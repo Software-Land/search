@@ -8,7 +8,6 @@
 - **Adaptive threshold** is corpus- and hardware-sensitive. 1500 is a default, not a guarantee.
 - **`score` is unstable.** Constraints are the correctness model.
 - **Custom retrievers** are experimental; they leak internal query/index shapes.
-- **No published npm package** yet. This tree is a private pre-release extraction.
 
 ## Future work (not started)
 

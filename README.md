@@ -4,7 +4,7 @@ Deterministic, explainable document search with optional offline corpus and sema
 
 Copyright 2026 Sam Malayek. Licensed under Apache-2.0.
 
-Source: [github.com/Software-Land/search](https://github.com/Software-Land/search). This tree is **0.x** and `"private": true` until the first registry publish.
+Source: [github.com/Software-Land/search](https://github.com/Software-Land/search). This tree is **0.x**.
 
 ## What it is
 
@@ -22,13 +22,9 @@ Generated compiler candidates are review material. Only trusted compiled artifac
 
 ## Install
 
-After the first publish:
-
 ```bash
 npm install @software-land/search
 ```
-
-Until then, install from this repository (still `"private": true`).
 
 ```js
 import { SearchEngine, english, dictionary } from "@software-land/search";

@@ -1,7 +1,7 @@
 {
   "name": "@software-land/search",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "description": "Deterministic, explainable document search with optional offline corpus and semantic compilation.",
   "license": "Apache-2.0",
   "author": "Sam Malayek",
