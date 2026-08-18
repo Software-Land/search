@@ -92,7 +92,7 @@ export function validateSchema(schema) {
     }
     if (spec.role != null && spec.role !== "title" && spec.role !== "body") {
       throw new InvalidConfigurationError(
-        `schema.${name}.role must be "title" or "body" (got ${JSON.stringify(spec.role)}). Other roles are not a stable Search V2 contract.`,
+        `schema.${name}.role must be "title" or "body" (got ${JSON.stringify(spec.role)}). Other roles are not a stable search contract.`,
         { field: `schema.${name}.role`, expected: "title | body" }
       );
     }

@@ -252,6 +252,7 @@ export class SearchEngine {
     }
     /** @param {import("./types.js").RetrievalHit} hit */
     const retrievalScoreOf = (hit) => (weight && maxRet ? weight * ((hit.retrievalScore || 0) / maxRet) : 0);
+    const tFeat = performance.now();
     /** @type {import("./types.js").FeaturedHit[]} */
     let featured = retrieved.map((hit, i) => {
       if (i % 8 === 0) throwIfAborted(signal);
@@ -263,12 +264,14 @@ export class SearchEngine {
         }),
       };
     });
+    const featureMs = performance.now() - tFeat;
 
     if (strategy === "none") {
-      return { featured, applied: { featured, relatedHits: [], primaries: [] } };
+      return { featured, applied: { featured, relatedHits: [], primaries: [] }, featureMs, relationshipMs: 0 };
     }
 
     throwIfAborted(signal);
+    const tRel = performance.now();
     const applied = applyRelationshipExpansion({
       featured,
       query,
@@ -278,6 +281,7 @@ export class SearchEngine {
       graph: this.relationships,
       sourcePolicy,
       signal,
+      constraints: constraintsForStrategy(strategy),
     });
     featured = applied.featured;
     for (const hit of applied.relatedHits) {
@@ -289,7 +293,8 @@ export class SearchEngine {
         score: scoreFeatures(features),
       });
     }
-    return { featured, applied };
+    const relationshipMs = performance.now() - tRel;
+    return { featured, applied, featureMs, relationshipMs };
   }
 
   /**
@@ -360,9 +365,10 @@ export class SearchEngine {
     });
     const retrieveMs = performance.now() - tRetrieve;
 
-    const tFeat = performance.now();
-    const { featured, applied } = this._expandAndFeature(retrieved, query, strategy, { signal, sourcePolicy });
-    const featureMs = performance.now() - tFeat;
+    const { featured, applied, featureMs, relationshipMs } = this._expandAndFeature(retrieved, query, strategy, {
+      signal,
+      sourcePolicy,
+    });
 
     const tRank = performance.now();
     const constraints = constraintsForStrategy(strategy);
@@ -374,7 +380,7 @@ export class SearchEngine {
       relatedLimit,
       retrieveMs,
       featureMs,
-      relationshipMs: 0,
+      relationshipMs,
       rankMs,
       totalMs: performance.now() - t0,
       candidateCount: featured.length,
@@ -409,19 +415,26 @@ export class SearchEngine {
     throwIfAborted(signal);
 
     const tRetrieve = performance.now();
-    const retrieved = await this.retriever.retrieveAsync(query, index, {
+    throwIfAborted(signal);
+    const retrieveOpts = {
       signal,
       candidateLimit: opts.candidateLimit || this.candidateLimit,
-    });
+    };
+    const retrieved =
+      typeof this.retriever.retrieveAsync === "function"
+        ? await this.retriever.retrieveAsync(query, index, retrieveOpts)
+        : this.retriever.retrieve(query, index, retrieveOpts);
+    throwIfAborted(signal);
     const retrieveMs = performance.now() - tRetrieve;
 
     throwIfAborted(signal);
     await Promise.resolve();
     throwIfAborted(signal);
 
-    const tFeat = performance.now();
-    const { featured, applied } = this._expandAndFeature(retrieved, query, strategy, { signal, sourcePolicy });
-    const featureMs = performance.now() - tFeat;
+    const { featured, applied, featureMs, relationshipMs } = this._expandAndFeature(retrieved, query, strategy, {
+      signal,
+      sourcePolicy,
+    });
 
     throwIfAborted(signal);
     await Promise.resolve();
@@ -438,7 +451,7 @@ export class SearchEngine {
       relatedLimit,
       retrieveMs,
       featureMs,
-      relationshipMs: 0,
+      relationshipMs,
       rankMs,
       totalMs: performance.now() - t0,
       candidateCount: featured.length,

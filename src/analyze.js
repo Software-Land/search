@@ -325,6 +325,8 @@ export function analyzeQuery(rawQuery, { plugins = [], lexicon = [], signal } = 
 /**
  * Conservative typo suggestions against a candidate vocabulary (titles ∪ dictionary).
  * Short alphanumeric literals (s3, h2, k8) are not treated as spelling errors.
+ * Equal-distance edit candidates keep the lexicographically smaller form so the
+ * choice does not depend on Set/corpus insertion order or document ids.
  * @param {unknown} token
  * @param {Iterable<string> | Set<string> | null | undefined} candidateSet
  * @param {{ signal?: AbortSignal }} [options]
@@ -345,7 +347,9 @@ export function suggestTypoForms(token, candidateSet, { signal } = {}) {
     if (Math.abs(cand.length - collapsed.length) > 2) continue;
     const d = levenshtein(collapsed, cand);
     if (d === 0 || d > 2) continue;
-    if (!best || d < best.distance) best = { form: cand, distance: d, provenance: "edit-distance" };
+    if (!best || d < best.distance || (d === best.distance && cand < best.form)) {
+      best = { form: cand, distance: d, provenance: "edit-distance" };
+    }
   }
   if (best) out.push(best);
   return out;

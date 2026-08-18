@@ -12,3 +12,8 @@
 ## Future work (not started)
 
 Compact analyzed representation, build-time lexical-index artifact, incremental updates, native ports. Do not treat those as promised.
+
+Ranking internals (not v0.1.1 work; behavior-preserving optimizations only):
+
+- `rankCandidates` already builds the pairwise constraint graph; `detectConstraintCycles` currently rebuilds that graph for diagnosis.
+- `readySort()` re-sorts zero-indegree SCC components after each extraction. Correct, not a hot-path rewrite target for this patch.

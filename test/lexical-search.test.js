@@ -28,7 +28,7 @@ const tlsDict = [
   { key: "api", expansion: ["application", "programming", "interface"] },
 ];
 
-describe("search-v2 version forms", () => {
+describe("version forms", () => {
   test("compact aliases come only from dotted spans", () => {
     expect(extractVersionCompactForms("TLS 1.2 Vulnerability")).toEqual(["12"]);
     expect(extractVersionCompactForms("AES-128 Cipher Suites")).toEqual([]);
@@ -39,7 +39,7 @@ describe("search-v2 version forms", () => {
   });
 });
 
-describe("search-v2 query analysis", () => {
+describe("query analysis", () => {
   test("keeps surface tokens and morphology provenance", () => {
     const q = analyzeQuery("shards", { plugins: [english()] });
     expect(q.tokens[0].surface).toBe("shards");
@@ -69,7 +69,7 @@ describe("search-v2 query analysis", () => {
   });
 });
 
-describe("search-v2 exact title and coverage", () => {
+describe("exact title and coverage", () => {
   const docs = [
     { id: "/object/", title: "Object", body: "Object in programming." },
     {
@@ -111,7 +111,7 @@ describe("search-v2 exact title and coverage", () => {
   });
 });
 
-describe("search-v2 morphology vs surface", () => {
+describe("morphology vs surface", () => {
   const docs = [
     { id: "/sharding/", title: "Sharding", body: "Sharding is partitioning." },
     {
@@ -135,7 +135,7 @@ describe("search-v2 morphology vs surface", () => {
   });
 });
 
-describe("search-v2 version compact", () => {
+describe("version compact", () => {
   const docs = [
     {
       id: "/tls/",
@@ -199,7 +199,7 @@ describe("search-v2 version compact", () => {
   });
 });
 
-describe("search-v2 short literal lead", () => {
+describe("short literal lead", () => {
   test("s3 prefers the lead token title", async () => {
     const e = await engine([
       { id: "/s3/", title: "S3 Bucket Policies", body: "Access policies for S3 buckets." },
@@ -220,7 +220,7 @@ describe("search-v2 short literal lead", () => {
   });
 });
 
-describe("search-v2 configured equivalence and explanations", () => {
+describe("configured equivalence and explanations", () => {
   test("expansion query retrieves the acronym title and explains sources", async () => {
     const e = await engine(
       [
@@ -241,7 +241,7 @@ describe("search-v2 configured equivalence and explanations", () => {
   });
 });
 
-describe("search-v2 constraints vs score", () => {
+describe("constraints vs score", () => {
   test("exact title constraint fires without giant constants", () => {
     const a = {
       document: { id: "a" },
@@ -284,7 +284,7 @@ describe("search-v2 constraints vs score", () => {
   });
 });
 
-describe("search-v2 candidate provenance", () => {
+describe("candidate provenance", () => {
   test("body matcher can retrieve a title-miss as body-lexical", () => {
     const index = buildIndex(
       [
@@ -303,7 +303,7 @@ describe("search-v2 candidate provenance", () => {
   });
 });
 
-describe("search-v2 features ranking and explanations", () => {
+describe("features ranking and explanations", () => {
   test("extractFeatures emits the documented named set", () => {
     const index = buildIndex(
       [{ id: "/object/", title: "Object", body: "An object." }],

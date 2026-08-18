@@ -2,7 +2,7 @@ import fs from "node:fs";
 
 /**
  * Portable corpus: { documents: [{ id, title, body, metadata? }] }
- * or a bare array of documents. No Gatsby / V1 store types.
+ * or a bare array of documents.
  * @param {unknown} input
  * @returns {import("../types.js").LoadedCorpus}
  */

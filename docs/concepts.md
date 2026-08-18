@@ -1,6 +1,6 @@
 # Concepts
 
-Search V2 splits **query understanding**, **candidate retrieval**, **ranking**, and **relatedness**.
+The search runtime splits **query understanding**, **candidate retrieval**, **ranking**, and **relatedness**.
 
 ```text
 query

@@ -1,4 +1,4 @@
-# Optional embedding extras. Do not install into the Search V2 runtime.
+# Optional embedding extras. Do not install into the search runtime.
 # Lexical builds need only the Python standard library.
 # Model weights are downloaded at run time into tools/search-semantic/.cache/
 # and are not vendored in this repository.

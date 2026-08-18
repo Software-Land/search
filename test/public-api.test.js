@@ -49,7 +49,7 @@ function ids(rows) {
   return rows.map((r) => r.id);
 }
 
-describe("search-v2 phase 12 public API", () => {
+describe("public API", () => {
   test("public export list is frozen", async () => {
     expect(Object.keys(publicApi).filter((k) => k !== "__esModule").sort()).toEqual([...PUBLIC_EXPORTS].sort());
     expect(RETRIEVER_NAMES).toEqual(["full-scan", "indexed", "adaptive"]);

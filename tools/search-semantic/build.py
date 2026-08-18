@@ -9,7 +9,7 @@ Offline relationship compiler.
     --min-score 0.3 \
     --output relationships.json
 
-Does not import Search V2. Emits search-v2-relationships v1 only.
+Does not import Search Core. Emits search-v2-relationships v1 only.
 """
 
 from __future__ import annotations

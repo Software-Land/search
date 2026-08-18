@@ -127,7 +127,7 @@ export function compileAnalysis(analysis) {
 }
 
 /**
- * Analyze + compile. `overrides` remains as a Phase 6 compatibility alias
+ * Analyze + compile. `overrides` remains as a legacy compatibility alias
  * for decisions ({ accept, reject, add }).
  * @param {unknown} input
  * @param {import("../types.js").CompileOptions} [opts]

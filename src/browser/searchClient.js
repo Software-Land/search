@@ -1,5 +1,5 @@
 /**
- * Vanilla JS Search V2 client. No React.
+ * Vanilla JS search client. No React.
  *
  * UI thread
  *   → SearchClient (latest-wins + request ids)

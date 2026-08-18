@@ -162,11 +162,14 @@ export interface DecisionDoc {
   synonyms: SynonymDecision[];
 }
 
-export interface Phase6Overrides {
+export interface DecisionOverrides {
   accept?: Array<{ key?: unknown; expansion?: unknown; aliases?: unknown }>;
   reject?: Array<{ key?: unknown; expansion?: unknown }>;
   add?: Array<{ key?: unknown; expansion?: unknown; aliases?: unknown }>;
 }
+
+/** @deprecated Use DecisionOverrides. */
+export type Phase6Overrides = DecisionOverrides;
 
 export interface DecisionIndex {
   loaded: DecisionDoc;
