@@ -40,7 +40,7 @@ const bluetoothDocs = {
 };
 
 describe("search-relationships isolation", () => {
-  test("compiler does not import V1, Search Core, search-corpus, or search-semantic", () => {
+  test("compiler does not import Search Core, search-corpus, or search-semantic", () => {
     const root = path.join(__dirname, "../tools/search-relationships/lib");
     for (const file of walkJs(root)) {
       const text = fs.readFileSync(file, "utf8");

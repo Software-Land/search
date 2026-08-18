@@ -1,6 +1,6 @@
 # search-semantic (optional build-time compiler)
 
-Offline compiler that emits the existing Search V2 relationship artifact:
+Offline compiler that emits the existing search relationship artifact:
 
 ```text
 corpus JSON
@@ -10,7 +10,7 @@ corpus JSON
   → search-v2-relationships v1
 ```
 
-Search V2 runtime must not import this package. A user can run search-core with **zero** relationship artifact.
+The search runtime must not import this package. A user can run Search Core with **zero** relationship artifact.
 
 This directory is **not** part of the npm import graph.
 
@@ -36,7 +36,7 @@ tools/search-semantic/.venv/bin/pip install -r tools/search-semantic/requirement
 
 Model weights are **downloaded** into the builder cache (`tools/search-semantic/.cache/`), not redistributed and never written into the runtime JSON.
 
-The builder core accepts portable `{id,title,body}` documents. `build.py` is the public CLI. Investigation-era experiment drivers are not part of this tree.
+The builder core accepts portable `{id,title,body}` documents. `build.py` is the public CLI.
 
 ## Default embedding model
 

@@ -42,7 +42,7 @@ function blankFeatures(over = {}) {
   };
 }
 
-describe("search-v2 constraint composition", () => {
+describe("constraint composition", () => {
   test("stronger class wins and records the weaker disagreement", () => {
     const a = {
       document: { id: "a" },
@@ -124,7 +124,7 @@ describe("search-v2 constraint composition", () => {
   });
 });
 
-describe("search-v2 compiled artifacts", () => {
+describe("compiled artifacts", () => {
   test("relationship artifact is versioned and generic", () => {
     const parsed = parseRelationships({
       format: "search-v2-relationships",
@@ -162,7 +162,7 @@ describe("search-v2 compiled artifacts", () => {
   });
 });
 
-describe("search-v2 precomputed relationships", () => {
+describe("precomputed relationships", () => {
   const docs = [
     { id: "tls-config", title: "TLS Configuration", body: "Configure TLS certificates." },
     { id: "vpn", title: "VPN Settings", body: "Virtual private network settings." },
@@ -223,7 +223,7 @@ describe("search-v2 precomputed relationships", () => {
   });
 });
 
-describe("search-v2 general lexical phase 2", () => {
+describe("general lexical search", () => {
   test("partial configured expansion continuous d maps to cd with provenance", () => {
     const q = analyzeQuery("continuous d", {
       plugins: [

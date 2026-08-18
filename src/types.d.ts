@@ -1,5 +1,5 @@
 /**
- * Internal Search V2 contracts for checkJs.
+ * Internal Search Core contracts for checkJs.
  * Public facade types live in index.d.ts; this file describes implementation shapes.
  */
 
@@ -301,6 +301,7 @@ export interface RelationshipExpansionArgs {
   graph?: RelationshipGraphApi | null;
   sourcePolicy?: SourcePolicy;
   signal?: AbortSignal;
+  constraints?: ConstraintDef[];
 }
 
 export interface ConstraintGraph {

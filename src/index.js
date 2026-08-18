@@ -1,5 +1,5 @@
 /**
- * Search V2 public runtime API.
+ * Public runtime API.
  * Internals remain importable from sibling modules for tests and tooling.
  */
 

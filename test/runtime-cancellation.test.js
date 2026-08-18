@@ -87,7 +87,7 @@ function sleep(ms, signal) {
   });
 }
 
-describe("search-v2 phase 5 relationship API", () => {
+describe("relationship API", () => {
   async function engine() {
     const e = SearchEngine.create({ schema, plugins, relationships: graph });
     await e.index(relDocs);
@@ -146,7 +146,7 @@ describe("search-v2 phase 5 relationship API", () => {
   });
 });
 
-describe("search-v2 phase 5 core cancellation", () => {
+describe("core cancellation", () => {
   const manyDocs = Array.from({ length: 48 }, (_, i) => ({
     id: `doc-${i}`,
     title: i === 0 ? "TLS Configuration" : `Widget ${i}`,
@@ -224,7 +224,7 @@ describe("search-v2 phase 5 core cancellation", () => {
   });
 });
 
-describe("search-v2 phase 5 analysis", () => {
+describe("query analysis repair", () => {
   test("compound typo segmentation is general and inspectable", () => {
     const q = analyzeQuery("aplicationsecurity", { plugins });
     expect(q.raw).toBe("aplicationsecurity");
@@ -298,7 +298,7 @@ describe("search-v2 phase 5 analysis", () => {
   });
 });
 
-describe("search-v2 phase 5 latest-wins scheduling", () => {
+describe("latest-wins scheduling", () => {
   test("pending query is replaced and only the latest publishes", async () => {
     const executed = [];
     const published = [];
@@ -421,7 +421,7 @@ describe("search-v2 phase 5 latest-wins scheduling", () => {
   });
 });
 
-describe("search-v2 phase 5 worker adapter", () => {
+describe("worker adapter", () => {
   test("loopback worker inits once and latest-wins cancels stale work", async () => {
     const runtime = createWorkerRuntime({ SearchEngine, english, dictionary });
     const transport = createLoopbackTransport(runtime);

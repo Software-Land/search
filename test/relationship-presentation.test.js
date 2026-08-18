@@ -24,7 +24,7 @@ const graph = {
 
 const plugins = [english(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })];
 
-describe("search-v2 phase 4 direct classes", () => {
+describe("direct classes", () => {
   test("exact title is strong; body-only is weak; related is none", async () => {
     const engine = SearchEngine.create({ schema, plugins, relationships: graph });
     await engine.index(docs);
@@ -56,7 +56,7 @@ describe("search-v2 phase 4 direct classes", () => {
   });
 });
 
-describe("search-v2 phase 4 presentation", () => {
+describe("relationship presentation", () => {
   async function engine() {
     const e = SearchEngine.create({ schema, plugins, relationships: graph });
     await e.index(docs);

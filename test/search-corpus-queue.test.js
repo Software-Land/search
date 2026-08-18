@@ -10,7 +10,7 @@ function pendingIds(result) {
   return (result.inspection.pending || []).map((p) => p.id);
 }
 
-describe("search-corpus Phase 8 review queue", () => {
+describe("search-corpus review queue", () => {
   test("good 2-letter acronym survives short-token filtering", () => {
     const result = compileCorpus({
       documents: [

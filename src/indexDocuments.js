@@ -95,14 +95,16 @@ export function buildIndex(documents, schema, plugins = []) {
   }
   const lemmaFn = plugins.find((p) => typeof p.lemma === "function")?.lemma || ((t) => t);
   const byId = new Map();
-  const titleTokenSet = new Set();
   const docsIn = documents || [];
   for (let i = 0; i < docsIn.length; i++) {
     const analyzed = analyzeDocument(docsIn[i], schema, { lemma: lemmaFn, index: i });
     byId.set(analyzed.id, analyzed);
+  }
+  const docs = [...byId.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const titleTokenSet = new Set();
+  for (const analyzed of docs) {
     for (const t of analyzed.titleTokens) titleTokenSet.add(t);
     for (const t of analyzed.titleLemmas) titleTokenSet.add(t);
   }
-  const docs = [...byId.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   return { schema: resolveSchema(schema), documents: docs, byId, titleTokenSet };
 }

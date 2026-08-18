@@ -32,7 +32,7 @@ async function engines() {
   return { full, indexed };
 }
 
-describe("search-v2 phase 11 replaceable retrieval", () => {
+describe("replaceable retrieval", () => {
   test("default retriever remains full-scan (existing tests unchanged)", async () => {
     const e = SearchEngine.create({ schema, plugins: [english()] });
     await e.index(docs);

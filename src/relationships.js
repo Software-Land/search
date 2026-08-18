@@ -7,6 +7,7 @@
 import { parseRelationships } from "./artifacts.js";
 import { classifyDirect } from "./features.js";
 import { throwIfAborted } from "./cancel.js";
+import { rankCandidates } from "./rank.js";
 
 /** @param {unknown} artifact @returns {import("./types.js").RelationshipGraphApi} */
 export function RelationshipGraph(artifact) {
@@ -44,17 +45,24 @@ export function isStrongPrimary(hit) {
 
 /**
  * Conservative expansion: only from high-confidence primaries, no multi-hop.
+ * Order is Search Core ranking of eligible strong DIRECT candidates, not
+ * retrieval order or document-id order.
  * @param {import("./types.js").FeaturedHit[]} featured
- * @param {{ sourcePolicy?: import("./types.js").SourcePolicy, n?: number }} [opts]
+ * @param {{
+ *   sourcePolicy?: import("./types.js").SourcePolicy,
+ *   n?: number,
+ *   constraints?: import("./types.js").ConstraintDef[],
+ *   signal?: AbortSignal,
+ * }} [opts]
  */
-export function pickPrimariesForExpansion(featured, { sourcePolicy = "top1-strong", n = 3 } = {}) {
+export function pickPrimariesForExpansion(featured, { sourcePolicy = "top1-strong", n = 3, constraints, signal } = {}) {
   const directs = featured.filter((h) => (h.features?.relevanceKind || "direct") !== "related");
   const strong = directs.filter(isStrongPrimary);
   if (!strong.length) return [];
-  strong.sort((a, b) => (b.score || 0) - (a.score || 0) || (a.document.id < b.document.id ? -1 : 1));
-  if (sourcePolicy === "all-strong") return strong;
-  if (sourcePolicy === "top-n-strong") return strong.slice(0, Math.max(1, n));
-  return strong.slice(0, 1);
+  const ranked = rankCandidates(strong, { constraints, signal });
+  if (sourcePolicy === "all-strong") return ranked;
+  if (sourcePolicy === "top-n-strong") return ranked.slice(0, Math.max(1, n));
+  return ranked.slice(0, 1);
 }
 
 /** @param {import("./types.js").FeaturedHit[]} featured */
@@ -87,12 +95,12 @@ function stripSources(rel) {
  * @param {import("./types.js").RelationshipExpansionArgs} [args]
  * @returns {import("./types.js").ExpansionResult}
  */
-export function applyRelationshipExpansion({ featured, query, extractFeatures, scoreFeatures, index, graph, sourcePolicy = "top1-strong", signal } = {}) {
+export function applyRelationshipExpansion({ featured, query, extractFeatures, scoreFeatures, index, graph, sourcePolicy = "top1-strong", signal, constraints } = {}) {
   throwIfAborted(signal);
   if (!graph || graph.empty || !featured || !query || !extractFeatures || !scoreFeatures || !index) {
     return { featured: featured || [], relatedHits: [], primaries: [] };
   }
-  const primaries = pickPrimariesForExpansion(featured, { sourcePolicy });
+  const primaries = pickPrimariesForExpansion(featured, { sourcePolicy, constraints, signal });
   if (!primaries.length) return { featured, relatedHits: [], primaries: [] };
 
   const byId = new Map(featured.map((h) => [h.document.id, h]));

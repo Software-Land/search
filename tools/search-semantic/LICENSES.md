@@ -2,7 +2,7 @@
 
 This package is optional build-time tooling. Model weights are downloaded into
 `tools/search-semantic/.cache/` and are **not** redistributed in git or in the
-Search V2 runtime artifact.
+search runtime artifact.
 
 | Component | Typical license | Notes |
 | --- | --- | --- |

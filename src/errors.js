@@ -1,5 +1,5 @@
 /**
- * Public Search V2 errors. Keep the set small and actionable.
+ * Public search errors. Keep the set small and actionable.
  * AbortError is created in cancel.js (DOMException when available).
  */
 

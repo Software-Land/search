@@ -24,7 +24,7 @@ function walkJs(dir) {
   return out;
 }
 
-describe("search-v2 phase 3 isolation", () => {
+describe("runtime isolation", () => {
   test("runtime does not import the semantic builder or embedding stacks", () => {
     const root = path.join(__dirname, "../src");
     const banned = [

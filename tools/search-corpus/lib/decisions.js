@@ -43,7 +43,7 @@ function asTerms(raw) {
  * Accept either:
  *   { equivalences: [...], synonyms: [...] }
  *   { equivalences: { api: { decision, expansion } }, synonyms: { "a::b": { decision } } }
- *   Phase 6 overrides: { accept, reject, add }
+ *   compact decision overrides: { accept, reject, add }
  * @param {unknown} raw
  * @returns {import("../types.js").DecisionDoc}
  */
@@ -54,7 +54,7 @@ export function loadDecisions(raw) {
   if (typeof raw !== "object" || Array.isArray(raw)) {
     throw new DecisionError("Decisions must be a JSON object");
   }
-  const rec = /** @type {Record<string, unknown> & import("../types.js").Phase6Overrides} */ (raw);
+  const rec = /** @type {Record<string, unknown> & import("../types.js").DecisionOverrides} */ (raw);
   if (rec.accept || rec.reject || rec.add) {
     return loadDecisions(overridesToDecisions(rec));
   }
@@ -76,7 +76,7 @@ export function emptyDecisions() {
   return { format: DECISION_FORMAT, version: 1, equivalences: [], synonyms: [] };
 }
 
-/** @param {import("../types.js").Phase6Overrides} overrides @returns {import("../types.js").DecisionDoc} */
+/** @param {import("../types.js").DecisionOverrides} overrides @returns {import("../types.js").DecisionDoc} */
 export function overridesToDecisions(overrides) {
   /** @type {import("../types.js").EquivalenceDecision[]} */
   const equivalences = [];

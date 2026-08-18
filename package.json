@@ -1,6 +1,6 @@
 {
   "name": "@software-land/search",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "description": "Deterministic, explainable document search with optional offline corpus and semantic compilation.",
   "license": "Apache-2.0",
@@ -43,6 +43,7 @@
   "files": [
     "LICENSE",
     "README.md",
+    "CHANGELOG.md",
     "docs",
     "examples",
     "src",

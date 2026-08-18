@@ -35,7 +35,7 @@ describe("search-corpus isolation", () => {
     }
   });
 
-  test("compiler does not import V1 search or search-semantic", () => {
+  test("compiler does not import Search Core or search-semantic", () => {
     const root = path.join(__dirname, "../tools/search-corpus/lib");
     for (const file of walkJs(root)) {
       const text = fs.readFileSync(file, "utf8");

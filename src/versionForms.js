@@ -1,5 +1,5 @@
 /**
- * Dotted-numeric version aliases for Search V2.
+ * Dotted-numeric version aliases.
  * Compact forms come only from dotted spans on the original surface
  * (e.g. "1.2" → "12"), never from joining independent digits or prefixes
  * of longer numerals (120 / 128) or hyphenated codes (AES-128).
