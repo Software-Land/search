@@ -22,7 +22,7 @@ node tools/search-corpus/build.mjs compile --input corpus.json --output dir --de
 node tools/search-corpus/build.mjs review --pending --output dir
 ```
 
-Public entry: `compileCorpus` / `analyzeCorpus` from `software-land-search/corpus`. Internal miners are not a supported app API.
+Public entry: `compileCorpus` / `analyzeCorpus` from `@software-land/search/corpus`. Internal miners are not a supported app API.
 
 ## search-semantic (`tools/search-semantic`)
 

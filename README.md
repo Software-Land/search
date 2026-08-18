@@ -1,10 +1,10 @@
-# software-land-search
+# @software-land/search
 
-Deterministic, explainable document search for modest-to-large catalogs. Ranking uses named features and partial-order constraints. Relatedness is a **build-time artifact**, not a runtime embedding model.
+Deterministic, explainable document search with optional offline corpus and semantic compilation. Ranking uses named features and partial-order constraints. Relatedness is a **build-time artifact**, not a runtime embedding model.
 
 Copyright 2026 Sam Malayek. Licensed under Apache-2.0.
 
-This tree is **0.x** and `"private": true` until an explicit publish step. The intended public npm name is `@software-land/search`. This checkout still uses the temporary name `software-land-search` until that scope is created and owned. Import examples below match the **current** package name.
+Source: [github.com/Software-Land/search](https://github.com/Software-Land/search). This tree is **0.x** and `"private": true` until the first registry publish.
 
 ## What it is
 
@@ -22,14 +22,16 @@ Generated compiler candidates are review material. Only trusted compiled artifac
 
 ## Install
 
-From a local checkout (`private` packages cannot be `npm install`ed from the registry yet):
+After the first publish:
 
 ```bash
-npm install
+npm install @software-land/search
 ```
 
+Until then, install from this repository (still `"private": true`).
+
 ```js
-import { SearchEngine, english, dictionary } from "software-land-search";
+import { SearchEngine, english, dictionary } from "@software-land/search";
 
 const engine = SearchEngine.create({
   schema: {
@@ -59,7 +61,7 @@ engine.search("wireless");
 Optional. Core does not import `Worker` or `window`.
 
 ```js
-import { createSearchClient, searchWorkerUrl } from "software-land-search/browser";
+import { createSearchClient, searchWorkerUrl } from "@software-land/search/browser";
 
 const client = createSearchClient({
   workerUrl: searchWorkerUrl(),
@@ -85,7 +87,7 @@ node tools/search-corpus/build.mjs compile --input corpus.json --output dir --de
 ```
 
 ```js
-import { compileCorpus } from "software-land-search/corpus";
+import { compileCorpus } from "@software-land/search/corpus";
 
 const { equivalences, synonyms, dictionaryEntries } = compileCorpus({
   documents: [{ id: "a", title: "Central Processing Unit (CPU)", body: "The CPU fetches instructions." }],
@@ -101,7 +103,7 @@ node tools/search-relationships/build.mjs compile \
 ```
 
 ```js
-import { compileRelationships } from "software-land-search/relationships";
+import { compileRelationships } from "@software-land/search/relationships";
 ```
 
 ## Optional semantic compiler (Python)
@@ -142,7 +144,9 @@ npm run typecheck
 
 v0 (`0.1.0`). The runtime facade, result shape, artifact `format`+`version`, `relationshipStrategy` values, and retriever names are intended to stabilize. Internal feature vectors, BM25 constants, and ranking modules are not public exports.
 
-Root exports: `SearchEngine`, `english`, `dictionary`, strategy/retriever constants, artifact parsers, abort helpers, public error classes.
+Supported imports: `@software-land/search`, `@software-land/search/browser`, `@software-land/search/corpus`, `@software-land/search/relationships`.
+
+Root exports: `SearchEngine`, `english`, `dictionary`, strategy/retriever constants, artifact parsers, abort helpers, public error classes. `searchWorkerUrl()` is exported only from `./browser`.
 
 ## Docs
 

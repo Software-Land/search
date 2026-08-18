@@ -1,8 +1,8 @@
 {
-  "name": "software-land-search",
+  "name": "@software-land/search",
   "version": "0.1.0",
   "private": true,
-  "description": "Deterministic, explainable document search with optional build-time corpus and relationship compilers.",
+  "description": "Deterministic, explainable document search with optional offline corpus and semantic compilation.",
   "license": "Apache-2.0",
   "author": "Sam Malayek",
   "keywords": [
@@ -11,6 +11,14 @@
     "ranking",
     "explainable"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Software-Land/search.git"
+  },
+  "homepage": "https://github.com/Software-Land/search#readme",
+  "bugs": {
+    "url": "https://github.com/Software-Land/search/issues"
+  },
   "type": "module",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",

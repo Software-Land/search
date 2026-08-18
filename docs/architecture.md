@@ -8,7 +8,7 @@ search-semantic        tools/search-semantic    optional Python relatedness buil
 search-relationships   tools/search-relationships
 ```
 
-Distribution: **one npm package** for the JavaScript side (`software-land-search`) with subpath exports `.`, `./browser`, `./corpus`, and `./relationships`. Python semantic tooling lives in the same repository and is not part of the npm import graph.
+Distribution: **one npm package** for the JavaScript side (`@software-land/search`) with subpath exports `.`, `./browser`, `./corpus`, and `./relationships`. Python semantic tooling lives in the same repository and is not part of the npm import graph.
 
 ## Environments
 

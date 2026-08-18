@@ -3,7 +3,7 @@
 Optional. Core does not import `Worker` or `window`.
 
 ```js
-import { createSearchClient, searchWorkerUrl } from "software-land-search/browser";
+import { createSearchClient, searchWorkerUrl } from "@software-land/search/browser";
 
 const client = createSearchClient({
   workerUrl: searchWorkerUrl(),
