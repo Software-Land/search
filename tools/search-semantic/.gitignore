@@ -1,0 +1,7 @@
+# tools/search-semantic — isolated from runtime
+.venv/
+.cache/
+__pycache__/
+*.pyc
+.output/
+*.egg-info/

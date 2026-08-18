@@ -1,0 +1,42 @@
+# Retrievers
+
+v0 exposes **built-in names only**. A third-party `{ retrieve }` object is accepted as experimental and is not a stable contract (it sees internal query/index shapes).
+
+```js
+SearchEngine.create({
+  retriever: "full-scan",   // default
+  // retriever: "indexed",
+  // retriever: "adaptive",
+  candidateLimit: 200,      // indexed budget for non-exact hits
+  adaptive: { documentThreshold: 1500 },
+});
+```
+
+| name | when |
+| --- | --- |
+| `full-scan` | Small corpora. Simplest. Scans every document. |
+| `indexed` | Inverted lexical candidate generation. BM25 **orders the budgeted slice only**. |
+| `adaptive` | Full scan while `documentCount <= adaptive.documentThreshold`, else indexed. Deterministic. No runtime benchmarking. |
+
+Default threshold **1500** is a documented default, not a universal law. Settings-like and article-like corpora cross at different sizes. Benchmark unusual shapes.
+
+Must-keep union (not budgeted): `exact-title`, `configured-equivalence`, `version`. Title-token / body / prefix hits are budgeted.
+
+`candidateLimit` default is 200. BM25 `k1`/`b` and title boost are implementation defaults, not public knobs.
+
+## BM25
+
+Useful as a **candidate retriever**. Not the final relevance algorithm. Default ranking weight of any BM25 score is **0**. A non-zero weight helped one corpus shape and hurt another.
+
+## Scaling (measured, not universal)
+
+On a Node / x86_64 harness:
+
+- Settings-like ~1k remained interactive under full scan (p95 ~18 ms)
+- Settings-like ~10k full scan was unsuitable for typeahead (p95 ~653 ms)
+- Indexed Settings-like ~100k stayed tens of milliseconds; full scan ran out of 8 GB heap
+- Article-like corpora crossed earlier because body/prefix hit sets explode
+
+The inverted postings are relatively small. The **analyzed document store** (tokens, sets, copies) can dominate memory. That is a known limitation, not a ranking bug.
+
+See [limitations.md](limitations.md).

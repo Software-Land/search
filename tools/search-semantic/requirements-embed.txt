@@ -1,0 +1,8 @@
+# Optional embedding extras. Do not install into the Search V2 runtime.
+# Lexical builds need only the Python standard library.
+# Model weights are downloaded at run time into tools/search-semantic/.cache/
+# and are not vendored in this repository.
+numpy>=2.0,<3
+fastembed>=0.5,<1
+# Optional fallback encoder if FastEmbed is unavailable:
+# sentence-transformers>=3,<4

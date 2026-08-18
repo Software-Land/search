@@ -1,0 +1,2 @@
+# Nested ignore files are for the source repo, not the published package.
+**/.gitignore

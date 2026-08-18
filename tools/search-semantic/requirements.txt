@@ -1,0 +1,2 @@
+# Lexical relationship building uses the Python standard library only.
+# Install requirements-embed.txt in an isolated venv when using --method embedding|combined.

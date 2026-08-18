@@ -1,0 +1,22 @@
+node_modules/
+coverage/
+.DS_Store
+
+# Compiler / semantic builder generated output (never source)
+tools/search-corpus/.output/
+tools/search-relationships/.output/
+tools/search-semantic/.output/
+tools/search-semantic/.venv/
+tools/search-semantic/.cache/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# Secrets and local env
+.env
+.env.*
+!.env.example
+
+# Editor
+.vscode/
+.idea/

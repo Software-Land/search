@@ -1,0 +1,46 @@
+/**
+ * Synonym / near-equivalence plugin. Query interpretation only.
+ * Does not imply document relatedness (TLS ↛ VPN).
+ *
+ * Entry: { terms: ["auth", "authentication"], type, provenance, confidence }
+ */
+
+import { parseSynonyms } from "./artifacts.js";
+
+/** @param {{ entries?: unknown[], format?: string, version?: number } | Record<string, unknown>} [input] */
+export function synonyms(input = {}) {
+  const parsed = Array.isArray(input.entries) || input.format
+    ? parseSynonyms(input.format ? input : { format: "search-v2-synonyms", version: 1, entries: input.entries || [] })
+    : parseSynonyms({ format: "search-v2-synonyms", version: 1, entries: input.entries || [] });
+
+  const lookup = new Map();
+  for (const entry of parsed.entries) {
+    for (const term of entry.terms) {
+      const others = entry.terms.filter((/** @type {string} */ t) => t !== term);
+      if (!lookup.has(term)) lookup.set(term, []);
+      lookup.get(term).push({ others, entry });
+    }
+  }
+
+  return {
+    name: "synonyms",
+    format: parsed.format,
+    version: parsed.version,
+    lookup,
+    expand(/** @type {string} */ token) {
+      const hits = lookup.get(String(token || "").toLowerCase()) || [];
+      const forms = [];
+      for (const hit of hits) {
+        for (const o of hit.others) {
+          forms.push({
+            form: o,
+            type: hit.entry.type,
+            provenance: hit.entry.provenance || "synonym",
+            confidence: hit.entry.confidence,
+          });
+        }
+      }
+      return forms;
+    },
+  };
+}

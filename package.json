@@ -1,0 +1,61 @@
+{
+  "name": "software-land-search",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deterministic, explainable document search with optional build-time corpus and relationship compilers.",
+  "license": "Apache-2.0",
+  "author": "Sam Malayek",
+  "keywords": [
+    "search",
+    "lexical",
+    "ranking",
+    "explainable"
+  ],
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    },
+    "./browser": {
+      "types": "./src/browser/index.d.ts",
+      "import": "./src/browser/index.js"
+    },
+    "./corpus": {
+      "types": "./tools/search-corpus/index.d.ts",
+      "import": "./tools/search-corpus/index.js"
+    },
+    "./relationships": {
+      "types": "./tools/search-relationships/index.d.ts",
+      "import": "./tools/search-relationships/index.js"
+    }
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "docs",
+    "examples",
+    "src",
+    "tools/search-corpus",
+    "tools/search-relationships"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.core.json --noEmit && tsc -p tsconfig.browser.json --noEmit && tsc -p tsconfig.tools.json --noEmit",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js && python3 -m unittest discover -s tools/search-semantic/tests -p 'test_*.py'",
+    "test:js": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "test:python": "python3 -m unittest discover -s tools/search-semantic/tests -p 'test_*.py'",
+    "example": "node examples/catalog/index.mjs",
+    "smoke:import": "node scripts/import-smoke.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "22.13.14",
+    "jest": "^29.7.0",
+    "typescript": "6.0.3"
+  }
+}

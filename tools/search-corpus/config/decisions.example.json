@@ -1,0 +1,22 @@
+{
+  "format": "search-corpus-decisions",
+  "version": 1,
+  "equivalences": [
+    {
+      "decision": "accept",
+      "key": "api",
+      "expansion": ["application", "programming", "interface"]
+    },
+    {
+      "decision": "reject",
+      "key": "io"
+    }
+  ],
+  "synonyms": [
+    {
+      "decision": "accept",
+      "terms": ["auth", "authentication"],
+      "relation": "alias"
+    }
+  ]
+}
