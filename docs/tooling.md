@@ -2,7 +2,7 @@
 
 Search Core never imports these. Runtime users should not pay for them.
 
-`npm run typecheck` typechecks Core, the browser Worker/client, and the Node JS compilers (`tools/search-corpus`, `tools/search-relationships`) under isolated `checkJs` projects. The Python semantic builder (`tools/search-semantic`) is excluded.
+`npm run typecheck` typechecks Core, the browser Worker/client, and the Node JS compilers (`tools/search-corpus`, `tools/search-relationships`, `tools/search-semantic/index.js`) under isolated `checkJs` projects. The Python sources under `tools/search-semantic/lib` stay outside `tsc`.
 
 ## search-corpus (`tools/search-corpus`)
 
@@ -26,7 +26,7 @@ Public entry: `compileCorpus` / `analyzeCorpus` from `@software-land/search/corp
 
 ## search-semantic (`tools/search-semantic`)
 
-Optional Python builder: documents → offline embeddings or lexical neighbors → `search-v2-relationships` v1. No runtime model. Default embedding experiment used `all-MiniLM-L6-v2` as **tooling config**, not a Core API. See `tools/search-semantic/LICENSES.md`. Model weights are downloaded separately into `.cache/`.
+Optional Python builder, shipped in the npm package: documents → offline embeddings or lexical neighbors → optional precision gate and mutual-neighbor filter → `search-v2-relationships` v1. Public Node entry: `compileSemantic` from `@software-land/search/semantic` (`precisionGate`, `mutual`). Search Core never imports this. Default embedding experiment used `all-MiniLM-L6-v2` as **tooling config**, not a Core API. See `tools/search-semantic/LICENSES.md`. Model weights are downloaded separately into a builder cache.
 
 ## search-relationships (`tools/search-relationships`)
 

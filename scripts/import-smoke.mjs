@@ -24,17 +24,21 @@ const rootExp = resolveExport(".");
 const browserExp = resolveExport("./browser");
 const corpusExp = resolveExport("./corpus");
 const relExp = resolveExport("./relationships");
+const semanticExp = resolveExport("./semantic");
 
 const runtime = await import(rootExp.url);
 const browser = await import(browserExp.url);
 const corpus = await import(corpusExp.url);
 const relationships = await import(relExp.url);
+const semantic = await import(semanticExp.url);
 
 if (typeof runtime.SearchEngine?.create !== "function") throw new Error("root SearchEngine missing");
 if (typeof browser.createSearchClient !== "function") throw new Error("browser createSearchClient missing");
 if (typeof browser.searchWorkerUrl !== "function") throw new Error("browser searchWorkerUrl missing");
 if (typeof corpus.compileCorpus !== "function") throw new Error("corpus compileCorpus missing");
 if (typeof relationships.compileRelationships !== "function") throw new Error("relationships compileRelationships missing");
+if (typeof semantic.compileSemantic !== "function") throw new Error("semantic compileSemantic missing");
+if ("compileSemantic" in runtime) throw new Error("runtime must not export compileSemantic");
 
 const extra = Object.keys(runtime).filter((k) => k !== "__esModule" && !runtime.PUBLIC_EXPORTS.includes(k));
 if (extra.length) throw new Error(`unexpected root exports: ${extra.join(", ")}`);
@@ -53,6 +57,7 @@ console.log(
         "./browser": browserExp.file,
         "./corpus": corpusExp.file,
         "./relationships": relExp.file,
+        "./semantic": semanticExp.file,
       },
     },
     null,

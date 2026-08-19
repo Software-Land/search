@@ -26,9 +26,17 @@ if str(ROOT) not in sys.path:
 
 from lib.artifact import edge_count, to_artifact
 from lib.embedding import DEFAULT_MODEL, load_or_embed, pairwise_embedding
+from lib.filters import apply_neighbor_filters
 from lib.lexical import pairwise_lexical
 from lib.neighbors import directed_neighbors, rrf_fuse
 from lib.prepare import prepared_documents
+
+
+def tfidf_lookup(pairs: list[tuple[str, str, float]] | None) -> dict[tuple[str, str], float]:
+    out: dict[tuple[str, str], float] = {}
+    for a, b, s in pairs or []:
+        out[(a, b) if a < b else (b, a)] = s
+    return out
 
 
 def load_corpus(path: Path) -> list[dict]:
@@ -54,12 +62,15 @@ def build(args) -> dict:
         "method": args.method,
         "topK": args.top_k,
         "minScore": args.min_score,
+        "precisionGate": bool(args.precision_gate),
+        "mutual": bool(args.mutual),
         "directionality": "directed-topk",
         "timings": {"prepareSec": round(prep_s, 4)},
     }
 
     lex_pairs = emb_pairs = None
-    if args.method in ("lexical", "combined"):
+    need_lexical = args.method in ("lexical", "combined") or args.precision_gate
+    if need_lexical:
         lex_pairs, sec = timed(lambda: pairwise_lexical(prepared))
         report["timings"]["lexicalPairwiseSec"] = round(sec, 4)
         report["lexicalPairCount"] = len(lex_pairs)
@@ -102,6 +113,19 @@ def build(args) -> dict:
     else:
         raise SystemExit(f"unknown method {args.method}")
 
+    before_filters = edge_count(to_artifact(neighbors, provenance=provenance))
+    docs_by_id = {str(d["id"]): d for d in docs}
+    neighbors = apply_neighbor_filters(
+        neighbors,
+        docs_by_id,
+        precision_gate=bool(args.precision_gate),
+        mutual=bool(args.mutual),
+        tfidf_lookup=tfidf_lookup(lex_pairs) if args.precision_gate else None,
+    )
+    if args.precision_gate or args.mutual:
+        report["preFilterEdgeCount"] = before_filters
+        report["filterOrder"] = "directed-topk → precision-gate → mutual"
+
     artifact = to_artifact(neighbors, provenance=provenance)
     report["edgeCount"] = edge_count(artifact)
     report["sourceCount"] = len(artifact["relationships"])
@@ -124,6 +148,18 @@ def main():
     p.add_argument("--embedding-min-score", type=float, default=None)
     p.add_argument("--model", default=DEFAULT_MODEL)
     p.add_argument("--cache-dir", default=str(ROOT / ".cache" / "embeddings"))
+    p.add_argument(
+        "--precision-gate",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Drop prefix false-friends and contrastive vs-pairs with no shared content token of length >= 4",
+    )
+    p.add_argument(
+        "--mutual",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Keep A→B only when B also retains A, after top-K and the precision gate",
+    )
     p.add_argument("--report", default="")
     args = p.parse_args()
 
@@ -137,7 +173,7 @@ def main():
         rp = Path(args.report)
         rp.parent.mkdir(parents=True, exist_ok=True)
         rp.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({k: report[k] for k in ("method", "representation", "edgeCount", "sourceCount", "artifactBytes", "timings") if k in report}, indent=2))
+    print(json.dumps({k: report[k] for k in ("method", "representation", "precisionGate", "mutual", "edgeCount", "sourceCount", "artifactBytes", "timings") if k in report}, indent=2))
 
 
 if __name__ == "__main__":

@@ -27,4 +27,4 @@ Ranking features, constraints, query analysis, relationship expansion policy, an
 
 ## What is not “AI search”
 
-Optional `search-semantic` may use embeddings **offline** to propose relationship edges. Runtime search does not load a model, a vector database, or query embeddings.
+Optional `search-semantic` (shipped in the npm package, launched from Node as `@software-land/search/semantic`) may use embeddings **offline** to propose relationship edges. Runtime search does not load a model, a vector database, or query embeddings.

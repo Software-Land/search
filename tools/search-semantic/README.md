@@ -7,12 +7,14 @@ corpus JSON
   → document preparation
   → relationship signal providers (lexical | embedding | combined)
   → directed top-K + threshold
+  → optional precision gate (prefix false-friends, contrastive vs-pairs)
+  → optional mutual-neighbor filter
   → search-v2-relationships v1
 ```
 
 The search runtime must not import this package. A user can run Search Core with **zero** relationship artifact.
 
-This directory is **not** part of the npm import graph.
+This directory ships in the npm tarball. The runtime import graph still does not include it. Use `@software-land/search/semantic` from Node build scripts.
 
 ## Setup
 
@@ -54,3 +56,5 @@ See `LICENSES.md` (descriptive, not legal advice): model Apache-2.0; weights dow
 ## Neighbor selection
 
 Directed top-K **and** a minimum score. Documents with no strong neighbor get an empty list. Cosine is symmetric; top-K lists are not forced-symmetric unless `--mutual` is chosen.
+
+`--precision-gate` drops prefix false-friends (IoT ↔ IO) and contrastive `vs` pairs that share no content token of length ≥ 4. `--mutual` then keeps A→B only when B also retains A. Both default off.

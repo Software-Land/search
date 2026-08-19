@@ -11,7 +11,14 @@ from lib.benchmark import evaluate_graph, resolve_judgments
 from lib.lexical import pairwise_lexical
 from lib.neighbors import directed_neighbors, rrf_fuse
 from lib.prepare import prepared_documents
-from lib.filters import mutual_neighbors, prefix_false_friend, title_tokens
+from lib.filters import (
+    apply_neighbor_filters,
+    apply_precision_gate,
+    contrastive_false_friend,
+    mutual_neighbors,
+    prefix_false_friend,
+    title_tokens,
+)
 
 
 DOCS = [
@@ -73,6 +80,62 @@ class BuilderTests(unittest.TestCase):
         mut = mutual_neighbors(g)
         self.assertEqual([t for t, _ in mut.get("a", [])], ["c"])
         self.assertEqual(mut.get("b"), None)
+
+    def test_contrastive_vs_pairs_need_shared_content_token(self):
+        self.assertTrue(
+            contrastive_false_friend(
+                "Symmetric vs Asymmetric Encryption",
+                "Asynchronous vs Synchronous",
+                title_tokens("Symmetric vs Asymmetric Encryption"),
+                title_tokens("Asynchronous vs Synchronous"),
+            )
+        )
+        self.assertFalse(
+            contrastive_false_friend(
+                "gRPC vs Kafka",
+                "gRPC vs REST",
+                title_tokens("gRPC vs Kafka"),
+                title_tokens("gRPC vs REST"),
+            )
+        )
+
+    def test_precision_gate_drops_prefix_and_contrastive_false_friends(self):
+        docs = {
+            "iot": {"id": "iot", "title": "What is IoT?"},
+            "io": {"id": "io", "title": "What is IO?"},
+            "edge": {"id": "edge", "title": "Edge Computing"},
+            "sym": {"id": "sym", "title": "Symmetric vs Asymmetric Encryption"},
+            "async": {"id": "async", "title": "Asynchronous vs Synchronous"},
+            "grpc": {"id": "grpc", "title": "gRPC vs Kafka"},
+            "rest": {"id": "rest", "title": "gRPC vs REST"},
+            "devops": {"id": "devops", "title": "What is DevOps?"},
+            "cicd": {"id": "cicd", "title": "CI/CD"},
+        }
+        neighbors = {
+            "iot": [("io", 0.9), ("edge", 0.4)],
+            "io": [("iot", 0.9)],
+            "sym": [("async", 0.8)],
+            "grpc": [("rest", 0.7)],
+            "devops": [("cicd", 0.5)],
+        }
+        gated = apply_precision_gate(neighbors, docs)
+        self.assertEqual([t for t, _ in gated.get("iot", [])], ["edge"])
+        self.assertIsNone(gated.get("io"))
+        self.assertIsNone(gated.get("sym"))
+        self.assertEqual([t for t, _ in gated.get("grpc", [])], ["rest"])
+        self.assertEqual([t for t, _ in gated.get("devops", [])], ["cicd"])
+
+    def test_neighbor_filters_gate_then_mutual(self):
+        docs = {
+            "a": {"id": "a", "title": "What is IoT?"},
+            "b": {"id": "b", "title": "What is IO?"},
+            "c": {"id": "c", "title": "Edge Computing"},
+        }
+        neighbors = {"a": [("b", 0.9), ("c", 0.4)], "b": [("a", 0.9)], "c": [("a", 0.4)]}
+        out = apply_neighbor_filters(neighbors, docs, precision_gate=True, mutual=True)
+        self.assertEqual([t for t, _ in out.get("a", [])], ["c"])
+        self.assertEqual([t for t, _ in out.get("c", [])], ["a"])
+        self.assertIsNone(out.get("b"))
 
 
 if __name__ == "__main__":

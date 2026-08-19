@@ -12,11 +12,11 @@ A JavaScript **runtime** that indexes documents, searches them, explains hits, a
 
 **Zero production npm dependencies.** Node 18+.
 
-Optional **offline compilers** (not required to search):
+Optional **offline compilers** (not required to search; not imported by the runtime):
 
 - `search-corpus` — lexical equivalences and synonyms from a portable `{id,title,body}` corpus
 - `search-relationships` — editorial / semantic relationship graphs
-- Python `tools/search-semantic` — optional relatedness builder in the **source repository only**, not in the npm tarball
+- Python `tools/search-semantic` — optional relatedness builder, shipped in the npm package and launched via `@software-land/search/semantic`
 
 Generated compiler candidates are review material. Only trusted compiled artifacts enter the runtime.
 
@@ -104,15 +104,27 @@ import { compileRelationships } from "@software-land/search/relationships";
 
 ## Optional semantic compiler (Python)
 
-Lives in the GitHub/source tree. **Not packed to npm.** Lexical relatedness uses the Python standard library. Embedding extras are optional:
+Shipped in the npm package. Search Core never imports it. Lexical relatedness uses the Python standard library. Embedding extras are installed into an isolated venv on first `combined` / `embedding` compile:
+
+```js
+import { compileSemantic } from "@software-land/search/semantic";
+
+const { artifact } = await compileSemantic(corpusJson, {
+  method: "embedding",
+  representation: "title_struct",
+  topK: 5,
+  minScore: 0.3,
+  precisionGate: true,
+  mutual: true,
+});
+```
 
 ```bash
-python3 -m venv tools/search-semantic/.venv
-tools/search-semantic/.venv/bin/pip install -r tools/search-semantic/requirements-embed.txt
+node tools/search-semantic/build.mjs --input corpus.json --output graph.json --method embedding --precision-gate --mutual
 python3 tools/search-semantic/build.py --input corpus.json --method lexical --output graph.json
 ```
 
-Default embedding model (when requested): `sentence-transformers/all-MiniLM-L6-v2`. Weights are downloaded into `.cache/` and are not redistributed. See `tools/search-semantic/LICENSES.md`.
+Default embedding model (when requested): `sentence-transformers/all-MiniLM-L6-v2`. Weights are downloaded into a builder cache and are not redistributed. See `tools/search-semantic/LICENSES.md`.
 
 ## Artifact flow
 
@@ -140,7 +152,7 @@ npm run typecheck
 
 v0 (`0.1.0`). The runtime facade, result shape, artifact `format`+`version`, `relationshipStrategy` values, and retriever names are intended to stabilize. Internal feature vectors, BM25 constants, and ranking modules are not public exports.
 
-Supported imports: `@software-land/search`, `@software-land/search/browser`, `@software-land/search/corpus`, `@software-land/search/relationships`.
+Supported imports: `@software-land/search`, `@software-land/search/browser`, `@software-land/search/corpus`, `@software-land/search/relationships`, `@software-land/search/semantic`. The last three are build-time compilers. Root and `./browser` do not import them.
 
 Root exports: `SearchEngine`, `english`, `dictionary`, strategy/retriever constants, artifact parsers, abort helpers, public error classes. `searchWorkerUrl()` is exported only from `./browser`.
 

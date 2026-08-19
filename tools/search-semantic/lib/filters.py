@@ -80,6 +80,23 @@ def apply_precision_gate(
     return out
 
 
+def apply_neighbor_filters(
+    neighbors: dict[str, list[tuple[str, float]]],
+    docs_by_id: dict[str, dict],
+    *,
+    precision_gate: bool,
+    mutual: bool,
+    tfidf_lookup: dict[tuple[str, str], float] | None = None,
+) -> dict[str, list[tuple[str, float]]]:
+    """Directed top-K output → optional precision gate → optional mutual filter."""
+    out = neighbors
+    if precision_gate:
+        out = apply_precision_gate(out, docs_by_id, tfidf_lookup)
+    if mutual:
+        out = mutual_neighbors(out)
+    return out
+
+
 def mutual_neighbors(neighbors: dict[str, list[tuple[str, float]]]) -> dict[str, list[tuple[str, float]]]:
     sets = {src: {t for t, _ in rows} for src, rows in neighbors.items()}
     out: dict[str, list[tuple[str, float]]] = {}

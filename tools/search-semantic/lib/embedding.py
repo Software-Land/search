@@ -68,7 +68,8 @@ def _encode(model_name: str, texts: list[str]):
         errors.append(f"sentence-transformers: {exc}")
     raise SystemExit(
         "Embedding extras are required for --method embedding|combined.\n"
-        "In an isolated venv: pip install -r tools/search-semantic/requirements-embed.txt\n"
+        "From Node: import { compileSemantic } from '@software-land/search/semantic'\n"
+        "Or in an isolated venv: pip install -r tools/search-semantic/requirements-embed.txt\n"
         + "\n".join(errors)
     )
 

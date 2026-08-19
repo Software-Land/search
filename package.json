@@ -1,6 +1,6 @@
 {
   "name": "@software-land/search",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": false,
   "description": "Deterministic, explainable document search with optional offline corpus and semantic compilation.",
   "license": "Apache-2.0",
@@ -38,6 +38,10 @@
     "./relationships": {
       "types": "./tools/search-relationships/index.d.ts",
       "import": "./tools/search-relationships/index.js"
+    },
+    "./semantic": {
+      "types": "./tools/search-semantic/index.d.ts",
+      "import": "./tools/search-semantic/index.js"
     }
   },
   "files": [
@@ -48,7 +52,8 @@
     "examples",
     "src",
     "tools/search-corpus",
-    "tools/search-relationships"
+    "tools/search-relationships",
+    "tools/search-semantic"
   ],
   "sideEffects": false,
   "engines": {
