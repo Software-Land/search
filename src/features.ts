@@ -10,33 +10,41 @@ import {
   STRONG_WITH_FULL_COVERAGE_TITLE_PREFIX_QUALITY,
   REPEATED_BODY_PHRASE_MIN,
 } from "./evidencePolicy.js";
+import type {
+  AnalyzedQuery,
+  ContextualTitlePrefix,
+  DirectClass,
+  FeatureVector,
+  IndexedDocument,
+  QueryConcept,
+  QueryToken,
+  RelationshipInfo,
+} from "./types.js";
 
 export { saturatingFrequency };
 
-/** @param {import("./types.js").AnalyzedQuery} query */
-function queryNonStop(query) {
+type ConfiguredEquivalenceMatch = false | "key-in-title" | "expansion";
+type VersionMatch = false | "dotted" | "compact-dotted" | "compact-weak" | "dotted-weak";
+
+function queryNonStop(query: AnalyzedQuery) {
   const toks = query.tokens.filter((t) => !DEFAULT_STOP.has(t.normalized) || query.tokens.length <= 2);
   return toks.length ? toks : query.tokens;
 }
 
-/** @param {import("./types.js").QueryConcept} concept @param {import("./types.js").IndexedDocument} doc */
-function conceptCoveredInTitle(concept, doc) {
+function conceptCoveredInTitle(concept: QueryConcept, doc: IndexedDocument) {
   return conceptMatchesTitle(concept, doc) != null;
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {import("./types.js").IndexedDocument} doc */
-function exactTitle(query, doc) {
+function exactTitle(query: AnalyzedQuery, doc: IndexedDocument) {
   const q = query.tokens.map((t) => t.normalized).join(" ");
   return q.length > 0 && q === doc.normalizedTitle;
 }
 
-/** @param {import("./types.js").QueryToken} t */
-function tokenLiteral(t) {
+function tokenLiteral(t: QueryToken) {
   return t.surfaceNormalized || t.surface;
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {import("./types.js").IndexedDocument} doc */
-function exactTitleTokenMatch(query, doc) {
+function exactTitleTokenMatch(query: AnalyzedQuery, doc: IndexedDocument) {
   return query.tokens.some((t) => {
     if (DEFAULT_STOP.has(t.normalized)) return false;
     return doc.titleTokenSet.has(t.normalized);
@@ -47,11 +55,8 @@ function exactTitleTokenMatch(query, doc) {
  * Typed/repaired surface (pre-lemma, pre-unique-prefix rewrite) agrees with a
  * title token: exact token, or the typed stub prefixes a title token.
  * Canonical lemmas and completedToken are not typed-surface evidence.
- *
- * @param {import("./types.js").AnalyzedQuery} query
- * @param {import("./types.js").IndexedDocument} doc
  */
-function typedSurfaceTitleMatch(query, doc) {
+function typedSurfaceTitleMatch(query: AnalyzedQuery, doc: IndexedDocument) {
   return query.tokens.some((t) => {
     const literal = tokenLiteral(t);
     if (!literal || DEFAULT_STOP.has(literal)) return false;
@@ -62,8 +67,7 @@ function typedSurfaceTitleMatch(query, doc) {
   });
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {import("./types.js").IndexedDocument} doc */
-function titlePrefixQuality(query, doc) {
+function titlePrefixQuality(query: AnalyzedQuery, doc: IndexedDocument) {
   const qToks = queryNonStop(query);
   if (!qToks.length || !doc.titleTokens.length) return 0;
   let matched = 0;
@@ -84,8 +88,7 @@ function titlePrefixQuality(query, doc) {
   return Number((0.5 * coverage + 0.3 * completeness + 0.2 * Math.min(1, tightness)).toFixed(4));
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {import("./types.js").IndexedDocument} doc */
-function queryCoverage(query, doc) {
+function queryCoverage(query: AnalyzedQuery, doc: IndexedDocument) {
   const concepts = query.concepts.filter((c) => c.kind !== "number" || query.concepts.length === 1);
   const usable = concepts.length ? concepts : query.concepts;
   if (!usable.length) return 0;
@@ -107,8 +110,7 @@ function queryCoverage(query, doc) {
   return Number((hit / usable.length).toFixed(4));
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {import("./types.js").IndexedDocument} doc */
-function titleCoverage(query, doc) {
+function titleCoverage(query: AnalyzedQuery, doc: IndexedDocument) {
   if (!doc.nonStopTitle.length) return 0;
   let hit = 0;
   for (const tok of doc.nonStopTitle) {
@@ -122,8 +124,7 @@ function titleCoverage(query, doc) {
   return Number((hit / doc.nonStopTitle.length).toFixed(4));
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {import("./types.js").IndexedDocument} doc */
-function configuredEquivalenceMatch(query, doc) {
+function configuredEquivalenceMatch(query: AnalyzedQuery, doc: IndexedDocument): ConfiguredEquivalenceMatch {
   const acr = query.concepts.find((c) => c.kind === "acronym");
   if (!acr) return false;
   if (doc.titleTokenSet.has(acr.id) || doc.titleLemmaSet.has(acr.id)) return "key-in-title";
@@ -131,8 +132,7 @@ function configuredEquivalenceMatch(query, doc) {
   return false;
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {import("./types.js").IndexedDocument} doc */
-function morphologyMatch(query, doc) {
+function morphologyMatch(query: AnalyzedQuery, doc: IndexedDocument) {
   return query.tokens.some((t) => {
     const lemma = t.lemma || t.normalized;
     if (!lemma) return false;
@@ -142,8 +142,7 @@ function morphologyMatch(query, doc) {
   });
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {import("./types.js").IndexedDocument} doc */
-function typoDistance(query, doc) {
+function typoDistance(query: AnalyzedQuery, doc: IndexedDocument) {
   let best = 0;
   for (const t of query.tokens) {
     if (t.normalized.length < 5) continue;
@@ -160,8 +159,7 @@ function typoDistance(query, doc) {
   return best;
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {import("./types.js").IndexedDocument} doc */
-function versionMatch(query, doc) {
+function versionMatch(query: AnalyzedQuery, doc: IndexedDocument): VersionMatch {
   const v = versionHit(query, doc);
   if (!v) return false;
   if (v.dottedHit && (v.companion === "covered" || v.companion === "absent")) return "dotted";
@@ -172,8 +170,7 @@ function versionMatch(query, doc) {
   return false;
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {import("./types.js").IndexedDocument} doc */
-function shortLiteralLeadMatch(query, doc) {
+function shortLiteralLeadMatch(query: AnalyzedQuery, doc: IndexedDocument) {
   const q = query.tokens.map((t) => t.normalized).join("");
   if (query.tokens.length !== 1) return false;
   const tok = query.tokens[0].normalized;
@@ -182,8 +179,7 @@ function shortLiteralLeadMatch(query, doc) {
   return doc.firstToken === tok || doc.firstToken.startsWith(tok);
 }
 
-/** @param {string[]} queryToks @param {string[]} fieldToks */
-function adjacentOn(queryToks, fieldToks) {
+function adjacentOn(queryToks: string[], fieldToks: string[]) {
   if (queryToks.length < 2 || fieldToks.length < queryToks.length) return false;
   for (let i = 0; i <= fieldToks.length - queryToks.length; i++) {
     let ok = true;
@@ -205,8 +201,7 @@ function adjacentOn(queryToks, fieldToks) {
   return false;
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {import("./types.js").IndexedDocument} doc */
-function phraseAdjacency(query, doc) {
+function phraseAdjacency(query: AnalyzedQuery, doc: IndexedDocument) {
   const qToks = queryNonStop(query).map((t) => t.normalized);
   const qLemmas = queryNonStop(query).map((t) => t.lemma || t.normalized);
   if (qToks.length < 2) return 0;
@@ -215,8 +210,7 @@ function phraseAdjacency(query, doc) {
   return 0;
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {import("./types.js").IndexedDocument} doc */
-function expansionEvidence(query, doc) {
+function expansionEvidence(query: AnalyzedQuery, doc: IndexedDocument) {
   const acr = query.concepts.find((c) => c.kind === "acronym");
   if (!acr) return 0;
   const expansion =
@@ -228,16 +222,14 @@ function expansionEvidence(query, doc) {
   return Number((hits.length / expansion.length).toFixed(4));
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query */
-function queryIsConfiguredKey(query) {
+function queryIsConfiguredKey(query: AnalyzedQuery) {
   const acr = query.concepts.find((c) => c.kind === "acronym");
   if (!acr) return false;
   if (query.tokens.length !== 1) return false;
   return query.tokens[0].normalized === acr.id;
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {import("./types.js").IndexedDocument} doc */
-function canonicalKeyTitle(query, doc) {
+function canonicalKeyTitle(query: AnalyzedQuery, doc: IndexedDocument) {
   if (!queryIsConfiguredKey(query)) return false;
   const acr = query.concepts.find((c) => c.kind === "acronym");
   if (!acr) return false;
@@ -246,8 +238,7 @@ function canonicalKeyTitle(query, doc) {
   return expansionEvidence(query, doc) >= 0.5;
 }
 
-/** @param {Partial<import("./types.js").FeatureVector>} f */
-function hasDirectTitleEvidence(f) {
+function hasDirectTitleEvidence(f: Partial<FeatureVector>) {
   if (f.exactTitleMatch || f.exactTitleTokenMatch) return true;
   if ((f.queryCoverage || 0) > 0) return true;
   if (f.configuredEquivalenceMatch) return true;
@@ -259,8 +250,7 @@ function hasDirectTitleEvidence(f) {
   return false;
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {import("./types.js").IndexedDocument} doc */
-function bodyLexicalMatch(query, doc) {
+function bodyLexicalMatch(query: AnalyzedQuery, doc: IndexedDocument) {
   let hits = 0;
   for (const c of query.concepts) {
     if (conceptMatchesBody(c, doc)) hits += 1;
@@ -269,21 +259,18 @@ function bodyLexicalMatch(query, doc) {
   return Number((hits / query.concepts.length).toFixed(4));
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query */
-function lexicalPhraseQueryTokens(query) {
+function lexicalPhraseQueryTokens(query: AnalyzedQuery) {
   if (Array.isArray(query.lexicalTokens) && query.lexicalTokens.length) return query.lexicalTokens;
   return query.tokens;
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query */
-function lexicalQueryNonStop(query) {
+function lexicalQueryNonStop(query: AnalyzedQuery) {
   const tokens = lexicalPhraseQueryTokens(query);
   const toks = tokens.filter((t) => !DEFAULT_STOP.has(t.normalized) || tokens.length <= 2);
   return toks.length ? toks : tokens;
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query */
-function phraseKeyCandidates(query) {
+function phraseKeyCandidates(query: AnalyzedQuery) {
   const source = lexicalPhraseQueryTokens(query);
   const toks = canonicalLexicalTokensFromQuery(source);
   if (!toks.length) return [];
@@ -298,12 +285,11 @@ function phraseKeyCandidates(query) {
   return keys;
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {import("./types.js").IndexedDocument} doc */
-function compiledPhraseLookup(query, doc) {
+function compiledPhraseLookup(query: AnalyzedQuery, doc: IndexedDocument) {
   const candidates = phraseKeyCandidates(query);
   const ngrams = doc.lexicalFrequency || null;
   const primary = candidates[0] || "";
-  let matchingPhraseKey = null;
+  let matchingPhraseKey: string | null = null;
   let count = 0;
   for (const key of candidates) {
     const n = key && ngrams && Number.isFinite(ngrams[key]) ? ngrams[key] : 0;
@@ -320,8 +306,7 @@ function compiledPhraseLookup(query, doc) {
   };
 }
 
-/** @param {import("./types.js").ContextualTitlePrefix | null} contextual */
-function contextualFeatureFields(contextual) {
+function contextualFeatureFields(contextual: ContextualTitlePrefix | null) {
   if (!contextual) {
     return {
       contextualTitlePrefix: false,
@@ -344,17 +329,14 @@ function contextualFeatureFields(contextual) {
   };
 }
 
-/**
- * @param {import("./types.js").AnalyzedQuery} query
- * @param {import("./types.js").IndexedDocument} doc
- * @param {{ relationship?: import("./types.js").RelationshipInfo | null, retrievalScore?: number }} [opts]
- * @returns {import("./types.js").FeatureVector}
- */
-export function extractFeatures(query, doc, { relationship = null, retrievalScore = 0 } = {}) {
+export function extractFeatures(
+  query: AnalyzedQuery,
+  doc: IndexedDocument,
+  { relationship = null, retrievalScore = 0 }: { relationship?: RelationshipInfo | null; retrievalScore?: number } = {}
+): FeatureVector {
   const phrase = compiledPhraseLookup(query, doc);
   const contextual = matchContextualTitlePrefix(query, doc);
-  /** @type {import("./types.js").FeatureVector} */
-  const base = {
+  const base: FeatureVector = {
     exactTitleMatch: exactTitle(query, doc),
     exactTitleTokenMatch: exactTitleTokenMatch(query, doc),
     typedSurfaceTitleMatch: typedSurfaceTitleMatch(query, doc),
@@ -397,8 +379,7 @@ export function extractFeatures(query, doc, { relationship = null, retrievalScor
  *   weak     — incidental title token or body-only overlap
  *   none     — no lexical evidence (typical of a pure related neighbor)
  */
-/** @param {Partial<import("./types.js").FeatureVector>} f @returns {import("./types.js").DirectClass} */
-export function classifyDirect(f) {
+export function classifyDirect(f: Partial<FeatureVector>): DirectClass {
   if (
     f.exactTitleMatch ||
     f.configuredEquivalenceMatch === "key-in-title" ||
