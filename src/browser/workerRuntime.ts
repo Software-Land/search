@@ -5,21 +5,25 @@
 
 import { MSG } from "./protocol.js";
 import { isAbortError } from "../cancel.js";
+import type { SearchEngine } from "../SearchEngine.js";
+import type { SearchEngineOptions, SearchOptions, SearchPlugin } from "../types.js";
+import type {
+  InitPayload,
+  ProtocolMessage,
+  ReplyFn,
+  WorkerRuntime,
+  WorkerRuntimeFactories,
+} from "./types.js";
 
-/**
- * @param {import("./types.js").WorkerRuntimeFactories} [factories]
- */
-export function createWorkerRuntime({ SearchEngine, english, dictionary } = {}) {
-  /** @type {import("../SearchEngine.js").SearchEngine | null} */
-  let engine = null;
-  /** @type {{ requestId?: number, abort: () => void } | null} */
-  let running = null;
+type RunningSearch = { requestId?: number; abort: () => void };
+
+export function createWorkerRuntime({ SearchEngine, english, dictionary }: WorkerRuntimeFactories = {}) {
+  let engine: SearchEngine | null = null;
+  let running: RunningSearch | null = null;
   let disposed = false;
 
-  /** @param {import("./types.js").ReplyFn} reply @param {number | undefined} requestId @param {unknown} err */
-  /** @param {import("./types.js").ReplyFn} reply @param {number | undefined} requestId @param {unknown} err */
-  function replyError(reply, requestId, err) {
-    const rec = err && typeof err === "object" ? /** @type {{ name?: string, message?: unknown }} */ (err) : {};
+  function replyError(reply: ReplyFn, requestId: number | undefined, err: unknown) {
+    const rec = err && typeof err === "object" ? (err as { name?: string; message?: unknown }) : {};
     reply({
       type: MSG.ERROR,
       requestId,
@@ -27,35 +31,31 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary } = {}) 
     });
   }
 
-  /** @param {import("./types.js").ProtocolMessage} message @param {import("./types.js").ReplyFn} reply */
-  async function handleInit(message, reply) {
+  async function handleInit(message: ProtocolMessage, reply: ReplyFn) {
     if (!SearchEngine) {
       replyError(reply, message.requestId, new Error("createWorkerRuntime requires SearchEngine"));
       return;
     }
-    const payload = /** @type {import("./types.js").InitPayload} */ (message.payload || {});
-    const plugins = [];
+    const payload = (message.payload || {}) as InitPayload;
+    const plugins: SearchPlugin[] = [];
     if (typeof english === "function") plugins.push(english(payload.englishOptions || {}));
     if (typeof dictionary === "function") {
       plugins.push(dictionary({ entries: payload.dictionaryEntries || [] }));
     }
-    engine = SearchEngine.create(
-      /** @type {import("../types.js").SearchEngineOptions} */ ({
-        schema: payload.schema,
-        plugins,
-        relationships: payload.relationships || null,
-        relationshipStrategy: payload.relationshipStrategy,
-        retriever: payload.retriever,
-        candidateLimit: payload.candidateLimit ?? undefined,
-        adaptive: payload.adaptive,
-      })
-    );
+    engine = SearchEngine.create({
+      schema: payload.schema,
+      plugins,
+      relationships: payload.relationships || null,
+      relationshipStrategy: payload.relationshipStrategy,
+      retriever: payload.retriever,
+      candidateLimit: payload.candidateLimit ?? undefined,
+      adaptive: payload.adaptive,
+    } as SearchEngineOptions);
     const indexed = await engine.index(payload.documents || []);
     reply({ type: MSG.READY, requestId: message.requestId, documentCount: indexed.documentCount });
   }
 
-  /** @param {import("./types.js").ProtocolMessage} message @param {import("./types.js").ReplyFn} reply */
-  async function handleSearch(message, reply) {
+  async function handleSearch(message: ProtocolMessage, reply: ReplyFn) {
     if (!engine) {
       replyError(reply, message.requestId, new Error("Worker engine is not initialized"));
       return;
@@ -71,7 +71,7 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary } = {}) 
         ac.abort();
       },
     };
-    const options = { ...(message.options || {}), signal: ac.signal };
+    const options = { ...(message.options || {}), signal: ac.signal } as SearchOptions;
     try {
       const detailed = await engine.searchDetailedAsync(String(message.query ?? ""), options);
       if (running && running.requestId === message.requestId) running = null;
@@ -101,8 +101,7 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary } = {}) 
     }
   }
 
-  /** @param {import("./types.js").ProtocolMessage} message */
-  function handleCancel(message) {
+  function handleCancel(message: ProtocolMessage) {
     if (running && (!message.requestId || running.requestId === message.requestId)) {
       running.abort();
     }
@@ -115,8 +114,7 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary } = {}) 
     engine = null;
   }
 
-  /** @param {import("./types.js").ProtocolMessage | null | undefined} message @param {import("./types.js").ReplyFn} reply */
-  async function dispatch(message, reply) {
+  async function dispatch(message: ProtocolMessage | null | undefined, reply: ReplyFn) {
     if (!message || disposed) return;
     switch (message.type) {
       case MSG.INIT:
@@ -150,12 +148,9 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary } = {}) 
  * In-process loopback used by tests. Models Worker message ordering:
  * inbound messages are queued as microtasks so a cancel can land between yields.
  */
-/** @param {import("./types.js").WorkerRuntime} runtime */
-export function createLoopbackTransport(runtime) {
-  /** @type {Set<(msg: import("./types.js").ProtocolMessage) => void>} */
-  const listeners = new Set();
-  /** @type {import("./types.js").ProtocolMessage[]} */
-  const inbound = [];
+export function createLoopbackTransport(runtime: WorkerRuntime) {
+  const listeners = new Set<(msg: ProtocolMessage) => void>();
+  const inbound: ProtocolMessage[] = [];
   let pumping = false;
 
   async function pump() {
@@ -163,7 +158,7 @@ export function createLoopbackTransport(runtime) {
     pumping = true;
     while (inbound.length) {
       const msg = inbound.shift();
-      await runtime.dispatch(msg, (/** @type {import("./types.js").ProtocolMessage} */ reply) => {
+      await runtime.dispatch(msg, (reply) => {
         for (const fn of listeners) fn(reply);
       });
     }
@@ -171,13 +166,13 @@ export function createLoopbackTransport(runtime) {
   }
 
   return {
-    postMessage(/** @type {import("./types.js").ProtocolMessage} */ message) {
+    postMessage(message: ProtocolMessage) {
       inbound.push(message);
       queueMicrotask(() => {
         pump();
       });
     },
-    subscribe(/** @type {(msg: import("./types.js").ProtocolMessage) => void} */ fn) {
+    subscribe(fn: (msg: ProtocolMessage) => void) {
       listeners.add(fn);
       return () => listeners.delete(fn);
     },
