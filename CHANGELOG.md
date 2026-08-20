@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.2
+
+### Fixed
+
+- Compact version companions now use the repaired typed token for typed-completeness evidence, so inferred unique-prefix completion cannot satisfy short companion queries such as `12 vuln`.
+
+### Changed
+
+- Clarified the query-token provenance contract: typed/repaired forms are distinct from canonical retrieval identity and inferred completion.
+- Documented the extension seam for future semantic retrievers: semantic query input should come from the raw or repaired typed query, not from projected lexical tokens.
+
+This patch does not change public package exports, artifact formats, Worker behavior, or the model-free runtime architecture.
+
 ## 0.2.1
 
 ### Changed
