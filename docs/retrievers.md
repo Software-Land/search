@@ -20,7 +20,12 @@ SearchEngine.create({
 
 Default threshold **1500** is a documented default, not a universal law. Settings-like and article-like corpora cross at different sizes. Benchmark unusual shapes.
 
-Must-keep union (not budgeted): `exact-title`, `configured-equivalence`, `version`. Title-token / body / prefix hits are budgeted.
+Must-keep union:
+
+- `exact-title`, `configured-equivalence`, and `version` are **unbounded** deterministic must-keep.
+- `contextual-title-prefix` is a **capped** must-keep (`prefixCap`, default 800), ranked by contextual quality then document position. Overflow is not dropped: it remains eligible for the ordinary `candidateLimit` pool, keeps `contextual-title-prefix` in `retrievalSources`, and competes by `retrievalScore` with deterministic pos tie-break.
+
+Title-token / body / other prefix hits are budgeted by `candidateLimit`.
 
 `candidateLimit` default is 200. BM25 `k1`/`b` and title boost are implementation defaults, not public knobs.
 

@@ -1,4 +1,5 @@
 import { tokenize, firstSurfaceToken, DEFAULT_STOP } from "./text.js";
+import { canonicalDocumentId } from "./documentId.js";
 import { extractVersionCompactForms, extractDottedSpans } from "./versionForms.js";
 import { InvalidDocumentError } from "./errors.js";
 
@@ -38,6 +39,34 @@ function copyRaw(doc, id, title, body) {
 }
 
 /**
+ * Canonical 0.2.0 shapes produced by attachLexicalFrequency / SearchEngine:
+ *   1. flat Record<string, number>  (preferred; attachLexicalFrequency writes this)
+ *   2. { ngrams: Record<string, number> }
+ * `ngrams` wins when it is a non-array object. Arrays are rejected.
+ * @param {unknown} raw @returns {Record<string, number> | null}
+ */
+function copyLexicalFrequency(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const rec = /** @type {Record<string, unknown>} */ (raw);
+  const nested = rec.ngrams;
+  const source =
+    nested && typeof nested === "object" && !Array.isArray(nested)
+      ? /** @type {Record<string, unknown>} */ (nested)
+      : rec;
+  /** @type {Record<string, number>} */
+  const out = Object.create(null);
+  let any = false;
+  for (const [key, value] of Object.entries(source)) {
+    if (key === "ngrams") continue;
+    const n = Number(value);
+    if (!key || !Number.isFinite(n) || n <= 0) continue;
+    out[key] = n;
+    any = true;
+  }
+  return any ? out : null;
+}
+
+/**
  * @param {unknown} doc
  * @param {import("./types.js").Schema | null | undefined} schema
  * @param {{ lemma?: (t: string) => string, index?: number | null }} [opts]
@@ -49,7 +78,7 @@ export function analyzeDocument(doc, schema, { lemma = (t) => t, index = null } 
   }
   const rec = /** @type {import("./types.js").SearchDocument} */ (doc);
   const { titleField, bodyField } = resolveSchema(schema);
-  const id = String(rec.id ?? "").trim();
+  const id = canonicalDocumentId(rec.id);
   if (!id) {
     throw new InvalidDocumentError("Each document must have a non-empty string id", { index, field: "id" });
   }
@@ -78,6 +107,7 @@ export function analyzeDocument(doc, schema, { lemma = (t) => t, index = null } 
     normalizedTitle: titleTokens.join(" "),
     versionCompactForms: extractVersionCompactForms(title),
     dottedSpans: extractDottedSpans(title),
+    lexicalFrequency: copyLexicalFrequency(rec.lexicalFrequency),
   };
 }
 
@@ -102,9 +132,14 @@ export function buildIndex(documents, schema, plugins = []) {
   }
   const docs = [...byId.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   const titleTokenSet = new Set();
+  const surfaceVocabulary = new Set();
   for (const analyzed of docs) {
-    for (const t of analyzed.titleTokens) titleTokenSet.add(t);
+    for (const t of analyzed.titleTokens) {
+      titleTokenSet.add(t);
+      surfaceVocabulary.add(t);
+    }
     for (const t of analyzed.titleLemmas) titleTokenSet.add(t);
+    for (const t of analyzed.bodyTokens) surfaceVocabulary.add(t);
   }
-  return { schema: resolveSchema(schema), documents: docs, byId, titleTokenSet };
+  return { schema: resolveSchema(schema), documents: docs, byId, titleTokenSet, surfaceVocabulary };
 }

@@ -29,6 +29,7 @@ describe("runtime isolation", () => {
     const root = path.join(__dirname, "../src");
     const banned = [
       "search-semantic",
+      "search-lexical",
       "sentence-transformers",
       "fastembed",
       "huggingface",

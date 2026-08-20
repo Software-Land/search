@@ -24,7 +24,6 @@ function versionNum(v) {
 function equivNum(v) {
   if (v === "key-in-title") return 1;
   if (v === "expansion") return 0.8;
-  if (v === "related") return 0.4;
   return 0;
 }
 

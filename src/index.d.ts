@@ -77,6 +77,16 @@ export interface SearchResult {
   explanation?: SearchExplanation;
 }
 
+export interface PrefixCompletion {
+  activePrefix: string;
+  completedToken: string | null;
+  canonicalToken: string | null;
+  completedTokens: string[];
+  canonicalTokens: string[];
+  source: "final-token-prefix";
+  ambiguous: boolean;
+}
+
 export interface SearchExplanation {
   query: {
     raw: string;
@@ -84,11 +94,27 @@ export interface SearchExplanation {
     tokens?: unknown[];
     concepts?: unknown[];
     alternatives?: unknown[];
+    prefixCompletion?: PrefixCompletion | null;
+    normalizedQueryPhrase?: string;
   };
   retrievalSources: string[];
   relevanceKind: RelevanceKind;
   directClass?: DirectClass;
   features: Record<string, unknown>;
+  lexical?: {
+    normalizedQueryPhrase: string;
+    matchingPhraseKey: string | null;
+    bodyPhraseCount: number;
+    bodyPhraseFrequency: number;
+  };
+  contextualPrefix?: {
+    matchedPrefixTokens: string[];
+    activeFinalPrefix: string | null;
+    completedTitleToken: string | null;
+    unmatchedTitleTokensAfter: number;
+    titleSequenceTightness: number;
+    contextualPrefixQuality: number;
+  };
   relationship: RelationshipInfo | null;
   constraintsVsNext?: unknown;
   constraintMeta?: unknown;

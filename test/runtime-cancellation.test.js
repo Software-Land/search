@@ -229,18 +229,20 @@ describe("query analysis repair", () => {
     const q = analyzeQuery("aplicationsecurity", { plugins });
     expect(q.raw).toBe("aplicationsecurity");
     expect(q.originalSurface).toEqual(["aplicationsecurity"]);
-    expect(q.tokens.map((t) => t.normalized)).toEqual(["application", "security"]);
     expect(q.alternatives.some((a) => a.source === "compound-spell-segmentation")).toBe(true);
-    expect(q.concepts.some((c) => c.id === "appsec")).toBe(true);
+    expect(q.alternatives.some((a) => a.tokens[0] === "application" && a.tokens[1] === "security")).toBe(true);
+    expect(q.tokens.map((t) => t.normalized)).toEqual(["application", "security"]);
+    expect(q.concepts.some((c) => c.id === "appsec" && c.kind === "acronym")).toBe(true);
+    expect(q.concepts.some((c) => c.kind === "term")).toBe(false);
   });
 
   test("mixed alphanumeric typo uses leet only on long tokens", () => {
     const q = analyzeQuery("aplication s3curity", { plugins });
-    expect(q.tokens.map((t) => t.normalized)).toEqual(["application", "security"]);
-    expect(q.tokens[0].surface).toBe("aplication");
-    expect(q.tokens[1].surface).toBe("s3curity");
+    expect(q.originalSurface).toEqual(["aplication", "s3curity"]);
     expect(q.alternatives.some((a) => a.source === "leet-decode")).toBe(true);
     expect(q.alternatives.some((a) => a.source === "typo-correction")).toBe(true);
+    expect(q.tokens.map((t) => t.normalized)).toEqual(["application", "security"]);
+    expect(q.concepts.some((c) => c.id === "appsec" && c.kind === "acronym")).toBe(true);
   });
 
   test("short literals are not treated as spelling errors", () => {
@@ -263,15 +265,22 @@ describe("query analysis repair", () => {
 
   test("http salvage from junk uses a dictionary key", () => {
     const q = analyzeQuery("asdfsafhttp", { plugins });
-    expect(q.tokens.map((t) => t.normalized)).toEqual(["http"]);
-    expect(q.concepts.some((c) => c.id === "http")).toBe(true);
+    expect(q.originalSurface).toEqual(["asdfsafhttp"]);
+    expect(q.tokens.map((t) => t.normalized)).toEqual(["hypertext", "transfer", "protocol"]);
+    expect(q.concepts.some((c) => c.id === "http" && c.provenance === "key")).toBe(true);
   });
 
   test("morphological tokens are not compound-split or over-corrected", () => {
     const intercepting = analyzeQuery("intercepting", { plugins, lexicon: ["interceptor", "testing", "interface"] });
-    expect(intercepting.tokens.map((t) => t.normalized)).toEqual(["intercepting"]);
+    expect(intercepting.tokens).toHaveLength(1);
+    expect(intercepting.tokens[0].surface).toBe("intercepting");
+    expect(intercepting.tokens[0].normalized).toBe("interceptor");
+    expect(intercepting.tokens[0].lemma).toBe("interceptor");
     const sorti = analyzeQuery("sorti", { plugins, lexicon: ["sort", "sorting"] });
-    expect(sorti.tokens.map((t) => t.normalized)).toEqual(["sorti"]);
+    expect(sorti.tokens).toHaveLength(1);
+    expect(sorti.tokens[0].surface).toBe("sorti");
+    expect(sorti.tokens[0].normalized).toBe("sort");
+    expect(sorti.tokens[0].completedToken).toBe("sorting");
   });
 
   test("common substrings do not salvage arbitrary words", () => {

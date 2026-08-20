@@ -31,6 +31,9 @@
     "tools/search-semantic/**/*.js",
     "tools/search-semantic/**/*.mjs",
     "tools/search-semantic/**/*.d.ts",
+    "tools/search-lexical/**/*.js",
+    "tools/search-lexical/**/*.mjs",
+    "tools/search-lexical/**/*.d.ts",
     "src/index.d.ts"
   ],
   "exclude": ["tools/**/.output/**"]

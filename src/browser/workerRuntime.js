@@ -35,7 +35,7 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary } = {}) 
     }
     const payload = /** @type {import("./types.js").InitPayload} */ (message.payload || {});
     const plugins = [];
-    if (typeof english === "function") plugins.push(english());
+    if (typeof english === "function") plugins.push(english(payload.englishOptions || {}));
     if (typeof dictionary === "function") {
       plugins.push(dictionary({ entries: payload.dictionaryEntries || [] }));
     }

@@ -2,7 +2,7 @@
 
 Search Core never imports these. Runtime users should not pay for them.
 
-`npm run typecheck` typechecks Core, the browser Worker/client, and the Node JS compilers (`tools/search-corpus`, `tools/search-relationships`, `tools/search-semantic/index.js`) under isolated `checkJs` projects. The Python sources under `tools/search-semantic/lib` stay outside `tsc`.
+`npm run typecheck` typechecks Core, the browser Worker/client, and the Node JS compilers (`tools/search-corpus`, `tools/search-relationships`, `tools/search-lexical`, `tools/search-semantic/index.js`) under isolated `checkJs` projects. The Python sources under `tools/search-semantic/lib` stay outside `tsc`.
 
 ## search-corpus (`tools/search-corpus`)
 
@@ -23,6 +23,10 @@ node tools/search-corpus/build.mjs review --pending --output dir
 ```
 
 Public entry: `compileCorpus` / `analyzeCorpus` from `@software-land/search/corpus`. Internal miners are not a supported app API.
+
+## search-lexical (`tools/search-lexical`)
+
+Build-time integer n-gram counts (unigrams and short phrases) from the **body field only**, in the same tokenize → lemma → stop-strip → contiguous 1–2 gram space as Search Core phrase lookup. Title and body are never concatenated, so n-grams cannot span the title/body boundary. Duplicate document ids follow SearchEngine.index (last document wins) **before** collection counts. Policy `minN`, `maxN`, and `minCollectionCount` must be finite positive integers with `maxN >= minN`. Public entry: `compileLexicalFrequency` from `@software-land/search/lexical`. The runtime never imports this tool; it consumes `document.lexicalFrequency` maps produced by `attachLexicalFrequency`.
 
 ## search-semantic (`tools/search-semantic`)
 

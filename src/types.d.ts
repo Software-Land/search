@@ -45,6 +45,8 @@ export interface DictionarySequence {
 export interface SearchPlugin {
   name?: string;
   lemma?: (token: string) => string;
+  /** Explicit lemma-table identity only; omit suffix-heuristic stems. */
+  canonicalLemma?: (token: string) => string | null;
   lexicon?: () => Iterable<string>;
   sequences?: DictionarySequence[];
   byKey?: Map<string, DictionaryEntry>;
@@ -63,9 +65,35 @@ export interface SearchPlugin {
 
 export interface QueryToken {
   surface: string;
+  /**
+   * Repaired form after repeat-collapse / leet / typo, before lemma or unique
+   * prefix rewrite. Retrieval uses `normalized`; ranking uses this for typed
+   * surface-title evidence.
+   */
+  surfaceNormalized?: string;
   normalized: string;
   lemma: string;
   sources: string[];
+  completedToken?: string;
+}
+
+export interface PrefixCompletion {
+  activePrefix: string;
+  completedToken: string | null;
+  canonicalToken: string | null;
+  completedTokens: string[];
+  canonicalTokens: string[];
+  source: "final-token-prefix";
+  ambiguous: boolean;
+}
+
+export interface ContextualTitlePrefix {
+  matchedPrefixTokens: string[];
+  activeFinalPrefix: string;
+  completedTitleToken: string;
+  unmatchedTitleTokensAfter: number;
+  titleSequenceTightness: number;
+  contextualPrefixQuality: number;
 }
 
 export interface QueryConcept {
@@ -73,6 +101,11 @@ export interface QueryConcept {
   kind: string;
   forms: string[];
   provenance: string;
+  expansion?: string[];
+  aliases?: string[][];
+  matchedExpansionTokens?: number;
+  expansionTokenCount?: number;
+  expansionCoverage?: number;
 }
 
 export interface QueryAlternative {
@@ -88,12 +121,17 @@ export interface AnalyzedQuery {
   concepts: QueryConcept[];
   alternatives: QueryAlternative[];
   dottedSpans: string[];
+  prefixCompletion?: PrefixCompletion | null;
+  lexicalTokens: QueryToken[];
+  lexicalPhraseTokens: string[];
+  lexicalPhraseKey: string;
   stopstripped: QueryToken[];
 }
 
 export interface AnalyzeOptions {
   plugins?: SearchPlugin[];
   lexicon?: Iterable<string> | Set<string>;
+  prefixLexicon?: Iterable<string> | Set<string>;
   signal?: AbortSignal;
 }
 
@@ -115,6 +153,7 @@ export interface IndexedDocument {
   normalizedTitle: string;
   versionCompactForms: string[];
   dottedSpans: string[];
+  lexicalFrequency: Record<string, number> | null;
 }
 
 export interface ResolvedSchema {
@@ -128,6 +167,7 @@ export interface SearchIndex {
   documents: IndexedDocument[];
   byId: Map<string, IndexedDocument>;
   titleTokenSet: Set<string>;
+  surfaceVocabulary: Set<string>;
 }
 
 export interface RelationshipEdge {
@@ -174,10 +214,18 @@ export interface RetrievalHit {
 export interface FeatureVector {
   exactTitleMatch: boolean;
   exactTitleTokenMatch: boolean;
+  typedSurfaceTitleMatch: boolean;
   titleCoverage: number;
   queryCoverage: number;
   titlePrefixQuality: number;
-  configuredEquivalenceMatch: false | "key-in-title" | "expansion" | "related" | string;
+  contextualTitlePrefix: boolean;
+  matchedPrefixTokens: string[];
+  activeFinalPrefix: string | null;
+  completedTitleToken: string | null;
+  unmatchedTitleTokensAfter: number;
+  titleSequenceTightness: number;
+  contextualPrefixQuality: number;
+  configuredEquivalenceMatch: false | "key-in-title" | "expansion";
   morphologyMatch: boolean;
   typoDistance: number;
   versionMatch: false | string;
@@ -187,6 +235,11 @@ export interface FeatureVector {
   titleTokenCount: number;
   expansionEvidence: number;
   canonicalKeyTitle: boolean;
+  queryTokenCount: number;
+  normalizedQueryPhrase: string;
+  matchingPhraseKey: string | null;
+  bodyPhraseCount: number;
+  bodyPhraseFrequency: number;
   relationshipStrength: number;
   relationshipType: string | null;
   relationshipSourceId: string | null;

@@ -277,7 +277,10 @@ describe("general lexical search", () => {
     ]);
     const results = engine.search("oop", { limit: 5, explain: true });
     expect(results[0].title).toBe("What is OOP (Object-Oriented Programming)?");
-    expect(results[0].features.canonicalKeyTitle).toBe(true);
+    expect(results[0].features.configuredEquivalenceMatch).toBe("key-in-title");
+    expect(results[0].features.expansionEvidence).toBeGreaterThan(
+      results.find((r) => r.id === "/oop-vs/").features.expansionEvidence
+    );
   });
 
   test("synonyms participate in query interpretation only", () => {

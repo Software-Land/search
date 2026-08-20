@@ -17,18 +17,17 @@
  */
 
 import { throwIfAborted } from "./cancel.js";
+import {
+  FULL_QUERY_COVERAGE,
+  TWO_THIRDS_QUERY_COVERAGE,
+  MODERATE_TITLE_PREFIX_QUALITY,
+  REPEATED_BODY_PHRASE_MIN,
+} from "./evidencePolicy.js";
 
 /** @param {unknown} v */
 function versionStrength(v) {
   if (v === "dotted" || v === "compact-dotted") return 2;
   if (v === "compact-weak" || v === "dotted-weak") return 1;
-  return 0;
-}
-
-/** @param {unknown} v */
-function equivalenceStrength(v) {
-  if (v === "key-in-title") return 2;
-  if (v === "expansion" || v === "related") return 1;
   return 0;
 }
 
@@ -44,22 +43,35 @@ function exactTitleConstraint(a, b) {
 
 /** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
 function coverageConstraint(a, b) {
-  const aFull = a.features.queryCoverage >= 0.999 && a.features.titlePrefixQuality >= 0.5;
-  const bFull = b.features.queryCoverage >= 0.999 && b.features.titlePrefixQuality >= 0.5;
-  const aWeak = a.features.queryCoverage > 0 && a.features.queryCoverage < 0.67 && !a.features.exactTitleMatch;
-  const bWeak = b.features.queryCoverage > 0 && b.features.queryCoverage < 0.67 && !b.features.exactTitleMatch;
+  const aFull =
+    a.features.queryCoverage >= FULL_QUERY_COVERAGE &&
+    a.features.titlePrefixQuality >= MODERATE_TITLE_PREFIX_QUALITY;
+  const bFull =
+    b.features.queryCoverage >= FULL_QUERY_COVERAGE &&
+    b.features.titlePrefixQuality >= MODERATE_TITLE_PREFIX_QUALITY;
+  const aWeak = a.features.queryCoverage > 0 && a.features.queryCoverage < TWO_THIRDS_QUERY_COVERAGE && !a.features.exactTitleMatch;
+  const bWeak = b.features.queryCoverage > 0 && b.features.queryCoverage < TWO_THIRDS_QUERY_COVERAGE && !b.features.exactTitleMatch;
   if (aFull && bWeak) return -1;
   if (bFull && aWeak) return 1;
   return 0;
 }
 
-/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
+/**
+ * Typed surface-title agreement outranks a title that only matches through
+ * the canonical lemma. Applies to single-token queries so morphological
+ * variants of a multi-token phrase keep ranking identity.
+ *
+ * @param {import("./types.js").FeaturedHit} a
+ * @param {import("./types.js").FeaturedHit} b
+ */
 function surfaceOverLemmaConstraint(a, b) {
-  if (a.features.exactTitleTokenMatch === b.features.exactTitleTokenMatch) return 0;
-  if (a.features.morphologyMatch && b.features.morphologyMatch) {
-    if (a.features.exactTitleTokenMatch && !b.features.exactTitleTokenMatch) return -1;
-    if (b.features.exactTitleTokenMatch && !a.features.exactTitleTokenMatch) return 1;
-  }
+  if ((a.features.queryTokenCount || 0) !== 1) return 0;
+  if (a.features.configuredEquivalenceMatch || b.features.configuredEquivalenceMatch) return 0;
+  const aSurf = Boolean(a.features.typedSurfaceTitleMatch);
+  const bSurf = Boolean(b.features.typedSurfaceTitleMatch);
+  if (aSurf === bSurf) return 0;
+  if (aSurf && !bSurf) return -1;
+  if (bSurf && !aSurf) return 1;
   return 0;
 }
 
@@ -92,10 +104,40 @@ function shortLiteralConstraint(a, b) {
   return 0;
 }
 
+/**
+ * Aligned title-sequence + final-token completion outranks candidates whose
+ * competing direct evidence is only weak or incidental (letter/body overlap).
+ * It does not outrank exact title, configured equivalence, full coverage, or
+ * other strong/moderate non-contextual evidence.
+ * Among two contextual hits, tighter contextualPrefixQuality wins.
+ */
+/** @param {Partial<import("./types.js").FeatureVector>} f */
+function isWeakIncidentalCompetitor(f) {
+  if (f.contextualTitlePrefix) return false;
+  if (f.exactTitleMatch) return false;
+  if (f.configuredEquivalenceMatch === "key-in-title" || f.canonicalKeyTitle) return false;
+  if (f.versionMatch === "dotted" || f.versionMatch === "compact-dotted") return false;
+  if ((f.queryCoverage || 0) >= FULL_QUERY_COVERAGE) return false;
+  if (f.directClass === "strong" || f.directClass === "moderate") return false;
+  return f.directClass === "weak" || f.directClass === "none" || isIncidentalTitleToken(f);
+}
+
+/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
+function contextualTitlePrefixConstraint(a, b) {
+  const aHit = Boolean(a.features.contextualTitlePrefix);
+  const bHit = Boolean(b.features.contextualTitlePrefix);
+  const aQ = a.features.contextualPrefixQuality || 0;
+  const bQ = b.features.contextualPrefixQuality || 0;
+  if (aHit && !bHit && isWeakIncidentalCompetitor(b.features)) return -1;
+  if (bHit && !aHit && isWeakIncidentalCompetitor(a.features)) return 1;
+  if (aHit && bHit && aQ !== bQ) return aQ > bQ ? -1 : 1;
+  return 0;
+}
+
 /** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
 function tighterTitleConstraint(a, b) {
-  const aExactish = a.features.queryCoverage >= 0.999 && a.features.titleCoverage >= 0.8;
-  const bExactish = b.features.queryCoverage >= 0.999 && b.features.titleCoverage >= 0.8;
+  const aExactish = a.features.queryCoverage >= FULL_QUERY_COVERAGE && a.features.titleCoverage >= 0.8;
+  const bExactish = b.features.queryCoverage >= FULL_QUERY_COVERAGE && b.features.titleCoverage >= 0.8;
   if (aExactish && bExactish) {
     if (a.features.titleTokenCount < b.features.titleTokenCount) return -1;
     if (b.features.titleTokenCount < a.features.titleTokenCount) return 1;
@@ -121,13 +163,13 @@ function directOverRelatedConstraint(a, b) {
     (a.features.exactTitleMatch ||
       a.features.configuredEquivalenceMatch === "key-in-title" ||
       a.features.canonicalKeyTitle ||
-      (a.features.queryCoverage || 0) >= 0.999);
+      (a.features.queryCoverage || 0) >= FULL_QUERY_COVERAGE);
   const bStrong =
     bDirect &&
     (b.features.exactTitleMatch ||
       b.features.configuredEquivalenceMatch === "key-in-title" ||
       b.features.canonicalKeyTitle ||
-      (b.features.queryCoverage || 0) >= 0.999);
+      (b.features.queryCoverage || 0) >= FULL_QUERY_COVERAGE);
   if (aDirect && !bDirect && (aStrong || (a.features.queryCoverage || 0) > 0 || a.features.exactTitleTokenMatch)) {
     return -1;
   }
@@ -170,6 +212,72 @@ function relatedOverWeakDirectConstraint(a, b) {
 }
 
 /**
+ * Multi-token queries: repeated compiled full-phrase body evidence (or a
+ * configured expansion) outranks weak/incidental direct evidence. It does not
+ * outrank strong or moderate direct evidence, exact title, configured
+ * key-in-title, canonical key title, full query/title coverage, or contextual
+ * aligned prefix. It is not a universal bodyPhraseCount comparison.
+ */
+/** @param {Partial<import("./types.js").FeatureVector>} f */
+function hasRepeatedPhraseEvidence(f) {
+  return (f.queryTokenCount || 0) >= 2 && (f.bodyPhraseCount || 0) >= REPEATED_BODY_PHRASE_MIN;
+}
+
+/** @param {Partial<import("./types.js").FeatureVector>} f */
+function hasConfiguredExpansionEvidence(f) {
+  return (
+    (f.queryTokenCount || 0) >= 2 &&
+    (f.configuredEquivalenceMatch === "expansion" || f.configuredEquivalenceMatch === "key-in-title")
+  );
+}
+
+/** @param {Partial<import("./types.js").FeatureVector>} f */
+function isIncidentalTitleToken(f) {
+  const lowCoverage = (f.queryCoverage || 0) < TWO_THIRDS_QUERY_COVERAGE;
+  const titleOverlap = Boolean(f.exactTitleTokenMatch) || (f.titlePrefixQuality || 0) > 0;
+  return (
+    titleOverlap &&
+    lowCoverage &&
+    (f.bodyPhraseCount || 0) === 0 &&
+    !f.exactTitleMatch &&
+    f.configuredEquivalenceMatch !== "key-in-title" &&
+    f.configuredEquivalenceMatch !== "expansion" &&
+    !f.contextualTitlePrefix
+  );
+}
+
+/**
+ * Repeated full-phrase body evidence (or configured expansion) outranks
+ * weak/incidental direct evidence, including incidental title-token overlap
+ * and weak body-only hits. It is not a universal ordering over every lower
+ * bodyPhraseCount.
+ *
+ * classifyDirect may label a low-coverage exact title token as moderate.
+ * That incidental overlap remains beatable. Genuine moderate evidence
+ * (coverage ≥ 2/3, contextual prefix, etc.) is not.
+ */
+/** @param {Partial<import("./types.js").FeatureVector>} f */
+function isWeakIncidentalPhraseCompetitor(f) {
+  if (hasRepeatedPhraseEvidence(f) || hasConfiguredExpansionEvidence(f)) return false;
+  if (f.exactTitleMatch || f.canonicalKeyTitle || f.configuredEquivalenceMatch === "key-in-title") return false;
+  if ((f.queryCoverage || 0) >= FULL_QUERY_COVERAGE) return false;
+  if (f.directClass === "strong") return false;
+  if (f.contextualTitlePrefix) return false;
+  if (isIncidentalTitleToken(f)) return true;
+  if (f.directClass === "moderate") return false;
+  return f.directClass === "weak" || f.directClass === "none";
+}
+
+/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
+function repeatedPhraseOverWeakDirectConstraint(a, b) {
+  const aPhrase = hasRepeatedPhraseEvidence(a.features) || hasConfiguredExpansionEvidence(a.features);
+  const bPhrase = hasRepeatedPhraseEvidence(b.features) || hasConfiguredExpansionEvidence(b.features);
+  if (aPhrase && isWeakIncidentalPhraseCompetitor(b.features)) return -1;
+  if (bPhrase && isWeakIncidentalPhraseCompetitor(a.features)) return 1;
+  return 0;
+}
+
+/**
  * When the query is a configured key, a title that also states the expansion
  * outranks a title that only contains the key (canonical vs comparison title).
  */
@@ -186,6 +294,8 @@ export const DEFAULT_CONSTRAINTS = [
   { id: "exact-title-over-non-exact", invariant: "H1", class: "absolute", fn: exactTitleConstraint },
   { id: "direct-over-related", invariant: "H1", class: "absolute", fn: directOverRelatedConstraint },
   { id: "canonical-key-expansion-over-key-only", invariant: "H2", class: "strong", fn: canonicalKeyConstraint },
+  { id: "repeated-phrase-over-weak-direct", invariant: "H8", class: "strong", fn: repeatedPhraseOverWeakDirectConstraint },
+  { id: "contextual-title-prefix-over-unaligned", invariant: "H8", class: "absolute", fn: contextualTitlePrefixConstraint },
   { id: "full-coverage-over-partial", invariant: "H8", class: "strong", fn: coverageConstraint },
   { id: "exact-surface-over-lemma-only", invariant: "H3", class: "strong", fn: surfaceOverLemmaConstraint },
   { id: "version-companion-over-weak-numeric", invariant: "H4", class: "strong", fn: versionConstraint },
@@ -200,6 +310,8 @@ export const HYBRID_CONSTRAINTS = [
   { id: "strong-moderate-direct-over-related", invariant: "H1", class: "absolute", fn: hybridDirectOverRelatedConstraint },
   { id: "related-over-weak-direct", invariant: "H1", class: "strong", fn: relatedOverWeakDirectConstraint },
   { id: "canonical-key-expansion-over-key-only", invariant: "H2", class: "strong", fn: canonicalKeyConstraint },
+  { id: "repeated-phrase-over-weak-direct", invariant: "H8", class: "strong", fn: repeatedPhraseOverWeakDirectConstraint },
+  { id: "contextual-title-prefix-over-unaligned", invariant: "H8", class: "absolute", fn: contextualTitlePrefixConstraint },
   { id: "full-coverage-over-partial", invariant: "H8", class: "strong", fn: coverageConstraint },
   { id: "exact-surface-over-lemma-only", invariant: "H3", class: "strong", fn: surfaceOverLemmaConstraint },
   { id: "version-companion-over-weak-numeric", invariant: "H4", class: "strong", fn: versionConstraint },
@@ -393,4 +505,4 @@ export function constraintCatalog() {
   return DEFAULT_CONSTRAINTS.map(({ id, invariant, class: cls }) => ({ id, invariant, class: cls }));
 }
 
-export { equivalenceStrength, versionStrength, CLASS_RANK, isStrongOrModerateDirect, isWeakDirect };
+export { versionStrength, CLASS_RANK, isStrongOrModerateDirect, isWeakDirect };

@@ -6,6 +6,9 @@
 import { levenshtein } from "./text.js";
 import { throwIfAborted } from "./cancel.js";
 
+/** Bound expensive compound repair of a user-controlled token. Same ceiling as exact segmentation. */
+export const MAX_COMPOUND_REPAIR_TOKEN_LENGTH = 64;
+
 /** @type {Record<string, string>} */
 const LEET = { 0: "o", 1: "i", 3: "e", 4: "a", 5: "s", 7: "t" };
 
@@ -55,7 +58,7 @@ function isNearSingleLexiconWord(token, lexicon) {
 
 /**
  * Split a long glued typo into lexicon words using edit distance ≤ 2 per part.
- * Exact glued compounds are handled by greedySegment; this is the typo path.
+ * Exact glued compounds are handled by segmentExactCompound; this is the typo path.
  * Skip when the token is already a single known/near-known word (morphology).
  */
 /**
@@ -67,6 +70,7 @@ export function compoundSpellSegment(token, lexicon, { signal } = {}) {
   throwIfAborted(signal);
   const t = String(token || "");
   if (t.length < 12) return null;
+  if (t.length > MAX_COMPOUND_REPAIR_TOKEN_LENGTH) return null;
   if (isNearSingleLexiconWord(t, lexicon)) return null;
   const words = lexiconWords(lexicon);
   if (!words.length) return null;
@@ -146,6 +150,7 @@ export function salvageContainedTerm(token, { lexicon, dictionaryKeys, signal } 
   throwIfAborted(signal);
   const t = String(token || "");
   if (t.length < 10) return null;
+  if (t.length > MAX_COMPOUND_REPAIR_TOKEN_LENGTH) return null;
   if (lexicon && "has" in lexicon && lexicon.has(t)) return null;
 
   const keys = [...(dictionaryKeys || [])].filter((k) => k.length >= 4).sort((a, b) => b.length - a.length);

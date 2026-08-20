@@ -34,11 +34,24 @@ function typoVocabulary(index, plugins) {
   return set;
 }
 
+/** @param {string} token @param {Set<string>} vocabulary */
+function isPrefixOfVocabulary(token, vocabulary) {
+  const t = String(token || "");
+  if (t.length < 4) return false;
+  for (const w of vocabulary) {
+    if (typeof w === "string" && w.length > t.length && w.startsWith(t)) return true;
+  }
+  return false;
+}
+
 /** @param {import("./types.js").AnalyzedQuery} query @param {Set<string>} vocabulary @param {{ signal?: AbortSignal }} [opts] */
 function attachTypoAlternatives(query, vocabulary, { signal } = {}) {
   const extra = [];
   const alternatives = [...(query.alternatives || [])];
   for (const tok of query.tokens) {
+    if (!tok) continue;
+    if (tok.completedToken || (tok.sources || []).includes("final-token-prefix")) continue;
+    if (vocabulary.has(tok.normalized) || isPrefixOfVocabulary(tok.normalized, vocabulary)) continue;
     const suggestions = suggestTypoForms(tok.normalized, vocabulary, { signal });
     for (const s of suggestions) {
       if (s.form === tok.normalized) continue;
@@ -81,6 +94,30 @@ function jsonSafe(value) {
   );
 }
 
+/** @param {import("./types.js").FeatureVector} f */
+function explainLexical(f) {
+  if ((f.queryTokenCount ?? 0) < 2 && (f.bodyPhraseCount ?? 0) <= 0) return undefined;
+  return {
+    normalizedQueryPhrase: f.normalizedQueryPhrase ?? "",
+    matchingPhraseKey: f.matchingPhraseKey ?? null,
+    bodyPhraseCount: f.bodyPhraseCount ?? 0,
+    bodyPhraseFrequency: f.bodyPhraseFrequency ?? 0,
+  };
+}
+
+/** @param {import("./types.js").FeatureVector} f */
+function explainContextualPrefix(f) {
+  if (!f.contextualTitlePrefix) return undefined;
+  return {
+    matchedPrefixTokens: f.matchedPrefixTokens ?? [],
+    activeFinalPrefix: f.activeFinalPrefix ?? null,
+    completedTitleToken: f.completedTitleToken ?? null,
+    unmatchedTitleTokensAfter: f.unmatchedTitleTokensAfter ?? 0,
+    titleSequenceTightness: f.titleSequenceTightness ?? 0,
+    contextualPrefixQuality: f.contextualPrefixQuality ?? 0,
+  };
+}
+
 /**
  * @param {import("./types.js").RankedHit} c
  * @param {import("./types.js").AnalyzedQuery} query
@@ -88,14 +125,15 @@ function jsonSafe(value) {
  * @returns {import("./types.js").SearchResultRow}
  */
 function serializeHit(c, query, explain) {
+  const f = c.features;
   /** @type {import("./types.js").SearchResultRow} */
   const row = {
     id: c.document.id,
     title: c.document.title,
     rank: c.rank,
     score: c.score,
-    relevanceKind: c.features.relevanceKind,
-    directClass: c.features.directClass,
+    relevanceKind: f.relevanceKind,
+    directClass: f.directClass,
   };
   if (c.relationship) {
     row.relationship = {
@@ -110,7 +148,7 @@ function serializeHit(c, query, explain) {
   }
   if (explain) {
     row.retrievalSources = [...(c.retrievalSources || [])];
-    row.features = { ...c.features };
+    row.features = { ...f };
     row.constraints = c.constraintVsNext?.applied || [];
     row.explanation = jsonSafe({
       query: {
@@ -119,14 +157,18 @@ function serializeHit(c, query, explain) {
         tokens: query.tokens,
         concepts: query.concepts,
         alternatives: query.alternatives || [],
+        prefixCompletion: query.prefixCompletion ?? null,
+        normalizedQueryPhrase: f.normalizedQueryPhrase ?? "",
       },
       retrievalSources: row.retrievalSources,
-      relevanceKind: c.features.relevanceKind,
-      directClass: c.features.directClass,
+      relevanceKind: f.relevanceKind,
+      directClass: f.directClass,
       features: row.features,
-      relationship: c.relationship || null,
+      lexical: explainLexical(f),
+      contextualPrefix: explainContextualPrefix(f),
+      relationship: c.relationship ?? null,
       constraintsVsNext: c.constraintVsNext,
-      constraintMeta: c.constraintMeta || null,
+      constraintMeta: c.constraintMeta ?? null,
     });
   }
   return row;
@@ -231,6 +273,7 @@ export class SearchEngine {
     let query = analyzeQuery(rawQuery, {
       plugins: this.plugins,
       lexicon: index.titleTokenSet,
+      prefixLexicon: index.surfaceVocabulary || index.titleTokenSet,
       signal,
     });
     query = attachTypoAlternatives(query, typoVocabulary(index, this.plugins), { signal });

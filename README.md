@@ -15,6 +15,7 @@ A JavaScript **runtime** that indexes documents, searches them, explains hits, a
 Optional **offline compilers** (not required to search; not imported by the runtime):
 
 - `search-corpus` — lexical equivalences and synonyms from a portable `{id,title,body}` corpus
+- `search-lexical` — integer term/phrase n-gram counts for runtime lookup
 - `search-relationships` — editorial / semantic relationship graphs
 - Python `tools/search-semantic` — optional relatedness builder, shipped in the npm package and launched via `@software-land/search/semantic`
 
@@ -90,6 +91,19 @@ const { equivalences, synonyms, dictionaryEntries } = compileCorpus({
 });
 ```
 
+## Lexical-frequency compiler
+
+Build-time n-gram counts. Search Core looks up compiled keys; it does not rescan document bodies at query time.
+
+```js
+import { compileLexicalFrequency, attachLexicalFrequency } from "@software-land/search/lexical";
+
+const artifact = compileLexicalFrequency(documents, { lemma: english().lemma });
+await engine.index(attachLexicalFrequency(documents, artifact));
+```
+
+Default policy: unigrams plus bigrams (n=1–2), keep keys whose collection occurrence count is at least 2. Phrase keys are built in the shared tokenize → lemma → stop-word removal space used by runtime query lookup (`machine learning` → `machine learn`, `foo the bar` → `foo bar`). n=2 is the smallest default that keeps adjacent-term phrase evidence without materializing every longer substring.
+
 ## Relationship compiler
 
 ```bash
@@ -150,9 +164,9 @@ npm run typecheck
 
 ## API stability
 
-v0 (`0.1.0`). The runtime facade, result shape, artifact `format`+`version`, `relationshipStrategy` values, and retriever names are intended to stabilize. Internal feature vectors, BM25 constants, and ranking modules are not public exports.
+v0. The runtime facade, result shape, artifact `format`+`version`, `relationshipStrategy` values, and retriever names are intended to stabilize. Internal feature vectors, BM25 constants, and ranking modules are not public exports.
 
-Supported imports: `@software-land/search`, `@software-land/search/browser`, `@software-land/search/corpus`, `@software-land/search/relationships`, `@software-land/search/semantic`. The last three are build-time compilers. Root and `./browser` do not import them.
+Supported imports: `@software-land/search`, `@software-land/search/browser`, `@software-land/search/corpus`, `@software-land/search/lexical`, `@software-land/search/relationships`, `@software-land/search/semantic`. The last four are build-time compilers. Root and `./browser` do not import them.
 
 Root exports: `SearchEngine`, `english`, `dictionary`, strategy/retriever constants, artifact parsers, abort helpers, public error classes. `searchWorkerUrl()` is exported only from `./browser`.
 

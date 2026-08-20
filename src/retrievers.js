@@ -8,14 +8,16 @@
  * generator (BM25 orders the budgeted set). It is not the ranker.
  */
 
-import { retrieveCandidates, retrieveCandidatesAsync } from "./retrieve.js";
+import { retrieveCandidates, retrieveCandidatesAsync, matchContextualTitlePrefix } from "./retrieve.js";
 import { allowPrefixMatch } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
 import { throwIfAborted } from "./cancel.js";
 
-// High-precision sources bypass the BM25 budget. Title-token hits are
-// retrieved but budgeted: keeping all of them made article-like p95 rank N docs.
-const MUST_KEEP = new Set(["exact-title", "configured-equivalence", "version"]);
+// Exact-title, configured-equivalence, and version bypass the BM25 budget
+// without a cap. Contextual title-prefix is a capped must-keep: overflow
+// stays eligible for the ordinary candidateLimit pool.
+const UNBOUNDED_MUST_KEEP = new Set(["exact-title", "configured-equivalence", "version"]);
+const CONTEXTUAL_MUST_KEEP_SOURCE = "contextual-title-prefix";
 const K1 = 1.2;
 const B = 0.75;
 const TITLE_BOOST = 4;
@@ -363,15 +365,57 @@ export function createIndexedLexicalRetriever({
       if (posts) for (const pos of posts) addHit(byPos, pos, "version", 12);
     }
 
+    const qToks = query.tokens || [];
+    /** @type {Map<number, number>} */
+    const contextualQuality = new Map();
+    if (qToks.length >= 2) {
+      const first = qToks[0];
+      const keys = [...new Set([first?.normalized, first?.lemma].filter(Boolean))];
+      /** @type {Set<number>} */
+      const contextualPos = new Set();
+      for (const key of keys) {
+        for (const map of [state.titlePostings, state.titleLemmaPostings]) {
+          const posting = map.get(key);
+          if (!posting) continue;
+          for (const pos of posting.docs) contextualPos.add(pos);
+        }
+      }
+      const positions = [...contextualPos].sort((a, b) => a - b);
+      for (let i = 0; i < positions.length; i++) {
+        if ((i & 7) === 0) throwIfAborted(signal);
+        const pos = positions[i];
+        const doc = docs[pos];
+        if (!doc) continue;
+        const hit = matchContextualTitlePrefix(query, doc);
+        if (!hit) continue;
+        addHit(byPos, pos, "contextual-title-prefix", 10);
+        contextualQuality.set(pos, hit.contextualPrefixQuality);
+      }
+    }
+
     const hits = [...byPos.values()];
-    const must = [];
+    const unboundedMust = [];
+    const contextualMust = [];
     const rest = [];
     for (const h of hits) {
-      const keep = unionDeterministic && h.retrievalSources.some((s) => MUST_KEEP.has(s));
-      if (keep) must.push(h);
+      const keepUnbounded = unionDeterministic && h.retrievalSources.some((s) => UNBOUNDED_MUST_KEEP.has(s));
+      const keepContextual =
+        unionDeterministic && h.retrievalSources.includes(CONTEXTUAL_MUST_KEEP_SOURCE);
+      if (keepUnbounded) unboundedMust.push(h);
+      else if (keepContextual) contextualMust.push(h);
       else rest.push(h);
     }
+    contextualMust.sort((a, b) => {
+      const qa = contextualQuality.get(a.pos) || 0;
+      const qb = contextualQuality.get(b.pos) || 0;
+      if (qb !== qa) return qb - qa;
+      return a.pos - b.pos;
+    });
+    const contextualKept = contextualMust.slice(0, prefixCap);
+    const contextualOverflow = contextualMust.slice(prefixCap);
+    for (const h of contextualOverflow) rest.push(h);
     rest.sort((a, b) => b.retrievalScore - a.retrievalScore || a.pos - b.pos);
+    const must = unionDeterministic ? [...unboundedMust, ...contextualKept] : [];
     const chosen = unionDeterministic ? [...must, ...rest.slice(0, k)] : rest.slice(0, k);
     chosen.sort((a, b) => a.pos - b.pos);
     return chosen.map((h) => ({
@@ -454,4 +498,4 @@ export function resolveRetriever(spec) {
   return createFullScanRetriever();
 }
 
-export { MUST_KEEP, queryForms };
+export { UNBOUNDED_MUST_KEEP, CONTEXTUAL_MUST_KEEP_SOURCE, queryForms };

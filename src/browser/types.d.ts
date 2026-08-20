@@ -22,6 +22,7 @@ export interface InitPayload {
   retriever?: import("../index.js").SearchEngineOptions["retriever"];
   candidateLimit?: number | null;
   adaptive?: import("../index.js").AdaptiveOptions;
+  englishOptions?: { lemmas?: Record<string, string> };
 }
 
 export interface ProtocolMessage {

@@ -17,6 +17,9 @@ __pycache__/
 .env.*
 !.env.example
 
+# npm pack outputs (review artifacts, not source)
+software-land-search-*.tgz
+
 # Editor
 .vscode/
 .idea/
