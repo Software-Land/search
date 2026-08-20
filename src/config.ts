@@ -5,6 +5,17 @@
 
 import { InvalidConfigurationError, IndexStateError } from "./errors.js";
 import { createFullScanRetriever, createIndexedLexicalRetriever, createAdaptiveRetriever } from "./retrievers.js";
+import type {
+  AdaptiveOptions,
+  RelationshipArtifact,
+  RelationshipGraphApi,
+  RelationshipStrategy,
+  Retriever,
+  Schema,
+  SearchEngineOptions,
+  SearchIndex,
+  SearchPlugin,
+} from "./types.js";
 
 export const RELATIONSHIP_STRATEGIES = Object.freeze(["none", "mixed", "hybrid", "separate"]);
 export const DEFAULT_RELATIONSHIP_STRATEGY = "hybrid";
@@ -27,22 +38,23 @@ const CREATE_KEYS = new Set([
 
 const FORBIDDEN_SCHEMA_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 
-/**
- * @overload
- * @param {unknown} value
- * @param {{ field?: string, optional?: false }} [opts]
- * @returns {import("./types.js").RelationshipStrategy}
- *
- * @overload
- * @param {unknown} value
- * @param {{ field?: string, optional: true }} opts
- * @returns {import("./types.js").RelationshipStrategy | null}
- *
- * @param {unknown} value
- * @param {{ field?: string, optional?: boolean }} [opts]
- * @returns {import("./types.js").RelationshipStrategy | null}
- */
-export function requireStrategy(value, { field = "relationshipStrategy", optional = false } = {}) {
+interface CreatedConfig {
+  schema: Schema;
+  plugins: SearchPlugin[];
+  relationships: RelationshipArtifact | RelationshipGraphApi | null;
+  relationshipStrategy: RelationshipStrategy;
+  retriever: Retriever;
+  candidateLimit: number | null;
+  adaptive: AdaptiveOptions;
+  retrievalScoreWeight: number;
+}
+
+export function requireStrategy(value: unknown, opts?: { field?: string; optional?: false }): RelationshipStrategy;
+export function requireStrategy(value: unknown, opts: { field?: string; optional: true }): RelationshipStrategy | null;
+export function requireStrategy(
+  value: unknown,
+  { field = "relationshipStrategy", optional = false }: { field?: string; optional?: boolean } = {}
+): RelationshipStrategy | null {
   if (value == null || value === "") {
     if (optional) return null;
     throw new InvalidConfigurationError(`${field} is required`, {
@@ -50,25 +62,23 @@ export function requireStrategy(value, { field = "relationshipStrategy", optiona
       expected: RELATIONSHIP_STRATEGIES.join(" | "),
     });
   }
-  const allowed = /** @type {readonly string[]} */ (RELATIONSHIP_STRATEGIES);
+  const allowed: readonly string[] = RELATIONSHIP_STRATEGIES;
   if (typeof value !== "string" || !allowed.includes(value)) {
     throw new InvalidConfigurationError(`${field} must be one of ${RELATIONSHIP_STRATEGIES.join(" | ")} (got ${JSON.stringify(value)})`, {
       field,
       expected: RELATIONSHIP_STRATEGIES.join(" | "),
     });
   }
-  return /** @type {import("./types.js").RelationshipStrategy} */ (value);
+  return value as RelationshipStrategy;
 }
 
-/** @param {unknown} value @param {string} field */
-function assertPlainObject(value, field) {
+function assertPlainObject(value: unknown, field: string): asserts value is Record<string, unknown> {
   if (value == null || typeof value !== "object" || Array.isArray(value)) {
     throw new InvalidConfigurationError(`${field} must be a plain object`, { field, expected: "object" });
   }
 }
 
-/** @param {unknown} [schema] @returns {import("./types.js").Schema} */
-export function validateSchema(schema) {
+export function validateSchema(schema?: unknown): Schema {
   if (schema == null) {
     return {
       title: { type: "text", role: "title" },
@@ -76,9 +86,8 @@ export function validateSchema(schema) {
     };
   }
   assertPlainObject(schema, "schema");
-  const fields = /** @type {Record<string, { type?: unknown, role?: unknown } | null | undefined>} */ (schema);
-  const textFields = [];
-  for (const [name, spec] of Object.entries(fields)) {
+  const textFields: string[] = [];
+  for (const [name, spec] of Object.entries(schema)) {
     if (FORBIDDEN_SCHEMA_KEYS.has(name)) {
       throw new InvalidConfigurationError(`schema field name ${JSON.stringify(name)} is not allowed`, { field: "schema" });
     }
@@ -104,15 +113,13 @@ export function validateSchema(schema) {
       expected: '{ title: { type: "text", role: "title" }, body: { type: "text", role: "body" } }',
     });
   }
-  return /** @type {import("./types.js").Schema} */ (schema);
+  return schema as Schema;
 }
 
-/** @param {unknown} [adaptive] @returns {import("./types.js").AdaptiveOptions} */
-function validateAdaptive(adaptive) {
+function validateAdaptive(adaptive?: unknown): AdaptiveOptions {
   if (adaptive == null) return { documentThreshold: DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD };
   assertPlainObject(adaptive, "adaptive");
-  const rec = /** @type {Record<string, unknown>} */ (adaptive);
-  for (const key of Object.keys(rec)) {
+  for (const key of Object.keys(adaptive)) {
     if (key !== "documentThreshold") {
       throw new InvalidConfigurationError(`Unknown adaptive option "${key}"`, {
         field: `adaptive.${key}`,
@@ -120,7 +127,7 @@ function validateAdaptive(adaptive) {
       });
     }
   }
-  const raw = rec.documentThreshold;
+  const raw = adaptive.documentThreshold;
   if (raw == null) return { documentThreshold: DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD };
   const n = Number(raw);
   if (!Number.isInteger(n) || n < 1) {
@@ -132,8 +139,7 @@ function validateAdaptive(adaptive) {
   return { documentThreshold: n };
 }
 
-/** @param {unknown} [value] @param {string} [field] @returns {number | null} */
-function validateCandidateLimit(value, field = "candidateLimit") {
+function validateCandidateLimit(value?: unknown, field = "candidateLimit"): number | null {
   if (value == null) return null;
   const n = Number(value);
   if (!Number.isInteger(n) || n < 1) {
@@ -144,27 +150,25 @@ function validateCandidateLimit(value, field = "candidateLimit") {
 
 /**
  * Built-in retrievers by public name. Custom { retrieve } objects are experimental.
- * @param {unknown} [spec]
- * @param {{ candidateLimit?: number | null, adaptive?: import("./types.js").AdaptiveOptions | null }} [opts]
- * @returns {import("./types.js").Retriever}
  */
-export function resolvePublicRetriever(spec, { candidateLimit, adaptive } = {}) {
+export function resolvePublicRetriever(
+  spec?: unknown,
+  { candidateLimit, adaptive }: { candidateLimit?: number | null; adaptive?: AdaptiveOptions | null } = {}
+): Retriever {
   const limit = candidateLimit || DEFAULT_CANDIDATE_LIMIT;
   const threshold = adaptive?.documentThreshold || DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD;
   if (spec == null || spec === "full-scan") return createFullScanRetriever();
   if (typeof spec === "object" && spec && "retrieve" in spec && typeof spec.retrieve === "function") {
-    return /** @type {import("./types.js").Retriever} */ (spec);
+    return spec as Retriever;
   }
   if (spec === "indexed" || spec === "indexed-lexical") {
     return createIndexedLexicalRetriever({ candidateLimit: limit });
   }
   if (spec === "adaptive") {
-    return createAdaptiveRetriever(
-      /** @type {import("./types.js").AdaptiveRetrieverOptions} */ ({
-        documentThreshold: threshold,
-        indexedOptions: { candidateLimit: limit },
-      })
-    );
+    return createAdaptiveRetriever({
+      documentThreshold: threshold,
+      indexedOptions: { candidateLimit: limit },
+    });
   }
   throw new InvalidConfigurationError(
     `retriever must be one of ${RETRIEVER_NAMES.join(" | ")} (got ${JSON.stringify(spec)})`,
@@ -172,27 +176,14 @@ export function resolvePublicRetriever(spec, { candidateLimit, adaptive } = {}) 
   );
 }
 
-/**
- * @param {unknown} [options]
- * @returns {{
- *   schema: import("./types.js").Schema,
- *   plugins: import("./types.js").SearchPlugin[],
- *   relationships: import("./types.js").RelationshipArtifact | import("./types.js").RelationshipGraphApi | null,
- *   relationshipStrategy: import("./types.js").RelationshipStrategy,
- *   retriever: import("./types.js").Retriever,
- *   candidateLimit: number | null,
- *   adaptive: import("./types.js").AdaptiveOptions,
- *   retrievalScoreWeight: number,
- * }}
- */
-export function validateCreateOptions(options = {}) {
+export function validateCreateOptions(options: unknown = {}): CreatedConfig {
   if (options == null || typeof options !== "object" || Array.isArray(options)) {
     throw new InvalidConfigurationError("SearchEngine.create() options must be a plain object", {
       field: "options",
       expected: "object",
     });
   }
-  const opts = /** @type {import("./types.js").SearchEngineOptions & Record<string, unknown>} */ (options);
+  const opts = options as SearchEngineOptions & Record<string, unknown>;
   for (const key of Object.keys(opts)) {
     if (!CREATE_KEYS.has(key)) {
       throw new InvalidConfigurationError(`Unknown SearchEngine.create() option "${key}"`, {
@@ -225,7 +216,7 @@ export function validateCreateOptions(options = {}) {
   const retriever = resolvePublicRetriever(opts.retriever, { candidateLimit, adaptive });
   return {
     schema,
-    plugins: Array.isArray(opts.plugins) ? opts.plugins.filter((p) => p != null) : [],
+    plugins: Array.isArray(opts.plugins) ? opts.plugins.filter((p): p is SearchPlugin => p != null) : [],
     relationships: opts.relationships == null ? null : opts.relationships,
     relationshipStrategy,
     retriever,
@@ -235,11 +226,7 @@ export function validateCreateOptions(options = {}) {
   };
 }
 
-/**
- * @param {{ _index?: import("./types.js").SearchIndex | null } | null | undefined} engine
- * @returns {import("./types.js").SearchIndex}
- */
-export function requireIndexed(engine) {
+export function requireIndexed(engine: { _index?: SearchIndex | null } | null | undefined): SearchIndex {
   if (!engine || !engine._index) {
     throw new IndexStateError("SearchEngine.search requires index() first");
   }
