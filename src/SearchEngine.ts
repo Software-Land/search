@@ -18,11 +18,48 @@ import {
   requireIndexed,
 } from "./config.js";
 import { InvalidDocumentError } from "./errors.js";
+import type {
+  AdaptiveOptions,
+  AnalyzedQuery,
+  FeaturedHit,
+  FeatureVector,
+  FinishTimings,
+  QueryAlternative,
+  QueryConcept,
+  RankedHit,
+  RelationshipArtifact,
+  RelationshipGraphApi,
+  RetrievalHit,
+  RetrieveOptions,
+  Schema,
+  SearchDocument,
+  SearchEngineOptions,
+  SearchIndex,
+  SearchOptions,
+  SearchPlugin,
+  SearchResultRow,
+  SourcePolicy,
+} from "./types.js";
 
 export { RELATIONSHIP_STRATEGIES, DEFAULT_RELATIONSHIP_STRATEGY };
 
-/** @param {import("./types.js").SearchIndex} index @param {import("./types.js").SearchPlugin[]} plugins */
-function typoVocabulary(index, plugins) {
+type TypoCompanionConcept = QueryConcept & {
+  distance: number;
+};
+
+type RuntimeRetriever = {
+  name?: string;
+  retrieve: (query: AnalyzedQuery, index: SearchIndex, options?: RetrieveOptions) => RetrievalHit[];
+  retrieveAsync?: (
+    query: AnalyzedQuery,
+    index: SearchIndex,
+    options?: RetrieveOptions
+  ) => Promise<RetrievalHit[]>;
+  prepare?: (index: SearchIndex, extra?: { schema?: Schema }) => void;
+  stats?: () => Record<string, unknown>;
+};
+
+function typoVocabulary(index: SearchIndex, plugins: SearchPlugin[]) {
   const set = new Set(index.titleTokenSet || []);
   for (const plugin of plugins) {
     if (typeof plugin.lexicon === "function") {
@@ -34,8 +71,7 @@ function typoVocabulary(index, plugins) {
   return set;
 }
 
-/** @param {string} token @param {Set<string>} vocabulary */
-function isPrefixOfVocabulary(token, vocabulary) {
+function isPrefixOfVocabulary(token: string, vocabulary: Set<string>) {
   const t = String(token || "");
   if (t.length < 4) return false;
   for (const w of vocabulary) {
@@ -44,10 +80,9 @@ function isPrefixOfVocabulary(token, vocabulary) {
   return false;
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {Set<string>} vocabulary @param {{ signal?: AbortSignal }} [opts] */
-function attachTypoAlternatives(query, vocabulary, { signal } = {}) {
-  const extra = [];
-  const alternatives = [...(query.alternatives || [])];
+function attachTypoAlternatives(query: AnalyzedQuery, vocabulary: Set<string>, { signal }: { signal?: AbortSignal } = {}) {
+  const extra: TypoCompanionConcept[] = [];
+  const alternatives: QueryAlternative[] = [...(query.alternatives || [])];
   for (const tok of query.tokens) {
     if (!tok) continue;
     if (tok.completedToken || (tok.sources || []).includes("final-token-prefix")) continue;
@@ -73,8 +108,9 @@ function attachTypoAlternatives(query, vocabulary, { signal } = {}) {
   return { ...query, concepts: [...query.concepts, ...extra], alternatives };
 }
 
-/** @param {import("./types.js").RelationshipArtifact | import("./types.js").RelationshipGraphApi | null | undefined} relationships @returns {import("./types.js").RelationshipGraphApi} */
-function resolveGraph(relationships) {
+function resolveGraph(
+  relationships: RelationshipArtifact | RelationshipGraphApi | null | undefined
+): RelationshipGraphApi {
   if (!relationships) return RelationshipGraph(null);
   if (typeof relationships === "object" && "neighbors" in relationships && typeof relationships.neighbors === "function") {
     return relationships;
@@ -82,8 +118,7 @@ function resolveGraph(relationships) {
   return RelationshipGraph(relationships);
 }
 
-/** @param {unknown} value */
-function jsonSafe(value) {
+function jsonSafe(value: unknown): unknown {
   return JSON.parse(
     JSON.stringify(value, (_key, v) => {
       if (v instanceof Map) return Object.fromEntries(v);
@@ -94,8 +129,7 @@ function jsonSafe(value) {
   );
 }
 
-/** @param {import("./types.js").FeatureVector} f */
-function explainLexical(f) {
+function explainLexical(f: FeatureVector) {
   if ((f.queryTokenCount ?? 0) < 2 && (f.bodyPhraseCount ?? 0) <= 0) return undefined;
   return {
     normalizedQueryPhrase: f.normalizedQueryPhrase ?? "",
@@ -105,8 +139,7 @@ function explainLexical(f) {
   };
 }
 
-/** @param {import("./types.js").FeatureVector} f */
-function explainContextualPrefix(f) {
+function explainContextualPrefix(f: FeatureVector) {
   if (!f.contextualTitlePrefix) return undefined;
   return {
     matchedPrefixTokens: f.matchedPrefixTokens ?? [],
@@ -118,16 +151,9 @@ function explainContextualPrefix(f) {
   };
 }
 
-/**
- * @param {import("./types.js").RankedHit} c
- * @param {import("./types.js").AnalyzedQuery} query
- * @param {boolean} [explain]
- * @returns {import("./types.js").SearchResultRow}
- */
-function serializeHit(c, query, explain) {
+function serializeHit(c: RankedHit, query: AnalyzedQuery, explain?: boolean): SearchResultRow {
   const f = c.features;
-  /** @type {import("./types.js").SearchResultRow} */
-  const row = {
+  const row: SearchResultRow = {
     id: c.document.id,
     title: c.document.title,
     rank: c.rank,
@@ -174,12 +200,7 @@ function serializeHit(c, query, explain) {
   return row;
 }
 
-/**
- * @param {import("./types.js").RankedHit[]} ranked
- * @param {string} strategy
- * @param {{ limit: number, relatedLimit: number }} opts
- */
-function sliceResults(ranked, strategy, { limit, relatedLimit }) {
+function sliceResults(ranked: RankedHit[], strategy: string, { limit, relatedLimit }: { limit: number; relatedLimit: number }) {
   const relatedRanked = ranked.filter((c) => c.features.relevanceKind === "related");
   const directRanked = ranked.filter((c) => c.features.relevanceKind !== "related");
   const primaryPool = strategy === "separate" || strategy === "none" ? directRanked : ranked;
@@ -192,39 +213,38 @@ function sliceResults(ranked, strategy, { limit, relatedLimit }) {
 }
 
 export class SearchEngine {
-  /**
-   * @param {import("./types.js").SearchEngineOptions} [options]
-   */
-  constructor(options = {}) {
+  declare schema: Schema;
+  declare plugins: SearchPlugin[];
+  declare relationships: RelationshipGraphApi;
+  declare relationshipStrategy: string;
+  declare retriever: RuntimeRetriever;
+  declare candidateLimit: number | null;
+  declare adaptive: AdaptiveOptions;
+  declare retrievalScoreWeight: number;
+  declare _index: SearchIndex | null;
+  declare indexBuildMs: number;
+  declare lastSearchMeta: Record<string, unknown> | null;
+
+  constructor(options: SearchEngineOptions = {}) {
     const cfg = validateCreateOptions(options);
-    /** @type {import("./types.js").Schema} */
     this.schema = cfg.schema;
-    /** @type {import("./types.js").SearchPlugin[]} */
     this.plugins = cfg.plugins;
     this.relationships = resolveGraph(cfg.relationships);
     this.relationshipStrategy = cfg.relationshipStrategy;
-    /** @type {import("./types.js").Retriever} */
     this.retriever = cfg.retriever;
-    /** @type {number | null} */
     this.candidateLimit = cfg.candidateLimit;
-    /** @type {import("./types.js").AdaptiveOptions} */
     this.adaptive = cfg.adaptive;
-    /** @type {number} */
     this.retrievalScoreWeight = cfg.retrievalScoreWeight;
-    /** @type {import("./types.js").SearchIndex | null} */
     this._index = null;
     this.indexBuildMs = 0;
-    /** @type {Record<string, unknown> | null} */
     this.lastSearchMeta = null;
   }
 
-  /** @param {import("./types.js").SearchEngineOptions} [options] */
-  static create(options) {
+  static create(options?: SearchEngineOptions) {
     return new SearchEngine(options);
   }
 
-  /** @param {import("./types.js").SearchDocument[] | null | undefined} documents */
-  async index(documents) {
+  async index(documents: SearchDocument[] | null | undefined) {
     if (documents != null && !Array.isArray(documents)) {
       throw new InvalidDocumentError("index(documents) requires an array", { field: "documents" });
     }
@@ -240,8 +260,7 @@ export class SearchEngine {
   /**
    * Default OSS API: returns an array. Same ranking as searchDetailed().results.
    */
-  /** @param {unknown} rawQuery @param {import("./types.js").SearchOptions} [opts] */
-  search(rawQuery, opts = {}) {
+  search(rawQuery: unknown, opts: SearchOptions = {}) {
     return this.searchDetailed(rawQuery, opts).results;
   }
 
@@ -249,25 +268,20 @@ export class SearchEngine {
    * Richer API for UIs and debugging. `results` uses the same strategy as search().
    * `related` is always the relationship-derived channel (empty when strategy is none
    * or no graph is configured).
-   * @param {unknown} rawQuery
-   * @param {import("./types.js").SearchOptions} [opts]
    */
-  searchDetailed(rawQuery, opts = {}) {
+  searchDetailed(rawQuery: unknown, opts: SearchOptions = {}) {
     return this._searchDetailedSync(rawQuery, opts);
   }
 
-  /** @param {unknown} rawQuery @param {import("./types.js").SearchOptions} [opts] */
-  async searchAsync(rawQuery, opts = {}) {
+  async searchAsync(rawQuery: unknown, opts: SearchOptions = {}) {
     return (await this.searchDetailedAsync(rawQuery, opts)).results;
   }
 
-  /** @param {unknown} rawQuery @param {import("./types.js").SearchOptions} [opts] */
-  async searchDetailedAsync(rawQuery, opts = {}) {
+  async searchDetailedAsync(rawQuery: unknown, opts: SearchOptions = {}) {
     return this._searchDetailedAsync(rawQuery, opts);
   }
 
-  /** @param {unknown} rawQuery @param {{ signal?: AbortSignal }} [opts] */
-  _prepareQuery(rawQuery, { signal } = {}) {
+  _prepareQuery(rawQuery: unknown, { signal }: { signal?: AbortSignal } = {}) {
     throwIfAborted(signal);
     const index = requireIndexed(this);
     let query = analyzeQuery(rawQuery, {
@@ -280,24 +294,21 @@ export class SearchEngine {
     return query;
   }
 
-  /**
-   * @param {import("./types.js").RetrievalHit[]} retrieved
-   * @param {import("./types.js").AnalyzedQuery} query
-   * @param {string} strategy
-   * @param {{ signal?: AbortSignal, sourcePolicy?: import("./types.js").SourcePolicy }} [opts]
-   */
-  _expandAndFeature(retrieved, query, strategy, { signal, sourcePolicy } = {}) {
+  _expandAndFeature(
+    retrieved: RetrievalHit[],
+    query: AnalyzedQuery,
+    strategy: string,
+    { signal, sourcePolicy }: { signal?: AbortSignal; sourcePolicy?: SourcePolicy } = {}
+  ) {
     throwIfAborted(signal);
     const weight = this.retrievalScoreWeight;
     let maxRet = 0;
     if (weight) {
       for (const hit of retrieved) maxRet = Math.max(maxRet, hit.retrievalScore || 0);
     }
-    /** @param {import("./types.js").RetrievalHit} hit */
-    const retrievalScoreOf = (hit) => (weight && maxRet ? weight * ((hit.retrievalScore || 0) / maxRet) : 0);
+    const retrievalScoreOf = (hit: RetrievalHit) => (weight && maxRet ? weight * ((hit.retrievalScore || 0) / maxRet) : 0);
     const tFeat = performance.now();
-    /** @type {import("./types.js").FeaturedHit[]} */
-    let featured = retrieved.map((hit, i) => {
+    let featured: FeaturedHit[] = retrieved.map((hit, i) => {
       if (i % 8 === 0) throwIfAborted(signal);
       return {
         ...hit,
@@ -340,14 +351,7 @@ export class SearchEngine {
     return { featured, applied, featureMs, relationshipMs };
   }
 
-  /**
-   * @param {import("./types.js").RankedHit[]} ranked
-   * @param {import("./types.js").AnalyzedQuery} query
-   * @param {boolean} explain
-   * @param {string} strategy
-   * @param {import("./types.js").FinishTimings} timings
-   */
-  _finish(ranked, query, explain, strategy, timings) {
+  _finish(ranked: RankedHit[], query: AnalyzedQuery, explain: boolean, strategy: string, timings: FinishTimings) {
     const { sliced, relatedSliced, relatedRanked } = sliceResults(ranked, strategy, {
       limit: timings.limit,
       relatedLimit: timings.relatedLimit,
@@ -382,8 +386,7 @@ export class SearchEngine {
     return { results, related, meta };
   }
 
-  /** @param {unknown} rawQuery @param {import("./types.js").SearchOptions} [opts] */
-  _searchDetailedSync(rawQuery, opts = {}) {
+  _searchDetailedSync(rawQuery: unknown, opts: SearchOptions = {}) {
     const {
       limit = 10,
       explain = false,
@@ -433,8 +436,7 @@ export class SearchEngine {
     });
   }
 
-  /** @param {unknown} rawQuery @param {import("./types.js").SearchOptions} [opts] */
-  async _searchDetailedAsync(rawQuery, opts = {}) {
+  async _searchDetailedAsync(rawQuery: unknown, opts: SearchOptions = {}) {
     const {
       limit = 10,
       explain = false,
