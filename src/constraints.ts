@@ -23,26 +23,32 @@ import {
   MODERATE_TITLE_PREFIX_QUALITY,
   REPEATED_BODY_PHRASE_MIN,
 } from "./evidencePolicy.js";
+import type {
+  ConstraintCompareResult,
+  ConstraintDef,
+  ConstraintGraph,
+  FeaturedHit,
+  FeatureVector,
+  RelationshipStrategy,
+} from "./types.js";
 
-/** @param {unknown} v */
-function versionStrength(v) {
+type AppliedRow = { id: string; invariant: string; class: string; result: string };
+
+function versionStrength(v: unknown) {
   if (v === "dotted" || v === "compact-dotted") return 2;
   if (v === "compact-weak" || v === "dotted-weak") return 1;
   return 0;
 }
 
-/** @type {Record<string, number>} */
-const CLASS_RANK = { absolute: 3, strong: 2, soft: 1 };
+const CLASS_RANK: Record<string, number> = { absolute: 3, strong: 2, soft: 1 };
 
-/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
-function exactTitleConstraint(a, b) {
+function exactTitleConstraint(a: FeaturedHit, b: FeaturedHit) {
   if (a.features.exactTitleMatch && !b.features.exactTitleMatch) return -1;
   if (b.features.exactTitleMatch && !a.features.exactTitleMatch) return 1;
   return 0;
 }
 
-/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
-function coverageConstraint(a, b) {
+function coverageConstraint(a: FeaturedHit, b: FeaturedHit) {
   const aFull =
     a.features.queryCoverage >= FULL_QUERY_COVERAGE &&
     a.features.titlePrefixQuality >= MODERATE_TITLE_PREFIX_QUALITY;
@@ -60,11 +66,8 @@ function coverageConstraint(a, b) {
  * Typed surface-title agreement outranks a title that only matches through
  * the canonical lemma. Applies to single-token queries so morphological
  * variants of a multi-token phrase keep ranking identity.
- *
- * @param {import("./types.js").FeaturedHit} a
- * @param {import("./types.js").FeaturedHit} b
  */
-function surfaceOverLemmaConstraint(a, b) {
+function surfaceOverLemmaConstraint(a: FeaturedHit, b: FeaturedHit) {
   if ((a.features.queryTokenCount || 0) !== 1) return 0;
   if (a.features.configuredEquivalenceMatch || b.features.configuredEquivalenceMatch) return 0;
   const aSurf = Boolean(a.features.typedSurfaceTitleMatch);
@@ -75,8 +78,7 @@ function surfaceOverLemmaConstraint(a, b) {
   return 0;
 }
 
-/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
-function versionConstraint(a, b) {
+function versionConstraint(a: FeaturedHit, b: FeaturedHit) {
   const as = versionStrength(a.features.versionMatch);
   const bs = versionStrength(b.features.versionMatch);
   if (as === bs) return 0;
@@ -85,8 +87,7 @@ function versionConstraint(a, b) {
   return 0;
 }
 
-/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
-function literalNumericOverWeakVersionConstraint(a, b) {
+function literalNumericOverWeakVersionConstraint(a: FeaturedHit, b: FeaturedHit) {
   const aLiteral = a.features.exactTitleTokenMatch && versionStrength(a.features.versionMatch) === 0;
   const bLiteral = b.features.exactTitleTokenMatch && versionStrength(b.features.versionMatch) === 0;
   const aWeak = versionStrength(a.features.versionMatch) === 1;
@@ -96,8 +97,7 @@ function literalNumericOverWeakVersionConstraint(a, b) {
   return 0;
 }
 
-/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
-function shortLiteralConstraint(a, b) {
+function shortLiteralConstraint(a: FeaturedHit, b: FeaturedHit) {
   if (a.features.shortLiteralLeadMatch === b.features.shortLiteralLeadMatch) return 0;
   if (a.features.shortLiteralLeadMatch && !b.features.shortLiteralLeadMatch) return -1;
   if (b.features.shortLiteralLeadMatch && !a.features.shortLiteralLeadMatch) return 1;
@@ -111,8 +111,7 @@ function shortLiteralConstraint(a, b) {
  * other strong/moderate non-contextual evidence.
  * Among two contextual hits, tighter contextualPrefixQuality wins.
  */
-/** @param {Partial<import("./types.js").FeatureVector>} f */
-function isWeakIncidentalCompetitor(f) {
+function isWeakIncidentalCompetitor(f: Partial<FeatureVector>) {
   if (f.contextualTitlePrefix) return false;
   if (f.exactTitleMatch) return false;
   if (f.configuredEquivalenceMatch === "key-in-title" || f.canonicalKeyTitle) return false;
@@ -122,8 +121,7 @@ function isWeakIncidentalCompetitor(f) {
   return f.directClass === "weak" || f.directClass === "none" || isIncidentalTitleToken(f);
 }
 
-/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
-function contextualTitlePrefixConstraint(a, b) {
+function contextualTitlePrefixConstraint(a: FeaturedHit, b: FeaturedHit) {
   const aHit = Boolean(a.features.contextualTitlePrefix);
   const bHit = Boolean(b.features.contextualTitlePrefix);
   const aQ = a.features.contextualPrefixQuality || 0;
@@ -134,8 +132,7 @@ function contextualTitlePrefixConstraint(a, b) {
   return 0;
 }
 
-/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
-function tighterTitleConstraint(a, b) {
+function tighterTitleConstraint(a: FeaturedHit, b: FeaturedHit) {
   const aExactish = a.features.queryCoverage >= FULL_QUERY_COVERAGE && a.features.titleCoverage >= 0.8;
   const bExactish = b.features.queryCoverage >= FULL_QUERY_COVERAGE && b.features.titleCoverage >= 0.8;
   if (aExactish && bExactish) {
@@ -153,8 +150,7 @@ function tighterTitleConstraint(a, b) {
  * Related documents must not displace a strong primary match (H1).
  * Mixed presentation: any direct with title-ish evidence beats related.
  */
-/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
-function directOverRelatedConstraint(a, b) {
+function directOverRelatedConstraint(a: FeaturedHit, b: FeaturedHit) {
   const aDirect = a.features.relevanceKind !== "related";
   const bDirect = b.features.relevanceKind !== "related";
   if (aDirect === bDirect) return 0;
@@ -179,21 +175,18 @@ function directOverRelatedConstraint(a, b) {
   return 0;
 }
 
-/** @param {Partial<import("./types.js").FeatureVector>} f */
-function isStrongOrModerateDirect(f) {
+function isStrongOrModerateDirect(f: Partial<FeatureVector>) {
   return f.relevanceKind !== "related" && (f.directClass === "strong" || f.directClass === "moderate");
 }
 
-/** @param {Partial<import("./types.js").FeatureVector>} f */
-function isWeakDirect(f) {
+function isWeakDirect(f: Partial<FeatureVector>) {
   return f.relevanceKind !== "related" && (f.directClass === "weak" || f.directClass === "none");
 }
 
 /**
  * Hybrid: strong/moderate directs outrank related; related outrank weak body-only directs.
  */
-/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
-function hybridDirectOverRelatedConstraint(a, b) {
+function hybridDirectOverRelatedConstraint(a: FeaturedHit, b: FeaturedHit) {
   const aRel = a.features.relevanceKind === "related";
   const bRel = b.features.relevanceKind === "related";
   if (aRel === bRel) return 0;
@@ -202,8 +195,7 @@ function hybridDirectOverRelatedConstraint(a, b) {
   return 0;
 }
 
-/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
-function relatedOverWeakDirectConstraint(a, b) {
+function relatedOverWeakDirectConstraint(a: FeaturedHit, b: FeaturedHit) {
   const aRel = a.features.relevanceKind === "related";
   const bRel = b.features.relevanceKind === "related";
   if (aRel && isWeakDirect(b.features)) return -1;
@@ -218,21 +210,18 @@ function relatedOverWeakDirectConstraint(a, b) {
  * key-in-title, canonical key title, full query/title coverage, or contextual
  * aligned prefix. It is not a universal bodyPhraseCount comparison.
  */
-/** @param {Partial<import("./types.js").FeatureVector>} f */
-function hasRepeatedPhraseEvidence(f) {
+function hasRepeatedPhraseEvidence(f: Partial<FeatureVector>) {
   return (f.queryTokenCount || 0) >= 2 && (f.bodyPhraseCount || 0) >= REPEATED_BODY_PHRASE_MIN;
 }
 
-/** @param {Partial<import("./types.js").FeatureVector>} f */
-function hasConfiguredExpansionEvidence(f) {
+function hasConfiguredExpansionEvidence(f: Partial<FeatureVector>) {
   return (
     (f.queryTokenCount || 0) >= 2 &&
     (f.configuredEquivalenceMatch === "expansion" || f.configuredEquivalenceMatch === "key-in-title")
   );
 }
 
-/** @param {Partial<import("./types.js").FeatureVector>} f */
-function isIncidentalTitleToken(f) {
+function isIncidentalTitleToken(f: Partial<FeatureVector>) {
   const lowCoverage = (f.queryCoverage || 0) < TWO_THIRDS_QUERY_COVERAGE;
   const titleOverlap = Boolean(f.exactTitleTokenMatch) || (f.titlePrefixQuality || 0) > 0;
   return (
@@ -256,8 +245,7 @@ function isIncidentalTitleToken(f) {
  * That incidental overlap remains beatable. Genuine moderate evidence
  * (coverage ≥ 2/3, contextual prefix, etc.) is not.
  */
-/** @param {Partial<import("./types.js").FeatureVector>} f */
-function isWeakIncidentalPhraseCompetitor(f) {
+function isWeakIncidentalPhraseCompetitor(f: Partial<FeatureVector>) {
   if (hasRepeatedPhraseEvidence(f) || hasConfiguredExpansionEvidence(f)) return false;
   if (f.exactTitleMatch || f.canonicalKeyTitle || f.configuredEquivalenceMatch === "key-in-title") return false;
   if ((f.queryCoverage || 0) >= FULL_QUERY_COVERAGE) return false;
@@ -268,8 +256,7 @@ function isWeakIncidentalPhraseCompetitor(f) {
   return f.directClass === "weak" || f.directClass === "none";
 }
 
-/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
-function repeatedPhraseOverWeakDirectConstraint(a, b) {
+function repeatedPhraseOverWeakDirectConstraint(a: FeaturedHit, b: FeaturedHit) {
   const aPhrase = hasRepeatedPhraseEvidence(a.features) || hasConfiguredExpansionEvidence(a.features);
   const bPhrase = hasRepeatedPhraseEvidence(b.features) || hasConfiguredExpansionEvidence(b.features);
   if (aPhrase && isWeakIncidentalPhraseCompetitor(b.features)) return -1;
@@ -281,16 +268,14 @@ function repeatedPhraseOverWeakDirectConstraint(a, b) {
  * When the query is a configured key, a title that also states the expansion
  * outranks a title that only contains the key (canonical vs comparison title).
  */
-/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
-function canonicalKeyConstraint(a, b) {
+function canonicalKeyConstraint(a: FeaturedHit, b: FeaturedHit) {
   if (a.features.canonicalKeyTitle === b.features.canonicalKeyTitle) return 0;
   if (a.features.canonicalKeyTitle && !b.features.canonicalKeyTitle) return -1;
   if (b.features.canonicalKeyTitle && !a.features.canonicalKeyTitle) return 1;
   return 0;
 }
 
-/** @type {import("./types.js").ConstraintDef[]} */
-export const DEFAULT_CONSTRAINTS = [
+export const DEFAULT_CONSTRAINTS: ConstraintDef[] = [
   { id: "exact-title-over-non-exact", invariant: "H1", class: "absolute", fn: exactTitleConstraint },
   { id: "direct-over-related", invariant: "H1", class: "absolute", fn: directOverRelatedConstraint },
   { id: "canonical-key-expansion-over-key-only", invariant: "H2", class: "strong", fn: canonicalKeyConstraint },
@@ -304,8 +289,7 @@ export const DEFAULT_CONSTRAINTS = [
   { id: "short-literal-lead-over-later", invariant: "H5", class: "soft", fn: shortLiteralConstraint },
 ];
 
-/** @type {import("./types.js").ConstraintDef[]} */
-export const HYBRID_CONSTRAINTS = [
+export const HYBRID_CONSTRAINTS: ConstraintDef[] = [
   { id: "exact-title-over-non-exact", invariant: "H1", class: "absolute", fn: exactTitleConstraint },
   { id: "strong-moderate-direct-over-related", invariant: "H1", class: "absolute", fn: hybridDirectOverRelatedConstraint },
   { id: "related-over-weak-direct", invariant: "H1", class: "strong", fn: relatedOverWeakDirectConstraint },
@@ -320,24 +304,19 @@ export const HYBRID_CONSTRAINTS = [
   { id: "short-literal-lead-over-later", invariant: "H5", class: "soft", fn: shortLiteralConstraint },
 ];
 
-/** @param {string | import("./types.js").RelationshipStrategy} [strategy] */
-export function constraintsForStrategy(strategy) {
+export function constraintsForStrategy(strategy?: string | RelationshipStrategy) {
   return strategy === "hybrid" ? HYBRID_CONSTRAINTS : DEFAULT_CONSTRAINTS;
 }
 
-/** @param {string | import("./types.js").RelationshipStrategy} [presentation] */
-export function constraintsForPresentation(presentation) {
+export function constraintsForPresentation(presentation?: string | RelationshipStrategy) {
   return constraintsForStrategy(presentation);
 }
 
 const CLASS_ORDER = ["absolute", "strong", "soft"];
 
-/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b @param {import("./types.js").ConstraintDef[]} [defs] */
-export function compareConstraint(a, b, defs = DEFAULT_CONSTRAINTS) {
-  /** @type {Array<{ id: string, invariant: string, class: string, result: string }>} */
-  const applied = [];
-  /** @type {Record<string, Array<{ id: string, invariant: string, class: string, result: string }>>} */
-  const byClass = { absolute: [], strong: [], soft: [] };
+export function compareConstraint(a: FeaturedHit, b: FeaturedHit, defs: ConstraintDef[] = DEFAULT_CONSTRAINTS): ConstraintCompareResult {
+  const applied: AppliedRow[] = [];
+  const byClass: Record<string, AppliedRow[]> = { absolute: [], strong: [], soft: [] };
 
   for (const c of defs) {
     const r = c.fn(a, b);
@@ -389,17 +368,14 @@ export function compareConstraint(a, b, defs = DEFAULT_CONSTRAINTS) {
  * Same-class conflicts add no edge (unordered; score will decide inside an SCC
  * only if other edges create a cycle).
  */
-/**
- * @param {import("./types.js").FeaturedHit[]} candidates
- * @param {import("./types.js").ConstraintDef[]} [defs]
- * @param {{ signal?: AbortSignal }} [options]
- */
-export function buildConstraintGraph(candidates, defs = DEFAULT_CONSTRAINTS, { signal } = {}) {
+export function buildConstraintGraph(
+  candidates: FeaturedHit[],
+  defs: ConstraintDef[] = DEFAULT_CONSTRAINTS,
+  { signal }: { signal?: AbortSignal } = {}
+): ConstraintGraph {
   const n = candidates.length;
-  /** @type {number[][]} */
-  const edges = [];
-  /** @type {Array<import("./types.js").ConstraintCompareResult & { i: number, j: number }>} */
-  const pairReports = [];
+  const edges: number[][] = [];
+  const pairReports: Array<ConstraintCompareResult & { i: number; j: number }> = [];
   let k = 0;
   for (let i = 0; i < n; i++) {
     for (let j = i + 1; j < n; j++) {
@@ -413,13 +389,14 @@ export function buildConstraintGraph(candidates, defs = DEFAULT_CONSTRAINTS, { s
   return { n, edges, pairReports };
 }
 
-/** @param {import("./types.js").FeaturedHit[]} candidates @param {import("./types.js").ConstraintDef[]} [defs] @param {{ signal?: AbortSignal }} [options] */
-export async function buildConstraintGraphAsync(candidates, defs = DEFAULT_CONSTRAINTS, { signal } = {}) {
+export async function buildConstraintGraphAsync(
+  candidates: FeaturedHit[],
+  defs: ConstraintDef[] = DEFAULT_CONSTRAINTS,
+  { signal }: { signal?: AbortSignal } = {}
+): Promise<ConstraintGraph> {
   const n = candidates.length;
-  /** @type {number[][]} */
-  const edges = [];
-  /** @type {Array<import("./types.js").ConstraintCompareResult & { i: number, j: number }>} */
-  const pairReports = [];
+  const edges: number[][] = [];
+  const pairReports: Array<ConstraintCompareResult & { i: number; j: number }> = [];
   let k = 0;
   for (let i = 0; i < n; i++) {
     for (let j = i + 1; j < n; j++) {
@@ -437,24 +414,16 @@ export async function buildConstraintGraphAsync(candidates, defs = DEFAULT_CONST
   return { n, edges, pairReports };
 }
 
-/**
- * @param {number} n
- * @param {number[][]} edges
- */
-export function stronglyConnectedComponents(n, edges) {
-  /** @type {number[][]} */
-  const adj = Array.from({ length: n }, () => /** @type {number[]} */ ([]));
-  /** @type {number[][]} */
-  const radj = Array.from({ length: n }, () => /** @type {number[]} */ ([]));
+export function stronglyConnectedComponents(n: number, edges: number[][]) {
+  const adj: number[][] = Array.from({ length: n }, () => []);
+  const radj: number[][] = Array.from({ length: n }, () => []);
   for (const [u, v] of edges) {
     adj[u].push(v);
     radj[v].push(u);
   }
   const seen = new Array(n).fill(false);
-  /** @type {number[]} */
-  const order = [];
-  /** @param {number} u */
-  function dfs1(u) {
+  const order: number[] = [];
+  function dfs1(u: number) {
     seen[u] = true;
     for (const v of adj[u]) if (!seen[v]) dfs1(v);
     order.push(u);
@@ -463,8 +432,7 @@ export function stronglyConnectedComponents(n, edges) {
 
   const comp = new Array(n).fill(-1);
   let cid = 0;
-  /** @param {number} u @param {number} id */
-  function dfs2(u, id) {
+  function dfs2(u: number, id: number) {
     comp[u] = id;
     for (const v of radj[u]) if (comp[v] === -1) dfs2(v, id);
   }
@@ -473,19 +441,17 @@ export function stronglyConnectedComponents(n, edges) {
     if (comp[u] === -1) dfs2(u, cid++);
   }
 
-  /** @type {number[][]} */
-  const groups = Array.from({ length: cid }, () => /** @type {number[]} */ ([]));
+  const groups: number[][] = Array.from({ length: cid }, () => []);
   for (let i = 0; i < n; i++) groups[comp[i]].push(i);
   const cycles = groups.filter((g) => g.length > 1).map((g) => g.slice());
   return { comp, groups, cycles };
 }
 
-/**
- * @param {import("./types.js").FeaturedHit[]} candidates
- * @param {import("./types.js").ConstraintDef[]} [defs]
- * @param {{ signal?: AbortSignal }} [options]
- */
-export function detectConstraintCycles(candidates, defs = DEFAULT_CONSTRAINTS, { signal } = {}) {
+export function detectConstraintCycles(
+  candidates: FeaturedHit[],
+  defs: ConstraintDef[] = DEFAULT_CONSTRAINTS,
+  { signal }: { signal?: AbortSignal } = {}
+) {
   const { n, edges, pairReports } = buildConstraintGraph(candidates, defs, { signal });
   const { cycles } = stronglyConnectedComponents(n, edges);
   const conflicts = pairReports.filter((p) => p.conflict);
