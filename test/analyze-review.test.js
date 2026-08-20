@@ -1,9 +1,9 @@
-import { analyzeQuery } from "../src/analyze.js";
-import { english, dictionary, SearchEngine } from "../src/index.js";
-import { extractFeatures } from "../src/features.js";
-import { compoundSpellSegment, MAX_COMPOUND_REPAIR_TOKEN_LENGTH } from "../src/analyzeRepair.js";
-import { conceptMatchesBody, conceptMatchesTitle } from "../src/retrieve.js";
-import { buildIndex } from "../src/indexDocuments.js";
+import { analyzeQuery } from "../dist/analyze.js";
+import { english, dictionary, SearchEngine } from "../dist/index.js";
+import { extractFeatures } from "../dist/features.js";
+import { compoundSpellSegment, MAX_COMPOUND_REPAIR_TOKEN_LENGTH } from "../dist/analyzeRepair.js";
+import { conceptMatchesBody, conceptMatchesTitle } from "../dist/retrieve.js";
+import { buildIndex } from "../dist/indexDocuments.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 

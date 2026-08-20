@@ -1,16 +1,16 @@
 import { compileLexicalFrequency, attachLexicalFrequency, saturatingFrequency, resolveLexicalPolicy } from "../tools/search-lexical/index.js";
-import { SearchEngine, english, dictionary } from "../src/index.js";
-import { analyzeQuery } from "../src/analyze.js";
-import { extractFeatures, saturatingFrequency as runtimeSaturatingFrequency } from "../src/features.js";
-import { saturatingFrequency as sharedSaturatingFrequency } from "../src/saturatingFrequency.js";
+import { SearchEngine, english, dictionary } from "../dist/index.js";
+import { analyzeQuery } from "../dist/analyze.js";
+import { extractFeatures, saturatingFrequency as runtimeSaturatingFrequency } from "../dist/features.js";
+import { saturatingFrequency as sharedSaturatingFrequency } from "../dist/saturatingFrequency.js";
 import {
   canonicalLexicalTokens,
   extractCanonicalNgrams,
   lexicalPhraseKeyFromQuery,
-} from "../src/lexicalNormalize.js";
-import { DEFAULT_STOP } from "../src/text.js";
-import { buildIndex } from "../src/indexDocuments.js";
-import { compareConstraint, HYBRID_CONSTRAINTS } from "../src/constraints.js";
+} from "../dist/lexicalNormalize.js";
+import { DEFAULT_STOP } from "../dist/text.js";
+import { buildIndex } from "../dist/indexDocuments.js";
+import { compareConstraint, HYBRID_CONSTRAINTS } from "../dist/constraints.js";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 

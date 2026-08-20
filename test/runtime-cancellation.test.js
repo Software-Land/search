@@ -1,15 +1,15 @@
-import { SearchEngine, english, dictionary, isAbortError } from "../src/index.js";
-import { analyzeQuery } from "../src/analyze.js";
-import { retrieveCandidates } from "../src/retrieve.js";
-import { rankCandidates } from "../src/rank.js";
-import { buildIndex } from "../src/indexDocuments.js";
-import { leftoverLooksLikeJunk } from "../src/analyzeRepair.js";
+import { SearchEngine, english, dictionary, isAbortError } from "../dist/index.js";
+import { analyzeQuery } from "../dist/analyze.js";
+import { retrieveCandidates } from "../dist/retrieve.js";
+import { rankCandidates } from "../dist/rank.js";
+import { buildIndex } from "../dist/indexDocuments.js";
+import { leftoverLooksLikeJunk } from "../dist/analyzeRepair.js";
 import {
   createLatestWinsSession,
   createWorkerRuntime,
   createLoopbackTransport,
   createSearchClient,
-} from "../src/browser/index.js";
+} from "../dist/browser/index.js";
 
 const schema = {
   title: { type: "text", role: "title" },

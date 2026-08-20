@@ -1,4 +1,4 @@
-import * as publicApi from "../src/index.js";
+import * as publicApi from "../dist/index.js";
 import {
   SearchEngine,
   english,
@@ -13,8 +13,8 @@ import {
   isAbortError,
   parseRelationships,
   parseEquivalences,
-} from "../src/index.js";
-import { createSearchClient, createWorkerRuntime, createLoopbackTransport } from "../src/browser/index.js";
+} from "../dist/index.js";
+import { createSearchClient, createWorkerRuntime, createLoopbackTransport } from "../dist/browser/index.js";
 
 const schema = {
   title: { type: "text", role: "title" },

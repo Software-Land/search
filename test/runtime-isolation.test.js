@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { parseRelationships } from "../src/artifacts.js";
-import { SearchEngine, english, dictionary } from "../src/index.js";
-import { analyzeQuery } from "../src/analyze.js";
+import { parseRelationships } from "../dist/artifacts.js";
+import { SearchEngine, english, dictionary } from "../dist/index.js";
+import { analyzeQuery } from "../dist/analyze.js";
 
 import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -26,7 +26,7 @@ function walkJs(dir) {
 
 describe("runtime isolation", () => {
   test("runtime does not import the semantic builder or embedding stacks", () => {
-    const root = path.join(__dirname, "../src");
+    const root = path.join(__dirname, "../dist");
     const banned = [
       "search-semantic",
       "search-lexical",

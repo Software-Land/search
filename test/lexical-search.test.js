@@ -2,14 +2,14 @@ import {
   SearchEngine,
   english,
   dictionary,
-} from "../src/index.js";
-import { analyzeQuery } from "../src/analyze.js";
-import { extractFeatures, FEATURE_DEFINITIONS } from "../src/features.js";
-import { compareConstraint, constraintCatalog } from "../src/constraints.js";
-import { retrieveCandidates } from "../src/retrieve.js";
-import { extractVersionCompactForms, queryTokenMatchesVersionCompact } from "../src/versionForms.js";
-import { buildIndex } from "../src/indexDocuments.js";
-import { scoreFeatures, rankCandidates } from "../src/rank.js";
+} from "../dist/index.js";
+import { analyzeQuery } from "../dist/analyze.js";
+import { extractFeatures, FEATURE_DEFINITIONS } from "../dist/features.js";
+import { compareConstraint, constraintCatalog } from "../dist/constraints.js";
+import { retrieveCandidates } from "../dist/retrieve.js";
+import { extractVersionCompactForms, queryTokenMatchesVersionCompact } from "../dist/versionForms.js";
+import { buildIndex } from "../dist/indexDocuments.js";
+import { scoreFeatures, rankCandidates } from "../dist/rank.js";
 
 function engine(docs, dictEntries = []) {
   const e = SearchEngine.create({

@@ -2,11 +2,11 @@ import {
   SearchEngine,
   english,
   dictionary,
-} from "../src/index.js";
-import { createIndexedLexicalRetriever } from "../src/retrievers.js";
-import { retrieveCandidates } from "../src/retrieve.js";
-import { analyzeQuery } from "../src/analyze.js";
-import { buildIndex } from "../src/indexDocuments.js";
+} from "../dist/index.js";
+import { createIndexedLexicalRetriever } from "../dist/retrievers.js";
+import { retrieveCandidates } from "../dist/retrieve.js";
+import { analyzeQuery } from "../dist/analyze.js";
+import { buildIndex } from "../dist/indexDocuments.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 

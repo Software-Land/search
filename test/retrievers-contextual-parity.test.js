@@ -1,9 +1,9 @@
-import { SearchEngine, english, dictionary } from "../src/index.js";
-import { analyzeQuery } from "../src/analyze.js";
-import { buildIndex } from "../src/indexDocuments.js";
-import { retrieveCandidates, matchContextualTitlePrefix } from "../src/retrieve.js";
-import { createIndexedLexicalRetriever } from "../src/retrievers.js";
-import { extractFeatures } from "../src/features.js";
+import { SearchEngine, english, dictionary } from "../dist/index.js";
+import { analyzeQuery } from "../dist/analyze.js";
+import { buildIndex } from "../dist/indexDocuments.js";
+import { retrieveCandidates, matchContextualTitlePrefix } from "../dist/retrieve.js";
+import { createIndexedLexicalRetriever } from "../dist/retrievers.js";
+import { extractFeatures } from "../dist/features.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 

@@ -20,16 +20,16 @@
     "url": "https://github.com/Software-Land/search/issues"
   },
   "type": "module",
-  "main": "./src/index.js",
+  "main": "./dist/index.js",
   "types": "./src/index.d.ts",
   "exports": {
     ".": {
       "types": "./src/index.d.ts",
-      "import": "./src/index.js"
+      "import": "./dist/index.js"
     },
     "./browser": {
       "types": "./src/browser/index.d.ts",
-      "import": "./src/browser/index.js"
+      "import": "./dist/browser/index.js"
     },
     "./corpus": {
       "types": "./tools/search-corpus/index.d.ts",
@@ -54,7 +54,9 @@
     "CHANGELOG.md",
     "docs",
     "examples",
-    "src",
+    "dist",
+    "src/index.d.ts",
+    "src/browser/index.d.ts",
     "tools/search-corpus",
     "tools/search-relationships",
     "tools/search-semantic",
@@ -65,12 +67,15 @@
     "node": ">=18"
   },
   "scripts": {
-    "typecheck": "tsc -p tsconfig.core.json --noEmit && tsc -p tsconfig.browser.json --noEmit && tsc -p tsconfig.tools.json --noEmit",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js && python3 -m unittest discover -s tools/search-semantic/tests -p 'test_*.py'",
-    "test:js": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "build": "tsc -p tsconfig.emit.json",
+    "prepack": "npm run build",
+    "typecheck": "npm run build && tsc -p tsconfig.core.json --noEmit && tsc -p tsconfig.browser.json --noEmit && tsc -p tsconfig.tools.json --noEmit",
+    "test": "npm run build && node --experimental-vm-modules ./node_modules/jest/bin/jest.js && python3 -m unittest discover -s tools/search-semantic/tests -p 'test_*.py'",
+    "test:js": "npm run build && node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
     "test:python": "python3 -m unittest discover -s tools/search-semantic/tests -p 'test_*.py'",
-    "example": "node examples/catalog/index.mjs",
-    "smoke:import": "node scripts/import-smoke.mjs"
+    "example": "npm run build && node examples/catalog/index.mjs",
+    "smoke:import": "npm run build && node scripts/import-smoke.mjs",
+    "smoke:pack": "node scripts/pack-smoke.mjs"
   },
   "devDependencies": {
     "@types/node": "22.13.14",

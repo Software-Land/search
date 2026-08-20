@@ -1,8 +1,9 @@
 /**
  * Tiny catalog demo. No host catalog required.
- * Run: node examples/catalog/index.mjs
+ * Run: npm run example
+ * (requires npm run build so dist/ exists)
  */
-import { SearchEngine, english, dictionary } from "../../src/index.js";
+import { SearchEngine, english, dictionary } from "../../dist/index.js";
 
 const schema = {
   title: { type: "text", role: "title" },

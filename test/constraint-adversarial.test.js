@@ -1,9 +1,9 @@
-import { compareConstraint, detectConstraintCycles, DEFAULT_CONSTRAINTS } from "../src/constraints.js";
+import { compareConstraint, detectConstraintCycles, DEFAULT_CONSTRAINTS } from "../dist/constraints.js";
 import {
   TWO_THIRDS_QUERY_COVERAGE,
   REPEATED_BODY_PHRASE_MIN,
   FULL_QUERY_COVERAGE,
-} from "../src/evidencePolicy.js";
+} from "../dist/evidencePolicy.js";
 
 function hit(id, over = {}) {
   return {

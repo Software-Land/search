@@ -8,7 +8,7 @@ search-semantic        tools/search-semantic    optional Python relatedness buil
 search-relationships   tools/search-relationships
 ```
 
-Distribution: **one npm package** (`@software-land/search`) with subpath exports `.`, `./browser`, `./corpus`, `./relationships`, and `./semantic`. Python semantic tooling ships in the tarball. Search Core and the browser Worker do not import `./semantic`, `./corpus`, or `./relationships`.
+Distribution: **one npm package** (`@software-land/search`) with subpath exports `.`, `./browser`, `./corpus`, `./relationships`, `./semantic`, and `./lexical`. Runtime and browser execute from emitted `dist/` JavaScript. Corpus, relationships, lexical, and Python semantic tooling remain source-shipped under `tools/`. Search Core and the browser Worker do not import `./semantic`, `./corpus`, or `./relationships`.
 
 ## Environments
 

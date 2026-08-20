@@ -1,9 +1,9 @@
 import { jest } from "@jest/globals";
-import { SearchEngine, english, dictionary, isAbortError } from "../src/index.js";
-import { analyzeQuery, suggestTypoForms } from "../src/analyze.js";
-import { buildIndex } from "../src/indexDocuments.js";
-import { pickPrimariesForExpansion } from "../src/relationships.js";
-import { retrieveCandidates } from "../src/retrieve.js";
+import { SearchEngine, english, dictionary, isAbortError } from "../dist/index.js";
+import { analyzeQuery, suggestTypoForms } from "../dist/analyze.js";
+import { buildIndex } from "../dist/indexDocuments.js";
+import { pickPrimariesForExpansion } from "../dist/relationships.js";
+import { retrieveCandidates } from "../dist/retrieve.js";
 
 const schema = {
   title: { type: "text", role: "title" },

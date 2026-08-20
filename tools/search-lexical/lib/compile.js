@@ -7,12 +7,12 @@
  * not rescan bodies or rebuild vocabularies.
  */
 
-import { canonicalDocumentId } from "../../../src/documentId.js";
-import { saturatingFrequency } from "../../../src/saturatingFrequency.js";
+import { canonicalDocumentId } from "../../../dist/documentId.js";
+import { saturatingFrequency } from "../../../dist/saturatingFrequency.js";
 import {
   canonicalLexicalTokens,
   extractCanonicalNgrams,
-} from "../../../src/lexicalNormalize.js";
+} from "../../../dist/lexicalNormalize.js";
 
 export { saturatingFrequency };
 

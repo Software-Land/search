@@ -5,12 +5,12 @@ import {
   parseRelationships,
   parseEquivalences,
   parseSynonyms,
-} from "../src/index.js";
-import { synonyms } from "../src/synonyms.js";
-import { analyzeQuery } from "../src/analyze.js";
-import { compareConstraint, detectConstraintCycles, DEFAULT_CONSTRAINTS } from "../src/constraints.js";
-import { RelationshipGraph } from "../src/relationships.js";
-import { rankCandidates } from "../src/rank.js";
+} from "../dist/index.js";
+import { synonyms } from "../dist/synonyms.js";
+import { analyzeQuery } from "../dist/analyze.js";
+import { compareConstraint, detectConstraintCycles, DEFAULT_CONSTRAINTS } from "../dist/constraints.js";
+import { RelationshipGraph } from "../dist/relationships.js";
+import { rankCandidates } from "../dist/rank.js";
 
 const schema = {
   title: { type: "text", role: "title" },

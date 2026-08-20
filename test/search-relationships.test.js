@@ -9,8 +9,8 @@ import {
   DecisionError,
   DEFAULT_RUNTIME_TYPES,
 } from "../tools/search-relationships/index.js";
-import { SearchEngine, english, dictionary } from "../src/index.js";
-import { analyzeQuery } from "../src/analyze.js";
+import { SearchEngine, english, dictionary } from "../dist/index.js";
+import { analyzeQuery } from "../dist/analyze.js";
 
 import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -52,7 +52,7 @@ describe("search-relationships isolation", () => {
   });
 
   test("Search Core does not import search-relationships", () => {
-    const root = path.join(__dirname, "../src");
+    const root = path.join(__dirname, "../dist");
     for (const file of walkJs(root)) {
       const text = fs.readFileSync(file, "utf8").toLowerCase();
       expect(text.includes("search-relationships")).toBe(false);

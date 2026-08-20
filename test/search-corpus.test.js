@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { compileCorpus, spellingLexiconPlugin } from "../tools/search-corpus/index.js";
-import { SearchEngine, english, dictionary } from "../src/index.js";
-import { analyzeQuery } from "../src/analyze.js";
+import { SearchEngine, english, dictionary } from "../dist/index.js";
+import { analyzeQuery } from "../dist/analyze.js";
 
 import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -28,7 +28,7 @@ function statusOf(result, key, phrase) {
 
 describe("search-corpus isolation", () => {
   test("Search Core does not import search-corpus", () => {
-    const root = path.join(__dirname, "../src");
+    const root = path.join(__dirname, "../dist");
     for (const file of walkJs(root)) {
       const text = fs.readFileSync(file, "utf8").toLowerCase();
       expect(text.includes("search-corpus")).toBe(false);

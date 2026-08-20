@@ -34,7 +34,7 @@ describe("search-semantic package boundary", () => {
   });
 
   test("runtime and browser do not import the semantic launcher", () => {
-    for (const dir of ["src", "src/browser"]) {
+    for (const dir of ["dist", "dist/browser"]) {
       const root = path.join(__dirname, "..", dir);
       if (!fs.existsSync(root)) continue;
       for (const file of walkJs(root)) {

@@ -1,6 +1,6 @@
-import { SearchEngine, english, dictionary } from "../src/index.js";
-import { classifyDirect } from "../src/features.js";
-import { analyzeQuery } from "../src/analyze.js";
+import { SearchEngine, english, dictionary } from "../dist/index.js";
+import { classifyDirect } from "../dist/features.js";
+import { analyzeQuery } from "../dist/analyze.js";
 
 const schema = {
   title: { type: "text", role: "title" },
