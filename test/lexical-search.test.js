@@ -6,7 +6,7 @@ import {
 import { analyzeQuery } from "../dist/analyze.js";
 import { extractFeatures, FEATURE_DEFINITIONS } from "../dist/features.js";
 import { compareConstraint, constraintCatalog } from "../dist/constraints.js";
-import { retrieveCandidates } from "../dist/retrieve.js";
+import { retrieveCandidates, versionHit, typedForm } from "../dist/retrieve.js";
 import { extractVersionCompactForms, queryTokenMatchesVersionCompact } from "../dist/versionForms.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 import { scoreFeatures, rankCandidates } from "../dist/rank.js";
@@ -689,6 +689,66 @@ describe("version compact", () => {
   test("near-complete companion 12 vulnerab still ranks TLS", async () => {
     const e = await engine(docs, tlsDict);
     expect(e.search("12 vulnerab")[0].title).toBe("TLS 1.2 Vulnerability");
+  });
+
+  test("inferred completion is not typed compact companion evidence", async () => {
+    const plugins = [english(), dictionary({ entries: tlsDict })];
+    const schema = {
+      title: { type: "text", role: "title" },
+      body: { type: "text", role: "body" },
+    };
+    const index = buildIndex(docs, schema, plugins);
+    const tlsDoc = index.documents.find((d) => d.id === "/tls/");
+    const analyze = (raw) =>
+      analyzeQuery(raw, {
+        plugins,
+        lexicon: index.titleTokenSet,
+        prefixLexicon: index.surfaceVocabulary || index.titleTokenSet,
+      });
+
+    const coverage = [
+      ["12 vulnerability", "covered"],
+      ["12 vulnerabilit", "covered"],
+      ["12 vulnerab", "covered"],
+      ["12 vuln", "weak"],
+      ["12 v", "absent"],
+    ];
+    for (const [raw, companion] of coverage) {
+      const query = analyze(raw);
+      const hit = versionHit(query, tlsDoc);
+      expect(hit?.compactHit).toBe(true);
+      expect(hit?.companion).toBe(companion);
+      const stub = query.tokens.find((t) => !/^\d+$/.test(t.surface));
+      expect(typedForm(stub)).toBe(stub.surfaceNormalized ?? stub.surface);
+    }
+
+    const e = await engine(docs, tlsDict);
+    const ranking = [
+      { q: "12 vulnerability", top: "TLS 1.2 Vulnerability", versionMatch: "compact-dotted" },
+      { q: "12 vulnerabilit", top: "TLS 1.2 Vulnerability", versionMatch: "compact-dotted" },
+      { q: "12 vulnerab", top: "TLS 1.2 Vulnerability", versionMatch: "compact-dotted" },
+      { q: "12 vuln", top: "Direct3D 12 Guide", versionMatch: "compact-weak" },
+      { q: "12 v", top: "Direct3D 12 Guide", versionMatch: "compact-weak" },
+    ];
+    for (const c of ranking) {
+      const detailed = e.searchDetailed(c.q, { limit: 5, explain: true });
+      expect(detailed.results[0].title).toBe(c.top);
+      const tls = detailed.results.find((r) => r.id === "/tls/");
+      expect(tls).toBeTruthy();
+      expect(tls.features.versionMatch).toBe(c.versionMatch);
+    }
+
+    const vuln = e.searchDetailed("12 vuln", { limit: 5, explain: true });
+    const stub = vuln.results[0].explanation.query.tokens.find((t) => t.surface === "vuln");
+    expect(typedForm(stub)).toBe("vuln");
+    expect(stub.surfaceNormalized).toBe("vuln");
+    expect(stub.normalized).toBe("vulnerability");
+    expect(stub.lemma).toBe("vulnerability");
+    expect(stub.completedToken).toBe("vulnerability");
+    const tls = vuln.results.find((r) => r.id === "/tls/");
+    expect(tls.retrievalSources).toContain("version");
+    expect(tls.features.versionMatch).toBe("compact-weak");
+    expect(vuln.results[0].title).toBe("Direct3D 12 Guide");
   });
 });
 

@@ -45,3 +45,25 @@ On a Node / x86_64 harness:
 The inverted postings are relatively small. The **analyzed document store** (tokens, sets, copies) can dominate memory. That is a known limitation, not a ranking bug.
 
 See [limitations.md](limitations.md).
+
+## Future hybrid / semantic retrieval (contract only)
+
+A query-semantic retriever is **not implemented**. If one is added, it must not reuse lexical analysis as the embed string.
+
+A semantic retriever returns ordinary `RetrievalHit`-shaped candidates:
+
+```js
+{ document, retrievalSources: ["semantic"], retrievalScore?: number }
+```
+
+Union point: **after candidate retrieval, before `extractFeatures` / ranking feature extraction**. Lexical and semantic hits are then featured and ranked together.
+
+Semantic query input:
+
+- **Default:** the raw query string (`AnalyzedQuery.raw`)
+- **Optional:** a join of repaired typed surfaces (`surfaceNormalized`)
+- **Must never embed:** `query.tokens` after key projection, `token.normalized`, `token.lemma` after prefix completion, `completedToken`, `prefixCompletion.canonicalToken`, or `concepts.forms`
+
+Lexical unique-prefix completion and configured-key projection rewrite retrieval identity. Those rewrites must not silently become the semantic query representation.
+
+When a semantic similarity feature is added, introduce an explicit `semanticScore`. Do not overload lexical `retrievalScore` to smuggle semantic similarity into ranking.

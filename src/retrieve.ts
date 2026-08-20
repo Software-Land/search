@@ -148,6 +148,17 @@ function conceptMatchesBody(concept: QueryConcept, doc: IndexedDocument) {
   return false;
 }
 
+/**
+ * Typed/repaired ranking evidence: surfaceNormalized after allowed surface
+ * repair, frozen before lemma and unique-prefix completion. Use this for
+ * "what did the user type?" / "how complete was the typing?" features.
+ * Never substitute normalized, lemma, completedToken, or
+ * prefixCompletion.canonicalToken.
+ */
+export function typedForm(token: Pick<QueryToken, "surface" | "surfaceNormalized">): string {
+  return token.surfaceNormalized ?? token.surface;
+}
+
 function versionHit(query: AnalyzedQuery, doc: IndexedDocument): VersionHit | null {
   const numberConcepts = query.concepts.filter((c) => c.kind === "number");
   const dottedHit = query.dottedSpans.some((span) => doc.dottedSpans.includes(span));
@@ -166,11 +177,10 @@ function versionHit(query: AnalyzedQuery, doc: IndexedDocument): VersionHit | nu
   let companion: VersionCompanion = "none";
   if (companions.length === 0) companion = "absent";
   else {
-    const ok = companions.some((c) =>
-      doc.titleTokens.some(
-        (tok) => tok === c.normalized || tok === c.lemma || isNearCompletePrefix(c.normalized, tok)
-      )
-    );
+    const ok = companions.some((c) => {
+      const typed = typedForm(c);
+      return doc.titleTokens.some((tok) => tok === typed || isNearCompletePrefix(typed, tok));
+    });
     companion = ok ? "covered" : "weak";
   }
 

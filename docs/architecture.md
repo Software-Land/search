@@ -25,3 +25,5 @@ Architecture was validated against an Android Settings–style catalog. There is
 Public: `SearchEngine` facade, result fields above, artifact v1, strategy names, retriever names, `AbortError`.
 
 Experimental / internal: custom Retriever objects, `retrievalScore` ranking weight, analyzed query objects, feature extraction, constraints module, `meta`, `lastSearchMeta`, `sourcePolicy`, BM25 constants, lexical-index serialization (none).
+
+Query-semantic / vector retrieval is not implemented. If it is added, union semantic `RetrievalHit`s after lexical candidate retrieval and before feature extraction, embed the **raw query string** (optionally repaired typed surfaces), and never embed analyzed `query.tokens`, `normalized`, post-prefix `lemma`, `completedToken`, or `concepts.forms`. See [retrievers.md](retrievers.md).

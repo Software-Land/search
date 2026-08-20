@@ -79,7 +79,9 @@ export interface SearchResult {
 
 export interface PrefixCompletion {
   activePrefix: string;
+  /** Inferred completion metadata. Never typed ranking evidence. */
   completedToken: string | null;
+  /** Canonical retrieval form of a unique completion. Never typed evidence. */
   canonicalToken: string | null;
   completedTokens: string[];
   canonicalTokens: string[];

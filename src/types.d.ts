@@ -64,22 +64,42 @@ export interface SearchPlugin {
 }
 
 export interface QueryToken {
+  /** Literal tokenize() surface. */
   surface: string;
   /**
-   * Repaired form after repeat-collapse / leet / typo, before lemma or unique
-   * prefix rewrite. Retrieval uses `normalized`; ranking uses this for typed
-   * surface-title evidence.
+   * Repaired typed form after allowed surface repair (repeat-collapse / leet /
+   * typo), frozen before lemma and unique-prefix completion. Use for
+   * typed/ranking evidence: what the user typed, and how complete that typing
+   * was. Do not treat rewritten `normalized`, `lemma`, or `completedToken` as
+   * a substitute.
    */
   surfaceNormalized?: string;
+  /**
+   * Canonical retrieval identity after analysis. May include morphology/table
+   * normalization and unique-prefix completion. Use for retrieval and
+   * canonical-identity features (exact title token, phrase keys, compact
+   * version digits). Not typed evidence.
+   */
   normalized: string;
+  /**
+   * Morphology / canonical morphology layer. May reflect inferred unique-prefix
+   * completion. Never a fallback for typed companion evidence.
+   */
   lemma: string;
+  /** Provenance of analysis steps applied to this token. */
   sources: string[];
+  /**
+   * Inferred unique-prefix completion of this token, when present. Retrieval /
+   * explanation metadata only. Never typed evidence.
+   */
   completedToken?: string;
 }
 
 export interface PrefixCompletion {
   activePrefix: string;
+  /** Inferred completion metadata. Never typed ranking evidence. */
   completedToken: string | null;
+  /** Canonical retrieval form of a unique completion. Never typed evidence. */
   canonicalToken: string | null;
   completedTokens: string[];
   canonicalTokens: string[];
@@ -99,6 +119,10 @@ export interface ContextualTitlePrefix {
 export interface QueryConcept {
   id: string;
   kind: string;
+  /**
+   * Recall bag of surface, repaired, canonical, lemma, and completed forms.
+   * Not a proxy for what the user typed; do not use as typed companion evidence.
+   */
   forms: string[];
   provenance: string;
   expansion?: string[];
@@ -115,8 +139,13 @@ export interface QueryAlternative {
 }
 
 export interface AnalyzedQuery {
+  /** Raw query string. Future semantic embedding should use this by default. */
   raw: string;
   originalSurface: string[];
+  /**
+   * Lexical intent after analysis, including unique-prefix rewrite and unique
+   * configured-key projection. Not the typed key; not a semantic embed string.
+   */
   tokens: QueryToken[];
   concepts: QueryConcept[];
   alternatives: QueryAlternative[];
