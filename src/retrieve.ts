@@ -4,9 +4,28 @@ import {
   queryTokenMatchesVersionCompact,
 } from "./versionForms.js";
 import { throwIfAborted } from "./cancel.js";
+import type {
+  AnalyzedQuery,
+  ContextualTitlePrefix,
+  IndexedDocument,
+  QueryConcept,
+  QueryToken,
+  RetrievalHit,
+  RetrieveOptions,
+  SearchIndex,
+} from "./types.js";
 
-/** @param {string[]} needles @param {string[]} hay */
-function sequencePresent(needles, hay) {
+type ConceptTitleMatch = "key" | "expansion" | "exact" | "prefix" | "lemma";
+type VersionCompanion = "none" | "absent" | "covered" | "weak";
+
+interface VersionHit {
+  compactHit: boolean;
+  dottedHit: boolean;
+  companion: VersionCompanion;
+  numberConcepts: number;
+}
+
+function sequencePresent(needles: string[], hay: string[]) {
   const n = needles.length;
   if (!n || hay.length < n) return false;
   for (let i = 0; i <= hay.length - n; i++) {
@@ -22,8 +41,7 @@ function sequencePresent(needles, hay) {
   return false;
 }
 
-/** @param {import("./types.js").QueryConcept} concept */
-function expansionSequence(concept) {
+function expansionSequence(concept: QueryConcept) {
   if (Array.isArray(concept.expansion) && concept.expansion.length) {
     return concept.expansion.filter((f) => f && f !== concept.id && !/^\d+$/.test(f));
   }
@@ -38,13 +56,18 @@ function expansionSequence(concept) {
  * A single expansion word is never full multi-token equivalence evidence,
  * including a 1-token alias that is just one of the expansion words.
  */
-/** @param {string[]} seq @param {string[]} expansion */
-function isSingleExpansionWordAlias(seq, expansion) {
+function isSingleExpansionWordAlias(seq: string[], expansion: string[]) {
   return expansion.length >= 2 && seq.length === 1 && expansion.includes(seq[0]);
 }
 
-/** @param {string[]} expansion @param {string[]} tokens @param {string[]} lemmas @param {Set<string>} tokenSet @param {Set<string>} lemmaSet @param {{ requireContiguous?: boolean }} [opts] */
-function fieldHasExpansionEvidence(expansion, tokens, lemmas, tokenSet, lemmaSet, { requireContiguous = false } = {}) {
+function fieldHasExpansionEvidence(
+  expansion: string[],
+  tokens: string[],
+  lemmas: string[],
+  tokenSet: Set<string>,
+  lemmaSet: Set<string>,
+  { requireContiguous = false }: { requireContiguous?: boolean } = {}
+) {
   if (!expansion.length) return false;
   if (expansion.length === 1) {
     return tokenSet.has(expansion[0]) || lemmaSet.has(expansion[0]);
@@ -54,8 +77,14 @@ function fieldHasExpansionEvidence(expansion, tokens, lemmas, tokenSet, lemmaSet
   return expansion.every((f) => tokenSet.has(f) || lemmaSet.has(f));
 }
 
-/** @param {import("./types.js").QueryConcept} concept @param {string[]} tokens @param {string[]} lemmas @param {Set<string>} tokenSet @param {Set<string>} lemmaSet @param {{ requireContiguous?: boolean }} [opts] */
-function acronymFieldEvidence(concept, tokens, lemmas, tokenSet, lemmaSet, opts = {}) {
+function acronymFieldEvidence(
+  concept: QueryConcept,
+  tokens: string[],
+  lemmas: string[],
+  tokenSet: Set<string>,
+  lemmaSet: Set<string>,
+  opts: { requireContiguous?: boolean } = {}
+) {
   if (tokenSet.has(concept.id) || lemmaSet.has(concept.id)) return true;
   const expansion = expansionSequence(concept);
   if (fieldHasExpansionEvidence(expansion, tokens, lemmas, tokenSet, lemmaSet, opts)) return true;
@@ -67,12 +96,7 @@ function acronymFieldEvidence(concept, tokens, lemmas, tokenSet, lemmaSet, opts 
   return false;
 }
 
-/**
- * @param {import("./types.js").QueryConcept} concept
- * @param {import("./types.js").IndexedDocument} doc
- * @returns {"key" | "expansion" | "exact" | "prefix" | "lemma" | null}
- */
-function conceptMatchesTitle(concept, doc) {
+function conceptMatchesTitle(concept: QueryConcept, doc: IndexedDocument): ConceptTitleMatch | null {
   if (concept.kind === "acronym") {
     if (doc.titleTokenSet.has(concept.id) || doc.titleLemmaSet.has(concept.id)) return "key";
     if (
@@ -102,8 +126,7 @@ function conceptMatchesTitle(concept, doc) {
   return null;
 }
 
-/** @param {import("./types.js").QueryConcept} concept @param {import("./types.js").IndexedDocument} doc */
-function conceptMatchesBody(concept, doc) {
+function conceptMatchesBody(concept: QueryConcept, doc: IndexedDocument) {
   if (concept.kind === "acronym") {
     return acronymFieldEvidence(
       concept,
@@ -125,8 +148,7 @@ function conceptMatchesBody(concept, doc) {
   return false;
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {import("./types.js").IndexedDocument} doc */
-function versionHit(query, doc) {
+function versionHit(query: AnalyzedQuery, doc: IndexedDocument): VersionHit | null {
   const numberConcepts = query.concepts.filter((c) => c.kind === "number");
   const dottedHit = query.dottedSpans.some((span) => doc.dottedSpans.includes(span));
   let compactHit = false;
@@ -141,7 +163,7 @@ function versionHit(query, doc) {
   const companions = query.tokens.filter(
     (t) => !isAllDigitToken(t.normalized) && t.normalized.length >= 3
   );
-  let companion = "none";
+  let companion: VersionCompanion = "none";
   if (companions.length === 0) companion = "absent";
   else {
     const ok = companions.some((c) =>
@@ -160,8 +182,7 @@ function versionHit(query, doc) {
   };
 }
 
-/** @param {import("./types.js").QueryToken} qt @param {string} titleTok @param {string} titleLemma */
-function canonicalTokenEqual(qt, titleTok, titleLemma) {
+function canonicalTokenEqual(qt: QueryToken, titleTok: string, titleLemma: string) {
   const n = qt.normalized;
   const lemma = qt.lemma || n;
   return n === titleTok || lemma === titleTok || n === titleLemma || lemma === titleLemma;
@@ -172,12 +193,8 @@ function canonicalTokenEqual(qt, titleTok, titleLemma) {
  * start of the title exactly/canonically. Only the FINAL token may be a short
  * proper prefix of the aligned title token. Standalone stubs (ap, c, co) do
  * not qualify because they have no preceding context.
- *
- * @param {import("./types.js").AnalyzedQuery} query
- * @param {import("./types.js").IndexedDocument} doc
- * @returns {import("./types.js").ContextualTitlePrefix | null}
  */
-export function matchContextualTitlePrefix(query, doc) {
+export function matchContextualTitlePrefix(query: AnalyzedQuery, doc: IndexedDocument): ContextualTitlePrefix | null {
   const qToks = query.tokens || [];
   const titleToks = doc.titleTokens || [];
   const titleLemmas = doc.titleLemmas || [];
@@ -185,8 +202,7 @@ export function matchContextualTitlePrefix(query, doc) {
   if (qToks.length > titleToks.length) return null;
 
   const last = qToks.length - 1;
-  /** @type {string[]} */
-  const matchedPrefixTokens = [];
+  const matchedPrefixTokens: string[] = [];
   for (let i = 0; i < last; i++) {
     const titleTok = titleToks[i];
     const titleLemma = titleLemmas[i] || "";
@@ -218,12 +234,11 @@ export function matchContextualTitlePrefix(query, doc) {
   };
 }
 
-/**
- * @param {import("./types.js").AnalyzedQuery} query
- * @param {import("./types.js").IndexedDocument} doc
- * @param {(doc: import("./types.js").IndexedDocument, source: string) => void} add
- */
-function scanDocument(query, doc, add) {
+function scanDocument(
+  query: AnalyzedQuery,
+  doc: IndexedDocument,
+  add: (doc: IndexedDocument, source: string) => void
+) {
   if (doc.normalizedTitle === query.tokens.map((t) => t.normalized).join(" ")) {
     add(doc, "exact-title");
   }
@@ -260,13 +275,8 @@ function scanDocument(query, doc, add) {
 }
 
 function createHitBag() {
-  /** @type {Map<string, import("./types.js").RetrievalHit>} */
-  const byId = new Map();
-  /**
-   * @param {import("./types.js").IndexedDocument} doc
-   * @param {string} source
-   */
-  function add(doc, source) {
+  const byId = new Map<string, RetrievalHit>();
+  function add(doc: IndexedDocument, source: string) {
     let hit = byId.get(doc.id);
     if (!hit) {
       hit = { document: doc, retrievalSources: [] };
@@ -280,12 +290,8 @@ function createHitBag() {
 /**
  * Deterministic full-scan retrievers. Each hit records provenance only;
  * none assign ranking scores.
- * @param {import("./types.js").AnalyzedQuery} query
- * @param {import("./types.js").SearchIndex} index
- * @param {import("./types.js").RetrieveOptions} [options]
- * @returns {import("./types.js").RetrievalHit[]}
  */
-export function retrieveCandidates(query, index, { signal } = {}) {
+export function retrieveCandidates(query: AnalyzedQuery, index: SearchIndex, { signal }: RetrieveOptions = {}): RetrievalHit[] {
   const { byId, add } = createHitBag();
   const docs = index.documents || [];
   for (let i = 0; i < docs.length; i++) {
@@ -295,8 +301,7 @@ export function retrieveCandidates(query, index, { signal } = {}) {
   return [...byId.values()];
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query @param {import("./types.js").SearchIndex} index @param {import("./types.js").RetrieveOptions} [options] */
-export async function retrieveCandidatesAsync(query, index, { signal } = {}) {
+export async function retrieveCandidatesAsync(query: AnalyzedQuery, index: SearchIndex, { signal }: RetrieveOptions = {}): Promise<RetrievalHit[]> {
   const { byId, add } = createHitBag();
   const docs = index.documents || [];
   for (let i = 0; i < docs.length; i++) {
