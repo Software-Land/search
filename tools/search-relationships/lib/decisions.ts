@@ -5,18 +5,12 @@
 import { ALLOWED_TYPES } from "./types.js";
 import { relationshipId, normalizeRef } from "./ids.js";
 import type { RelDecision, RelDecisionDoc, RelDecisionIndex } from "../types.js";
+import { DecisionError } from "../index.js";
+
+export { DecisionError };
 
 export const DECISION_FORMAT = "search-relationships-decisions";
 export const ALLOWED_DECISIONS = new Set(["accept", "reject"]);
-
-export class DecisionError extends Error {
-  details?: string[];
-  constructor(message: string, details: string[] = []) {
-    super(message);
-    this.name = "DecisionError";
-    this.details = details;
-  }
-}
 
 export function emptyDecisions(): RelDecisionDoc {
   return { format: DECISION_FORMAT, version: 1, relationships: [] };

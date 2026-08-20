@@ -3,13 +3,10 @@
  * Implementation lives under ./lib; this barrel freezes the v0.2.2 types.
  */
 import {
-  COMPILER_VERSION as compilerVersion,
   analyzeRelationships as analyzeRelationshipsImpl,
   compileRelationships as compileRelationshipsImpl,
   filterRelationships as filterRelationshipsImpl,
-  DecisionError as DecisionErrorImpl,
 } from "./lib/pipeline.js";
-import { LIFECYCLE as lifecycleImpl } from "./lib/lifecycle.js";
 import { relationshipId as relationshipIdImpl } from "./lib/ids.js";
 import {
   RELATIONSHIP_TYPES as relationshipTypesImpl,
@@ -29,7 +26,7 @@ export type {
   RelationshipEdge,
 } from "./types.js";
 
-export const COMPILER_VERSION: 1 = compilerVersion;
+export const COMPILER_VERSION: 1 = 1;
 
 export const LIFECYCLE: {
   readonly MANUAL_ACCEPTED: "MANUAL_ACCEPTED";
@@ -38,20 +35,28 @@ export const LIFECYCLE: {
   readonly HUMAN_REJECTED: "HUMAN_REJECTED";
   readonly CONFLICT: "CONFLICT";
   readonly ORPHANED_DECISION: "ORPHANED_DECISION";
-} = lifecycleImpl;
+} = {
+  MANUAL_ACCEPTED: "MANUAL_ACCEPTED",
+  HUMAN_ACCEPTED: "HUMAN_ACCEPTED",
+  REVIEW_PENDING: "REVIEW_PENDING",
+  HUMAN_REJECTED: "HUMAN_REJECTED",
+  CONFLICT: "CONFLICT",
+  ORPHANED_DECISION: "ORPHANED_DECISION",
+};
 
 export const RELATIONSHIP_TYPES: Record<string, { symmetric: boolean; searchEligible: boolean; description: string }> =
   relationshipTypesImpl;
 export const DEFAULT_RUNTIME_TYPES: readonly string[] = defaultRuntimeTypesImpl;
 export const STRUCTURAL_TYPES: readonly string[] = structuralTypesImpl;
 
-type DecisionErrorInstance = Error & { details?: string[] };
-interface DecisionErrorConstructor {
-  new (message: string, details?: string[]): DecisionErrorInstance;
-  prototype: DecisionErrorInstance;
+export class DecisionError extends Error {
+  details?: string[];
+  constructor(message: string, details: string[] = []) {
+    super(message);
+    this.name = "DecisionError";
+    this.details = details;
+  }
 }
-export const DecisionError: DecisionErrorConstructor = DecisionErrorImpl;
-export type DecisionError = DecisionErrorInstance;
 
 export function analyzeRelationships(
   input?: unknown,
