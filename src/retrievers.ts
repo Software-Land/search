@@ -12,34 +12,50 @@ import { retrieveCandidates, retrieveCandidatesAsync, matchContextualTitlePrefix
 import { allowPrefixMatch } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
 import { throwIfAborted } from "./cancel.js";
+import type {
+  AdaptiveRetrieverOptions,
+  AnalyzedQuery,
+  IndexedLexicalOptions,
+  IndexedLexicalState,
+  Posting,
+  Retriever,
+  RetrieveOptions,
+  SearchIndex,
+} from "./types.js";
+
+type QueryFormKind = "token" | "lemma" | "acronym-key" | "concept" | "acronym-form";
+type QueryForm = { form: string; kind: QueryFormKind };
+type AdaptiveActive = "full-scan" | "indexed-lexical";
+
+interface IndexedHit {
+  pos: number;
+  retrievalSources: string[];
+  retrievalScore: number;
+}
 
 // Exact-title, configured-equivalence, and version bypass the BM25 budget
 // without a cap. Contextual title-prefix is a capped must-keep: overflow
 // stays eligible for the ordinary candidateLimit pool.
-const UNBOUNDED_MUST_KEEP = new Set(["exact-title", "configured-equivalence", "version"]);
+const UNBOUNDED_MUST_KEEP = new Set<string>(["exact-title", "configured-equivalence", "version"]);
 const CONTEXTUAL_MUST_KEEP_SOURCE = "contextual-title-prefix";
 const K1 = 1.2;
 const B = 0.75;
 const TITLE_BOOST = 4;
 
-/** @param {{ retrievalSources: string[] }} hit @param {string} source */
-function pushSource(hit, source) {
+function pushSource(hit: { retrievalSources: string[] }, source: string) {
   if (!hit.retrievalSources.includes(source)) hit.retrievalSources.push(source);
 }
 
-/** @param {number} n @param {number} df */
-function idf(n, df) {
+function idf(n: number, df: number) {
   return Math.log(1 + (n - df + 0.5) / (df + 0.5));
 }
 
-/** @param {number} tf @param {number} dl @param {number} avgdl */
-function bm25Tf(tf, dl, avgdl) {
+function bm25Tf(tf: number, dl: number, avgdl: number) {
   const denom = tf + K1 * (1 - B + B * (dl / Math.max(avgdl, 1)));
   return (tf * (K1 + 1)) / Math.max(denom, 1e-9);
 }
 
-/** @param {Array<{ norm: string }>} arr @param {string} key */
-function lowerBoundNorm(arr, key) {
+function lowerBoundNorm(arr: Array<{ norm: string }>, key: string) {
   let lo = 0;
   let hi = arr.length;
   while (lo < hi) {
@@ -50,8 +66,7 @@ function lowerBoundNorm(arr, key) {
   return lo;
 }
 
-/** @param {string[]} terms @param {string} key */
-function lowerBoundTerm(terms, key) {
+function lowerBoundTerm(terms: string[], key: string) {
   let lo = 0;
   let hi = terms.length;
   while (lo < hi) {
@@ -62,13 +77,10 @@ function lowerBoundTerm(terms, key) {
   return lo;
 }
 
-/** @param {import("./types.js").AnalyzedQuery} query */
-function queryForms(query) {
-  /** @type {Array<{ form: string, kind: string }>} */
-  const forms = [];
-  const seen = new Set();
-  /** @param {unknown} form @param {string} kind */
-  function add(form, kind) {
+function queryForms(query: AnalyzedQuery) {
+  const forms: QueryForm[] = [];
+  const seen = new Set<string>();
+  function add(form: unknown, kind: QueryFormKind) {
     const f = String(form || "");
     if (!f || seen.has(`${kind}:${f}`)) return;
     seen.add(`${kind}:${f}`);
@@ -85,23 +97,13 @@ function queryForms(query) {
   return forms;
 }
 
-export function createFullScanRetriever() {
+export function createFullScanRetriever(): Retriever {
   return {
     name: "full-scan",
     prepare() {},
-    /**
-     * @param {import("./types.js").AnalyzedQuery} query
-     * @param {import("./types.js").SearchIndex} index
-     * @param {import("./types.js").RetrieveOptions} [opts]
-     */
     retrieve(query, index, opts = {}) {
       return retrieveCandidates(query, index, { signal: opts.signal });
     },
-    /**
-     * @param {import("./types.js").AnalyzedQuery} query
-     * @param {import("./types.js").SearchIndex} index
-     * @param {import("./types.js").RetrieveOptions} [opts]
-     */
     retrieveAsync(query, index, opts = {}) {
       return retrieveCandidatesAsync(query, index, { signal: opts.signal });
     },
@@ -111,14 +113,12 @@ export function createFullScanRetriever() {
   };
 }
 
-/** @returns {import("./types.js").Posting} */
-function emptyPosting() {
+function emptyPosting(): Posting {
   return { df: 0, docs: [], tfs: [] };
 }
 
-/** @param {Map<string, import("./types.js").Posting>} map @param {string[]} tokens @param {number} docPos */
-function addTokenCounts(map, tokens, docPos) {
-  const counts = new Map();
+function addTokenCounts(map: Map<string, Posting>, tokens: string[], docPos: number) {
+  const counts = new Map<string, number>();
   for (const t of tokens) {
     if (!t) continue;
     counts.set(t, (counts.get(t) || 0) + 1);
@@ -136,8 +136,7 @@ function addTokenCounts(map, tokens, docPos) {
   return counts;
 }
 
-/** @param {Map<string, number>} counts */
-function postingLength(counts) {
+function postingLength(counts: Map<string, number>) {
   let n = 0;
   for (const tf of counts.values()) n += tf;
   return Math.max(n, 1);
@@ -146,17 +145,14 @@ function postingLength(counts) {
 /**
  * Inverted lexical index + deterministic exact sources.
  * BM25 scores order the budgeted (non-exact) slice only.
- * @param {import("./types.js").IndexedLexicalOptions} [opts]
- * @returns {import("./types.js").Retriever}
  */
 export function createIndexedLexicalRetriever({
   candidateLimit = 200,
   prefixCap = 800,
   unionDeterministic = true,
   titleBoost = TITLE_BOOST,
-} = {}) {
-  /** @type {import("./types.js").IndexedLexicalState} */
-  const state = {
+}: IndexedLexicalOptions = {}): Retriever {
+  const state: IndexedLexicalState = {
     prepared: false,
     n: 0,
     titlePostings: new Map(),
@@ -175,8 +171,7 @@ export function createIndexedLexicalRetriever({
     termCount: 0,
   };
 
-  /** @param {import("./types.js").SearchIndex} index */
-  function prepare(index) {
+  function prepare(index: SearchIndex) {
     const docs = index.documents || [];
     state.n = docs.length;
     state.titlePostings = new Map();
@@ -189,8 +184,7 @@ export function createIndexedLexicalRetriever({
     state.bodyDl = new Array(docs.length);
     let titleLen = 0;
     let bodyLen = 0;
-    /** @type {Array<{ norm: string, pos: number }>} */
-    const titles = [];
+    const titles: Array<{ norm: string; pos: number }> = [];
     for (let i = 0; i < docs.length; i++) {
       const doc = docs[i];
       const tCounts = addTokenCounts(state.titlePostings, doc.titleTokens || [], i);
@@ -233,13 +227,7 @@ export function createIndexedLexicalRetriever({
     state.prepared = true;
   }
 
-  /**
-   * @param {Map<number, { pos: number, retrievalSources: string[], retrievalScore: number }>} byPos
-   * @param {number} pos
-   * @param {string} source
-   * @param {number} [scoreDelta]
-   */
-  function addHit(byPos, pos, source, scoreDelta) {
+  function addHit(byPos: Map<number, IndexedHit>, pos: number, source: string, scoreDelta?: number) {
     let hit = byPos.get(pos);
     if (!hit) {
       hit = { pos, retrievalSources: [], retrievalScore: 0 };
@@ -249,16 +237,15 @@ export function createIndexedLexicalRetriever({
     if (scoreDelta) hit.retrievalScore += scoreDelta;
   }
 
-  /**
-   * @param {Map<number, { pos: number, retrievalSources: string[], retrievalScore: number }>} byPos
-   * @param {import("./types.js").Posting | undefined} posting
-   * @param {string} source
-   * @param {number} fieldBoost
-   * @param {number} avgdl
-   * @param {number[]} dlArr
-   * @param {{ signal?: AbortSignal, n?: number }} [opts]
-   */
-  function accumulatePosting(byPos, posting, source, fieldBoost, avgdl, dlArr, { signal, n } = {}) {
+  function accumulatePosting(
+    byPos: Map<number, IndexedHit>,
+    posting: Posting | undefined,
+    source: string,
+    fieldBoost: number,
+    avgdl: number,
+    dlArr: number[],
+    { signal, n }: { signal?: AbortSignal; n?: number } = {}
+  ) {
     if (!posting) return;
     const w = idf(n || 0, posting.df) * fieldBoost;
     for (let i = 0; i < posting.docs.length; i++) {
@@ -269,10 +256,9 @@ export function createIndexedLexicalRetriever({
     }
   }
 
-  /** @param {string} prefix */
-  function prefixTerms(prefix) {
+  function prefixTerms(prefix: string) {
     if (!prefix) return [];
-    const out = [];
+    const out: string[] = [];
     let i = lowerBoundTerm(state.sortedTerms, prefix);
     while (i < state.sortedTerms.length) {
       const term = state.sortedTerms[i];
@@ -284,18 +270,12 @@ export function createIndexedLexicalRetriever({
     return out;
   }
 
-  /**
-   * @param {import("./types.js").AnalyzedQuery} query
-   * @param {import("./types.js").SearchIndex} index
-   * @param {import("./types.js").RetrieveOptions} [opts]
-   */
-  function retrieve(query, index, { signal, candidateLimit: limitOverride } = {}) {
+  function retrieve(query: AnalyzedQuery, index: SearchIndex, { signal, candidateLimit: limitOverride }: RetrieveOptions = {}) {
     throwIfAborted(signal);
     if (!state.prepared) prepare(index);
     const docs = index.documents || [];
     const n = state.n || docs.length;
-    /** @type {Map<number, { pos: number, retrievalSources: string[], retrievalScore: number }>} */
-    const byPos = new Map();
+    const byPos = new Map<number, IndexedHit>();
     const k = limitOverride || candidateLimit;
     const forms = queryForms(query);
     const qNorm = (query.tokens || []).map((t) => t.normalized).join(" ");
@@ -307,7 +287,7 @@ export function createIndexedLexicalRetriever({
 
     if (qNorm) {
       const start = lowerBoundNorm(state.sortedTitles, qNorm);
-      const prefixHits = [];
+      const prefixHits: Array<{ norm: string; pos: number }> = [];
       for (let i = start; i < state.sortedTitles.length; i++) {
         const row = state.sortedTitles[i];
         if (!row.norm.startsWith(qNorm)) break;
@@ -366,13 +346,11 @@ export function createIndexedLexicalRetriever({
     }
 
     const qToks = query.tokens || [];
-    /** @type {Map<number, number>} */
-    const contextualQuality = new Map();
+    const contextualQuality = new Map<number, number>();
     if (qToks.length >= 2) {
       const first = qToks[0];
       const keys = [...new Set([first?.normalized, first?.lemma].filter(Boolean))];
-      /** @type {Set<number>} */
-      const contextualPos = new Set();
+      const contextualPos = new Set<number>();
       for (const key of keys) {
         for (const map of [state.titlePostings, state.titleLemmaPostings]) {
           const posting = map.get(key);
@@ -394,9 +372,9 @@ export function createIndexedLexicalRetriever({
     }
 
     const hits = [...byPos.values()];
-    const unboundedMust = [];
-    const contextualMust = [];
-    const rest = [];
+    const unboundedMust: IndexedHit[] = [];
+    const contextualMust: IndexedHit[] = [];
+    const rest: IndexedHit[] = [];
     for (const h of hits) {
       const keepUnbounded = unionDeterministic && h.retrievalSources.some((s) => UNBOUNDED_MUST_KEEP.has(s));
       const keepContextual =
@@ -429,7 +407,7 @@ export function createIndexedLexicalRetriever({
     name: "indexed-lexical",
     prepare,
     retrieve,
-    async retrieveAsync(/** @type {import("./types.js").AnalyzedQuery} */ query, /** @type {import("./types.js").SearchIndex} */ index, /** @type {import("./types.js").RetrieveOptions} */ opts = {}) {
+    async retrieveAsync(query: AnalyzedQuery, index: SearchIndex, opts: RetrieveOptions = {}) {
       throwIfAborted(opts.signal);
       await Promise.resolve();
       throwIfAborted(opts.signal);
@@ -449,21 +427,17 @@ export function createIndexedLexicalRetriever({
   };
 }
 
-/**
- * @param {import("./types.js").AdaptiveRetrieverOptions} [opts]
- * @returns {import("./types.js").Retriever}
- */
-export function createAdaptiveRetriever({ documentThreshold = 1500, smallLimit, indexedOptions } = {}) {
+export function createAdaptiveRetriever({ documentThreshold = 1500, smallLimit, indexedOptions }: AdaptiveRetrieverOptions = {}): Retriever {
   const full = createFullScanRetriever();
   const indexed = createIndexedLexicalRetriever(indexedOptions);
   const threshold =
     typeof smallLimit === "number" && Number.isInteger(smallLimit) && smallLimit > 0
       ? smallLimit
       : documentThreshold || 1500;
-  let active = "full-scan";
+  let active: AdaptiveActive = "full-scan";
   return {
     name: "adaptive",
-    prepare(/** @type {import("./types.js").SearchIndex} */ index) {
+    prepare(index: SearchIndex) {
       const n = index.documents?.length || 0;
       active = n <= threshold ? "full-scan" : "indexed-lexical";
       if (active === "indexed-lexical") indexed.prepare(index);
@@ -481,19 +455,18 @@ export function createAdaptiveRetriever({ documentThreshold = 1500, smallLimit, 
   };
 }
 
-/** @param {unknown} spec @returns {import("./types.js").Retriever} */
-export function resolveRetriever(spec) {
+export function resolveRetriever(spec: unknown): Retriever {
   if (!spec || spec === "full-scan") return createFullScanRetriever();
   if (typeof spec === "object" && spec && "retrieve" in spec && typeof spec.retrieve === "function") {
-    return /** @type {import("./types.js").Retriever} */ (spec);
+    return spec as Retriever;
   }
   if (spec === "indexed" || spec === "indexed-lexical") return createIndexedLexicalRetriever();
   if (spec === "adaptive") return createAdaptiveRetriever();
   if (typeof spec === "object" && spec && "type" in spec && spec.type === "indexed-lexical") {
-    return createIndexedLexicalRetriever(/** @type {import("./types.js").IndexedLexicalOptions} */ (spec));
+    return createIndexedLexicalRetriever(spec as IndexedLexicalOptions);
   }
   if (typeof spec === "object" && spec && "type" in spec && spec.type === "adaptive") {
-    return createAdaptiveRetriever(/** @type {import("./types.js").AdaptiveRetrieverOptions} */ (spec));
+    return createAdaptiveRetriever(spec as AdaptiveRetrieverOptions);
   }
   return createFullScanRetriever();
 }
