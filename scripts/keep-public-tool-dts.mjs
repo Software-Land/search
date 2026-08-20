@@ -1,7 +1,10 @@
 /**
- * Keep generated public tool barrels; drop declaration emit from tool impl modules.
- * Only walks TypeScript-migrated tools so handwritten corpus/semantic
+ * Keep public tool barrels; drop declaration emit from tool impl modules.
+ * Walks TypeScript-migrated tools only so handwritten corpus/semantic
  * declarations are left untouched.
+ *
+ * search-lexical/index.d.ts is generated and preserved.
+ * search-relationships/index.d.ts and types.d.ts are handwritten v0.2.2 contracts.
  */
 import { existsSync, readdirSync, statSync, unlinkSync } from "node:fs";
 import path from "node:path";
@@ -9,7 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-/** Tool directories whose JS/DTS are generated from TypeScript. */
+/** Tool directories whose JS is generated from TypeScript. */
 const migratedTools = ["search-lexical", "search-relationships"];
 
 const keep = new Set([

@@ -1,6 +1,9 @@
 {
   // In-place emit for TypeScript-migrated tools (Option C).
-  // Add include globs as each tool is migrated. Do not include remaining JS tools.
+  // Lexical emits JS + public index.d.ts here. Relationships JS uses
+  // tsconfig.tools-emit-relationships.json (declaration: false) so the
+  // handwritten v0.2.2 public .d.ts files are not overwritten.
+  // Do not include remaining JS tools.
   "compilerOptions": {
     "allowJs": false,
     "checkJs": false,
@@ -28,6 +31,6 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false
   },
-  "include": ["tools/search-lexical/**/*.ts", "tools/search-relationships/**/*.ts"],
+  "include": ["tools/search-lexical/**/*.ts"],
   "exclude": ["tools/**/.output/**"]
 }

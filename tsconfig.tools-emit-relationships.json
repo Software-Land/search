@@ -1,0 +1,8 @@
+{
+  // Relationships runtime JS is emitted in place; public .d.ts stay handwritten (v0.2.2 contract).
+  "extends": "./tsconfig.tools-emit.json",
+  "compilerOptions": {
+    "declaration": false
+  },
+  "include": ["tools/search-relationships/**/*.ts"]
+}
