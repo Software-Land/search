@@ -6,7 +6,16 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const dist = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "dist");
-const keep = new Set(["index.d.ts", "api.d.ts", "browser/index.d.ts", "browser/api.d.ts"]);
+const keep = new Set([
+  "index.d.ts",
+  "api.d.ts",
+  "browser/index.d.ts",
+  "browser/api.d.ts",
+  // Emitted helpers imported by packed lexical tooling (directly or via lexicalNormalize.js).
+  "documentId.d.ts",
+  "saturatingFrequency.d.ts",
+  "text.d.ts",
+]);
 
 function walk(dir, rel = "") {
   for (const name of readdirSync(dir)) {

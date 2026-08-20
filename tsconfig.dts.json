@@ -27,6 +27,15 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false
   },
-  "include": ["src/index.ts", "src/api.ts", "src/browser/index.ts", "src/browser/api.ts", "src/**/*.d.ts"],
+  "include": [
+    "src/index.ts",
+    "src/api.ts",
+    "src/browser/index.ts",
+    "src/browser/api.ts",
+    "src/documentId.ts",
+    "src/saturatingFrequency.ts",
+    "src/text.ts",
+    "src/**/*.d.ts"
+  ],
   "exclude": ["examples/**", "src/ambient-core.d.ts"]
 }

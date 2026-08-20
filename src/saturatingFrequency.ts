@@ -4,9 +4,8 @@
  * tree is not imported from root or browser.
  *
  * log1p(count) / (1 + log1p(count)) — monotonic, bounded in [0, 1).
- * @param {number} count
  */
-export function saturatingFrequency(count) {
+export function saturatingFrequency(count: number): number {
   const n = Math.max(0, Number(count) || 0);
   const x = Math.log1p(n);
   return Number((x / (1 + x)).toFixed(4));

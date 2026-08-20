@@ -3,8 +3,7 @@ const DEFAULT_STOP = new Set([
   "a", "and", "in", "to", "as", "vs",
 ]);
 
-/** @param {unknown} [text] @returns {string[]} */
-export function tokenize(text) {
+export function tokenize(text?: unknown): string[] {
   return String(text || "")
     .toLowerCase()
     .replace(/[''`"]/g, "")
@@ -14,27 +13,24 @@ export function tokenize(text) {
     .filter(Boolean);
 }
 
-/** @param {unknown} [text] @returns {string} */
-export function normalizeSurface(text) {
+export function normalizeSurface(text?: unknown): string {
   return tokenize(text).join(" ");
 }
 
-/** @param {unknown} [token] @returns {string} */
-export function collapseTrailingRepeats(token) {
+export function collapseTrailingRepeats(token?: unknown): string {
   const t = String(token || "");
   if (t.length < 4) return t;
   return t.replace(/(.)\1{2,}$/g, "$1");
 }
 
-/** @param {unknown} [a] @param {unknown} [b] @returns {number} */
-export function levenshtein(a, b) {
+export function levenshtein(a?: unknown, b?: unknown): number {
   const s = String(a || "");
   const t = String(b || "");
   if (s === t) return 0;
   if (!s.length) return t.length;
   if (!t.length) return s.length;
-  const prev = new Array(t.length + 1);
-  const curr = new Array(t.length + 1);
+  const prev: number[] = new Array(t.length + 1);
+  const curr: number[] = new Array(t.length + 1);
   for (let j = 0; j <= t.length; j++) prev[j] = j;
   for (let i = 1; i <= s.length; i++) {
     curr[0] = i;
@@ -47,8 +43,7 @@ export function levenshtein(a, b) {
   return prev[t.length];
 }
 
-/** @param {unknown} [prefix] @param {unknown} [token] */
-export function isNearCompletePrefix(prefix, token) {
+export function isNearCompletePrefix(prefix?: unknown, token?: unknown): boolean {
   const p = String(prefix || "");
   const t = String(token || "");
   if (!p || !t || !t.startsWith(p)) return false;
@@ -61,8 +56,7 @@ export function isNearCompletePrefix(prefix, token) {
  * Title-token prefix evidence. Short alphabetic stubs (io, a, ap) must not
  * prefix-match longer tokens; length >= 4 prefixes are allowed (mono → monotonic).
  */
-/** @param {unknown} [queryTok] @param {unknown} [titleTok] */
-export function allowPrefixMatch(queryTok, titleTok) {
+export function allowPrefixMatch(queryTok?: unknown, titleTok?: unknown): boolean {
   const q = String(queryTok || "");
   const t = String(titleTok || "");
   if (!q || !t) return false;
@@ -74,8 +68,7 @@ export function allowPrefixMatch(queryTok, titleTok) {
   return false;
 }
 
-/** @param {unknown} [title] @returns {string} */
-export function firstSurfaceToken(title) {
+export function firstSurfaceToken(title?: unknown): string {
   const tokens = tokenize(title);
   return tokens[0] || "";
 }

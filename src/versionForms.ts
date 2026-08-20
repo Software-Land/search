@@ -7,15 +7,13 @@
 
 const DOTTED_NUMERIC_SPAN_RE = /(?:^|[^0-9])(\d+(?:\.\d+)+)(?![0-9])/g;
 
-/** @param {unknown} [tok] */
-export function isAllDigitToken(tok) {
+export function isAllDigitToken(tok?: unknown): boolean {
   return typeof tok === "string" && /^\d+$/.test(tok);
 }
 
-/** @param {unknown} [surface] @returns {string[]} */
-export function extractDottedSpans(surface) {
+export function extractDottedSpans(surface?: unknown): string[] {
   const text = String(surface || "");
-  const spans = [];
+  const spans: string[] = [];
   const re = new RegExp(DOTTED_NUMERIC_SPAN_RE.source, "g");
   let match;
   while ((match = re.exec(text)) !== null) {
@@ -24,10 +22,9 @@ export function extractDottedSpans(surface) {
   return spans;
 }
 
-/** @param {unknown} [surface] @returns {string[]} */
-export function extractVersionCompactForms(surface) {
-  const forms = [];
-  const seen = new Set();
+export function extractVersionCompactForms(surface?: unknown): string[] {
+  const forms: string[] = [];
+  const seen = new Set<string>();
   for (const span of extractDottedSpans(surface)) {
     if (!span.includes(".")) continue;
     const compact = span.replace(/\./g, "");
@@ -39,8 +36,7 @@ export function extractVersionCompactForms(surface) {
   return forms;
 }
 
-/** @param {unknown} [qTok] @param {unknown} [versionCompactForms] */
-export function queryTokenMatchesVersionCompact(qTok, versionCompactForms) {
+export function queryTokenMatchesVersionCompact(qTok?: unknown, versionCompactForms?: unknown): boolean {
   if (!isAllDigitToken(qTok)) return false;
   if (!Array.isArray(versionCompactForms) || versionCompactForms.length === 0) {
     return false;
@@ -48,8 +44,7 @@ export function queryTokenMatchesVersionCompact(qTok, versionCompactForms) {
   return versionCompactForms.some((form) => form === qTok);
 }
 
-/** @param {unknown} [query] @param {unknown} [span] */
-export function queryHasDottedSpan(query, span) {
+export function queryHasDottedSpan(query?: unknown, span?: unknown): boolean {
   const qSpans = extractDottedSpans(query);
   return typeof span === "string" && qSpans.includes(span);
 }

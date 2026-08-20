@@ -4,8 +4,7 @@
  * "no hits" from "this query is stale."
  */
 
-/** @param {string} [message] @returns {Error} */
-export function abortError(message = "Aborted") {
+export function abortError(message = "Aborted"): Error {
   if (typeof DOMException === "function") {
     try {
       return new DOMException(message, "AbortError");
@@ -18,15 +17,13 @@ export function abortError(message = "Aborted") {
   return err;
 }
 
-/** @param {AbortSignal | null | undefined} [signal] */
-export function throwIfAborted(signal) {
+export function throwIfAborted(signal?: AbortSignal | null): void {
   if (!signal) return;
   if (signal.aborted) throw abortError("Aborted");
 }
 
-/** @param {unknown} err */
-export function isAbortError(err) {
+export function isAbortError(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;
-  const rec = /** @type {{ name?: unknown, code?: unknown }} */ (err);
+  const rec = err as { name?: unknown; code?: unknown };
   return rec.name === "AbortError" || rec.code === 20;
 }
