@@ -1,6 +1,5 @@
 {
-  // Public facade .d.ts files are excluded so tsc emits the matching .js entrypoints.
-  // Consumers still receive those handwritten declarations via package.json types.
+  // Mixed JS/TS emit. Public .d.ts files are produced by tsconfig.dts.json.
   "compilerOptions": {
     "allowJs": true,
     "checkJs": true,
@@ -26,11 +25,6 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false
   },
-  "include": ["src/**/*.js", "src/**/*.d.ts"],
-  "exclude": [
-    "examples/**",
-    "src/ambient-core.d.ts",
-    "src/index.d.ts",
-    "src/browser/index.d.ts"
-  ]
+  "include": ["src/**/*.js", "src/**/*.ts", "src/**/*.d.ts"],
+  "exclude": ["examples/**", "src/ambient-core.d.ts"]
 }

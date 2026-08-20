@@ -308,7 +308,10 @@ describe("public PrefixCompletion typing surface", () => {
     const path = await import("node:path");
     const { fileURLToPath } = await import("node:url");
     const root = path.dirname(fileURLToPath(import.meta.url));
-    const pub = fs.readFileSync(path.join(root, "../src/index.d.ts"), "utf8");
+    const pub = [
+      fs.readFileSync(path.join(root, "../dist/index.d.ts"), "utf8"),
+      fs.readFileSync(path.join(root, "../dist/api.d.ts"), "utf8"),
+    ].join("\n");
     const internal = fs.readFileSync(path.join(root, "../src/types.d.ts"), "utf8");
     expect(pub).toMatch(/export interface PrefixCompletion/);
     expect(pub).toMatch(/source: "final-token-prefix"/);

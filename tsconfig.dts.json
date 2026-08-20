@@ -1,8 +1,15 @@
 {
+  // Declaration emit for the designed public facades only.
   "compilerOptions": {
     "allowJs": true,
     "checkJs": true,
-    "noEmit": true,
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "sourceMap": false,
+    "declarationMap": false,
+    "outDir": "dist",
+    "rootDir": "src",
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -20,13 +27,6 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false
   },
-  "include": [
-    "src/browser/**/*.js",
-    "src/browser/**/*.ts",
-    "src/browser/**/*.d.ts",
-    "src/index.ts",
-    "src/api.ts",
-    "src/**/*.d.ts"
-  ],
+  "include": ["src/index.ts", "src/api.ts", "src/browser/index.ts", "src/browser/api.ts", "src/**/*.d.ts"],
   "exclude": ["examples/**", "src/ambient-core.d.ts"]
 }

@@ -1,3 +1,8 @@
+/**
+ * Designed public type contract for @software-land/search/browser.
+ * Protocol/runtime implementation types stay internal.
+ */
+
 export interface SearchClientOptions {
   worker?: { postMessage(msg: unknown): void; addEventListener?: Function; terminate?: Function; subscribe?: Function };
   workerUrl?: URL | string;
@@ -20,21 +25,3 @@ export interface SearchClient {
   timings(): Record<string, number>;
   readonly ready: boolean;
 }
-
-export declare function createSearchClient(options?: SearchClientOptions): SearchClient;
-/** Resolves the bundled Worker module URL from this package. */
-export declare function searchWorkerUrl(): URL;
-export declare function createLatestWinsSession(options: unknown): unknown;
-export declare function createWorkerRuntime(options: unknown): unknown;
-export declare function createLoopbackTransport(runtime: unknown): unknown;
-export declare const PROTOCOL_VERSION: 1;
-export declare const MSG: {
-  readonly INIT: "init";
-  readonly SEARCH: "search";
-  readonly CANCEL: "cancel";
-  readonly DISPOSE: "dispose";
-  readonly READY: "ready";
-  readonly RESULT: "result";
-  readonly ERROR: "error";
-  readonly ABORTED: "aborted";
-};

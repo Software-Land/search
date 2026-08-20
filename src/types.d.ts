@@ -1,6 +1,6 @@
 /**
  * Internal Search Core contracts for checkJs.
- * Public facade types live in index.d.ts; this file describes implementation shapes.
+ * Public facade types live in api.ts / index.ts; this file describes implementation shapes.
  */
 
 export type RelationshipStrategy = "none" | "mixed" | "hybrid" | "separate";

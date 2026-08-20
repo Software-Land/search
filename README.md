@@ -154,7 +154,7 @@ Runtime parsers: `parseEquivalences`, `parseSynonyms`, `parseRelationships`. Art
 
 ## TypeScript
 
-Implementation is JavaScript. The published runtime is emitted ESM in `dist/`; public types still ship as handwritten `.d.ts` (`types` on each export). From a git checkout:
+Implementation is JavaScript. The published runtime is emitted ESM in `dist/`; root and browser public types are generated from `src/index.ts` / `src/browser/index.ts` into `dist/*.d.ts`. Compiler subpaths still ship handwritten `.d.ts` under `tools/`. From a git checkout:
 
 ```bash
 npm install
@@ -164,7 +164,7 @@ npm run test:types
 npm test
 ```
 
-A repository checkout requires `npm run build` before executing the runtime, Jest tests, or `examples/catalog`. Python is outside `tsc`. Typecheck configs are not in the npm tarball; consumers use the shipped `.d.ts` files.
+A repository checkout requires `npm run build` before executing the runtime, Jest tests, or `examples/catalog`. Python is outside `tsc`. Typecheck configs are not in the npm tarball; consumers use the shipped `dist` declarations for `.` and `./browser`.
 
 ## API stability
 

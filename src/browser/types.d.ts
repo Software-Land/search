@@ -1,6 +1,6 @@
 /**
  * Internal browser/Worker contracts for checkJs.
- * Public facade types live in index.d.ts.
+ * Public facade types live in api.ts / index.ts.
  */
 
 export type ProtocolType =
@@ -104,9 +104,9 @@ export interface SearchClientOptions {
 }
 
 export interface WorkerRuntimeFactories {
-  SearchEngine?: typeof import("../index.js").SearchEngine;
-  english?: typeof import("../index.js").english;
-  dictionary?: typeof import("../index.js").dictionary;
+  SearchEngine?: typeof import("../SearchEngine.js").SearchEngine;
+  english?: typeof import("../english.js").english;
+  dictionary?: typeof import("../dictionary.js").dictionary;
 }
 
 export interface EngineLike {

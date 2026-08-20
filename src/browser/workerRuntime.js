@@ -10,7 +10,7 @@ import { isAbortError } from "../cancel.js";
  * @param {import("./types.js").WorkerRuntimeFactories} [factories]
  */
 export function createWorkerRuntime({ SearchEngine, english, dictionary } = {}) {
-  /** @type {import("../index.js").SearchEngine | null} */
+  /** @type {import("../SearchEngine.js").SearchEngine | null} */
   let engine = null;
   /** @type {{ requestId?: number, abort: () => void } | null} */
   let running = null;
@@ -39,15 +39,17 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary } = {}) 
     if (typeof dictionary === "function") {
       plugins.push(dictionary({ entries: payload.dictionaryEntries || [] }));
     }
-    engine = SearchEngine.create({
-      schema: payload.schema,
-      plugins,
-      relationships: payload.relationships || null,
-      relationshipStrategy: payload.relationshipStrategy,
-      retriever: payload.retriever,
-      candidateLimit: payload.candidateLimit ?? undefined,
-      adaptive: payload.adaptive,
-    });
+    engine = SearchEngine.create(
+      /** @type {import("../types.js").SearchEngineOptions} */ ({
+        schema: payload.schema,
+        plugins,
+        relationships: payload.relationships || null,
+        relationshipStrategy: payload.relationshipStrategy,
+        retriever: payload.retriever,
+        candidateLimit: payload.candidateLimit ?? undefined,
+        adaptive: payload.adaptive,
+      })
+    );
     const indexed = await engine.index(payload.documents || []);
     reply({ type: MSG.READY, requestId: message.requestId, documentCount: indexed.documentCount });
   }

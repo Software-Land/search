@@ -1,6 +1,6 @@
 /**
- * @software-land/search public TypeScript declarations.
- * Implementation remains JavaScript. These types describe the stable v0 facade.
+ * Designed public type contract for @software-land/search.
+ * Implementation details (SearchPlugin, FeatureVector, AnalyzedQuery) stay internal.
  */
 
 export type TextRole = "title" | "body";
@@ -132,8 +132,7 @@ export interface IndexResult {
   buildMs: number;
 }
 
-export declare class SearchEngine {
-  static create(options?: SearchEngineOptions): SearchEngine;
+export interface SearchEngine {
   index(documents: SearchDocument[]): Promise<IndexResult>;
   search(query: string, options?: SearchOptions): SearchResult[];
   searchDetailed(query: string, options?: SearchOptions): SearchDetailedResult;
@@ -141,8 +140,11 @@ export declare class SearchEngine {
   searchDetailedAsync(query: string, options?: SearchOptions): Promise<SearchDetailedResult>;
 }
 
-export declare function english(options?: { lemmas?: Record<string, string> }): unknown;
-export declare function dictionary(options?: { entries?: EquivalenceEntry[] }): unknown;
+export interface SearchEngineConstructor {
+  new (): SearchEngine;
+  create(options?: SearchEngineOptions): SearchEngine;
+  prototype: SearchEngine;
+}
 
 export interface EquivalenceEntry {
   key: string;
@@ -179,41 +181,41 @@ export interface RelationshipArtifact {
   relationships: Record<string, RelationshipEdge[]>;
 }
 
-export declare const RELATIONSHIP_STRATEGIES: readonly RelationshipStrategy[];
-export declare const DEFAULT_RELATIONSHIP_STRATEGY: "hybrid";
-export declare const RETRIEVER_NAMES: readonly RetrieverName[];
-export declare const DEFAULT_CANDIDATE_LIMIT: 200;
-export declare const DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD: 1500;
-export declare const ARTIFACT_FORMATS: {
-  equivalences: "search-v2-equivalences";
-  synonyms: "search-v2-synonyms";
-  relationships: "search-v2-relationships";
-  corpusStats: "search-v2-corpus-stats";
-};
-export declare const ARTIFACT_VERSION: 1;
-export declare const PUBLIC_EXPORTS: readonly string[];
-
-export declare function parseEquivalences(obj?: unknown): EquivalenceArtifact;
-export declare function parseSynonyms(obj?: unknown): SynonymArtifact;
-export declare function parseRelationships(obj?: unknown): RelationshipArtifact;
-
-export declare function abortError(message?: string): Error;
-export declare function isAbortError(err: unknown): boolean;
-
-export declare class InvalidConfigurationError extends Error {
+export interface InvalidConfigurationError extends Error {
   field: string | null;
   expected: string | null;
 }
-export declare class InvalidDocumentError extends Error {
+export interface InvalidDocumentError extends Error {
   index: number | null;
   field: string | null;
 }
-export declare class ArtifactVersionError extends Error {
+export interface ArtifactVersionError extends Error {
   format: string | null;
   version: number | null;
 }
-export declare class ArtifactValidationError extends Error {
+export interface ArtifactValidationError extends Error {
   format: string | null;
   field: string | null;
 }
-export declare class IndexStateError extends Error {}
+export interface IndexStateError extends Error {}
+
+export interface InvalidConfigurationErrorConstructor {
+  new (message?: string): InvalidConfigurationError;
+  prototype: InvalidConfigurationError;
+}
+export interface InvalidDocumentErrorConstructor {
+  new (message?: string): InvalidDocumentError;
+  prototype: InvalidDocumentError;
+}
+export interface ArtifactVersionErrorConstructor {
+  new (message?: string): ArtifactVersionError;
+  prototype: ArtifactVersionError;
+}
+export interface ArtifactValidationErrorConstructor {
+  new (message?: string): ArtifactValidationError;
+  prototype: ArtifactValidationError;
+}
+export interface IndexStateErrorConstructor {
+  new (message?: string): IndexStateError;
+  prototype: IndexStateError;
+}

@@ -21,14 +21,14 @@
   },
   "type": "module",
   "main": "./dist/index.js",
-  "types": "./src/index.d.ts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./src/index.d.ts",
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
     "./browser": {
-      "types": "./src/browser/index.d.ts",
+      "types": "./dist/browser/index.d.ts",
       "import": "./dist/browser/index.js"
     },
     "./corpus": {
@@ -55,8 +55,6 @@
     "docs",
     "examples",
     "dist",
-    "src/index.d.ts",
-    "src/browser/index.d.ts",
     "tools/search-corpus",
     "tools/search-relationships",
     "tools/search-semantic",
@@ -67,7 +65,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.emit.json",
+    "build": "tsc -p tsconfig.emit.json && tsc -p tsconfig.dts.json && node scripts/keep-public-dts.mjs",
     "prepack": "npm run build",
     "typecheck": "npm run build && tsc -p tsconfig.core.json --noEmit && tsc -p tsconfig.browser.json --noEmit && tsc -p tsconfig.tools.json --noEmit",
     "test:types": "npm run build && tsc -p test/types/tsconfig.json",

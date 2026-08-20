@@ -112,6 +112,25 @@ try {
     }
   }
 
+  const dtsImportRe = /(?:from|import)\s+["']([^"']+)["']/g;
+  for (const rel of packedRel.filter((file) => file.startsWith("dist/") && file.endsWith(".d.ts"))) {
+    const text = readFileSync(path.join(packedRoot, rel), "utf8");
+    let match;
+    while ((match = dtsImportRe.exec(text))) {
+      const spec = match[1];
+      if (spec.startsWith(".")) {
+        const resolved = path.posix.normalize(`${path.posix.dirname(rel)}/${spec.replace(/\.js$/, ".d.ts")}`);
+        if (!packedRel.includes(resolved) && !packedRel.includes(resolved.replace(/\.d\.ts$/, ".js"))) {
+          throw new Error(`${rel} references omitted declaration ${spec} -> ${resolved}`);
+        }
+      }
+    }
+  }
+
+  if (packedRel.includes("src/index.d.ts") || packedRel.includes("src/browser/index.d.ts")) {
+    throw new Error("tarball must not include handwritten root/browser src declarations");
+  }
+
   const consumer = path.join(tmp, "consumer");
   mkdirSync(consumer);
   writeFileSync(
