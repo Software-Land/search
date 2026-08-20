@@ -14,9 +14,19 @@ import {
   MAX_COMPOUND_REPAIR_TOKEN_LENGTH,
 } from "./analyzeRepair.js";
 import { canonicalLexicalTokensFromQuery } from "./lexicalNormalize.js";
+import type {
+  AnalyzedQuery,
+  AnalyzeOptions,
+  DictionaryEntry,
+  PrefixCompletion,
+  QueryAlternative,
+  QueryConcept,
+  QueryToken,
+  SearchPlugin,
+  TypoSuggestion,
+} from "./types.js";
 
-/** @param {import("./types.js").SearchPlugin[]} plugins @param {string} token */
-function pluginLemma(plugins, token) {
+function pluginLemma(plugins: SearchPlugin[], token: string) {
   for (const plugin of plugins) {
     if (typeof plugin.lemma === "function") {
       return plugin.lemma(token);
@@ -28,9 +38,8 @@ function pluginLemma(plugins, token) {
 /**
  * Confident morphology only (explicit lemma table). Suffix-heuristic stems
  * stay on `lemma` and do not rewrite retrieval `normalized`.
- * @param {import("./types.js").SearchPlugin[]} plugins @param {string} token
  */
-function pluginCanonicalLemma(plugins, token) {
+function pluginCanonicalLemma(plugins: SearchPlugin[], token: string) {
   for (const plugin of plugins) {
     if (typeof plugin.canonicalLemma === "function") {
       const hit = plugin.canonicalLemma(token);
@@ -40,18 +49,15 @@ function pluginCanonicalLemma(plugins, token) {
   return null;
 }
 
-/** @param {import("./types.js").SearchPlugin[]} plugins */
-function dictionaryPlugin(plugins) {
+function dictionaryPlugin(plugins: SearchPlugin[]) {
   return plugins.find((p) => p && p.sequences) || null;
 }
 
-/** @param {import("./types.js").SearchPlugin[]} plugins */
-function synonymPlugin(plugins) {
+function synonymPlugin(plugins: SearchPlugin[]) {
   return plugins.find((p) => p && typeof p.expand === "function" && p.name === "synonyms") || null;
 }
 
-/** @param {import("./types.js").SearchPlugin[]} plugins @param {Iterable<string> | Set<string> | null | undefined} extra */
-function lexiconFrom(plugins, extra) {
+function lexiconFrom(plugins: SearchPlugin[], extra: Iterable<string> | Set<string> | null | undefined) {
   const words = new Set(extra || []);
   for (const plugin of plugins) {
     if (typeof plugin.lexicon === "function") {
@@ -74,15 +80,12 @@ const MAX_PREFIX_ALTERNATIVES = 4;
 const PREFIX_UNIQUE_CONFIDENCE = 0.9;
 const PREFIX_AMBIGUOUS_CONFIDENCE = 0.55;
 
-/** @param {unknown} token @param {Set<string>} lexicon */
-function segmentExactCompound(token, lexicon) {
+function segmentExactCompound(token: unknown, lexicon: Set<string>) {
   const t = String(token || "");
   if (t.length < 8 || t.length > MAX_COMPOUND_REPAIR_TOKEN_LENGTH || t.includes(" ")) return null;
   if (lexicon.has(t)) return null;
-  /** @type {Map<number, string[] | null>} */
-  const memo = new Map();
-  /** @param {number} i @returns {string[] | null} */
-  function walk(i) {
+  const memo = new Map<number, string[] | null>();
+  function walk(i: number): string[] | null {
     if (i === t.length) return [];
     if (memo.has(i)) return memo.get(i) ?? null;
     for (let len = Math.min(t.length - i, MAX_COMPOUND_PART_LENGTH); len >= 3; len--) {
@@ -101,12 +104,11 @@ function segmentExactCompound(token, lexicon) {
   return parts && parts.length >= 2 ? parts : null;
 }
 
-/**
- * @param {string} tok
- * @param {string} want
- * @param {{ isLast?: boolean, allowShortLastPrefix?: boolean }} [opts]
- */
-function tokenSatisfiesDictToken(tok, want, { isLast = false, allowShortLastPrefix = false } = {}) {
+function tokenSatisfiesDictToken(
+  tok: string,
+  want: string,
+  { isLast = false, allowShortLastPrefix = false }: { isLast?: boolean; allowShortLastPrefix?: boolean } = {}
+) {
   if (tok === want) return true;
   if (!want.startsWith(tok)) return false;
   if (isLast && allowShortLastPrefix && tok.length >= 1) return true;
@@ -119,11 +121,8 @@ function tokenSatisfiesDictToken(tok, want, { isLast = false, allowShortLastPref
  * Exact expansion words compare against typed surface, not post-lemma
  * retrieval `normalized`. Otherwise `learning → learn` would fail to match
  * configured `["machine","learning"]`.
- *
- * @param {import("./types.js").QueryToken} tok
- * @param {string} want
  */
-function tokenExactDictWord(tok, want) {
+function tokenExactDictWord(tok: QueryToken, want: string) {
   const surface = String(tok.surfaceNormalized || tok.surface || "").toLowerCase();
   if (surface === want) return true;
   if (tok.normalized === want && surface === tok.normalized) return true;
@@ -134,30 +133,29 @@ function tokenExactDictWord(tok, want) {
  * Distinct keys for a span. Two or more keys sharing the same exact
  * expansion do not collapse. Insertion order, lexicographic order, and
  * `primary` are not used.
- *
- * @param {import("./types.js").DictionaryEntry[]} entries
- * @returns {string | null}
  */
-function uniqueConfiguredKey(entries) {
-  const keys = new Set();
+function uniqueConfiguredKey(entries: DictionaryEntry[]) {
+  const keys = new Set<string>();
   for (const e of entries || []) {
     if (e?.key) keys.add(e.key);
   }
   if (keys.size !== 1) return null;
-  return keys.values().next().value;
+  return keys.values().next().value as string;
 }
 
-/**
- * @param {import("./types.js").QueryToken[]} tokens
- * @param {import("./types.js").SearchPlugin} dict
- * @param {number} from
- * @param {number} n
- * @returns {import("./types.js").DictionaryEntry[]}
- */
-function exactExpansionEntriesAt(tokens, dict, from, n) {
-  /** @type {import("./types.js").DictionaryEntry[]} */
-  const entries = [];
-  const seen = new Set();
+interface DictionaryMatchHit {
+  entry: DictionaryEntry;
+  kind: string;
+  from: number;
+  to: number;
+  matchedExpansionTokens: number;
+  expansionTokenCount: number;
+  expansionCoverage: number | undefined;
+}
+
+function exactExpansionEntriesAt(tokens: QueryToken[], dict: SearchPlugin, from: number, n: number) {
+  const entries: DictionaryEntry[] = [];
+  const seen = new Set<string>();
   if (!dict?.sequences) return entries;
   for (const seq of dict.sequences) {
     if (seq.kind !== "expansion") continue;
@@ -178,17 +176,9 @@ function exactExpansionEntriesAt(tokens, dict, from, n) {
   return entries;
 }
 
-/**
- * @param {import("./types.js").QueryToken[]} tokens
- * @param {import("./types.js").SearchPlugin} dict
- * @param {number} from
- * @param {number} n
- * @returns {import("./types.js").DictionaryEntry[]}
- */
-function expansionPrefixEntriesAt(tokens, dict, from, n) {
-  /** @type {import("./types.js").DictionaryEntry[]} */
-  const entries = [];
-  const seen = new Set();
+function expansionPrefixEntriesAt(tokens: QueryToken[], dict: SearchPlugin, from: number, n: number) {
+  const entries: DictionaryEntry[] = [];
+  const seen = new Set<string>();
   if (!dict?.sequences) return entries;
   for (const seq of dict.sequences) {
     if (seq.kind !== "expansion") continue;
@@ -219,12 +209,8 @@ function expansionPrefixEntriesAt(tokens, dict, from, n) {
 
 /**
  * Expansion uniquely owned by one key. Shared expansions do not project.
- *
- * @param {import("./types.js").SearchPlugin | null} dict
- * @param {string} key
- * @returns {string[] | null}
  */
-function uniquelyOwnedExpansion(dict, key) {
+function uniquelyOwnedExpansion(dict: SearchPlugin | null, key: string) {
   const byKey = dict?.byKey;
   if (!byKey) return null;
   const entry = byKey.get(key);
@@ -241,14 +227,9 @@ function uniquelyOwnedExpansion(dict, key) {
  * Lemmatize configured expansion words with the same morphology rules as
  * typed query tokens, so "machine learning" and a projected "ml" share
  * canonical intent terms such as ["machine","learn"].
- *
- * @param {string[]} expansion
- * @param {import("./types.js").SearchPlugin[]} plugins
- * @returns {import("./types.js").QueryToken[]}
  */
-function lemmatizedExpansionTokens(expansion, plugins) {
-  /** @type {import("./types.js").QueryToken[]} */
-  const out = [];
+function lemmatizedExpansionTokens(expansion: string[], plugins: SearchPlugin[]) {
+  const out: QueryToken[] = [];
   for (const word of expansion || []) {
     const w = String(word || "");
     if (!w || isAllDigitToken(w)) continue;
@@ -275,13 +256,13 @@ function lemmatizedExpansionTokens(expansion, plugins) {
  * Unique exact-key queries inherit the canonical lexical intent of their
  * expansion. Concept identity/provenance stay on the acronym concept.
  * Shared expansions and partial matches are not rewritten.
- *
- * @param {import("./types.js").QueryToken[]} tokens
- * @param {import("./types.js").QueryConcept[]} concepts
- * @param {import("./types.js").SearchPlugin | null} dict
- * @param {import("./types.js").SearchPlugin[]} plugins
  */
-function projectUniqueKeyCanonicalIntent(tokens, concepts, dict, plugins) {
+function projectUniqueKeyCanonicalIntent(
+  tokens: QueryToken[],
+  concepts: QueryConcept[],
+  dict: SearchPlugin | null,
+  plugins: SearchPlugin[]
+) {
   const acronyms = (concepts || []).filter((c) => c.kind === "acronym");
   if (acronyms.length !== 1) return tokens;
   const acr = acronyms[0];
@@ -293,8 +274,11 @@ function projectUniqueKeyCanonicalIntent(tokens, concepts, dict, plugins) {
   return projected.length ? projected : tokens;
 }
 
-/** @param {{ kind?: string, tokens?: string[], entry?: { key?: string, expansion?: string[] } }} seq */
-function isSingleExpansionWordAliasSequence(seq) {
+function isSingleExpansionWordAliasSequence(seq: {
+  kind?: string;
+  tokens?: string[];
+  entry?: { key?: string; expansion?: string[] };
+}) {
   if (seq.kind !== "alias") return false;
   const key = seq.entry?.key;
   const expansion = (seq.entry?.expansion || []).filter((f) => f && f !== key && !/^\d+$/.test(f));
@@ -302,11 +286,10 @@ function isSingleExpansionWordAliasSequence(seq) {
   return expansion.length >= 2 && tokens.length === 1 && expansion.includes(tokens[0]);
 }
 
-/** @param {import("./types.js").QueryToken[]} tokens @param {import("./types.js").SearchPlugin | null} dict */
-function matchDictionarySequences(tokens, dict) {
+function matchDictionarySequences(tokens: QueryToken[], dict: SearchPlugin | null) {
   if (!dict || !dict.sequences) return [];
-  const hits = [];
-  const used = new Set();
+  const hits: DictionaryMatchHit[] = [];
+  const used = new Set<number>();
   const norms = tokens.map((t) => t.normalized);
   for (const seq of dict.sequences) {
     if (isSingleExpansionWordAliasSequence(seq)) continue;
@@ -391,19 +374,14 @@ const MIN_EXPANSION_PREFIX_COVERAGE = 2 / 3;
  * Requires ≥2 aligned tokens, coverage ≥ 2/3, a unique best expansion, and
  * that the match start at expansion token 0. The final typed token may be a
  * prefix of the corresponding expansion token.
- *
- * @param {import("./types.js").QueryToken[]} tokens
- * @param {import("./types.js").SearchPlugin | null} dict
- * @param {Set<number>} used
  */
-function matchExpansionPrefixes(tokens, dict, used) {
+function matchExpansionPrefixes(tokens: QueryToken[], dict: SearchPlugin | null, used: Set<number>) {
   if (!dict || !dict.sequences) return [];
   const norms = tokens.map((t) => t.normalized);
   const k = norms.length;
   if (k < MIN_EXPANSION_PREFIX_TOKENS) return [];
-  /** @type {Array<{ entry: import("./types.js").DictionaryEntry, kind: string, from: number, to: number, matchedExpansionTokens: number, expansionTokenCount: number, expansionCoverage: number }>} */
-  const candidates = [];
-  const seen = new Set();
+  const candidates: Array<DictionaryMatchHit & { expansionCoverage: number }> = [];
+  const seen = new Set<string>();
   for (const seq of dict.sequences) {
     if (seq.kind !== "expansion") continue;
     const n = seq.tokens.length;
@@ -461,20 +439,16 @@ function matchExpansionPrefixes(tokens, dict, used) {
 /**
  * Incomplete configured-key prefix of the unused final active query token.
  * Exact keys already matched anywhere in matchDictionarySequences.
- *
- * @param {import("./types.js").QueryToken[]} tokens
- * @param {import("./types.js").SearchPlugin | null} dict
- * @param {Set<number>} used
  */
-function matchFinalActiveKeyPrefix(tokens, dict, used) {
+function matchFinalActiveKeyPrefix(tokens: QueryToken[], dict: SearchPlugin | null, used: Set<number>) {
   if (!dict || !dict.sequences) return [];
   const norms = tokens.map((t) => t.normalized);
   if (!norms.length) return [];
   const i = norms.length - 1;
   if (used.has(i)) return [];
   const tok = norms[i];
-  const candidates = [];
-  const seen = new Set();
+  const candidates: DictionaryEntry[] = [];
+  const seen = new Set<string>();
   for (const seq of dict.sequences) {
     if (seq.kind !== "key") continue;
     if (seq.tokens.length !== 1) continue;
@@ -503,8 +477,7 @@ function matchFinalActiveKeyPrefix(tokens, dict, used) {
   ];
 }
 
-/** @param {import("./types.js").DictionaryEntry} entry */
-function formsForEntry(entry) {
+function formsForEntry(entry: DictionaryEntry) {
   const forms = new Set([entry.key, ...entry.expansion]);
   for (const alias of entry.aliases) {
     for (const w of alias) forms.add(w);
@@ -512,8 +485,7 @@ function formsForEntry(entry) {
   return [...forms];
 }
 
-/** @param {unknown} token @param {Iterable<string>} lex */
-function isPrefixOfVocabulary(token, lex) {
+function isPrefixOfVocabulary(token: unknown, lex: Iterable<string>) {
   const t = String(token || "");
   if (t.length < 4) return false;
   for (const w of lex) {
@@ -522,18 +494,15 @@ function isPrefixOfVocabulary(token, lex) {
   return false;
 }
 
-/** @param {unknown} word */
-function isPlausibleCompletionToken(word) {
+function isPlausibleCompletionToken(word: unknown) {
   return typeof word === "string" && /^[a-z]+$/.test(word);
 }
 
 /**
  * Apply the morphology plugin until it stabilizes (learning → learn).
  * Bounded so a malformed plugin that cycles cannot loop forever.
- * @param {(t: string) => string} lemmaFn
- * @param {unknown} token
  */
-function lemmaFixedPoint(lemmaFn, token) {
+function lemmaFixedPoint(lemmaFn: (t: string) => string, token: unknown) {
   let cur = String(token || "");
   for (let i = 0; i < MAX_LEMMA_FIXED_POINT_ITERS; i += 1) {
     const next = lemmaFn(cur) || cur;
@@ -547,15 +516,13 @@ function lemmaFixedPoint(lemmaFn, token) {
  * Surface completions of an incomplete FINAL query token.
  * Stops once overflow of MAX_PREFIX_COMPLETIONS is proven; the prefix is then
  * too ambiguous to rewrite.
- * @param {string} prefix
- * @param {Set<string>} vocab
  */
-function prefixCompletions(prefix, vocab) {
+function prefixCompletions(prefix: string, vocab: Set<string>) {
   const t = String(prefix || "");
   if (t.length < MIN_FINAL_PREFIX_LEN) return [];
   if (isAllDigitToken(t) || /\d/.test(t)) return [];
   if (DEFAULT_STOP.has(t)) return [];
-  const out = [];
+  const out: string[] = [];
   for (const w of vocab) {
     if (!isPlausibleCompletionToken(w)) continue;
     if (w.length <= t.length) continue;
@@ -572,13 +539,12 @@ function prefixCompletions(prefix, vocab) {
  * Unique canonical lemma rewrites the final token's retrieval `normalized`
  * value. Typed surface, completedToken, and prefixCompletion stay for explain.
  * Ambiguous completions do not rewrite the query.
- *
- * @param {import("./types.js").QueryToken[]} tokens
- * @param {Set<string>} vocab
- * @param {(token: string) => string} lemmaFn
- * @returns {{ tokens: import("./types.js").QueryToken[], prefixCompletion: import("./types.js").PrefixCompletion | null }}
  */
-function applyFinalTokenPrefixCompletion(tokens, vocab, lemmaFn) {
+function applyFinalTokenPrefixCompletion(
+  tokens: QueryToken[],
+  vocab: Set<string>,
+  lemmaFn: (token: string) => string
+): { tokens: QueryToken[]; prefixCompletion: PrefixCompletion | null } {
   if (!tokens.length) return { tokens, prefixCompletion: null };
   const last = tokens[tokens.length - 1];
   if (!last) return { tokens, prefixCompletion: null };
@@ -591,8 +557,7 @@ function applyFinalTokenPrefixCompletion(tokens, vocab, lemmaFn) {
   }
   const completions = prefixCompletions(typed, vocab);
   if (!completions.length) return { tokens, prefixCompletion: null };
-  /** @type {Map<string, string[]>} */
-  const byCanon = new Map();
+  const byCanon = new Map<string, string[]>();
   for (const word of completions) {
     const canon = lemmaFixedPoint(lemmaFn, word);
     if (!byCanon.has(canon)) byCanon.set(canon, []);
@@ -601,10 +566,8 @@ function applyFinalTokenPrefixCompletion(tokens, vocab, lemmaFn) {
   const canonicalTokens = [...byCanon.keys()].sort();
   if (!canonicalTokens.length) return { tokens, prefixCompletion: null };
   const unique = canonicalTokens.length === 1;
-  /** @type {string | null} */
-  let completedToken = null;
-  /** @type {string | null} */
-  let canonicalToken = null;
+  let completedToken: string | null = null;
+  let canonicalToken: string | null = null;
   let nextTokens = tokens;
   if (unique) {
     canonicalToken = canonicalTokens[0];
@@ -634,9 +597,8 @@ function applyFinalTokenPrefixCompletion(tokens, vocab, lemmaFn) {
   };
 }
 
-/** @param {import("./types.js").SearchPlugin[]} plugins */
-function dictionaryKeysFrom(plugins) {
-  const keys = new Set();
+function dictionaryKeysFrom(plugins: SearchPlugin[]) {
+  const keys = new Set<string>();
   const dict = dictionaryPlugin(plugins);
   if (dict?.byKey) {
     for (const k of dict.byKey.keys()) keys.add(k);
@@ -648,18 +610,18 @@ function dictionaryKeysFrom(plugins) {
  * Query analysis. Surface tokens are never discarded; alternatives carry
  * provenance. The final token may be replaced (not mutated) when a unique
  * prefix completion exists.
- * @param {unknown} rawQuery
- * @param {import("./types.js").AnalyzeOptions} [options]
- * @returns {import("./types.js").AnalyzedQuery}
  */
-export function analyzeQuery(rawQuery, { plugins = [], lexicon = [], prefixLexicon, signal } = {}) {
+export function analyzeQuery(
+  rawQuery: unknown,
+  { plugins = [], lexicon = [], prefixLexicon, signal }: AnalyzeOptions = {}
+): AnalyzedQuery {
   throwIfAborted(signal);
   const raw = String(rawQuery ?? "");
   const dict = dictionaryPlugin(plugins);
   const lex = lexiconFrom(plugins, lexicon);
   const prefixLex = prefixLexicon == null ? lex : lexiconFrom(plugins, prefixLexicon);
   const dictionaryKeys = dictionaryKeysFrom(plugins);
-  const alternatives = [];
+  const alternatives: QueryAlternative[] = [];
 
   let surface = tokenize(raw);
   if (surface.length === 1) {
@@ -685,8 +647,7 @@ export function analyzeQuery(rawQuery, { plugins = [], lexicon = [], prefixLexic
 
   throwIfAborted(signal);
 
-  /** @type {import("./types.js").QueryToken[]} */
-  const tokens = surface.map((surfaceTok) => {
+  const tokens: QueryToken[] = surface.map((surfaceTok) => {
     const collapsed = collapseTrailingRepeats(surfaceTok);
     const sources = ["surface"];
     if (collapsed !== surfaceTok) sources.push("repeat-collapse");
@@ -759,15 +720,14 @@ export function analyzeQuery(rawQuery, { plugins = [], lexicon = [], prefixLexic
   }
 
   const dictHits = matchDictionarySequences(analyzedTokens, dict);
-  /** @type {import("./types.js").QueryConcept[]} */
-  const concepts = [];
-  const dictionaryOccupiedIndexes = new Set();
+  const concepts: QueryConcept[] = [];
+  const dictionaryOccupiedIndexes = new Set<number>();
   for (const hit of dictHits) {
     for (let i = hit.from; i < hit.to; i++) dictionaryOccupiedIndexes.add(i);
   }
   const prefixHits = matchExpansionPrefixes(analyzedTokens, dict, dictionaryOccupiedIndexes);
   const keyPrefixHits = matchFinalActiveKeyPrefix(analyzedTokens, dict, dictionaryOccupiedIndexes);
-  const covered = new Set();
+  const covered = new Set<number>();
   for (const hit of [...dictHits, ...prefixHits, ...keyPrefixHits]) {
     const forms = formsForEntry(hit.entry);
     concepts.push({
@@ -808,7 +768,7 @@ export function analyzeQuery(rawQuery, { plugins = [], lexicon = [], prefixLexic
     }
     const forms = new Set(
       [tok.surface, tok.surfaceNormalized, tok.normalized, tok.lemma, tok.completedToken].filter(
-        /** @type {(v: unknown) => v is string} */ (v) => typeof v === "string" && v.length > 0
+        (v): v is string => typeof v === "string" && v.length > 0
       )
     );
     const syn = synonymPlugin(plugins);
@@ -856,19 +816,19 @@ export function analyzeQuery(rawQuery, { plugins = [], lexicon = [], prefixLexic
  * Short alphanumeric literals (s3, h2, k8) are not treated as spelling errors.
  * Equal-distance edit candidates keep the lexicographically smaller form so the
  * choice does not depend on Set/corpus insertion order or document ids.
- * @param {unknown} token
- * @param {Iterable<string> | Set<string> | null | undefined} candidateSet
- * @param {{ signal?: AbortSignal }} [options]
- * @returns {import("./types.js").TypoSuggestion[]}
  */
-export function suggestTypoForms(token, candidateSet, { signal } = {}) {
+export function suggestTypoForms(
+  token: unknown,
+  candidateSet?: Iterable<string> | Set<string> | null,
+  { signal }: { signal?: AbortSignal } = {}
+): TypoSuggestion[] {
   const t = String(token || "");
   if (t.length < 5 || isAllDigitToken(t)) return [];
   if (/\d/.test(t) && t.length < 6) return [];
   const collapsed = collapseTrailingRepeats(t);
-  const out = [];
+  const out: TypoSuggestion[] = [];
   if (collapsed !== t) out.push({ form: collapsed, distance: 1, provenance: "repeat-collapse" });
-  let best = null;
+  let best: TypoSuggestion | null = null;
   let i = 0;
   for (const cand of candidateSet || []) {
     if ((i++ & 63) === 0) throwIfAborted(signal);
