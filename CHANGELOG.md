@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.1
+
+### Changed
+
+- Runtime source implementation migrated from JavaScript to TypeScript. npm runtime output is now emitted under `dist/`.
+- The existing six supported public package specifiers remain unchanged. Public/runtime/search behavior remains compatible with 0.2.0.
+- Browser Worker packaging now emits `dist/browser/searchWorker.js`. Consumers continue to use `searchWorkerUrl()`.
+- Build-time corpus, relationship, lexical, and semantic tooling remains under `tools/`. Semantic Python remains build-time only.
+- Zero production dependencies. Node >=18 remains supported.
+
+This patch does not retune ranking, change artifact format versions, or break the public API.
+
 ## 0.2.0
 
 ### Added

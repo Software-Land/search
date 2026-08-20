@@ -1,6 +1,6 @@
 {
   "name": "@software-land/search",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
   "description": "Deterministic, explainable document search with optional offline corpus and semantic compilation.",
   "license": "Apache-2.0",
