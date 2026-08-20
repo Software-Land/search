@@ -7,16 +7,12 @@
  */
 
 import { isAbortError } from "../cancel.js";
+import type { LatestWinsOptions, PendingJob, RunningJob } from "./types.js";
 
-/**
- * @param {import("./types.js").LatestWinsOptions} [options]
- */
-export function createLatestWinsSession({ search, onResult, onClear, onError } = {}) {
+export function createLatestWinsSession({ search, onResult, onClear, onError }: LatestWinsOptions = {}) {
   let generation = 0;
-  /** @type {import("./types.js").RunningJob | null} */
-  let running = null;
-  /** @type {import("./types.js").PendingJob | null} */
-  let pending = null;
+  let running: RunningJob | null = null;
+  let pending: PendingJob | null = null;
   let disposed = false;
   const stats = {
     submitted: 0,
@@ -31,8 +27,7 @@ export function createLatestWinsSession({ search, onResult, onClear, onError } =
     return generation;
   }
 
-  /** @param {unknown} query @param {Record<string, unknown>} [options] */
-  function setQuery(query, options = {}) {
+  function setQuery(query: unknown, options: Record<string, unknown> = {}) {
     if (disposed) return generation;
     generation += 1;
     const gen = generation;
