@@ -1,3 +1,13 @@
+/**
+ * Rank by constraint partial order:
+ *   graph of must-outrank edges → SCCs → topo order of components
+ *   → score + stable id inside each component.
+ * Cycles/conflicts are attached for explain/tests; they never fail silently.
+ *
+ * Interpretable within-constraint score is used only inside unordered
+ * components of the constraint partial order.
+ */
+
 import {
   compareConstraint,
   buildConstraintGraph,
@@ -7,21 +17,19 @@ import {
   DEFAULT_CONSTRAINTS,
 } from "./constraints.js";
 import { throwIfAborted } from "./cancel.js";
+import type { ConstraintDef, FeaturedHit, FeatureVector, RankedHit } from "./types.js";
 
-/** @param {unknown} v */
-function boolNum(v) {
+function boolNum(v: unknown) {
   return v ? 1 : 0;
 }
 
-/** @param {unknown} v */
-function versionNum(v) {
+function versionNum(v: unknown) {
   if (v === "dotted" || v === "compact-dotted") return 1;
   if (v === "compact-weak" || v === "dotted-weak") return 0.35;
   return 0;
 }
 
-/** @param {unknown} v */
-function equivNum(v) {
+function equivNum(v: unknown) {
   if (v === "key-in-title") return 1;
   if (v === "expansion") return 0.8;
   return 0;
@@ -31,8 +39,7 @@ function equivNum(v) {
  * Interpretable within-constraint score. Used only inside unordered
  * components of the constraint partial order.
  */
-/** @param {Partial<import("./types.js").FeatureVector>} f */
-export function scoreFeatures(f) {
+export function scoreFeatures(f: Partial<FeatureVector>) {
   return (
     boolNum(f.exactTitleMatch) * 5 +
     boolNum(f.exactTitleTokenMatch) * 1.6 +
@@ -53,33 +60,23 @@ export function scoreFeatures(f) {
   );
 }
 
-/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b */
-function idCmp(a, b) {
+function idCmp(a: FeaturedHit, b: FeaturedHit) {
   if (a.document.id < b.document.id) return -1;
   if (a.document.id > b.document.id) return 1;
   return 0;
 }
 
-/** @param {import("./types.js").FeaturedHit} a @param {import("./types.js").FeaturedHit} b @param {import("./types.js").ConstraintDef[]} [defs] */
-export function compareCandidates(a, b, defs = DEFAULT_CONSTRAINTS) {
+export function compareCandidates(a: FeaturedHit, b: FeaturedHit, defs: ConstraintDef[] = DEFAULT_CONSTRAINTS) {
   const constrained = compareConstraint(a, b, defs);
   if (constrained.order !== 0) return constrained.order;
   if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
   return idCmp(a, b);
 }
 
-/**
- * Rank by constraint partial order:
- *   graph of must-outrank edges → SCCs → topo order of components
- *   → score + stable id inside each component.
- * Cycles/conflicts are attached for explain/tests; they never fail silently.
- */
-/**
- * @param {import("./types.js").FeaturedHit[]} candidates
- * @param {{ constraints?: import("./types.js").ConstraintDef[], signal?: AbortSignal }} [options]
- * @returns {import("./types.js").RankedHit[]}
- */
-export function rankCandidates(candidates, { constraints = DEFAULT_CONSTRAINTS, signal } = {}) {
+export function rankCandidates(
+  candidates: FeaturedHit[],
+  { constraints = DEFAULT_CONSTRAINTS, signal }: { constraints?: ConstraintDef[]; signal?: AbortSignal } = {}
+): RankedHit[] {
   throwIfAborted(signal);
   const decorated = candidates.map((c) => ({
     ...c,
@@ -89,8 +86,10 @@ export function rankCandidates(candidates, { constraints = DEFAULT_CONSTRAINTS, 
   return orderFromGraph(decorated, n, edges, constraints, { signal });
 }
 
-/** @param {import("./types.js").FeaturedHit[]} candidates @param {{ constraints?: import("./types.js").ConstraintDef[], signal?: AbortSignal }} [options] */
-export async function rankCandidatesAsync(candidates, { constraints = DEFAULT_CONSTRAINTS, signal } = {}) {
+export async function rankCandidatesAsync(
+  candidates: FeaturedHit[],
+  { constraints = DEFAULT_CONSTRAINTS, signal }: { constraints?: ConstraintDef[]; signal?: AbortSignal } = {}
+): Promise<RankedHit[]> {
   throwIfAborted(signal);
   await Promise.resolve();
   throwIfAborted(signal);
@@ -102,19 +101,17 @@ export async function rankCandidatesAsync(candidates, { constraints = DEFAULT_CO
   return orderFromGraph(decorated, n, edges, constraints, { signal });
 }
 
-/**
- * @param {import("./types.js").FeaturedHit[]} decorated
- * @param {number} n
- * @param {number[][]} edges
- * @param {import("./types.js").ConstraintDef[]} constraints
- * @param {{ signal?: AbortSignal }} [options]
- * @returns {import("./types.js").RankedHit[]}
- */
-function orderFromGraph(decorated, n, edges, constraints, { signal } = {}) {
+function orderFromGraph(
+  decorated: FeaturedHit[],
+  n: number,
+  edges: number[][],
+  constraints: ConstraintDef[],
+  { signal }: { signal?: AbortSignal } = {}
+): RankedHit[] {
   throwIfAborted(signal);
   const { comp, groups } = stronglyConnectedComponents(n, edges);
 
-  const succ = Array.from({ length: groups.length }, () => new Set());
+  const succ = Array.from({ length: groups.length }, () => new Set<number>());
   const indeg = new Array(groups.length).fill(0);
   for (const [u, v] of edges) {
     if (comp[u] === comp[v]) continue;
@@ -124,12 +121,10 @@ function orderFromGraph(decorated, n, edges, constraints, { signal } = {}) {
     }
   }
 
-  /** @type {number[]} */
-  const ready = [];
+  const ready: number[] = [];
   for (let g = 0; g < groups.length; g++) if (indeg[g] === 0) ready.push(g);
 
-  /** @param {number} g */
-  function bestOf(g) {
+  function bestOf(g: number) {
     const members = groups[g].map((i) => decorated[i]);
     members.sort((a, b) => ((b.score || 0) !== (a.score || 0) ? (b.score || 0) - (a.score || 0) : idCmp(a, b)));
     return members[0];
@@ -143,10 +138,9 @@ function orderFromGraph(decorated, n, edges, constraints, { signal } = {}) {
     });
   }
   readySort();
-  /** @type {number[]} */
-  const topo = [];
+  const topo: number[] = [];
   while (ready.length) {
-    const g = /** @type {number} */ (ready.shift());
+    const g = ready.shift() as number;
     topo.push(g);
     const next = [...succ[g]];
     for (const h of next) {
@@ -160,8 +154,7 @@ function orderFromGraph(decorated, n, edges, constraints, { signal } = {}) {
     for (let g = 0; g < groups.length; g++) if (!topo.includes(g)) topo.push(g);
   }
 
-  /** @type {import("./types.js").FeaturedHit[]} */
-  const ordered = [];
+  const ordered: FeaturedHit[] = [];
   for (const g of topo) {
     const members = groups[g].map((i) => decorated[i]);
     members.sort((a, b) => {
