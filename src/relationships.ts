@@ -8,12 +8,23 @@ import { parseRelationships } from "./artifacts.js";
 import { classifyDirect } from "./features.js";
 import { throwIfAborted } from "./cancel.js";
 import { rankCandidates } from "./rank.js";
+import type {
+  ConstraintDef,
+  FeaturedHit,
+  FeatureVector,
+  RelationshipEdge,
+  RelationshipExpansionArgs,
+  RelationshipGraphApi,
+  RelationshipInfo,
+  RetrievalHit,
+  SearchIndex,
+  SourcePolicy,
+  ExpansionResult,
+} from "./types.js";
 
-/** @param {unknown} artifact @returns {import("./types.js").RelationshipGraphApi} */
-export function RelationshipGraph(artifact) {
+export function RelationshipGraph(artifact: unknown): RelationshipGraphApi {
   const parsed = parseRelationships(artifact);
-  /** @type {Map<string, import("./types.js").RelationshipEdge[]>} */
-  const bySource = new Map();
+  const bySource = new Map<string, RelationshipEdge[]>();
   for (const [source, edges] of Object.entries(parsed.relationships)) {
     bySource.set(source, edges);
   }
@@ -31,9 +42,8 @@ export function RelationshipGraph(artifact) {
   };
 }
 
-/** @param {import("./types.js").FeaturedHit | null | undefined} hit */
-export function isStrongPrimary(hit) {
-  const f = hit?.features || /** @type {Partial<import("./types.js").FeatureVector>} */ ({});
+export function isStrongPrimary(hit: FeaturedHit | null | undefined) {
+  const f: Partial<FeatureVector> = hit?.features || {};
   if (f.directClass === "strong") return true;
   if (f.exactTitleMatch) return true;
   if (f.configuredEquivalenceMatch === "key-in-title") return true;
@@ -47,15 +57,16 @@ export function isStrongPrimary(hit) {
  * Conservative expansion: only from high-confidence primaries, no multi-hop.
  * Order is Search Core ranking of eligible strong DIRECT candidates, not
  * retrieval order or document-id order.
- * @param {import("./types.js").FeaturedHit[]} featured
- * @param {{
- *   sourcePolicy?: import("./types.js").SourcePolicy,
- *   n?: number,
- *   constraints?: import("./types.js").ConstraintDef[],
- *   signal?: AbortSignal,
- * }} [opts]
  */
-export function pickPrimariesForExpansion(featured, { sourcePolicy = "top1-strong", n = 3, constraints, signal } = {}) {
+export function pickPrimariesForExpansion(
+  featured: FeaturedHit[],
+  {
+    sourcePolicy = "top1-strong",
+    n = 3,
+    constraints,
+    signal,
+  }: { sourcePolicy?: SourcePolicy; n?: number; constraints?: ConstraintDef[]; signal?: AbortSignal } = {}
+) {
   const directs = featured.filter((h) => (h.features?.relevanceKind || "direct") !== "related");
   const strong = directs.filter(isStrongPrimary);
   if (!strong.length) return [];
@@ -65,15 +76,12 @@ export function pickPrimariesForExpansion(featured, { sourcePolicy = "top1-stron
   return ranked.slice(0, 1);
 }
 
-/** @param {import("./types.js").FeaturedHit[]} featured */
-export function pickPrimaryForExpansion(featured) {
+export function pickPrimaryForExpansion(featured: FeaturedHit[]) {
   return pickPrimariesForExpansion(featured, { sourcePolicy: "top1-strong" })[0] || null;
 }
 
-/** @param {import("./types.js").RelationshipInfo | null | undefined} prev @param {import("./types.js").RelationshipInfo} next @returns {import("./types.js").RelationshipInfo} */
-function mergeRelationship(prev, next) {
-  /** @type {import("./types.js").RelationshipInfo[]} */
-  const sources = [...(prev?.sources || (prev ? [stripSources(prev)] : [])), stripSources(next)];
+function mergeRelationship(prev: RelationshipInfo | null | undefined, next: RelationshipInfo): RelationshipInfo {
+  const sources: RelationshipInfo[] = [...(prev?.sources || (prev ? [stripSources(prev)] : [])), stripSources(next)];
   const best = sources.reduce((a, b) => ((b.strength || 0) > (a.strength || 0) ? b : a));
   return {
     ...best,
@@ -81,8 +89,7 @@ function mergeRelationship(prev, next) {
   };
 }
 
-/** @param {import("./types.js").RelationshipInfo} rel @returns {import("./types.js").RelationshipInfo} */
-function stripSources(rel) {
+function stripSources(rel: RelationshipInfo): RelationshipInfo {
   const { sources, ...rest } = rel;
   return rest;
 }
@@ -92,10 +99,18 @@ function stripSources(rel) {
  * Rank uses max strength; explanations keep every supporting source.
  * Weak existing directs may be reclassified as related when an edge exists.
  * Strong/moderate directs stay direct and are not converted to related.
- * @param {import("./types.js").RelationshipExpansionArgs} [args]
- * @returns {import("./types.js").ExpansionResult}
  */
-export function applyRelationshipExpansion({ featured, query, extractFeatures, scoreFeatures, index, graph, sourcePolicy = "top1-strong", signal, constraints } = {}) {
+export function applyRelationshipExpansion({
+  featured,
+  query,
+  extractFeatures,
+  scoreFeatures,
+  index,
+  graph,
+  sourcePolicy = "top1-strong",
+  signal,
+  constraints,
+}: RelationshipExpansionArgs = {}): ExpansionResult {
   throwIfAborted(signal);
   if (!graph || graph.empty || !featured || !query || !extractFeatures || !scoreFeatures || !index) {
     return { featured: featured || [], relatedHits: [], primaries: [] };
@@ -104,15 +119,13 @@ export function applyRelationshipExpansion({ featured, query, extractFeatures, s
   if (!primaries.length) return { featured, relatedHits: [], primaries: [] };
 
   const byId = new Map(featured.map((h) => [h.document.id, h]));
-  /** @type {Map<string, import("./types.js").RelationshipInfo>} */
-  const collected = new Map();
+  const collected = new Map<string, RelationshipInfo>();
 
   for (const primary of primaries) {
     const edges = graph.neighbors(primary.document.id);
     edges.forEach((edge, idx) => {
       if (!edge?.target) return;
-      /** @type {import("./types.js").RelationshipInfo} */
-      const rel = {
+      const rel: RelationshipInfo = {
         sourceId: primary.document.id,
         sourceTitle: primary.document.title,
         type: edge.type,
@@ -125,8 +138,7 @@ export function applyRelationshipExpansion({ featured, query, extractFeatures, s
     });
   }
 
-  /** @type {import("./types.js").RetrievalHit[]} */
-  const relatedHits = [];
+  const relatedHits: RetrievalHit[] = [];
   let n = 0;
   for (const [target, relationship] of collected) {
     if ((n++ & 7) === 0) throwIfAborted(signal);
@@ -152,20 +164,20 @@ export function applyRelationshipExpansion({ featured, query, extractFeatures, s
   return { featured, relatedHits, primaries };
 }
 
-/**
- * @param {{
- *   primary?: import("./types.js").FeaturedHit | null,
- *   index?: import("./types.js").SearchIndex,
- *   graph?: import("./types.js").RelationshipGraphApi | null,
- *   existingIds?: Set<string> | Iterable<string> | null
- * }} args
- * @returns {import("./types.js").RetrievalHit[]}
- */
-export function expandRelatedCandidates({ primary, index, graph, existingIds }) {
+export function expandRelatedCandidates({
+  primary,
+  index,
+  graph,
+  existingIds,
+}: {
+  primary?: FeaturedHit | null;
+  index?: SearchIndex;
+  graph?: RelationshipGraphApi | null;
+  existingIds?: Set<string> | Iterable<string> | null;
+}): RetrievalHit[] {
   if (!primary || !graph || graph.empty || !index) return [];
   const seen = existingIds instanceof Set ? existingIds : new Set(existingIds || []);
-  /** @type {import("./types.js").RetrievalHit[]} */
-  const out = [];
+  const out: RetrievalHit[] = [];
   const edges = graph.neighbors(primary.document.id);
   edges.forEach((edge, idx) => {
     if (seen.has(edge.target)) return;
