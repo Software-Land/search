@@ -11,10 +11,11 @@ const keep = new Set([
   "api.d.ts",
   "browser/index.d.ts",
   "browser/api.d.ts",
-  // Emitted helpers imported by packed lexical tooling (directly or via lexicalNormalize.js).
+  // Emitted helpers imported by packed lexical tooling (directly or via dist/lexicalNormalize.js).
   "documentId.d.ts",
   "saturatingFrequency.d.ts",
   "text.d.ts",
+  "lexicalNormalize.d.ts",
 ]);
 
 function walk(dir, rel = "") {

@@ -15,50 +15,47 @@ import { tokenize, DEFAULT_STOP } from "./text.js";
 /** Unigrams shorter than this are not compiled or used as phrase keys. */
 export const MIN_UNIGRAM_LENGTH = 2;
 
-/**
- * @param {string[]} tokens
- * @param {(token: string) => string} [lemma]
- */
-export function lemmatizeTokens(tokens, lemma) {
-  const fn = typeof lemma === "function" ? lemma : (/** @type {string} */ t) => t;
+export function lemmatizeTokens(
+  tokens?: string[] | null,
+  lemma?: (token: string) => string
+): string[] {
+  const fn = typeof lemma === "function" ? lemma : (t: string) => t;
   return (tokens || []).map((t) => fn(t) || t).filter(Boolean);
 }
 
-/**
- * @param {string[]} tokens
- * @param {Set<string>} [stop]
- */
-export function stripStopTokens(tokens, stop = DEFAULT_STOP) {
+export function stripStopTokens(tokens?: string[] | null, stop: Set<string> = DEFAULT_STOP): string[] {
   return (tokens || []).filter((t) => t && !stop.has(t));
 }
 
 /**
  * Body/query token stream used for compiled n-grams and phrase lookup.
- * @param {unknown} text
- * @param {{ lemma?: (token: string) => string, stop?: Set<string> }} [opts]
  */
-export function canonicalLexicalTokens(text, { lemma, stop = DEFAULT_STOP } = {}) {
+export function canonicalLexicalTokens(
+  text: unknown,
+  { lemma, stop = DEFAULT_STOP }: { lemma?: (token: string) => string; stop?: Set<string> } = {}
+): string[] {
   return stripStopTokens(lemmatizeTokens(tokenize(text), lemma), stop);
 }
 
 /**
  * Same stream from an already-analyzed query (lemmas already applied).
- * @param {Array<{ lemma?: string, normalized?: string }>} queryTokens
- * @param {Set<string>} [stop]
  */
-export function canonicalLexicalTokensFromQuery(queryTokens, stop = DEFAULT_STOP) {
+export function canonicalLexicalTokensFromQuery(
+  queryTokens?: Array<{ lemma?: string; normalized?: string }> | null,
+  stop: Set<string> = DEFAULT_STOP
+): string[] {
   const lemmatized = (queryTokens || []).map((t) => t.lemma || t.normalized || "").filter(Boolean);
   return stripStopTokens(lemmatized, stop);
 }
 
 /**
  * Contiguous n-grams over an already-canonical (lemmatized, stop-stripped) stream.
- * @param {string[]} tokens
- * @param {{ minN: number, maxN: number }} policy
- * @returns {string[]}
  */
-export function extractCanonicalNgrams(tokens, policy) {
-  const out = [];
+export function extractCanonicalNgrams(
+  tokens: string[] | null | undefined,
+  policy: { minN: number; maxN: number }
+): string[] {
+  const out: string[] = [];
   const minN = policy.minN;
   const maxN = policy.maxN;
   const list = tokens || [];
@@ -75,9 +72,10 @@ export function extractCanonicalNgrams(tokens, policy) {
 
 /**
  * Primary compiled-phrase lookup key for a query token list.
- * @param {Array<{ lemma?: string, normalized?: string }>} queryTokens
- * @param {Set<string>} [stop]
  */
-export function lexicalPhraseKeyFromQuery(queryTokens, stop = DEFAULT_STOP) {
+export function lexicalPhraseKeyFromQuery(
+  queryTokens?: Array<{ lemma?: string; normalized?: string }> | null,
+  stop: Set<string> = DEFAULT_STOP
+): string {
   return canonicalLexicalTokensFromQuery(queryTokens, stop).join(" ");
 }
