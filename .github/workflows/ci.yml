@@ -17,6 +17,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      - run: npm run test:types
       - run: npm test
       - run: npm run smoke:import
       - run: npm run smoke:pack

@@ -2,7 +2,7 @@
 
 Search Core never imports these. Runtime users should not pay for them.
 
-`npm run typecheck` typechecks Core, the browser Worker/client, and the Node JS compilers (`tools/search-corpus`, `tools/search-relationships`, `tools/search-lexical`, `tools/search-semantic/index.js`) under isolated `checkJs` projects after `npm run build` (runtime JS is emitted to `dist/`). The Python sources under `tools/search-semantic/lib` stay outside `tsc`.
+`npm run typecheck` typechecks Core, the browser Worker/client, and the Node JS compilers (`tools/search-corpus`, `tools/search-relationships`, `tools/search-lexical`, `tools/search-semantic/index.js`) under isolated `checkJs` projects after `npm run build` (runtime JS is emitted to `dist/`). The Python sources under `tools/search-semantic/lib` stay outside `tsc`. `npm run test:types` compiles consumer fixtures in `test/types/` against the public `package.json` `exports.types` surface after the same build.
 
 ## search-corpus (`tools/search-corpus`)
 

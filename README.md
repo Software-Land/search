@@ -160,6 +160,7 @@ Implementation is JavaScript. The published runtime is emitted ESM in `dist/`; p
 npm install
 npm run build
 npm run typecheck
+npm run test:types
 npm test
 ```
 

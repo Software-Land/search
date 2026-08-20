@@ -1,0 +1,20 @@
+{
+  // Resolves @software-land/search* through package.json name + exports.types
+  // (Node16 self-reference). Do not import src/types.d.ts or src/browser/types.d.ts.
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "types": [],
+    "skipLibCheck": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "exactOptionalPropertyTypes": false
+  },
+  "include": ["./**/*.ts"]
+}
