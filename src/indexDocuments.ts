@@ -2,24 +2,29 @@ import { tokenize, firstSurfaceToken, DEFAULT_STOP } from "./text.js";
 import { canonicalDocumentId } from "./documentId.js";
 import { extractVersionCompactForms, extractDottedSpans } from "./versionForms.js";
 import { InvalidDocumentError } from "./errors.js";
+import type {
+  IndexedDocument,
+  ResolvedSchema,
+  Schema,
+  SearchDocument,
+  SearchIndex,
+  SearchPlugin,
+} from "./types.js";
 
-/** @param {import("./types.js").Schema | null | undefined} schema @param {string} name */
-function fieldRole(schema, name) {
+function fieldRole(schema: Schema | null | undefined, name: string) {
   const spec = schema?.[name];
   if (!spec) return null;
   return spec.role || (name === "title" ? "title" : name === "body" ? "body" : null);
 }
 
-/** @param {import("./types.js").Schema | null | undefined} [schema] @returns {import("./types.js").ResolvedSchema} */
-export function resolveSchema(schema) {
-  /** @type {import("./types.js").Schema} */
-  const fields =
+export function resolveSchema(schema?: Schema | null): ResolvedSchema {
+  const fields: Schema =
     schema && typeof schema === "object"
       ? schema
       : { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
-  let titleField = null;
-  let bodyField = null;
-  const textFields = [];
+  let titleField: string | null = null;
+  let bodyField: string | null = null;
+  const textFields: string[] = [];
   for (const [name, spec] of Object.entries(fields)) {
     if (!spec || spec.type !== "text") continue;
     textFields.push(name);
@@ -32,8 +37,7 @@ export function resolveSchema(schema) {
   return { fields, titleField, bodyField };
 }
 
-/** @param {import("./types.js").SearchDocument} doc @param {string} id @param {string} title @param {string} body */
-function copyRaw(doc, id, title, body) {
+function copyRaw(doc: SearchDocument, id: string, title: string, body: string) {
   const metadata = doc && doc.metadata != null && typeof doc.metadata === "object" && !Array.isArray(doc.metadata) ? { ...doc.metadata } : undefined;
   return metadata ? { id, title, body, metadata } : { id, title, body };
 }
@@ -43,18 +47,16 @@ function copyRaw(doc, id, title, body) {
  *   1. flat Record<string, number>  (preferred; attachLexicalFrequency writes this)
  *   2. { ngrams: Record<string, number> }
  * `ngrams` wins when it is a non-array object. Arrays are rejected.
- * @param {unknown} raw @returns {Record<string, number> | null}
  */
-function copyLexicalFrequency(raw) {
+function copyLexicalFrequency(raw: unknown): Record<string, number> | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
-  const rec = /** @type {Record<string, unknown>} */ (raw);
+  const rec = raw as Record<string, unknown>;
   const nested = rec.ngrams;
   const source =
     nested && typeof nested === "object" && !Array.isArray(nested)
-      ? /** @type {Record<string, unknown>} */ (nested)
+      ? (nested as Record<string, unknown>)
       : rec;
-  /** @type {Record<string, number>} */
-  const out = Object.create(null);
+  const out: Record<string, number> = Object.create(null);
   let any = false;
   for (const [key, value] of Object.entries(source)) {
     if (key === "ngrams") continue;
@@ -66,17 +68,15 @@ function copyLexicalFrequency(raw) {
   return any ? out : null;
 }
 
-/**
- * @param {unknown} doc
- * @param {import("./types.js").Schema | null | undefined} schema
- * @param {{ lemma?: (t: string) => string, index?: number | null }} [opts]
- * @returns {import("./types.js").IndexedDocument}
- */
-export function analyzeDocument(doc, schema, { lemma = (t) => t, index = null } = {}) {
+export function analyzeDocument(
+  doc: unknown,
+  schema: Schema | null | undefined,
+  { lemma = (t: string) => t, index = null }: { lemma?: (t: string) => string; index?: number | null } = {}
+): IndexedDocument {
   if (doc == null || typeof doc !== "object" || Array.isArray(doc)) {
     throw new InvalidDocumentError("Each document must be a plain object", { index, field: "document" });
   }
-  const rec = /** @type {import("./types.js").SearchDocument} */ (doc);
+  const rec = doc as SearchDocument;
   const { titleField, bodyField } = resolveSchema(schema);
   const id = canonicalDocumentId(rec.id);
   if (!id) {
@@ -114,25 +114,25 @@ export function analyzeDocument(doc, schema, { lemma = (t) => t, index = null } 
 /**
  * Rebuilds the in-memory index. Duplicate ids: last document wins.
  * Documents are sorted by id for deterministic iteration.
- * @param {unknown[] | null | undefined} documents
- * @param {import("./types.js").Schema | null | undefined} schema
- * @param {import("./types.js").SearchPlugin[]} [plugins]
- * @returns {import("./types.js").SearchIndex}
  */
-export function buildIndex(documents, schema, plugins = []) {
+export function buildIndex(
+  documents: unknown[] | null | undefined,
+  schema: Schema | null | undefined,
+  plugins: SearchPlugin[] = []
+): SearchIndex {
   if (documents != null && !Array.isArray(documents)) {
     throw new InvalidDocumentError("index(documents) requires an array", { field: "documents" });
   }
-  const lemmaFn = plugins.find((p) => typeof p.lemma === "function")?.lemma || ((t) => t);
-  const byId = new Map();
+  const lemmaFn = plugins.find((p) => typeof p.lemma === "function")?.lemma || ((t: string) => t);
+  const byId = new Map<string, IndexedDocument>();
   const docsIn = documents || [];
   for (let i = 0; i < docsIn.length; i++) {
     const analyzed = analyzeDocument(docsIn[i], schema, { lemma: lemmaFn, index: i });
     byId.set(analyzed.id, analyzed);
   }
   const docs = [...byId.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  const titleTokenSet = new Set();
-  const surfaceVocabulary = new Set();
+  const titleTokenSet = new Set<string>();
+  const surfaceVocabulary = new Set<string>();
   for (const analyzed of docs) {
     for (const t of analyzed.titleTokens) {
       titleTokenSet.add(t);
