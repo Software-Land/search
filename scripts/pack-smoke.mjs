@@ -77,6 +77,21 @@ try {
   const packedSrcJs = packedRel.filter((rel) => rel.startsWith("src/") && rel.endsWith(".js"));
   if (packedSrcJs.length) throw new Error(`tarball must not include runtime src JS: ${packedSrcJs.join(", ")}`);
 
+  const packedToolTs = packedRel.filter((rel) => rel.startsWith("tools/") && rel.endsWith(".ts") && !rel.endsWith(".d.ts"));
+  if (packedToolTs.length) throw new Error(`tarball must not include tool TypeScript source: ${packedToolTs.join(", ")}`);
+  const packedMaps = packedRel.filter((rel) => rel.endsWith(".map"));
+  if (packedMaps.length) throw new Error(`tarball must not include source maps: ${packedMaps.join(", ")}`);
+  for (const required of [
+    "tools/search-lexical/index.js",
+    "tools/search-lexical/index.d.ts",
+    "tools/search-lexical/lib/compile.js",
+  ]) {
+    if (!packedRel.includes(required)) throw new Error(`packed tarball missing ${required}`);
+  }
+  if (packedRel.includes("tools/search-lexical/lib/compile.d.ts")) {
+    throw new Error("tarball must not include lexical implementation declarations");
+  }
+
   const forbidden = packedRel.filter(
     (rel) =>
       rel.includes("node_modules/") ||

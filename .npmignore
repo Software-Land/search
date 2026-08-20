@@ -1,2 +1,8 @@
 # Nested ignore files are for the source repo, not the published package.
 **/.gitignore
+
+# TypeScript tool sources are not shipped; consumers execute emitted JavaScript.
+# npm pack treats *.ts as matching *.d.ts, so files[] re-includes tools/**/*.d.ts.
+tools/**/*.ts
+**/*.js.map
+**/*.d.ts.map

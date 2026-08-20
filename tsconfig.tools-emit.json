@@ -1,8 +1,15 @@
 {
+  // In-place emit for TypeScript-migrated tools (Option C).
+  // Add include globs as each tool is migrated. Do not include remaining JS tools.
   "compilerOptions": {
-    "allowJs": true,
-    "checkJs": true,
-    "noEmit": true,
+    "allowJs": false,
+    "checkJs": false,
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": false,
+    "sourceMap": false,
+    "rootDir": ".",
+    "outDir": ".",
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -21,19 +28,6 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false
   },
-  "include": [
-    "tools/search-corpus/**/*.js",
-    "tools/search-corpus/**/*.mjs",
-    "tools/search-corpus/**/*.d.ts",
-    "tools/search-relationships/**/*.js",
-    "tools/search-relationships/**/*.mjs",
-    "tools/search-relationships/**/*.d.ts",
-    "tools/search-semantic/**/*.js",
-    "tools/search-semantic/**/*.mjs",
-    "tools/search-semantic/**/*.d.ts",
-    "tools/search-lexical/**/*.ts",
-    "src/index.ts",
-    "src/api.ts"
-  ],
+  "include": ["tools/search-lexical/**/*.ts"],
   "exclude": ["tools/**/.output/**"]
 }

@@ -3,6 +3,11 @@ coverage/
 dist/
 .DS_Store
 
+# Generated emit for TypeScript-migrated tools (source of truth is *.ts)
+tools/search-lexical/**/*.js
+tools/search-lexical/**/*.d.ts
+tools/search-lexical/**/*.map
+
 # Compiler / semantic builder generated output (never source)
 tools/search-corpus/.output/
 tools/search-relationships/.output/

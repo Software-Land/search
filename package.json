@@ -58,14 +58,18 @@
     "tools/search-corpus",
     "tools/search-relationships",
     "tools/search-semantic",
-    "tools/search-lexical"
+    "tools/search-lexical",
+    "!tools/**/*.ts",
+    "tools/**/*.d.ts",
+    "!**/*.js.map",
+    "!**/*.d.ts.map"
   ],
   "sideEffects": false,
   "engines": {
     "node": ">=18"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.emit.json && tsc -p tsconfig.dts.json && node scripts/keep-public-dts.mjs",
+    "build": "tsc -p tsconfig.emit.json && tsc -p tsconfig.dts.json && node scripts/keep-public-dts.mjs && tsc -p tsconfig.tools-emit.json && node scripts/keep-public-tool-dts.mjs",
     "prepack": "npm run build",
     "typecheck": "npm run build && tsc -p tsconfig.core.json --noEmit && tsc -p tsconfig.browser.json --noEmit && tsc -p tsconfig.tools.json --noEmit",
     "test:types": "npm run build && tsc -p test/types/tsconfig.json",
