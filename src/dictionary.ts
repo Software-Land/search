@@ -6,17 +6,24 @@
  * { key: "tls", expansion: ["transport","layer","security"], aliases: [["..."]] }
  */
 
-/** @param {{ entries?: unknown[] }} [options] */
-export function dictionary({ entries = [] } = {}) {
-  /** @type {import("./types.js").DictionaryEntry[]} */
-  const list = [];
+import type { DictionaryEntry, DictionarySequence } from "./types.js";
+
+export interface DictionaryPlugin {
+  name: "dictionary";
+  entries: DictionaryEntry[];
+  byKey: Map<string, DictionaryEntry>;
+  sequences: DictionarySequence[];
+  lexicon(): Set<string>;
+}
+
+export function dictionary({ entries = [] }: { entries?: unknown[] } = {}): DictionaryPlugin {
+  const list: DictionaryEntry[] = [];
   for (const raw of entries) {
     const entry = normalizeEntry(raw);
     if (entry) list.push(entry);
   }
-  const byKey = new Map();
-  /** @type {import("./types.js").DictionarySequence[]} */
-  const sequences = [];
+  const byKey = new Map<string, DictionaryEntry>();
+  const sequences: DictionarySequence[] = [];
 
   for (const entry of list) {
     byKey.set(entry.key, entry);
@@ -37,7 +44,7 @@ export function dictionary({ entries = [] } = {}) {
     byKey,
     sequences,
     lexicon() {
-      const words = new Set();
+      const words = new Set<string>();
       for (const entry of list) {
         words.add(entry.key);
         for (const w of entry.expansion) words.add(w);
@@ -50,13 +57,17 @@ export function dictionary({ entries = [] } = {}) {
   };
 }
 
-/**
- * @param {unknown} raw
- * @returns {import("./types.js").DictionaryEntry | null}
- */
-function normalizeEntry(raw) {
+function normalizeEntry(raw: unknown): DictionaryEntry | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw) || !("key" in raw) || !raw.key) return null;
-  const rec = /** @type {{ key: unknown, expansion?: unknown, aliases?: unknown, primary?: unknown, type?: unknown, provenance?: unknown, confidence?: unknown }} */ (raw);
+  const rec = raw as {
+    key: unknown;
+    expansion?: unknown;
+    aliases?: unknown;
+    primary?: unknown;
+    type?: unknown;
+    provenance?: unknown;
+    confidence?: unknown;
+  };
   const key = String(rec.key).toLowerCase();
   const expansion = Array.isArray(rec.expansion)
     ? rec.expansion.map((w) => String(w).toLowerCase())
@@ -64,7 +75,7 @@ function normalizeEntry(raw) {
   const aliases = Array.isArray(rec.aliases)
     ? rec.aliases
         .filter((a) => Array.isArray(a) && a.length)
-        .map((a) => a.map((/** @type {unknown} */ w) => String(w).toLowerCase()))
+        .map((a) => (a as unknown[]).map((w) => String(w).toLowerCase()))
     : [];
   return {
     key,
@@ -77,8 +88,9 @@ function normalizeEntry(raw) {
   };
 }
 
-/** @param {Record<string, { exp?: string[], aliases?: string[][], primary?: string | null }> | null | undefined} [acronymMap] */
-export function entriesFromAcronymMap(acronymMap) {
+export function entriesFromAcronymMap(
+  acronymMap?: Record<string, { exp?: string[]; aliases?: string[][]; primary?: string | null }> | null
+) {
   return Object.entries(acronymMap || {}).map(([key, def]) => ({
     key,
     expansion: Array.isArray(def?.exp) ? def.exp : [],

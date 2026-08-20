@@ -19,25 +19,23 @@ export const ARTIFACT_FORMATS = {
 
 export const ARTIFACT_VERSION = 1;
 
-/**
- * @overload
- * @param {unknown} obj
- * @param {string} format
- * @param {{ optional?: false }} [opts]
- * @returns {{ format: string, version: number } & Record<string, unknown>}
- *
- * @overload
- * @param {unknown} obj
- * @param {string} format
- * @param {{ optional: true }} opts
- * @returns {({ format: string, version: number } & Record<string, unknown>) | null}
- *
- * @param {unknown} obj
- * @param {string} format
- * @param {{ optional?: boolean }} [opts]
- * @returns {({ format: string, version: number } & Record<string, unknown>) | null}
- */
-export function assertArtifact(obj, format, { optional = false } = {}) {
+type ArtifactRecord = { format: string; version: number } & Record<string, unknown>;
+
+export function assertArtifact(
+  obj: unknown,
+  format: string,
+  opts?: { optional?: false }
+): ArtifactRecord;
+export function assertArtifact(
+  obj: unknown,
+  format: string,
+  opts: { optional: true }
+): ArtifactRecord | null;
+export function assertArtifact(
+  obj: unknown,
+  format: string,
+  { optional = false }: { optional?: boolean } = {}
+): ArtifactRecord | null {
   if (obj == null) {
     if (optional) return null;
     throw new ArtifactValidationError(`Missing artifact ${format}`, { format });
@@ -45,7 +43,7 @@ export function assertArtifact(obj, format, { optional = false } = {}) {
   if (typeof obj !== "object" || Array.isArray(obj)) {
     throw new ArtifactValidationError(`Artifact ${format} must be a plain object`, { format });
   }
-  const rec = /** @type {Record<string, unknown>} */ (obj);
+  const rec = obj as Record<string, unknown>;
   if (!rec.format) {
     throw new ArtifactValidationError(`Artifact ${format} is missing required field "format"`, {
       format,
@@ -81,8 +79,7 @@ export function assertArtifact(obj, format, { optional = false } = {}) {
  * Equivalence / acronym artifact. Affects query interpretation, not relatedness.
  * { format, version, entries: [{ key, expansion, aliases, type, provenance, confidence }] }
  */
-/** @param {unknown} [obj] */
-export function parseEquivalences(obj) {
+export function parseEquivalences(obj?: unknown) {
   if (obj == null) return { format: ARTIFACT_FORMATS.equivalences, version: 1, entries: [] };
   const art = assertArtifact(obj, ARTIFACT_FORMATS.equivalences, { optional: false });
   const entries = Array.isArray(art.entries) ? art.entries : [];
@@ -90,9 +87,17 @@ export function parseEquivalences(obj) {
     format: ARTIFACT_FORMATS.equivalences,
     version: art.version,
     entries: entries
-      .filter((e) => e && typeof e === "object" && /** @type {{ key?: unknown }} */ (e).key)
+      .filter((e) => e && typeof e === "object" && (e as { key?: unknown }).key)
       .map((e) => {
-        const row = /** @type {{ key: unknown, type?: unknown, expansion?: unknown, aliases?: unknown, provenance?: unknown, confidence?: unknown, primary?: unknown }} */ (e);
+        const row = e as {
+          key: unknown;
+          type?: unknown;
+          expansion?: unknown;
+          aliases?: unknown;
+          provenance?: unknown;
+          confidence?: unknown;
+          primary?: unknown;
+        };
         return {
         key: String(row.key).toLowerCase(),
         type: row.type || "equivalence",
@@ -111,8 +116,7 @@ export function parseEquivalences(obj) {
  * Distinct from document relationships.
  * { format, version, entries: [{ terms, type, provenance, confidence }] }
  */
-/** @param {unknown} [obj] */
-export function parseSynonyms(obj) {
+export function parseSynonyms(obj?: unknown) {
   if (obj == null) return { format: ARTIFACT_FORMATS.synonyms, version: 1, entries: [] };
   const art = assertArtifact(obj, ARTIFACT_FORMATS.synonyms);
   const entries = Array.isArray(art.entries) ? art.entries : [];
@@ -120,9 +124,9 @@ export function parseSynonyms(obj) {
     format: ARTIFACT_FORMATS.synonyms,
     version: art.version,
     entries: entries
-      .filter((e) => e && typeof e === "object" && Array.isArray(/** @type {{ terms?: unknown }} */ (e).terms) && /** @type {{ terms: unknown[] }} */ (e).terms.length >= 2)
+      .filter((e) => e && typeof e === "object" && Array.isArray((e as { terms?: unknown }).terms) && (e as { terms: unknown[] }).terms.length >= 2)
       .map((e) => {
-        const row = /** @type {{ terms: unknown[], type?: unknown, provenance?: unknown, confidence?: unknown }} */ (e);
+        const row = e as { terms: unknown[]; type?: unknown; provenance?: unknown; confidence?: unknown };
         return {
         terms: row.terms.map((t) => String(t).toLowerCase()),
         type: row.type || "near-equivalence",
@@ -133,26 +137,31 @@ export function parseSynonyms(obj) {
   };
 }
 
+export interface ParsedRelationshipEdge {
+  target: string;
+  type: string;
+  strength: number;
+  provenance: string | null;
+}
+
 /**
  * Document-document relationship graph. Does not participate in query rewriting.
  * { format, version, relationships: { [sourceId]: [{ target, type, strength, provenance }] } }
  */
-/** @param {unknown} [obj] */
-export function parseRelationships(obj) {
+export function parseRelationships(obj?: unknown) {
   if (obj == null) {
     return { format: ARTIFACT_FORMATS.relationships, version: 1, relationships: {} };
   }
   const art = assertArtifact(obj, ARTIFACT_FORMATS.relationships);
   const raw = art.relationships && typeof art.relationships === "object" && !Array.isArray(art.relationships) ? art.relationships : {};
-  /** @type {Record<string, Array<{ target: string, type: string, strength: number, provenance: string | null }>>} */
-  const relationships = {};
-  for (const [source, list] of Object.entries(raw)) {
+  const relationships: Record<string, ParsedRelationshipEdge[]> = {};
+  for (const [source, list] of Object.entries(raw as Record<string, unknown>)) {
     if (FORBIDDEN_KEYS.has(source)) continue;
     if (!Array.isArray(list)) continue;
     relationships[String(source)] = list
-      .filter((e) => e && typeof e === "object" && /** @type {{ target?: unknown }} */ (e).target)
+      .filter((e) => e && typeof e === "object" && (e as { target?: unknown }).target)
       .map((e) => {
-        const row = /** @type {{ target: unknown, type?: unknown, strength?: unknown, provenance?: unknown }} */ (e);
+        const row = e as { target: unknown; type?: unknown; strength?: unknown; provenance?: unknown };
         return {
         target: String(row.target),
         type: typeof row.type === "string" ? row.type : "related",
@@ -168,8 +177,7 @@ export function parseRelationships(obj) {
   };
 }
 
-/** @param {unknown} [obj] */
-export function parseCorpusStats(obj) {
+export function parseCorpusStats(obj?: unknown) {
   if (obj == null) return { format: ARTIFACT_FORMATS.corpusStats, version: 1, stats: {} };
   const art = assertArtifact(obj, ARTIFACT_FORMATS.corpusStats);
   return {
@@ -179,8 +187,7 @@ export function parseCorpusStats(obj) {
   };
 }
 
-/** @param {number} n */
-function clamp01(n) {
+function clamp01(n: number): number {
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(1, n));
 }

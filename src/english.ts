@@ -7,8 +7,7 @@
 
 import { collapseTrailingRepeats } from "./text.js";
 
-/** @type {Record<string, string>} */
-const DEFAULT_LEMMAS = {
+const DEFAULT_LEMMAS: Record<string, string> = {
   libraries: "library",
   recursive: "recursion",
   recursively: "recursion",
@@ -30,8 +29,7 @@ const DEFAULT_LEMMAS = {
   intercept: "interceptor",
 };
 
-/** @param {string} token */
-function stripSuffix(token) {
+function stripSuffix(token: string): string {
   if (token.length <= 3) return token;
   if (token.endsWith("ies") && token.length > 4) return `${token.slice(0, -3)}y`;
   if (token.endsWith("ing") && token.length > 5) {
@@ -46,12 +44,20 @@ function stripSuffix(token) {
   return token;
 }
 
-/** @param {{ lemmas?: Record<string, string> }} [options] */
-export function english({ lemmas = {} } = {}) {
-  /** @type {Record<string, string>} */
-  const table = { ...lemmas, ...DEFAULT_LEMMAS };
-  /** @param {string} token @returns {string | null} */
-  function explicitLemma(token) {
+export interface EnglishPlugin {
+  name: "english";
+  lemma(token: string): string;
+  /**
+   * Lemma-table identity only. Suffix heuristics are not confident enough
+   * to rewrite retrieval tokens (application → applicat, kubernetes → kubernete).
+   */
+  canonicalLemma(token: string): string | null;
+  collapseRepeats: typeof collapseTrailingRepeats;
+}
+
+export function english({ lemmas = {} }: { lemmas?: Record<string, string> } = {}): EnglishPlugin {
+  const table: Record<string, string> = { ...lemmas, ...DEFAULT_LEMMAS };
+  function explicitLemma(token: string): string | null {
     const t = String(token || "").toLowerCase();
     if (!t) return null;
     if (table[t]) return table[t];
@@ -64,7 +70,6 @@ export function english({ lemmas = {} } = {}) {
 
   return {
     name: "english",
-    /** @param {string} token */
     lemma(token) {
       const t = String(token || "").toLowerCase();
       if (!t) return t;
@@ -74,11 +79,6 @@ export function english({ lemmas = {} } = {}) {
       const stripped = stripSuffix(collapsed);
       return stripped;
     },
-    /**
-     * Lemma-table identity only. Suffix heuristics are not confident enough
-     * to rewrite retrieval tokens (application → applicat, kubernetes → kubernete).
-     * @param {string} token
-     */
     canonicalLemma(token) {
       return explicitLemma(token);
     },
