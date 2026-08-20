@@ -4,29 +4,25 @@
 
 import { ALLOWED_TYPES } from "./types.js";
 import { relationshipId, normalizeRef } from "./ids.js";
+import type { RelDecision, RelDecisionDoc, RelDecisionIndex } from "../types.js";
 
 export const DECISION_FORMAT = "search-relationships-decisions";
 export const ALLOWED_DECISIONS = new Set(["accept", "reject"]);
 
 export class DecisionError extends Error {
-  /**
-   * @param {string} message
-   * @param {string[]} [details]
-   */
-  constructor(message, details = []) {
+  details?: string[];
+  constructor(message: string, details: string[] = []) {
     super(message);
     this.name = "DecisionError";
     this.details = details;
   }
 }
 
-/** @returns {import("../types.js").RelDecisionDoc} */
-export function emptyDecisions() {
+export function emptyDecisions(): RelDecisionDoc {
   return { format: DECISION_FORMAT, version: 1, relationships: [] };
 }
 
-/** @param {Record<string, unknown>} item @returns {import("../types.js").RelDecision} */
-function normalizeItem(item) {
+function normalizeItem(item: Record<string, unknown>): RelDecision {
   const type = String(item.type || "editorial").toLowerCase();
   const source = normalizeRef(item.source);
   const target = normalizeRef(item.target);
@@ -46,11 +42,10 @@ function normalizeItem(item) {
   };
 }
 
-/** @param {unknown} raw @returns {import("../types.js").RelDecisionDoc} */
-export function loadDecisions(raw) {
+export function loadDecisions(raw: unknown): RelDecisionDoc {
   if (raw == null) return emptyDecisions();
   if (typeof raw !== "object" || Array.isArray(raw)) throw new DecisionError("Decisions must be a JSON object");
-  const rec = /** @type {Record<string, unknown>} */ (raw);
+  const rec = raw as Record<string, unknown>;
   if (rec.format && rec.format !== DECISION_FORMAT) {
     throw new DecisionError(`Expected format ${DECISION_FORMAT}, got ${rec.format}`);
   }
@@ -58,15 +53,14 @@ export function loadDecisions(raw) {
   return {
     format: DECISION_FORMAT,
     version: rec.version == null ? 1 : Number(rec.version) || 1,
-    relationships: list.map((item) => normalizeItem(item && typeof item === "object" ? /** @type {Record<string, unknown>} */ (item) : {})),
+    relationships: list.map((item) => normalizeItem(item && typeof item === "object" ? (item as Record<string, unknown>) : {})),
   };
 }
 
-/** @param {unknown} raw @returns {import("../types.js").RelDecisionDoc} */
-export function validateDecisions(raw) {
+export function validateDecisions(raw: unknown): RelDecisionDoc {
   const loaded = loadDecisions(raw);
-  const errors = [];
-  const byId = new Map();
+  const errors: string[] = [];
+  const byId = new Map<string, RelDecision>();
   for (const item of loaded.relationships) {
     if (!ALLOWED_DECISIONS.has(item.decision)) {
       errors.push(`${item.id}: unknown decision "${item.decision}"`);
@@ -81,7 +75,8 @@ export function validateDecisions(raw) {
     } else if (!ALLOWED_TYPES.has(item.type)) {
       errors.push(`${item.id}: unknown relationship type "${item.type}" (add it to RELATIONSHIP_TYPES to extend)`);
     }
-    if (byId.has(item.id) && byId.get(item.id).decision !== item.decision) {
+    const prev = byId.get(item.id);
+    if (prev && prev.decision !== item.decision) {
       errors.push(`${item.id}: both accept and reject`);
     }
     byId.set(item.id, item);
@@ -90,11 +85,10 @@ export function validateDecisions(raw) {
   return loaded;
 }
 
-/** @param {unknown} raw @returns {import("../types.js").RelDecisionIndex} */
-export function indexDecisions(raw) {
+export function indexDecisions(raw: unknown): RelDecisionIndex {
   const loaded = validateDecisions(raw);
-  const byId = new Map();
-  const rejectAllPairs = new Set();
+  const byId = new Map<string, RelDecision>();
+  const rejectAllPairs = new Set<string>();
   for (const item of loaded.relationships) {
     byId.set(item.id, item);
     if (item.decision === "reject" && item.type === "*") {

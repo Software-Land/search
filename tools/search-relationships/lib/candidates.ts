@@ -7,11 +7,11 @@ import { relationshipId } from "./ids.js";
 import { ALLOWED_TYPES } from "./types.js";
 import { resolveRef } from "./documents.js";
 import { stableSort } from "./hash.js";
+import type { DocIndex, RelCandidate, RelDocument } from "../types.js";
 
 const INTERNAL_LINK = /\[([^\]]+)\]\((\/[^)\s#]+)(?:#[^)]*)?\)/g;
 
-/** @param {unknown} path */
-function isSkippablePath(path) {
+function isSkippablePath(path: unknown): boolean {
   const p = String(path || "").toLowerCase();
   if (!p.startsWith("/")) return true;
   if (p.startsWith("/glossary")) return true;
@@ -21,17 +21,12 @@ function isSkippablePath(path) {
 
 /**
  * Portable miner: markdown body links + document.metadata.links / category / prerequisite.
- * @param {import("../types.js").RelDocument[]} documents
- * @param {import("../types.js").DocIndex} docIndex
- * @returns {import("../types.js").RelCandidate[]}
  */
-export function mineRelationshipCandidates(documents, docIndex) {
-  /** @type {import("../types.js").RelCandidate[]} */
-  const out = [];
-  const seen = new Set();
+export function mineRelationshipCandidates(documents: RelDocument[], docIndex: DocIndex): RelCandidate[] {
+  const out: RelCandidate[] = [];
+  const seen = new Set<string>();
 
-  /** @param {import("../types.js").RelCandidate} row */
-  function push(row) {
+  function push(row: RelCandidate) {
     if (!ALLOWED_TYPES.has(row.type)) return;
     if (!row.source || !row.target || row.source === row.target) return;
     const id = relationshipId(row.type, row.source, row.target, { directional: row.directional });
@@ -42,7 +37,7 @@ export function mineRelationshipCandidates(documents, docIndex) {
 
   for (const doc of documents) {
     INTERNAL_LINK.lastIndex = 0;
-    let m;
+    let m: RegExpExecArray | null;
     const body = String(doc.body || "");
     while ((m = INTERNAL_LINK.exec(body))) {
       const href = m[2];
@@ -63,7 +58,7 @@ export function mineRelationshipCandidates(documents, docIndex) {
 
     const links = Array.isArray(doc.metadata?.links) ? doc.metadata.links : [];
     for (const link of links) {
-      const rec = /** @type {Record<string, unknown>} */ (link && typeof link === "object" ? link : { target: link });
+      const rec = (link && typeof link === "object" ? link : { target: link }) as Record<string, unknown>;
       const target = resolveRef(rec.target || rec.targetId || link, docIndex);
       if (!target || target.id === doc.id) continue;
       const linkType = typeof rec.type === "string" ? rec.type : "";
@@ -119,8 +114,7 @@ export function mineRelationshipCandidates(documents, docIndex) {
   return stableSort(out, (c) => c.id || "");
 }
 
-/** @param {import("../types.js").RelCandidate} c */
-export function bandForCandidate(c) {
+export function bandForCandidate(c: RelCandidate): string {
   const e = c.evidence || {};
   if ((e.declaredPrerequisite || 0) >= 1) return "HIGH";
   if ((e.contentLinks || 0) >= 1) return "HIGH";
@@ -129,8 +123,7 @@ export function bandForCandidate(c) {
   return "LOW";
 }
 
-/** @param {import("../types.js").RelCandidate[]} rows */
-export function annotateCandidates(rows) {
+export function annotateCandidates(rows: RelCandidate[]): RelCandidate[] {
   return rows.map((c) => ({
     ...c,
     reviewBand: c.reviewBand || bandForCandidate(c),

@@ -1,6 +1,6 @@
 /**
  * Keep generated public tool barrels; drop declaration emit from tool impl modules.
- * Only walks TypeScript-migrated tools so handwritten corpus/relationships/semantic
+ * Only walks TypeScript-migrated tools so handwritten corpus/semantic
  * declarations are left untouched.
  */
 import { existsSync, readdirSync, statSync, unlinkSync } from "node:fs";
@@ -10,9 +10,13 @@ import { fileURLToPath } from "node:url";
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 /** Tool directories whose JS/DTS are generated from TypeScript. */
-const migratedTools = ["search-lexical"];
+const migratedTools = ["search-lexical", "search-relationships"];
 
-const keep = new Set(migratedTools.map((name) => `tools/${name}/index.d.ts`));
+const keep = new Set([
+  "tools/search-lexical/index.d.ts",
+  "tools/search-relationships/index.d.ts",
+  "tools/search-relationships/types.d.ts",
+]);
 
 function walk(dir, rel) {
   for (const name of readdirSync(dir)) {

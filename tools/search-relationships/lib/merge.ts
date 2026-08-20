@@ -7,13 +7,14 @@
 import { ALLOWED_TYPES, DEFAULT_RUNTIME_TYPES } from "./types.js";
 import { relationshipId, pairKey } from "./ids.js";
 import { toArtifact, filterRelationships } from "./compile.js";
+import type { FlattenedEdge, MergeRelOptions, RelLifecycleResult, RelationshipEdge } from "../types.js";
 
-/** @param {unknown} artifact @param {string} [fallbackType] */
-function flatten(artifact, fallbackType = "semantic") {
-  /** @type {import("../types.js").FlattenedEdge[]} */
-  const out = [];
+function flatten(artifact: unknown, fallbackType = "semantic"): FlattenedEdge[] {
+  const out: FlattenedEdge[] = [];
   if (!artifact || typeof artifact !== "object") return out;
-  const rec = /** @type {{ relationships?: Record<string, Array<{ target?: unknown, type?: unknown, strength?: unknown, provenance?: unknown }> | undefined> }} */ (artifact);
+  const rec = artifact as {
+    relationships?: Record<string, Array<{ target?: unknown; type?: unknown; strength?: unknown; provenance?: unknown }> | undefined>;
+  };
   for (const [source, edges] of Object.entries(rec.relationships || {})) {
     for (const e of edges || []) {
       if (!e?.target) continue;
@@ -29,8 +30,7 @@ function flatten(artifact, fallbackType = "semantic") {
   return out;
 }
 
-/** @param {Partial<import("../types.js").RelLifecycleResult>} life @param {string} source @param {string} target @param {string} type */
-function rejected(life, source, target, type) {
+function rejected(life: Partial<RelLifecycleResult>, source: string, target: string, type: string): boolean {
   if (life.rejectAllPairs?.has(pairKey(source, target)) || life.rejectAllPairs?.has(pairKey(target, source))) {
     return true;
   }
@@ -47,19 +47,17 @@ function rejected(life, source, target, type) {
   return false;
 }
 
-/**
- * @param {import("../types.js").MergeRelOptions} [options]
- */
-export function mergeRelationshipArtifacts({ semantic = null, domain = null, life = {}, runtimeTypes = DEFAULT_RUNTIME_TYPES } = {}) {
-  /** @type {Map<string, import("../types.js").RelationshipEdge[]>} */
-  const bag = new Map();
-  /** @param {string} s @param {string} t @param {string} type */
-  const keyOf = (s, t, type) => `${s}::${t}::${type}`;
-  /** @type {Map<string, import("../types.js").FlattenedEdge>} */
-  const seen = new Map();
+export function mergeRelationshipArtifacts({
+  semantic = null,
+  domain = null,
+  life = {},
+  runtimeTypes = DEFAULT_RUNTIME_TYPES,
+}: MergeRelOptions = {}): { full: ReturnType<typeof toArtifact>; runtime: ReturnType<typeof filterRelationships> } {
+  const bag = new Map<string, RelationshipEdge[]>();
+  const keyOf = (s: string, t: string, type: string) => `${s}::${t}::${type}`;
+  const seen = new Map<string, FlattenedEdge>();
 
-  /** @param {import("../types.js").FlattenedEdge} edge */
-  function add(edge) {
+  function add(edge: FlattenedEdge) {
     if (!ALLOWED_TYPES.has(edge.type)) return;
     if (edge.source === edge.target) return;
     if (rejected(life, edge.source, edge.target, edge.type)) return;

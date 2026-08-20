@@ -7,6 +7,11 @@ dist/
 tools/search-lexical/**/*.js
 tools/search-lexical/**/*.d.ts
 tools/search-lexical/**/*.map
+tools/search-relationships/**/*.js
+tools/search-relationships/index.d.ts
+tools/search-relationships/lib/**/*.d.ts
+tools/search-relationships/build.d.ts
+tools/search-relationships/**/*.map
 
 # Compiler / semantic builder generated output (never source)
 tools/search-corpus/.output/

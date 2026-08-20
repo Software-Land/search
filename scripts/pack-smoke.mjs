@@ -91,6 +91,22 @@ try {
   if (packedRel.includes("tools/search-lexical/lib/compile.d.ts")) {
     throw new Error("tarball must not include lexical implementation declarations");
   }
+  for (const required of [
+    "tools/search-relationships/index.js",
+    "tools/search-relationships/index.d.ts",
+    "tools/search-relationships/types.d.ts",
+    "tools/search-relationships/build.mjs",
+    "tools/search-relationships/build.js",
+    "tools/search-relationships/lib/pipeline.js",
+  ]) {
+    if (!packedRel.includes(required)) throw new Error(`packed tarball missing ${required}`);
+  }
+  const packedRelImplDts = packedRel.filter(
+    (rel) => rel.startsWith("tools/search-relationships/lib/") && rel.endsWith(".d.ts")
+  );
+  if (packedRelImplDts.length) {
+    throw new Error(`tarball must not include relationships implementation declarations: ${packedRelImplDts.join(", ")}`);
+  }
 
   const forbidden = packedRel.filter(
     (rel) =>

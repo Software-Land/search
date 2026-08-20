@@ -1,12 +1,10 @@
 import { isSymmetricType } from "./types.js";
 
-/** @param {unknown} value */
-export function normalizeRef(value) {
+export function normalizeRef(value: unknown): string {
   return String(value || "").trim();
 }
 
-/** @param {unknown} value */
-export function normalizePath(value) {
+export function normalizePath(value: unknown): string {
   let s = String(value || "").trim().toLowerCase();
   if (!s) return "";
   s = s.replace(/#.*$/, "");
@@ -15,13 +13,11 @@ export function normalizePath(value) {
   return s;
 }
 
-/** @param {string} source @param {string} target */
-export function pairKey(source, target) {
+export function pairKey(source: string, target: string): string {
   return `${source}::${target}`;
 }
 
-/** @param {string} source @param {string} target @param {{ symmetric?: boolean }} [opts] @returns {[string, string]} */
-export function orderedPair(source, target, { symmetric = false } = {}) {
+export function orderedPair(source: string, target: string, { symmetric = false }: { symmetric?: boolean } = {}): [string, string] {
   const a = String(source);
   const b = String(target);
   if (!symmetric) return [a, b];
@@ -32,8 +28,7 @@ export function orderedPair(source, target, { symmetric = false } = {}) {
  * Stable identity: type + endpoints.
  * Symmetric types normalize pair order. Directional types keep source→target.
  */
-/** @param {unknown} type @param {unknown} source @param {unknown} target @param {{ directional?: boolean }} [opts] */
-export function relationshipId(type, source, target, { directional = false } = {}) {
+export function relationshipId(type: unknown, source: unknown, target: unknown, { directional = false }: { directional?: boolean } = {}): string {
   const t = String(type || "editorial").toLowerCase();
   const symmetric = isSymmetricType(t, { directional });
   const [a, b] = orderedPair(String(source), String(target), { symmetric });

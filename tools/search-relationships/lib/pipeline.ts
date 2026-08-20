@@ -6,20 +6,19 @@ import { mergeRelationshipArtifacts } from "./merge.js";
 import { mineRelationshipCandidates, annotateCandidates } from "./candidates.js";
 import { DEFAULT_RUNTIME_TYPES } from "./types.js";
 import { hashJson } from "./hash.js";
+import type { AnalyzeRelOptions, CompileRelOptions, RelCandidate, RelationshipArtifact, RelationshipEdge } from "../types.js";
 
-export const COMPILER_VERSION = 1;
+export const COMPILER_VERSION: 1 = 1;
 
-function now() {
+function now(): number {
   return typeof performance !== "undefined" ? performance.now() : Date.now();
 }
 
-/** @param {unknown} n */
-function round(n) {
+function round(n: unknown): number {
   return Number(Number(n).toFixed(3));
 }
 
-/** @param {unknown} input @param {import("../types.js").AnalyzeRelOptions} [opts] */
-export function analyzeRelationships(input, { decisions = null, mine = true } = {}) {
+export function analyzeRelationships(input?: unknown, { decisions = null, mine = true }: AnalyzeRelOptions = {}) {
   const t0 = now();
   const documents = loadDocuments(input);
   const docIndex = indexDocuments(documents);
@@ -31,7 +30,7 @@ export function analyzeRelationships(input, { decisions = null, mine = true } = 
   const inspection = inspectLifecycle(life, {
     queueStats: {
       raw: mined.length,
-      pending: life.candidates.filter((c) => c.lifecycle === "REVIEW_PENDING").length,
+      pending: life.candidates.filter((c: RelCandidate) => c.lifecycle === "REVIEW_PENDING").length,
       high: mined.filter((c) => c.reviewBand === "HIGH").length,
       medium: mined.filter((c) => c.reviewBand === "MEDIUM").length,
       low: mined.filter((c) => c.reviewBand === "LOW").length,
@@ -53,8 +52,10 @@ export function analyzeRelationships(input, { decisions = null, mine = true } = 
   };
 }
 
-/** @param {unknown} input @param {import("../types.js").CompileRelOptions} [opts] */
-export function compileRelationships(input, { decisions = null, semantic = null, mine = true, runtimeTypes = DEFAULT_RUNTIME_TYPES } = {}) {
+export function compileRelationships(
+  input?: unknown,
+  { decisions = null, semantic = null, mine = true, runtimeTypes = DEFAULT_RUNTIME_TYPES }: CompileRelOptions = {}
+) {
   const analysis = analyzeRelationships(input, { decisions, mine });
   const t0 = now();
   const domain = compileTrusted(analysis.life);
@@ -86,27 +87,26 @@ export function compileRelationships(input, { decisions = null, semantic = null,
   return {
     ...analysis,
     domain,
-    semantic: semantic && typeof semantic === "object"
-      ? /** @type {import("../types.js").RelationshipArtifact} */ (semantic)
-      : { format: "search-v2-relationships", version: 1, relationships: /** @type {Record<string, import("../types.js").RelationshipEdge[]>} */ ({}) },
+    semantic:
+      semantic && typeof semantic === "object"
+        ? (semantic as RelationshipArtifact)
+        : { format: "search-v2-relationships", version: 1, relationships: {} as Record<string, RelationshipEdge[]> },
     merged: merged.full,
     runtime: merged.runtime,
     manifest,
   };
 }
 
-/** @param {unknown} artifact */
-function countEdges(artifact) {
+function countEdges(artifact: unknown): number {
   if (!artifact || typeof artifact !== "object") return 0;
-  const rec = /** @type {{ relationships?: Record<string, unknown[] | undefined> }} */ (artifact);
+  const rec = artifact as { relationships?: Record<string, unknown[] | undefined> };
   return Object.values(rec.relationships || {}).reduce((n, list) => n + (list?.length || 0), 0);
 }
 
-/** @param {unknown} artifact */
-function countPairs(artifact) {
-  const pairs = new Set();
+function countPairs(artifact: unknown): number {
+  const pairs = new Set<string>();
   if (!artifact || typeof artifact !== "object") return 0;
-  const rec = /** @type {{ relationships?: Record<string, Array<{ target?: string }> | undefined> }} */ (artifact);
+  const rec = artifact as { relationships?: Record<string, Array<{ target?: string }> | undefined> };
   for (const [s, edges] of Object.entries(rec.relationships || {})) {
     for (const e of edges || []) {
       const a = s < (e.target || "") ? s : e.target || "";

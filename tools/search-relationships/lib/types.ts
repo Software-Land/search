@@ -7,10 +7,11 @@
  * Structural types are stored but omitted from the default runtime graph.
  */
 
+import type { TypeSpec } from "../types.js";
+
 export const ARTIFACT_FORMAT = "search-v2-relationships";
 
-/** @type {Record<string, import("../types.js").TypeSpec>} */
-export const RELATIONSHIP_TYPES = {
+export const RELATIONSHIP_TYPES: Record<string, TypeSpec> = {
   semantic: {
     symmetric: false,
     searchEligible: true,
@@ -46,29 +47,25 @@ export const RELATIONSHIP_TYPES = {
 export const ALLOWED_TYPES = new Set(Object.keys(RELATIONSHIP_TYPES));
 
 /** Types that may enter Search Core search()/related by default. */
-export const DEFAULT_RUNTIME_TYPES = Object.freeze(
+export const DEFAULT_RUNTIME_TYPES: readonly string[] = Object.freeze(
   Object.entries(RELATIONSHIP_TYPES)
     .filter(([, spec]) => spec.searchEligible)
     .map(([type]) => type)
 );
 
-export const STRUCTURAL_TYPES = Object.freeze(
+export const STRUCTURAL_TYPES: readonly string[] = Object.freeze(
   Object.entries(RELATIONSHIP_TYPES)
     .filter(([, spec]) => !spec.searchEligible)
     .map(([type]) => type)
 );
 
-/** @param {unknown} type @returns {import("../types.js").TypeSpec | null} */
-export function typeSpec(type) {
-  const spec = /** @type {Record<string, import("../types.js").TypeSpec>} */ (RELATIONSHIP_TYPES);
-  return spec[String(type || "")] || null;
+export function typeSpec(type: unknown): TypeSpec | null {
+  return RELATIONSHIP_TYPES[String(type || "")] || null;
 }
 
-/** @param {unknown} type @param {{ directional?: boolean }} [opts] */
-export function isSymmetricType(type, { directional = false } = {}) {
+export function isSymmetricType(type: unknown, { directional = false }: { directional?: boolean } = {}): boolean {
   if (directional) return false;
-  const spec = /** @type {Record<string, import("../types.js").TypeSpec>} */ (RELATIONSHIP_TYPES);
-  return Boolean(spec[String(type || "")]?.symmetric);
+  return Boolean(RELATIONSHIP_TYPES[String(type || "")]?.symmetric);
 }
 
 /** Discrete explicit importance. Not a cosine. */

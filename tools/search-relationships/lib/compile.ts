@@ -2,22 +2,20 @@ import { ARTIFACT_FORMAT, EXPLICIT_STRENGTH, DEFAULT_RUNTIME_TYPES, isSymmetricT
 import { stableSort } from "./hash.js";
 import { trustedRows, LIFECYCLE } from "./lifecycle.js";
 import { relationshipId } from "./ids.js";
+import type { RelCandidate, RelInspectionDoc, RelLifecycleResult, RelationshipArtifact, RelationshipEdge } from "../types.js";
 
-/** @returns {Record<string, import("../types.js").RelationshipEdge[]>} */
-function emptyRelationships() {
-  return /** @type {Record<string, import("../types.js").RelationshipEdge[]>} */ ({});
+function emptyRelationships(): Record<string, RelationshipEdge[]> {
+  return {};
 }
 
-/** @param {import("../types.js").RelCandidate} row */
-function edgeProvenance(row) {
+function edgeProvenance(row: RelCandidate): string | null {
   if (row.decisionRecord?.provenance) return row.decisionRecord.provenance;
   if (row.lifecycle === LIFECYCLE.MANUAL_ACCEPTED) return "manual";
   if (row.lifecycle === LIFECYCLE.HUMAN_ACCEPTED) return "human-reviewed";
   return "human-reviewed";
 }
 
-/** @param {import("../types.js").RelCandidate} row */
-function explicitStrength(row) {
+function explicitStrength(row: RelCandidate): number {
   const p = row.decisionRecord?.priority;
   if (p != null && Number.isFinite(Number(p))) {
     const n = Number(p);
@@ -26,22 +24,15 @@ function explicitStrength(row) {
   return EXPLICIT_STRENGTH;
 }
 
-/**
- * @param {Map<string, import("../types.js").RelationshipEdge[]>} bag
- * @param {string} source
- * @param {import("../types.js").RelationshipEdge} edge
- */
-function pushEdge(bag, source, edge) {
+function pushEdge(bag: Map<string, RelationshipEdge[]>, source: string, edge: RelationshipEdge) {
   if (!bag.has(source)) bag.set(source, []);
   const list = bag.get(source) || [];
   if (list.some((e) => e.target === edge.target && e.type === edge.type)) return;
   list.push(edge);
 }
 
-/** @param {import("../types.js").RelLifecycleResult} life @returns {import("../types.js").RelationshipArtifact} */
-export function compileTrusted(life) {
-  /** @type {Map<string, import("../types.js").RelationshipEdge[]>} */
-  const bag = new Map();
+export function compileTrusted(life: RelLifecycleResult): RelationshipArtifact {
+  const bag = new Map<string, RelationshipEdge[]>();
   for (const row of trustedRows(life)) {
     const edge = {
       target: row.resolvedTarget || "",
@@ -57,8 +48,7 @@ export function compileTrusted(life) {
   return toArtifact(bag);
 }
 
-/** @param {Map<string, import("../types.js").RelationshipEdge[]>} bag @returns {import("../types.js").RelationshipArtifact} */
-export function toArtifact(bag) {
+export function toArtifact(bag: Map<string, RelationshipEdge[]>): RelationshipArtifact {
   const relationships = emptyRelationships();
   const sources = stableSort([...bag.keys()], (k) => k);
   for (const source of sources) {
@@ -75,8 +65,10 @@ export function toArtifact(bag) {
   };
 }
 
-/** @param {import("../types.js").RelationshipArtifact | null | undefined} artifact @param {{ types?: readonly string[] }} [opts] */
-export function filterRelationships(artifact, { types = DEFAULT_RUNTIME_TYPES } = {}) {
+export function filterRelationships(
+  artifact: RelationshipArtifact | null | undefined,
+  { types = DEFAULT_RUNTIME_TYPES }: { types?: readonly string[] } = {}
+): RelationshipArtifact {
   const allow = new Set(types);
   const relationships = emptyRelationships();
   for (const [source, edges] of Object.entries(artifact?.relationships || {})) {
@@ -86,10 +78,11 @@ export function filterRelationships(artifact, { types = DEFAULT_RUNTIME_TYPES } 
   return { format: ARTIFACT_FORMAT, version: artifact?.version || 1, relationships };
 }
 
-/** @param {import("../types.js").RelLifecycleResult} life @param {{ delta?: unknown, queueStats?: unknown }} [opts] @returns {import("../types.js").RelInspectionDoc} */
-export function inspectLifecycle(life, { delta = null, queueStats = null } = {}) {
-  /** @type {Record<string, unknown[]>} */
-  const byLife = {};
+export function inspectLifecycle(
+  life: RelLifecycleResult,
+  { delta = null, queueStats = null }: { delta?: unknown; queueStats?: unknown } = {}
+): RelInspectionDoc {
+  const byLife: Record<string, unknown[]> = {};
   for (const c of life.candidates || []) {
     const k = c.lifecycle || "UNKNOWN";
     if (!byLife[k]) byLife[k] = [];

@@ -3,6 +3,7 @@ import { isSymmetricType } from "./types.js";
 import { indexDecisions } from "./decisions.js";
 import { resolveRef } from "./documents.js";
 import { stableSort } from "./hash.js";
+import type { DocIndex, RelCandidate, RelDecision, RelDocument, RelLifecycleResult } from "../types.js";
 
 export const LIFECYCLE = {
   MANUAL_ACCEPTED: "MANUAL_ACCEPTED",
@@ -11,25 +12,23 @@ export const LIFECYCLE = {
   HUMAN_REJECTED: "HUMAN_REJECTED",
   CONFLICT: "CONFLICT",
   ORPHANED_DECISION: "ORPHANED_DECISION",
-};
+} as const;
 
-/** @param {import("../types.js").RelDecision} item @param {import("../types.js").RelDocument | null} src @param {import("../types.js").RelDocument | null} tgt */
-function resolvedId(item, src, tgt) {
+function resolvedId(item: RelDecision, src: RelDocument | null, tgt: RelDocument | null): string {
   if (src && tgt) return relationshipId(item.type, src.id, tgt.id, { directional: item.directional });
   return item.id;
 }
 
-/** @param {import("../types.js").RelCandidate[] | null | undefined} candidates @param {unknown} decisions @param {import("../types.js").DocIndex} docIndex @returns {import("../types.js").RelLifecycleResult} */
-export function applyLifecycle(candidates, decisions, docIndex) {
+export function applyLifecycle(
+  candidates: RelCandidate[] | null | undefined,
+  decisions: unknown,
+  docIndex: DocIndex
+): RelLifecycleResult {
   const idx = indexDecisions(decisions);
-  /** @type {unknown[]} */
-  const flags = [];
-  /** @type {unknown[]} */
-  const conflicts = [];
-  /** @type {import("../types.js").RelCandidate[]} */
-  const orphaned = [];
-  /** @type {Map<string, import("../types.js").RelCandidate>} */
-  const byId = new Map();
+  const flags: unknown[] = [];
+  const conflicts: unknown[] = [];
+  const orphaned: RelCandidate[] = [];
+  const byId = new Map<string, RelCandidate>();
 
   for (const raw of candidates || []) {
     const src = resolveRef(raw.source, docIndex);
@@ -45,7 +44,7 @@ export function applyLifecycle(candidates, decisions, docIndex) {
     });
   }
 
-  const usedDecisionIds = new Set();
+  const usedDecisionIds = new Set<string>();
 
   for (const item of idx.loaded.relationships) {
     const src = resolveRef(item.source, docIndex);
@@ -118,8 +117,7 @@ export function applyLifecycle(candidates, decisions, docIndex) {
   };
 }
 
-/** @param {import("../types.js").RelLifecycleResult} life */
-export function trustedRows(life) {
+export function trustedRows(life: RelLifecycleResult): RelCandidate[] {
   return (life.candidates || []).filter(
     (c) =>
       (c.lifecycle === LIFECYCLE.MANUAL_ACCEPTED || c.lifecycle === LIFECYCLE.HUMAN_ACCEPTED) &&

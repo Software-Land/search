@@ -28,6 +28,6 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false
   },
-  "include": ["tools/search-lexical/**/*.ts"],
+  "include": ["tools/search-lexical/**/*.ts", "tools/search-relationships/**/*.ts"],
   "exclude": ["tools/**/.output/**"]
 }
