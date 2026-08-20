@@ -9,4 +9,4 @@ export const MSG = Object.freeze({
   RESULT: "result",
   ERROR: "error",
   ABORTED: "aborted",
-});
+} as const);
