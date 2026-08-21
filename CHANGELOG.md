@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.3
+
+### Changed
+
+- Node build-tool implementation source migrated from JavaScript to TypeScript: `@software-land/search/lexical`, `@software-land/search/relationships`, `@software-land/search/corpus`, and the Node wrapper/CLI for `@software-land/search/semantic`. Emitted JavaScript remains what npm consumers execute. Documented `build.mjs` CLI paths remain compatible.
+- All production Node runtime and Node build-tool implementation source is now TypeScript, while the semantic compiler remains Python and small compatibility launchers/tests/scripts remain in their appropriate languages. Semantic Python remains build-time only.
+- Handwritten public declarations remain frozen where generated declarations would alter the v0.2.2 contract. Lexical declaration output remains contract-equivalent.
+- Documented the existing morphology ownership contract: Core owns the `english()` mechanism (suffix heuristics, small built-in table, merge/precedence). A site/catalog may supply corpus-specific lemma data through `english({ lemmas })` and Worker `englishOptions`. Site-specific spaCy / lemminflect / model generation remains outside Core and the browser/runtime dependency graph.
+- Public/runtime/search behavior remains compatible with v0.2.2. The existing six supported public package specifiers remain unchanged. Zero production dependencies. Node >=18 remains supported.
+
+### Infrastructure
+
+- GitHub Actions `actions/checkout` and `actions/setup-node` updated to v5.
+
+This patch does not retune ranking, change artifact format versions, add a query-time model/vector/LLM dependency, change the Worker protocol, or break the public API.
+
 ## 0.2.2
 
 ### Fixed
