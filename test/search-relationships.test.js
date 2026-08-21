@@ -9,6 +9,7 @@ import {
   DecisionError,
   DEFAULT_RUNTIME_TYPES,
 } from "../tools/search-relationships/index.js";
+import { LIFECYCLE as implementationLifecycle } from "../tools/search-relationships/lib/lifecycle.js";
 import { SearchEngine, english, dictionary } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
 
@@ -40,6 +41,10 @@ const bluetoothDocs = {
 };
 
 describe("search-relationships isolation", () => {
+  test("public LIFECYCLE is the implementation object", () => {
+    expect(LIFECYCLE).toBe(implementationLifecycle);
+  });
+
   test("compiler does not import Search Core, search-corpus, or search-semantic", () => {
     const root = path.join(__dirname, "../tools/search-relationships/lib");
     for (const file of walkJs(root)) {

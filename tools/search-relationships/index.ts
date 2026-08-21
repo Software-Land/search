@@ -16,6 +16,7 @@ import {
 import { loadDecisions as loadDecisionsImpl, validateDecisions as validateDecisionsImpl } from "./lib/decisions.js";
 import { hashJson as hashJsonImpl } from "./lib/hash.js";
 import { mergeRelationshipArtifacts as mergeRelationshipArtifactsImpl } from "./lib/merge.js";
+import { LIFECYCLE as lifecycleImpl } from "./lib/lifecycle.js";
 
 export type {
   AnalyzeRelOptions,
@@ -35,14 +36,7 @@ export const LIFECYCLE: {
   readonly HUMAN_REJECTED: "HUMAN_REJECTED";
   readonly CONFLICT: "CONFLICT";
   readonly ORPHANED_DECISION: "ORPHANED_DECISION";
-} = {
-  MANUAL_ACCEPTED: "MANUAL_ACCEPTED",
-  HUMAN_ACCEPTED: "HUMAN_ACCEPTED",
-  REVIEW_PENDING: "REVIEW_PENDING",
-  HUMAN_REJECTED: "HUMAN_REJECTED",
-  CONFLICT: "CONFLICT",
-  ORPHANED_DECISION: "ORPHANED_DECISION",
-};
+} = lifecycleImpl;
 
 export const RELATIONSHIP_TYPES: Record<string, { symmetric: boolean; searchEligible: boolean; description: string }> =
   relationshipTypesImpl;
