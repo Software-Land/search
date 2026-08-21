@@ -53,6 +53,20 @@ engine.search("wireless");
 
 `wifi` as a single token does not match the title `Wi-Fi` unless you configure an alias. That is corpus configuration, not a Core heuristic.
 
+## Morphology
+
+Lemmatization is corpus-specific. Core owns the morphology mechanism, not every catalog's morphology policy. `english()` ships suffix heuristics, a small built-in table, and `english({ lemmas })`. It does not run spaCy, WordNet, lemminflect, or a site lemma script.
+
+Pass generated or editorial maps as data:
+
+```js
+english({ lemmas: { intercepting: "interceptor", recursive: "recursion", foobars: "foobaz" } })
+```
+
+`intercepting` → `interceptor` and `recursive` → `recursion` are catalog-specific policy examples, not universal linguistic truth. Some of those mappings already live in Core's small default table. Site entries **augment** the defaults. Explicit built-in mappings win, so a generated table cannot replace stems the runtime already relies on (`computing` stays `compute`). The Worker takes the same map as `init({ englishOptions: { lemmas } })`. Compile lexical-frequency n-grams with the same `english({ lemmas }).lemma` used at search time.
+
+Keep lemma generators, caches, and models in the site build. This package consumes a `Record<string, string>`, not the script. Those Python/model dependencies do not enter Search Core or the browser/runtime package dependency graph.
+
 ## Browser Worker
 
 Optional. Core does not import `Worker` or `window`.

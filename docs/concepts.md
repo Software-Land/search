@@ -17,9 +17,10 @@ query
 | --- | --- | --- |
 | Equivalence (`tls` ↔ transport layer security) | dictionary / equivalences artifact | query interpretation |
 | Near-synonym | synonyms artifact | query interpretation |
+| Morphology (site lemma table) | `english({ lemmas })` / Worker `englishOptions` | query and document analysis |
 | Related documents (Bluetooth → Connected devices) | relationships artifact | expansion after strong primaries |
 
-Core does not invent aliases. `wifi` will not match `Wi-Fi` unless you compile that decision.
+Core does not invent aliases. `wifi` will not match `Wi-Fi` unless you compile that decision. Lemma generators stay in the site build; Core consumes an optional `Record<string, string>` and will not import spaCy, lemminflect, or a site lemmatizer.
 
 ## What is frozen
 
