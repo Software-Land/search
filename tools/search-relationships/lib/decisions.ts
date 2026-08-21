@@ -4,10 +4,16 @@
 
 import { ALLOWED_TYPES } from "./types.js";
 import { relationshipId, normalizeRef } from "./ids.js";
-import type { RelDecision, RelDecisionDoc, RelDecisionIndex } from "../types.js";
-import { DecisionError } from "../index.js";
+import type { RelDecision, RelDecisionDoc } from "../types.js";
 
-export { DecisionError };
+export class DecisionError extends Error {
+  details?: string[];
+  constructor(message: string, details: string[] = []) {
+    super(message);
+    this.name = "DecisionError";
+    this.details = details;
+  }
+}
 
 export const DECISION_FORMAT = "search-relationships-decisions";
 export const ALLOWED_DECISIONS = new Set(["accept", "reject"]);
@@ -32,7 +38,6 @@ function normalizeItem(item: Record<string, unknown>): RelDecision {
     note: item.note ? String(item.note) : null,
     provenance: item.provenance ? String(item.provenance) : null,
     priority: item.priority == null ? null : Number(item.priority),
-    manual: item.manual !== false,
   };
 }
 
@@ -77,17 +82,4 @@ export function validateDecisions(raw: unknown): RelDecisionDoc {
   }
   if (errors.length) throw new DecisionError(`Invalid relationship decisions: ${errors.join("; ")}`, errors);
   return loaded;
-}
-
-export function indexDecisions(raw: unknown): RelDecisionIndex {
-  const loaded = validateDecisions(raw);
-  const byId = new Map<string, RelDecision>();
-  const rejectAllPairs = new Set<string>();
-  for (const item of loaded.relationships) {
-    byId.set(item.id, item);
-    if (item.decision === "reject" && item.type === "*") {
-      rejectAllPairs.add(`${item.source}::${item.target}`);
-    }
-  }
-  return { loaded, byId, rejectAllPairs };
 }

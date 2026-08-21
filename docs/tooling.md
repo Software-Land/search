@@ -34,7 +34,7 @@ Optional Python builder, shipped in the npm package: documents → offline embed
 
 ## search-relationships (`tools/search-relationships`)
 
-Merges semantic graph + domain decisions. Stable relationship identity, direction, provenance, reject/conflict/orphan handling. Unreviewed editorial candidates do not enter the default runtime artifact.
+Merges semantic graph + explicit domain decisions. Stable relationship identity, direction, provenance, reject/orphan handling.
 
 ```bash
 node tools/search-relationships/build.mjs compile \

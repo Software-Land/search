@@ -5,7 +5,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { analyzeRelationships, compileRelationships, DecisionError } from "./lib/pipeline.js";
+import { compileRelationships, DecisionError } from "./lib/pipeline.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -31,36 +31,23 @@ function write(dir: string, name: string, obj: unknown): { name: string; bytes: 
 }
 
 export function main(): void {
-  const sub = ["analyze", "compile", "review", "build"].includes(process.argv[2]) ? process.argv[2] : "build";
+  const sub = process.argv[2];
+  if (sub && !["compile", "build", "--help"].includes(sub) && !sub.startsWith("--")) {
+    console.error(`Unknown command "${sub}". Use compile.`);
+    process.exit(1);
+  }
+
   const input = arg("--input", path.join(HERE, ".output/corpus.json")) || path.join(HERE, ".output/corpus.json");
   const output = arg("--output", path.join(HERE, ".output")) || path.join(HERE, ".output");
   const decisionsPath = arg("--decisions", null);
   const semanticPath = arg("--semantic", null);
 
-  if (has("--help")) {
+  if (has("--help") || sub === "--help") {
     console.log(`Usage:
-  node tools/search-relationships/build.mjs analyze --input corpus.json --output dir [--decisions decisions.json]
   node tools/search-relationships/build.mjs compile --input corpus.json --output dir [--decisions decisions.json] [--semantic semantic.json]
-  node tools/search-relationships/build.mjs review --pending --output dir
 
 Generated files never overwrite the decisions file.
 `);
-    process.exit(0);
-  }
-
-  if (sub === "review") {
-    const inspection = readJson(path.join(output, "inspection.json")) as {
-      pending?: Array<{ reviewBand?: string | null; id?: string }>;
-    } | null;
-    if (!inspection) {
-      console.error(`No inspection.json in ${output}. Run analyze first.`);
-      process.exit(1);
-    }
-    const items = [...(inspection.pending || [])].sort((a, b) => {
-      const rank: Record<string, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
-      return (rank[a.reviewBand || ""] ?? 9) - (rank[b.reviewBand || ""] ?? 9) || String(a.id).localeCompare(String(b.id));
-    });
-    console.log(JSON.stringify({ pending: items.length, items }, null, 2));
     process.exit(0);
   }
 
@@ -78,25 +65,17 @@ Generated files never overwrite the decisions file.
   }
 
   const semantic = semanticPath ? readJson(semanticPath) : null;
-  const mine = !has("--no-mine");
 
   try {
     fs.mkdirSync(output, { recursive: true });
-    if (sub === "analyze") {
-      const analysis = analyzeRelationships(input, { decisions, mine });
-      write(output, "inspection.json", analysis.inspection);
-      console.log(JSON.stringify({ stage: "analyze", counts: analysis.inspection.counts, timings: analysis.timings }, null, 2));
-      process.exit(0);
-    }
-    const result = compileRelationships(input, { decisions, semantic, mine });
+    const result = compileRelationships(input, { decisions, semantic });
     const written = [
       write(output, "relationships.json", result.runtime),
       write(output, "relationships-full.json", result.merged),
       write(output, "domain.json", result.domain),
-      write(output, "inspection.json", result.inspection),
       write(output, "manifest.json", result.manifest),
     ];
-    console.log(JSON.stringify({ stage: sub, counts: result.manifest.counts, timings: result.manifest.timings, written }, null, 2));
+    console.log(JSON.stringify({ stage: "compile", counts: result.manifest.counts, written }, null, 2));
   } catch (err) {
     if (err instanceof DecisionError) {
       console.error(err.message);

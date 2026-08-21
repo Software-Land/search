@@ -11,8 +11,8 @@ import {
 } from "@software-land/search/corpus";
 import {
   COMPILER_VERSION as REL_COMPILER_VERSION,
-  analyzeRelationships,
   compileRelationships,
+  filterRelationships,
   type CompileRelOptions,
 } from "@software-land/search/relationships";
 import {
@@ -47,12 +47,17 @@ void corpus;
 void compiledFromAnalysis;
 void loaded.documents;
 
-const relOpts: CompileRelOptions = { mine: false };
+const relOpts: CompileRelOptions = { semantic: null };
 const relationships: Record<string, unknown> = compileRelationships({ documents: [] }, relOpts);
-const analyzedRel: Record<string, unknown> = analyzeRelationships({ documents: [] });
+const filteredRel = filterRelationships(
+  { format: "search-v2-relationships", version: 1, relationships: {} },
+  ["semantic", "editorial"]
+);
 void REL_COMPILER_VERSION;
+const relCompilerVersion: 2 = REL_COMPILER_VERSION;
+void relCompilerVersion;
 void relationships;
-void analyzedRel;
+void filteredRel;
 
 const semanticOpts: CompileSemanticOptions = {
   method: DEFAULT_METHOD,

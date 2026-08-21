@@ -1,21 +1,21 @@
 # search-relationships (build-time)
 
-Typed **domain/editorial** relationship compiler and merger. Lexical miners stay frozen. Search Core stays frozen.
+Typed **domain/editorial** relationship compiler and merger. Search Core stays frozen.
 
 ```text
 search-semantic  → semantic artifact
-domain decisions → editorial / prerequisite / same-category / manually-related
+explicit decisions → editorial / prerequisite / same-category / manually-related
         ↓
 search-relationships merge
         ↓
 search-v2-relationships v1
 ```
 
-`search-semantic` does not import this package. This package does not import `search-corpus` miners or Search Core.
+`search-semantic` does not import this package. This package does not import `search-corpus` miners or Search Core. It does not mine candidates or run a human-review queue.
 
 Generated output never overwrites the decisions file.
 
-Conflicting `accept` and `reject` for the same relationship id fail compile. Missing endpoints become `ORPHANED_DECISION` and are omitted from runtime. Content-link mining is optional (`--no-mine`); candidates stay `REVIEW_PENDING` until accepted. Co-occurrence is not a miner. Production editorial truth is the decisions file.
+Conflicting `accept` and `reject` for the same relationship id fail compile. Missing endpoints are orphaned and omitted from runtime. Production editorial truth is the decisions file.
 
 ## Taxonomy
 
@@ -30,7 +30,7 @@ Conflicting `accept` and `reject` for the same relationship id fail compile. Mis
 
 Custom types are added by extending `RELATIONSHIP_TYPES` — unknown types fail compile.
 
-Strength for human/editorial edges is discrete `1` (explicit), not a fake cosine. Semantic edges keep builder scores.
+Strength for explicit editorial edges is discrete `1` (or `priority` when set), not a fake cosine. Semantic edges keep builder scores. Reject of a type, or `type: "*"`, wins at merge.
 
 ## Decisions
 
@@ -50,7 +50,7 @@ Strength for human/editorial edges is discrete `1` (explicit), not a fake cosine
 }
 ```
 
-Source/target may be corpus ids or paths. Runtime edges use corpus ids. Missing endpoints become `ORPHANED_DECISION`, not silent retargeting. `accept` + `reject` on the same id fails compile.
+Source/target may be corpus ids or paths. Runtime edges use corpus ids. Missing endpoints are orphaned, not silently retargeted. `accept` + `reject` on the same id fails compile.
 
 ## CLI
 
@@ -61,7 +61,5 @@ node tools/search-relationships/build.mjs compile \
   --semantic relationships-from-builder.json \
   --output dir
 ```
-
-`--no-mine` skips content-link candidates. Candidates are `REVIEW_PENDING` until accepted. Co-occurrence is not a miner.
 
 Default runtime artifact includes `semantic`, `editorial`, and `manually-related`. Structural types remain in `relationships-full.json`.
