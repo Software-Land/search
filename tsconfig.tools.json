@@ -30,9 +30,9 @@
     "tools/search-relationships/index.d.ts",
     "tools/search-relationships/types.d.ts",
     "tools/search-relationships/build.mjs",
-    "tools/search-semantic/**/*.js",
-    "tools/search-semantic/**/*.mjs",
-    "tools/search-semantic/**/*.d.ts",
+    "tools/search-semantic/**/*.ts",
+    "tools/search-semantic/index.d.ts",
+    "tools/search-semantic/build.mjs",
     "tools/search-lexical/**/*.ts",
     "src/index.ts",
     "src/api.ts"

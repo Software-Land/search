@@ -1,0 +1,8 @@
+{
+  // Semantic Node runtime JS is emitted in place; public index.d.ts stays handwritten (v0.2.2 contract).
+  "extends": "./tsconfig.tools-emit.json",
+  "compilerOptions": {
+    "declaration": false
+  },
+  "include": ["tools/search-semantic/**/*.ts"]
+}

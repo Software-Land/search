@@ -14,75 +14,68 @@ export const SEMANTIC_BUILDER = path.join(SEMANTIC_ROOT, "build.py");
 export const SEMANTIC_REQUIREMENTS = path.join(SEMANTIC_ROOT, "requirements.txt");
 export const SEMANTIC_REQUIREMENTS_EMBED = path.join(SEMANTIC_ROOT, "requirements-embed.txt");
 
-export const DEFAULT_METHOD = "combined";
+export const DEFAULT_METHOD: "combined" = "combined";
 export const DEFAULT_REPRESENTATION = "title_struct";
 export const DEFAULT_TOP_K = 5;
 export const DEFAULT_MIN_SCORE = 0.3;
 export const DEFAULT_MODEL = "sentence-transformers/all-MiniLM-L6-v2";
 
-/** @typedef {"lexical" | "embedding" | "combined"} SemanticMethod */
+type SemanticMethod = "lexical" | "embedding" | "combined";
 
-/**
- * @typedef {object} EnsureSemanticEnvironmentOptions
- * @property {SemanticMethod} [method]
- * @property {string} [pythonPath]
- * @property {string} [venvDir]
- */
+interface EnsureSemanticEnvironmentOptions {
+  method?: SemanticMethod;
+  pythonPath?: string;
+  venvDir?: string;
+}
 
-/**
- * @typedef {object} CompileSemanticOptions
- * @property {SemanticMethod} [method]
- * @property {string} [representation]
- * @property {number} [topK]
- * @property {number} [minScore]
- * @property {number} [lexicalMinScore]
- * @property {number} [embeddingMinScore]
- * @property {string} [model]
- * @property {string} [pythonPath]
- * @property {string} [venvDir]
- * @property {string} [cacheDir]
- * @property {string} [outputPath]
- * @property {string} [reportPath]
- * @property {boolean} [precisionGate]
- * @property {boolean} [mutual]
- */
+interface CompileSemanticOptions {
+  method?: SemanticMethod;
+  representation?: string;
+  topK?: number;
+  minScore?: number;
+  lexicalMinScore?: number;
+  embeddingMinScore?: number;
+  model?: string;
+  pythonPath?: string;
+  venvDir?: string;
+  cacheDir?: string;
+  outputPath?: string;
+  reportPath?: string;
+  precisionGate?: boolean;
+  mutual?: boolean;
+}
 
-/**
- * @typedef {object} CompileSemanticResult
- * @property {Record<string, unknown>} artifact
- * @property {Record<string, unknown> | null} report
- * @property {string} outputPath
- * @property {string} stdout
- */
+interface CompileSemanticResult {
+  artifact: Record<string, unknown>;
+  report: Record<string, unknown> | null;
+  outputPath: string;
+  stdout: string;
+}
 
-export function semanticRoot() {
+export function semanticRoot(): string {
   return SEMANTIC_ROOT;
 }
 
-export function semanticBuilderPath() {
+export function semanticBuilderPath(): string {
   return SEMANTIC_BUILDER;
 }
 
-/** @param {SemanticMethod} method */
-function needsEmbedExtras(method) {
+function needsEmbedExtras(method: SemanticMethod): boolean {
   return method === "embedding" || method === "combined";
 }
 
-/** @param {string} venvDir */
-function venvPython(venvDir) {
+function venvPython(venvDir: string): string {
   if (process.platform === "win32") {
     return path.join(venvDir, "Scripts", "python.exe");
   }
   return path.join(venvDir, "bin", "python");
 }
 
-/**
- * @param {string} command
- * @param {string[]} args
- * @param {{ cwd?: string, env?: NodeJS.ProcessEnv, inheritStderr?: boolean }} [opts]
- * @returns {Promise<{ stdout: string, stderr: string }>}
- */
-function run(command, args, opts = {}) {
+function run(
+  command: string,
+  args: string[],
+  opts: { cwd?: string; env?: NodeJS.ProcessEnv; inheritStderr?: boolean } = {}
+): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd: opts.cwd || SEMANTIC_ROOT,
@@ -91,9 +84,11 @@ function run(command, args, opts = {}) {
     });
     let stdout = "";
     let stderr = "";
-    child.stdout.on("data", (chunk) => {
-      stdout += String(chunk);
-    });
+    if (child.stdout) {
+      child.stdout.on("data", (chunk) => {
+        stdout += String(chunk);
+      });
+    }
     if (child.stderr) {
       child.stderr.on("data", (chunk) => {
         stderr += String(chunk);
@@ -110,7 +105,7 @@ function run(command, args, opts = {}) {
   });
 }
 
-async function findPython(explicitPath) {
+async function findPython(explicitPath?: string): Promise<string> {
   if (explicitPath) return explicitPath;
   const candidates = process.platform === "win32" ? ["python", "python3"] : ["python3", "python"];
   for (const cmd of candidates) {
@@ -124,10 +119,7 @@ async function findPython(explicitPath) {
   throw new Error("Python 3.10+ is required to run @software-land/search/semantic");
 }
 
-/**
- * @param {EnsureSemanticEnvironmentOptions} [opts]
- */
-export async function ensureSemanticEnvironment(opts = {}) {
+export async function ensureSemanticEnvironment(opts: EnsureSemanticEnvironmentOptions = {}): Promise<{ python: string; venvDir: string | null }> {
   const method = opts.method || DEFAULT_METHOD;
   const basePython = await findPython(opts.pythonPath);
   if (!needsEmbedExtras(method)) {
@@ -148,11 +140,7 @@ export async function ensureSemanticEnvironment(opts = {}) {
   return { python, venvDir };
 }
 
-/**
- * @param {unknown} input
- * @param {string} tmpDir
- */
-function writeInput(input, tmpDir) {
+function writeInput(input: unknown, tmpDir: string): string {
   if (typeof input === "string") return path.resolve(input);
   const file = path.join(tmpDir, "corpus.json");
   const payload = Array.isArray(input) ? { format: "search-semantic-corpus", version: 1, documents: input } : input;
@@ -160,12 +148,7 @@ function writeInput(input, tmpDir) {
   return file;
 }
 
-/**
- * @param {unknown} input
- * @param {CompileSemanticOptions} [opts]
- * @returns {Promise<CompileSemanticResult>}
- */
-export async function compileSemantic(input, opts = {}) {
+export async function compileSemantic(input: unknown, opts: CompileSemanticOptions = {}): Promise<CompileSemanticResult> {
   const method = opts.method || DEFAULT_METHOD;
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "search-semantic-"));
   try {
@@ -182,8 +165,7 @@ export async function compileSemantic(input, opts = {}) {
     fs.mkdirSync(path.dirname(reportPath), { recursive: true });
     fs.mkdirSync(cacheDir, { recursive: true });
 
-    /** @type {string[]} */
-    const args = [
+    const args: string[] = [
       SEMANTIC_BUILDER,
       "--input",
       inputPath,
@@ -216,14 +198,14 @@ export async function compileSemantic(input, opts = {}) {
       HF_HOME: path.join(cacheDir, "hf"),
     };
     const { stdout } = await run(python, args, { env, inheritStderr: true });
-    const artifact = JSON.parse(fs.readFileSync(outputPath, "utf8"));
+    const artifact = JSON.parse(fs.readFileSync(outputPath, "utf8")) as Record<string, unknown>;
     if (!artifact || artifact.format !== "search-v2-relationships" || artifact.version !== 1) {
       throw new Error("semantic compiler did not emit search-v2-relationships v1");
     }
     if (Object.prototype.hasOwnProperty.call(artifact, "vectors") || Object.prototype.hasOwnProperty.call(artifact, "embeddings")) {
       throw new Error("semantic compiler must not write vectors into the relationship artifact");
     }
-    const report = fs.existsSync(reportPath) ? JSON.parse(fs.readFileSync(reportPath, "utf8")) : null;
+    const report = fs.existsSync(reportPath) ? (JSON.parse(fs.readFileSync(reportPath, "utf8")) as Record<string, unknown>) : null;
     return { artifact, report, outputPath, stdout };
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });

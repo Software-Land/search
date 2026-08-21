@@ -140,6 +140,24 @@ try {
   if (!packedRel.some((rel) => rel.startsWith("tools/search-semantic/") && rel.endsWith(".py"))) {
     throw new Error("packed tarball missing Python semantic files");
   }
+  for (const required of [
+    "tools/search-semantic/index.js",
+    "tools/search-semantic/index.d.ts",
+    "tools/search-semantic/build.mjs",
+    "tools/search-semantic/build.js",
+    "tools/search-semantic/build.py",
+    "tools/search-semantic/lib/embedding.py",
+    "tools/search-semantic/requirements.txt",
+    "tools/search-semantic/requirements-embed.txt",
+  ]) {
+    if (!packedRel.includes(required)) throw new Error(`packed tarball missing ${required}`);
+  }
+  if (packedRel.includes("tools/search-semantic/index.ts") || packedRel.includes("tools/search-semantic/build.ts")) {
+    throw new Error("tarball must not include semantic TypeScript source");
+  }
+  if (packedRel.includes("tools/search-semantic/build.d.ts")) {
+    throw new Error("tarball must not include semantic implementation declarations");
+  }
 
   const importRe = /(?:from|import)\s+["']([^"']+)["']/g;
   for (const rel of packedRel.filter((file) => file.startsWith("dist/") && file.endsWith(".js"))) {

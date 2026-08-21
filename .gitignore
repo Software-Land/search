@@ -15,6 +15,10 @@ tools/search-corpus/**/*.js
 tools/search-corpus/lib/**/*.d.ts
 tools/search-corpus/build.d.ts
 tools/search-corpus/**/*.map
+tools/search-semantic/index.js
+tools/search-semantic/build.js
+tools/search-semantic/build.d.ts
+tools/search-semantic/**/*.map
 
 # Compiler / semantic builder generated output (never source)
 tools/search-corpus/.output/
