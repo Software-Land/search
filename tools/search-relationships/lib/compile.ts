@@ -1,17 +1,17 @@
 import { ARTIFACT_FORMAT, EXPLICIT_STRENGTH, DEFAULT_RUNTIME_TYPES, isSymmetricType } from "./types.js";
 import { stableSort } from "./hash.js";
-import type { AcceptedDecision } from "./ingest.js";
+import type { ResolvedDomainRelationship } from "./domain.js";
 import type { RelationshipArtifact, RelationshipEdge } from "../types.js";
 
 function emptyRelationships(): Record<string, RelationshipEdge[]> {
   return {};
 }
 
-function edgeProvenance(row: AcceptedDecision): string {
+function edgeProvenance(row: ResolvedDomainRelationship): string {
   return row.provenance || "manual";
 }
 
-function explicitStrength(row: AcceptedDecision): number {
+function explicitStrength(row: ResolvedDomainRelationship): number {
   if (row.priority != null && Number.isFinite(row.priority)) {
     return Math.max(0, Math.min(1, row.priority));
   }
@@ -25,9 +25,9 @@ function pushEdge(bag: Map<string, RelationshipEdge[]>, source: string, edge: Re
   list.push(edge);
 }
 
-export function compileDomain(accepted: readonly AcceptedDecision[]): RelationshipArtifact {
+export function compileDomain(resolved: readonly ResolvedDomainRelationship[]): RelationshipArtifact {
   const bag = new Map<string, RelationshipEdge[]>();
-  for (const row of accepted) {
+  for (const row of resolved) {
     const edge = {
       target: row.resolvedTarget,
       type: row.type,

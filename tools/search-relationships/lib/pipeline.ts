@@ -1,6 +1,5 @@
 import { loadDocuments, indexDocuments } from "./documents.js";
-import { emptyDecisions, DecisionError } from "./decisions.js";
-import { ingestDecisions } from "./ingest.js";
+import { emptyDomain, resolveDomain, RelationshipError } from "./domain.js";
 import { compileDomain, filterRelationships } from "./compile.js";
 import { mergeRelationshipArtifacts } from "./merge.js";
 import { DEFAULT_RUNTIME_TYPES } from "./types.js";
@@ -35,17 +34,15 @@ function emptySemantic(): RelationshipArtifact {
 
 export function compileRelationships(
   input?: unknown,
-  { decisions = null, semantic = null, runtimeTypes = DEFAULT_RUNTIME_TYPES }: CompileRelOptions = {}
+  { domain = null, semantic = null, runtimeTypes = DEFAULT_RUNTIME_TYPES }: CompileRelOptions = {}
 ) {
   const documents = loadDocuments(input);
   const docIndex = indexDocuments(documents);
-  const ingested = ingestDecisions(decisions || emptyDecisions(), docIndex);
-  const domain = compileDomain(ingested.accepted);
+  const resolvedDomain = resolveDomain(domain || emptyDomain(), docIndex);
+  const domainArtifact = compileDomain(resolvedDomain.resolved);
   const merged = mergeRelationshipArtifacts({
     semantic,
-    domain,
-    rejectedIds: ingested.rejectedIds,
-    rejectAllPairs: ingested.rejectAllPairs,
+    domain: domainArtifact,
     runtimeTypes,
   });
   const semanticArtifact =
@@ -55,13 +52,11 @@ export function compileRelationships(
     version: 1,
     compilerVersion: COMPILER_VERSION,
     corpusHash: hashJson(documents.map((d) => ({ id: d.id, title: d.title, path: d.metadata?.path || null }))),
-    decisionsHash: hashJson(ingested.decisions),
+    domainHash: hashJson(resolvedDomain.loaded),
     semanticHash: semantic ? hashJson(semantic) : null,
     counts: {
-      accepted: ingested.accepted.length,
-      rejected: ingested.rejectedCount,
-      orphaned: ingested.orphaned.length,
-      domainEdges: countEdges(domain),
+      domainRelationships: resolvedDomain.resolved.length,
+      domainEdges: countEdges(domainArtifact),
       semanticEdges: countEdges(semantic),
       mergedTypedEdges: countEdges(merged.full),
       mergedPairs: countPairs(merged.full),
@@ -70,13 +65,12 @@ export function compileRelationships(
     artifactHash: hashJson(merged.runtime),
   };
   return {
-    domain,
+    domain: domainArtifact,
     semantic: semanticArtifact,
     merged: merged.full,
     runtime: merged.runtime,
-    orphaned: ingested.orphaned,
     manifest,
   };
 }
 
-export { filterRelationships, DecisionError };
+export { filterRelationships, RelationshipError };

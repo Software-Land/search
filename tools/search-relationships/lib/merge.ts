@@ -1,24 +1,11 @@
 /**
  * Deterministic merge of relationship artifacts.
- * Explicit reject of a pair/type wins. Multiple types between the same
- * documents are preserved as separate edges.
+ * Multiple types between the same documents are preserved as separate edges.
  */
 
 import { ALLOWED_TYPES, DEFAULT_RUNTIME_TYPES } from "./types.js";
-import { relationshipId, pairKey } from "./ids.js";
 import { toArtifact, filterRelationships } from "./compile.js";
 import type { FlattenedEdge, MergeRelOptions, RelationshipEdge } from "../types.js";
-
-/** Reject sets are compiler-internal; not part of the public merge contract. */
-interface MergeImplOptions extends MergeRelOptions {
-  rejectedIds?: Iterable<string>;
-  rejectAllPairs?: Iterable<string>;
-}
-
-function asSet(value: Iterable<string> | null | undefined): Set<string> {
-  if (!value) return new Set();
-  return value instanceof Set ? value : new Set(value);
-}
 
 function flatten(artifact: unknown, fallbackType = "semantic"): FlattenedEdge[] {
   const out: FlattenedEdge[] = [];
@@ -41,30 +28,11 @@ function flatten(artifact: unknown, fallbackType = "semantic"): FlattenedEdge[] 
   return out;
 }
 
-function rejected(
-  rejectedIds: Set<string>,
-  rejectAllPairs: Set<string>,
-  source: string,
-  target: string,
-  type: string
-): boolean {
-  if (rejectAllPairs.has(pairKey(source, target)) || rejectAllPairs.has(pairKey(target, source))) {
-    return true;
-  }
-  const directionalId = relationshipId(type, source, target, { directional: true });
-  const symmetricId = relationshipId(type, source, target, { directional: false });
-  return rejectedIds.has(directionalId) || rejectedIds.has(symmetricId);
-}
-
 export function mergeRelationshipArtifacts({
   semantic = null,
   domain = null,
-  rejectedIds,
-  rejectAllPairs,
   runtimeTypes = DEFAULT_RUNTIME_TYPES,
-}: MergeImplOptions = {}): { full: ReturnType<typeof toArtifact>; runtime: ReturnType<typeof filterRelationships> } {
-  const rejectedIdSet = asSet(rejectedIds);
-  const rejectAllSet = asSet(rejectAllPairs);
+}: MergeRelOptions = {}): { full: ReturnType<typeof toArtifact>; runtime: ReturnType<typeof filterRelationships> } {
   const bag = new Map<string, RelationshipEdge[]>();
   const keyOf = (s: string, t: string, type: string) => `${s}::${t}::${type}`;
   const seen = new Map<string, FlattenedEdge>();
@@ -72,7 +40,6 @@ export function mergeRelationshipArtifacts({
   function add(edge: FlattenedEdge) {
     if (!ALLOWED_TYPES.has(edge.type)) return;
     if (edge.source === edge.target) return;
-    if (rejected(rejectedIdSet, rejectAllSet, edge.source, edge.target, edge.type)) return;
     const k = keyOf(edge.source, edge.target, edge.type);
     const prev = seen.get(k);
     if (prev) {

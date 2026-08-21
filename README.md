@@ -122,7 +122,7 @@ Default policy: unigrams plus bigrams (n=1–2), keep keys whose collection occu
 
 ```bash
 node tools/search-relationships/build.mjs compile \
-  --input corpus.json --decisions decisions.json \
+  --input corpus.json --domain domain.json \
   --semantic relationships-from-builder.json --output dir
 ```
 

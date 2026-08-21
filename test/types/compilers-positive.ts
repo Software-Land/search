@@ -47,7 +47,7 @@ void corpus;
 void compiledFromAnalysis;
 void loaded.documents;
 
-const relOpts: CompileRelOptions = { semantic: null };
+const relOpts: CompileRelOptions = { semantic: null, domain: null };
 const relationships: Record<string, unknown> = compileRelationships({ documents: [] }, relOpts);
 const filteredRel = filterRelationships(
   { format: "search-v2-relationships", version: 1, relationships: {} },

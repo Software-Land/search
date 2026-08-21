@@ -30,6 +30,6 @@ Not exposed: postings lists, BM25 internals, engine class instances.
 
 **Semantic related:** Bluetooth → Connected devices with `type: "semantic"` and builder provenance, typically on `related` when `relationshipStrategy: "separate"`.
 
-**Editorial related:** same rail, `type: "editorial"` / `manually-related`, provenance from decisions.
+**Editorial related:** same rail, `type: "editorial"` / `manually-related`, provenance from explicit domain relationships.
 
 **Indexed candidate:** large corpus, `retriever: "indexed"`; provenance still uses named sources, not a lone BM25 number.

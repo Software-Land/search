@@ -10,11 +10,10 @@ import {
   DEFAULT_RUNTIME_TYPES as defaultRuntimeTypesImpl,
   STRUCTURAL_TYPES as structuralTypesImpl,
 } from "./lib/types.js";
-import { loadDecisions as loadDecisionsImpl, validateDecisions as validateDecisionsImpl } from "./lib/decisions.js";
 import { hashJson as hashJsonImpl } from "./lib/hash.js";
 import { mergeRelationshipArtifacts as mergeRelationshipArtifactsImpl } from "./lib/merge.js";
 
-export { DecisionError } from "./lib/decisions.js";
+export { RelationshipError } from "./lib/domain.js";
 
 export type {
   CompileRelOptions,
@@ -47,14 +46,6 @@ export function relationshipId(
   opts?: { directional?: boolean }
 ): string {
   return relationshipIdImpl(type, source, target, opts);
-}
-
-export function loadDecisions(input?: unknown): unknown {
-  return loadDecisionsImpl(input);
-}
-
-export function validateDecisions(input?: unknown): unknown {
-  return validateDecisionsImpl(input);
 }
 
 export function hashJson(value?: unknown): string {

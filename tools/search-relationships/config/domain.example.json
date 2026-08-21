@@ -1,12 +1,11 @@
 {
-  "format": "search-relationships-decisions",
+  "format": "search-relationships-domain",
   "version": 1,
   "relationships": [
     {
       "source": "/tls-1.2-vulnerability/",
       "target": "/what-is-vpn/",
       "type": "editorial",
-      "decision": "accept",
       "note": "security neighborhood: TLS traffic is a common VPN use-case, not synonymy and not MiniLM-close."
     }
   ]

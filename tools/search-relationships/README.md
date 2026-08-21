@@ -1,21 +1,19 @@
 # search-relationships (build-time)
 
-Typed **domain/editorial** relationship compiler and merger. Search Core stays frozen.
+Merges a semantic graph with explicit typed domain relationships. Search Core stays frozen.
 
 ```text
-search-semantic  → semantic artifact
-explicit decisions → editorial / prerequisite / same-category / manually-related
+search-semantic              → semantic artifact
+explicit domain relationships → editorial / prerequisite / same-category / manually-related
         ↓
 search-relationships merge
         ↓
 search-v2-relationships v1
 ```
 
-`search-semantic` does not import this package. This package does not import `search-corpus` miners or Search Core. It does not mine candidates or run a human-review queue.
+`search-semantic` does not import this package. This package does not import `search-corpus` miners or Search Core. It does not mine candidates or run a review queue.
 
-Generated output never overwrites the decisions file.
-
-Conflicting `accept` and `reject` for the same relationship id fail compile. Missing endpoints are orphaned and omitted from runtime. Production editorial truth is the decisions file.
+Generated output never overwrites the domain relationships file. Missing type, unknown type, and unresolved source/target refs fail compile.
 
 ## Taxonomy
 
@@ -30,34 +28,33 @@ Conflicting `accept` and `reject` for the same relationship id fail compile. Mis
 
 Custom types are added by extending `RELATIONSHIP_TYPES` — unknown types fail compile.
 
-Strength for explicit editorial edges is discrete `1` (or `priority` when set), not a fake cosine. Semantic edges keep builder scores. Reject of a type, or `type: "*"`, wins at merge.
+Strength for explicit domain edges is discrete `1` (or `priority` when set), not a fake cosine. Semantic edges keep builder scores.
 
-## Decisions
+## Domain relationships
 
 ```json
 {
-  "format": "search-relationships-decisions",
+  "format": "search-relationships-domain",
   "version": 1,
   "relationships": [
     {
       "source": "/tls-1.2-vulnerability/",
       "target": "/what-is-vpn/",
       "type": "editorial",
-      "decision": "accept",
       "note": "security neighborhood"
     }
   ]
 }
 ```
 
-Source/target may be corpus ids or paths. Runtime edges use corpus ids. Missing endpoints are orphaned, not silently retargeted. `accept` + `reject` on the same id fails compile.
+Every record asserts that the relationship exists and must include `type`. Source/target may be corpus ids or paths. Runtime edges use corpus ids. Omitted provenance compiles as `"manual"`.
 
 ## CLI
 
 ```bash
 node tools/search-relationships/build.mjs compile \
   --input corpus.json \
-  --decisions tools/search-relationships/config/decisions.example.json \
+  --domain tools/search-relationships/config/domain.example.json \
   --semantic relationships-from-builder.json \
   --output dir
 ```

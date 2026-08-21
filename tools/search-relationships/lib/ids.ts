@@ -13,10 +13,6 @@ export function normalizePath(value: unknown): string {
   return s;
 }
 
-export function pairKey(source: string, target: string): string {
-  return `${source}::${target}`;
-}
-
 export function orderedPair(source: string, target: string, { symmetric = false }: { symmetric?: boolean } = {}): [string, string] {
   const a = String(source);
   const b = String(target);

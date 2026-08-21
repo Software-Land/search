@@ -3,14 +3,12 @@ import path from "node:path";
 import {
   compileRelationships,
   relationshipId,
-  loadDecisions,
-  validateDecisions,
   filterRelationships,
-  DecisionError,
+  RelationshipError,
   DEFAULT_RUNTIME_TYPES,
   COMPILER_VERSION,
 } from "../tools/search-relationships/index.js";
-import { DecisionError as ImplementationDecisionError } from "../tools/search-relationships/lib/decisions.js";
+import { RelationshipError as ImplementationRelationshipError } from "../tools/search-relationships/lib/domain.js";
 import { filterRelationships as filterRelationshipsImpl } from "../tools/search-relationships/lib/compile.js";
 import { SearchEngine, english, dictionary } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
@@ -63,24 +61,26 @@ const slEquivalentSemantic = {
   },
 };
 
-const slEquivalentDecisions = {
-  format: "search-relationships-decisions",
+const slEquivalentDomain = {
+  format: "search-relationships-domain",
   version: 1,
   relationships: [
     {
       source: "/tls-1.2-vulnerability/",
       target: "/what-is-vpn/",
       type: "editorial",
-      decision: "accept",
     },
   ],
 };
 
 describe("search-relationships isolation", () => {
-  test("review-only APIs are not exported", async () => {
+  test("review and decisions APIs are not exported", async () => {
     const api = await import("../tools/search-relationships/index.js");
     expect(api.analyzeRelationships).toBeUndefined();
     expect(api.LIFECYCLE).toBeUndefined();
+    expect(api.loadDecisions).toBeUndefined();
+    expect(api.validateDecisions).toBeUndefined();
+    expect(api.DecisionError).toBeUndefined();
     expect(api.COMPILER_VERSION).toBe(2);
     expect(COMPILER_VERSION).toBe(2);
   });
@@ -109,10 +109,8 @@ describe("search-relationships isolation", () => {
 describe("search-relationships compilation", () => {
   test("editorial relation compiles and is not a synonym or equivalence", async () => {
     const compiled = compileRelationships(bluetoothDocs, {
-      decisions: {
-        relationships: [
-          { source: "bluetooth", target: "connected-devices", type: "editorial", decision: "accept" },
-        ],
+      domain: {
+        relationships: [{ source: "bluetooth", target: "connected-devices", type: "editorial" }],
       },
     });
     const edges = compiled.runtime.relationships.bluetooth || [];
@@ -120,7 +118,7 @@ describe("search-relationships compilation", () => {
     expect(edges.find((e) => e.target === "connected-devices").strength).toBe(1);
     expect(edges.find((e) => e.target === "connected-devices").provenance).toBe("manual");
     expect(compiled.runtime.relationships["connected-devices"]?.some((e) => e.target === "bluetooth")).toBe(true);
-    expect(compiled.manifest.counts.accepted).toBe(1);
+    expect(compiled.manifest.counts.domainRelationships).toBe(1);
     expect(compiled.manifest.counts.domainEdges).toBe(2);
 
     const engine = SearchEngine.create({
@@ -141,10 +139,8 @@ describe("search-relationships compilation", () => {
 
   test("prerequisite stays directional", () => {
     const compiled = compileRelationships(bluetoothDocs, {
-      decisions: {
-        relationships: [
-          { source: "advanced-tls", target: "tls-basics", type: "prerequisite", decision: "accept", directional: true },
-        ],
+      domain: {
+        relationships: [{ source: "advanced-tls", target: "tls-basics", type: "prerequisite", directional: true }],
       },
     });
     expect(compiled.merged.relationships["advanced-tls"]?.some((e) => e.target === "tls-basics" && e.type === "prerequisite")).toBe(
@@ -164,8 +160,8 @@ describe("search-relationships compilation", () => {
       ],
     };
     const compiled = compileRelationships(docs, {
-      decisions: {
-        relationships: [{ source: "wifi", target: "bluetooth", type: "same-category", decision: "accept" }],
+      domain: {
+        relationships: [{ source: "wifi", target: "bluetooth", type: "same-category" }],
       },
     });
     expect(compiled.merged.relationships.wifi.some((e) => e.target === "bluetooth" && e.type === "same-category")).toBe(true);
@@ -184,8 +180,8 @@ describe("search-relationships compilation", () => {
     };
     const compiled = compileRelationships(bluetoothDocs, {
       semantic,
-      decisions: {
-        relationships: [{ source: "bluetooth", target: "wifi", type: "editorial", decision: "accept" }],
+      domain: {
+        relationships: [{ source: "bluetooth", target: "wifi", type: "editorial" }],
       },
     });
     const edges = compiled.runtime.relationships.bluetooth;
@@ -202,67 +198,7 @@ describe("search-relationships compilation", () => {
     expect(new Set(hit.relationship.sources.map((s) => s.type))).toEqual(new Set(["semantic", "editorial"]));
   });
 
-  test("typed reject-wins drops matching semantic edges and leaves other types", () => {
-    const docs = {
-      documents: [
-        { id: "a", title: "A", body: "a" },
-        { id: "b", title: "B", body: "b" },
-      ],
-    };
-    const semantic = {
-      format: "search-v2-relationships",
-      version: 1,
-      relationships: {
-        a: [{ target: "b", type: "semantic", strength: 0.7, provenance: "embedding" }],
-        b: [{ target: "a", type: "semantic", strength: 0.6, provenance: "embedding" }],
-      },
-    };
-    const rejected = compileRelationships(docs, {
-      semantic,
-      decisions: { relationships: [{ source: "a", target: "b", type: "semantic", decision: "reject" }] },
-    });
-    expect(rejected.runtime.relationships.a || []).toEqual([]);
-    expect(rejected.runtime.relationships.b).toEqual([
-      { target: "a", type: "semantic", strength: 0.6, provenance: "embedding" },
-    ]);
-    expect(rejected.manifest.counts.rejected).toBe(1);
-
-    const editorialKept = compileRelationships(docs, {
-      semantic,
-      decisions: { relationships: [{ source: "a", target: "b", type: "editorial", decision: "reject" }] },
-    });
-    expect(editorialKept.runtime.relationships).toEqual(semantic.relationships);
-  });
-
-  test("path-based type:'*' reject-wins against semantic edges uses resolved document ids", () => {
-    const docs = {
-      documents: [
-        { id: "tls", title: "TLS", body: "tls", metadata: { path: "/tls/" } },
-        { id: "vpn", title: "VPN", body: "vpn", metadata: { path: "/vpn/" } },
-      ],
-    };
-    const semantic = {
-      format: "search-v2-relationships",
-      version: 1,
-      relationships: {
-        tls: [{ target: "vpn", type: "semantic", strength: 0.88, provenance: "embedding" }],
-        vpn: [{ target: "tls", type: "semantic", strength: 0.81, provenance: "embedding" }],
-      },
-    };
-    const compiled = compileRelationships(docs, {
-      semantic,
-      decisions: {
-        relationships: [{ source: "/tls/", target: "/vpn/", type: "*", decision: "reject" }],
-      },
-    });
-    expect(compiled.runtime.relationships.tls || []).toEqual([]);
-    expect(compiled.runtime.relationships.vpn || []).toEqual([]);
-    expect(compiled.merged.relationships).toEqual({});
-    expect(compiled.manifest.counts.rejected).toBe(1);
-    expect(compiled.manifest.counts.orphaned).toBe(0);
-  });
-
-  test("markdown and metadata links produce no edge without an explicit decision", () => {
+  test("markdown and metadata links produce no edge without an explicit domain relationship", () => {
     const docs = {
       documents: [
         {
@@ -283,20 +219,30 @@ describe("search-relationships compilation", () => {
     expect(compiled.runtime.relationships).toEqual({});
     expect(compiled.merged.relationships).toEqual({});
     expect(compiled.domain.relationships).toEqual({});
-    expect(compiled.manifest.counts.accepted).toBe(0);
+    expect(compiled.manifest.counts.domainRelationships).toBe(0);
     expect(compiled.manifest.counts.domainEdges).toBe(0);
   });
 
-  test("missing target is orphaned, not silently retargeted", () => {
-    const compiled = compileRelationships(bluetoothDocs, {
-      decisions: {
-        relationships: [{ source: "bluetooth", target: "gone-doc", type: "editorial", decision: "accept" }],
-      },
-    });
-    expect(compiled.runtime.relationships.bluetooth || []).toEqual([]);
-    expect(compiled.orphaned.some((o) => o.target === "gone-doc" && o.decision === "accept")).toBe(true);
-    expect(compiled.manifest.counts.orphaned).toBe(1);
-    expect(compiled.manifest.counts.accepted).toBe(0);
+  test("missing target fails compile instead of silently retargeting", () => {
+    expect(() =>
+      compileRelationships(bluetoothDocs, {
+        domain: {
+          relationships: [{ source: "bluetooth", target: "gone-doc", type: "editorial" }],
+        },
+      })
+    ).toThrow(RelationshipError);
+    try {
+      compileRelationships(bluetoothDocs, {
+        domain: {
+          relationships: [{ source: "bluetooth", target: "gone-doc", type: "editorial" }],
+        },
+      });
+    } catch (err) {
+      expect(err).toBeInstanceOf(RelationshipError);
+      expect(err.details.some((d) => /unresolved target "gone-doc"/.test(d))).toBe(true);
+      return;
+    }
+    throw new Error("compileRelationships should have thrown RelationshipError");
   });
 
   test("related editorial does not rewrite the query", () => {
@@ -308,7 +254,7 @@ describe("search-relationships compilation", () => {
         ],
       },
       {
-        decisions: { relationships: [{ source: "ai", target: "bg", type: "editorial", decision: "accept" }] },
+        domain: { relationships: [{ source: "ai", target: "bg", type: "editorial" }] },
       }
     );
     const engine = SearchEngine.create({
@@ -323,60 +269,53 @@ describe("search-relationships compilation", () => {
     expect(vpn.concepts.some((c) => (c.forms || []).includes("tls"))).toBe(false);
   });
 
-  test("malformed type and conflicting decisions fail clearly", () => {
-    expect(() =>
-      validateDecisions({
-        relationships: [{ source: "a", target: "b", type: "vibes", decision: "accept" }],
-      })
-    ).toThrow(DecisionError);
-    expect(() =>
-      validateDecisions({
-        relationships: [
-          { source: "a", target: "b", type: "editorial", decision: "accept" },
-          { source: "a", target: "b", type: "editorial", decision: "reject" },
-        ],
-      })
-    ).toThrow(/both accept and reject/);
+  test("missing type fails clearly", () => {
+    const missing = [
+      { source: "bluetooth", target: "wifi" },
+      { source: "bluetooth", target: "wifi", type: "" },
+      { source: "bluetooth", target: "wifi", type: "  " },
+    ];
+    for (const relationship of missing) {
+      try {
+        compileRelationships(bluetoothDocs, { domain: { relationships: [relationship] } });
+      } catch (err) {
+        expect(err).toBeInstanceOf(RelationshipError);
+        expect(err.details.some((d) => /missing type/.test(d))).toBe(true);
+        continue;
+      }
+      throw new Error("compileRelationships should have thrown RelationshipError");
+    }
   });
 
-  test("public DecisionError is the class thrown by load and validate", () => {
-    expect(DecisionError).toBe(ImplementationDecisionError);
-
-    let loadErr;
-    try {
-      loadDecisions([]);
-    } catch (err) {
-      loadErr = err;
-    }
-    expect(loadErr).toBeInstanceOf(DecisionError);
-    expect(loadErr).toBeInstanceOf(Error);
-    expect(loadErr.constructor).toBe(DecisionError);
-    expect(loadErr.name).toBe("DecisionError");
-
-    let validateErr;
-    try {
-      validateDecisions({
-        relationships: [{ source: "a", target: "b", type: "vibes", decision: "accept" }],
-      });
-    } catch (err) {
-      validateErr = err;
-    }
-    expect(validateErr).toBeInstanceOf(DecisionError);
-    expect(validateErr.constructor).toBe(DecisionError);
-    expect(Array.isArray(validateErr.details)).toBe(true);
-    expect(validateErr.details.some((d) => /unknown relationship type/.test(d))).toBe(true);
-
+  test("unknown type fails clearly", () => {
     try {
       compileRelationships(bluetoothDocs, {
-        decisions: { relationships: [{ source: "bluetooth", target: "wifi", type: "vibes", decision: "accept" }] },
+        domain: { relationships: [{ source: "bluetooth", target: "wifi", type: "vibes" }] },
       });
     } catch (err) {
-      expect(err).toBeInstanceOf(DecisionError);
-      expect(err.constructor).toBe(DecisionError);
-      expect(err).toBeInstanceOf(ImplementationDecisionError);
+      expect(err).toBeInstanceOf(RelationshipError);
+      expect(err.constructor).toBe(RelationshipError);
+      expect(err).toBeInstanceOf(ImplementationRelationshipError);
+      expect(Array.isArray(err.details)).toBe(true);
+      expect(err.details.some((d) => /unknown relationship type/.test(d))).toBe(true);
       return;
     }
-    throw new Error("compileRelationships should have thrown DecisionError");
+    throw new Error("compileRelationships should have thrown RelationshipError");
+  });
+
+  test("public RelationshipError is the class thrown by compile", () => {
+    expect(RelationshipError).toBe(ImplementationRelationshipError);
+
+    let err;
+    try {
+      compileRelationships(bluetoothDocs, { domain: [] });
+    } catch (caught) {
+      err = caught;
+    }
+    expect(err).toBeInstanceOf(RelationshipError);
+    expect(err).toBeInstanceOf(Error);
+    expect(err.constructor).toBe(RelationshipError);
+    expect(err.name).toBe("RelationshipError");
   });
 
   test("filterRelationships honors a caller-provided type array and keeps the default path", () => {
@@ -414,20 +353,19 @@ describe("search-relationships compilation", () => {
     expect(JSON.stringify(filterRelationships(artifact, null))).toBe(JSON.stringify(omitted));
   });
 
-  test("path-based editorial accept keeps semantic edges and two domain edges", () => {
+  test("path-based editorial relationship keeps semantic edges and two domain edges", () => {
     const compiled = compileRelationships(slEquivalentDocs, {
       semantic: slEquivalentSemantic,
-      decisions: slEquivalentDecisions,
+      domain: slEquivalentDomain,
     });
 
-    expect(compiled.manifest.counts.accepted).toBe(1);
-    expect(compiled.manifest.counts.rejected).toBe(0);
-    expect(compiled.manifest.counts.orphaned).toBe(0);
+    expect(compiled.manifest.counts.domainRelationships).toBe(1);
     expect(compiled.manifest.counts.domainEdges).toBe(2);
     expect(compiled.manifest.counts.semanticEdges).toBe(2);
     expect(compiled.manifest.counts.runtimeEdges).toBe(4);
     expect(compiled.life).toBeUndefined();
     expect(compiled.inspection).toBeUndefined();
+    expect(compiled.orphaned).toBeUndefined();
 
     const domainAi = compiled.domain.relationships.ai || [];
     const domainBg = compiled.domain.relationships.bg || [];
@@ -456,10 +394,17 @@ describe("search-relationships compilation", () => {
     expect(compiled.runtime.version).toBe(1);
   });
 
-  test("Software.Land-shaped fixture serializes to the frozen expected runtime artifact", () => {
+  test("Software.Land TLS→VPN fixture supplies type editorial and stays byte-identical", () => {
+    expect(slEquivalentDomain.relationships[0].type).toBe("editorial");
+    const examplePath = path.join(__dirname, "../tools/search-relationships/config/domain.example.json");
+    const example = JSON.parse(fs.readFileSync(examplePath, "utf8"));
+    expect(example.relationships[0].source).toBe("/tls-1.2-vulnerability/");
+    expect(example.relationships[0].target).toBe("/what-is-vpn/");
+    expect(example.relationships[0].type).toBe("editorial");
+
     const compiled = compileRelationships(slEquivalentDocs, {
       semantic: slEquivalentSemantic,
-      decisions: slEquivalentDecisions,
+      domain: slEquivalentDomain,
     });
     const expected = {
       format: "search-v2-relationships",
@@ -482,11 +427,11 @@ describe("search-relationships compilation", () => {
       version: 1,
       relationships: { bluetooth: [{ target: "wifi", type: "semantic", strength: 0.5, provenance: "embedding" }] },
     };
-    const decisions = {
-      relationships: [{ source: "bluetooth", target: "connected-devices", type: "editorial", decision: "accept" }],
+    const domain = {
+      relationships: [{ source: "bluetooth", target: "connected-devices", type: "editorial" }],
     };
-    const a = compileRelationships(bluetoothDocs, { semantic, decisions });
-    const b = compileRelationships(bluetoothDocs, { semantic, decisions });
+    const a = compileRelationships(bluetoothDocs, { semantic, domain });
+    const b = compileRelationships(bluetoothDocs, { semantic, domain });
     expect(JSON.stringify(a.runtime)).toBe(JSON.stringify(b.runtime));
     expect(a.manifest.artifactHash).toBe(b.manifest.artifactHash);
     expect(relationshipId("editorial", "bluetooth", "connected-devices")).toBe(

@@ -34,24 +34,6 @@ export interface TypeSpec {
   description: string;
 }
 
-export interface RelDecision {
-  id: string;
-  source: string;
-  target: string;
-  type: string;
-  decision: string;
-  directional: boolean;
-  note: string | null;
-  provenance: string | null;
-  priority: number | null;
-}
-
-export interface RelDecisionDoc {
-  format: string;
-  version: number;
-  relationships: RelDecision[];
-}
-
 export interface RelationshipEdge {
   target: string;
   type?: string;
@@ -74,7 +56,7 @@ export interface FlattenedEdge {
 }
 
 export interface CompileRelOptions {
-  decisions?: unknown;
+  domain?: unknown;
   semantic?: unknown;
   runtimeTypes?: readonly string[];
 }

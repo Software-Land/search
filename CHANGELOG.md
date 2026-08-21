@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.3.0 — Unreleased
+
+### Breaking
+
+- `@software-land/search/relationships` no longer mines relationship candidates or runs a human-review workflow. Removed `analyzeRelationships`, relationship `LIFECYCLE`, `mine` / `--no-mine`, and the `analyze` / `review` CLI commands.
+- Explicit domain relationships replace relationship decisions. `CompileRelOptions.domain` is the compile input (`compileRelationships(documents, { semantic, domain, runtimeTypes })`). Format is `search-relationships-domain`. Each record is `{ source, target, type, directional?, priority?, provenance?, note? }` with required `type`.
+- Unresolved domain endpoints and missing or unknown `type` fail compile with `RelationshipError`.
+- Removed from `/relationships`: `loadDecisions`, `validateDecisions`, and `DecisionError`. Corpus `DecisionError` is unchanged.
+- Relationship `COMPILER_VERSION` is `2`. The runtime artifact remains `search-v2-relationships` version `1`.
+
+### Fixed
+
+- Public `filterRelationships(artifact, types?: readonly string[])` honors a caller-supplied type array. `null` / `undefined` and other invalid runtime values use the default search-eligible types instead of throwing.
+
+### Changed
+
+- Explicit domain edges still default provenance to `"manual"` when omitted. Semantic edges keep builder scores and provenance.
+
+This release does not retune Search Core ranking or change the runtime relationship artifact schema.
+
 ## 0.2.3
 
 ### Changed

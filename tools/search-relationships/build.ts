@@ -5,7 +5,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { compileRelationships, DecisionError } from "./lib/pipeline.js";
+import { compileRelationships, RelationshipError } from "./lib/pipeline.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -39,14 +39,14 @@ export function main(): void {
 
   const input = arg("--input", path.join(HERE, ".output/corpus.json")) || path.join(HERE, ".output/corpus.json");
   const output = arg("--output", path.join(HERE, ".output")) || path.join(HERE, ".output");
-  const decisionsPath = arg("--decisions", null);
+  const domainPath = arg("--domain", null);
   const semanticPath = arg("--semantic", null);
 
   if (has("--help") || sub === "--help") {
     console.log(`Usage:
-  node tools/search-relationships/build.mjs compile --input corpus.json --output dir [--decisions decisions.json] [--semantic semantic.json]
+  node tools/search-relationships/build.mjs compile --input corpus.json --output dir [--domain domain.json] [--semantic semantic.json]
 
-Generated files never overwrite the decisions file.
+Generated files never overwrite the domain relationships file.
 `);
     process.exit(0);
   }
@@ -56,11 +56,11 @@ Generated files never overwrite the decisions file.
     process.exit(1);
   }
 
-  let decisions = null;
+  let domain = null;
   try {
-    decisions = decisionsPath ? readJson(decisionsPath) : null;
+    domain = domainPath ? readJson(domainPath) : null;
   } catch (err) {
-    console.error(`Failed to read decisions: ${err instanceof Error ? err.message : String(err)}`);
+    console.error(`Failed to read domain relationships: ${err instanceof Error ? err.message : String(err)}`);
     process.exit(1);
   }
 
@@ -68,7 +68,7 @@ Generated files never overwrite the decisions file.
 
   try {
     fs.mkdirSync(output, { recursive: true });
-    const result = compileRelationships(input, { decisions, semantic });
+    const result = compileRelationships(input, { domain, semantic });
     const written = [
       write(output, "relationships.json", result.runtime),
       write(output, "relationships-full.json", result.merged),
@@ -77,7 +77,7 @@ Generated files never overwrite the decisions file.
     ];
     console.log(JSON.stringify({ stage: "compile", counts: result.manifest.counts, written }, null, 2));
   } catch (err) {
-    if (err instanceof DecisionError) {
+    if (err instanceof RelationshipError) {
       console.error(err.message);
       for (const d of err.details || []) console.error(`  - ${d}`);
       process.exit(1);

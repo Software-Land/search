@@ -34,10 +34,10 @@ Optional Python builder, shipped in the npm package: documents → offline embed
 
 ## search-relationships (`tools/search-relationships`)
 
-Merges semantic graph + explicit domain decisions. Stable relationship identity, direction, provenance, reject/orphan handling.
+Merges semantic graph + explicit domain relationships. Stable relationship identity, direction, and provenance.
 
 ```bash
 node tools/search-relationships/build.mjs compile \
-  --input corpus.json --decisions decisions.json \
+  --input corpus.json --domain domain.json \
   --semantic relationships-from-builder.json --output dir
 ```
