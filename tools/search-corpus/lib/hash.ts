@@ -1,16 +1,13 @@
 import crypto from "node:crypto";
 
-/** @param {unknown} text */
-export function sha256Hex(text) {
+export function sha256Hex(text: unknown): string {
   return crypto.createHash("sha256").update(String(text || ""), "utf8").digest("hex");
 }
 
-/** @param {unknown} value */
-export function canonicalJson(value) {
+export function canonicalJson(value: unknown): string {
   return `${JSON.stringify(value)}\n`;
 }
 
-/** @param {unknown} value */
-export function hashJson(value) {
+export function hashJson(value: unknown): string {
   return sha256Hex(JSON.stringify(value));
 }

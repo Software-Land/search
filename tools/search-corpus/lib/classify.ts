@@ -1,15 +1,14 @@
 import { documentSupportsPairIndexed, indexDocuments } from "./acronyms.js";
 import { stableSort } from "./text.js";
+import type { CorpusDocument, EquivalenceCandidate, EquivalenceEvidence, EvidenceHit, IndexedDocument } from "../types.js";
 
-/** @param {Array<{ documentId?: string | null }>} hits */
-function uniqueDocs(hits) {
+function uniqueDocs(hits: Array<{ documentId?: string | null }>): Set<string | null | undefined> {
   return new Set(hits.map((h) => h.documentId));
 }
 
-/** @param {Array<{ documentId?: string | null, provenance?: string, snippet?: string | null, field?: string | null }>} hits */
-function capProvenance(hits) {
-  const seen = new Set();
-  const out = [];
+function capProvenance(hits: Array<{ documentId?: string | null; provenance?: string; snippet?: string | null; field?: string | null }>): EvidenceHit[] {
+  const seen = new Set<string>();
+  const out: EvidenceHit[] = [];
   for (const h of hits) {
     const id = `${h.documentId}|${h.provenance}|${h.snippet}`;
     if (seen.has(id)) continue;
@@ -25,8 +24,7 @@ function capProvenance(hits) {
   return out;
 }
 
-/** @param {import("../types.js").EquivalenceCandidate} row @param {import("../types.js").IndexedDocument[]} indexedDocs */
-function summarizeEvidence(row, indexedDocs) {
+function summarizeEvidence(row: EquivalenceCandidate, indexedDocs: IndexedDocument[]): EquivalenceEvidence {
   const hits = row.hits || [];
   const explicitHits = hits.filter((h) => String(h.provenance || "").startsWith("explicit"));
   const explicitDocs = uniqueDocs(explicitHits);
@@ -57,24 +55,21 @@ function summarizeEvidence(row, indexedDocs) {
     expansionDf,
     keyDf,
     supportingDocuments: explicitDocs.size + titleCooccurrences + bodyCooccurrences,
-    provenances: [...new Set(hits.map((h) => h.provenance).filter((p) => typeof p === "string"))].sort(),
+    provenances: [...new Set(hits.map((h) => h.provenance).filter((p): p is string => typeof p === "string"))].sort(),
   };
 }
 
-/** @param {unknown} key */
-function shortTokenNeedsMoreEvidence(key) {
+function shortTokenNeedsMoreEvidence(key: unknown): boolean {
   return String(key || "").length <= 3;
 }
 
-/** @param {unknown} key @param {string[]} expansion */
-function strictInitialsMatch(key, expansion) {
+function strictInitialsMatch(key: unknown, expansion: string[]): boolean {
   const k = String(key || "").toLowerCase();
-  const init = (expansion || []).map((t) => (t[0] || "")).join("");
+  const init = (expansion || []).map((t) => t[0] || "").join("");
   return k.length > 0 && k === init;
 }
 
-/** @param {import("../types.js").EquivalenceEvidence} ev @param {Partial<import("../types.js").EquivalenceCandidate>} [item] */
-function hasStrongShortTokenEvidence(ev, item = {}) {
+function hasStrongShortTokenEvidence(ev: EquivalenceEvidence, item: Partial<EquivalenceCandidate> = {}): boolean {
   if ((ev.explicitDefinitions || 0) >= 1) return true;
   // 2/3-letter keys matching an ngram only after dropping of/and are coincidences
   // (cd → cycle of developing). Explicit definitions may still use optional words.
@@ -87,8 +82,7 @@ function hasStrongShortTokenEvidence(ev, item = {}) {
   return false;
 }
 
-/** @param {import("../types.js").EquivalenceEvidence} evidence @param {string} status @param {string[]} [extra] */
-function reasonsFrom(evidence, status, extra = []) {
+function reasonsFrom(evidence: EquivalenceEvidence, status: string, extra: string[] = []): string[] {
   const reasons = [...extra];
   if (evidence.explicitDefinitions) {
     reasons.push(
@@ -114,13 +108,10 @@ function reasonsFrom(evidence, status, extra = []) {
  *   accepted — repeated or title-backed explicit definitions, unambiguous
  *   review   — real evidence, not enough to trust automatically
  *   rejected — coincidence, failed initials, relatedness, or too weak
- * @param {import("../types.js").EquivalenceCandidate[]} rawRows
- * @param {import("../types.js").CorpusDocument[]} documents
  */
-export function classifyCandidates(rawRows, documents) {
+export function classifyCandidates(rawRows: EquivalenceCandidate[], documents: CorpusDocument[]): EquivalenceCandidate[] {
   const indexedDocs = indexDocuments(documents);
-  /** @type {Map<string, import("../types.js").EquivalenceCandidate>} */
-  const merged = new Map();
+  const merged = new Map<string, EquivalenceCandidate>();
   for (const row of rawRows) {
     const id = `${row.key}::${row.expansionPhrase}`;
     const existing = merged.get(id);
@@ -128,8 +119,7 @@ export function classifyCandidates(rawRows, documents) {
     else existing.hits = [...(existing.hits || []), ...(row.hits || [])];
   }
 
-  /** @type {Map<string, import("../types.js").EquivalenceCandidate[]>} */
-  const byKey = new Map();
+  const byKey = new Map<string, EquivalenceCandidate[]>();
   for (const row of merged.values()) {
     const evidence = summarizeEvidence(row, indexedDocs);
     const item = { ...row, evidence };
@@ -137,7 +127,7 @@ export function classifyCandidates(rawRows, documents) {
     (byKey.get(row.key) || []).push(item);
   }
 
-  const out = [];
+  const out: EquivalenceCandidate[] = [];
   for (const [key, items] of byKey) {
     const explicitItems = items.filter((i) => (i.evidence?.explicitDefinitions || 0) >= 1 && i.initialsMatch);
     const ambiguous = explicitItems.length >= 2;

@@ -1,19 +1,16 @@
 import { tokenize, isProtectedLiteral, FUNCTION_WORDS, stableSort } from "./text.js";
+import type { CorpusDocument, VocabularyArtifact, VocabularyTerm } from "../types.js";
 
 const JUNK = /^(https?|www|html|href|class|span|div|src)$/;
 const CODEISH = /[0-9]{4,}|[a-z]+[A-Z]|[_$]{2}/;
 
-/**
- * @param {import("../types.js").CorpusDocument[]} documents
- * @param {{ acceptedEquivalences?: Array<{ key?: string, expansion?: string[], aliases?: unknown[] }> }} [opts]
- * @returns {import("../types.js").VocabularyArtifact}
- */
-export function buildVocabulary(documents, { acceptedEquivalences = [] } = {}) {
-  /** @type {Map<string, { term: string, tf: number, df: number, titleDf: number, docs: Set<unknown>, surfaces: Set<string> }>} */
-  const byTerm = new Map();
+export function buildVocabulary(
+  documents: CorpusDocument[],
+  { acceptedEquivalences = [] }: { acceptedEquivalences?: Array<{ key?: string; expansion?: string[]; aliases?: unknown[] }> } = {}
+): VocabularyArtifact {
+  const byTerm = new Map<string, { term: string; tf: number; df: number; titleDf: number; docs: Set<unknown>; surfaces: Set<string> }>();
 
-  /** @param {unknown} term @param {{ title?: boolean, docId: unknown }} opts */
-  function add(term, { title = false, docId }) {
+  function add(term: unknown, { title = false, docId }: { title?: boolean; docId: unknown }) {
     const t = String(term || "").toLowerCase();
     if (!t || t.length > 32) return;
     if (JUNK.test(t)) return;
@@ -30,12 +27,12 @@ export function buildVocabulary(documents, { acceptedEquivalences = [] } = {}) {
   for (const doc of documents) {
     const titleToks = tokenize(doc.title);
     const bodyToks = tokenize(doc.body);
-    const seenTitle = new Set();
+    const seenTitle = new Set<string>();
     for (const tok of titleToks) {
       add(tok, { title: !seenTitle.has(tok), docId: doc.id });
       seenTitle.add(tok);
     }
-    const seenBody = new Set();
+    const seenBody = new Set<string>();
     for (const tok of bodyToks) {
       if (seenBody.has(tok)) {
         add(tok, { title: false, docId: doc.id });
@@ -46,7 +43,7 @@ export function buildVocabulary(documents, { acceptedEquivalences = [] } = {}) {
     }
   }
 
-  const configured = new Set();
+  const configured = new Set<string>();
   for (const e of acceptedEquivalences) {
     if (e.key) configured.add(e.key);
     for (const w of e.expansion || []) configured.add(w);
@@ -56,7 +53,7 @@ export function buildVocabulary(documents, { acceptedEquivalences = [] } = {}) {
     }
   }
 
-  const terms = /** @type {import("../types.js").VocabularyTerm[]} */ ([]);
+  const terms: VocabularyTerm[] = [];
   for (const row of byTerm.values()) {
     row.df = row.docs.size;
     const literal = isProtectedLiteral(row.term);
@@ -89,8 +86,7 @@ export function buildVocabulary(documents, { acceptedEquivalences = [] } = {}) {
   };
 }
 
-/** @param {import("../types.js").VocabularyArtifact | { terms?: import("../types.js").VocabularyTerm[] } | null | undefined} vocabulary */
-export function spellingTerms(vocabulary) {
+export function spellingTerms(vocabulary: VocabularyArtifact | { terms?: VocabularyTerm[] } | null | undefined): string[] {
   return (vocabulary?.terms || []).filter((t) => t.spellingTrusted).map((t) => t.term);
 }
 
@@ -98,8 +94,7 @@ export function spellingTerms(vocabulary) {
  * Optional runtime plugin. Search Core already honors plugin.lexicon().
  * This module is not imported by Search Core.
  */
-/** @param {unknown} [terms] */
-export function spellingLexiconPlugin(terms) {
+export function spellingLexiconPlugin(terms?: unknown) {
   const set = new Set((Array.isArray(terms) ? terms : []).filter((t) => typeof t === "string" && t.length >= 5));
   return {
     name: "corpus-spelling-lexicon",

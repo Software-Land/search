@@ -8,6 +8,7 @@
 import { equivalenceId, synonymId, expansionPhraseOf } from "./ids.js";
 import { indexDecisions } from "./decisions.js";
 import { stableSort } from "./text.js";
+import type { CorpusCandidate, EquivalenceCandidate, EquivalenceEvidence, LifecycleResult, SynonymCandidate } from "../types.js";
 
 export const LIFECYCLE = {
   AUTO_ACCEPTED: "AUTO_ACCEPTED",
@@ -16,10 +17,9 @@ export const LIFECYCLE = {
   HUMAN_REJECTED: "HUMAN_REJECTED",
   CONFLICT: "CONFLICT",
   ORPHANED_DECISION: "ORPHANED_DECISION",
-};
+} as const;
 
-/** @param {unknown} status @param {import("../types.js").EquivalenceEvidence | undefined} evidence */
-function compilerRecommendation(status, evidence) {
+function compilerRecommendation(status: unknown, evidence: EquivalenceEvidence | undefined): string {
   if (status === "accepted") return "accept";
   if (status === "rejected") return "reject";
   const ev = evidence || {};
@@ -29,8 +29,7 @@ function compilerRecommendation(status, evidence) {
   return "review";
 }
 
-/** @param {import("../types.js").EquivalenceCandidate | null | undefined} c */
-function isStrongCompetitor(c) {
+function isStrongCompetitor(c: EquivalenceCandidate | null | undefined): boolean {
   if (!c || c.initialsMatch === false) return false;
   if (c.compilerStatus === "accepted") return true;
   if ((c.evidence?.explicitDefinitions || 0) >= 1) return true;
@@ -38,13 +37,11 @@ function isStrongCompetitor(c) {
   return false;
 }
 
-/** @param {import("../types.js").EquivalenceCandidate[]} candidates @param {string} key @param {string | undefined} exceptId */
-function competingMined(candidates, key, exceptId) {
+function competingMined(candidates: EquivalenceCandidate[], key: string, exceptId: string | undefined): EquivalenceCandidate[] {
   return candidates.filter((c) => c.key === key && c.id !== exceptId && isStrongCompetitor(c));
 }
 
-/** @param {import("../types.js").EquivalenceCandidate[]} classified */
-export function attachEquivalenceIds(classified) {
+export function attachEquivalenceIds(classified: EquivalenceCandidate[]): EquivalenceCandidate[] {
   return classified.map((c) => ({
     ...c,
     id: equivalenceId(c.key, c.expansion),
@@ -54,8 +51,7 @@ export function attachEquivalenceIds(classified) {
   }));
 }
 
-/** @param {import("../types.js").SynonymCandidate[]} rows */
-export function attachSynonymIds(rows) {
+export function attachSynonymIds(rows: SynonymCandidate[]): SynonymCandidate[] {
   return rows.map((c) => ({
     ...c,
     id: synonymId(c.terms),
@@ -68,17 +64,12 @@ export function attachSynonymIds(rows) {
 /**
  * Apply durable decisions onto generated candidates. Does not mutate the
  * decisions object. Human truth outranks inference.
- * @param {import("../types.js").EquivalenceCandidate[]} classified
- * @param {import("../types.js").SynonymCandidate[]} synonymRows
- * @param {unknown} decisions
- * @returns {import("../types.js").LifecycleResult}
  */
-export function applyLifecycle(classified, synonymRows, decisions) {
+export function applyLifecycle(classified: EquivalenceCandidate[], synonymRows: SynonymCandidate[], decisions: unknown): LifecycleResult {
   const idx = indexDecisions(decisions);
-  const conflicts = /** @type {Array<Record<string, unknown>>} */ ([]);
-  const flags = /** @type {Array<Record<string, unknown>>} */ ([]);
+  const conflicts: Array<Record<string, unknown>> = [];
+  const flags: Array<Record<string, unknown>> = [];
 
-  /** @type {import("../types.js").EquivalenceCandidate[]} */
   const eq = attachEquivalenceIds(classified).map((c) => ({ ...c }));
   const byId = new Map(eq.map((c) => [c.id || "", c]));
 
@@ -202,12 +193,11 @@ export function applyLifecycle(classified, synonymRows, decisions) {
     c.recommendation = c.recommendation || "reject";
   }
 
-  const orphaned = /** @type {import("../types.js").CorpusCandidate[]} */ ([]);
+  const orphaned: CorpusCandidate[] = [];
   for (const item of idx.loaded.equivalences) {
     if (item.decision === "reject" && item.expansion.length === 0) continue;
     if (byId.has(item.id)) continue;
-    /** @type {import("../types.js").EquivalenceCandidate} */
-    const row = {
+    const row: EquivalenceCandidate = {
       type: "equivalence-candidate",
       id: item.id,
       key: item.key,
@@ -239,7 +229,6 @@ export function applyLifecycle(classified, synonymRows, decisions) {
     }
   }
 
-  /** @type {import("../types.js").SynonymCandidate[]} */
   const syn = attachSynonymIds(synonymRows).map((c) => ({ ...c }));
   const synById = new Map(syn.map((c) => [c.id || "", c]));
   for (const c of syn) {
@@ -262,8 +251,7 @@ export function applyLifecycle(classified, synonymRows, decisions) {
   }
   for (const item of idx.loaded.synonyms) {
     if (synById.has(item.id)) continue;
-    /** @type {import("../types.js").SynonymCandidate} */
-    const row = {
+    const row: SynonymCandidate = {
       type: "synonym-candidate",
       id: item.id,
       terms: item.terms,
@@ -300,14 +288,12 @@ export function applyLifecycle(classified, synonymRows, decisions) {
   };
 }
 
-/** @param {import("../types.js").EquivalenceCandidate[]} rows */
-export function trustedEquivalences(rows) {
+export function trustedEquivalences(rows: EquivalenceCandidate[]): EquivalenceCandidate[] {
   return rows.filter(
     (c) => c.lifecycle === LIFECYCLE.AUTO_ACCEPTED || c.lifecycle === LIFECYCLE.HUMAN_ACCEPTED
   );
 }
 
-/** @param {import("../types.js").SynonymCandidate[]} rows */
-export function trustedSynonyms(rows) {
+export function trustedSynonyms(rows: SynonymCandidate[]): SynonymCandidate[] {
   return rows.filter((c) => c.lifecycle === LIFECYCLE.HUMAN_ACCEPTED);
 }

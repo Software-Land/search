@@ -18,8 +18,7 @@ const COMMON_FALSE_KEYS = new Set([
   "new", "old", "one", "two", "see", "may", "use", "used", "using",
 ]);
 
-/** @param {unknown} [text] */
-export function cleanText(text) {
+export function cleanText(text?: unknown): string {
   return String(text || "")
     .replace(/<[^>]+>/g, " ")
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
@@ -29,8 +28,7 @@ export function cleanText(text) {
     .trim();
 }
 
-/** @param {unknown} [text] @returns {string[]} */
-export function tokenize(text) {
+export function tokenize(text?: unknown): string[] {
   return String(text || "")
     .toLowerCase()
     .replace(/[''`"]/g, "")
@@ -40,8 +38,7 @@ export function tokenize(text) {
     .filter(Boolean);
 }
 
-/** @param {unknown} [surface] */
-export function acronymKey(surface) {
+export function acronymKey(surface?: unknown): string {
   let t = String(surface || "").toLowerCase().replace(/[^a-z0-9]/g, "");
   if (!t) return "";
   // Plural surfaces only: APIs, SDKs. Never strip TLS, RBAC, OS, etc.
@@ -51,8 +48,7 @@ export function acronymKey(surface) {
   return t;
 }
 
-/** @param {unknown} key @param {{ original?: unknown }} [opts] */
-export function isPlausibleAcronymKey(key, { original = "" } = {}) {
+export function isPlausibleAcronymKey(key: unknown, { original = "" }: { original?: unknown } = {}): boolean {
   const k = String(key || "");
   if (k.length < 2 || k.length > 12) return false;
   if (COMMON_FALSE_KEYS.has(k) || FUNCTION_WORDS.has(k)) return false;
@@ -68,8 +64,7 @@ export function isPlausibleAcronymKey(key, { original = "" } = {}) {
   return true;
 }
 
-/** @param {unknown} token */
-export function isProtectedLiteral(token) {
+export function isProtectedLiteral(token: unknown): boolean {
   const t = String(token || "").toLowerCase();
   if (!t) return false;
   if (/^[a-z]\d$/.test(t)) return true; // s3, h2, k8
@@ -78,18 +73,15 @@ export function isProtectedLiteral(token) {
   return false;
 }
 
-/** @param {unknown} phrase @returns {string[]} */
-export function expansionTokens(phrase) {
+export function expansionTokens(phrase: unknown): string[] {
   return tokenize(phrase).filter(Boolean);
 }
 
-/** @param {string[]} tokens @returns {string[]} */
-export function contentTokens(tokens) {
+export function contentTokens(tokens: string[]): string[] {
   return tokens.filter((t) => !FUNCTION_WORDS.has(t));
 }
 
-/** @param {string[]} tokens @param {{ skipOptional?: boolean }} [opts] */
-export function initialsOf(tokens, { skipOptional = false } = {}) {
+export function initialsOf(tokens: string[], { skipOptional = false }: { skipOptional?: boolean } = {}): string {
   const parts = skipOptional ? tokens.filter((t) => !OPTIONAL_INITIAL_WORDS.has(t)) : tokens;
   return parts.map((t) => t[0] || "").join("");
 }
@@ -97,8 +89,11 @@ export function initialsOf(tokens, { skipOptional = false } = {}) {
 /**
  * Exact initialism only. Prefix matches are rejected (io ↛ internet of things).
  */
-/** @param {unknown} key @param {string[]} tokens @param {{ optionalWords?: Set<string> }} [opts] */
-export function initialsMatch(key, tokens, { optionalWords = OPTIONAL_INITIAL_WORDS } = {}) {
+export function initialsMatch(
+  key: unknown,
+  tokens: string[],
+  { optionalWords = OPTIONAL_INITIAL_WORDS }: { optionalWords?: Set<string> } = {}
+): boolean {
   const k = String(key || "").toLowerCase();
   if (!k || !tokens.length) return false;
   const strict = tokens.map((t) => t[0] || "").join("");
@@ -110,18 +105,15 @@ export function initialsMatch(key, tokens, { optionalWords = OPTIONAL_INITIAL_WO
 /** Co-occurrence mining only skips of/and — not arbitrary "the" in a sentence. */
 export const COOCCURRENCE_OPTIONAL = new Set(["of", "and"]);
 
-/** @param {unknown} key @param {string[]} tokens */
-export function initialsMatchCooccurrence(key, tokens) {
+export function initialsMatchCooccurrence(key: unknown, tokens: string[]): boolean {
   return initialsMatch(key, tokens, { optionalWords: COOCCURRENCE_OPTIONAL });
 }
 
-/** @param {string[]} tokens */
-export function phraseKey(tokens) {
+export function phraseKey(tokens: string[]): string {
   return tokens.join(" ");
 }
 
-/** @param {unknown} [tokens] @returns {string[]} */
-export function normalizeExpansion(tokens) {
+export function normalizeExpansion(tokens?: unknown): string[] {
   const list = Array.isArray(tokens) ? tokens.map((t) => String(t)) : [];
   let t = [...list];
   while (t.length && FUNCTION_WORDS.has(t[0])) t.shift();
@@ -140,8 +132,7 @@ const UNLIKELY_EXPANSION_WORDS = new Set([
  * Conservative noun-phrase check for co-occurrence mining.
  * Explicit parenthetical definitions may be slightly looser.
  */
-/** @param {unknown} [tokens] */
-export function looksLikeTermPhrase(tokens) {
+export function looksLikeTermPhrase(tokens?: unknown): boolean {
   const list = Array.isArray(tokens) ? tokens.map((t) => String(t)) : [];
   const content = contentTokens(list);
   if (content.length < 2 || list.length > 8) return false;
@@ -150,13 +141,7 @@ export function looksLikeTermPhrase(tokens) {
   return true;
 }
 
-/**
- * @template T
- * @param {T[]} arr
- * @param {(item: T) => string} keyFn
- * @returns {T[]}
- */
-export function stableSort(arr, keyFn) {
+export function stableSort<T>(arr: T[], keyFn: (item: T) => string): T[] {
   return [...arr].sort((a, b) => {
     const ka = keyFn(a);
     const kb = keyFn(b);

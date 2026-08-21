@@ -2,7 +2,7 @@
 
 Search Core never imports these. Runtime users should not pay for them.
 
-`npm run typecheck` typechecks Core, the browser Worker/client, TypeScript-migrated tools (`tools/search-lexical`, `tools/search-relationships`), and the remaining Node JS compilers (`tools/search-corpus`, `tools/search-semantic/index.js`) after `npm run build` (runtime JS is emitted to `dist/`; root and browser public declarations are generated into `dist/*.d.ts`; lexical JS/DTS are emitted beside `tools/search-lexical` source; relationships JS is emitted beside its TypeScript source while `tools/search-relationships/index.d.ts` and `types.d.ts` remain the handwritten v0.2.2 public contract). The Python sources under `tools/search-semantic/lib` stay outside `tsc`. `npm run test:types` compiles consumer fixtures in `test/types/` against the public `package.json` `exports.types` surface after the same build.
+`npm run typecheck` typechecks Core, the browser Worker/client, TypeScript-migrated tools (`tools/search-lexical`, `tools/search-relationships`, `tools/search-corpus`), and the remaining Node JS compiler (`tools/search-semantic/index.js`) after `npm run build` (runtime JS is emitted to `dist/`; root and browser public declarations are generated into `dist/*.d.ts`; lexical JS/DTS are emitted beside `tools/search-lexical` source; relationships and corpus JS are emitted beside their TypeScript source while their `index.d.ts` and `types.d.ts` remain the handwritten v0.2.2 public contract). The Python sources under `tools/search-semantic/lib` stay outside `tsc`. `npm run test:types` compiles consumer fixtures in `test/types/` against the public `package.json` `exports.types` surface after the same build.
 
 ## search-corpus (`tools/search-corpus`)
 

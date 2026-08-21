@@ -8,32 +8,28 @@
 
 import { acronymKey, expansionTokens, phraseKey } from "./text.js";
 import { equivalenceId, synonymId, normalizeTerms } from "./ids.js";
+import type { DecisionDoc, DecisionIndex, DecisionOverrides, EquivalenceDecision, SynonymDecision } from "../types.js";
 
 export const DECISION_FORMAT = "search-corpus-decisions";
 export const ALLOWED_DECISIONS = new Set(["accept", "reject"]);
 export const ALLOWED_RELATIONS = new Set(["synonym", "alias", "surface-variant"]);
 
 export class DecisionError extends Error {
-  /**
-   * @param {string} message
-   * @param {string[]} [details]
-   */
-  constructor(message, details = []) {
+  details: string[];
+  constructor(message: string, details: string[] = []) {
     super(message);
     this.name = "DecisionError";
     this.details = details;
   }
 }
 
-/** @param {unknown} raw @returns {string[]} */
-function asExpansion(raw) {
+function asExpansion(raw: unknown): string[] {
   if (Array.isArray(raw)) return raw.map((w) => String(w).toLowerCase()).filter(Boolean);
   if (typeof raw === "string" && raw.trim()) return expansionTokens(raw);
   return [];
 }
 
-/** @param {unknown} raw @returns {string[]} */
-function asTerms(raw) {
+function asTerms(raw: unknown): string[] {
   if (Array.isArray(raw)) return normalizeTerms(raw);
   if (typeof raw === "string") return normalizeTerms(raw.split(/[\s,]+/));
   return [];
@@ -44,17 +40,15 @@ function asTerms(raw) {
  *   { equivalences: [...], synonyms: [...] }
  *   { equivalences: { api: { decision, expansion } }, synonyms: { "a::b": { decision } } }
  *   compact decision overrides: { accept, reject, add }
- * @param {unknown} raw
- * @returns {import("../types.js").DecisionDoc}
  */
-export function loadDecisions(raw) {
+export function loadDecisions(raw: unknown): DecisionDoc {
   if (raw == null) {
     return emptyDecisions();
   }
   if (typeof raw !== "object" || Array.isArray(raw)) {
     throw new DecisionError("Decisions must be a JSON object");
   }
-  const rec = /** @type {Record<string, unknown> & import("../types.js").DecisionOverrides} */ (raw);
+  const rec = raw as Record<string, unknown> & DecisionOverrides;
   if (rec.accept || rec.reject || rec.add) {
     return loadDecisions(overridesToDecisions(rec));
   }
@@ -71,15 +65,12 @@ export function loadDecisions(raw) {
   };
 }
 
-/** @returns {import("../types.js").DecisionDoc} */
-export function emptyDecisions() {
+export function emptyDecisions(): DecisionDoc {
   return { format: DECISION_FORMAT, version: 1, equivalences: [], synonyms: [] };
 }
 
-/** @param {import("../types.js").DecisionOverrides} overrides @returns {import("../types.js").DecisionDoc} */
-export function overridesToDecisions(overrides) {
-  /** @type {import("../types.js").EquivalenceDecision[]} */
-  const equivalences = [];
+export function overridesToDecisions(overrides: DecisionOverrides): DecisionDoc {
+  const equivalences: EquivalenceDecision[] = [];
   for (const rej of overrides.reject || []) {
     const key = acronymKey(rej.key);
     const expansion = asExpansion(rej.expansion);
@@ -111,13 +102,12 @@ export function overridesToDecisions(overrides) {
   return { format: DECISION_FORMAT, version: 1, equivalences, synonyms: [] };
 }
 
-/** @param {unknown} raw @returns {import("../types.js").EquivalenceDecision[]} */
-function normalizeEquivalenceList(raw) {
+function normalizeEquivalenceList(raw: unknown): EquivalenceDecision[] {
   if (raw == null) return [];
-  if (Array.isArray(raw)) return raw.map(normalizeEquivalenceItem);
+  if (Array.isArray(raw)) return raw.map((item) => normalizeEquivalenceItem(item as Record<string, unknown>));
   if (typeof raw === "object") {
     return Object.entries(raw).map(([k, v]) => {
-      const item = v && typeof v === "object" ? { ...v } : { decision: v };
+      const item: Record<string, unknown> = v && typeof v === "object" ? { ...(v as Record<string, unknown>) } : { decision: v };
       if (!item.key) item.key = item.id ? undefined : k;
       if (!item.id && k.startsWith("equivalence:")) item.id = k;
       if (!item.key && item.id) {
@@ -131,8 +121,7 @@ function normalizeEquivalenceList(raw) {
   throw new DecisionError("equivalences must be an array or object");
 }
 
-/** @param {Record<string, unknown>} item @returns {import("../types.js").EquivalenceDecision} */
-function normalizeEquivalenceItem(item) {
+function normalizeEquivalenceItem(item: Record<string, unknown>): EquivalenceDecision {
   const key = acronymKey(typeof item.key === "string" ? item.key : "");
   const expansion = asExpansion(item.expansion);
   const id = typeof item.id === "string" && item.id ? item.id : equivalenceId(key, expansion);
@@ -148,13 +137,12 @@ function normalizeEquivalenceItem(item) {
   };
 }
 
-/** @param {unknown} raw @returns {import("../types.js").SynonymDecision[]} */
-function normalizeSynonymList(raw) {
+function normalizeSynonymList(raw: unknown): SynonymDecision[] {
   if (raw == null) return [];
-  if (Array.isArray(raw)) return raw.map(normalizeSynonymItem);
+  if (Array.isArray(raw)) return raw.map((item) => normalizeSynonymItem(item as Record<string, unknown>));
   if (typeof raw === "object") {
     return Object.entries(raw).map(([k, v]) => {
-      const item = v && typeof v === "object" ? { ...v } : { decision: v };
+      const item: Record<string, unknown> = v && typeof v === "object" ? { ...(v as Record<string, unknown>) } : { decision: v };
       if (!item.terms && k.includes(":")) {
         item.terms = k.replace(/^synonym:/, "").split(":");
       }
@@ -164,8 +152,7 @@ function normalizeSynonymList(raw) {
   throw new DecisionError("synonyms must be an array or object");
 }
 
-/** @param {Record<string, unknown>} item @returns {import("../types.js").SynonymDecision} */
-function normalizeSynonymItem(item) {
+function normalizeSynonymItem(item: Record<string, unknown>): SynonymDecision {
   const terms = asTerms(item.terms);
   const id = typeof item.id === "string" && item.id ? item.id : synonymId(terms);
   const relation = String(item.relation || item.type || "synonym").toLowerCase();
@@ -182,15 +169,13 @@ function normalizeSynonymItem(item) {
 
 /**
  * Fail clearly on malformed decisions. Do not guess.
- * @param {unknown} decisions
- * @returns {import("../types.js").DecisionDoc}
  */
-export function validateDecisions(decisions) {
+export function validateDecisions(decisions: unknown): DecisionDoc {
   const loaded = loadDecisions(decisions);
-  const errors = [];
+  const errors: string[] = [];
 
-  const eqIds = new Map();
-  const acceptByKey = new Map();
+  const eqIds = new Map<string, EquivalenceDecision>();
+  const acceptByKey = new Map<string, EquivalenceDecision[]>();
   for (const item of loaded.equivalences) {
     if (!ALLOWED_DECISIONS.has(item.decision)) {
       errors.push(`equivalence ${item.id || item.key}: unknown decision "${item.decision}"`);
@@ -201,24 +186,24 @@ export function validateDecisions(decisions) {
     }
     if (eqIds.has(item.id)) {
       const prev = eqIds.get(item.id);
-      if (prev.decision !== item.decision) {
+      if (prev && prev.decision !== item.decision) {
         errors.push(`equivalence ${item.id}: both accept and reject`);
       }
     }
     eqIds.set(item.id, item);
     if (item.decision === "accept") {
       if (!acceptByKey.has(item.key)) acceptByKey.set(item.key, []);
-      acceptByKey.get(item.key).push(item);
+      acceptByKey.get(item.key)!.push(item);
     }
   }
   for (const [key, items] of acceptByKey) {
-      const phrases = [...new Set(items.map((/** @type {import("../types.js").EquivalenceDecision} */ i) => i.expansionPhrase).filter(Boolean))];
+    const phrases = [...new Set(items.map((i: EquivalenceDecision) => i.expansionPhrase).filter(Boolean))];
     if (phrases.length >= 2) {
       errors.push(`equivalence ${key}: conflicting accepted expansions (${phrases.join(" vs ")})`);
     }
   }
 
-  const synIds = new Map();
+  const synIds = new Map<string, SynonymDecision>();
   for (const item of loaded.synonyms) {
     if (!ALLOWED_DECISIONS.has(item.decision)) {
       errors.push(`synonym ${item.id}: unknown decision "${item.decision}"`);
@@ -229,7 +214,7 @@ export function validateDecisions(decisions) {
     if (item.relation && !ALLOWED_RELATIONS.has(item.relation)) {
       errors.push(`synonym ${item.id}: unknown relation type "${item.relation}"`);
     }
-    if (synIds.has(item.id) && synIds.get(item.id).decision !== item.decision) {
+    if (synIds.has(item.id) && synIds.get(item.id)!.decision !== item.decision) {
       errors.push(`synonym ${item.id}: both accept and reject`);
     }
     synIds.set(item.id, item);
@@ -239,19 +224,18 @@ export function validateDecisions(decisions) {
   return loaded;
 }
 
-/** @param {unknown} decisions @returns {import("../types.js").DecisionIndex} */
-export function indexDecisions(decisions) {
+export function indexDecisions(decisions: unknown): DecisionIndex {
   const loaded = validateDecisions(decisions);
-  const eqById = new Map();
-  const eqRejectKeys = new Set();
-  const eqByKey = new Map();
+  const eqById = new Map<string, EquivalenceDecision>();
+  const eqRejectKeys = new Set<string>();
+  const eqByKey = new Map<string, EquivalenceDecision[]>();
   for (const item of loaded.equivalences) {
     eqById.set(item.id, item);
     if (!eqByKey.has(item.key)) eqByKey.set(item.key, []);
-    eqByKey.get(item.key).push(item);
+    eqByKey.get(item.key)!.push(item);
     if (item.decision === "reject" && item.expansion.length === 0) eqRejectKeys.add(item.key);
   }
-  const synById = new Map();
+  const synById = new Map<string, SynonymDecision>();
   for (const item of loaded.synonyms) synById.set(item.id, item);
   return { loaded, eqById, eqRejectKeys, eqByKey, synById };
 }

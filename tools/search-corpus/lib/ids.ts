@@ -4,24 +4,21 @@
 
 import { acronymKey, expansionTokens, phraseKey } from "./text.js";
 
-/** @param {unknown} tokens */
-export function slugTokens(tokens) {
+export function slugTokens(tokens: unknown): string {
   return (Array.isArray(tokens) ? tokens : expansionTokens(tokens || ""))
     .map((t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, ""))
     .filter(Boolean)
     .join("-");
 }
 
-/** @param {unknown} key @param {unknown} expansion */
-export function equivalenceId(key, expansion) {
+export function equivalenceId(key: unknown, expansion?: unknown): string {
   const k = acronymKey(key);
   const slug = slugTokens(expansion);
   if (!slug) return `equivalence:${k}:*`;
   return `equivalence:${k}:${slug}`;
 }
 
-/** @param {unknown} [terms] @returns {string} */
-export function synonymId(terms) {
+export function synonymId(terms?: unknown): string {
   const list = Array.isArray(terms) ? terms : [];
   const sorted = [...list]
     .map((t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, ""))
@@ -30,8 +27,7 @@ export function synonymId(terms) {
   return `synonym:${sorted.join(":")}`;
 }
 
-/** @param {unknown} [terms] @returns {string[]} */
-export function normalizeTerms(terms) {
+export function normalizeTerms(terms?: unknown): string[] {
   const list = Array.isArray(terms) ? terms : [];
   return [...list]
     .map((t) => String(t).toLowerCase())
@@ -39,7 +35,6 @@ export function normalizeTerms(terms) {
     .sort();
 }
 
-/** @param {unknown} expansion */
-export function expansionPhraseOf(expansion) {
-  return phraseKey(Array.isArray(expansion) ? expansion : expansionTokens(expansion || ""));
+export function expansionPhraseOf(expansion: unknown): string {
+  return phraseKey(Array.isArray(expansion) ? (expansion as string[]) : expansionTokens(expansion || ""));
 }

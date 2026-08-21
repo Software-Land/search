@@ -15,25 +15,22 @@ import { mineSynonymCandidates } from "./synonyms.js";
 import { diffInspections } from "./delta.js";
 import { annotateReviewQueue } from "./queue.js";
 import { hashJson } from "./hash.js";
+import type { AnalyzeOptions, AnalyzeResult, CompileOptions } from "../types.js";
 
-export const COMPILER_VERSION = 1;
+export const COMPILER_VERSION: 1 = 1;
 
-function now() {
+function now(): number {
   return typeof performance !== "undefined" ? performance.now() : Date.now();
 }
 
-/** @param {unknown} n */
-function round(n) {
+function round(n: unknown): number {
   return Number(Number(n).toFixed(3));
 }
 
 /**
  * Analyze: corpus → generated candidates + lifecycle (no runtime compile required).
- * @param {unknown} input
- * @param {import("../types.js").AnalyzeOptions} [opts]
- * @returns {import("../types.js").AnalyzeResult}
  */
-export function analyzeCorpus(input, { decisions = null, overrides = null, previousInspection = null } = {}) {
+export function analyzeCorpus(input?: unknown, { decisions = null, overrides = null, previousInspection = null }: AnalyzeOptions = {}): AnalyzeResult {
   const t0 = now();
   const corpus = loadCorpus(input);
   const documents = corpus.documents || [];
@@ -59,7 +56,7 @@ export function analyzeCorpus(input, { decisions = null, overrides = null, previ
     lifeRaw.equivalences
       .filter((c) => c.lifecycle === LIFECYCLE.AUTO_ACCEPTED || c.lifecycle === LIFECYCLE.HUMAN_ACCEPTED)
       .map((c) => c.key)
-      .filter((k) => typeof k === "string" && k.length > 0)
+      .filter((k): k is string => typeof k === "string" && k.length > 0)
   );
   const tLife = now();
   const life = {
@@ -100,9 +97,8 @@ export function analyzeCorpus(input, { decisions = null, overrides = null, previ
 
 /**
  * Compile trusted runtime artifacts from an analysis (or by re-analyzing).
- * @param {import("../types.js").AnalyzeResult} analysis
  */
-export function compileAnalysis(analysis) {
+export function compileAnalysis(analysis: AnalyzeResult) {
   const equivalences = compileEquivalences(analysis.life.equivalences);
   const synonyms = compileSynonyms(analysis.life.synonyms);
   const vocabulary = buildVocabulary(analysis.documentRecords, { acceptedEquivalences: equivalences.entries });
@@ -129,10 +125,8 @@ export function compileAnalysis(analysis) {
 /**
  * Analyze + compile. `overrides` remains as a legacy compatibility alias
  * for decisions ({ accept, reject, add }).
- * @param {unknown} input
- * @param {import("../types.js").CompileOptions} [opts]
  */
-export function compileCorpus(input, { overrides = null, decisions = null, previousInspection = null } = {}) {
+export function compileCorpus(input?: unknown, { overrides = null, decisions = null, previousInspection = null }: CompileOptions = {}) {
   const analysis = analyzeCorpus(input, { decisions: decisions || overrides, previousInspection });
   const compiled = compileAnalysis(analysis);
   return {

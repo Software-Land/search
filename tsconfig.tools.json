@@ -22,9 +22,10 @@
     "noUnusedParameters": false
   },
   "include": [
-    "tools/search-corpus/**/*.js",
-    "tools/search-corpus/**/*.mjs",
-    "tools/search-corpus/**/*.d.ts",
+    "tools/search-corpus/**/*.ts",
+    "tools/search-corpus/index.d.ts",
+    "tools/search-corpus/types.d.ts",
+    "tools/search-corpus/build.mjs",
     "tools/search-relationships/**/*.ts",
     "tools/search-relationships/index.d.ts",
     "tools/search-relationships/types.d.ts",

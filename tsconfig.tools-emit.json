@@ -1,8 +1,8 @@
 {
   // In-place emit for TypeScript-migrated tools (Option C).
-  // Lexical emits JS + public index.d.ts here. Relationships JS uses
-  // tsconfig.tools-emit-relationships.json (declaration: false) so the
-  // handwritten v0.2.2 public .d.ts files are not overwritten.
+  // Lexical emits JS + public index.d.ts here. Relationships and corpus JS use
+  // tsconfig.tools-emit-relationships.json / tsconfig.tools-emit-corpus.json
+  // (declaration: false) so handwritten v0.2.2 public .d.ts files are not overwritten.
   // Do not include remaining JS tools.
   "compilerOptions": {
     "allowJs": false,

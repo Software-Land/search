@@ -1,39 +1,38 @@
 import { expansionTokens, phraseKey, acronymKey, initialsMatch } from "./text.js";
+import type { EquivalenceCandidate } from "../types.js";
 
-/** @param {unknown} key @param {unknown} expansion */
-function pairId(key, expansion) {
+function pairId(key: unknown, expansion: unknown): string {
   return `${acronymKey(key)}::${phraseKey(Array.isArray(expansion) ? expansion.map((t) => String(t)) : expansionTokens(expansion))}`;
 }
 
-/** @param {unknown} raw @returns {{ accept: Array<{ key?: unknown, expansion?: unknown, aliases?: unknown }>, reject: Array<{ key?: unknown, expansion?: unknown }>, add: Array<{ key?: unknown, expansion?: unknown, aliases?: unknown }> }} */
-export function loadOverrides(raw) {
+export function loadOverrides(raw: unknown): {
+  accept: Array<{ key?: unknown; expansion?: unknown; aliases?: unknown }>;
+  reject: Array<{ key?: unknown; expansion?: unknown }>;
+  add: Array<{ key?: unknown; expansion?: unknown; aliases?: unknown }>;
+} {
   if (!raw || typeof raw !== "object") {
     return { accept: [], reject: [], add: [] };
   }
-  const rec = /** @type {{ accept?: unknown, reject?: unknown, add?: unknown }} */ (raw);
+  const rec = raw as { accept?: unknown; reject?: unknown; add?: unknown };
   return {
-    accept: Array.isArray(rec.accept) ? /** @type {Array<{ key?: unknown, expansion?: unknown, aliases?: unknown }>} */ (rec.accept) : [],
-    reject: Array.isArray(rec.reject) ? /** @type {Array<{ key?: unknown, expansion?: unknown }>} */ (rec.reject) : [],
-    add: Array.isArray(rec.add) ? /** @type {Array<{ key?: unknown, expansion?: unknown, aliases?: unknown }>} */ (rec.add) : [],
+    accept: Array.isArray(rec.accept) ? rec.accept : [],
+    reject: Array.isArray(rec.reject) ? rec.reject : [],
+    add: Array.isArray(rec.add) ? rec.add : [],
   };
 }
 
 /**
  * Manual truth outranks automatic inference. Conflicts are reported, never
  * silently overwritten.
- * @param {import("../types.js").EquivalenceCandidate[]} candidates
- * @param {unknown} overrides
  */
-export function applyOverrides(candidates, overrides) {
+export function applyOverrides(candidates: EquivalenceCandidate[], overrides: unknown) {
   const cfg = loadOverrides(overrides);
-  /** @type {Array<Record<string, unknown>>} */
-  const conflicts = [];
-  /** @type {Map<string, import("../types.js").EquivalenceCandidate>} */
-  const byId = new Map(candidates.map((c) => [pairId(c.key, c.expansion), { ...c }]));
+  const conflicts: Array<Record<string, unknown>> = [];
+  const byId = new Map<string, EquivalenceCandidate>(candidates.map((c) => [pairId(c.key, c.expansion), { ...c }]));
 
   for (const rej of cfg.reject) {
     const key = acronymKey(rej.key);
-    const expansion = Array.isArray(rej.expansion) ? rej.expansion : expansionTokens(rej.expansion || "");
+    const expansion = Array.isArray(rej.expansion) ? (rej.expansion as string[]) : expansionTokens(rej.expansion || "");
     if (expansion.length) {
       const id = pairId(key, expansion);
       if (byId.has(id)) {
@@ -45,7 +44,7 @@ export function applyOverrides(candidates, overrides) {
         row.override = "reject";
       }
     } else {
-      for (const [id, row] of byId) {
+      for (const [, row] of byId) {
         if (row.key === key) {
           row.status = "rejected";
           row.decision = "manual-reject";
@@ -58,7 +57,7 @@ export function applyOverrides(candidates, overrides) {
 
   for (const acc of cfg.accept) {
     const key = acronymKey(acc.key);
-    const expansion = Array.isArray(acc.expansion) ? acc.expansion : expansionTokens(acc.expansion || "");
+    const expansion = Array.isArray(acc.expansion) ? (acc.expansion as string[]) : expansionTokens(acc.expansion || "");
     const id = pairId(key, expansion);
     const existing = byId.get(id);
     const others = [...byId.values()].filter((c) => c.key === key && pairId(c.key, c.expansion) !== id && c.status === "accepted");
@@ -102,7 +101,7 @@ export function applyOverrides(candidates, overrides) {
 
   for (const add of cfg.add) {
     const key = acronymKey(add.key);
-    const expansion = Array.isArray(add.expansion) ? add.expansion : expansionTokens(add.expansion || "");
+    const expansion = Array.isArray(add.expansion) ? (add.expansion as string[]) : expansionTokens(add.expansion || "");
     const id = pairId(key, expansion);
     const aliases = Array.isArray(add.aliases) ? add.aliases : [];
     byId.set(id, {

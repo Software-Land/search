@@ -5,19 +5,17 @@
 
 import { stableSort, contentTokens } from "./text.js";
 import { LIFECYCLE } from "./lifecycle.js";
+import type { CorpusCandidate, EquivalenceCandidate, ReviewContribution, SynonymCandidate } from "../types.js";
 
-/** @type {Record<string, number>} */
-const BAND_RANK = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+const BAND_RANK: Record<string, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
 
-/** @param {import("../types.js").CorpusCandidate} c */
-function ev(c) {
+function ev(c: CorpusCandidate) {
   return c.evidence || {};
 }
 
-/** @param {import("../types.js").CorpusCandidate} c */
-function singularPhrase(c) {
+function singularPhrase(c: CorpusCandidate): string {
   const tokens = [...(c.expansion || [])];
-  if (!tokens.length) return (c.expansionPhrase || "");
+  if (!tokens.length) return c.expansionPhrase || "";
   const last = tokens[tokens.length - 1];
   if (last.endsWith("s") && last.length > 3 && !last.endsWith("ss")) {
     tokens[tokens.length - 1] = last.slice(0, -1);
@@ -25,8 +23,7 @@ function singularPhrase(c) {
   return tokens.join(" ");
 }
 
-/** @param {import("../types.js").SynonymCandidate} c */
-function aliasShortTerm(c) {
+function aliasShortTerm(c: SynonymCandidate): string {
   const terms = [...(c.terms || [])].map((t) => String(t).toLowerCase());
   if (terms.length < 2) return "";
   const [s, l] = [...terms].sort((a, b) => a.length - b.length || a.localeCompare(b));
@@ -34,8 +31,7 @@ function aliasShortTerm(c) {
   return "";
 }
 
-/** @param {import("../types.js").SynonymCandidate} c */
-function aliasRemainder(c) {
+function aliasRemainder(c: SynonymCandidate): string {
   const terms = [...(c.terms || [])].map((t) => String(t).toLowerCase());
   if (terms.length < 2) return "";
   const [s, l] = [...terms].sort((a, b) => a.length - b.length || a.localeCompare(b));
@@ -45,8 +41,7 @@ function aliasRemainder(c) {
 
 const WEAK_ALIAS_REMAINDER = /^(?:ious|evious|eous|ial)$/;
 
-/** @param {import("../types.js").CorpusCandidate} c */
-function expansionSignature(c) {
+function expansionSignature(c: CorpusCandidate): string {
   const content = contentTokens(c.expansion || []).map((t) => {
     if (t.endsWith("s") && t.length > 3 && !t.endsWith("ss")) return t.slice(0, -1);
     return t;
@@ -54,10 +49,9 @@ function expansionSignature(c) {
   return content.join("-") || String(c.expansionPhrase || "").replace(/\s+/g, "-");
 }
 
-/** @param {import("../types.js").CorpusCandidate} c */
-export function familyIdFor(c) {
+export function familyIdFor(c: CorpusCandidate): string {
   if (c.type === "synonym-candidate") {
-    const short = aliasShortTerm(/** @type {import("../types.js").SynonymCandidate} */ (c));
+    const short = aliasShortTerm(c as SynonymCandidate);
     if (short) return `synonym-family:${short}`;
     const terms = [...(c.terms || [])].map((t) => String(t).toLowerCase()).sort();
     return `synonym-family:${terms.join(":")}`;
@@ -67,10 +61,9 @@ export function familyIdFor(c) {
   return `equivalence-family:${c.key}:${expansionSignature(c)}`;
 }
 
-/** @param {import("../types.js").CorpusCandidate} c @param {{ acceptedKeys?: Set<string> }} [opts] */
-function priorityContributions(c, { acceptedKeys = new Set() } = {}) {
+function priorityContributions(c: CorpusCandidate, { acceptedKeys = new Set<string>() }: { acceptedKeys?: Set<string> } = {}): ReviewContribution[] {
   const e = ev(c);
-  const parts = [];
+  const parts: ReviewContribution[] = [];
   if ((e.explicitDefinitions || 0) >= 1) parts.push({ name: "explicit-definition", weight: 40 });
   if (c.initialsMatch) parts.push({ name: "exact-initialism", weight: 15 });
   if ((e.titleCooccurrences || 0) >= 1 && (e.bodyCooccurrences || 0) >= 1) {
@@ -99,15 +92,14 @@ function priorityContributions(c, { acceptedKeys = new Set() } = {}) {
   return parts;
 }
 
-/** @param {import("../types.js").CorpusCandidate} c @param {import("../types.js").ReviewContribution[]} contributions */
-function bandFrom(c, contributions) {
+function bandFrom(c: CorpusCandidate, contributions: ReviewContribution[]): string {
   const score = contributions.reduce((n, p) => n + p.weight, 0);
   const e = ev(c);
   if (c.compilerStatus === "rejected" || c.lifecycle === "COMPILER_REJECTED" || c.lifecycle === LIFECYCLE.HUMAN_REJECTED) {
     return "LOW";
   }
   if (c.morphologyRedundant || c.familyRole === "redundant-to-accepted") return "LOW";
-  if (c.type === "synonym-candidate" && WEAK_ALIAS_REMAINDER.test(aliasRemainder(/** @type {import("../types.js").SynonymCandidate} */ (c)))) return "LOW";
+  if (c.type === "synonym-candidate" && WEAK_ALIAS_REMAINDER.test(aliasRemainder(c as SynonymCandidate))) return "LOW";
   if ((e.explicitDefinitions || 0) >= 1 && c.initialsMatch) return "HIGH";
   if (c.recommendation === "likely-equivalence" && c.initialsMatch) return "HIGH";
   if ((e.titleKeyBodyPhrase || 0) >= 1 && c.initialsMatch) return "HIGH";
@@ -122,8 +114,7 @@ function bandFrom(c, contributions) {
   return "LOW";
 }
 
-/** @param {import("../types.js").CorpusCandidate} a @param {import("../types.js").CorpusCandidate} b */
-function comparePriority(a, b) {
+function comparePriority(a: CorpusCandidate, b: CorpusCandidate): number {
   const br = (BAND_RANK[a.reviewBand || "LOW"] ?? 9) - (BAND_RANK[b.reviewBand || "LOW"] ?? 9);
   if (br !== 0) return br;
   const sc = (b.reviewScore || 0) - (a.reviewScore || 0);
@@ -133,27 +124,21 @@ function comparePriority(a, b) {
 
 /**
  * Group + score pending-quality metadata. Lifecycle is unchanged.
- * @template {import("../types.js").CorpusCandidate} T
- * @param {T[]} rows
- * @param {{ acceptedKeys?: Set<string> }} [opts]
- * @returns {T[]}
  */
-export function annotateReviewQueue(rows, { acceptedKeys = new Set() } = {}) {
-  /** @type {Map<string, T[]>} */
-  const byFamily = new Map();
+export function annotateReviewQueue<T extends CorpusCandidate>(rows: T[], { acceptedKeys = new Set<string>() }: { acceptedKeys?: Set<string> } = {}): T[] {
+  const byFamily = new Map<string, T[]>();
   const annotated = rows.map((c) => {
     const familyId = familyIdFor(c);
     const contributions = priorityContributions(c, { acceptedKeys });
     const reviewScore = contributions.reduce((n, p) => n + p.weight, 0);
-    /** @type {T} */
-    const row = /** @type {T} */ ({
+    const row = {
       ...c,
       familyId,
       familyRole: "member",
       reviewScore,
       reviewContributions: contributions,
       reviewBand: "LOW",
-    });
+    } as T;
     row.reviewBand = bandFrom(row, contributions);
     if (!byFamily.has(familyId)) byFamily.set(familyId, []);
     (byFamily.get(familyId) || []).push(row);
@@ -213,37 +198,35 @@ export function annotateReviewQueue(rows, { acceptedKeys = new Set() } = {}) {
   return stableSort(annotated, (c) => `${BAND_RANK[c.reviewBand || "LOW"] ?? 9}:${String(1000 - (c.reviewScore || 0)).padStart(4, "0")}:${c.id}`);
 }
 
-/** @param {import("../types.js").CorpusCandidate[]} rows */
-export function sortPending(rows) {
-  return [...rows].sort(comparePriority);
+export function sortPending(rows?: unknown): CorpusCandidate[] {
+  const list = Array.isArray(rows) ? (rows as CorpusCandidate[]) : [];
+  return [...list].sort(comparePriority);
 }
 
-/** @param {import("../types.js").CorpusCandidate} c */
-export function decisionSkeleton(c) {
-  if (c.type === "synonym-candidate") {
+export function decisionSkeleton(c?: unknown) {
+  const row = c as CorpusCandidate | undefined;
+  if (row?.type === "synonym-candidate") {
     return {
-      candidateId: c.id,
+      candidateId: row.id,
       decision: "accept",
-      terms: c.terms,
-      relation: c.relation || "alias",
+      terms: row.terms,
+      relation: row.relation || "alias",
     };
   }
   return {
-    candidateId: c.id,
+    candidateId: row?.id,
     decision: "accept",
-    key: c.key,
-    expansion: c.expansion,
+    key: row?.key,
+    expansion: row?.expansion,
   };
 }
 
-/** @param {import("../types.js").CorpusCandidate} c */
-export function isCanonicalPending(c) {
+export function isCanonicalPending(c: CorpusCandidate): boolean {
   return c.lifecycle === LIFECYCLE.REVIEW_PENDING && c.familyRole === "canonical";
 }
 
-/** @param {import("../types.js").CorpusCandidate[]} rows */
-export function familySummaries(rows) {
-  const byId = new Map();
+export function familySummaries(rows: CorpusCandidate[]) {
+  const byId = new Map<string, { id: string; type?: string; canonicalId?: string; reviewBand?: unknown; memberIds: unknown[] }>();
   for (const c of rows) {
     if (!c.familyId) continue;
     if (!byId.has(c.familyId)) {
@@ -255,24 +238,21 @@ export function familySummaries(rows) {
         memberIds: [],
       });
     }
-    const fam = byId.get(c.familyId);
+    const fam = byId.get(c.familyId)!;
     fam.memberIds.push(c.id);
     if (c.familyRole === "canonical") {
       fam.canonicalId = c.id;
       fam.reviewBand = c.reviewBand;
     }
   }
-  return stableSort([...byId.values()], (f) => `${BAND_RANK[f.reviewBand || "LOW"] ?? 9}:${f.id}`);
+  return stableSort([...byId.values()], (f) => `${BAND_RANK[String(f.reviewBand || "LOW")] ?? 9}:${f.id}`);
 }
 
-/** @param {import("../types.js").EquivalenceCandidate[]} equivalences @param {import("../types.js").SynonymCandidate[]} synonyms */
-export function queueStats(equivalences, synonyms) {
-  /** @param {import("../types.js").CorpusCandidate[]} rows */
-  function tally(rows) {
+export function queueStats(equivalences: EquivalenceCandidate[], synonyms: SynonymCandidate[]) {
+  function tally(rows: CorpusCandidate[]) {
     const pending = rows.filter((r) => r.lifecycle === LIFECYCLE.REVIEW_PENDING);
     const canonicalPending = pending.filter((r) => r.familyRole === "canonical");
-    /** @type {Record<string, number>} */
-    const bandCounts = { HIGH: 0, MEDIUM: 0, LOW: 0 };
+    const bandCounts: Record<string, number> = { HIGH: 0, MEDIUM: 0, LOW: 0 };
     for (const r of canonicalPending) {
       const band = r.reviewBand || "LOW";
       bandCounts[band] = (bandCounts[band] || 0) + 1;

@@ -107,6 +107,22 @@ try {
   if (packedRelImplDts.length) {
     throw new Error(`tarball must not include relationships implementation declarations: ${packedRelImplDts.join(", ")}`);
   }
+  for (const required of [
+    "tools/search-corpus/index.js",
+    "tools/search-corpus/index.d.ts",
+    "tools/search-corpus/types.d.ts",
+    "tools/search-corpus/build.mjs",
+    "tools/search-corpus/build.js",
+    "tools/search-corpus/lib/pipeline.js",
+  ]) {
+    if (!packedRel.includes(required)) throw new Error(`packed tarball missing ${required}`);
+  }
+  const packedCorpusImplDts = packedRel.filter(
+    (rel) => rel.startsWith("tools/search-corpus/lib/") && rel.endsWith(".d.ts")
+  );
+  if (packedCorpusImplDts.length) {
+    throw new Error(`tarball must not include corpus implementation declarations: ${packedCorpusImplDts.join(", ")}`);
+  }
 
   const forbidden = packedRel.filter(
     (rel) =>

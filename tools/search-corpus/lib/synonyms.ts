@@ -1,5 +1,6 @@
 import { tokenize, FUNCTION_WORDS, stableSort } from "./text.js";
 import { synonymId } from "./ids.js";
+import type { CorpusDocument, SynonymCandidate } from "../types.js";
 
 /**
  * Synonym *candidates* only. Nothing is auto-accepted into runtime.
@@ -25,29 +26,28 @@ export const RELATEDNESS_BLOCKLIST = new Set([
   "kubernetes::docker",
 ]);
 
-/** @param {string} a @param {string} b */
-function pairKey(a, b) {
+function pairKey(a: string, b: string): string {
   return `${a}::${b}`;
 }
 
-/** @param {string} a @param {string} b */
-export function isInflectionPair(a, b) {
-  const [s, l] = a.length <= b.length ? [a, b] : [b, a];
+export function isInflectionPair(a?: unknown, b?: unknown): boolean {
+  const left = a as string;
+  const right = b as string;
+  const [s, l] = left.length <= right.length ? [left, right] : [right, left];
   const rest = l.startsWith(s) ? l.slice(s.length) : "";
   if (/^(?:s|es|ed|ing|izing|er|ers|ly|ally|d|ling)$/.test(rest)) return true;
   if (l === `${s}s` || l === `${s}es`) return true;
   if (l === `${s}d` && s.endsWith("e")) return true;
   if (s.endsWith("e") && l === `${s.slice(0, -1)}ing`) return true;
   if (s.endsWith("y") && l === `${s.slice(0, -1)}ies`) return true;
-  const stem = (/** @type {string} */ t) => t.replace(/(?:ing|ed|es|ers|er|ly)$/u, "").replace(/s$/u, "");
-  if (stem(a) === stem(b) && stem(a).length >= 5 && a !== b) return true;
+  const stem = (t: string) => t.replace(/(?:ing|ed|es|ers|er|ly)$/u, "").replace(/s$/u, "");
+  if (stem(left) === stem(right) && stem(left).length >= 5 && left !== right) return true;
   return false;
 }
 
 const ALIAS_TAIL = /(?:ation|ization|isation|ative|ence|ency|ance|ous|ual|ment)$/;
 
-/** @param {string} a @param {string} b */
-function isAliasShortForm(a, b) {
+function isAliasShortForm(a: string, b: string): boolean {
   const [s, l] = a.length <= b.length ? [a, b] : [b, a];
   if (s.length < 4 || s.length > 8) return false;
   if (!l.startsWith(s)) return false;
@@ -57,20 +57,21 @@ function isAliasShortForm(a, b) {
   return ALIAS_TAIL.test(l) || ALIAS_TAIL.test(rest);
 }
 
-/** @param {string} a @param {string} b */
-function blocked(a, b) {
+function blocked(a: string, b: string): boolean {
   return RELATEDNESS_BLOCKLIST.has(pairKey(a, b)) || RELATEDNESS_BLOCKLIST.has(pairKey(b, a));
 }
 
 const AKA_PAREN =
   /\b([A-Za-z][A-Za-z0-9+#-]{2,24})\s*\(\s*(?:a\.?k\.?a\.?|also called|short for|abbreviated(?:\s+as)?)\s+([A-Za-z][A-Za-z0-9+#\s-]{2,40})\s*\)/gi;
 
-/** @param {import("../types.js").CorpusDocument[]} documents @param {{ df: Map<string, number>, titleDf: Map<string, number>, push: (row: import("../types.js").SynonymCandidate) => void }} opts */
-function mineExplicitAliasMentions(documents, { df, titleDf, push }) {
+function mineExplicitAliasMentions(
+  documents: CorpusDocument[],
+  { df, titleDf, push }: { df: Map<string, number>; titleDf: Map<string, number>; push: (row: SynonymCandidate) => void }
+): void {
   for (const doc of documents) {
     const text = `${doc.title || ""} ${doc.body || ""}`;
     AKA_PAREN.lastIndex = 0;
-    let m;
+    let m: RegExpExecArray | null;
     while ((m = AKA_PAREN.exec(text))) {
       const left = tokenize(m[1]).filter((t) => !FUNCTION_WORDS.has(t));
       const right = tokenize(m[2]).filter((t) => !FUNCTION_WORDS.has(t));
@@ -103,10 +104,12 @@ function mineExplicitAliasMentions(documents, { df, titleDf, push }) {
   }
 }
 
-/** @param {import("../types.js").CorpusDocument[]} documents @param {{ acceptedEquivalences?: Array<{ key?: string, expansion?: string[] }> }} [opts] */
-export function mineSynonymCandidates(documents, { acceptedEquivalences = [] } = {}) {
-  const df = new Map();
-  const titleDf = new Map();
+export function mineSynonymCandidates(
+  documents: CorpusDocument[],
+  { acceptedEquivalences = [] }: { acceptedEquivalences?: Array<{ key?: string; expansion?: string[] }> } = {}
+): SynonymCandidate[] {
+  const df = new Map<string, number>();
+  const titleDf = new Map<string, number>();
   for (const doc of documents) {
     const titleSeen = new Set(tokenize(doc.title));
     const seen = new Set(tokenize(`${doc.title} ${doc.body}`));
@@ -119,12 +122,10 @@ export function mineSynonymCandidates(documents, { acceptedEquivalences = [] } =
     .map(([t]) => t)
     .sort();
 
-  /** @type {import("../types.js").SynonymCandidate[]} */
-  const out = [];
-  const seenIds = new Set();
+  const out: SynonymCandidate[] = [];
+  const seenIds = new Set<string | undefined>();
 
-  /** @param {import("../types.js").SynonymCandidate} row */
-  function push(row) {
+  function push(row: SynonymCandidate) {
     if (seenIds.has(row.id)) return;
     seenIds.add(row.id);
     out.push(row);

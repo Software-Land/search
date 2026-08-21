@@ -1,25 +1,24 @@
 import fs from "node:fs";
+import type { CorpusDocument, LoadedCorpus } from "../types.js";
 
 /**
  * Portable corpus: { documents: [{ id, title, body, metadata? }] }
  * or a bare array of documents.
- * @param {unknown} input
- * @returns {import("../types.js").LoadedCorpus}
  */
-export function loadCorpus(input) {
-  let raw = input;
+export function loadCorpus(input: unknown): LoadedCorpus {
+  let raw: unknown = input;
   if (typeof input === "string") {
     raw = JSON.parse(fs.readFileSync(input, "utf8"));
   }
-  const rec = raw && typeof raw === "object" && !Array.isArray(raw) ? /** @type {Record<string, unknown>} */ (raw) : null;
+  const rec = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
   const documents = Array.isArray(raw) ? raw : Array.isArray(rec?.documents) ? rec.documents : [];
-  const docs = documents
-    .filter((/** @type {unknown} */ d) => d && typeof d === "object" && (/** @type {{ id?: unknown, title?: unknown }} */ (d).id || /** @type {{ title?: unknown }} */ (d).title))
-    .map((/** @type {Record<string, unknown>} */ d) => ({
+  const docs: CorpusDocument[] = documents
+    .filter((d: unknown) => d && typeof d === "object" && ((d as { id?: unknown; title?: unknown }).id || (d as { title?: unknown }).title))
+    .map((d: Record<string, unknown>) => ({
       id: String(d.id ?? d.title),
       title: String(d.title || ""),
       body: String(d.body || d.content || ""),
-      metadata: d.metadata && typeof d.metadata === "object" ? /** @type {Record<string, unknown>} */ (d.metadata) : {},
+      metadata: d.metadata && typeof d.metadata === "object" ? (d.metadata as Record<string, unknown>) : {},
     }));
   docs.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   return {

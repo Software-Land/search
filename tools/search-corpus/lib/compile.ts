@@ -8,14 +8,24 @@ import {
   familySummaries,
   isCanonicalPending,
 } from "./queue.js";
+import type {
+  CorpusCandidate,
+  EquivalenceArtifact,
+  EquivalenceCandidate,
+  EvidenceHit,
+  InspectionDelta,
+  InspectionDoc,
+  LifecycleResult,
+  ReviewerRow,
+  SynonymArtifact,
+  SynonymCandidate,
+} from "../types.js";
 
-/** @param {import("../types.js").EvidenceHit[] | undefined} provenance */
-function reviewerExamples(provenance) {
+function reviewerExamples(provenance: EvidenceHit[] | undefined): EvidenceHit[] {
   return (provenance || []).slice(0, 3);
 }
 
-/** @param {import("../types.js").CorpusCandidate} c @returns {import("../types.js").ReviewerRow} */
-function reviewerRow(c) {
+function reviewerRow(c: CorpusCandidate): ReviewerRow {
   return {
     id: c.id,
     type: c.type,
@@ -43,13 +53,10 @@ function reviewerRow(c) {
   };
 }
 
-/** @param {import("../types.js").EquivalenceCandidate[]} candidates @returns {import("../types.js").EquivalenceArtifact} */
-export function compileEquivalences(candidates) {
+export function compileEquivalences(candidates: EquivalenceCandidate[]): EquivalenceArtifact {
   const accepted = trustedEquivalences(candidates);
-  /** @type {Map<string, import("../types.js").EquivalenceCandidate>} */
-  const byKey = new Map();
-  /** @type {Array<{ key: string, reason: string, ids: unknown[] }>} */
-  const skipped = [];
+  const byKey = new Map<string, EquivalenceCandidate>();
+  const skipped: Array<{ key: string; reason: string; ids: unknown[] }> = [];
   for (const c of accepted) {
     const key = c.key || "";
     if (byKey.has(key)) {
@@ -80,8 +87,7 @@ export function compileEquivalences(candidates) {
   };
 }
 
-/** @param {import("../types.js").SynonymCandidate[]} candidates @returns {import("../types.js").SynonymArtifact} */
-export function compileSynonyms(candidates) {
+export function compileSynonyms(candidates: SynonymCandidate[]): SynonymArtifact {
   const accepted = trustedSynonyms(candidates);
   const entries = stableSort(accepted, (e) => (e.terms || []).join(":")).map((c) => ({
     terms: c.terms || [],
@@ -99,18 +105,19 @@ export function compileSynonyms(candidates) {
   };
 }
 
-/** @param {import("../types.js").LifecycleResult} lifecycleResult @param {{ delta?: import("../types.js").InspectionDelta | null }} [opts] @returns {import("../types.js").InspectionDoc} */
-export function compileInspection(lifecycleResult, { delta = null } = {}) {
+export function compileInspection(lifecycleResult: LifecycleResult, { delta = null }: { delta?: InspectionDelta | null } = {}): InspectionDoc {
   const eq = lifecycleResult.equivalences || [];
   const syn = lifecycleResult.synonyms || [];
-  /** @type {{ accepted: import("../types.js").EquivalenceCandidate[], review: import("../types.js").EquivalenceCandidate[], rejected: import("../types.js").EquivalenceCandidate[] }} */
-  const buckets = { accepted: [], review: [], rejected: [] };
+  const buckets: { accepted: EquivalenceCandidate[]; review: EquivalenceCandidate[]; rejected: EquivalenceCandidate[] } = {
+    accepted: [],
+    review: [],
+    rejected: [],
+  };
   for (const c of stableSort(eq, (x) => `${x.compilerStatus}:${x.key}:${x.expansionPhrase}`)) {
     const bucket = c.compilerStatus === "accepted" ? "accepted" : c.compilerStatus === "review" ? "review" : "rejected";
     buckets[bucket].push(c);
   }
-  /** @type {Record<string, import("../types.js").ReviewerRow[]>} */
-  const byLifecycle = {};
+  const byLifecycle: Record<string, ReviewerRow[]> = {};
   for (const c of [...eq, ...syn]) {
     const k = c.lifecycle || "UNKNOWN";
     if (!byLifecycle[k]) byLifecycle[k] = [];
@@ -161,10 +168,10 @@ export function compileInspection(lifecycleResult, { delta = null } = {}) {
   };
 }
 
-/** @param {import("../types.js").EquivalenceArtifact | { entries?: unknown[] } | null | undefined} artifact */
-export function dictionaryEntriesFromEquivalences(artifact) {
-  return (artifact?.entries || []).map((e) => {
-    const row = /** @type {{ key?: unknown, expansion?: unknown, aliases?: unknown, provenance?: unknown }} */ (e);
+export function dictionaryEntriesFromEquivalences(artifact?: unknown): unknown[] {
+  const rec = artifact as { entries?: unknown[] } | null | undefined;
+  return (rec?.entries || []).map((e) => {
+    const row = e as { key?: unknown; expansion?: unknown; aliases?: unknown; provenance?: unknown };
     return {
       key: row.key,
       expansion: row.expansion,
@@ -174,8 +181,21 @@ export function dictionaryEntriesFromEquivalences(artifact) {
   });
 }
 
-/** @param {{ corpusHash?: string | null, decisionsHash?: string | null, inspection?: import("../types.js").InspectionDoc, equivalences?: unknown, synonyms?: unknown, timings?: unknown }} opts */
-export function compileManifest({ corpusHash, decisionsHash, inspection, equivalences, synonyms, timings }) {
+export function compileManifest({
+  corpusHash,
+  decisionsHash,
+  inspection,
+  equivalences,
+  synonyms,
+  timings,
+}: {
+  corpusHash?: string | null;
+  decisionsHash?: string | null;
+  inspection?: InspectionDoc;
+  equivalences?: unknown;
+  synonyms?: unknown;
+  timings?: unknown;
+}) {
   return {
     format: "search-corpus-manifest",
     version: 1,

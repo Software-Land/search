@@ -11,6 +11,10 @@ tools/search-relationships/**/*.js
 tools/search-relationships/lib/**/*.d.ts
 tools/search-relationships/build.d.ts
 tools/search-relationships/**/*.map
+tools/search-corpus/**/*.js
+tools/search-corpus/lib/**/*.d.ts
+tools/search-corpus/build.d.ts
+tools/search-corpus/**/*.map
 
 # Compiler / semantic builder generated output (never source)
 tools/search-corpus/.output/

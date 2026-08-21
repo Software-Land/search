@@ -1,22 +1,19 @@
 import { stableSort } from "./text.js";
+import type { CorpusCandidate, InspectionDelta, InspectionDoc } from "../types.js";
 
-/** @param {Array<{ id?: string } | null | undefined>} rows */
-function indexById(rows) {
-  /** @type {Map<string, import("../types.js").CorpusCandidate>} */
-  const m = new Map();
+function indexById(rows: Array<{ id?: string } | null | undefined> | undefined): Map<string, CorpusCandidate> {
+  const m = new Map<string, CorpusCandidate>();
   for (const r of rows || []) {
-    if (r?.id) m.set(r.id, /** @type {import("../types.js").CorpusCandidate} */ (r));
+    if (r?.id) m.set(r.id, r as CorpusCandidate);
   }
   return m;
 }
 
-/** @param {import("../types.js").CorpusCandidate | null | undefined} row */
-function explicitCount(row) {
+function explicitCount(row: CorpusCandidate | null | undefined): number {
   return row?.evidence?.explicitDefinitions || 0;
 }
 
-/** @param {import("../types.js").CorpusCandidate | null | undefined} row */
-function hasTitleEvidence(row) {
+function hasTitleEvidence(row: CorpusCandidate | null | undefined): boolean {
   return (row?.evidence?.titleCooccurrences || 0) >= 1 || (row?.evidence?.titleKeyBodyPhrase || 0) >= 1;
 }
 
@@ -24,20 +21,20 @@ function hasTitleEvidence(row) {
  * Support-count drift (7 → 8) is not a semantic review event.
  * Material = lifecycle, band, ambiguity, new explicit definition, new title evidence,
  * competing expansion, or a rejected candidate gaining strong evidence.
- * @param {import("../types.js").CorpusCandidate | null | undefined} prev
- * @param {import("../types.js").CorpusCandidate | null | undefined} cur
  */
-export function isMaterialChange(prev, cur) {
-  if (!prev || !cur) return false;
-  if (prev.lifecycle !== cur.lifecycle) return true;
-  if ((prev.reviewBand || null) !== (cur.reviewBand || null)) return true;
-  if (explicitCount(prev) === 0 && explicitCount(cur) >= 1) return true;
-  if (!hasTitleEvidence(prev) && hasTitleEvidence(cur)) return true;
-  const prevAmb = (prev.flags || []).includes("competing-expansion") || prev.lifecycle === "CONFLICT";
+export function isMaterialChange(prev?: unknown, next?: unknown): boolean {
+  const prevRow = prev as CorpusCandidate | null | undefined;
+  const cur = next as CorpusCandidate | null | undefined;
+  if (!prevRow || !cur) return false;
+  if (prevRow.lifecycle !== cur.lifecycle) return true;
+  if ((prevRow.reviewBand || null) !== (cur.reviewBand || null)) return true;
+  if (explicitCount(prevRow) === 0 && explicitCount(cur) >= 1) return true;
+  if (!hasTitleEvidence(prevRow) && hasTitleEvidence(cur)) return true;
+  const prevAmb = (prevRow.flags || []).includes("competing-expansion") || prevRow.lifecycle === "CONFLICT";
   const curAmb = (cur.flags || []).includes("competing-expansion") || cur.lifecycle === "CONFLICT";
   if (!prevAmb && curAmb) return true;
   if (
-    !(prev.flags || []).includes("rejected-candidate-gained-strong-evidence") &&
+    !(prevRow.flags || []).includes("rejected-candidate-gained-strong-evidence") &&
     (cur.flags || []).includes("rejected-candidate-gained-strong-evidence")
   ) {
     return true;
@@ -45,51 +42,32 @@ export function isMaterialChange(prev, cur) {
   return false;
 }
 
-/** @param {import("../types.js").CorpusCandidate | null | undefined} row */
-function bandOf(row) {
+function bandOf(row: CorpusCandidate | null | undefined): string | null {
   return row?.reviewBand || null;
 }
 
 /**
  * Incremental change summary vs a previous inspection snapshot.
- * @param {import("../types.js").InspectionDoc | null | undefined} current
- * @param {import("../types.js").InspectionDoc | null | undefined} previous
- * @returns {import("../types.js").InspectionDelta}
  */
-export function diffInspections(current, previous) {
+export function diffInspections(current?: InspectionDoc | null, previous?: InspectionDoc | null): InspectionDelta {
   const curEq = indexById(current?.candidates || []);
   const prevEq = indexById(previous?.candidates || []);
   const curSyn = indexById(current?.synonymCandidates || current?.synonymPending || []);
   const prevSyn = indexById(previous?.synonymCandidates || previous?.synonymPending || []);
 
-  /** @type {string[]} */
-  const newReview = [];
-  /** @type {string[]} */
-  const existingUnresolved = [];
-  /** @type {string[]} */
-  const evidenceChanged = [];
-  /** @type {string[]} */
-  const materialChanges = [];
-  /** @type {string[]} */
-  const newConflicts = [];
-  /** @type {string[]} */
-  const orphaned = [];
-  /** @type {Record<string, string[]>} */
-  const newByBand = { HIGH: [], MEDIUM: [], LOW: [] };
-  /** @type {Array<{ id: string, from: string | null, to: string | null }>} */
-  const promoted = [];
-  /** @type {Array<{ id: string, from: string | null, to: string | null }>} */
-  const demoted = [];
+  const newReview: string[] = [];
+  const existingUnresolved: string[] = [];
+  const evidenceChanged: string[] = [];
+  const materialChanges: string[] = [];
+  const newConflicts: string[] = [];
+  const orphaned: string[] = [];
+  const newByBand: Record<string, string[]> = { HIGH: [], MEDIUM: [], LOW: [] };
+  const promoted: Array<{ id: string; from: string | null; to: string | null }> = [];
+  const demoted: Array<{ id: string; from: string | null; to: string | null }> = [];
 
-  /** @type {Record<string, number>} */
-  const BAND_RANK = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+  const BAND_RANK: Record<string, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
 
-  /**
-   * @param {string} id
-   * @param {import("../types.js").CorpusCandidate} row
-   * @param {import("../types.js").CorpusCandidate | undefined} prev
-   */
-  function consider(id, row, prev) {
+  function consider(id: string, row: CorpusCandidate, prev: CorpusCandidate | undefined) {
     if (row.lifecycle === "REVIEW_PENDING" && !prev) {
       newReview.push(id);
       if (row.reviewBand && newByBand[row.reviewBand]) newByBand[row.reviewBand].push(id);

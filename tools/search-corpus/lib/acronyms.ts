@@ -14,6 +14,7 @@ import {
   looksLikeTermPhrase,
   FUNCTION_WORDS,
 } from "./text.js";
+import type { CorpusDocument, EquivalenceCandidate, EvidenceHit, IndexedDocument } from "../types.js";
 
 const PHRASE_THEN_ACR =
   /\b((?:[A-Za-z][A-Za-z0-9+#]*|[A-Z]{2,})(?:[\s\/,-]+(?:(?:of|the|and|a|an|for|as|to|in|or)\s+)?[A-Za-z][A-Za-z0-9+#]*){1,7})\s*\(\s*([A-Za-z][A-Za-z0-9+.-]{1,12})\s*\)/g;
@@ -32,16 +33,39 @@ const WEAK_LAST_TOKENS = new Set([
   "true", "false", "simple", "hard", "first", "last", "next", "same",
 ]);
 
-/** @param {string[]} tokens */
-function looksLikePhrase(tokens) {
+function looksLikePhrase(tokens: string[]): boolean {
   const content = contentTokens(tokens);
   if (content.length < 2) return false;
   if (tokens.length > 8) return false;
   return content.every((t) => t.length >= 2);
 }
 
-/** @param {{ key: string, expansion: unknown, docId: string, field: string, snippet: unknown, provenance: string, originalKey?: unknown }} opts */
-function makeCandidate({ key, expansion, docId, field, snippet, provenance, originalKey }) {
+type MinedCandidate = {
+  type: "equivalence-candidate";
+  key: string;
+  expansion: string[];
+  expansionPhrase: string;
+  initialsMatch: boolean;
+  evidenceHit: EvidenceHit;
+};
+
+function makeCandidate({
+  key,
+  expansion,
+  docId,
+  field,
+  snippet,
+  provenance,
+  originalKey,
+}: {
+  key: string;
+  expansion: unknown;
+  docId: string;
+  field: string;
+  snippet: unknown;
+  provenance: string;
+  originalKey?: unknown;
+}): MinedCandidate | null {
   const tokens = normalizeExpansion(expansionTokens(expansion));
   if (!looksLikePhrase(tokens) && !(tokens.length === 1 && tokens[0].length >= 8 && key.length >= 3)) {
     return null;
@@ -66,8 +90,7 @@ function makeCandidate({ key, expansion, docId, field, snippet, provenance, orig
   };
 }
 
-/** @param {Map<string, import("../types.js").EquivalenceCandidate>} bag @param {ReturnType<typeof makeCandidate>} cand */
-function pushHit(bag, cand) {
+function pushHit(bag: Map<string, EquivalenceCandidate>, cand: MinedCandidate | null): void {
   if (!cand) return;
   const id = `${cand.key}::${cand.expansionPhrase}`;
   let row = bag.get(id);
@@ -86,11 +109,10 @@ function pushHit(bag, cand) {
   row.hits.push(cand.evidenceHit);
 }
 
-/** @param {import("../types.js").CorpusDocument[]} documents */
-export function mineExplicitDefinitions(documents) {
-  const bag = new Map();
+export function mineExplicitDefinitions(documents: CorpusDocument[]): EquivalenceCandidate[] {
+  const bag = new Map<string, EquivalenceCandidate>();
   for (const doc of documents) {
-    for (const field of ["title", "body"]) {
+    for (const field of ["title", "body"] as const) {
       const text = cleanText(doc[field]);
       if (!text) continue;
       PHRASE_THEN_ACR.lastIndex = 0;
@@ -98,7 +120,7 @@ export function mineExplicitDefinitions(documents) {
       STANDS_FOR.lastIndex = 0;
       DASH_EXPANSION.lastIndex = 0;
 
-      let m;
+      let m: RegExpExecArray | null;
       while ((m = PHRASE_THEN_ACR.exec(text))) {
         pushHit(
           bag,
@@ -163,9 +185,8 @@ export function mineExplicitDefinitions(documents) {
   return [...bag.values()];
 }
 
-/** @param {string[]} tokens @param {number} min @param {number} max */
-function ngrams(tokens, min, max) {
-  const out = [];
+function ngrams(tokens: string[], min: number, max: number): string[][] {
+  const out: string[][] = [];
   for (let n = min; n <= max; n++) {
     for (let i = 0; i + n <= tokens.length; i++) {
       out.push(tokens.slice(i, i + n));
@@ -174,11 +195,10 @@ function ngrams(tokens, min, max) {
   return out;
 }
 
-/** @param {unknown} text @returns {string[]} */
-export function extractAcronymSurfaces(text) {
-  const found = [];
+export function extractAcronymSurfaces(text: unknown): string[] {
+  const found: string[] = [];
   const re = /\b[A-Z][A-Za-z0-9]{1,7}\b/g;
-  let m;
+  let m: RegExpExecArray | null;
   while ((m = re.exec(String(text || "")))) {
     const s = m[0];
     if (s.length > 8) continue;
@@ -192,10 +212,8 @@ export function extractAcronymSurfaces(text) {
 
 /**
  * Tokenize once. Classification and co-occurrence both reuse this.
- * @param {import("../types.js").CorpusDocument[]} documents
- * @returns {import("../types.js").IndexedDocument[]}
  */
-export function indexDocuments(documents) {
+export function indexDocuments(documents: CorpusDocument[]): IndexedDocument[] {
   return documents.map((doc) => {
     const title = tokenize(doc.title);
     const body = tokenize(doc.body);
@@ -214,8 +232,7 @@ export function indexDocuments(documents) {
   });
 }
 
-/** @param {import("../types.js").IndexedDocument} idx @param {string} key @param {string[]} expansion */
-export function documentSupportsPairIndexed(idx, key, expansion) {
+export function documentSupportsPairIndexed(idx: IndexedDocument, key: string, expansion: string[]) {
   const hasKey = idx.allSet.has(key) || idx.allAcronymKeys.has(key);
   if (!hasKey) {
     return { hasKey: false, titleHasKey: false, hasPhrase: false, titleHasPhrase: false };
@@ -229,8 +246,7 @@ export function documentSupportsPairIndexed(idx, key, expansion) {
   };
 }
 
-/** @param {import("../types.js").CorpusDocument} doc @param {string} key @param {string[]} expansion */
-export function documentSupportsPair(doc, key, expansion) {
+export function documentSupportsPair(doc: CorpusDocument, key: string, expansion: string[]) {
   const idx = indexDocuments([doc])[0];
   return documentSupportsPairIndexed(idx, key, expansion);
 }
@@ -239,19 +255,23 @@ export function documentSupportsPair(doc, key, expansion) {
  * Conservative co-occurrence: all-caps acronym surfaces × noun-phrase ngrams
  * whose initials match *after* normalization. Indexed by initials so this is
  * O(ngrams + acronyms) per document, not O(acronyms × ngrams).
- * @param {import("../types.js").CorpusDocument[]} documents
- * @param {{ titlePhrases?: Set<string> }} [opts]
  */
-export function mineInitialismCooccurrence(documents, { titlePhrases } = {}) {
-  const titleSet = titlePhrases || new Set();
-  const phraseDf = new Map();
-  const prepared = [];
+export function mineInitialismCooccurrence(documents: CorpusDocument[], { titlePhrases }: { titlePhrases?: Set<string> } = {}): EquivalenceCandidate[] {
+  const titleSet = titlePhrases || new Set<string>();
+  const phraseDf = new Map<string, number>();
+  const prepared: Array<{
+    doc: CorpusDocument;
+    titleToks: string[];
+    titleKeys: Set<string>;
+    acronyms: string[];
+    byInitials: Map<string, Array<{ phrase: string; tokens: string[] }>>;
+  }> = [];
 
   for (const doc of documents) {
     const titleToks = tokenize(doc.title);
     const bodyToks = tokenize(doc.body);
     const allToks = titleToks.concat(bodyToks);
-    const phraseToTokens = /** @type {Map<string, string[]>} */ (new Map());
+    const phraseToTokens = new Map<string, string[]>();
     for (const gram of ngrams(allToks, 2, 6)) {
       const tokens = normalizeExpansion(gram);
       if (!looksLikeTermPhrase(tokens)) continue;
@@ -267,7 +287,7 @@ export function mineInitialismCooccurrence(documents, { titlePhrases } = {}) {
     const titleKeys = new Set(
       titleSurfaces.map((s) => acronymKey(s)).filter((k) => k && !FUNCTION_WORDS.has(k) && !isProtectedLiteral(k))
     );
-    const acronyms = [];
+    const acronyms: string[] = [];
     for (const surface of titleSurfaces.concat(bodySurfaces)) {
       const key = acronymKey(surface);
       if (!isPlausibleAcronymKey(key, { original: surface })) continue;
@@ -276,7 +296,7 @@ export function mineInitialismCooccurrence(documents, { titlePhrases } = {}) {
       acronyms.push(key);
     }
 
-    const byInitials = /** @type {Map<string, Array<{ phrase: string, tokens: string[] }>>} */ (new Map());
+    const byInitials = new Map<string, Array<{ phrase: string; tokens: string[] }>>();
     for (const [phrase, tokens] of phraseToTokens) {
       const skipped = tokens.filter((t) => !COOCCURRENCE_OPTIONAL.has(t)).map((t) => t[0] || "").join("");
       const strict = tokens.map((t) => t[0] || "").join("");
@@ -296,7 +316,7 @@ export function mineInitialismCooccurrence(documents, { titlePhrases } = {}) {
     });
   }
 
-  const bag = new Map();
+  const bag = new Map<string, EquivalenceCandidate>();
   for (const row of prepared) {
     for (const key of row.acronyms) {
       const matches = row.byInitials.get(key) || [];
@@ -333,9 +353,8 @@ export function mineInitialismCooccurrence(documents, { titlePhrases } = {}) {
   return [...bag.values()];
 }
 
-/** @param {import("../types.js").CorpusDocument[]} documents @returns {Set<string>} */
-export function collectPhraseInventory(documents) {
-  const phrases = new Set();
+export function collectPhraseInventory(documents: CorpusDocument[]): Set<string> {
+  const phrases = new Set<string>();
   for (const doc of documents) {
     const titleToks = tokenize(doc.title);
     for (const gram of ngrams(titleToks, 2, 6)) {
@@ -346,8 +365,7 @@ export function collectPhraseInventory(documents) {
   return phrases;
 }
 
-/** @param {string[]} tokens @param {string[]} seq */
-function containsSequence(tokens, seq) {
+function containsSequence(tokens: string[], seq: string[]): boolean {
   if (!seq.length) return false;
   for (let i = 0; i + seq.length <= tokens.length; i++) {
     let ok = true;
