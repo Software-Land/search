@@ -1,5 +1,5 @@
 import { isNearCompletePrefix, levenshtein, DEFAULT_STOP, allowPrefixMatch } from "./text.js";
-import { isAllDigitToken } from "./versionForms.js";
+import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "./versionForms.js";
 import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix } from "./retrieve.js";
 import { saturatingFrequency } from "./saturatingFrequency.js";
 import { canonicalLexicalTokensFromQuery } from "./lexicalNormalize.js";
@@ -47,7 +47,7 @@ function tokenLiteral(t: QueryToken) {
 function exactTitleTokenMatch(query: AnalyzedQuery, doc: IndexedDocument) {
   return query.tokens.some((t) => {
     if (DEFAULT_STOP.has(t.normalized)) return false;
-    return doc.titleTokenSet.has(t.normalized);
+    return hasIndependentTitleToken(doc, t.normalized);
   });
 }
 
@@ -60,9 +60,11 @@ function typedSurfaceTitleMatch(query: AnalyzedQuery, doc: IndexedDocument) {
   return query.tokens.some((t) => {
     const literal = tokenLiteral(t);
     if (!literal || DEFAULT_STOP.has(literal)) return false;
-    if (doc.titleTokenSet.has(literal)) return true;
+    if (hasIndependentTitleToken(doc, literal)) return true;
     return doc.titleTokens.some(
-      (tok) => allowPrefixMatch(literal, tok) || isNearCompletePrefix(literal, tok)
+      (tok, i) =>
+        !isDottedSpanComponentIndex(doc, i) &&
+        (allowPrefixMatch(literal, tok) || isNearCompletePrefix(literal, tok))
     );
   });
 }
@@ -75,7 +77,11 @@ function titlePrefixQuality(query: AnalyzedQuery, doc: IndexedDocument) {
   let titleChars = 0;
   for (const qt of qToks) {
     titleChars += qt.normalized.length;
-    const hit = doc.titleTokens.find((tok) => allowPrefixMatch(qt.normalized, tok) || isNearCompletePrefix(qt.normalized, tok));
+    const hit = doc.titleTokens.find(
+      (tok, i) =>
+        !isDottedSpanComponentIndex(doc, i) &&
+        (allowPrefixMatch(qt.normalized, tok) || isNearCompletePrefix(qt.normalized, tok))
+    );
     if (hit) {
       matched += 1;
       prefixChars += qt.normalized.length;
@@ -113,9 +119,14 @@ function queryCoverage(query: AnalyzedQuery, doc: IndexedDocument) {
 function titleCoverage(query: AnalyzedQuery, doc: IndexedDocument) {
   if (!doc.nonStopTitle.length) return 0;
   let hit = 0;
-  for (const tok of doc.nonStopTitle) {
+  for (let i = 0; i < doc.titleTokens.length; i++) {
+    const tok = doc.titleTokens[i];
+    if (DEFAULT_STOP.has(tok)) continue;
+    const spanComponent = isDottedSpanComponentIndex(doc, i);
     const ok = query.tokens.some((qt) => {
+      if (spanComponent && (qt.normalized === tok || qt.lemma === tok)) return false;
       if (qt.normalized === tok || qt.lemma === tok) return true;
+      if (spanComponent) return false;
       if (allowPrefixMatch(qt.normalized, tok) || isNearCompletePrefix(qt.normalized, tok)) return true;
       return query.concepts.some((c) => c.forms.includes(tok) && c.kind !== "acronym");
     });
@@ -177,6 +188,15 @@ function shortLiteralLeadMatch(query: AnalyzedQuery, doc: IndexedDocument) {
   if (tok.length > 3) return false;
   if (!doc.firstToken) return false;
   return doc.firstToken === tok || doc.firstToken.startsWith(tok);
+}
+
+function dottedSpanComponentTitleMatch(query: AnalyzedQuery, doc: IndexedDocument) {
+  const spans = doc.dottedSpans || [];
+  if (!spans.length) return false;
+  return query.tokens.some((t) => {
+    const forms = [t.normalized, t.surfaceNormalized, t.surface];
+    return forms.some((f) => queryTokenMatchesDottedSpanComponent(f, spans));
+  });
 }
 
 function adjacentOn(queryToks: string[], fieldToks: string[]) {
@@ -244,6 +264,7 @@ function hasDirectTitleEvidence(f: Partial<FeatureVector>) {
   if (f.configuredEquivalenceMatch) return true;
   if (f.morphologyMatch) return true;
   if (f.versionMatch) return true;
+  if (f.dottedSpanComponentTitleMatch) return true;
   if ((f.titlePrefixQuality || 0) > 0) return true;
   if (f.canonicalKeyTitle) return true;
   if (f.contextualTitlePrefix) return true;
@@ -349,6 +370,7 @@ export function extractFeatures(
     typoDistance: typoDistance(query, doc),
     versionMatch: versionMatch(query, doc),
     shortLiteralLeadMatch: shortLiteralLeadMatch(query, doc),
+    dottedSpanComponentTitleMatch: dottedSpanComponentTitleMatch(query, doc),
     phraseAdjacency: phraseAdjacency(query, doc),
     bodyLexicalMatch: bodyLexicalMatch(query, doc),
     titleTokenCount: doc.nonStopTitle.length,
@@ -397,6 +419,7 @@ export function classifyDirect(f: Partial<FeatureVector>): DirectClass {
     f.configuredEquivalenceMatch === "expansion" ||
     f.phraseAdjacency === 1 ||
     f.shortLiteralLeadMatch ||
+    f.dottedSpanComponentTitleMatch ||
     (f.exactTitleTokenMatch && (f.queryCoverage || 0) > 0) ||
     ((f.queryTokenCount || 0) >= 2 && (f.bodyPhraseCount || 0) >= REPEATED_BODY_PHRASE_MIN) ||
     f.contextualTitlePrefix
@@ -419,8 +442,8 @@ export function classifyDirect(f: Partial<FeatureVector>): DirectClass {
 
 export const FEATURE_DEFINITIONS = {
   exactTitleMatch: "True when normalized query equals the full normalized title.",
-  exactTitleTokenMatch: "True when a non-stop canonical query token occurs as a title token. Unique prefix completions and morphology use the lemma; typed stubs and completedToken are not exact surface evidence.",
-  typedSurfaceTitleMatch: "True when the typed/repaired surface (before lemma or unique-prefix rewrite) occurs as a title token or is a legitimate prefix of one. Canonical retrieval lemmas are not typed-surface evidence.",
+  exactTitleTokenMatch: "True when a non-stop canonical query token occurs as an independent title token (not a digit split from a dotted numeric span such as 1.2). Unique prefix completions and morphology use the lemma; typed stubs and completedToken are not exact surface evidence.",
+  typedSurfaceTitleMatch: "True when the typed/repaired surface (before lemma or unique-prefix rewrite) occurs as an independent title token or is a legitimate prefix of one. Digits produced by splitting a dotted span are not typed-surface evidence. Canonical retrieval lemmas are not typed-surface evidence.",
   titleCoverage: "Fraction of non-stop title tokens accounted for by the query.",
   queryCoverage: "Fraction of query concepts evidenced in the title (or via a legitimate version alias).",
   titlePrefixQuality: "How completely query tokens prefix title tokens, tightened by extra title tokens.",
@@ -436,6 +459,7 @@ export const FEATURE_DEFINITIONS = {
   typoDistance: "0–2 style evidence: 0 none, 1 repeat-collapse or edit-distance 2, 2 edit-distance 1.",
   versionMatch: "false | compact-weak | compact-dotted | dotted | dotted-weak.",
   shortLiteralLeadMatch: "Short query (≤3) matches the first surface title token as exact or prefix.",
+  dottedSpanComponentTitleMatch: "True when a typed all-digit query token equals a component of a dotted numeric title span (the 2 in 1.2). Not independent exact-title evidence and not a versionMatch.",
   phraseAdjacency: "1 title-adjacent query tokens, 0.5 body-adjacent, else 0.",
   bodyLexicalMatch: "Fraction of query concepts evidenced in the body field.",
   titleTokenCount: "Non-stop title token count; used for tightness, not as a boost constant.",

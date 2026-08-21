@@ -105,6 +105,20 @@ function shortLiteralConstraint(a: FeaturedHit, b: FeaturedHit) {
 }
 
 /**
+ * A dotted-span title component (the "2" in "1.2") is title-local structured
+ * evidence. It outranks weak/body-only directs. It does not outrank lead
+ * short-literals, independent exact tokens, or genuine version queries.
+ */
+function dottedSpanComponentOverWeakDirectConstraint(a: FeaturedHit, b: FeaturedHit) {
+  const aDot = Boolean(a.features.dottedSpanComponentTitleMatch);
+  const bDot = Boolean(b.features.dottedSpanComponentTitleMatch);
+  if (aDot === bDot) return 0;
+  if (aDot && isWeakDirect(b.features) && !bDot) return -1;
+  if (bDot && isWeakDirect(a.features) && !aDot) return 1;
+  return 0;
+}
+
+/**
  * Aligned title-sequence + final-token completion outranks candidates whose
  * competing direct evidence is only weak or incidental (letter/body overlap).
  * It does not outrank exact title, configured equivalence, full coverage, or
@@ -285,6 +299,7 @@ export const DEFAULT_CONSTRAINTS: ConstraintDef[] = [
   { id: "exact-surface-over-lemma-only", invariant: "H3", class: "strong", fn: surfaceOverLemmaConstraint },
   { id: "version-companion-over-weak-numeric", invariant: "H4", class: "strong", fn: versionConstraint },
   { id: "literal-numeric-over-weak-compact", invariant: "H4", class: "strong", fn: literalNumericOverWeakVersionConstraint },
+  { id: "dotted-span-component-over-weak-direct", invariant: "H9", class: "strong", fn: dottedSpanComponentOverWeakDirectConstraint },
   { id: "tighter-title-over-longer-contains", invariant: "H1", class: "soft", fn: tighterTitleConstraint },
   { id: "short-literal-lead-over-later", invariant: "H5", class: "soft", fn: shortLiteralConstraint },
 ];
@@ -300,6 +315,7 @@ export const HYBRID_CONSTRAINTS: ConstraintDef[] = [
   { id: "exact-surface-over-lemma-only", invariant: "H3", class: "strong", fn: surfaceOverLemmaConstraint },
   { id: "version-companion-over-weak-numeric", invariant: "H4", class: "strong", fn: versionConstraint },
   { id: "literal-numeric-over-weak-compact", invariant: "H4", class: "strong", fn: literalNumericOverWeakVersionConstraint },
+  { id: "dotted-span-component-over-weak-direct", invariant: "H9", class: "strong", fn: dottedSpanComponentOverWeakDirectConstraint },
   { id: "tighter-title-over-longer-contains", invariant: "H1", class: "soft", fn: tighterTitleConstraint },
   { id: "short-literal-lead-over-later", invariant: "H5", class: "soft", fn: shortLiteralConstraint },
 ];

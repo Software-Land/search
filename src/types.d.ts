@@ -182,6 +182,11 @@ export interface IndexedDocument {
   normalizedTitle: string;
   versionCompactForms: string[];
   dottedSpans: string[];
+  /**
+   * Indexes into titleTokens whose source range is a dotted numeric span
+   * component (the "2" in "1.2"). Not independent exact-title evidence.
+   */
+  dottedSpanComponentIndexes: Set<number>;
   lexicalFrequency: Record<string, number> | null;
 }
 
@@ -259,6 +264,7 @@ export interface FeatureVector {
   typoDistance: number;
   versionMatch: false | string;
   shortLiteralLeadMatch: boolean;
+  dottedSpanComponentTitleMatch: boolean;
   phraseAdjacency: number;
   bodyLexicalMatch: number;
   titleTokenCount: number;

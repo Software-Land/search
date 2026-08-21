@@ -53,6 +53,7 @@ export function scoreFeatures(f: Partial<FeatureVector>) {
     Math.min(f.typoDistance || 0, 2) * 0.35 +
     versionNum(f.versionMatch) * 2.2 +
     boolNum(f.shortLiteralLeadMatch) * 1.7 +
+    boolNum(f.dottedSpanComponentTitleMatch) * 0.9 +
     (f.phraseAdjacency || 0) * 0.8 +
     (f.bodyLexicalMatch || 0) * 0.25 +
     (f.relationshipStrength || 0) * 0.45 +

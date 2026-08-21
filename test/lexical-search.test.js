@@ -7,7 +7,14 @@ import { analyzeQuery } from "../dist/analyze.js";
 import { extractFeatures, FEATURE_DEFINITIONS } from "../dist/features.js";
 import { compareConstraint, constraintCatalog } from "../dist/constraints.js";
 import { retrieveCandidates, versionHit, typedForm } from "../dist/retrieve.js";
-import { extractVersionCompactForms, queryTokenMatchesVersionCompact } from "../dist/versionForms.js";
+import {
+  extractVersionCompactForms,
+  queryTokenMatchesVersionCompact,
+  dottedSpanComponentIndexes,
+  hasIndependentTitleToken,
+  queryTokenMatchesDottedSpanComponent,
+} from "../dist/versionForms.js";
+import { tokenize, tokenizeWithRanges } from "../dist/text.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 import { scoreFeatures, rankCandidates } from "../dist/rank.js";
 
@@ -28,6 +35,16 @@ const tlsDict = [
   { key: "api", expansion: ["application", "programming", "interface"] },
 ];
 
+function legacyTokenize(text) {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/[''`"]/g, "")
+    .replace(/[_\-.\/:]+/g, " ")
+    .replace(/[^\w\s*]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
 describe("version forms", () => {
   test("compact aliases come only from dotted spans", () => {
     expect(extractVersionCompactForms("TLS 1.2 Vulnerability")).toEqual(["12"]);
@@ -36,6 +53,55 @@ describe("version forms", () => {
     expect(queryTokenMatchesVersionCompact("12", ["12"])).toBe(true);
     expect(queryTokenMatchesVersionCompact("120", ["12"])).toBe(false);
     expect(queryTokenMatchesVersionCompact("128", ["12"])).toBe(false);
+    expect(queryTokenMatchesDottedSpanComponent("2", ["1.2"])).toBe(true);
+    expect(queryTokenMatchesDottedSpanComponent("1", ["1.2"])).toBe(true);
+    expect(queryTokenMatchesDottedSpanComponent("12", ["1.2"])).toBe(false);
+    expect(queryTokenMatchesDottedSpanComponent("2", [])).toBe(false);
+  });
+
+  test("tokenizeWithRanges matches the historical tokenize surface", () => {
+    const samples = [
+      "TLS 1.2 Vulnerability",
+      "HTTP/2",
+      "Chapter 1 and 2 Overview",
+      "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+      "don't split quotes",
+      "AES-128 Cipher Suites",
+      "",
+      "   ",
+    ];
+    for (const sample of samples) {
+      expect(tokenize(sample)).toEqual(legacyTokenize(sample));
+      expect(tokenizeWithRanges(sample).map((t) => t.token)).toEqual(legacyTokenize(sample));
+    }
+  });
+
+  test("dotted-span components are not independent title tokens", () => {
+    expect([...dottedSpanComponentIndexes("TLS 1.2 Vulnerability")].sort((a, b) => a - b)).toEqual([1, 2]);
+    expect([...dottedSpanComponentIndexes("HTTP/2")]).toEqual([]);
+    expect([...dottedSpanComponentIndexes("Chapter 1 and 2 Overview")]).toEqual([]);
+    expect([...dottedSpanComponentIndexes("TLS 1.2 and HTTP/2")].sort((a, b) => a - b)).toEqual([1, 2]);
+
+    const schema = {
+      title: { type: "text", role: "title" },
+      body: { type: "text", role: "body" },
+    };
+    const index = buildIndex(
+      [
+        { id: "/tls/", title: "TLS 1.2 Vulnerability", body: "tls" },
+        { id: "/http2/", title: "HTTP/2", body: "http" },
+        { id: "/ch/", title: "Chapter 1 and 2 Overview", body: "chapters" },
+        { id: "/mixed/", title: "TLS 1.2 and HTTP/2", body: "mixed" },
+      ],
+      schema
+    );
+    const byId = Object.fromEntries(index.documents.map((d) => [d.id, d]));
+    expect(hasIndependentTitleToken(byId["/tls/"], "2")).toBe(false);
+    expect(hasIndependentTitleToken(byId["/tls/"], "1")).toBe(false);
+    expect(hasIndependentTitleToken(byId["/tls/"], "tls")).toBe(true);
+    expect(hasIndependentTitleToken(byId["/http2/"], "2")).toBe(true);
+    expect(hasIndependentTitleToken(byId["/ch/"], "2")).toBe(true);
+    expect(hasIndependentTitleToken(byId["/mixed/"], "2")).toBe(true);
   });
 });
 
@@ -770,6 +836,115 @@ describe("short literal lead", () => {
     ]);
     const results = e.search("a");
     expect(results[0].title).toBe("Agile vs Waterfall");
+  });
+});
+
+describe("dotted span digit provenance ranking", () => {
+  const docs = [
+    {
+      id: "/200fps/",
+      title: "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+      body: "Compare CSS, Canvas, WebGL, and WebGPU at 200 frames per second.",
+    },
+    {
+      id: "/tls/",
+      title: "TLS 1.2 Vulnerability",
+      body: "TLS 1.2 protocol vulnerability and AES-128 cipher suites.",
+    },
+    { id: "/http2/", title: "HTTP/2", body: "HTTP/2 multiplexed streams." },
+    { id: "/d3d/", title: "Direct3D 12 Guide", body: "A guide to Direct3D 12." },
+  ];
+
+  test("query 2 ranks 200FPS above TLS while still retrieving TLS", async () => {
+    const e = await engine(docs.filter((d) => d.id === "/200fps/" || d.id === "/tls/"), tlsDict);
+    const results = e.search("2", { limit: 5, explain: true });
+    expect(results[0].title).toBe("200FPS: CSS vs Canvas vs WebGL vs WebGPU");
+    const fps = results[0];
+    const tls = results.find((r) => r.id === "/tls/");
+    expect(tls).toBeTruthy();
+    expect(fps.features.shortLiteralLeadMatch).toBe(true);
+    expect(fps.features.exactTitleTokenMatch).toBe(false);
+    expect(fps.features.typedSurfaceTitleMatch).toBe(false);
+    expect(fps.features.dottedSpanComponentTitleMatch).toBe(false);
+    expect(tls.features.exactTitleTokenMatch).toBe(false);
+    expect(tls.features.typedSurfaceTitleMatch).toBe(false);
+    expect(tls.features.versionMatch).toBe(false);
+    expect(tls.features.shortLiteralLeadMatch).toBe(false);
+    expect(tls.features.dottedSpanComponentTitleMatch).toBe(true);
+    expect(tls.directClass).toBe("moderate");
+  });
+
+  test("query 2 ranks TLS above unrelated body-only matches", async () => {
+    const e = await engine(
+      [
+        ...docs.filter((d) => d.id === "/200fps/" || d.id === "/tls/"),
+        { id: "/protobuf/", title: "Protobuf Encoding", body: "Field number 2 in the payload." },
+        { id: "/rr/", title: "Request Response", body: "HTTP/1.1 vs HTTP/2 in the body only." },
+        { id: "/rest/", title: "REST API vs GraphQL", body: "Version 2 of the API comparison." },
+      ],
+      tlsDict
+    );
+    const results = e.search("2", { limit: 10, explain: true });
+    expect(results[0].title).toBe("200FPS: CSS vs Canvas vs WebGL vs WebGPU");
+    expect(results[1].title).toBe("TLS 1.2 Vulnerability");
+    expect(results[1].features.dottedSpanComponentTitleMatch).toBe(true);
+    expect(results[1].features.exactTitleTokenMatch).toBe(false);
+    expect(results.map((r) => r.title).slice(2)).toEqual(
+      expect.arrayContaining(["Protobuf Encoding", "Request Response", "REST API vs GraphQL"])
+    );
+  });
+
+  test("standalone HTTP/2 keeps independent numeric title evidence", async () => {
+    const e = await engine(docs.filter((d) => d.id === "/http2/" || d.id === "/tls/"), tlsDict);
+    const results = e.search("2", { limit: 5, explain: true });
+    expect(results[0].title).toBe("HTTP/2");
+    expect(results[0].features.exactTitleTokenMatch).toBe(true);
+    expect(results[0].features.typedSurfaceTitleMatch).toBe(true);
+    const tls = results.find((r) => r.id === "/tls/");
+    expect(tls).toBeTruthy();
+    expect(tls.features.exactTitleTokenMatch).toBe(false);
+    expect(tls.features.typedSurfaceTitleMatch).toBe(false);
+  });
+
+  test("20, 200, and 200fps continue preferring 200FPS", async () => {
+    const e = await engine(docs, tlsDict);
+    for (const q of ["20", "200", "200fps"]) {
+      expect(e.search(q)[0].title).toBe("200FPS: CSS vs Canvas vs WebGL vs WebGPU");
+    }
+  });
+
+  test("12 prefers TLS over 200FPS and still prefers literal Direct3D 12", async () => {
+    const vsFps = await engine(docs.filter((d) => d.id === "/200fps/" || d.id === "/tls/"), tlsDict);
+    expect(vsFps.search("12")[0].title).toBe("TLS 1.2 Vulnerability");
+    const withLiteral = await engine(docs, tlsDict);
+    expect(withLiteral.search("12")[0].title).toBe("Direct3D 12 Guide");
+  });
+
+  test("1.2, tls 1.2, and tls 12 continue preferring TLS", async () => {
+    const e = await engine(docs, tlsDict);
+    for (const q of ["1.2", "tls 1.2", "tls 12"]) {
+      expect(e.search(q)[0].title).toBe("TLS 1.2 Vulnerability");
+    }
+  });
+
+  test("independent trailing 2 stays exact when another 2 is dotted-derived", async () => {
+    const e = await engine(
+      [
+        { id: "/mixed/", title: "TLS 1.2 vs 2", body: "Compares TLS 1.2 against version 2." },
+        { id: "/tls/", title: "TLS 1.2 Vulnerability", body: "TLS 1.2 protocol vulnerability." },
+        { id: "/200fps/", title: "200FPS: CSS vs Canvas", body: "200 frames per second." },
+      ],
+      tlsDict
+    );
+    const results = e.search("2", { limit: 5, explain: true });
+    const mixed = results.find((r) => r.id === "/mixed/");
+    const tls = results.find((r) => r.id === "/tls/");
+    expect(mixed).toBeTruthy();
+    expect(mixed.features.exactTitleTokenMatch).toBe(true);
+    expect(mixed.features.typedSurfaceTitleMatch).toBe(true);
+    expect(mixed.features.dottedSpanComponentTitleMatch).toBe(true);
+    expect(tls.features.exactTitleTokenMatch).toBe(false);
+    expect(tls.features.dottedSpanComponentTitleMatch).toBe(true);
   });
 });
 

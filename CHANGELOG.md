@@ -12,13 +12,14 @@
 
 ### Fixed
 
+- Standalone query `"2"` no longer treats the dotted-span title component in `TLS 1.2` as independent exact-title evidence. Lead short-literal titles such as `200FPS` rank above that weak dotted-span match.
 - Public `filterRelationships(artifact, types?: readonly string[])` honors a caller-supplied type array. `null` / `undefined` and other invalid runtime values use the default search-eligible types instead of throwing.
 
 ### Changed
 
 - Explicit domain edges still default provenance to `"manual"` when omitted. Semantic edges keep builder scores and provenance.
 
-This release does not retune Search Core ranking or change the runtime relationship artifact schema.
+This release does not change the runtime relationship artifact schema.
 
 ## 0.2.3
 

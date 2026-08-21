@@ -1,6 +1,6 @@
 import { tokenize, firstSurfaceToken, DEFAULT_STOP } from "./text.js";
 import { canonicalDocumentId } from "./documentId.js";
-import { extractVersionCompactForms, extractDottedSpans } from "./versionForms.js";
+import { extractVersionCompactForms, extractDottedSpans, dottedSpanComponentIndexes } from "./versionForms.js";
 import { InvalidDocumentError } from "./errors.js";
 import type {
   IndexedDocument,
@@ -107,6 +107,7 @@ export function analyzeDocument(
     normalizedTitle: titleTokens.join(" "),
     versionCompactForms: extractVersionCompactForms(title),
     dottedSpans: extractDottedSpans(title),
+    dottedSpanComponentIndexes: dottedSpanComponentIndexes(title),
     lexicalFrequency: copyLexicalFrequency(rec.lexicalFrequency),
   };
 }

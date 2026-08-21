@@ -2,6 +2,7 @@ import { isNearCompletePrefix, allowPrefixMatch } from "./text.js";
 import {
   isAllDigitToken,
   queryTokenMatchesVersionCompact,
+  hasIndependentTitleForm,
 } from "./versionForms.js";
 import { throwIfAborted } from "./cancel.js";
 import type {
@@ -114,7 +115,7 @@ function conceptMatchesTitle(concept: QueryConcept, doc: IndexedDocument): Conce
     return null;
   }
   for (const form of concept.forms) {
-    if (doc.titleTokenSet.has(form) || doc.titleLemmaSet.has(form)) return "exact";
+    if (hasIndependentTitleForm(doc, form)) return "exact";
     if (/^\d+$/.test(form)) continue;
     for (const tok of doc.titleTokens) {
       if (allowPrefixMatch(form, tok)) return "prefix";

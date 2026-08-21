@@ -3,14 +3,53 @@ const DEFAULT_STOP = new Set([
   "a", "and", "in", "to", "as", "vs",
 ]);
 
+export interface TokenRange {
+  token: string;
+  /** Inclusive start index in the original (pre-lowercase) string. */
+  start: number;
+  /** Exclusive end index in the original string. */
+  end: number;
+}
+
+/**
+ * Same tokens as tokenize(), with source ranges in the original string.
+ * Quote characters are deleted; other separators become spaces in-place.
+ */
+export function tokenizeWithRanges(text?: unknown): TokenRange[] {
+  const original = String(text || "");
+  const lower = original.toLowerCase();
+  const chars: Array<{ c: string; origIndex: number }> = [];
+  for (let i = 0; i < lower.length; i++) {
+    const ch = lower[i];
+    if (/[''`"]/.test(ch)) continue;
+    if (/[_\-.\/:]/.test(ch) || /[^\w\s*]/.test(ch)) {
+      chars.push({ c: " ", origIndex: i });
+    } else {
+      chars.push({ c: ch, origIndex: i });
+    }
+  }
+  const ranges: TokenRange[] = [];
+  let i = 0;
+  while (i < chars.length) {
+    if (/\s/.test(chars[i].c)) {
+      i += 1;
+      continue;
+    }
+    const start = chars[i].origIndex;
+    let tok = "";
+    let j = i;
+    while (j < chars.length && !/\s/.test(chars[j].c)) {
+      tok += chars[j].c;
+      j += 1;
+    }
+    ranges.push({ token: tok, start, end: chars[j - 1].origIndex + 1 });
+    i = j;
+  }
+  return ranges;
+}
+
 export function tokenize(text?: unknown): string[] {
-  return String(text || "")
-    .toLowerCase()
-    .replace(/[''`"]/g, "")
-    .replace(/[_\-.\/:]+/g, " ")
-    .replace(/[^\w\s*]/g, " ")
-    .split(/\s+/)
-    .filter(Boolean);
+  return tokenizeWithRanges(text).map((t) => t.token);
 }
 
 export function normalizeSurface(text?: unknown): string {
