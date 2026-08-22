@@ -126,7 +126,9 @@ describe("software-land corpus fixture", () => {
   test("manifest records source commit, package version, document count, and scenario provenance", () => {
     expect(manifest.format).toBe("software-land-search-fixture");
     expect(manifest.version).toBe(1);
-    expect(manifest.softwareLandCommit).toBe("dff24cf606967cb50b24d28d9142747c9203e053");
+    expect(manifest.corpusSourceCommit).toBe("dff24cf606967cb50b24d28d9142747c9203e053");
+    expect(manifest.scenarioSourceCommit).toBe("08e1b735ae01a3815964360ef3b9141466176dc4");
+    expect(manifest.softwareLandCommit).toBeUndefined();
     expect(manifest.searchPackageVersion).toBe("0.3.1");
     expect(manifest.documentCount).toBe(122);
     expect(documents).toHaveLength(122);
@@ -154,6 +156,8 @@ describe("software-land corpus fixture", () => {
     expect(readme).toContain("Software.Land-derived realistic integration test data. It is not default package policy.");
     expect(readme).toContain("They must never become Core defaults.");
     expect(readme).toContain("not Core ranking policy");
+    expect(readme).toContain("dff24cf606967cb50b24d28d9142747c9203e053");
+    expect(readme).toContain("08e1b735ae01a3815964360ef3b9141466176dc4");
   });
 
   test("historical inventory is non-executable provenance with dispositions", () => {
