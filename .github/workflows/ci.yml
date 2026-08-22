@@ -7,18 +7,31 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test:types
+      - run: npm run test:js
+      - run: npm run smoke:import
+      - run: npm run smoke:pack
+      - run: npm pack --dry-run
+
+  python:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm run test:types
-      - run: npm test
-      - run: npm run smoke:import
-      - run: npm run smoke:pack
-      - run: npm pack --dry-run
+      - run: npm run test:python
