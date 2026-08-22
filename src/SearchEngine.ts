@@ -372,7 +372,7 @@ export class SearchEngine {
       primaryId: timings.primaryId,
       primaryIds: timings.primaryIds,
       relationshipStrategy: strategy,
-      retriever: this.retriever?.name || "full-scan",
+      retriever: this.retriever?.name || "indexed-lexical",
       related,
       constraintCycles: ranked[0]?.constraintMeta?.cycles || [],
       constraintConflicts: ranked[0]?.constraintMeta?.conflictCount || 0,

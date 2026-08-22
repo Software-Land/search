@@ -72,6 +72,8 @@ async function runWorkload(name, documents) {
       body: { type: "text", role: "body" },
     },
     dictionaryEntries: [],
+    retriever: "full-scan",
+    relationshipStrategy: "none",
   });
   await client.waitReady();
   const generation = client.setQuery(QUERY, { limit: 10 });

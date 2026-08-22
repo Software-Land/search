@@ -326,4 +326,13 @@ export async function retrieveCandidatesAsync(query: AnalyzedQuery, index: Searc
   return [...byId.values()];
 }
 
+/** Exact full-scan provenance for one document. Empty means the document is not a hit. */
+export function retrievalSourcesForDocument(query: AnalyzedQuery, doc: IndexedDocument): string[] {
+  const sources: string[] = [];
+  scanDocument(query, doc, (_d, source) => {
+    if (!sources.includes(source)) sources.push(source);
+  });
+  return sources;
+}
+
 export { versionHit, conceptMatchesTitle, conceptMatchesBody };

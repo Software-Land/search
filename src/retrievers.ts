@@ -4,11 +4,18 @@
  * Query analysis and ranking stay in Search Core. Retrievers emit
  * { document, retrievalSources, retrievalScore? } only.
  *
- * Full scan remains the default. Indexed lexical retrieval is a candidate
- * generator (BM25 orders the budgeted set). It is not the ranker.
+ * Indexed lexical retrieval is the default production path: inverted
+ * postings propose documents, exact scanDocument provenance is required,
+ * and BM25 orders only the budgeted ordinary slice. It is not the ranker.
+ * Full-scan remains an explicit small-corpus / reference mode.
  */
 
-import { retrieveCandidates, retrieveCandidatesAsync, matchContextualTitlePrefix } from "./retrieve.js";
+import {
+  retrieveCandidates,
+  retrieveCandidatesAsync,
+  matchContextualTitlePrefix,
+  retrievalSourcesForDocument,
+} from "./retrieve.js";
 import { allowPrefixMatch } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
 import { throwIfAborted } from "./cancel.js";
@@ -256,16 +263,15 @@ export function createIndexedLexicalRetriever({
     }
   }
 
-  function prefixTerms(prefix: string) {
+  function prefixTerms(prefix: string, accept: (term: string) => boolean) {
     if (!prefix) return [];
     const out: string[] = [];
     let i = lowerBoundTerm(state.sortedTerms, prefix);
     while (i < state.sortedTerms.length) {
       const term = state.sortedTerms[i];
       if (!term.startsWith(prefix)) break;
-      if (allowPrefixMatch(prefix, term)) out.push(term);
+      if (accept(term)) out.push(term);
       i += 1;
-      if (out.length >= 64) break;
     }
     return out;
   }
@@ -322,14 +328,16 @@ export function createIndexedLexicalRetriever({
       if (bodyL) accumulatePosting(byPos, bodyL, "morphology", 0.5, state.avgBodyDl, state.bodyDl, { signal, n });
 
       if (!isAllDigitToken(form) && form.length >= 3) {
-        for (const term of prefixTerms(form)) {
+        for (const term of prefixTerms(form, (t) => allowPrefixMatch(form, t))) {
           if (term === form) continue;
           const tp = state.titlePostings.get(term);
           if (tp) accumulatePosting(byPos, tp, "title-token-prefix", titleBoost * 0.5, state.avgTitleDl, state.titleDl, { signal, n });
+        }
+        // Body prefix evidence matches scanDocument: length ≥ 3 and startsWith, not allowPrefixMatch.
+        for (const term of prefixTerms(form, (t) => !isAllDigitToken(t))) {
+          if (term === form) continue;
           const bp = state.bodyPostings.get(term);
-          if (bp && form.length >= 3) {
-            accumulatePosting(byPos, bp, "indexed-lexical", 0.4, state.avgBodyDl, state.bodyDl, { signal, n });
-          }
+          if (bp) accumulatePosting(byPos, bp, "indexed-lexical", 0.4, state.avgBodyDl, state.bodyDl, { signal, n });
         }
       }
     }
@@ -370,6 +378,18 @@ export function createIndexedLexicalRetriever({
         contextualQuality.set(pos, hit.contextualPrefixQuality);
       }
     }
+
+    const drop: number[] = [];
+    for (const [pos, hit] of byPos) {
+      if ((step++ & 7) === 0) throwIfAborted(signal);
+      const sources = retrievalSourcesForDocument(query, docs[pos]);
+      if (!sources.length) {
+        drop.push(pos);
+        continue;
+      }
+      hit.retrievalSources = sources;
+    }
+    for (const pos of drop) byPos.delete(pos);
 
     const hits = [...byPos.values()];
     const unboundedMust: IndexedHit[] = [];
@@ -456,7 +476,8 @@ export function createAdaptiveRetriever({ documentThreshold = 1500, smallLimit, 
 }
 
 export function resolveRetriever(spec: unknown): Retriever {
-  if (!spec || spec === "full-scan") return createFullScanRetriever();
+  if (spec === "full-scan") return createFullScanRetriever();
+  if (!spec) return createIndexedLexicalRetriever();
   if (typeof spec === "object" && spec && "retrieve" in spec && typeof spec.retrieve === "function") {
     return spec as Retriever;
   }
@@ -468,7 +489,7 @@ export function resolveRetriever(spec: unknown): Retriever {
   if (typeof spec === "object" && spec && "type" in spec && spec.type === "adaptive") {
     return createAdaptiveRetriever(spec as AdaptiveRetrieverOptions);
   }
-  return createFullScanRetriever();
+  return createIndexedLexicalRetriever();
 }
 
 export { UNBOUNDED_MUST_KEEP, CONTEXTUAL_MUST_KEEP_SOURCE, queryForms };

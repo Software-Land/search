@@ -343,7 +343,9 @@ describe("software-land candidate-stage survival", () => {
     expect(contractStats.prefixMiss).toEqual([]);
     expect(regressionStats.prefixMiss).toEqual([]);
     expect(contractStats.maxC).toBeLessThanOrEqual(documents.length);
-    expect(regressionStats.maxC).toBe(122);
+    expect(regressionStats.maxC).toBeLessThanOrEqual(documents.length);
+    expect(contractStats.maxC).toBe(116);
+    expect(regressionStats.maxC).toBe(98);
   });
 
   test("representative queries report the measured full-scan candidate counts", () => {

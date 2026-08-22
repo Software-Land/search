@@ -33,10 +33,10 @@ async function engines() {
 }
 
 describe("replaceable retrieval", () => {
-  test("default retriever remains full-scan (existing tests unchanged)", async () => {
+  test("default retriever is indexed lexical", async () => {
     const e = SearchEngine.create({ schema, plugins: [morphology()] });
     await e.index(docs);
-    expect(e.retriever.name).toBe("full-scan");
+    expect(e.retriever.name).toBe("indexed-lexical");
     expect(e.search("bluetooth")[0].title).toBe("Bluetooth");
   });
 

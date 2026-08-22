@@ -157,7 +157,8 @@ export function resolvePublicRetriever(
 ): Retriever {
   const limit = candidateLimit || DEFAULT_CANDIDATE_LIMIT;
   const threshold = adaptive?.documentThreshold || DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD;
-  if (spec == null || spec === "full-scan") return createFullScanRetriever();
+  if (spec === "full-scan") return createFullScanRetriever();
+  if (spec == null) return createIndexedLexicalRetriever({ candidateLimit: limit });
   if (typeof spec === "object" && spec && "retrieve" in spec && typeof spec.retrieve === "function") {
     return spec as Retriever;
   }
