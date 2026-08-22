@@ -572,40 +572,76 @@ function buildConstraintCsrPair(n: number, edges: PackedConstraintEdgesApi): { a
   };
 }
 
-function csrEachNeighbor(csr: ConstraintCsr, u: number, visit: (v: number) => void) {
-  const start = csr.offsets[u];
-  const end = csr.offsets[u + 1];
-  const neighbors = csr.neighbors;
-  for (let k = start; k < end; k++) visit(neighbors[k]);
-}
-
 export function csrNeighborList(csr: ConstraintCsr, u: number): number[] {
   return Array.from(csr.neighbors.subarray(csr.offsets[u], csr.offsets[u + 1]));
 }
 
+/**
+ * Iterative Kosaraju. Frames `{ u, k }` resume at CSR index `k` so first-pass
+ * finish order matches the previous recursive postorder: mark on entry,
+ * neighbors left-to-right, append only after descendants complete.
+ */
 function kosaraju(n: number, adj: ConstraintCsr, radj: ConstraintCsr) {
   const seen = new Array(n).fill(false);
   const order: number[] = [];
-  function dfs1(u: number) {
-    seen[u] = true;
-    csrEachNeighbor(adj, u, (v) => {
-      if (!seen[v]) dfs1(v);
-    });
-    order.push(u);
+  const stackU: number[] = [];
+  const stackK: number[] = [];
+  const adjOff = adj.offsets;
+  const adjN = adj.neighbors;
+  const radjOff = radj.offsets;
+  const radjN = radj.neighbors;
+
+  for (let i = 0; i < n; i++) {
+    if (seen[i]) continue;
+    seen[i] = true;
+    stackU.push(i);
+    stackK.push(adjOff[i]);
+    while (stackU.length) {
+      const u = stackU[stackU.length - 1];
+      const k = stackK[stackK.length - 1];
+      const end = adjOff[u + 1];
+      if (k < end) {
+        const v = adjN[k];
+        stackK[stackK.length - 1] = k + 1;
+        if (!seen[v]) {
+          seen[v] = true;
+          stackU.push(v);
+          stackK.push(adjOff[v]);
+        }
+      } else {
+        stackU.pop();
+        stackK.pop();
+        order.push(u);
+      }
+    }
   }
-  for (let i = 0; i < n; i++) if (!seen[i]) dfs1(i);
 
   const comp = new Array(n).fill(-1);
   let cid = 0;
-  function dfs2(u: number, id: number) {
-    comp[u] = id;
-    csrEachNeighbor(radj, u, (v) => {
-      if (comp[v] === -1) dfs2(v, id);
-    });
-  }
   for (let i = order.length - 1; i >= 0; i--) {
-    const u = order[i];
-    if (comp[u] === -1) dfs2(u, cid++);
+    const root = order[i];
+    if (comp[root] !== -1) continue;
+    const id = cid++;
+    comp[root] = id;
+    stackU.push(root);
+    stackK.push(radjOff[root]);
+    while (stackU.length) {
+      const u = stackU[stackU.length - 1];
+      const k = stackK[stackK.length - 1];
+      const end = radjOff[u + 1];
+      if (k < end) {
+        const v = radjN[k];
+        stackK[stackK.length - 1] = k + 1;
+        if (comp[v] === -1) {
+          comp[v] = id;
+          stackU.push(v);
+          stackK.push(radjOff[v]);
+        }
+      } else {
+        stackU.pop();
+        stackK.pop();
+      }
+    }
   }
 
   const groups: number[][] = Array.from({ length: cid }, () => []);

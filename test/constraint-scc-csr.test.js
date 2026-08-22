@@ -319,3 +319,181 @@ describe("ranking and diagnosis over CSR SCC", () => {
     expect(ranked.map((r) => r.document.id)).toEqual(["a", "b"]);
   });
 });
+
+/**
+ * Compact copy of the previous recursive Kosaraju. Test-only reference so the
+ * iterative production walk can be compared for exact finish-derived output.
+ */
+function recursiveKosarajuReference(n, adj, radj) {
+  const seen = new Array(n).fill(false);
+  const order = [];
+  function dfs1(u) {
+    seen[u] = true;
+    for (const v of adj[u]) {
+      if (!seen[v]) dfs1(v);
+    }
+    order.push(u);
+  }
+  for (let i = 0; i < n; i++) if (!seen[i]) dfs1(i);
+
+  const comp = new Array(n).fill(-1);
+  let cid = 0;
+  function dfs2(u, id) {
+    comp[u] = id;
+    for (const v of radj[u]) {
+      if (comp[v] === -1) dfs2(v, id);
+    }
+  }
+  for (let i = order.length - 1; i >= 0; i--) {
+    const u = order[i];
+    if (comp[u] === -1) dfs2(u, cid++);
+  }
+
+  const groups = Array.from({ length: cid }, () => []);
+  for (let i = 0; i < n; i++) groups[comp[i]].push(i);
+  const cycles = groups.filter((g) => g.length > 1).map((g) => g.slice());
+  return { comp, groups, cycles };
+}
+
+function packedPairs(pairs) {
+  const edges = new PackedConstraintEdges(Math.max(8, pairs.length || 8));
+  for (const [u, v] of pairs) edges.append(u, v);
+  return edges;
+}
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function randomDirectedPairs(n, p, seed) {
+  const rnd = mulberry32(seed);
+  const pairs = [];
+  for (let u = 0; u < n; u++) {
+    for (let v = 0; v < n; v++) {
+      if (rnd() < p) pairs.push([u, v]);
+    }
+  }
+  return pairs;
+}
+
+function assertIterativeMatchesRecursive(n, pairs) {
+  const edges = packedPairs(pairs);
+  const ref = recursiveKosarajuReference(n, jsAdj(n, edges, false), jsAdj(n, edges, true));
+  const prod = stronglyConnectedComponents(n, edges);
+  expect(prod.comp).toEqual(ref.comp);
+  expect(prod.groups).toEqual(ref.groups);
+  expect(prod.cycles).toEqual(ref.cycles);
+}
+
+describe("iterative Kosaraju matches recursive reference", () => {
+  const fixtures = [
+    ["n=0 empty", 0, []],
+    ["n=1 isolated", 1, []],
+    ["n=3 isolated", 3, []],
+    ["chain 5", 5, [
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 4],
+    ]],
+    ["diamond DAG", 4, [
+      [0, 1],
+      [0, 2],
+      [1, 3],
+      [2, 3],
+    ]],
+    ["transitive DAG", 4, [
+      [0, 1],
+      [1, 2],
+      [0, 2],
+      [2, 3],
+    ]],
+    ["self-edge", 1, [[0, 0]]],
+    ["self-edge then successor", 2, [
+      [0, 0],
+      [0, 1],
+    ]],
+    ["single cycle SCC", 3, [
+      [0, 1],
+      [1, 2],
+      [2, 0],
+    ]],
+    ["two disjoint cycles", 6, [
+      [0, 1],
+      [1, 2],
+      [2, 0],
+      [3, 4],
+      [4, 5],
+      [5, 3],
+    ]],
+    ["SCCs joined by DAG edges", 5, [
+      [0, 1],
+      [1, 0],
+      [2, 3],
+      [3, 2],
+      [1, 2],
+      [1, 4],
+    ]],
+    ["bidirected K4", 4, [
+      [0, 1],
+      [1, 0],
+      [0, 2],
+      [2, 0],
+      [0, 3],
+      [3, 0],
+      [1, 2],
+      [2, 1],
+      [1, 3],
+      [3, 1],
+      [2, 3],
+      [3, 2],
+    ]],
+    ["tournament i→j for i<j", 5, [
+      [0, 1],
+      [0, 2],
+      [0, 3],
+      [0, 4],
+      [1, 2],
+      [1, 3],
+      [1, 4],
+      [2, 3],
+      [2, 4],
+      [3, 4],
+    ]],
+  ];
+
+  test.each(fixtures)("%s", (_name, n, pairs) => {
+    assertIterativeMatchesRecursive(n, pairs);
+  });
+
+  test("deterministic sparse and dense pseudo-random graphs", () => {
+    for (const [n, p, seed] of [
+      [8, 0.12, 1],
+      [12, 0.08, 2],
+      [10, 0.45, 3],
+      [7, 1, 4],
+      [9, 0, 5],
+    ]) {
+      assertIterativeMatchesRecursive(n, randomDirectedPairs(n, p, seed));
+    }
+  });
+});
+
+describe("iterative SCC stack safety", () => {
+  test("20k-vertex chain completes with one vertex per component", () => {
+    const n = 20000;
+    const edges = new PackedConstraintEdges();
+    for (let i = 0; i < n - 1; i++) edges.append(i, i + 1);
+    const scc = stronglyConnectedComponents(n, edges);
+    expect(scc.cycles).toEqual([]);
+    expect(scc.comp).toEqual(Array.from({ length: n }, (_, i) => i));
+    expect(scc.groups).toEqual(Array.from({ length: n }, (_, i) => [i]));
+  });
+});
