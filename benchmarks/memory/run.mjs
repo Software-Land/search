@@ -183,7 +183,7 @@ function formatHuman(report) {
   const lines = [
     `@software-land/search memory benchmark`,
     `shape=${report.shape} n=${report.n} retriever=${report.retriever} node=${report.node} exposeGc=${report.exposeGc}`,
-    `indexMs=${report.indexMs}  sourceHeap=${src.heapUsedMb}MB  retainedHeap=${idx.heapUsedMb}MB  rss=${drop.rssMb}MB`,
+    `indexMs=${report.indexMs}  sourceHeap=${src.heapUsedMb}MB  retainedHeap=${drop.heapUsedMb}MB  rss=${drop.rssMb}MB`,
     `note: ${report.note}`,
   ];
   if (report.search) {
