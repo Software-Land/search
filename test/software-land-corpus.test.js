@@ -33,7 +33,12 @@ const schema = {
   body: { type: "text", role: "body" },
 };
 
-function createEngine({ useLemmas = true, useDictionary = true, useRelationships = true } = {}) {
+function createEngine({
+  useLemmas = true,
+  useDictionary = true,
+  useRelationships = true,
+  retriever = "full-scan",
+} = {}) {
   return SearchEngine.create({
     schema,
     plugins: [
@@ -42,7 +47,7 @@ function createEngine({ useLemmas = true, useDictionary = true, useRelationships
     ],
     relationships: useRelationships ? relationships : undefined,
     relationshipStrategy: useRelationships ? "hybrid" : undefined,
-    retriever: "full-scan",
+    retriever,
   });
 }
 
@@ -58,6 +63,61 @@ function titlesOf(engine, query, limit = SEARCH_LIMIT) {
 
 function indexOfTitle(titles, wanted) {
   return titles.findIndex((title) => title === wanted);
+}
+
+function expectedTargetTitles(row) {
+  const titles = new Set();
+  if (row.exactFirst) titles.add(row.exactFirst);
+  for (const req of row.requiredWithin || []) titles.add(req.title);
+  for (const req of row.requiredAnyWithin || []) titles.add(req.title);
+  if (row.requiredAnyTop) {
+    for (const title of row.requiredAnyTop.titles) titles.add(title);
+  }
+  if (row.mustNotDominate?.primary) titles.add(row.mustNotDominate.primary);
+  if (row.relationship?.title) titles.add(row.relationship.title);
+  return [...titles];
+}
+
+function measureCandidateSurvival(engine, rows) {
+  const missing = [];
+  const relatedMiss = [];
+  const prefixMiss = [];
+  const counts = [];
+  for (const row of rows) {
+    const detailed = engine.searchDetailed(row.query, { limit: SEARCH_LIMIT });
+    const candidateTitles = new Set(detailed.meta.candidateTitles);
+    counts.push(detailed.meta.candidateCount);
+    for (const title of expectedTargetTitles(row)) {
+      if (!candidateTitles.has(title)) {
+        missing.push({ query: row.query, name: row.name, title });
+      }
+    }
+    if (row.requiredRelatedAny) {
+      const hit = row.requiredRelatedAny.titles.filter((title) => candidateTitles.has(title)).length;
+      if (hit < (row.requiredRelatedAny.minCount || 1)) {
+        relatedMiss.push({ query: row.query, name: row.name, hit, need: row.requiredRelatedAny.minCount || 1 });
+      }
+    }
+    if (row.titlePrefix) {
+      const prefixed = [...candidateTitles].filter((title) => title.startsWith(row.titlePrefix)).length;
+      if (prefixed < 1) {
+        prefixMiss.push({ query: row.query, name: row.name, prefixed });
+      }
+    }
+  }
+  counts.sort((a, b) => a - b);
+  const n = counts.length;
+  return {
+    n,
+    missing,
+    relatedMiss,
+    prefixMiss,
+    survivalRate: n === 0 ? 1 : (n - missing.length) / n,
+    minC: counts[0] ?? 0,
+    maxC: counts[n - 1] ?? 0,
+    p50C: counts[Math.floor(n / 2)] ?? 0,
+    meanC: n ? counts.reduce((sum, c) => sum + c, 0) / n : 0,
+  };
 }
 
 function assertScenarioCase(engine, row) {
@@ -237,5 +297,78 @@ describe("software-land fixture inputs are load-bearing", () => {
     const vpn = without.searchDetailed("tls", { limit: 10, explain: true }).results.find((hit) => hit.title === "What is VPN?");
     expect(vpn?.relevanceKind).not.toBe("related");
     expect(vpn?.relationship?.type).not.toBe("editorial");
+  });
+});
+
+describe("software-land candidate-stage survival", () => {
+  let fullScan;
+  let indexed;
+
+  beforeAll(async () => {
+    fullScan = await indexEngine(createEngine({ retriever: "full-scan" }));
+    indexed = await indexEngine(createEngine({ retriever: "indexed" }));
+  });
+
+  test("executable cases never depend on v1 expectedTop", () => {
+    for (const row of [...contracts.cases, ...regressions.cases]) {
+      expect(row.v1).toBeUndefined();
+      expect(row.expectedTop).toBeUndefined();
+    }
+  });
+
+  test("full-scan retains contract and regression targets before ranking", () => {
+    const contractStats = measureCandidateSurvival(fullScan, contracts.cases);
+    const regressionStats = measureCandidateSurvival(fullScan, regressions.cases);
+    expect(contractStats.n).toBe(98);
+    expect(regressionStats.n).toBe(60);
+    expect(contractStats.missing).toEqual([]);
+    expect(regressionStats.missing).toEqual([]);
+    expect(contractStats.relatedMiss).toEqual([]);
+    expect(regressionStats.relatedMiss).toEqual([]);
+    expect(contractStats.prefixMiss).toEqual([]);
+    expect(regressionStats.prefixMiss).toEqual([]);
+    expect(contractStats.maxC).toBeLessThanOrEqual(documents.length);
+    expect(regressionStats.maxC).toBeLessThanOrEqual(documents.length);
+    expect(contractStats.maxC).toBe(116);
+    expect(regressionStats.maxC).toBe(98);
+  });
+
+  test("indexed retains contract and regression targets before ranking", () => {
+    const contractStats = measureCandidateSurvival(indexed, contracts.cases);
+    const regressionStats = measureCandidateSurvival(indexed, regressions.cases);
+    expect(contractStats.missing).toEqual([]);
+    expect(regressionStats.missing).toEqual([]);
+    expect(contractStats.relatedMiss).toEqual([]);
+    expect(regressionStats.relatedMiss).toEqual([]);
+    expect(contractStats.prefixMiss).toEqual([]);
+    expect(regressionStats.prefixMiss).toEqual([]);
+    expect(contractStats.maxC).toBeLessThanOrEqual(documents.length);
+    expect(regressionStats.maxC).toBe(122);
+  });
+
+  test("representative queries report the measured full-scan candidate counts", () => {
+    const expected = {
+      2: 63,
+      "Edge Computing": 62,
+      aplicationsecurity: 3,
+      tls: 7,
+      "machine learning": 9,
+      what: 79,
+    };
+    for (const [query, c] of Object.entries(expected)) {
+      const detailed = fullScan.searchDetailed(query, { limit: SEARCH_LIMIT });
+      expect(detailed.meta.candidateCount).toBe(c);
+      expect(detailed.meta.candidateCount).toBeLessThanOrEqual(documents.length);
+    }
+  });
+
+  test("query 2 keeps both correctness-critical titles in the candidate set", () => {
+    const detailed = fullScan.searchDetailed("2", { limit: SEARCH_LIMIT });
+    const titles = new Set(detailed.meta.candidateTitles);
+    expect(titles.has("200FPS: CSS vs Canvas vs WebGL vs WebGPU")).toBe(true);
+    expect(titles.has("TLS 1.2 Vulnerability")).toBe(true);
+    expect(indexed.searchDetailed("2", { limit: SEARCH_LIMIT }).meta.candidateTitles).toEqual(
+      expect.arrayContaining(["200FPS: CSS vs Canvas vs WebGL vs WebGPU", "TLS 1.2 Vulnerability"])
+    );
   });
 });
