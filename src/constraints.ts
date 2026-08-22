@@ -463,12 +463,13 @@ export function stronglyConnectedComponents(n: number, edges: number[][]) {
   return { comp, groups, cycles };
 }
 
-export function detectConstraintCycles(
-  candidates: FeaturedHit[],
-  defs: ConstraintDef[] = DEFAULT_CONSTRAINTS,
-  { signal }: { signal?: AbortSignal } = {}
-) {
-  const { n, edges, pairReports } = buildConstraintGraph(candidates, defs, { signal });
+/**
+ * Cycle/conflict diagnosis from an already-built constraint graph.
+ * Ranking reuses the pairwise graph; standalone detectConstraintCycles
+ * still builds, then calls this.
+ */
+export function diagnoseConstraintGraph(graph: ConstraintGraph, candidates: FeaturedHit[]) {
+  const { n, edges, pairReports } = graph;
   const { cycles } = stronglyConnectedComponents(n, edges);
   const conflicts = pairReports.filter((p) => p.conflict);
   return {
@@ -481,6 +482,14 @@ export function detectConstraintCycles(
     })),
     pairReports,
   };
+}
+
+export function detectConstraintCycles(
+  candidates: FeaturedHit[],
+  defs: ConstraintDef[] = DEFAULT_CONSTRAINTS,
+  { signal }: { signal?: AbortSignal } = {}
+) {
+  return diagnoseConstraintGraph(buildConstraintGraph(candidates, defs, { signal }), candidates);
 }
 
 export function constraintCatalog() {

@@ -13,7 +13,7 @@
 
 Compact analyzed representation, build-time lexical-index artifact, incremental updates, native ports. Do not treat those as promised.
 
-Ranking internals (not v0.1.1 work; behavior-preserving optimizations only):
+Ranking internals (behavior-preserving; not a ranking redesign):
 
-- `rankCandidates` already builds the pairwise constraint graph; `detectConstraintCycles` currently rebuilds that graph for diagnosis.
-- `readySort()` re-sorts zero-indegree SCC components after each extraction. Correct, not a hot-path rewrite target for this patch.
+- Pairwise constraint evaluation remains Θ(C²). Ranking now constructs the pairwise graph once rather than twice. Cycle diagnosis reuses that graph. `DEFAULT_CANDIDATE_LIMIT` is unchanged.
+- `readySort()` re-sorts zero-indegree SCC components after each extraction. Correct, not a hot-path rewrite target.

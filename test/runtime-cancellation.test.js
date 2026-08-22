@@ -204,6 +204,34 @@ describe("core cancellation", () => {
     abortErrorGuard(() => rankCandidates(featured, { signal: abortAfter(2) }));
   });
 
+  test("abort after constraint-graph construction and order, before diagnosis", () => {
+    const featured = [
+      {
+        document: { id: "b" },
+        features: {
+          exactTitleMatch: false,
+          queryCoverage: 0,
+          relevanceKind: "direct",
+          directClass: "none",
+        },
+      },
+      {
+        document: { id: "a" },
+        features: {
+          exactTitleMatch: false,
+          queryCoverage: 0,
+          relevanceKind: "direct",
+          directClass: "none",
+        },
+      },
+    ];
+    // C=2: aborted getter is polled at rank start, graph pair 0, orderFromGraph
+    // start, then the diagnosis-boundary check that replaced the second graph.
+    abortErrorGuard(() => rankCandidates(featured, { signal: abortAfter(3) }));
+    const ranked = rankCandidates(featured, { signal: abortAfter(4) });
+    expect(ranked.map((r) => r.document.id)).toEqual(["a", "b"]);
+  });
+
   test("search succeeds after abort and does not keep cancelled meta", async () => {
     const e = await engine();
     e.search("tls");

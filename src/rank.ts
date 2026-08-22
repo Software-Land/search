@@ -13,11 +13,11 @@ import {
   buildConstraintGraph,
   buildConstraintGraphAsync,
   stronglyConnectedComponents,
-  detectConstraintCycles,
+  diagnoseConstraintGraph,
   DEFAULT_CONSTRAINTS,
 } from "./constraints.js";
 import { throwIfAborted } from "./cancel.js";
-import type { ConstraintDef, FeaturedHit, FeatureVector, RankedHit } from "./types.js";
+import type { ConstraintDef, ConstraintGraph, FeaturedHit, FeatureVector, RankedHit } from "./types.js";
 
 function boolNum(v: unknown) {
   return v ? 1 : 0;
@@ -83,8 +83,8 @@ export function rankCandidates(
     ...c,
     score: Number(scoreFeatures(c.features).toFixed(6)),
   }));
-  const { n, edges } = buildConstraintGraph(decorated, constraints, { signal });
-  return orderFromGraph(decorated, n, edges, constraints, { signal });
+  const graph = buildConstraintGraph(decorated, constraints, { signal });
+  return orderFromGraph(decorated, graph, constraints, { signal });
 }
 
 export async function rankCandidatesAsync(
@@ -98,18 +98,18 @@ export async function rankCandidatesAsync(
     ...c,
     score: Number(scoreFeatures(c.features).toFixed(6)),
   }));
-  const { n, edges } = await buildConstraintGraphAsync(decorated, constraints, { signal });
-  return orderFromGraph(decorated, n, edges, constraints, { signal });
+  const graph = await buildConstraintGraphAsync(decorated, constraints, { signal });
+  return orderFromGraph(decorated, graph, constraints, { signal });
 }
 
 function orderFromGraph(
   decorated: FeaturedHit[],
-  n: number,
-  edges: number[][],
+  graph: ConstraintGraph,
   constraints: ConstraintDef[],
   { signal }: { signal?: AbortSignal } = {}
 ): RankedHit[] {
   throwIfAborted(signal);
+  const { n, edges } = graph;
   const { comp, groups } = stronglyConnectedComponents(n, edges);
 
   const succ = Array.from({ length: groups.length }, () => new Set<number>());
@@ -165,7 +165,10 @@ function orderFromGraph(
     ordered.push(...members);
   }
 
-  const diagnosis = detectConstraintCycles(decorated, constraints, { signal });
+  // Same abort opportunity the previous second buildConstraintGraph() polled
+  // at its first pair (k === 0) before diagnostic work.
+  throwIfAborted(signal);
+  const diagnosis = diagnoseConstraintGraph(graph, decorated);
 
   return ordered.map((c, i) => ({
     ...c,
@@ -182,4 +185,5 @@ function orderFromGraph(
   }));
 }
 
-export { detectConstraintCycles, compareConstraint };
+export { detectConstraintCycles } from "./constraints.js";
+export { compareConstraint };
