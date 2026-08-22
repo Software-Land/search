@@ -10,6 +10,8 @@ Source: [github.com/Software-Land/search](https://github.com/Software-Land/searc
 
 A JavaScript **runtime** that indexes documents, searches them, explains hits, and can attach a related-document rail from a compiled graph. It does not download models, call an LLM, or depend on a CMS.
 
+Pairwise ranking is Θ(C²) in the candidate set C, not in corpus size N. `indexed` / `adaptive` retrieval budget ordinary hits; full-scan of a high-document-frequency term is not a large-C architecture.
+
 **Zero production npm dependencies.** Node 18+.
 
 Optional **offline compilers** (not required to search; not imported by the runtime):
@@ -208,7 +210,7 @@ v0. The runtime facade, result shape, artifact `format`+`version`, `relationship
 
 Supported imports: `@software-land/search`, `@software-land/search/browser`, `@software-land/search/corpus`, `@software-land/search/lexical`, `@software-land/search/relationships`, `@software-land/search/semantic`. The last four are build-time compilers. Root and `./browser` do not import them.
 
-Root exports: `SearchEngine`, `english`, `dictionary`, strategy/retriever constants, artifact parsers, abort helpers, public error classes. `searchWorkerUrl()` is exported only from `./browser`.
+Root exports: `SearchEngine`, `morphology`, deprecated `english`, `dictionary`, strategy/retriever constants, artifact parsers, abort helpers, public error classes. `searchWorkerUrl()` is exported only from `./browser`.
 
 ## Docs
 
@@ -225,8 +227,11 @@ Root exports: `SearchEngine`, `english`, `dictionary`, strategy/retriever consta
 | Browser Worker | [docs/browser.md](docs/browser.md) |
 | Architecture | [docs/architecture.md](docs/architecture.md) |
 | Known limitations | [docs/limitations.md](docs/limitations.md) |
+| Security | [SECURITY.md](SECURITY.md) |
+| Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Relevance evaluation (dev, GitHub tree; not in the npm tarball) | [benchmarks/relevance/README.md](https://github.com/Software-Land/search/blob/main/benchmarks/relevance/README.md) |
 | Memory benchmarks (dev, GitHub tree; not in the npm tarball) | [benchmarks/memory/README.md](https://github.com/Software-Land/search/blob/main/benchmarks/memory/README.md) |
+| Ranking envelope at fixed C (dev, GitHub tree; not in the npm tarball) | [benchmarks/ranking/README.md](https://github.com/Software-Land/search/blob/main/benchmarks/ranking/README.md) |
 
 The checked-in toy fixture is evaluation machinery, not a ranking-quality claim.
 

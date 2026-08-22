@@ -9,6 +9,15 @@ import type { AnalyzedQuery } from "@software-land/search";
 // @ts-expect-error IndexedDocument is not a public export
 import type { IndexedDocument } from "@software-land/search";
 
+// @ts-expect-error lang is not a public export
+import { lang } from "@software-land/search";
+
+// @ts-expect-error createEnglishPlugin is not a public export
+import { createEnglishPlugin } from "@software-land/search";
+
+// @ts-expect-error EnglishMorphologyOptions is not a public export
+import type { EnglishMorphologyOptions } from "@software-land/search";
+
 const engine = SearchEngine.create();
 
 // @ts-expect-error retriever is not on the public SearchEngine class
@@ -35,3 +44,5 @@ void morphologyPlugin.lemma;
 void engine;
 void plugin;
 void morphologyPlugin;
+void lang;
+void createEnglishPlugin;

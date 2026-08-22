@@ -6,10 +6,13 @@ The search runtime splits **query understanding**, **candidate retrieval**, **ra
 query
   → analysis (tokens, lemmas, configured equivalences, typo alternatives)
   → retriever (full-scan | indexed | adaptive)
+  → relationship expansion
   → named features + constraints
-  → deterministic ranking
+  → deterministic ranking on candidate set C
   → results (+ optional related rail)
 ```
+
+Retrieval bounds ordinary indexed hits. Pairwise ranking is Θ(C²) in the candidate count, not in corpus size N.
 
 ## Equivalence ≠ synonym ≠ relatedness
 

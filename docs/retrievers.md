@@ -29,7 +29,30 @@ Must-keep union:
 
 Title-token / body / other prefix hits are budgeted by `candidateLimit`.
 
+Synonym and typo alternatives are query-interpretation only. They become ordinary retrieval forms (budgeted unless they also qualify as a must-keep source).
+
 `candidateLimit` default is 200. BM25 `k1`/`b` and title boost are implementation defaults, not public knobs.
+
+## Candidate envelope
+
+`C` is `searchDetailed().meta.candidateCount`: the featured set after retrieval **and** one-hop relationship expansion, immediately before pairwise ranking.
+
+Let `k` be `candidateLimit` (default 200) and `P` the contextual-prefix-only hits.
+
+Indexed retrieval:
+
+```text
+C_retrieve <= |U_exact ∪ U_equiv ∪ U_version| + min(|P|, prefixCap) + k
+C        <= C_retrieve + |R_new|
+```
+
+`U_*` are documents whose retrieval sources include unbounded must-keep. `R_new` is one-hop neighbors of expansion primaries that were not already retrieved. Default `sourcePolicy` is `top1-strong` (one primary). Dedup is by document id before ranking.
+
+Those `U_*` and `R_new` terms can grow with corpus size N when many documents share an exact title, a configured-equivalence title form, a version/dotted span, or a high-degree relationship neighborhood. 0.3.2 does **not** silently truncate those correctness-critical classes. Ordinary large-corpus operation is still: index cheaply, budget the ordinary pool, then run the existing constraint ranker on C.
+
+Full-scan (default retriever) does not apply `candidateLimit`. Matching documents can be Θ(N). Adaptive uses full-scan while `documentCount <= adaptive.documentThreshold` (default 1500), else indexed. Custom `{ retrieve }` objects are experimental and unbounded.
+
+C becomes fixed in `SearchEngine._expandAndFeature` after related hits are appended, then `rankCandidates` / `rankCandidatesAsync` consume that array.
 
 ## BM25
 
@@ -37,7 +60,9 @@ Useful as a **candidate retriever**. Not the final relevance algorithm. Default 
 
 ## Scaling
 
-Small full-scan catalogs can remain interactive. High-document-frequency full-scan at 10k+ candidates is unsuitable for typeahead. Pairwise ranking remains Θ(C²) in candidate count; use `indexed` / `adaptive` for large corpora.
+Small full-scan catalogs can remain interactive. High-document-frequency full-scan at 10k+ candidates is unsuitable for typeahead. Pairwise ranking remains Θ(C²) in **candidate count C**; corpus scale is a retrieval problem. Use `indexed` / `adaptive` so ordinary hits stay near `candidateLimit`. Full-scan plus pairwise ranking is not a large-C architecture.
+
+Fixed-C ranker timings: [ranking envelope (GitHub tree; not in the npm tarball)](https://github.com/Software-Land/search/blob/main/benchmarks/ranking/README.md).
 
 Full-scan ranking of a high-DF query previously exhausted heap by retaining Θ(C²) pair diagnostics. 0.3.1 no longer retains those objects, packs remaining directed edges, and uses CSR SCC traversal with generation-stamp component-edge deduplication instead of JS adjacency/`Set` overlays. Comparison time remains Θ(C²). Article-like corpora crossed the typeahead limit earlier because body/prefix hit sets explode.
 

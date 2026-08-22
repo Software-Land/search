@@ -129,6 +129,16 @@ try {
     throw new Error(`tarball must not include benchmark datasets: ${packedBenchmarks.join(", ")}`);
   }
 
+  const packedFixtures = packedRel.filter(
+    (rel) => rel.startsWith("test/") || rel.includes("fixtures/software-land")
+  );
+  if (packedFixtures.length) {
+    throw new Error(`tarball must not include test fixtures: ${packedFixtures.join(", ")}`);
+  }
+  for (const required of ["SECURITY.md", "CONTRIBUTING.md", "CHANGELOG.md"]) {
+    if (!packedRel.includes(required)) throw new Error(`packed tarball missing ${required}`);
+  }
+
   const forbidden = packedRel.filter(
     (rel) =>
       rel.includes("node_modules/") ||
