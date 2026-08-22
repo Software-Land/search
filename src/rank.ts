@@ -23,6 +23,7 @@ import {
 import { throwIfAborted } from "./cancel.js";
 import { BinaryMaxHeap, scoreThenIdBetter } from "./rankHeap.js";
 import { constraintsAreBuiltin, rankSparse, rankSparseAsync, type RankerStats } from "./rankSparse.js";
+import { constraintSignature } from "./rankSignature.js";
 import type { ConstraintDef, ConstraintGraph, FeaturedHit, FeatureVector, RankedHit } from "./types.js";
 
 let lastStats: RankerStats | null = null;
@@ -84,6 +85,101 @@ export function scoreFeatures(f: Partial<FeatureVector>) {
     (f.relationshipStrength || 0) * 0.45 +
     (f.retrievalScore || 0)
   );
+}
+
+export type RepresentativeSelectionStats = {
+  exact: boolean;
+  requestedDepth: number;
+  examined: number;
+  signatures: number;
+  retained: number;
+  maxRepresentativesPerSignature: number;
+  fallback: "none" | "custom-constraints";
+};
+
+/**
+ * Exact builtin-ranker reduction.
+ *
+ * For one constraint signature every builtin constraint compares identically
+ * against every other signature. The sparse ranker orders members of that
+ * signature by the rounded final score, then document id. Therefore a member
+ * below depth R in its signature has at least R same-signature predecessors
+ * and cannot occur in the global top R.
+ *
+ * Callers that need `constraintVsNext` for the first R results must request
+ * R + 1 representatives. Unknown/custom constraints fail closed to all
+ * candidates because their functions are not covered by constraintSignature.
+ */
+export function selectTopPerBuiltinSignature(
+  candidates: FeaturedHit[],
+  depth: number,
+  constraints: ConstraintDef[] = DEFAULT_CONSTRAINTS
+): { candidates: FeaturedHit[]; stats: RepresentativeSelectionStats } {
+  const requestedDepth = Math.max(0, Math.floor(Number(depth) || 0));
+  if (!constraintsAreBuiltin(constraints)) {
+    return {
+      candidates: candidates.slice(),
+      stats: {
+        exact: true,
+        requestedDepth,
+        examined: candidates.length,
+        signatures: candidates.length,
+        retained: candidates.length,
+        maxRepresentativesPerSignature: candidates.length ? 1 : 0,
+        fallback: "custom-constraints",
+      },
+    };
+  }
+  if (requestedDepth === 0 || candidates.length === 0) {
+    return {
+      candidates: [],
+      stats: {
+        exact: true,
+        requestedDepth,
+        examined: candidates.length,
+        signatures: candidates.length ? new Set(candidates.map((c) => constraintSignature(c.features))).size : 0,
+        retained: 0,
+        maxRepresentativesPerSignature: 0,
+        fallback: "none",
+      },
+    };
+  }
+
+  const groups = new Map<string, FeaturedHit[]>();
+  for (const candidate of candidates) {
+    const key = constraintSignature(candidate.features);
+    const scored = {
+      ...candidate,
+      score: Number(scoreFeatures(candidate.features).toFixed(6)),
+    };
+    const group = groups.get(key);
+    if (group) group.push(scored);
+    else groups.set(key, [scored]);
+  }
+
+  const retained: FeaturedHit[] = [];
+  let maxRepresentativesPerSignature = 0;
+  for (const group of groups.values()) {
+    group.sort((a, b) => {
+      if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
+      return idCmp(a, b);
+    });
+    const take = Math.min(requestedDepth, group.length);
+    maxRepresentativesPerSignature = Math.max(maxRepresentativesPerSignature, take);
+    for (let i = 0; i < take; i++) retained.push(group[i]);
+  }
+  return {
+    candidates: retained,
+    stats: {
+      exact: true,
+      requestedDepth,
+      examined: candidates.length,
+      signatures: groups.size,
+      retained: retained.length,
+      maxRepresentativesPerSignature,
+      fallback: "none",
+    },
+  };
 }
 
 function idCmp(a: FeaturedHit, b: FeaturedHit) {
