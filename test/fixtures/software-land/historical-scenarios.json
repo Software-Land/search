@@ -1,0 +1,5482 @@
+{
+  "kind": "historical-provenance",
+  "notes": [
+    "Full historical scenario inventory. Non-executable.",
+    "disposition explains why a row is a contract, a regression, or omitted.",
+    "v1.expectedTop is provenance only."
+  ],
+  "counts": {
+    "rows": 215,
+    "omitted-covered-by-v2-contract": 16,
+    "contract-a-intent": 82,
+    "regression-b-intent": 60,
+    "omitted-empty-intent-observational-v1": 44,
+    "omitted-duplicate-b-intent": 5,
+    "omitted-duplicate-a-intent": 6,
+    "omitted-b-intent-not-current-v2": 1,
+    "omitted-obsolete": 1
+  },
+  "rows": [
+    {
+      "index": 0,
+      "query": "library",
+      "classification": "B",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "intent": {
+        "requiredPrimary": [
+          "Framework vs Library vs Package"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Framework vs Library vs Package",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Framework vs Library vs Package",
+          "React Component Libraries"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 1,
+      "query": "libraries",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": [
+          {
+            "title": "React Component Libraries",
+            "topN": 5
+          }
+        ]
+      },
+      "v1": {
+        "expectedTop": [
+          "Framework vs Library vs Package",
+          "React Component Libraries"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 2,
+      "query": "compute",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Edge Computing"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Edge Computing",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Edge Computing"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 3,
+      "query": "testing",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Testing in Software Engineering"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Testing in Software Engineering",
+            "topN": 3
+          }
+        ],
+        "requiredAnyWithin": [
+          {
+            "title": "Load vs Stress Testing",
+            "topN": 5
+          }
+        ]
+      },
+      "v1": {
+        "expectedTop": [
+          "Testing in Software Engineering",
+          "Load vs Stress Testing"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 4,
+      "query": "wha",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "titlePrefix": "What",
+        "topN": 10,
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "titlePrefix": "What",
+        "topN": 10
+      }
+    },
+    {
+      "index": 5,
+      "query": "continuous d",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "CI/CD"
+        ],
+        "requiredWithin": [
+          {
+            "title": "CI/CD",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "CI/CD"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 6,
+      "query": "zer",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Zero-Trust Security"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Zero-Trust Security",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Zero-Trust Security"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 7,
+      "query": "hypertext",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "requiredWithin": [
+          {
+            "title": "TLS 1.2 Vulnerability",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability",
+          "gRPC vs REST",
+          "Request Response",
+          "Vite React",
+          "React Authentication",
+          "REST API vs GraphQL",
+          "TCP vs UDP"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 8,
+      "query": "hypertext tran",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TCP vs UDP",
+          "gRPC vs REST",
+          "TLS 1.2 Vulnerability",
+          "Vite React",
+          "Request Response",
+          "REST API vs GraphQL",
+          "React Authentication"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 9,
+      "query": "hypertext transfer",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TCP vs UDP",
+          "gRPC vs REST",
+          "TLS 1.2 Vulnerability",
+          "Vite React",
+          "Request Response",
+          "REST API vs GraphQL",
+          "React Authentication"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 10,
+      "query": "hypertext transfer protocol",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TCP vs UDP",
+          "gRPC vs REST",
+          "Vite React",
+          "REST API vs GraphQL",
+          "TLS 1.2 Vulnerability",
+          "React Authentication",
+          "Request Response"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 11,
+      "query": "http",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TCP vs UDP",
+          "gRPC vs REST",
+          "Vite React",
+          "REST API vs GraphQL",
+          "TLS 1.2 Vulnerability",
+          "React Authentication",
+          "Request Response"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 12,
+      "query": "bfs",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "InOrder vs PreOrder vs PostOrder",
+          "A-Star Pathfinding",
+          "Maximum Flow Algorithm"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 13,
+      "query": "breadth first search",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "InOrder vs PreOrder vs PostOrder",
+          "A-Star Pathfinding",
+          "Maximum Flow Algorithm"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 14,
+      "query": "depth first search",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "DFS Backtracking"
+        ],
+        "requiredWithin": [
+          {
+            "title": "DFS Backtracking",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "DFS Backtracking",
+          "InOrder vs PreOrder vs PostOrder",
+          "A-Star Pathfinding",
+          "What is Recursion?",
+          "Maximum Flow Algorithm",
+          "Topological Sort"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "index": 15,
+      "query": "dfs back",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "DFS Backtracking"
+        ],
+        "requiredWithin": [
+          {
+            "title": "DFS Backtracking",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "DFS Backtracking",
+          "What is Recursion?"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 16,
+      "query": "dfs backtr",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "DFS Backtracking"
+        ],
+        "requiredWithin": [
+          {
+            "title": "DFS Backtracking",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "DFS Backtracking",
+          "What is Recursion?"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 17,
+      "query": "asyncronou",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Asynchronous vs Synchronous"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Asynchronous vs Synchronous",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Asynchronous vs Synchronous"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 18,
+      "query": "input output",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What is IO?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is IO?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is IO?"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 19,
+      "query": "io",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What is IO?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is IO?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is IO?"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 20,
+      "query": "iot",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What is IoT?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is IoT?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is IoT?"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 21,
+      "query": "what is iot",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What is IoT?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is IoT?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is IoT?"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 22,
+      "query": "what is cod",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What is Code?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is Code?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is Code?"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 23,
+      "query": "what is ci",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "CI/CD"
+        ],
+        "requiredWithin": [
+          {
+            "title": "CI/CD",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "CI/CD"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 24,
+      "query": "transport layer security",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "requiredWithin": [
+          {
+            "title": "TLS 1.2 Vulnerability",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability",
+          "Symmetric vs Asymmetric Encryption",
+          "What is VPN?"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 25,
+      "query": "tls",
+      "classification": "B",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "intent": {
+        "requiredPrimary": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "requiredWithin": [
+          {
+            "title": "TLS 1.2 Vulnerability",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability",
+          "Symmetric vs Asymmetric Encryption",
+          "What is VPN?"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 26,
+      "query": "rbac",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "RBAC (Role Based Access Control)"
+        ],
+        "requiredWithin": [
+          {
+            "title": "RBAC (Role Based Access Control)",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "RBAC (Role Based Access Control)",
+          "CockroachDB vs Postgres",
+          "React Authentication",
+          "Authorization Middleware"
+        ],
+        "topN": 8
+      }
+    },
+    {
+      "index": 27,
+      "query": "role based access control",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "RBAC (Role Based Access Control)"
+        ],
+        "requiredWithin": [
+          {
+            "title": "RBAC (Role Based Access Control)",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "RBAC (Role Based Access Control)",
+          "CockroachDB vs Postgres",
+          "React Authentication",
+          "Authorization Middleware"
+        ],
+        "topN": 8
+      }
+    },
+    {
+      "index": 28,
+      "query": "what is an app sec",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec",
+          "Authorization Middleware",
+          "SAML vs OAuth",
+          "React Authentication",
+          "RBAC (Role Based Access Control)",
+          "Zero-Trust Security"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 29,
+      "query": "applicationsecurity",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec",
+          "Authorization Middleware",
+          "SAML vs OAuth",
+          "RBAC (Role Based Access Control)",
+          "Bearer Token",
+          "React Authentication",
+          "TLS 1.2 Vulnerability",
+          "Zero-Trust Security"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 30,
+      "query": "applicationsec",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec",
+          "Authorization Middleware",
+          "SAML vs OAuth",
+          "RBAC (Role Based Access Control)",
+          "Bearer Token",
+          "React Authentication",
+          "TLS 1.2 Vulnerability",
+          "Zero-Trust Security"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 31,
+      "query": "appsecurity",
+      "classification": "B",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 3
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec",
+          "Authorization Middleware",
+          "SAML vs OAuth",
+          "RBAC (Role Based Access Control)",
+          "Bearer Token",
+          "React Authentication",
+          "TLS 1.2 Vulnerability",
+          "Zero-Trust Security"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 32,
+      "query": "appsec",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 3
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec",
+          "Authorization Middleware",
+          "SAML vs OAuth",
+          "RBAC (Role Based Access Control)",
+          "Bearer Token",
+          "React Authentication",
+          "TLS 1.2 Vulnerability",
+          "Zero-Trust Security"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 33,
+      "query": "appsec",
+      "classification": "B",
+      "disposition": "omitted-duplicate-b-intent",
+      "note": "Duplicate of a B-class independent intent already in regression-scenarios.json.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 3
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec",
+          "Zero-Trust Security"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 34,
+      "query": "app sec",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec",
+          "Authorization Middleware",
+          "SAML vs OAuth",
+          "RBAC (Role Based Access Control)",
+          "Bearer Token",
+          "React Authentication",
+          "TLS 1.2 Vulnerability",
+          "Zero-Trust Security"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 35,
+      "query": "app sec",
+      "classification": "B",
+      "disposition": "omitted-duplicate-b-intent",
+      "note": "Duplicate of a B-class independent intent already in regression-scenarios.json.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec",
+          "Zero-Trust Security"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 36,
+      "query": "what is an applicatio security",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 3
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 37,
+      "query": "what is an ap",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What is an API?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is an API?",
+            "topN": 3
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?",
+          "App Sec"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 38,
+      "query": "what is an ap",
+      "classification": "A",
+      "disposition": "omitted-duplicate-a-intent",
+      "note": "Duplicate of an A-class independent intent already in v2-contracts.json.",
+      "intent": {
+        "requiredPrimary": [
+          "What is an API?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is an API?",
+            "topN": 3
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?",
+          "App Sec"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 39,
+      "query": "app sec",
+      "classification": "B",
+      "disposition": "omitted-duplicate-b-intent",
+      "note": "Duplicate of a B-class independent intent already in regression-scenarios.json.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec",
+          "Authorization Middleware",
+          "TLS 1.2 Vulnerability",
+          "Zero-Trust Security",
+          "React Authentication",
+          "Bearer Token",
+          "SAML vs OAuth"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 40,
+      "query": "what is an applica",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "What is an Interface?",
+          "Working with APIs"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 41,
+      "query": "what is an appl",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "What is an Interface?",
+          "Working with APIs"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 42,
+      "query": "what is an appli",
+      "classification": "B",
+      "disposition": "omitted-b-intent-not-current-v2",
+      "note": "Recorded B intent is not current fixture V2 behavior. Not mined into regression.",
+      "intent": {
+        "requiredPrimary": [
+          "What is an API?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is an API?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "What is an Interface?",
+          "Working with APIs"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 43,
+      "query": "what is an applic",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "What is an Interface?",
+          "Working with APIs"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 44,
+      "query": "applic",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "What is an Interface?",
+          "Working with APIs"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 45,
+      "query": "app",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 46,
+      "query": "appl",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 47,
+      "query": "application se",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec",
+          "Zero-Trust Security"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 48,
+      "query": "aplication s3curity",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 49,
+      "query": "aPplicationsecurity",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 50,
+      "query": "aplicationsecurity",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 51,
+      "query": "aplicationsecurity",
+      "classification": "B",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec",
+          "Zero-Trust Security"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 52,
+      "query": "aplication s3curity",
+      "classification": "B",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec",
+          "Zero-Trust Security",
+          "TLS 1.2 Vulnerability",
+          "React Authentication",
+          "Bearer Token",
+          "SAML vs OAuth"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 53,
+      "query": "application security",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec",
+          "Zero-Trust Security",
+          "TLS 1.2 Vulnerability",
+          "React Authentication",
+          "Bearer Token",
+          "SAML vs OAuth"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 54,
+      "query": "object oriented prog",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": [
+          {
+            "title": "What is OOP (Object-Oriented Programming)?",
+            "topN": 5
+          }
+        ]
+      },
+      "v1": {
+        "expectedTop": [
+          "OOP vs Functional",
+          "What is OOP (Object-Oriented Programming)?"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 55,
+      "query": "oop",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What is OOP (Object-Oriented Programming)?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is OOP (Object-Oriented Programming)?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is OOP (Object-Oriented Programming)?"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 56,
+      "query": "what is an a",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What is an API?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is an API?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 57,
+      "query": "programming",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Which Programming Language to Start?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Which Programming Language to Start?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Which Programming Language to Start?"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 58,
+      "query": "programming",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What is OOP (Object-Oriented Programming)?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is OOP (Object-Oriented Programming)?",
+            "topN": 3
+          }
+        ],
+        "requiredAnyWithin": [
+          {
+            "title": "Which Programming Language to Start?",
+            "topN": 5
+          },
+          {
+            "title": "Dynamic Programming Matrix",
+            "topN": 5
+          }
+        ]
+      },
+      "v1": {
+        "expectedTop": [
+          "What is OOP (Object-Oriented Programming)?",
+          "Which Programming Language to Start?",
+          "Dynamic Programming Matrix"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 59,
+      "query": "programming",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What is OOP (Object-Oriented Programming)?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is OOP (Object-Oriented Programming)?",
+            "topN": 3
+          }
+        ],
+        "requiredAnyWithin": [
+          {
+            "title": "Dynamic Programming Matrix",
+            "topN": 5
+          }
+        ]
+      },
+      "v1": {
+        "expectedTop": [
+          "What is OOP (Object-Oriented Programming)?",
+          "Dynamic Programming Matrix"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 60,
+      "query": "what are apis",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "Working with APIs"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Working with APIs",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Working with APIs",
+          "What is an API?",
+          "REST API vs GraphQL",
+          "What is an Interface?",
+          "Class vs Interface"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 61,
+      "query": "interface",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is an Interface?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is an Interface?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": [
+          {
+            "title": "Class vs Interface",
+            "topN": 5
+          }
+        ]
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an Interface?",
+          "Class vs Interface",
+          "What is an API?",
+          "Shadcn UI React Components",
+          "REST API vs GraphQL"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 62,
+      "query": "what is dev",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What is DevOps?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is DevOps?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is DevOps?"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 63,
+      "query": "what is c",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What is Code?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is Code?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is Code?"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 64,
+      "query": "what is a c",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What is a Container?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is a Container?",
+            "topN": 3
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is a Container?"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 65,
+      "query": "what is a co",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What is a Container?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is a Container?",
+            "topN": 3
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is a Container?"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 66,
+      "query": "what is c",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What is Clean Code?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is Clean Code?",
+            "topN": 3
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is Clean Code?"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 67,
+      "query": "internet of th",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What is IoT?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is IoT?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is IoT?"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 68,
+      "query": "application programming",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What is an API?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is an API?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 69,
+      "query": "application programming",
+      "classification": "A",
+      "disposition": "omitted-duplicate-a-intent",
+      "note": "Duplicate of an A-class independent intent already in v2-contracts.json.",
+      "intent": {
+        "requiredPrimary": [
+          "What is an API?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is an API?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 70,
+      "query": "machine l",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Coursera Review",
+          "Minmax Tree"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 71,
+      "query": "machine le",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Coursera Review",
+          "Minmax Tree"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 72,
+      "query": "machine lea",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Coursera Review",
+          "Minmax Tree"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 73,
+      "query": "machine lear",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Coursera Review",
+          "Minmax Tree"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 74,
+      "query": "machine learn",
+      "classification": "B",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "intent": {
+        "requiredPrimary": [
+          "Linear vs Logistic Regression"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Linear vs Logistic Regression",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Coursera Review",
+          "Minmax Tree"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 75,
+      "query": "machine learning",
+      "classification": "B",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "intent": {
+        "requiredPrimary": [
+          "Linear vs Logistic Regression"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Linear vs Logistic Regression",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Coursera Review",
+          "Minmax Tree"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 76,
+      "query": "maachine leaarning",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "Linear vs Logistic Regression"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Linear vs Logistic Regression",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
+          "Coursera Review",
+          "Minmax Tree"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 77,
+      "query": "what is machine learning",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "Linear vs Logistic Regression"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Linear vs Logistic Regression",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
+          "Coursera Review",
+          "Minmax Tree"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 78,
+      "query": "application programming",
+      "classification": "B",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "intent": {
+        "requiredPrimary": [
+          "What is an API?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is an API?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "What is an Interface?"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 79,
+      "query": "object oriented programming vs functional",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": [
+          {
+            "title": "What is OOP (Object-Oriented Programming)?",
+            "topN": 5
+          }
+        ]
+      },
+      "v1": {
+        "expectedTop": [
+          "OOP vs Functional",
+          "What is OOP (Object-Oriented Programming)?"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 80,
+      "query": "object oriented",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": [
+          {
+            "title": "What is OOP (Object-Oriented Programming)?",
+            "topN": 5
+          }
+        ]
+      },
+      "v1": {
+        "expectedTop": [
+          "OOP vs Functional",
+          "What is OOP (Object-Oriented Programming)?"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 81,
+      "query": "object oriented",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "OOP vs Functional",
+          "Object"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 82,
+      "query": "dynamicprogramming",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "Dynamic Programming Matrix"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Dynamic Programming Matrix",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Dynamic Programming Matrix",
+          "What is Recursion?"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 83,
+      "query": "dynamic programming",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "Dynamic Programming Matrix"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Dynamic Programming Matrix",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Dynamic Programming Matrix",
+          "What is Recursion?"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 84,
+      "query": "dp",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "Dynamic Programming Matrix"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Dynamic Programming Matrix",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Dynamic Programming Matrix",
+          "What is Recursion?"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 85,
+      "query": "applicationprogramminginterface",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is an API?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is an API?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "What is an Interface?"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 86,
+      "query": "shadcnuireactcomponents",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Shadcn UI React Components"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Shadcn UI React Components",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Shadcn UI React Components"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 87,
+      "query": "ai",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Staying Ahead of the AI Revolution"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Staying Ahead of the AI Revolution",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Staying Ahead of the AI Revolution"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 88,
+      "query": "asdfasdfcontainerasdfadfs",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is Docker?",
+          "What is a Container?"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 89,
+      "query": "hypertext transfer protocol secure",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "requiredWithin": [
+          {
+            "title": "TLS 1.2 Vulnerability",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability",
+          "TCP vs UDP",
+          "Bearer Token",
+          "gRPC vs REST",
+          "React Authentication",
+          "Vite React"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 90,
+      "query": "https",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability",
+          "TCP vs UDP",
+          "Bearer Token",
+          "gRPC vs REST",
+          "React Authentication",
+          "Vite React"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 91,
+      "query": "asdfsafhttp",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability",
+          "REST API vs GraphQL",
+          "gRPC vs REST",
+          "TCP vs UDP"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 92,
+      "query": "devops",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is DevOps?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is DevOps?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is DevOps?",
+          "CI/CD"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 93,
+      "query": "dev ops",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is DevOps?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is DevOps?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is DevOps?",
+          "CI/CD"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 94,
+      "query": "dev op",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is DevOps?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is DevOps?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is DevOps?",
+          "CI/CD"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 95,
+      "query": "devop",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is DevOps?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is DevOps?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is DevOps?",
+          "CI/CD"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 96,
+      "query": "quality ass",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Load vs Stress Testing",
+          "Testing in Software Engineering"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 97,
+      "query": "service mseh",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is a Service Mesh?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is a Service Mesh?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is a Service Mesh?",
+          "What is Kubernetes?"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 98,
+      "query": "next",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Shadcn UI React Components",
+          "React Authentication",
+          "React Server Components",
+          "Vite React",
+          "React Design Systems",
+          "React Suspense",
+          "React Data Fetching"
+        ],
+        "topN": 7
+      }
+    },
+    {
+      "index": 99,
+      "query": "nextjs",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Shadcn UI React Components",
+          "React Authentication",
+          "React Server Components",
+          "Vite React",
+          "React Design Systems",
+          "React Suspense",
+          "React Data Fetching"
+        ],
+        "topN": 7
+      }
+    },
+    {
+      "index": 100,
+      "query": "next js",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Shadcn UI React Components",
+          "React Authentication",
+          "React Server Components",
+          "Vite React",
+          "React Design Systems",
+          "React Suspense",
+          "React Data Fetching"
+        ],
+        "topN": 7
+      }
+    },
+    {
+      "index": 101,
+      "query": "app programming interface",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is an API?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is an API?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "What is an Interface?",
+          "Class vs Interface"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 102,
+      "query": "app security",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "App Sec"
+        ],
+        "requiredWithin": [
+          {
+            "title": "App Sec",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "App Sec",
+          "SAML vs OAuth",
+          "Bearer Token",
+          "TLS 1.2 Vulnerability",
+          "Zero-Trust Security",
+          "RBAC (Role Based Access Control)",
+          "React Authentication",
+          "Authorization Middleware"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 103,
+      "query": "application orogramming interface",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is an API?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is an API?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "What is an Interface?",
+          "Working with APIs",
+          "Class vs Interface"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 104,
+      "query": "application programming interface",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is an API?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is an API?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "What is an Interface?",
+          "Working with APIs",
+          "Class vs Interface"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 105,
+      "query": "applicationprogramming interface",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "What is an Interface?",
+          "Working with APIs",
+          "Class vs Interface"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 106,
+      "query": "applicationprogramminginterface",
+      "classification": "B",
+      "disposition": "omitted-duplicate-b-intent",
+      "note": "Duplicate of a B-class independent intent already in regression-scenarios.json.",
+      "intent": {
+        "requiredPrimary": [
+          "What is an API?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is an API?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "What is an Interface?",
+          "Working with APIs",
+          "Class vs Interface"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 107,
+      "query": "application programminginterface",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "What is an Interface?",
+          "Working with APIs",
+          "Class vs Interface"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 108,
+      "query": "grpc",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": [
+          {
+            "title": "gRPC vs REST",
+            "topN": 5
+          }
+        ]
+      },
+      "v1": {
+        "expectedTop": [
+          "Protobuf Encoding",
+          "gRPC vs REST"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 109,
+      "query": "grpc remote procedure call",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Protobuf Encoding",
+          "gRPC vs REST"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 110,
+      "query": "grpc vs kafka",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "gRPC vs Kafka"
+        ],
+        "requiredWithin": [
+          {
+            "title": "gRPC vs Kafka",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "gRPC vs Kafka",
+          "gRPC Interceptor",
+          "gRPC vs REST"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 111,
+      "query": "rpc vs kafka",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "gRPC vs Kafka"
+        ],
+        "requiredWithin": [
+          {
+            "title": "gRPC vs Kafka",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "gRPC vs Kafka",
+          "gRPC Interceptor",
+          "gRPC vs REST"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 112,
+      "query": "vpn",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is VPN?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is VPN?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is VPN?",
+          "TLS 1.2 Vulnerability",
+          "Symmetric vs Asymmetric Encryption"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 113,
+      "query": "vpns",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is VPN?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is VPN?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is VPN?",
+          "TLS 1.2 Vulnerability",
+          "Symmetric vs Asymmetric Encryption"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 114,
+      "query": "virtual private network",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is VPN?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is VPN?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is VPN?",
+          "TLS 1.2 Vulnerability",
+          "Symmetric vs Asymmetric Encryption"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 115,
+      "query": "open",
+      "classification": "A",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "SAML vs OAuth"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 116,
+      "query": "what is an ap",
+      "classification": "A",
+      "disposition": "omitted-duplicate-a-intent",
+      "note": "Duplicate of an A-class independent intent already in v2-contracts.json.",
+      "intent": {
+        "requiredPrimary": [
+          "What is an API?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is an API?",
+            "topN": 3
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is an API?"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 117,
+      "query": "dfs",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "DFS Backtracking"
+        ],
+        "requiredWithin": [
+          {
+            "title": "DFS Backtracking",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "DFS Backtracking",
+          "InOrder vs PreOrder vs PostOrder",
+          "A-Star Pathfinding",
+          "What is Recursion?",
+          "Maximum Flow Algorithm",
+          "Topological Sort"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "index": 118,
+      "query": "astar",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "A-Star Pathfinding"
+        ],
+        "requiredWithin": [
+          {
+            "title": "A-Star Pathfinding",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "A-Star Pathfinding"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 119,
+      "query": "a*",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "A-Star Pathfinding"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 120,
+      "query": "build time",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "Build Time"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Build Time",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Build Time",
+          "Dependency Graph",
+          "CI/CD",
+          "Protobuf Encoding",
+          "gRPC vs REST"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 121,
+      "query": "protobuf",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Protobuf Encoding"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Protobuf Encoding",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Protobuf Encoding"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 122,
+      "query": "national institute of standards and technology",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 123,
+      "query": "national institute of stan",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 124,
+      "query": "national institute of standards and tec",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 125,
+      "query": "national institute of standard",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 126,
+      "query": "institute of standards and technology",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 127,
+      "query": "institute standards",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 128,
+      "query": "institute",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "Udacity Review"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Udacity Review",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Udacity Review",
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 129,
+      "query": "recursion",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is Recursion?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is Recursion?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is Recursion?",
+          "DFS Backtracking",
+          "React Performance Optimization",
+          "Dynamic Programming Matrix",
+          "InOrder vs PreOrder vs PostOrder"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 130,
+      "query": "recursion",
+      "classification": "B",
+      "disposition": "omitted-duplicate-b-intent",
+      "note": "Duplicate of a B-class independent intent already in regression-scenarios.json.",
+      "intent": {
+        "requiredPrimary": [
+          "What is Recursion?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is Recursion?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is Recursion?",
+          "DFS Backtracking",
+          "InOrder vs PreOrder vs PostOrder"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 131,
+      "query": "recursing",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is Recursion?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is Recursion?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is Recursion?",
+          "DFS Backtracking",
+          "React Performance Optimization",
+          "Dynamic Programming Matrix",
+          "InOrder vs PreOrder vs PostOrder"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 132,
+      "query": "recursed",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is Recursion?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is Recursion?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is Recursion?",
+          "DFS Backtracking",
+          "React Performance Optimization",
+          "Dynamic Programming Matrix",
+          "InOrder vs PreOrder vs PostOrder"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 133,
+      "query": "recursive",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is Recursion?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is Recursion?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is Recursion?",
+          "DFS Backtracking",
+          "React Performance Optimization",
+          "Dynamic Programming Matrix",
+          "InOrder vs PreOrder vs PostOrder"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 134,
+      "query": "shard",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "Sharding"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Sharding",
+            "topN": 3
+          }
+        ],
+        "requiredAnyWithin": [
+          {
+            "title": "Hot Shards",
+            "topN": 5
+          }
+        ]
+      },
+      "v1": {
+        "expectedTop": [
+          "Sharding",
+          "Hot Shards",
+          "CockroachDB vs Postgres",
+          "SQL vs NoSQL",
+          "gRPC vs Kafka"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "index": 135,
+      "query": "shardin",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "Sharding"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Sharding",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Sharding",
+          "Hot Shards",
+          "CockroachDB vs Postgres",
+          "SQL vs NoSQL",
+          "gRPC vs Kafka"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "index": 136,
+      "query": "sharde",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Sharding",
+          "Hot Shards",
+          "CockroachDB vs Postgres",
+          "SQL vs NoSQL",
+          "gRPC vs Kafka"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "index": 137,
+      "query": "shards",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Hot Shards"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Hot Shards",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Hot Shards"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 138,
+      "query": "shardsss",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Hot Shards"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Hot Shards",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Hot Shards"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 139,
+      "query": "sharding",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Sharding"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Sharding",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Sharding"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 140,
+      "query": "sharde",
+      "classification": "C",
+      "disposition": "omitted-obsolete",
+      "note": "Hot Shards #1 is not current V1 or V2 behavior for sharde. Live V1 ranks Sharding first. No supported engine is expected to retain this rank.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Hot Shards",
+          "Sharding"
+        ],
+        "topN": 2
+      },
+      "obsoleteReason": "Hot Shards #1 is not current V1 or V2 behavior for sharde. Live V1 ranks Sharding first. No supported engine is expected to retain this rank."
+    },
+    {
+      "index": 141,
+      "query": "recursiv",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is Recursion?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is Recursion?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is Recursion?",
+          "DFS Backtracking",
+          "React Performance Optimization",
+          "Dynamic Programming Matrix",
+          "InOrder vs PreOrder vs PostOrder"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 142,
+      "query": "recurssing",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is Recursion?",
+          "DFS Backtracking",
+          "React Performance Optimization",
+          "Dynamic Programming Matrix",
+          "InOrder vs PreOrder vs PostOrder"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 143,
+      "query": "authent",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "React Authentication"
+        ],
+        "requiredWithin": [
+          {
+            "title": "React Authentication",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "React Authentication",
+          "TLS 1.2 Vulnerability",
+          "Zero-Trust Security",
+          "SAML vs OAuth"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 144,
+      "query": "authentication",
+      "classification": "B",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "intent": {
+        "requiredPrimary": [
+          "React Authentication"
+        ],
+        "requiredWithin": [
+          {
+            "title": "React Authentication",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "React Authentication",
+          "TLS 1.2 Vulnerability",
+          "Zero-Trust Security",
+          "SAML vs OAuth"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 145,
+      "query": "auth",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "React Authentication"
+        ],
+        "requiredWithin": [
+          {
+            "title": "React Authentication",
+            "topN": 3
+          }
+        ],
+        "requiredAnyWithin": [
+          {
+            "title": "Authorization Middleware",
+            "topN": 5
+          }
+        ]
+      },
+      "v1": {
+        "expectedTop": [
+          "React Authentication",
+          "Authorization Middleware"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 146,
+      "query": "author",
+      "classification": "B",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": [
+          {
+            "title": "Authorization Middleware",
+            "topN": 5
+          }
+        ]
+      },
+      "v1": {
+        "expectedTop": [
+          "React Authentication",
+          "Authorization Middleware"
+        ],
+        "topN": 7
+      }
+    },
+    {
+      "index": 147,
+      "query": "author",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Authorization Middleware"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Authorization Middleware",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Authorization Middleware"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 148,
+      "query": "authen",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "React Authentication"
+        ],
+        "requiredWithin": [
+          {
+            "title": "React Authentication",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "React Authentication"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 149,
+      "query": "interceptor",
+      "classification": "B",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "intent": {
+        "requiredPrimary": [
+          "gRPC Interceptor"
+        ],
+        "requiredWithin": [
+          {
+            "title": "gRPC Interceptor",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "gRPC Interceptor",
+          "Authorization Middleware"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 150,
+      "query": "interceptor",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "gRPC Interceptor"
+        ],
+        "requiredWithin": [
+          {
+            "title": "gRPC Interceptor",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "gRPC Interceptor"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 151,
+      "query": "zerk trust security",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Zero-Trust Security"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Zero-Trust Security",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Zero-Trust Security"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 152,
+      "query": "internetofthings",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is IoT?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is IoT?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is IoT?",
+          "Edge Computing",
+          "Event Driven Architecture",
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 153,
+      "query": "internet of things",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is IoT?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is IoT?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is IoT?",
+          "Edge Computing",
+          "Event Driven Architecture",
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 154,
+      "query": "iot",
+      "classification": "B",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "intent": {
+        "requiredPrimary": [
+          "What is IoT?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is IoT?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is IoT?",
+          "Edge Computing",
+          "Event Driven Architecture",
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 155,
+      "query": "platform as a service",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is Kubernetes?",
+          "What is the Cloud?"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 156,
+      "query": "paas",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is Kubernetes?",
+          "What is the Cloud?"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 157,
+      "query": "topological sorti",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Topological Sort"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Topological Sort",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Topological Sort"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 158,
+      "query": "sorting",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Python Custom Sorting"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Python Custom Sorting",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Python Custom Sorting"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 159,
+      "query": "sorti",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Python Custom Sorting"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Python Custom Sorting",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Python Custom Sorting"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 160,
+      "query": "sorts",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Topological Sort"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Topological Sort",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Topological Sort"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 161,
+      "query": "sort",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Topological Sort"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Topological Sort",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Topological Sort"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 162,
+      "query": "authenticated",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "React Authentication"
+        ],
+        "requiredWithin": [
+          {
+            "title": "React Authentication",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "React Authentication"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 163,
+      "query": "authentication",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "React Authentication"
+        ],
+        "requiredWithin": [
+          {
+            "title": "React Authentication",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "React Authentication"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 164,
+      "query": "authenticating",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "React Authentication"
+        ],
+        "requiredWithin": [
+          {
+            "title": "React Authentication",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "React Authentication"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 165,
+      "query": "authorizing",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "Authorization Middleware"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Authorization Middleware",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Authorization Middleware",
+          "React Authentication",
+          "Zero-Trust Security",
+          "Bearer Token"
+        ],
+        "topN": 8
+      }
+    },
+    {
+      "index": 166,
+      "query": "authorization",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "Authorization Middleware"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Authorization Middleware",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Authorization Middleware",
+          "React Authentication",
+          "Zero-Trust Security",
+          "Bearer Token"
+        ],
+        "topN": 8
+      }
+    },
+    {
+      "index": 167,
+      "query": "authorized",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "Authorization Middleware"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Authorization Middleware",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Authorization Middleware",
+          "React Authentication",
+          "Zero-Trust Security",
+          "Bearer Token"
+        ],
+        "topN": 8
+      }
+    },
+    {
+      "index": 168,
+      "query": "authorizes",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "Authorization Middleware"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Authorization Middleware",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Authorization Middleware",
+          "React Authentication",
+          "Zero-Trust Security",
+          "Bearer Token"
+        ],
+        "topN": 8
+      }
+    },
+    {
+      "index": 169,
+      "query": "authoriz",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "Authorization Middleware"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Authorization Middleware",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Authorization Middleware",
+          "React Authentication",
+          "Zero-Trust Security",
+          "Bearer Token"
+        ],
+        "topN": 8
+      }
+    },
+    {
+      "index": 170,
+      "query": "intercept",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "gRPC Interceptor"
+        ],
+        "requiredWithin": [
+          {
+            "title": "gRPC Interceptor",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "gRPC Interceptor"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 171,
+      "query": "intercepting",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "gRPC Interceptor"
+        ],
+        "requiredWithin": [
+          {
+            "title": "gRPC Interceptor",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "gRPC Interceptor"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 172,
+      "query": "intercepted",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "gRPC Interceptor"
+        ],
+        "requiredWithin": [
+          {
+            "title": "gRPC Interceptor",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "gRPC Interceptor"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 173,
+      "query": "sort recurses",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Dynamic Programming Matrix",
+          "React Performance Optimization",
+          "Topological Sort",
+          "What is Recursion?"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 174,
+      "query": "sort recursion",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Dynamic Programming Matrix",
+          "React Performance Optimization",
+          "Topological Sort",
+          "What is Recursion?"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 175,
+      "query": "sort recursing",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Dynamic Programming Matrix",
+          "React Performance Optimization",
+          "Topological Sort",
+          "What is Recursion?"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 176,
+      "query": "sort recurses",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Dynamic Programming Matrix"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 177,
+      "query": "sort recursing",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Dynamic Programming Matrix"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 178,
+      "query": "sort recursion",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Dynamic Programming Matrix"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 179,
+      "query": "object",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Object"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Object",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Object"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 180,
+      "query": "developme operations",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is DevOps?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is DevOps?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is DevOps?",
+          "CI/CD",
+          "Build Time"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 181,
+      "query": "development operations",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What is DevOps?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What is DevOps?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What is DevOps?",
+          "CI/CD",
+          "Build Time"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 182,
+      "query": "authenticat",
+      "classification": "B",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "intent": {
+        "requiredPrimary": [
+          "React Authentication"
+        ],
+        "requiredWithin": [
+          {
+            "title": "React Authentication",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "React Authentication",
+          "Zero-Trust Security",
+          "Authorization Middleware",
+          "Bearer Token",
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 183,
+      "query": "authenticated",
+      "classification": "B",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "intent": {
+        "requiredPrimary": [
+          "React Authentication"
+        ],
+        "requiredWithin": [
+          {
+            "title": "React Authentication",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "React Authentication",
+          "Zero-Trust Security",
+          "Authorization Middleware",
+          "Bearer Token",
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 184,
+      "query": "authenticating",
+      "classification": "B",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "intent": {
+        "requiredPrimary": [
+          "React Authentication"
+        ],
+        "requiredWithin": [
+          {
+            "title": "React Authentication",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "React Authentication",
+          "Zero-Trust Security",
+          "Authorization Middleware",
+          "Bearer Token",
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 185,
+      "query": "authentication",
+      "classification": "B",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "intent": {
+        "requiredPrimary": [
+          "React Authentication"
+        ],
+        "requiredWithin": [
+          {
+            "title": "React Authentication",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "React Authentication",
+          "Zero-Trust Security",
+          "Authorization Middleware",
+          "Bearer Token",
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 186,
+      "query": "authenticat",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "React Authentication"
+        ],
+        "requiredWithin": [
+          {
+            "title": "React Authentication",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "React Authentication"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 187,
+      "query": "authenticated",
+      "classification": "A",
+      "disposition": "omitted-duplicate-a-intent",
+      "note": "Duplicate of an A-class independent intent already in v2-contracts.json.",
+      "intent": {
+        "requiredPrimary": [
+          "React Authentication"
+        ],
+        "requiredWithin": [
+          {
+            "title": "React Authentication",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "React Authentication"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 188,
+      "query": "authenticating",
+      "classification": "A",
+      "disposition": "omitted-duplicate-a-intent",
+      "note": "Duplicate of an A-class independent intent already in v2-contracts.json.",
+      "intent": {
+        "requiredPrimary": [
+          "React Authentication"
+        ],
+        "requiredWithin": [
+          {
+            "title": "React Authentication",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "React Authentication"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 189,
+      "query": "authentication",
+      "classification": "A",
+      "disposition": "omitted-duplicate-a-intent",
+      "note": "Duplicate of an A-class independent intent already in v2-contracts.json.",
+      "intent": {
+        "requiredPrimary": [
+          "React Authentication"
+        ],
+        "requiredWithin": [
+          {
+            "title": "React Authentication",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "React Authentication"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 190,
+      "query": "rate limiting",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Rate Limiting"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Rate Limiting",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Rate Limiting"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 191,
+      "query": "rate limit",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Rate Limiting"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Rate Limiting",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Rate Limiting"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 192,
+      "query": "algorithmm",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "Raft Algorithm"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Raft Algorithm",
+            "topN": 3
+          }
+        ],
+        "requiredAnyWithin": [
+          {
+            "title": "Maximum Flow Algorithm",
+            "topN": 5
+          }
+        ]
+      },
+      "v1": {
+        "expectedTop": [
+          "Raft Algorithm",
+          "Maximum Flow Algorithm",
+          "Rate Limiting Algorithms"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 193,
+      "query": "algorithms",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Rate Limiting Algorithms"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Rate Limiting Algorithms",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Rate Limiting Algorithms"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 194,
+      "query": "algorithmsss",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Rate Limiting Algorithms"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Rate Limiting Algorithms",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Rate Limiting Algorithms"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 195,
+      "query": "distributed s",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "What are Distributed Systems?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What are Distributed Systems?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": [
+          {
+            "title": "Distributed Cloud",
+            "topN": 5
+          }
+        ]
+      },
+      "v1": {
+        "expectedTop": [
+          "What are Distributed Systems?",
+          "Distributed Cloud"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 196,
+      "query": "distributed sy",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What are Distributed Systems?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What are Distributed Systems?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What are Distributed Systems?",
+          "Distributed Cloud"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 197,
+      "query": "distributed sys",
+      "classification": "B",
+      "disposition": "regression-b-intent",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "intent": {
+        "requiredPrimary": [
+          "What are Distributed Systems?"
+        ],
+        "requiredWithin": [
+          {
+            "title": "What are Distributed Systems?",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "What are Distributed Systems?",
+          "Distributed Cloud"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 198,
+      "query": "mono",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Monotonic Stack"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Monotonic Stack",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Monotonic Stack"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 199,
+      "query": "monoto",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Monotonic Stack"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Monotonic Stack",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Monotonic Stack"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 200,
+      "query": "monoton",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "Monotonic Stack"
+        ],
+        "requiredWithin": [
+          {
+            "title": "Monotonic Stack",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "Monotonic Stack"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 201,
+      "query": "12 vulnerability",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "requiredWithin": [
+          {
+            "title": "TLS 1.2 Vulnerability",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 202,
+      "query": "tls 12",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "requiredWithin": [
+          {
+            "title": "TLS 1.2 Vulnerability",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 203,
+      "query": "1.2 vulnerability",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "requiredWithin": [
+          {
+            "title": "TLS 1.2 Vulnerability",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 204,
+      "query": "tls 1.2",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "requiredWithin": [
+          {
+            "title": "TLS 1.2 Vulnerability",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 205,
+      "query": "120",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+        ],
+        "requiredWithin": [
+          {
+            "title": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 206,
+      "query": "12 vulnerabilit",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "requiredWithin": [
+          {
+            "title": "TLS 1.2 Vulnerability",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 207,
+      "query": "12 vulnerabili",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "requiredWithin": [
+          {
+            "title": "TLS 1.2 Vulnerability",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 208,
+      "query": "12 vulnerab",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "requiredWithin": [
+          {
+            "title": "TLS 1.2 Vulnerability",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 209,
+      "query": "2",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+        ],
+        "requiredWithin": [
+          {
+            "title": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+            "topN": 1
+          },
+          {
+            "title": "TLS 1.2 Vulnerability",
+            "topN": 2
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 210,
+      "query": "20",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+        ],
+        "requiredWithin": [
+          {
+            "title": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 211,
+      "query": "200",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+        ],
+        "requiredWithin": [
+          {
+            "title": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 212,
+      "query": "200fps",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+        ],
+        "requiredWithin": [
+          {
+            "title": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 213,
+      "query": "1.2",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "requiredWithin": [
+          {
+            "title": "TLS 1.2 Vulnerability",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 214,
+      "query": "12",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
+      "intent": {
+        "requiredPrimary": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "requiredWithin": [
+          {
+            "title": "TLS 1.2 Vulnerability",
+            "topN": 1
+          }
+        ],
+        "requiredAnyWithin": []
+      },
+      "v1": {
+        "expectedTop": [
+          "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+        ],
+        "topN": 1
+      }
+    }
+  ]
+}

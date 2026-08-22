@@ -23,6 +23,21 @@ They must never become Core defaults.
 | Source | clean Software.Land worktree at `dff24cf606967cb50b24d28d9142747c9203e053` |
 | `@software-land/search` | `0.3.1` |
 | Documents | 122 |
+| Source scenarios | `tests/search-scenarios.js` (215 rows) + `tests/search-v2-contracts.js` (16) |
+| Strict V2 contracts | 98 (`v2-contracts.json`) |
+| B-intent regressions | 60 (`regression-scenarios.json`, compatibility coverage, not Core policy) |
+| Historical inventory | 215 non-executable rows (`historical-scenarios.json`) |
+| Omitted empty-intent rows | 44 (observational V1 provenance only) |
+| Omitted V1-only source rows | 126 (B + A without intent; some re-enter as regressions) |
+| Omitted browser/UI-only | 1 (`zzz-no-hit` no-results copy) |
+
+Corpus artifacts come from a clean Software.Land worktree at
+`dff24cf606967cb50b24d28d9142747c9203e053`. Strict V2 contracts are A-class
+independent intent plus `SEARCH_V2_CONTRACTS`. Regression cases reuse recorded
+B-class independent intent as Software.Land compatibility coverage; they are
+**not Core ranking policy**. V1 `expectedTop` neighbor lists are provenance
+only and are never asserted against V2. Empty-intent rows are not mined into
+executable cases.
 
 Do not snapshot from a dirty Software.Land worktree.
 
@@ -33,8 +48,11 @@ Do not snapshot from a dirty Software.Land worktree.
 - `lemmas.json` — site lemma table as `english({ lemmas })`
 - `relationships.json` — runtime relationship graph, including TLS ↔ VPN editorial edges
 - `lexical-frequency.json` — production lexical-frequency artifact
-- `scenarios.json` — compact accepted V2 assertions
-- `manifest.json` — format, source commit, package version, document count, SHA256s
+- `v2-contracts.json` — strict accepted V2 cases (`kind: contract`)
+- `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy
+- `historical-scenarios.json` — full 215-row inventory with dispositions; not executed
+- `scenarios.json` — index, counts, and disposition totals
+- `manifest.json` — format, source commit, package version, document count, scenario provenance, SHA256s
 
 `lexical-frequency.json` is copied from the production artifact. Compiling it
 from `documents.json` through `@software-land/search/lexical` is deterministic
@@ -52,7 +70,16 @@ From a clean Software.Land tree at the recorded commit, after
 2. Transform `acronymMap.js` + compiled equivalences into `dictionary.json`.
 3. Copy `site-lemmas.json` lemmas, `software-land-relationships.json`, and
    `lexical-frequency.json`.
-4. Refresh SHA256s in `manifest.json`.
+4. Rebuild scenario fixtures and provenance in `manifest.json` with the
+   repo-only transform (no Gatsby, UI, or network):
+
+```bash
+node scripts/software-land-scenarios.mjs \
+  --scenarios /path/to/software.land/tests/search-scenarios.js \
+  --contracts /path/to/software.land/tests/search-v2-contracts.js \
+  --dir test/fixtures/software-land \
+  --manifest test/fixtures/software-land/manifest.json
+```
 
 Do not run `compileSemantic` in OSS CI. Do not copy models, vectors, markdown
-posts, Gatsby code, or the app E2E matrix.
+posts, Gatsby code, V1 rankings, or the app E2E runner.

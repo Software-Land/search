@@ -29,8 +29,31 @@
       "sha256": "b964ef45cbe2f105a259e5d284600a03d28a1521e4f911dcb65a7a9fd46334f9"
     },
     "scenarios.json": {
-      "bytes": 1974,
-      "sha256": "351bb9be086b527ac240ae862ea93909a034314e91248181b6fb4f7e359c6cd1"
+      "bytes": 1789,
+      "sha256": "bec788925ea79f7efaba0393448a144a4377a3022db6cef27949c90c85e8c82b"
+    },
+    "v2-contracts.json": {
+      "bytes": 37835,
+      "sha256": "420b0a0d1fcb4e7fdc27f7873310703f227c387c6c672fee801d942f40235a5f"
+    },
+    "regression-scenarios.json": {
+      "bytes": 23906,
+      "sha256": "3f72e1f8dc2f56ea87a92fa2f1b898ef7d372ad05375a4f451cc7c9dcfd3fec4"
+    },
+    "historical-scenarios.json": {
+      "bytes": 135364,
+      "sha256": "84d8f71bcfe421ee08b0747552028b81518f11dd07be0041c620ef96caabc57b"
     }
-  }
+  },
+  "scenarioCount": 215,
+  "executableV2ScenarioCount": 98,
+  "omittedV1OnlyCount": 126,
+  "omittedBrowserUiOnlyCount": 1,
+  "sourceScenarioFiles": [
+    "tests/search-scenarios.js",
+    "tests/search-v2-contracts.js"
+  ],
+  "executableRegressionCount": 60,
+  "historicalScenarioCount": 215,
+  "omittedEmptyIntentCount": 44
 }

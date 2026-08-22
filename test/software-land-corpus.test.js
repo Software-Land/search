@@ -1,6 +1,7 @@
 /**
  * Software.Land-derived realistic integration tests.
  * Fixture data is not default package policy.
+ * Regression cases are compatibility coverage, not Core ranking policy.
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -10,6 +11,7 @@ import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = path.join(ROOT, "fixtures", "software-land");
+const SEARCH_LIMIT = 10;
 
 function loadJson(name) {
   return JSON.parse(readFileSync(path.join(FIXTURE, name), "utf8"));
@@ -21,7 +23,10 @@ const dictionaryEntries = loadJson("dictionary.json");
 const lemmas = loadJson("lemmas.json");
 const relationships = loadJson("relationships.json");
 const lexicalFrequency = loadJson("lexical-frequency.json");
-const scenarios = loadJson("scenarios.json");
+const index = loadJson("scenarios.json");
+const contracts = loadJson("v2-contracts.json");
+const regressions = loadJson("regression-scenarios.json");
+const historical = loadJson("historical-scenarios.json");
 
 const schema = {
   title: { type: "text", role: "title" },
@@ -47,6 +52,70 @@ async function indexEngine(engine, { useLexicalFrequency = true } = {}) {
   return engine;
 }
 
+function titlesOf(engine, query, limit = SEARCH_LIMIT) {
+  return engine.search(query, { limit }).map((hit) => hit.title);
+}
+
+function indexOfTitle(titles, wanted) {
+  return titles.findIndex((title) => title === wanted);
+}
+
+function assertScenarioCase(engine, row) {
+  const titles = titlesOf(engine, row.query);
+  if (row.exactFirst) {
+    expect(titles[0]).toBe(row.exactFirst);
+  }
+  for (const req of row.requiredWithin || []) {
+    const idx = indexOfTitle(titles, req.title);
+    expect(idx).toBeGreaterThanOrEqual(0);
+    expect(idx + 1).toBeLessThanOrEqual(req.topN);
+  }
+  for (const req of row.requiredAnyWithin || []) {
+    const idx = indexOfTitle(titles, req.title);
+    expect(idx).toBeGreaterThanOrEqual(0);
+    expect(idx + 1).toBeLessThanOrEqual(req.topN);
+  }
+  if (row.requiredAnyTop) {
+    const window = titles.slice(0, row.requiredAnyTop.topN);
+    for (const title of row.requiredAnyTop.titles) {
+      expect(window).toContain(title);
+    }
+  }
+  if (row.titlePrefix) {
+    const topN = row.titlePrefixTopN ?? 10;
+    for (const title of titles.slice(0, topN)) {
+      expect(title.startsWith(row.titlePrefix)).toBe(true);
+    }
+  }
+  if (row.mustNotDominate?.primary) {
+    const primaryIdx = indexOfTitle(titles, row.mustNotDominate.primary);
+    expect(primaryIdx).toBeGreaterThanOrEqual(0);
+    for (const forbidden of row.mustNotDominate.titles) {
+      const idx = indexOfTitle(titles, forbidden);
+      if (idx >= 0) expect(idx).toBeGreaterThan(primaryIdx);
+    }
+  }
+  if (row.requiredRelatedAny) {
+    const window = titles.slice(0, row.requiredRelatedAny.topN || SEARCH_LIMIT);
+    const matched = row.requiredRelatedAny.titles.filter((title) => window.includes(title));
+    expect(matched.length).toBeGreaterThanOrEqual(row.requiredRelatedAny.minCount || 1);
+  }
+  if (row.relationship) {
+    const detailed = engine.searchDetailed(row.query, { limit: SEARCH_LIMIT, explain: true });
+    const hit = detailed.results.find((item) => item.title === row.relationship.title);
+    expect(hit).toBeTruthy();
+    expect(hit.relevanceKind).toBe(row.relationship.relevanceKind);
+    expect(hit.relationship).toEqual(
+      expect.objectContaining({
+        type: row.relationship.type,
+        provenance: row.relationship.provenance,
+        sourceTitle: row.relationship.sourceTitle,
+      })
+    );
+    expect(hit.retrievalSources).toContain("relationship");
+  }
+}
+
 describe("software-land corpus fixture", () => {
   let engine;
 
@@ -54,7 +123,7 @@ describe("software-land corpus fixture", () => {
     engine = await indexEngine(createEngine());
   });
 
-  test("manifest records source commit, package version, and document count", () => {
+  test("manifest records source commit, package version, document count, and scenario provenance", () => {
     expect(manifest.format).toBe("software-land-search-fixture");
     expect(manifest.version).toBe(1);
     expect(manifest.softwareLandCommit).toBe("dff24cf606967cb50b24d28d9142747c9203e053");
@@ -62,52 +131,82 @@ describe("software-land corpus fixture", () => {
     expect(manifest.documentCount).toBe(122);
     expect(documents).toHaveLength(122);
     expect(manifest.description).toMatch(/not default package policy/i);
+    expect(manifest.scenarioCount).toBe(215);
+    expect(manifest.historicalScenarioCount).toBe(215);
+    expect(manifest.executableV2ScenarioCount).toBe(98);
+    expect(manifest.executableRegressionCount).toBe(60);
+    expect(manifest.omittedV1OnlyCount).toBe(126);
+    expect(manifest.omittedEmptyIntentCount).toBe(44);
+    expect(manifest.omittedBrowserUiOnlyCount).toBe(1);
+    expect(manifest.sourceScenarioFiles).toEqual([
+      "tests/search-scenarios.js",
+      "tests/search-v2-contracts.js",
+    ]);
+    expect(contracts.cases).toHaveLength(98);
+    expect(regressions.cases).toHaveLength(60);
+    expect(historical.rows).toHaveLength(215);
+    expect(index.counts.executableContracts).toBe(98);
+    expect(index.counts.executableRegressions).toBe(60);
   });
 
   test("fixture README states site data is not Core policy", () => {
     const readme = readFileSync(path.join(FIXTURE, "README.md"), "utf8");
     expect(readme).toContain("Software.Land-derived realistic integration test data. It is not default package policy.");
     expect(readme).toContain("They must never become Core defaults.");
+    expect(readme).toContain("not Core ranking policy");
   });
 
-  test.each(scenarios.cases.filter((row) => Array.isArray(row.exact)).map((row) => [row.query, row]))(
-    "query %j exact prefix",
-    (_query, row) => {
-      const titles = engine.search(row.query, { limit: 10 }).map((hit) => hit.title);
-      expect(titles.slice(0, row.exact.length)).toEqual(row.exact);
-    }
-  );
-
-  test.each(scenarios.cases.filter((row) => row.exactFirst && !row.relationship).map((row) => [row.query, row]))(
-    "query %j exact #1",
-    (_query, row) => {
-      expect(engine.search(row.query, { limit: 1 })[0].title).toBe(row.exactFirst);
-    }
-  );
-
-  test.each(scenarios.cases.filter((row) => row.withinTopN).map((row) => [row.query, row]))(
-    "query %j includes expected title within top N",
-    (_query, row) => {
-      const titles = engine.search(row.query, { limit: row.withinTopN.topN }).map((hit) => hit.title);
-      expect(titles).toContain(row.withinTopN.title);
-    }
-  );
-
-  test("tls #1 is TLS 1.2 Vulnerability and VPN is an editorial related hit", () => {
-    const row = scenarios.cases.find((item) => item.query === "tls");
-    const detailed = engine.searchDetailed("tls", { limit: 10, explain: true });
-    expect(detailed.results[0].title).toBe(row.exactFirst);
-    const vpn = detailed.results.find((hit) => hit.title === row.relationship.title);
-    expect(vpn).toBeTruthy();
-    expect(vpn.relevanceKind).toBe(row.relationship.relevanceKind);
-    expect(vpn.relationship).toEqual(
-      expect.objectContaining({
-        type: row.relationship.type,
-        provenance: row.relationship.provenance,
-        sourceTitle: row.relationship.sourceTitle,
-      })
+  test("historical inventory is non-executable provenance with dispositions", () => {
+    const dispositions = new Set(historical.rows.map((row) => row.disposition));
+    expect(dispositions).toEqual(
+      new Set([
+        "contract-a-intent",
+        "omitted-duplicate-a-intent",
+        "regression-b-intent",
+        "omitted-duplicate-b-intent",
+        "omitted-covered-by-v2-contract",
+        "omitted-b-intent-not-current-v2",
+        "omitted-empty-intent-observational-v1",
+        "omitted-obsolete",
+      ])
     );
-    expect(vpn.retrievalSources).toContain("relationship");
+    expect(historical.rows.filter((row) => row.disposition === "contract-a-intent")).toHaveLength(82);
+    expect(historical.rows.filter((row) => row.disposition === "omitted-duplicate-a-intent")).toHaveLength(6);
+    expect(historical.rows.filter((row) => row.disposition === "regression-b-intent")).toHaveLength(60);
+    expect(historical.rows.filter((row) => row.disposition === "omitted-duplicate-b-intent")).toHaveLength(5);
+    expect(historical.rows.filter((row) => row.disposition === "omitted-covered-by-v2-contract")).toHaveLength(16);
+    expect(historical.rows.filter((row) => row.disposition === "omitted-obsolete")).toHaveLength(1);
+    expect(historical.rows.filter((row) => row.disposition === "omitted-empty-intent-observational-v1")).toHaveLength(44);
+    expect(historical.rows.filter((row) => row.disposition === "omitted-b-intent-not-current-v2").map((row) => row.query)).toEqual([
+      "what is an appli",
+    ]);
+    for (const row of historical.rows) {
+      expect(row.query).toBeTruthy();
+      expect(row.classification).toMatch(/^[ABC]$/);
+      expect(row.disposition).toBeTruthy();
+      expect(row.note).toBeTruthy();
+    }
+    const emptyIntent = historical.rows.filter((row) => row.disposition === "omitted-empty-intent-observational-v1");
+    expect(emptyIntent.every((row) => row.v1?.expectedTop || row.v1?.titlePrefix)).toBe(true);
+    expect(contracts.cases.every((row) => row.kind === "contract" && !row.v1)).toBe(true);
+    expect(regressions.cases.every((row) => row.kind === "regression" && row.classification === "B" && !row.v1)).toBe(true);
+  });
+
+  test('query "2" is 200FPS then TLS 1.2 Vulnerability', () => {
+    expect(titlesOf(engine, "2", 2)).toEqual([
+      "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+      "TLS 1.2 Vulnerability",
+    ]);
+  });
+
+  test.each(contracts.cases.map((row) => [row.name, row]))("contract %s", (_name, row) => {
+    expect(row.kind).toBe("contract");
+    assertScenarioCase(engine, row);
+  });
+
+  test.each(regressions.cases.map((row) => [row.name, row]))("regression %s", (_name, row) => {
+    expect(row.kind).toBe("regression");
+    assertScenarioCase(engine, row);
   });
 });
 

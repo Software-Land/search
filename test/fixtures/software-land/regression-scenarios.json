@@ -1,0 +1,868 @@
+{
+  "kind": "regression",
+  "notes": [
+    "Software.Land compatibility coverage from recorded B-class independent intent.",
+    "Not Core ranking policy. Not V1 expectedTop bags.",
+    "Empty-intent rows are excluded."
+  ],
+  "counts": {
+    "cases": 60
+  },
+  "cases": [
+    {
+      "query": "hypertext",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "regression · scenario · hypertext · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "depth first search",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "DFS Backtracking",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "DFS Backtracking",
+      "name": "regression · scenario · depth first search · #1:DFS Backtracking | DFS Backtracking@1"
+    },
+    {
+      "query": "dfs back",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "DFS Backtracking",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "DFS Backtracking",
+      "name": "regression · scenario · dfs back · #1:DFS Backtracking | DFS Backtracking@1"
+    },
+    {
+      "query": "dfs backtr",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "DFS Backtracking",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "DFS Backtracking",
+      "name": "regression · scenario · dfs backtr · #1:DFS Backtracking | DFS Backtracking@1"
+    },
+    {
+      "query": "transport layer security",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "regression · scenario · transport layer security · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "rbac",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "RBAC (Role Based Access Control)",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "RBAC (Role Based Access Control)",
+      "name": "regression · scenario · rbac · #1:RBAC (Role Based Access Control) | RBAC (Role Based Access Control)@1"
+    },
+    {
+      "query": "role based access control",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "RBAC (Role Based Access Control)",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "RBAC (Role Based Access Control)",
+      "name": "regression · scenario · role based access control · #1:RBAC (Role Based Access Control) | RBAC (Role Based Access Control)@1"
+    },
+    {
+      "query": "what is an app sec",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "App Sec",
+      "name": "regression · scenario · what is an app sec · #1:App Sec | App Sec@1"
+    },
+    {
+      "query": "applicationsecurity",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "App Sec",
+      "name": "regression · scenario · applicationsecurity · #1:App Sec | App Sec@1"
+    },
+    {
+      "query": "applicationsec",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "App Sec",
+      "name": "regression · scenario · applicationsec · #1:App Sec | App Sec@1"
+    },
+    {
+      "query": "appsec",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 3
+        }
+      ],
+      "name": "regression · scenario · appsec · App Sec@3"
+    },
+    {
+      "query": "app sec",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "App Sec",
+      "name": "regression · scenario · app sec · #1:App Sec | App Sec@1"
+    },
+    {
+      "query": "application se",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "App Sec",
+      "name": "regression · scenario · application se · #1:App Sec | App Sec@1"
+    },
+    {
+      "query": "application security",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "App Sec",
+      "name": "regression · scenario · application security · #1:App Sec | App Sec@1"
+    },
+    {
+      "query": "what are apis",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "Working with APIs",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Working with APIs",
+      "name": "regression · scenario · what are apis · #1:Working with APIs | Working with APIs@1"
+    },
+    {
+      "query": "interface",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is an Interface?",
+          "topN": 1
+        }
+      ],
+      "requiredAnyWithin": [
+        {
+          "title": "Class vs Interface",
+          "topN": 5
+        }
+      ],
+      "exactFirst": "What is an Interface?",
+      "name": "regression · scenario · interface · #1:What is an Interface? | What is an Interface?@1 | any:Class vs Interface@5"
+    },
+    {
+      "query": "maachine leaarning",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "Linear vs Logistic Regression",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Linear vs Logistic Regression",
+      "name": "regression · scenario · maachine leaarning · #1:Linear vs Logistic Regression | Linear vs Logistic Regression@1"
+    },
+    {
+      "query": "what is machine learning",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "Linear vs Logistic Regression",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Linear vs Logistic Regression",
+      "name": "regression · scenario · what is machine learning · #1:Linear vs Logistic Regression | Linear vs Logistic Regression@1"
+    },
+    {
+      "query": "dynamicprogramming",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "Dynamic Programming Matrix",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Dynamic Programming Matrix",
+      "name": "regression · scenario · dynamicprogramming · #1:Dynamic Programming Matrix | Dynamic Programming Matrix@1"
+    },
+    {
+      "query": "dynamic programming",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "Dynamic Programming Matrix",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Dynamic Programming Matrix",
+      "name": "regression · scenario · dynamic programming · #1:Dynamic Programming Matrix | Dynamic Programming Matrix@1"
+    },
+    {
+      "query": "dp",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "Dynamic Programming Matrix",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Dynamic Programming Matrix",
+      "name": "regression · scenario · dp · #1:Dynamic Programming Matrix | Dynamic Programming Matrix@1"
+    },
+    {
+      "query": "applicationprogramminginterface",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is an API?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is an API?",
+      "name": "regression · scenario · applicationprogramminginterface · #1:What is an API? | What is an API?@1"
+    },
+    {
+      "query": "hypertext transfer protocol secure",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "regression · scenario · hypertext transfer protocol secure · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "devops",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is DevOps?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is DevOps?",
+      "name": "regression · scenario · devops · #1:What is DevOps? | What is DevOps?@1"
+    },
+    {
+      "query": "dev ops",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is DevOps?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is DevOps?",
+      "name": "regression · scenario · dev ops · #1:What is DevOps? | What is DevOps?@1"
+    },
+    {
+      "query": "dev op",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is DevOps?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is DevOps?",
+      "name": "regression · scenario · dev op · #1:What is DevOps? | What is DevOps?@1"
+    },
+    {
+      "query": "devop",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is DevOps?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is DevOps?",
+      "name": "regression · scenario · devop · #1:What is DevOps? | What is DevOps?@1"
+    },
+    {
+      "query": "service mseh",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is a Service Mesh?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is a Service Mesh?",
+      "name": "regression · scenario · service mseh · #1:What is a Service Mesh? | What is a Service Mesh?@1"
+    },
+    {
+      "query": "app programming interface",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is an API?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is an API?",
+      "name": "regression · scenario · app programming interface · #1:What is an API? | What is an API?@1"
+    },
+    {
+      "query": "app security",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "App Sec",
+      "name": "regression · scenario · app security · #1:App Sec | App Sec@1"
+    },
+    {
+      "query": "application orogramming interface",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is an API?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is an API?",
+      "name": "regression · scenario · application orogramming interface · #1:What is an API? | What is an API?@1"
+    },
+    {
+      "query": "application programming interface",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is an API?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is an API?",
+      "name": "regression · scenario · application programming interface · #1:What is an API? | What is an API?@1"
+    },
+    {
+      "query": "grpc vs kafka",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "gRPC vs Kafka",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "gRPC vs Kafka",
+      "name": "regression · scenario · grpc vs kafka · #1:gRPC vs Kafka | gRPC vs Kafka@1"
+    },
+    {
+      "query": "rpc vs kafka",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "gRPC vs Kafka",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "gRPC vs Kafka",
+      "name": "regression · scenario · rpc vs kafka · #1:gRPC vs Kafka | gRPC vs Kafka@1"
+    },
+    {
+      "query": "vpn",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is VPN?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is VPN?",
+      "name": "regression · scenario · vpn · #1:What is VPN? | What is VPN?@1"
+    },
+    {
+      "query": "vpns",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is VPN?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is VPN?",
+      "name": "regression · scenario · vpns · #1:What is VPN? | What is VPN?@1"
+    },
+    {
+      "query": "virtual private network",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is VPN?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is VPN?",
+      "name": "regression · scenario · virtual private network · #1:What is VPN? | What is VPN?@1"
+    },
+    {
+      "query": "dfs",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "DFS Backtracking",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "DFS Backtracking",
+      "name": "regression · scenario · dfs · #1:DFS Backtracking | DFS Backtracking@1"
+    },
+    {
+      "query": "build time",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "Build Time",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Build Time",
+      "name": "regression · scenario · build time · #1:Build Time | Build Time@1"
+    },
+    {
+      "query": "institute",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "Udacity Review",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Udacity Review",
+      "name": "regression · scenario · institute · #1:Udacity Review | Udacity Review@1"
+    },
+    {
+      "query": "recursion",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is Recursion?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is Recursion?",
+      "name": "regression · scenario · recursion · #1:What is Recursion? | What is Recursion?@1"
+    },
+    {
+      "query": "recursing",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is Recursion?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is Recursion?",
+      "name": "regression · scenario · recursing · #1:What is Recursion? | What is Recursion?@1"
+    },
+    {
+      "query": "recursed",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is Recursion?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is Recursion?",
+      "name": "regression · scenario · recursed · #1:What is Recursion? | What is Recursion?@1"
+    },
+    {
+      "query": "recursive",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is Recursion?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is Recursion?",
+      "name": "regression · scenario · recursive · #1:What is Recursion? | What is Recursion?@1"
+    },
+    {
+      "query": "shard",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "Sharding",
+          "topN": 3
+        }
+      ],
+      "requiredAnyWithin": [
+        {
+          "title": "Hot Shards",
+          "topN": 5
+        }
+      ],
+      "name": "regression · scenario · shard · Sharding@3 | any:Hot Shards@5"
+    },
+    {
+      "query": "shardin",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "Sharding",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Sharding",
+      "name": "regression · scenario · shardin · #1:Sharding | Sharding@1"
+    },
+    {
+      "query": "recursiv",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is Recursion?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is Recursion?",
+      "name": "regression · scenario · recursiv · #1:What is Recursion? | What is Recursion?@1"
+    },
+    {
+      "query": "authent",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "React Authentication",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "React Authentication",
+      "name": "regression · scenario · authent · #1:React Authentication | React Authentication@1"
+    },
+    {
+      "query": "internetofthings",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is IoT?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is IoT?",
+      "name": "regression · scenario · internetofthings · #1:What is IoT? | What is IoT?@1"
+    },
+    {
+      "query": "internet of things",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is IoT?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is IoT?",
+      "name": "regression · scenario · internet of things · #1:What is IoT? | What is IoT?@1"
+    },
+    {
+      "query": "authorizing",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "Authorization Middleware",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Authorization Middleware",
+      "name": "regression · scenario · authorizing · #1:Authorization Middleware | Authorization Middleware@1"
+    },
+    {
+      "query": "authorization",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "Authorization Middleware",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Authorization Middleware",
+      "name": "regression · scenario · authorization · #1:Authorization Middleware | Authorization Middleware@1"
+    },
+    {
+      "query": "authorized",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "Authorization Middleware",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Authorization Middleware",
+      "name": "regression · scenario · authorized · #1:Authorization Middleware | Authorization Middleware@1"
+    },
+    {
+      "query": "authorizes",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "Authorization Middleware",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Authorization Middleware",
+      "name": "regression · scenario · authorizes · #1:Authorization Middleware | Authorization Middleware@1"
+    },
+    {
+      "query": "authoriz",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "Authorization Middleware",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Authorization Middleware",
+      "name": "regression · scenario · authoriz · #1:Authorization Middleware | Authorization Middleware@1"
+    },
+    {
+      "query": "developme operations",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is DevOps?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is DevOps?",
+      "name": "regression · scenario · developme operations · #1:What is DevOps? | What is DevOps?@1"
+    },
+    {
+      "query": "development operations",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What is DevOps?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is DevOps?",
+      "name": "regression · scenario · development operations · #1:What is DevOps? | What is DevOps?@1"
+    },
+    {
+      "query": "algorithmm",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "Raft Algorithm",
+          "topN": 3
+        }
+      ],
+      "requiredAnyWithin": [
+        {
+          "title": "Maximum Flow Algorithm",
+          "topN": 5
+        }
+      ],
+      "name": "regression · scenario · algorithmm · Raft Algorithm@3 | any:Maximum Flow Algorithm@5"
+    },
+    {
+      "query": "distributed sy",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What are Distributed Systems?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What are Distributed Systems?",
+      "name": "regression · scenario · distributed sy · #1:What are Distributed Systems? | What are Distributed Systems?@1"
+    },
+    {
+      "query": "distributed sys",
+      "kind": "regression",
+      "origin": "scenario",
+      "classification": "B",
+      "requiredWithin": [
+        {
+          "title": "What are Distributed Systems?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What are Distributed Systems?",
+      "name": "regression · scenario · distributed sys · #1:What are Distributed Systems? | What are Distributed Systems?@1"
+    }
+  ]
+}

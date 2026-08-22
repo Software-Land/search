@@ -1,85 +1,48 @@
 {
   "notes": [
-    "Accepted live V2 results from Software.Land @software-land/search 0.3.1. Not Core policy.",
-    "sort recurses #1 depends on the site lemma table (identity mapping recursion→recursion). Without it, Topological Sort ranks first."
+    "Software.Land-derived realistic integration test data. It is not default package policy.",
+    "v2-contracts.json is the strict accepted V2 contract set.",
+    "regression-scenarios.json is B-class independent-intent compatibility coverage, not Core ranking policy.",
+    "historical-scenarios.json is the full 215-row inventory. It is not executed.",
+    "V1 expectedTop neighbor lists are provenance only and are never asserted against V2.",
+    "Empty-intent rows are not mined into executable cases."
   ],
-  "cases": [
-    {
-      "query": "2",
-      "exact": [
-        "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
-        "TLS 1.2 Vulnerability"
-      ]
-    },
-    {
-      "query": "1.2",
-      "exactFirst": "TLS 1.2 Vulnerability"
-    },
-    {
-      "query": "12",
-      "exactFirst": "TLS 1.2 Vulnerability"
-    },
-    {
-      "query": "200fps",
-      "exactFirst": "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
-    },
-    {
-      "query": "oop",
-      "exactFirst": "What is OOP (Object-Oriented Programming)?"
-    },
-    {
-      "query": "rbac",
-      "exactFirst": "RBAC (Role Based Access Control)"
-    },
-    {
-      "query": "aplicationsecurity",
-      "exactFirst": "App Sec"
-    },
-    {
-      "query": "appsecurity",
-      "exactFirst": "App Sec"
-    },
-    {
-      "query": "what is an ap",
-      "exactFirst": "What is an API?"
-    },
-    {
-      "query": "sort recurses",
-      "exactFirst": "What is Recursion?",
-      "dependsOn": "lemmas"
-    },
-    {
-      "query": "machine learning",
-      "withinTopN": {
-        "title": "Linear vs Logistic Regression",
-        "topN": 2
-      },
-      "dependsOn": "lexical-frequency"
-    },
-    {
-      "query": "machine learni",
-      "withinTopN": {
-        "title": "Linear vs Logistic Regression",
-        "topN": 2
-      }
-    },
-    {
-      "query": "library",
-      "withinTopN": {
-        "title": "Framework vs Library vs Package",
-        "topN": 2
-      }
-    },
-    {
-      "query": "tls",
-      "exactFirst": "TLS 1.2 Vulnerability",
-      "relationship": {
-        "title": "What is VPN?",
-        "relevanceKind": "related",
-        "type": "editorial",
-        "provenance": "manual",
-        "sourceTitle": "TLS 1.2 Vulnerability"
-      }
-    }
-  ]
+  "source": {
+    "files": [
+      "tests/search-scenarios.js",
+      "tests/search-v2-contracts.js"
+    ],
+    "policy": "A-class independent intent + SEARCH_V2_CONTRACTS; B-intent regressions are compatibility coverage only"
+  },
+  "counts": {
+    "sourceScenarioRows": 215,
+    "distinctQueries": 185,
+    "v2ApplicableRows": 88,
+    "v2Contracts": 16,
+    "executableContracts": 98,
+    "executableRegressions": 60,
+    "historicalRows": 215,
+    "omittedObsolete": 1,
+    "omittedEmptyIntent": 44,
+    "omittedCoveredByContract": 16,
+    "omittedBIntentNotCurrentV2": 1,
+    "omittedDuplicateA": 6,
+    "omittedDuplicateB": 5,
+    "omittedBrowserUiOnly": 1
+  },
+  "dispositionCounts": {
+    "omitted-covered-by-v2-contract": 16,
+    "contract-a-intent": 82,
+    "regression-b-intent": 60,
+    "omitted-empty-intent-observational-v1": 44,
+    "omitted-duplicate-b-intent": 5,
+    "omitted-duplicate-a-intent": 6,
+    "omitted-b-intent-not-current-v2": 1,
+    "omitted-obsolete": 1
+  },
+  "files": {
+    "v2-contracts.json": "Strict accepted V2 cases (kind: contract).",
+    "regression-scenarios.json": "B-intent regression/reference cases (kind: regression).",
+    "historical-scenarios.json": "Non-executable 215-row inventory with dispositions."
+  }
 }

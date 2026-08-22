@@ -1,0 +1,1366 @@
+{
+  "kind": "contract",
+  "notes": [
+    "Strict accepted Search V2 assertions. Not Core default ranking policy.",
+    "A-class independent intent plus SEARCH_V2_CONTRACTS.",
+    "V1 expectedTop is not asserted."
+  ],
+  "counts": {
+    "cases": 98
+  },
+  "cases": [
+    {
+      "query": "libraries",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredAnyWithin": [
+        {
+          "title": "React Component Libraries",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · libraries · any:React Component Libraries@5"
+    },
+    {
+      "query": "compute",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Edge Computing",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Edge Computing",
+      "name": "contract · scenario · compute · #1:Edge Computing | Edge Computing@1"
+    },
+    {
+      "query": "testing",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Testing in Software Engineering",
+          "topN": 3
+        }
+      ],
+      "requiredAnyWithin": [
+        {
+          "title": "Load vs Stress Testing",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · testing · Testing in Software Engineering@3 | any:Load vs Stress Testing@5"
+    },
+    {
+      "query": "wha",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "titlePrefix": "What",
+      "titlePrefixTopN": 10,
+      "name": "contract · scenario · wha · prefix:What@10"
+    },
+    {
+      "query": "continuous d",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "CI/CD",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "CI/CD",
+      "name": "contract · scenario · continuous d · #1:CI/CD | CI/CD@1"
+    },
+    {
+      "query": "zer",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Zero-Trust Security",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Zero-Trust Security",
+      "name": "contract · scenario · zer · #1:Zero-Trust Security | Zero-Trust Security@1"
+    },
+    {
+      "query": "asyncronou",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Asynchronous vs Synchronous",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Asynchronous vs Synchronous",
+      "name": "contract · scenario · asyncronou · #1:Asynchronous vs Synchronous | Asynchronous vs Synchronous@1"
+    },
+    {
+      "query": "input output",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is IO?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is IO?",
+      "name": "contract · scenario · input output · #1:What is IO? | What is IO?@1"
+    },
+    {
+      "query": "io",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is IO?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is IO?",
+      "name": "contract · scenario · io · #1:What is IO? | What is IO?@1"
+    },
+    {
+      "query": "iot",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is IoT?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is IoT?",
+      "name": "contract · scenario · iot · #1:What is IoT? | What is IoT?@1"
+    },
+    {
+      "query": "what is iot",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is IoT?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is IoT?",
+      "name": "contract · scenario · what is iot · #1:What is IoT? | What is IoT?@1"
+    },
+    {
+      "query": "what is cod",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is Code?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is Code?",
+      "name": "contract · scenario · what is cod · #1:What is Code? | What is Code?@1"
+    },
+    {
+      "query": "what is ci",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "CI/CD",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "CI/CD",
+      "name": "contract · scenario · what is ci · #1:CI/CD | CI/CD@1"
+    },
+    {
+      "query": "what is an applicatio security",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 3
+        }
+      ],
+      "name": "contract · scenario · what is an applicatio security · App Sec@3"
+    },
+    {
+      "query": "what is an ap",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is an API?",
+          "topN": 3
+        }
+      ],
+      "name": "contract · scenario · what is an ap · What is an API?@3"
+    },
+    {
+      "query": "app",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "App Sec",
+      "name": "contract · scenario · app · #1:App Sec | App Sec@1"
+    },
+    {
+      "query": "aplication s3curity",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "App Sec",
+      "name": "contract · scenario · aplication s3curity · #1:App Sec | App Sec@1"
+    },
+    {
+      "query": "aPplicationsecurity",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "App Sec",
+      "name": "contract · scenario · aPplicationsecurity · #1:App Sec | App Sec@1"
+    },
+    {
+      "query": "aplicationsecurity",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "App Sec",
+      "name": "contract · scenario · aplicationsecurity · #1:App Sec | App Sec@1"
+    },
+    {
+      "query": "object oriented prog",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredAnyWithin": [
+        {
+          "title": "What is OOP (Object-Oriented Programming)?",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · object oriented prog · any:What is OOP (Object-Oriented Programming)?@5"
+    },
+    {
+      "query": "oop",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is OOP (Object-Oriented Programming)?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is OOP (Object-Oriented Programming)?",
+      "name": "contract · scenario · oop · #1:What is OOP (Object-Oriented Programming)? | What is OOP (Object-Oriented Programming)?@1"
+    },
+    {
+      "query": "what is an a",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is an API?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is an API?",
+      "name": "contract · scenario · what is an a · #1:What is an API? | What is an API?@1"
+    },
+    {
+      "query": "programming",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Which Programming Language to Start?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Which Programming Language to Start?",
+      "name": "contract · scenario · programming · #1:Which Programming Language to Start? | Which Programming Language to Start?@1"
+    },
+    {
+      "query": "programming",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is OOP (Object-Oriented Programming)?",
+          "topN": 3
+        }
+      ],
+      "requiredAnyWithin": [
+        {
+          "title": "Which Programming Language to Start?",
+          "topN": 5
+        },
+        {
+          "title": "Dynamic Programming Matrix",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · programming · What is OOP (Object-Oriented Programming)?@3 | any:Which Programming Language to Start?@5 | any:Dynamic Programming Matrix@5"
+    },
+    {
+      "query": "programming",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is OOP (Object-Oriented Programming)?",
+          "topN": 3
+        }
+      ],
+      "requiredAnyWithin": [
+        {
+          "title": "Dynamic Programming Matrix",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · programming · What is OOP (Object-Oriented Programming)?@3 | any:Dynamic Programming Matrix@5"
+    },
+    {
+      "query": "what is dev",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is DevOps?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is DevOps?",
+      "name": "contract · scenario · what is dev · #1:What is DevOps? | What is DevOps?@1"
+    },
+    {
+      "query": "what is c",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is Code?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is Code?",
+      "name": "contract · scenario · what is c · #1:What is Code? | What is Code?@1"
+    },
+    {
+      "query": "what is a c",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is a Container?",
+          "topN": 3
+        }
+      ],
+      "name": "contract · scenario · what is a c · What is a Container?@3"
+    },
+    {
+      "query": "what is a co",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is a Container?",
+          "topN": 3
+        }
+      ],
+      "name": "contract · scenario · what is a co · What is a Container?@3"
+    },
+    {
+      "query": "what is c",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is Clean Code?",
+          "topN": 3
+        }
+      ],
+      "name": "contract · scenario · what is c · What is Clean Code?@3"
+    },
+    {
+      "query": "internet of th",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is IoT?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is IoT?",
+      "name": "contract · scenario · internet of th · #1:What is IoT? | What is IoT?@1"
+    },
+    {
+      "query": "application programming",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is an API?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is an API?",
+      "name": "contract · scenario · application programming · #1:What is an API? | What is an API?@1"
+    },
+    {
+      "query": "object oriented programming vs functional",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredAnyWithin": [
+        {
+          "title": "What is OOP (Object-Oriented Programming)?",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · object oriented programming vs functional · any:What is OOP (Object-Oriented Programming)?@5"
+    },
+    {
+      "query": "object oriented",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredAnyWithin": [
+        {
+          "title": "What is OOP (Object-Oriented Programming)?",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · object oriented · any:What is OOP (Object-Oriented Programming)?@5"
+    },
+    {
+      "query": "shadcnuireactcomponents",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Shadcn UI React Components",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Shadcn UI React Components",
+      "name": "contract · scenario · shadcnuireactcomponents · #1:Shadcn UI React Components | Shadcn UI React Components@1"
+    },
+    {
+      "query": "ai",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Staying Ahead of the AI Revolution",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Staying Ahead of the AI Revolution",
+      "name": "contract · scenario · ai · #1:Staying Ahead of the AI Revolution | Staying Ahead of the AI Revolution@1"
+    },
+    {
+      "query": "grpc",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredAnyWithin": [
+        {
+          "title": "gRPC vs REST",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · grpc · any:gRPC vs REST@5"
+    },
+    {
+      "query": "astar",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "A-Star Pathfinding",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "A-Star Pathfinding",
+      "name": "contract · scenario · astar · #1:A-Star Pathfinding | A-Star Pathfinding@1"
+    },
+    {
+      "query": "protobuf",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Protobuf Encoding",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Protobuf Encoding",
+      "name": "contract · scenario · protobuf · #1:Protobuf Encoding | Protobuf Encoding@1"
+    },
+    {
+      "query": "shards",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Hot Shards",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Hot Shards",
+      "name": "contract · scenario · shards · #1:Hot Shards | Hot Shards@1"
+    },
+    {
+      "query": "shardsss",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Hot Shards",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Hot Shards",
+      "name": "contract · scenario · shardsss · #1:Hot Shards | Hot Shards@1"
+    },
+    {
+      "query": "sharding",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Sharding",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Sharding",
+      "name": "contract · scenario · sharding · #1:Sharding | Sharding@1"
+    },
+    {
+      "query": "auth",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "React Authentication",
+          "topN": 3
+        }
+      ],
+      "requiredAnyWithin": [
+        {
+          "title": "Authorization Middleware",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · auth · React Authentication@3 | any:Authorization Middleware@5"
+    },
+    {
+      "query": "author",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Authorization Middleware",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Authorization Middleware",
+      "name": "contract · scenario · author · #1:Authorization Middleware | Authorization Middleware@1"
+    },
+    {
+      "query": "authen",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "React Authentication",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "React Authentication",
+      "name": "contract · scenario · authen · #1:React Authentication | React Authentication@1"
+    },
+    {
+      "query": "interceptor",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "gRPC Interceptor",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "gRPC Interceptor",
+      "name": "contract · scenario · interceptor · #1:gRPC Interceptor | gRPC Interceptor@1"
+    },
+    {
+      "query": "zerk trust security",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Zero-Trust Security",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Zero-Trust Security",
+      "name": "contract · scenario · zerk trust security · #1:Zero-Trust Security | Zero-Trust Security@1"
+    },
+    {
+      "query": "topological sorti",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Topological Sort",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Topological Sort",
+      "name": "contract · scenario · topological sorti · #1:Topological Sort | Topological Sort@1"
+    },
+    {
+      "query": "sorting",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Python Custom Sorting",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Python Custom Sorting",
+      "name": "contract · scenario · sorting · #1:Python Custom Sorting | Python Custom Sorting@1"
+    },
+    {
+      "query": "sorti",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Python Custom Sorting",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Python Custom Sorting",
+      "name": "contract · scenario · sorti · #1:Python Custom Sorting | Python Custom Sorting@1"
+    },
+    {
+      "query": "sorts",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Topological Sort",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Topological Sort",
+      "name": "contract · scenario · sorts · #1:Topological Sort | Topological Sort@1"
+    },
+    {
+      "query": "sort",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Topological Sort",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Topological Sort",
+      "name": "contract · scenario · sort · #1:Topological Sort | Topological Sort@1"
+    },
+    {
+      "query": "authenticated",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "React Authentication",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "React Authentication",
+      "name": "contract · scenario · authenticated · #1:React Authentication | React Authentication@1"
+    },
+    {
+      "query": "authentication",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "React Authentication",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "React Authentication",
+      "name": "contract · scenario · authentication · #1:React Authentication | React Authentication@1"
+    },
+    {
+      "query": "authenticating",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "React Authentication",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "React Authentication",
+      "name": "contract · scenario · authenticating · #1:React Authentication | React Authentication@1"
+    },
+    {
+      "query": "intercept",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "gRPC Interceptor",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "gRPC Interceptor",
+      "name": "contract · scenario · intercept · #1:gRPC Interceptor | gRPC Interceptor@1"
+    },
+    {
+      "query": "intercepting",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "gRPC Interceptor",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "gRPC Interceptor",
+      "name": "contract · scenario · intercepting · #1:gRPC Interceptor | gRPC Interceptor@1"
+    },
+    {
+      "query": "intercepted",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "gRPC Interceptor",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "gRPC Interceptor",
+      "name": "contract · scenario · intercepted · #1:gRPC Interceptor | gRPC Interceptor@1"
+    },
+    {
+      "query": "object",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Object",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Object",
+      "name": "contract · scenario · object · #1:Object | Object@1"
+    },
+    {
+      "query": "authenticat",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "React Authentication",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "React Authentication",
+      "name": "contract · scenario · authenticat · #1:React Authentication | React Authentication@1"
+    },
+    {
+      "query": "rate limiting",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Rate Limiting",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Rate Limiting",
+      "name": "contract · scenario · rate limiting · #1:Rate Limiting | Rate Limiting@1"
+    },
+    {
+      "query": "rate limit",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Rate Limiting",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Rate Limiting",
+      "name": "contract · scenario · rate limit · #1:Rate Limiting | Rate Limiting@1"
+    },
+    {
+      "query": "algorithms",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Rate Limiting Algorithms",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Rate Limiting Algorithms",
+      "name": "contract · scenario · algorithms · #1:Rate Limiting Algorithms | Rate Limiting Algorithms@1"
+    },
+    {
+      "query": "algorithmsss",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Rate Limiting Algorithms",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Rate Limiting Algorithms",
+      "name": "contract · scenario · algorithmsss · #1:Rate Limiting Algorithms | Rate Limiting Algorithms@1"
+    },
+    {
+      "query": "distributed s",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What are Distributed Systems?",
+          "topN": 1
+        }
+      ],
+      "requiredAnyWithin": [
+        {
+          "title": "Distributed Cloud",
+          "topN": 5
+        }
+      ],
+      "exactFirst": "What are Distributed Systems?",
+      "name": "contract · scenario · distributed s · #1:What are Distributed Systems? | What are Distributed Systems?@1 | any:Distributed Cloud@5"
+    },
+    {
+      "query": "mono",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Monotonic Stack",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Monotonic Stack",
+      "name": "contract · scenario · mono · #1:Monotonic Stack | Monotonic Stack@1"
+    },
+    {
+      "query": "monoto",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Monotonic Stack",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Monotonic Stack",
+      "name": "contract · scenario · monoto · #1:Monotonic Stack | Monotonic Stack@1"
+    },
+    {
+      "query": "monoton",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Monotonic Stack",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Monotonic Stack",
+      "name": "contract · scenario · monoton · #1:Monotonic Stack | Monotonic Stack@1"
+    },
+    {
+      "query": "12 vulnerability",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · 12 vulnerability · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "tls 12",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · tls 12 · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "1.2 vulnerability",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · 1.2 vulnerability · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "tls 1.2",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · tls 1.2 · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "120",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+      "name": "contract · scenario · 120 · #1:200FPS: CSS vs Canvas vs WebGL vs WebGPU | 200FPS: CSS vs Canvas vs WebGL vs WebGPU@1"
+    },
+    {
+      "query": "12 vulnerabilit",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · 12 vulnerabilit · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "12 vulnerabili",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · 12 vulnerabili · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "12 vulnerab",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · 12 vulnerab · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "2",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+          "topN": 1
+        },
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 2
+        }
+      ],
+      "exactFirst": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+      "name": "contract · scenario · 2 · #1:200FPS: CSS vs Canvas vs WebGL vs WebGPU | 200FPS: CSS vs Canvas vs WebGL vs WebGPU@1 | TLS 1.2 Vulnerability@2"
+    },
+    {
+      "query": "20",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+      "name": "contract · scenario · 20 · #1:200FPS: CSS vs Canvas vs WebGL vs WebGPU | 200FPS: CSS vs Canvas vs WebGL vs WebGPU@1"
+    },
+    {
+      "query": "200",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+      "name": "contract · scenario · 200 · #1:200FPS: CSS vs Canvas vs WebGL vs WebGPU | 200FPS: CSS vs Canvas vs WebGL vs WebGPU@1"
+    },
+    {
+      "query": "200fps",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+      "name": "contract · scenario · 200fps · #1:200FPS: CSS vs Canvas vs WebGL vs WebGPU | 200FPS: CSS vs Canvas vs WebGL vs WebGPU@1"
+    },
+    {
+      "query": "1.2",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · 1.2 · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "12",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · 12 · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "machine learning",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "Linear vs Logistic Regression",
+      "mustNotDominate": {
+        "primary": "Linear vs Logistic Regression",
+        "titles": [
+          "LinkedIn Learning Review"
+        ]
+      },
+      "name": "contract · v2-contract · machine learning · #1:Linear vs Logistic Regression | notAbove:LinkedIn Learning Review"
+    },
+    {
+      "query": "machine learn",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "Linear vs Logistic Regression",
+      "mustNotDominate": {
+        "primary": "Linear vs Logistic Regression",
+        "titles": [
+          "LinkedIn Learning Review"
+        ]
+      },
+      "name": "contract · v2-contract · machine learn · #1:Linear vs Logistic Regression | notAbove:LinkedIn Learning Review"
+    },
+    {
+      "query": "machine learni",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "Linear vs Logistic Regression",
+      "mustNotDominate": {
+        "primary": "Linear vs Logistic Regression",
+        "titles": [
+          "LinkedIn Learning Review"
+        ]
+      },
+      "name": "contract · v2-contract · machine learni · #1:Linear vs Logistic Regression | notAbove:LinkedIn Learning Review"
+    },
+    {
+      "query": "machine learnin",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "Linear vs Logistic Regression",
+      "mustNotDominate": {
+        "primary": "Linear vs Logistic Regression",
+        "titles": [
+          "LinkedIn Learning Review"
+        ]
+      },
+      "name": "contract · v2-contract · machine learnin · #1:Linear vs Logistic Regression | notAbove:LinkedIn Learning Review"
+    },
+    {
+      "query": "compute",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "Edge Computing",
+      "name": "contract · v2-contract · compute · #1:Edge Computing"
+    },
+    {
+      "query": "computing",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "Edge Computing",
+      "name": "contract · v2-contract · computing · #1:Edge Computing"
+    },
+    {
+      "query": "testing",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "Load vs Stress Testing",
+          "Testing in Software Engineering"
+        ],
+        "topN": 2
+      },
+      "name": "contract · v2-contract · testing · anyTop:Load vs Stress Testing, Testing in Software Engineering@2"
+    },
+    {
+      "query": "library",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "Framework vs Library vs Package",
+          "React Component Libraries"
+        ],
+        "topN": 2
+      },
+      "name": "contract · v2-contract · library · anyTop:Framework vs Library vs Package, React Component Libraries@2"
+    },
+    {
+      "query": "libraries",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "Framework vs Library vs Package",
+          "React Component Libraries"
+        ],
+        "topN": 2
+      },
+      "name": "contract · v2-contract · libraries · anyTop:Framework vs Library vs Package, React Component Libraries@2"
+    },
+    {
+      "query": "wha",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "titlePrefix": "What",
+      "titlePrefixTopN": 10,
+      "name": "contract · v2-contract · wha · prefix:What@10"
+    },
+    {
+      "query": "tls",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "requiredRelatedAny": {
+        "titles": [
+          "What is VPN?",
+          "Zero-Trust Security",
+          "Symmetric vs Asymmetric Encryption",
+          "What is a Service Mesh?",
+          "Bearer Token"
+        ],
+        "topN": 10,
+        "minCount": 2
+      },
+      "relationship": {
+        "title": "What is VPN?",
+        "relevanceKind": "related",
+        "type": "editorial",
+        "provenance": "manual",
+        "sourceTitle": "TLS 1.2 Vulnerability"
+      },
+      "name": "contract · v2-contract · tls · #1:TLS 1.2 Vulnerability | relatedAny | relationship"
+    },
+    {
+      "query": "what is an ap",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "What is an API?",
+      "name": "contract · v2-contract · what is an ap · #1:What is an API?"
+    },
+    {
+      "query": "what is c",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "What is Code?",
+      "requiredAnyTop": {
+        "titles": [
+          "What is Clean Code?"
+        ],
+        "topN": 3
+      },
+      "mustNotDominate": {
+        "primary": "What is Code?",
+        "titles": [
+          "CI/CD",
+          "Edge Computing"
+        ]
+      },
+      "name": "contract · v2-contract · what is c · #1:What is Code? | anyTop:What is Clean Code?@3 | notAbove:CI/CD, Edge Computing"
+    },
+    {
+      "query": "what is a c",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "What is a Container?",
+      "name": "contract · v2-contract · what is a c · #1:What is a Container?"
+    },
+    {
+      "query": "what is a co",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "What is a Container?",
+      "name": "contract · v2-contract · what is a co · #1:What is a Container?"
+    },
+    {
+      "query": "appsecurity",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "App Sec",
+      "name": "contract · v2-contract · appsecurity · #1:App Sec"
+    }
+  ]
+}
