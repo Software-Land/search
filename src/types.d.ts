@@ -395,6 +395,10 @@ export interface RelationshipExpansionArgs {
 export interface ConstraintGraph {
   n: number;
   edges: number[][];
+  /**
+   * Conflict diagnostics only. Unordered / no-decision pairs are compared
+   * during graph construction but not retained.
+   */
   pairReports: Array<ConstraintCompareResult & { i: number; j: number }>;
 }
 

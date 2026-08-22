@@ -383,7 +383,25 @@ export function compareConstraint(a: FeaturedHit, b: FeaturedHit, defs: Constrai
  * Directed graph: edge i→j means i must outrank j.
  * Same-class conflicts add no edge (unordered; score will decide inside an SCC
  * only if other edges create a cycle).
+ *
+ * Unordered / no-decision pairs are compared but not retained. pairReports
+ * keeps only conflict diagnostics (same-class conflict or weaker-class
+ * disagreement). Ranking still evaluates every unordered pair once.
  */
+function recordConstraintPair(
+  i: number,
+  j: number,
+  candidates: FeaturedHit[],
+  defs: ConstraintDef[],
+  edges: number[][],
+  pairReports: Array<ConstraintCompareResult & { i: number; j: number }>
+) {
+  const cmp = compareConstraint(candidates[i], candidates[j], defs);
+  if (cmp.conflict) pairReports.push({ i, j, ...cmp });
+  if (cmp.order < 0) edges.push([i, j]);
+  else if (cmp.order > 0) edges.push([j, i]);
+}
+
 export function buildConstraintGraph(
   candidates: FeaturedHit[],
   defs: ConstraintDef[] = DEFAULT_CONSTRAINTS,
@@ -396,10 +414,7 @@ export function buildConstraintGraph(
   for (let i = 0; i < n; i++) {
     for (let j = i + 1; j < n; j++) {
       if ((k++ & 63) === 0) throwIfAborted(signal);
-      const cmp = compareConstraint(candidates[i], candidates[j], defs);
-      pairReports.push({ i, j, ...cmp });
-      if (cmp.order < 0) edges.push([i, j]);
-      else if (cmp.order > 0) edges.push([j, i]);
+      recordConstraintPair(i, j, candidates, defs, edges, pairReports);
     }
   }
   return { n, edges, pairReports };
@@ -421,10 +436,7 @@ export async function buildConstraintGraphAsync(
         await Promise.resolve();
         throwIfAborted(signal);
       }
-      const cmp = compareConstraint(candidates[i], candidates[j], defs);
-      pairReports.push({ i, j, ...cmp });
-      if (cmp.order < 0) edges.push([i, j]);
-      else if (cmp.order > 0) edges.push([j, i]);
+      recordConstraintPair(i, j, candidates, defs, edges, pairReports);
     }
   }
   return { n, edges, pairReports };
@@ -467,6 +479,8 @@ export function stronglyConnectedComponents(n: number, edges: number[][]) {
  * Cycle/conflict diagnosis from an already-built constraint graph.
  * Ranking reuses the pairwise graph; standalone detectConstraintCycles
  * still builds, then calls this.
+ *
+ * graph.pairReports contains conflict diagnostics only.
  */
 export function diagnoseConstraintGraph(graph: ConstraintGraph, candidates: FeaturedHit[]) {
   const { n, edges, pairReports } = graph;

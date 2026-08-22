@@ -224,6 +224,7 @@ Root exports: `SearchEngine`, `english`, `dictionary`, strategy/retriever consta
 | Architecture | [docs/architecture.md](docs/architecture.md) |
 | Known limitations | [docs/limitations.md](docs/limitations.md) |
 | Relevance evaluation (dev) | [benchmarks/relevance/README.md](benchmarks/relevance/README.md) |
+| Memory benchmarks (dev) | [benchmarks/memory/README.md](benchmarks/memory/README.md) |
 
 The checked-in toy fixture is evaluation machinery, not a ranking-quality claim.
 

@@ -41,7 +41,7 @@ On a Node / x86_64 harness:
 
 - Settings-like ~1k remained interactive under full scan (p95 ~18 ms)
 - Settings-like ~10k full scan was unsuitable for typeahead (p95 ~653 ms)
-- Indexed Settings-like ~100k stayed tens of milliseconds; full scan ran out of 8 GB heap
+- Indexed Settings-like ~100k stayed tens of milliseconds; full-scan ranking of a high-DF query previously exhausted heap by retaining Θ(C²) pair diagnostics. 0.3.1 removes that allocation. Comparison time remains Θ(C²) and is unsuitable for typeahead at 10k+; use `indexed` / `adaptive`.
 - Article-like corpora crossed earlier because body/prefix hit sets explode
 
 The inverted postings are relatively small. The **analyzed document store** (tokens, sets, copies) can dominate memory. That is a known limitation, not a ranking bug.

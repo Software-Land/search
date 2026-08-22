@@ -1,6 +1,7 @@
 import { SearchEngine, english, dictionary } from "../dist/index.js";
 import {
   buildConstraintGraph,
+  buildConstraintGraphAsync,
   compareConstraint,
   constraintsForStrategy,
   DEFAULT_CONSTRAINTS,
@@ -78,6 +79,7 @@ describe("diagnoseConstraintGraph reuses a built graph", () => {
     const defs = [];
     const graph = buildConstraintGraph(candidates, defs);
     expect(graph.edges).toEqual([]);
+    expect(graph.pairReports).toEqual([]);
     expect(diagnoseConstraintGraph(graph, candidates)).toEqual(detectConstraintCycles(candidates, defs));
   });
 
@@ -97,6 +99,7 @@ describe("diagnoseConstraintGraph reuses a built graph", () => {
     ];
     const graph = buildConstraintGraph(candidates, defs);
     expect(graph.edges).toEqual([[1, 0]]);
+    expect(graph.pairReports).toEqual([]);
     expect(diagnoseConstraintGraph(graph, candidates)).toEqual(detectConstraintCycles(candidates, defs));
   });
 
@@ -166,11 +169,12 @@ describe("ranking reuses graph construction", () => {
     }
   });
 
-  test("200 candidates: one graph has 19900 pairReports and ranking is deterministic", () => {
+  test("200 candidates: unordered pairs are not retained; ranking is deterministic", () => {
     const C = 200;
     const candidates = Array.from({ length: C }, (_, i) => hit(`id-${String(i).padStart(3, "0")}`));
     const graph = buildConstraintGraph(candidates, []);
-    expect(graph.pairReports).toHaveLength(19900);
+    expect(graph.edges).toEqual([]);
+    expect(graph.pairReports).toHaveLength(0);
     const first = rankCandidates(candidates, { constraints: [] }).map((r) => r.document.id);
     const second = rankCandidates(candidates, { constraints: [] }).map((r) => r.document.id);
     expect(first).toEqual(second);
@@ -220,6 +224,119 @@ describe("ranking reuses graph construction", () => {
     );
     expect(asyncd.map((r) => r.constraintVsNext)).toEqual(sync.map((r) => r.constraintVsNext));
     expect(asyncd.map((r) => r.constraintMeta)).toEqual(sync.map((r) => r.constraintMeta));
+  });
+});
+
+describe("constraint graph retains only edges and conflicts", () => {
+  test("unordered no-decision pairs are compared but not retained", async () => {
+    const candidates = [hit("c"), hit("a"), hit("b")];
+    const sync = buildConstraintGraph(candidates, []);
+    const asyncd = await buildConstraintGraphAsync(candidates, []);
+    expect(sync).toEqual({ n: 3, edges: [], pairReports: [] });
+    expect(asyncd).toEqual(sync);
+  });
+
+  test("decisive ordered pairs become edges without a retained report", () => {
+    const candidates = [hit("loser"), hit("winner")];
+    const defs = [
+      {
+        id: "winner-over-loser",
+        invariant: "test",
+        class: "absolute",
+        fn: (a, b) => {
+          if (a.document.id === "winner" && b.document.id === "loser") return -1;
+          if (a.document.id === "loser" && b.document.id === "winner") return 1;
+          return 0;
+        },
+      },
+    ];
+    const graph = buildConstraintGraph(candidates, defs);
+    expect(graph.edges).toEqual([[1, 0]]);
+    expect(graph.pairReports).toEqual([]);
+  });
+
+  test("same-class conflicts are retained and still unordered", () => {
+    const candidates = [hit("a"), hit("b")];
+    const defs = [
+      {
+        id: "rule-ab",
+        invariant: "test",
+        class: "strong",
+        fn: (a, b) => (a.document.id === "a" && b.document.id === "b" ? -1 : 0),
+      },
+      {
+        id: "rule-ba",
+        invariant: "test",
+        class: "strong",
+        fn: (a, b) => (a.document.id === "a" && b.document.id === "b" ? 1 : 0),
+      },
+    ];
+    const graph = buildConstraintGraph(candidates, defs);
+    expect(graph.edges).toEqual([]);
+    expect(graph.pairReports).toHaveLength(1);
+    expect(graph.pairReports[0]).toMatchObject({
+      i: 0,
+      j: 1,
+      order: 0,
+      conflict: true,
+      resolution: "unordered-same-class-conflict",
+    });
+    const diagnosis = diagnoseConstraintGraph(graph, candidates);
+    expect(diagnosis.conflicts).toEqual([
+      {
+        a: "a",
+        b: "b",
+        applied: graph.pairReports[0].applied,
+        resolution: "unordered-same-class-conflict",
+      },
+    ]);
+    expect(diagnosis.pairReports).toEqual(graph.pairReports);
+  });
+
+  test("stronger-class-wins pairs keep an edge and a conflict report", () => {
+    const candidates = [hit("a"), hit("b")];
+    const defs = [
+      {
+        id: "absolute-ab",
+        invariant: "test",
+        class: "absolute",
+        fn: (a, b) => (a.document.id === "a" && b.document.id === "b" ? -1 : 0),
+      },
+      {
+        id: "soft-ba",
+        invariant: "test",
+        class: "soft",
+        fn: (a, b) => (a.document.id === "a" && b.document.id === "b" ? 1 : 0),
+      },
+    ];
+    const graph = buildConstraintGraph(candidates, defs);
+    expect(graph.edges).toEqual([[0, 1]]);
+    expect(graph.pairReports).toHaveLength(1);
+    expect(graph.pairReports[0]).toMatchObject({
+      conflict: true,
+      resolution: "stronger-class-wins",
+      order: -1,
+    });
+  });
+
+  test("public search meta exposes cycles and conflictCount, not pairReports", async () => {
+    const e = SearchEngine.create({
+      schema: { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } },
+      plugins: [english()],
+    });
+    await e.index([
+      { id: "exact", title: "Bluetooth", body: "wireless" },
+      { id: "other", title: "Other", body: "notes" },
+    ]);
+    const detailed = e.searchDetailed("bluetooth", { limit: 10, explain: true });
+    expect(detailed.meta).not.toHaveProperty("pairReports");
+    expect(Array.isArray(detailed.meta.constraintCycles)).toBe(true);
+    expect(typeof detailed.meta.constraintConflicts).toBe("number");
+    expect(detailed.results[0].explanation.constraintMeta).toEqual({
+      cycles: detailed.meta.constraintCycles,
+      conflictCount: detailed.meta.constraintConflicts,
+    });
+    expect(e.lastSearchMeta).not.toHaveProperty("pairReports");
   });
 });
 
