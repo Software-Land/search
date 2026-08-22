@@ -322,6 +322,50 @@ async function main() {
       }
     }
 
+    copyFileSync(path.join(harnessDir, "retrieval-bench-app.mjs"), path.join(consumer, "retrieval-bench-app.mjs"));
+    writeFileSync(
+      path.join(consumer, "retrieval.html"),
+      `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>chromium-pack retrieval bench</title>
+    <script type="importmap">${JSON.stringify(importMap)}</script>
+  </head>
+  <body>
+    <script type="module" src="/retrieval-bench-app.mjs"></script>
+  </body>
+</html>
+`
+    );
+
+    const RETRIEVAL_WAIT_MS = 120_000;
+    const retrievalPage = await browser.newPage();
+    const retrievalConsoleErrors = [];
+    retrievalPage.on("console", (msg) => {
+      if (msg.type() === "error") retrievalConsoleErrors.push(msg.text());
+    });
+    await retrievalPage.goto(`${origin}/retrieval.html`, { waitUntil: "load", timeout: RETRIEVAL_WAIT_MS });
+    await retrievalPage.waitForFunction(() => window.__booted === true || window.__bootError, null, {
+      timeout: RETRIEVAL_WAIT_MS,
+    });
+    const retrievalBoot = await retrievalPage.evaluate(() => ({
+      booted: window.__booted,
+      bootError: window.__bootError || null,
+      errors: window.__state?.errors || [],
+      results: window.__state?.results || [],
+    }));
+    if (!retrievalBoot.booted) {
+      throw new Error(`retrieval-bench boot failed: ${retrievalBoot.bootError || JSON.stringify(retrievalBoot.errors)}`);
+    }
+    if (retrievalBoot.errors.length) {
+      throw new Error(`retrieval-bench errors: ${JSON.stringify(retrievalBoot.errors)}`);
+    }
+    if (retrievalConsoleErrors.length) throw new Error(`retrieval-bench console error: ${retrievalConsoleErrors.join("\n")}`);
+    if (retrievalBoot.results.length !== 6) {
+      throw new Error(`retrieval-bench expected 6 rows, got ${JSON.stringify(retrievalBoot.results)}`);
+    }
+
     diagnostics.push({
       origin,
       workerUrl,
@@ -332,6 +376,7 @@ async function main() {
       latestWinsPublished: afterLatest.published.slice(beforeLatest),
       latestWinsFinal: last,
       rankBench: rankBoot.results,
+      retrievalBench: retrievalBoot.results,
     });
     console.log(JSON.stringify({ ok: true, ...diagnostics[0] }, null, 2));
   } finally {
