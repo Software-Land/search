@@ -407,6 +407,22 @@ export interface PackedConstraintEdges {
   [Symbol.iterator](): IterableIterator<[number, number]>;
 }
 
+export interface ConstraintCsr {
+  offsets: Uint32Array;
+  neighbors: Uint32Array;
+}
+
+/**
+ * Kosaraju result. `cycles` are copies of multi-node `groups` entries,
+ * not aliases. `adj` is forward CSR only; reverse CSR is not retained.
+ */
+export interface ConstraintScc {
+  comp: number[];
+  groups: number[][];
+  cycles: number[][];
+  adj: ConstraintCsr;
+}
+
 export interface ConstraintGraph {
   n: number;
   edges: PackedConstraintEdges;

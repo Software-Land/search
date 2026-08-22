@@ -25,8 +25,10 @@ import {
 } from "./evidencePolicy.js";
 import type {
   ConstraintCompareResult,
+  ConstraintCsr,
   ConstraintDef,
   ConstraintGraph,
+  ConstraintScc,
   PackedConstraintEdges as PackedConstraintEdgesApi,
   FeaturedHit,
   FeatureVector,
@@ -515,18 +517,80 @@ export async function buildConstraintGraphAsync(
   return { n, edges, pairReports };
 }
 
-export function stronglyConnectedComponents(n: number, edges: PackedConstraintEdgesApi) {
-  const adj: number[][] = Array.from({ length: n }, () => []);
-  const radj: number[][] = Array.from({ length: n }, () => []);
+export function constraintCsrBytes(csr: ConstraintCsr) {
+  return csr.offsets.byteLength + csr.neighbors.byteLength;
+}
+
+/**
+ * Exact CSR adjacency. Neighbors of u are packed-edge insertion order for
+ * edges whose source (forward) or target (reverse) is u.
+ */
+export function buildConstraintCsr(n: number, edges: PackedConstraintEdgesApi, reverse = false): ConstraintCsr {
+  const degree = new Uint32Array(n);
   edges.forEachEdge((u, v) => {
-    adj[u].push(v);
-    radj[v].push(u);
+    degree[reverse ? v : u] += 1;
   });
+  const offsets = new Uint32Array(n + 1);
+  for (let i = 0; i < n; i++) offsets[i + 1] = offsets[i] + degree[i];
+  const neighbors = new Uint32Array(offsets[n]);
+  degree.fill(0);
+  edges.forEachEdge((u, v) => {
+    const from = reverse ? v : u;
+    const to = reverse ? u : v;
+    neighbors[offsets[from] + degree[from]] = to;
+    degree[from] += 1;
+  });
+  return { offsets, neighbors };
+}
+
+function buildConstraintCsrPair(n: number, edges: PackedConstraintEdgesApi): { adj: ConstraintCsr; radj: ConstraintCsr } {
+  const outDeg = new Uint32Array(n);
+  const inDeg = new Uint32Array(n);
+  edges.forEachEdge((u, v) => {
+    outDeg[u] += 1;
+    inDeg[v] += 1;
+  });
+  const adjOff = new Uint32Array(n + 1);
+  const radjOff = new Uint32Array(n + 1);
+  for (let i = 0; i < n; i++) {
+    adjOff[i + 1] = adjOff[i] + outDeg[i];
+    radjOff[i + 1] = radjOff[i] + inDeg[i];
+  }
+  const adjN = new Uint32Array(adjOff[n]);
+  const radjN = new Uint32Array(radjOff[n]);
+  outDeg.fill(0);
+  inDeg.fill(0);
+  edges.forEachEdge((u, v) => {
+    adjN[adjOff[u] + outDeg[u]] = v;
+    outDeg[u] += 1;
+    radjN[radjOff[v] + inDeg[v]] = u;
+    inDeg[v] += 1;
+  });
+  return {
+    adj: { offsets: adjOff, neighbors: adjN },
+    radj: { offsets: radjOff, neighbors: radjN },
+  };
+}
+
+function csrEachNeighbor(csr: ConstraintCsr, u: number, visit: (v: number) => void) {
+  const start = csr.offsets[u];
+  const end = csr.offsets[u + 1];
+  const neighbors = csr.neighbors;
+  for (let k = start; k < end; k++) visit(neighbors[k]);
+}
+
+export function csrNeighborList(csr: ConstraintCsr, u: number): number[] {
+  return Array.from(csr.neighbors.subarray(csr.offsets[u], csr.offsets[u + 1]));
+}
+
+function kosaraju(n: number, adj: ConstraintCsr, radj: ConstraintCsr) {
   const seen = new Array(n).fill(false);
   const order: number[] = [];
   function dfs1(u: number) {
     seen[u] = true;
-    for (const v of adj[u]) if (!seen[v]) dfs1(v);
+    csrEachNeighbor(adj, u, (v) => {
+      if (!seen[v]) dfs1(v);
+    });
     order.push(u);
   }
   for (let i = 0; i < n; i++) if (!seen[i]) dfs1(i);
@@ -535,7 +599,9 @@ export function stronglyConnectedComponents(n: number, edges: PackedConstraintEd
   let cid = 0;
   function dfs2(u: number, id: number) {
     comp[u] = id;
-    for (const v of radj[u]) if (comp[v] === -1) dfs2(v, id);
+    csrEachNeighbor(radj, u, (v) => {
+      if (comp[v] === -1) dfs2(v, id);
+    });
   }
   for (let i = order.length - 1; i >= 0; i--) {
     const u = order[i];
@@ -544,20 +610,96 @@ export function stronglyConnectedComponents(n: number, edges: PackedConstraintEd
 
   const groups: number[][] = Array.from({ length: cid }, () => []);
   for (let i = 0; i < n; i++) groups[comp[i]].push(i);
+  // Copies so later Kahn/group walks cannot mutate diagnostic cycle rows.
   const cycles = groups.filter((g) => g.length > 1).map((g) => g.slice());
   return { comp, groups, cycles };
 }
 
+function releaseConstraintCsrBuffers(csr: ConstraintCsr | undefined) {
+  if (!csr) return;
+  csr.offsets = new Uint32Array(0);
+  csr.neighbors = new Uint32Array(0);
+}
+
+/**
+ * Kosaraju over exact CSR. Reverse CSR buffers are released before return
+ * so they are not reachable from the SCC result, closures, or later ordering.
+ */
+export function stronglyConnectedComponents(n: number, edges: PackedConstraintEdgesApi): ConstraintScc {
+  const pair: { adj: ConstraintCsr; radj: ConstraintCsr | undefined } = buildConstraintCsrPair(n, edges);
+  const adj = pair.adj;
+  const { comp, groups, cycles } = kosaraju(n, adj, pair.radj as ConstraintCsr);
+  releaseConstraintCsrBuffers(pair.radj);
+  pair.radj = undefined;
+  return { comp, groups, cycles, adj };
+}
+
+export const CONSTRAINT_STAMP_MAX = 0xffffffff;
+
+export function advanceConstraintStamp(marks: Uint32Array, generation: number): number {
+  if (generation >= CONSTRAINT_STAMP_MAX) {
+    marks.fill(0);
+    return 1;
+  }
+  return generation + 1;
+}
+
+export function forEachOutgoingComponent(
+  g: number,
+  comp: number[],
+  groups: number[][],
+  adj: ConstraintCsr,
+  marks: Uint32Array,
+  generation: number,
+  visit: (b: number) => void
+) {
+  const members = groups[g];
+  const neighbors = adj.neighbors;
+  const offsets = adj.offsets;
+  for (let i = 0; i < members.length; i++) {
+    const u = members[i];
+    const start = offsets[u];
+    const end = offsets[u + 1];
+    for (let k = start; k < end; k++) {
+      const b = comp[neighbors[k]];
+      if (b === g) continue;
+      if (marks[b] !== generation) {
+        marks[b] = generation;
+        visit(b);
+      }
+    }
+  }
+}
+
+export function computeComponentIndegrees(comp: number[], groups: number[][], adj: ConstraintCsr): Uint32Array {
+  const nComp = groups.length;
+  const indeg = new Uint32Array(nComp);
+  const marks = new Uint32Array(nComp);
+  let generation = 0;
+  for (let g = 0; g < nComp; g++) {
+    generation = advanceConstraintStamp(marks, generation);
+    forEachOutgoingComponent(g, comp, groups, adj, marks, generation, (b) => {
+      indeg[b] += 1;
+    });
+  }
+  return indeg;
+}
+
 /**
  * Cycle/conflict diagnosis from an already-built constraint graph.
- * Ranking reuses the pairwise graph; standalone detectConstraintCycles
- * still builds, then calls this.
+ * Ranking reuses the pairwise graph and may pass a precomputed SCC so
+ * Kosaraju does not run twice. Standalone detectConstraintCycles still
+ * computes SCC itself.
  *
  * graph.pairReports contains conflict diagnostics only.
  */
-export function diagnoseConstraintGraph(graph: ConstraintGraph, candidates: FeaturedHit[]) {
-  const { n, edges, pairReports } = graph;
-  const { cycles } = stronglyConnectedComponents(n, edges);
+export function diagnoseConstraintGraph(
+  graph: ConstraintGraph,
+  candidates: FeaturedHit[],
+  precomputed?: Pick<ConstraintScc, "cycles">
+) {
+  const { pairReports } = graph;
+  const cycles = precomputed?.cycles ?? stronglyConnectedComponents(graph.n, graph.edges).cycles;
   const conflicts = pairReports.filter((p) => p.conflict);
   return {
     cycles: cycles.map((ids) => ids.map((i) => candidates[i]?.document?.id ?? i)),

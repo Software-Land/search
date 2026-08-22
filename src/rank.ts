@@ -14,6 +14,9 @@ import {
   buildConstraintGraphAsync,
   stronglyConnectedComponents,
   diagnoseConstraintGraph,
+  computeComponentIndegrees,
+  forEachOutgoingComponent,
+  advanceConstraintStamp,
   DEFAULT_CONSTRAINTS,
 } from "./constraints.js";
 import { throwIfAborted } from "./cancel.js";
@@ -102,28 +105,17 @@ export async function rankCandidatesAsync(
   return orderFromGraph(decorated, graph, constraints, { signal });
 }
 
-function orderFromGraph(
-  decorated: FeaturedHit[],
-  graph: ConstraintGraph,
-  constraints: ConstraintDef[],
-  { signal }: { signal?: AbortSignal } = {}
-): RankedHit[] {
-  throwIfAborted(signal);
+function orderComponents(decorated: FeaturedHit[], graph: ConstraintGraph) {
   const { n, edges } = graph;
-  const { comp, groups } = stronglyConnectedComponents(n, edges);
+  const { comp, groups, cycles, adj } = stronglyConnectedComponents(n, edges);
 
-  const succ = Array.from({ length: groups.length }, () => new Set<number>());
-  const indeg = new Array(groups.length).fill(0);
-  edges.forEachEdge((u, v) => {
-    if (comp[u] === comp[v]) return;
-    if (!succ[comp[u]].has(comp[v])) {
-      succ[comp[u]].add(comp[v]);
-      indeg[comp[v]] += 1;
-    }
-  });
+  const nComp = groups.length;
+  const indeg = computeComponentIndegrees(comp, groups, adj);
+  const marks = new Uint32Array(nComp);
+  let generation = 0;
 
   const ready: number[] = [];
-  for (let g = 0; g < groups.length; g++) if (indeg[g] === 0) ready.push(g);
+  for (let g = 0; g < nComp; g++) if (indeg[g] === 0) ready.push(g);
 
   function bestOf(g: number) {
     const members = groups[g].map((i) => decorated[i]);
@@ -143,11 +135,11 @@ function orderFromGraph(
   while (ready.length) {
     const g = ready.shift() as number;
     topo.push(g);
-    const next = [...succ[g]];
-    for (const h of next) {
+    generation = advanceConstraintStamp(marks, generation);
+    forEachOutgoingComponent(g, comp, groups, adj, marks, generation, (h) => {
       indeg[h] -= 1;
       if (indeg[h] === 0) ready.push(h);
-    }
+    });
     readySort();
   }
   // If the DAG walk missed nodes (shouldn't with SCCs), append remaining by id.
@@ -164,11 +156,25 @@ function orderFromGraph(
     });
     ordered.push(...members);
   }
+  // Reverse CSR was never stored on the SCC result. Forward CSR / groups /
+  // comp become unreachable when this frame returns; diagnosis keeps only
+  // the copied `cycles` rows.
+  return { ordered, cycles };
+}
+
+function orderFromGraph(
+  decorated: FeaturedHit[],
+  graph: ConstraintGraph,
+  constraints: ConstraintDef[],
+  { signal }: { signal?: AbortSignal } = {}
+): RankedHit[] {
+  throwIfAborted(signal);
+  const { ordered, cycles } = orderComponents(decorated, graph);
 
   // Same abort opportunity the previous second buildConstraintGraph() polled
   // at its first pair (k === 0) before diagnostic work.
   throwIfAborted(signal);
-  const diagnosis = diagnoseConstraintGraph(graph, decorated);
+  const diagnosis = diagnoseConstraintGraph(graph, decorated, { cycles });
 
   return ordered.map((c, i) => ({
     ...c,
