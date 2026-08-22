@@ -1,0 +1,36 @@
+{
+  "format": "software-land-search-fixture",
+  "version": 1,
+  "description": "Software.Land-derived realistic integration test data. It is not default package policy.",
+  "softwareLandCommit": "dff24cf606967cb50b24d28d9142747c9203e053",
+  "searchPackageVersion": "0.3.1",
+  "documentCount": 122,
+  "dictionaryEntryCount": 180,
+  "lemmaCount": 1206,
+  "files": {
+    "documents.json": {
+      "bytes": 759396,
+      "sha256": "e5d27ce5b12a83db8a1d39e11c4eabe37a60a9e3f708b3730480c71b10c65dc2"
+    },
+    "dictionary.json": {
+      "bytes": 26647,
+      "sha256": "9b613353ffefdf2bf821691d56db145ed39bbc147118caf0a7e3e1367ff20379"
+    },
+    "lemmas.json": {
+      "bytes": 31494,
+      "sha256": "a445f33066c7aa585132bb14a7399f8b0e2ad365de9daae3bd759db8c145a39f"
+    },
+    "relationships.json": {
+      "bytes": 42102,
+      "sha256": "72a87352316d9f0dbf51a9b07b32291c467b42f1f857739c8d2cd9cafad93d22"
+    },
+    "lexical-frequency.json": {
+      "bytes": 1581264,
+      "sha256": "b964ef45cbe2f105a259e5d284600a03d28a1521e4f911dcb65a7a9fd46334f9"
+    },
+    "scenarios.json": {
+      "bytes": 1974,
+      "sha256": "351bb9be086b527ac240ae862ea93909a034314e91248181b6fb4f7e359c6cd1"
+    }
+  }
+}

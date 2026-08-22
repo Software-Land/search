@@ -1,0 +1,85 @@
+{
+  "notes": [
+    "Accepted live V2 results from Software.Land @software-land/search 0.3.1. Not Core policy.",
+    "sort recurses #1 depends on the site lemma table (identity mapping recursion→recursion). Without it, Topological Sort ranks first."
+  ],
+  "cases": [
+    {
+      "query": "2",
+      "exact": [
+        "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+        "TLS 1.2 Vulnerability"
+      ]
+    },
+    {
+      "query": "1.2",
+      "exactFirst": "TLS 1.2 Vulnerability"
+    },
+    {
+      "query": "12",
+      "exactFirst": "TLS 1.2 Vulnerability"
+    },
+    {
+      "query": "200fps",
+      "exactFirst": "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+    },
+    {
+      "query": "oop",
+      "exactFirst": "What is OOP (Object-Oriented Programming)?"
+    },
+    {
+      "query": "rbac",
+      "exactFirst": "RBAC (Role Based Access Control)"
+    },
+    {
+      "query": "aplicationsecurity",
+      "exactFirst": "App Sec"
+    },
+    {
+      "query": "appsecurity",
+      "exactFirst": "App Sec"
+    },
+    {
+      "query": "what is an ap",
+      "exactFirst": "What is an API?"
+    },
+    {
+      "query": "sort recurses",
+      "exactFirst": "What is Recursion?",
+      "dependsOn": "lemmas"
+    },
+    {
+      "query": "machine learning",
+      "withinTopN": {
+        "title": "Linear vs Logistic Regression",
+        "topN": 2
+      },
+      "dependsOn": "lexical-frequency"
+    },
+    {
+      "query": "machine learni",
+      "withinTopN": {
+        "title": "Linear vs Logistic Regression",
+        "topN": 2
+      }
+    },
+    {
+      "query": "library",
+      "withinTopN": {
+        "title": "Framework vs Library vs Package",
+        "topN": 2
+      }
+    },
+    {
+      "query": "tls",
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "relationship": {
+        "title": "What is VPN?",
+        "relevanceKind": "related",
+        "type": "editorial",
+        "provenance": "manual",
+        "sourceTitle": "TLS 1.2 Vulnerability"
+      }
+    }
+  ]
+}

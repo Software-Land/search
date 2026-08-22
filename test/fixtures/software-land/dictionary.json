@@ -1,0 +1,1888 @@
+[
+  {
+    "key": "api",
+    "expansion": [
+      "application",
+      "programming",
+      "interface"
+    ],
+    "aliases": [
+      [
+        "app",
+        "programming",
+        "interface"
+      ]
+    ],
+    "primary": "interface"
+  },
+  {
+    "key": "iot",
+    "expansion": [
+      "internet",
+      "things"
+    ],
+    "aliases": [
+      [
+        "internet",
+        "of",
+        "things"
+      ]
+    ],
+    "primary": null
+  },
+  {
+    "key": "dp",
+    "expansion": [
+      "dynamic",
+      "programming"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "oop",
+    "expansion": [
+      "object",
+      "oriented",
+      "programming"
+    ],
+    "aliases": [],
+    "primary": "programming"
+  },
+  {
+    "key": "ci",
+    "expansion": [
+      "continuous",
+      "integration"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "cd",
+    "expansion": [
+      "continuous",
+      "deployment"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "cicd",
+    "expansion": [
+      "continuous",
+      "integration",
+      "continuous",
+      "deployment"
+    ],
+    "aliases": [
+      [
+        "ci",
+        "cd"
+      ],
+      [
+        "ci"
+      ],
+      [
+        "cd"
+      ]
+    ],
+    "primary": null
+  },
+  {
+    "key": "dfs",
+    "expansion": [
+      "depth",
+      "first",
+      "search"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "io",
+    "expansion": [
+      "input",
+      "output"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "tcp",
+    "expansion": [
+      "transmission",
+      "control",
+      "protocol"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "udp",
+    "expansion": [
+      "user",
+      "datagram",
+      "protocol"
+    ],
+    "aliases": [],
+    "primary": "datagram"
+  },
+  {
+    "key": "tls",
+    "expansion": [
+      "transport",
+      "layer",
+      "security"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "vpn",
+    "expansion": [
+      "virtual",
+      "private",
+      "network"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "grpc",
+    "expansion": [
+      "grpc",
+      "remote",
+      "procedure",
+      "call"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "rpc",
+    "expansion": [
+      "remote",
+      "procedure",
+      "call"
+    ],
+    "aliases": [
+      [
+        "remote",
+        "procedural",
+        "call"
+      ]
+    ],
+    "primary": null
+  },
+  {
+    "key": "rest",
+    "expansion": [
+      "representational",
+      "state",
+      "transfer"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "graphql",
+    "expansion": [
+      "graph",
+      "query",
+      "language"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "gql",
+    "expansion": [
+      "graph",
+      "query",
+      "language"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "sql",
+    "expansion": [
+      "structured",
+      "query",
+      "language"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "nosql",
+    "expansion": [
+      "not",
+      "only",
+      "sql"
+    ],
+    "aliases": [
+      [
+        "no",
+        "sql"
+      ]
+    ],
+    "primary": null
+  },
+  {
+    "key": "oltp",
+    "expansion": [
+      "online",
+      "transaction",
+      "processing"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "olap",
+    "expansion": [
+      "online",
+      "analytical",
+      "processing"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "rbac",
+    "expansion": [
+      "role",
+      "based",
+      "access",
+      "control"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "bfs",
+    "expansion": [
+      "breadth",
+      "first",
+      "search"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ai",
+    "expansion": [
+      "artificial",
+      "intelligence"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "eda",
+    "expansion": [
+      "event",
+      "driven",
+      "architecture"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "jwt",
+    "expansion": [
+      "json",
+      "web",
+      "token"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "sla",
+    "expansion": [
+      "service",
+      "level",
+      "agreement"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "iac",
+    "expansion": [
+      "infrastructure",
+      "code"
+    ],
+    "aliases": [
+      [
+        "infrastructure",
+        "as",
+        "code"
+      ]
+    ],
+    "primary": null
+  },
+  {
+    "key": "tco",
+    "expansion": [
+      "total",
+      "cost",
+      "ownership"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "p99",
+    "expansion": [
+      "tail",
+      "latency"
+    ],
+    "aliases": [],
+    "primary": "latency"
+  },
+  {
+    "key": "tos",
+    "expansion": [
+      "terms",
+      "service"
+    ],
+    "aliases": [
+      [
+        "terms",
+        "of",
+        "service"
+      ]
+    ],
+    "primary": null
+  },
+  {
+    "key": "qa",
+    "expansion": [
+      "quality",
+      "assurance"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "testing",
+    "expansion": [
+      "quality",
+      "assurance"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "sre",
+    "expansion": [
+      "site",
+      "reliability",
+      "engineering"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "slo",
+    "expansion": [
+      "service",
+      "level",
+      "objective"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "sli",
+    "expansion": [
+      "service",
+      "level",
+      "indicator"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "soa",
+    "expansion": [
+      "service",
+      "oriented",
+      "architecture"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "mvc",
+    "expansion": [
+      "model",
+      "view",
+      "controller"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "mvp",
+    "expansion": [
+      "minimum",
+      "viable",
+      "product"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "crud",
+    "expansion": [
+      "create",
+      "read",
+      "update",
+      "delete"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "cdn",
+    "expansion": [
+      "content",
+      "delivery",
+      "network"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "cdb",
+    "expansion": [
+      "cockroach",
+      "db"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "http",
+    "expansion": [
+      "hypertext",
+      "transfer",
+      "protocol"
+    ],
+    "aliases": [],
+    "primary": "hypertext"
+  },
+  {
+    "key": "https",
+    "expansion": [
+      "hypertext",
+      "transfer",
+      "protocol",
+      "secure"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "rtt",
+    "expansion": [
+      "round",
+      "trip",
+      "time"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "kpi",
+    "expansion": [
+      "key",
+      "performance",
+      "indicator"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "tps",
+    "expansion": [
+      "transactions",
+      "per",
+      "second"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "csr",
+    "expansion": [
+      "certificate",
+      "signing",
+      "request"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "cra",
+    "expansion": [
+      "create",
+      "react",
+      "app"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "devop",
+    "expansion": [
+      "dev",
+      "ops"
+    ],
+    "aliases": [
+      [
+        "development",
+        "operations"
+      ],
+      [
+        "devops"
+      ]
+    ],
+    "primary": null
+  },
+  {
+    "key": "kg",
+    "expansion": [
+      "knowledge",
+      "graph"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "techdebt",
+    "expansion": [
+      "tech",
+      "debt"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "swe",
+    "expansion": [
+      "software",
+      "engineer"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "swd",
+    "expansion": [
+      "software",
+      "developer"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ml",
+    "expansion": [
+      "machine",
+      "learning"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "appsec",
+    "expansion": [
+      "application",
+      "security"
+    ],
+    "aliases": [
+      [
+        "app",
+        "sec"
+      ],
+      [
+        "app",
+        "security"
+      ],
+      [
+        "application",
+        "sec"
+      ],
+      [
+        "security"
+      ]
+    ],
+    "primary": null
+  },
+  {
+    "key": "zts",
+    "expansion": [
+      "zero",
+      "trust",
+      "security"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "aws",
+    "expansion": [
+      "amazon",
+      "web",
+      "services"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "gcp",
+    "expansion": [
+      "google",
+      "cloud",
+      "platform"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "abac",
+    "expansion": [
+      "attribute",
+      "based",
+      "access",
+      "control"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "acl",
+    "expansion": [
+      "access",
+      "control",
+      "list"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "aes",
+    "expansion": [
+      "advanced",
+      "encryption",
+      "standard"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ast",
+    "expansion": [
+      "abstract",
+      "syntax",
+      "tree"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "cpu",
+    "expansion": [
+      "central",
+      "processing",
+      "unit"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "css",
+    "expansion": [
+      "cascading",
+      "style",
+      "sheets"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "cvcs",
+    "expansion": [
+      "centralized",
+      "version",
+      "control",
+      "system"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "pkce",
+    "expansion": [
+      "proof",
+      "key",
+      "for",
+      "code",
+      "exchange"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "db",
+    "expansion": [
+      "database"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "dns",
+    "expansion": [
+      "domain",
+      "name",
+      "system"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "dom",
+    "expansion": [
+      "document",
+      "object",
+      "model"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "dvcs",
+    "expansion": [
+      "distributed",
+      "version",
+      "control",
+      "system"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ec2",
+    "expansion": [
+      "elastic",
+      "compute",
+      "cloud"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "eks",
+    "expansion": [
+      "elastic",
+      "kubernetes",
+      "service"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "etl",
+    "expansion": [
+      "extract",
+      "transform",
+      "load"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "faas",
+    "expansion": [
+      "function",
+      "service"
+    ],
+    "aliases": [
+      [
+        "function",
+        "as",
+        "a",
+        "service"
+      ]
+    ],
+    "primary": null
+  },
+  {
+    "key": "ftp",
+    "expansion": [
+      "file",
+      "transfer",
+      "protocol"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ga4",
+    "expansion": [
+      "google",
+      "analytics",
+      "4"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "gdpr",
+    "expansion": [
+      "general",
+      "data",
+      "protection",
+      "regulation"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "gui",
+    "expansion": [
+      "graphical",
+      "user",
+      "interface"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "hdd",
+    "expansion": [
+      "hard",
+      "disk",
+      "drive"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "hft",
+    "expansion": [
+      "high",
+      "frequency",
+      "trading"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "html",
+    "expansion": [
+      "hypertext",
+      "markup",
+      "language"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "iaas",
+    "expansion": [
+      "infrastructure",
+      "service"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "idp",
+    "expansion": [
+      "identity",
+      "provider"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ike",
+    "expansion": [
+      "internet",
+      "key",
+      "exchange"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ioc",
+    "expansion": [
+      "inversion",
+      "control"
+    ],
+    "aliases": [
+      [
+        "inversion",
+        "of",
+        "control"
+      ]
+    ],
+    "primary": null
+  },
+  {
+    "key": "ip",
+    "expansion": [
+      "internet",
+      "protocol"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ipsec",
+    "expansion": [
+      "internet",
+      "protocol",
+      "security"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "isp",
+    "expansion": [
+      "internet",
+      "service",
+      "provider"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "json",
+    "expansion": [
+      "javascript",
+      "object",
+      "notation"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "llm",
+    "expansion": [
+      "large",
+      "language",
+      "model"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "mfa",
+    "expansion": [
+      "multi",
+      "factor",
+      "authentication"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "mtls",
+    "expansion": [
+      "mutual",
+      "transport",
+      "layer",
+      "security"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "oauth",
+    "expansion": [
+      "open",
+      "authorization"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "oidc",
+    "expansion": [
+      "openid",
+      "connect"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "os",
+    "expansion": [
+      "operating",
+      "system"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "osi",
+    "expansion": [
+      "open",
+      "systems",
+      "interconnection"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "paas",
+    "expansion": [
+      "platform",
+      "service"
+    ],
+    "aliases": [
+      [
+        "platform",
+        "as",
+        "a",
+        "service"
+      ]
+    ],
+    "primary": null
+  },
+  {
+    "key": "rtmp",
+    "expansion": [
+      "real",
+      "time",
+      "messaging",
+      "protocol"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "rtp",
+    "expansion": [
+      "real",
+      "time",
+      "transport",
+      "protocol"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "rtsp",
+    "expansion": [
+      "real",
+      "time",
+      "streaming",
+      "protocol"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "s3",
+    "expansion": [
+      "simple",
+      "storage",
+      "service"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "saas",
+    "expansion": [
+      "software",
+      "service"
+    ],
+    "aliases": [
+      [
+        "software",
+        "as",
+        "a",
+        "service"
+      ]
+    ],
+    "primary": null
+  },
+  {
+    "key": "saml",
+    "expansion": [
+      "security",
+      "assertion",
+      "markup",
+      "language"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "sns",
+    "expansion": [
+      "simple",
+      "notification",
+      "service"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "sqs",
+    "expansion": [
+      "simple",
+      "queue",
+      "service"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ssg",
+    "expansion": [
+      "static",
+      "site",
+      "generation"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ssl",
+    "expansion": [
+      "secure",
+      "sockets",
+      "layer"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ssr",
+    "expansion": [
+      "server",
+      "side",
+      "rendering"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ttl",
+    "expansion": [
+      "time",
+      "to",
+      "live"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ui",
+    "expansion": [
+      "user",
+      "interface"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "url",
+    "expansion": [
+      "uniform",
+      "resource",
+      "locator"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "usb",
+    "expansion": [
+      "universal",
+      "serial",
+      "bus"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "vm",
+    "expansion": [
+      "virtual",
+      "machine"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "vpc",
+    "expansion": [
+      "virtual",
+      "private",
+      "cloud"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "xss",
+    "expansion": [
+      "cross",
+      "site",
+      "scripting"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "dag",
+    "expansion": [
+      "directed",
+      "acyclic",
+      "graph"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "stem",
+    "expansion": [
+      "science",
+      "technology",
+      "engineering",
+      "mathematics"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "htap",
+    "expansion": [
+      "hybrid",
+      "transactional",
+      "analytical",
+      "processing"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ide",
+    "expansion": [
+      "integrated",
+      "development",
+      "environment"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "dsl",
+    "expansion": [
+      "domain",
+      "specific",
+      "language"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ram",
+    "expansion": [
+      "random",
+      "access",
+      "memory"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "iam",
+    "expansion": [
+      "identity",
+      "and",
+      "access",
+      "management"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "rdf",
+    "expansion": [
+      "resource",
+      "description",
+      "framework"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "owl",
+    "expansion": [
+      "web",
+      "ontology",
+      "language"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "sparql",
+    "expansion": [
+      "sparql",
+      "protocol",
+      "and",
+      "rdf",
+      "query",
+      "language"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "swrl",
+    "expansion": [
+      "semantic",
+      "web",
+      "rule",
+      "language"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "shacl",
+    "expansion": [
+      "shapes",
+      "constraint",
+      "language"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ecs",
+    "expansion": [
+      "elastic",
+      "container",
+      "service"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ebs",
+    "expansion": [
+      "elastic",
+      "block",
+      "store"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ecr",
+    "expansion": [
+      "elastic",
+      "container",
+      "registry"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "rds",
+    "expansion": [
+      "relational",
+      "database",
+      "service"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "hls",
+    "expansion": [
+      "http",
+      "live",
+      "streaming"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "webrtc",
+    "expansion": [
+      "web",
+      "real",
+      "time",
+      "communication"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ccpa",
+    "expansion": [
+      "california",
+      "consumer",
+      "privacy",
+      "act"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "csrf",
+    "expansion": [
+      "cross",
+      "site",
+      "request",
+      "forgery"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "dx",
+    "expansion": [
+      "developer",
+      "experience"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "e2e",
+    "expansion": [
+      "end",
+      "to",
+      "end"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "gpu",
+    "expansion": [
+      "graphics",
+      "processing",
+      "unit"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "jsx",
+    "expansion": [
+      "javascript",
+      "xml"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "l2tp",
+    "expansion": [
+      "layer",
+      "2",
+      "tunneling",
+      "protocol"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "nist",
+    "expansion": [
+      "national",
+      "institute",
+      "standards",
+      "technology"
+    ],
+    "aliases": [],
+    "primary": "institute"
+  },
+  {
+    "key": "rdfs",
+    "expansion": [
+      "rdf",
+      "schema"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "spa",
+    "expansion": [
+      "single",
+      "page",
+      "application"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "svg",
+    "expansion": [
+      "scalable",
+      "vector",
+      "graphics"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ts",
+    "expansion": [
+      "typescript"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "tsx",
+    "expansion": [
+      "typescript",
+      "jsx"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "acid",
+    "expansion": [
+      "atomicity",
+      "consistency",
+      "isolation",
+      "durability"
+    ],
+    "aliases": [],
+    "primary": "atomicity"
+  },
+  {
+    "key": "base",
+    "expansion": [
+      "basically",
+      "available",
+      "soft",
+      "state",
+      "eventual",
+      "consistency"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "cap",
+    "expansion": [
+      "consistency",
+      "availability",
+      "partition",
+      "tolerance"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "crdt",
+    "expansion": [
+      "conflict",
+      "free",
+      "replicated",
+      "data",
+      "type"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "qps",
+    "expansion": [
+      "queries",
+      "per",
+      "second"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "rps",
+    "expansion": [
+      "requests",
+      "per",
+      "second"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "uri",
+    "expansion": [
+      "uniform",
+      "resource",
+      "identifier"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "nic",
+    "expansion": [
+      "network",
+      "interface",
+      "card"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ssd",
+    "expansion": [
+      "solid",
+      "state",
+      "drive"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "fp",
+    "expansion": [
+      "functional",
+      "programming"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "cli",
+    "expansion": [
+      "command",
+      "line",
+      "interface"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ipc",
+    "expansion": [
+      "inter",
+      "process",
+      "communication"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "hpa",
+    "expansion": [
+      "horizontal",
+      "pod",
+      "autoscaler"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "k8s",
+    "expansion": [
+      "kubernetes"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "rsc",
+    "expansion": [
+      "react",
+      "server",
+      "components"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "hmr",
+    "expansion": [
+      "hot",
+      "module",
+      "replacement"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "swc",
+    "expansion": [
+      "speedy",
+      "web",
+      "compiler"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "dlq",
+    "expansion": [
+      "dead",
+      "letter",
+      "queue"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "zkp",
+    "expansion": [
+      "zero",
+      "knowledge",
+      "proof"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "oci",
+    "expansion": [
+      "open",
+      "container",
+      "initiative"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "cri",
+    "expansion": [
+      "container",
+      "runtime",
+      "interface"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "rsa",
+    "expansion": [
+      "rivest",
+      "shamir",
+      "adleman"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "dsa",
+    "expansion": [
+      "digital",
+      "signature",
+      "algorithm"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "ecc",
+    "expansion": [
+      "elliptic",
+      "curve",
+      "cryptography"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "proto",
+    "expansion": [
+      "protocol",
+      "buffer"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "protobuf",
+    "expansion": [
+      "protocol",
+      "buffer"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "lsm",
+    "expansion": [
+      "log",
+      "structured",
+      "merge"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "diy",
+    "expansion": [
+      "do",
+      "it",
+      "yourself"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "nextjs",
+    "expansion": [
+      "next",
+      "js"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "reactjs",
+    "expansion": [
+      "react",
+      "js"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "shadcnui",
+    "expansion": [
+      "shadcn",
+      "ui"
+    ],
+    "aliases": [],
+    "primary": null
+  },
+  {
+    "key": "gatech",
+    "expansion": [
+      "georgia",
+      "institute",
+      "of",
+      "technology"
+    ],
+    "aliases": [],
+    "primary": "institute"
+  }
+]
