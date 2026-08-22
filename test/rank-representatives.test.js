@@ -155,6 +155,36 @@ describe("top-R per builtin constraint signature", () => {
     }
   });
 
+  test("reduction preserves first-seen signature order for directional builtin comparisons", () => {
+    const candidates = [
+      hit("s-low", {
+        queryTokenCount: 1,
+        typedSurfaceTitleMatch: true,
+        retrievalScore: 1,
+      }),
+      hit("t", {
+        queryTokenCount: 2,
+        typedSurfaceTitleMatch: false,
+        retrievalScore: 10,
+      }),
+      hit("s-high", {
+        queryTokenCount: 1,
+        typedSurfaceTitleMatch: true,
+        retrievalScore: 5,
+      }),
+    ];
+    const full = rankCandidates(candidates);
+    expect(ids(full, 3)).toEqual(["s-high", "s-low", "t"]);
+
+    const selected = selectTopPerBuiltinSignature(candidates, 1);
+    expect(selected.candidates.map((row) => row.document.id)).toEqual(["s-high", "t"]);
+    expect(ids(rankCandidates(selected.candidates), 1)).toEqual(["s-high"]);
+
+    // A stable-filter implementation would reverse first-seen bucket order
+    // after dropping s-low and would incorrectly make t the winner.
+    expect(ids(rankCandidates([candidates[1], selected.candidates[0]]), 1)).toEqual(["t"]);
+  });
+
   test("incomparable, dominated, stronger/weaker, and same-class-conflict signatures preserve prefixes", () => {
     const candidates = [];
     for (let i = 0; i < 40; i += 1) {

@@ -106,6 +106,12 @@ export type RepresentativeSelectionStats = {
  * below depth R in its signature has at least R same-signature predecessors
  * and cannot occur in the global top R.
  *
+ * Map insertion order is part of the reduction: retained groups are emitted
+ * in the first-seen signature order used by rankSparse. Do not reorder the
+ * groups independently. SearchEngine feature vectors are query-coherent, but
+ * preserving this ordered quotient also keeps the theorem valid for synthetic
+ * builtin vectors whose directional comparisons are asymmetric.
+ *
  * Callers that need `constraintVsNext` for the first R results must request
  * R + 1 representatives. Unknown/custom constraints fail closed to all
  * candidates because their functions are not covered by constraintSignature.
@@ -159,6 +165,8 @@ export function selectTopPerBuiltinSignature(
 
   const retained: FeaturedHit[] = [];
   let maxRepresentativesPerSignature = 0;
+  // Intentionally iterate Map insertion order to preserve rankSparse's
+  // first-seen signature order.
   for (const group of groups.values()) {
     group.sort((a, b) => {
       if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
