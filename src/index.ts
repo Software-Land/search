@@ -54,10 +54,15 @@ import type {
 
 export type {
   AdaptiveOptions,
+  DictionaryPlugin,
   DirectClass,
+  EnglishPlugin,
   EquivalenceArtifact,
   EquivalenceEntry,
+  ExperimentalRetrieveOptions,
+  ExperimentalRetriever,
   IndexResult,
+  LexiconPlugin,
   PrefixCompletion,
   RelationshipArtifact,
   RelationshipEdge,
@@ -72,8 +77,10 @@ export type {
   SearchEngineOptions,
   SearchExplanation,
   SearchOptions,
+  SearchPlugin,
   SearchResult,
   SynonymArtifact,
+  SynonymPlugin,
   TextRole,
 } from "./api.js";
 

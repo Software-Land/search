@@ -22,7 +22,7 @@ Architecture was validated against an Android Settings–style catalog. There is
 
 ## Public vs experimental
 
-Public: `SearchEngine` facade, result fields above, artifact v1, strategy names, retriever names, `AbortError`.
+Public: `SearchEngine` facade, result fields above, artifact v1, strategy names, retriever names, `AbortError`. Opt-in type-only plugin/retriever authoring contracts (`SearchPlugin`, `ExperimentalRetriever`, …) do not narrow create() inputs and do not publish analysis or index internals.
 
 Experimental / internal: custom Retriever objects, `retrievalScore` ranking weight, analyzed query objects, feature extraction, constraints module, `meta`, `lastSearchMeta`, `sourcePolicy`, BM25 constants, lexical-index serialization (none).
 

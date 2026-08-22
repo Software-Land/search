@@ -3,11 +3,11 @@ import { SearchEngine, english } from "@software-land/search";
 // @ts-expect-error FeatureVector is not a public export
 import type { FeatureVector } from "@software-land/search";
 
-// @ts-expect-error SearchPlugin is not a public export
-import type { SearchPlugin } from "@software-land/search";
-
 // @ts-expect-error AnalyzedQuery is not a public export
 import type { AnalyzedQuery } from "@software-land/search";
+
+// @ts-expect-error IndexedDocument is not a public export
+import type { IndexedDocument } from "@software-land/search";
 
 const engine = SearchEngine.create();
 

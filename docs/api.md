@@ -51,3 +51,9 @@ Pre-aborted signals throw immediately.
 ## Determinism
 
 Same documents, configuration, artifacts, and query produce the same ordering, explanations, and related rail. Ties break on document id. Cross-engine floating-point bit identity is not claimed.
+
+## Plugins (opt-in types)
+
+`SearchEngine.create({ plugins })` remains `unknown[]`. `english()` and `dictionary()` remain `unknown`. Permissive JavaScript plugin objects are still valid.
+
+Type-only contracts `SearchPlugin`, `EnglishPlugin`, `DictionaryPlugin`, `SynonymPlugin`, and `LexiconPlugin` are opt-in. Annotate objects you author when you want checking. They describe the duck-typed hooks Core actually reads (`lemma`, `canonicalLemma`, `lexicon`, `sequences` / `entry`, `byKey`, `expand`). They do not make analysis or ranking internals public, and they do not change runtime dispatch.

@@ -180,6 +180,24 @@ npm test
 
 A repository checkout requires `npm run build` before executing the runtime, Jest tests, or `examples/catalog`. Python is outside `tsc`. Typecheck configs are not in the npm tarball; consumers use the shipped `dist` declarations for `.` and `./browser`.
 
+`SearchEngine.create({ plugins })` still accepts `unknown[]`. `english()` and `dictionary()` still return `unknown`. Custom retrievers still type as `{ retrieve: Function }`. Those 0.3.0 bindings are unchanged.
+
+Opt-in authoring interfaces (`SearchPlugin`, `EnglishPlugin`, `DictionaryPlugin`, `SynonymPlugin`, `LexiconPlugin`, `ExperimentalRetriever`) are available for extension authors who want checking. They do not publish query-analysis or index internals. Custom retrievers remain experimental; `query` and `index` arguments are intentionally `unknown`. Annotate your own objects — do not expect `english().lemma` to typecheck.
+
+```ts
+import { SearchEngine, type SearchPlugin, type ExperimentalRetriever } from "@software-land/search";
+
+const plugin: SearchPlugin = {
+  lemma(token) { return token; },
+};
+
+const retriever: ExperimentalRetriever = {
+  retrieve() { return []; },
+};
+
+SearchEngine.create({ plugins: [plugin], retriever });
+```
+
 ## API stability
 
 v0. The runtime facade, result shape, artifact `format`+`version`, `relationshipStrategy` values, and retriever names are intended to stabilize. Internal feature vectors, BM25 constants, and ranking modules are not public exports.

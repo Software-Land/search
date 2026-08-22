@@ -1,6 +1,8 @@
 /**
  * Designed public type contract for @software-land/search.
- * Implementation details (SearchPlugin, FeatureVector, AnalyzedQuery) stay internal.
+ * Implementation details (FeatureVector, AnalyzedQuery, IndexedDocument) stay internal.
+ * SearchPlugin and ExperimentalRetriever are opt-in authoring contracts; they do
+ * not narrow SearchEngine.create() inputs.
  */
 
 export type TextRole = "title" | "body";
@@ -28,6 +30,82 @@ export type DirectClass = "strong" | "moderate" | "weak" | "none";
 export interface AdaptiveOptions {
   /** Deterministic document-count cutoff. Not a hardware auto-tuner. Default 1500. */
   documentThreshold?: number;
+}
+
+/**
+ * Opt-in plugin authoring contract. `SearchEngine.create({ plugins })` still
+ * accepts `unknown[]`; annotate with `SearchPlugin` only when you want checking.
+ *
+ * Hooks are duck-typed at runtime. Provide only the hooks you implement.
+ * If `sequences` is present, Core reads `tokens` and `entry.key` on each item.
+ */
+export interface SearchPlugin {
+  name?: string;
+  lemma?(token: string): string;
+  canonicalLemma?(token: string): string | null;
+  lexicon?(): Iterable<string>;
+  sequences?: ReadonlyArray<{
+    tokens: readonly string[];
+    kind?: string;
+    entry: EquivalenceEntry;
+  }>;
+  byKey?: ReadonlyMap<string, EquivalenceEntry>;
+  expand?(token: string): Array<{ form: string }>;
+}
+
+/** Opt-in morphology plugin shape. `english()` still returns `unknown`. */
+export interface EnglishPlugin extends SearchPlugin {
+  name: "english";
+  lemma(token: string): string;
+  canonicalLemma(token: string): string | null;
+}
+
+/**
+ * Opt-in configured-equivalence plugin shape. `dictionary()` still returns
+ * `unknown`. Core does not read a plugin `entries` array.
+ */
+export interface DictionaryPlugin extends SearchPlugin {
+  name: "dictionary";
+  sequences: NonNullable<SearchPlugin["sequences"]>;
+  byKey: ReadonlyMap<string, EquivalenceEntry>;
+  lexicon(): Iterable<string>;
+}
+
+/** Opt-in near-synonym plugin shape. Detected when `name === "synonyms"`. */
+export interface SynonymPlugin extends SearchPlugin {
+  name: "synonyms";
+  expand(token: string): Array<{ form: string }>;
+}
+
+/** Opt-in lexicon-only plugin shape (typo vocabulary / prefix words). */
+export interface LexiconPlugin extends SearchPlugin {
+  lexicon(): Iterable<string>;
+}
+
+/**
+ * @experimental Options Core passes into a custom retriever.
+ * `candidateLimit` is the indexed budget override; `signal` is abort.
+ */
+export interface ExperimentalRetrieveOptions {
+  signal?: AbortSignal;
+  candidateLimit?: number | null;
+}
+
+/**
+ * @experimental Opt-in custom retriever authoring contract.
+ * `query` and `index` are engine internals and stay `unknown` on purpose.
+ * This type does not publish AnalyzedQuery, SearchIndex, or IndexedDocument.
+ * `SearchEngine.create({ retriever })` still accepts `{ retrieve: Function }`.
+ */
+export interface ExperimentalRetriever {
+  name?: string;
+  prepare?(index: unknown, extra?: { schema?: Schema }): void;
+  retrieve(query: unknown, index: unknown, options?: ExperimentalRetrieveOptions): unknown[];
+  retrieveAsync?(
+    query: unknown,
+    index: unknown,
+    options?: ExperimentalRetrieveOptions
+  ): Promise<unknown[]>;
 }
 
 export interface SearchEngineOptions {
