@@ -15,6 +15,7 @@ export const ARTIFACT_FORMATS = {
   synonyms: "search-v2-synonyms",
   relationships: "search-v2-relationships",
   corpusStats: "search-v2-corpus-stats",
+  lexicalIndex: "search-v2-lexical-index",
 };
 
 export const ARTIFACT_VERSION = 1;

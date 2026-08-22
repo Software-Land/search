@@ -344,8 +344,12 @@ describe("software-land candidate-stage survival", () => {
     expect(regressionStats.prefixMiss).toEqual([]);
     expect(contractStats.maxC).toBeLessThanOrEqual(documents.length);
     expect(regressionStats.maxC).toBeLessThanOrEqual(documents.length);
-    expect(contractStats.maxC).toBe(116);
-    expect(regressionStats.maxC).toBe(98);
+    // Exact compiled retrieval enumerates every match, then ranks only the
+    // required score/id representatives per builtin constraint signature.
+    // The retained count is intentionally no longer the old BM25 candidate
+    // envelope and is not a fixed product contract.
+    expect(contractStats.maxC).toBeLessThan(116);
+    expect(regressionStats.maxC).toBeLessThan(98);
   });
 
   test("representative queries report the measured full-scan candidate counts", () => {

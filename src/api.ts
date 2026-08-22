@@ -43,6 +43,8 @@ export interface AdaptiveOptions {
  */
 export interface SearchPlugin {
   name?: string;
+  /** Deterministic identity for plugin behavior compiled into a lexical index. */
+  indexIdentity?: string;
   lemma?(token: string): string;
   canonicalLemma?(token: string): string | null;
   lexicon?(): Iterable<string>;
@@ -122,13 +124,37 @@ export interface ExperimentalRetriever {
 export interface SearchEngineOptions {
   schema?: Schema;
   plugins?: SearchPlugin[];
+  /** Optional search-v2-lexical-index v1 artifact compiled for these documents. */
+  lexicalIndex?: LexicalIndexArtifact;
   relationships?: RelationshipArtifact | null;
   relationshipStrategy?: RelationshipStrategy;
   retriever?: RetrieverName | "indexed-lexical" | ExperimentalRetriever;
+  /** Compatibility/experimental-retriever budget; exact indexed retrieval does not truncate to it. */
   candidateLimit?: number;
   adaptive?: AdaptiveOptions;
   /** @experimental Default 0. Not a supported ranking feature. */
   retrievalScoreWeight?: number;
+}
+
+/**
+ * Opaque compiled lexical index envelope. Build it with
+ * `@software-land/search/lexical`; posting internals are versioned data rather
+ * than a public runtime API.
+ */
+export interface LexicalIndexArtifact {
+  format: "search-v2-lexical-index";
+  version: 1;
+  compatibility: {
+    core: string;
+    analyzer: string;
+    schema: [string, string];
+  };
+  corpus: {
+    documentCount: number;
+    fingerprint: string;
+  };
+  integrity: string;
+  data: unknown;
 }
 
 export interface SearchOptions {

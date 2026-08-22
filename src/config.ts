@@ -4,9 +4,14 @@
  */
 
 import { InvalidConfigurationError, IndexStateError } from "./errors.js";
-import { createFullScanRetriever, createIndexedLexicalRetriever, createAdaptiveRetriever } from "./retrievers.js";
+import {
+  createFullScanRetriever,
+  createCompiledLexicalRetriever,
+  createAdaptiveRetriever,
+} from "./retrievers.js";
 import type {
   AdaptiveOptions,
+  LexicalIndexArtifact,
   RelationshipArtifact,
   RelationshipGraphApi,
   RelationshipStrategy,
@@ -28,6 +33,7 @@ export const DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD = 1500;
 const CREATE_KEYS = new Set([
   "schema",
   "plugins",
+  "lexicalIndex",
   "relationships",
   "relationshipStrategy",
   "retriever",
@@ -41,6 +47,7 @@ const FORBIDDEN_SCHEMA_KEYS = new Set(["__proto__", "prototype", "constructor"])
 interface CreatedConfig {
   schema: Schema;
   plugins: SearchPlugin[];
+  lexicalIndex: LexicalIndexArtifact | null;
   relationships: RelationshipArtifact | RelationshipGraphApi | null;
   relationshipStrategy: RelationshipStrategy;
   retriever: Retriever;
@@ -158,12 +165,12 @@ export function resolvePublicRetriever(
   const limit = candidateLimit || DEFAULT_CANDIDATE_LIMIT;
   const threshold = adaptive?.documentThreshold || DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD;
   if (spec === "full-scan") return createFullScanRetriever();
-  if (spec == null) return createIndexedLexicalRetriever({ candidateLimit: limit });
+  if (spec == null) return createCompiledLexicalRetriever();
   if (typeof spec === "object" && spec && "retrieve" in spec && typeof spec.retrieve === "function") {
     return spec as Retriever;
   }
   if (spec === "indexed" || spec === "indexed-lexical") {
-    return createIndexedLexicalRetriever({ candidateLimit: limit });
+    return createCompiledLexicalRetriever();
   }
   if (spec === "adaptive") {
     return createAdaptiveRetriever({
@@ -218,6 +225,7 @@ export function validateCreateOptions(options: unknown = {}): CreatedConfig {
   return {
     schema,
     plugins: Array.isArray(opts.plugins) ? opts.plugins.filter((p): p is SearchPlugin => p != null) : [],
+    lexicalIndex: opts.lexicalIndex == null ? null : opts.lexicalIndex,
     relationships: opts.relationships == null ? null : opts.relationships,
     relationshipStrategy,
     retriever,

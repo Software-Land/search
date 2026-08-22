@@ -1,7 +1,13 @@
 import { analyzeQuery, suggestTypoForms } from "./analyze.js";
 import { buildIndex } from "./indexDocuments.js";
+import { loadLexicalIndex } from "./lexicalIndex.js";
 import { extractFeatures } from "./features.js";
-import { rankCandidates, rankCandidatesAsync, scoreFeatures } from "./rank.js";
+import {
+  rankCandidates,
+  rankCandidatesAsync,
+  scoreFeatures,
+  selectTopPerBuiltinSignature,
+} from "./rank.js";
 import { constraintsForStrategy } from "./constraints.js";
 import { morphology } from "./morphology.js";
 import { dictionary } from "./dictionary.js";
@@ -35,6 +41,7 @@ import type {
   SearchDocument,
   SearchEngineOptions,
   SearchIndex,
+  LexicalIndexArtifact,
   SearchOptions,
   SearchPlugin,
   SearchResultRow,
@@ -49,13 +56,14 @@ type TypoCompanionConcept = QueryConcept & {
 
 type RuntimeRetriever = {
   name?: string;
+  exactSignatureSelection?: boolean;
   retrieve: (query: AnalyzedQuery, index: SearchIndex, options?: RetrieveOptions) => RetrievalHit[];
   retrieveAsync?: (
     query: AnalyzedQuery,
     index: SearchIndex,
     options?: RetrieveOptions
   ) => Promise<RetrievalHit[]>;
-  prepare?: (index: SearchIndex, extra?: { schema?: Schema }) => void;
+  prepare?: (index: SearchIndex, extra?: { schema?: Schema; plugins?: SearchPlugin[] }) => void;
   stats?: () => Record<string, unknown>;
 };
 
@@ -212,10 +220,55 @@ function sliceResults(ranked: RankedHit[], strategy: string, { limit, relatedLim
   };
 }
 
+function representativeDepthForOutput(
+  ranked: RankedHit[],
+  strategy: string,
+  {
+    limit,
+    relatedLimit,
+    explain,
+  }: { limit: number; relatedLimit: number; explain: boolean }
+) {
+  const primaryTarget = Math.max(0, limit);
+  const relatedTarget = Math.max(0, relatedLimit);
+  let primarySeen = 0;
+  let relatedSeen = 0;
+  const requiredIndexes = new Set<number>();
+  for (let i = 0; i < ranked.length; i++) {
+    const related = ranked[i].features.relevanceKind === "related";
+    const primaryEligible = strategy === "separate" || strategy === "none" ? !related : true;
+    if (primaryEligible && primarySeen < primaryTarget) {
+      primarySeen += 1;
+      requiredIndexes.add(i);
+    }
+    if (related && relatedSeen < relatedTarget) {
+      relatedSeen += 1;
+      requiredIndexes.add(i);
+    }
+    if (primarySeen >= primaryTarget && relatedSeen >= relatedTarget) break;
+  }
+  if (explain) {
+    for (const i of [...requiredIndexes]) {
+      if (i + 1 < ranked.length) requiredIndexes.add(i + 1);
+    }
+  }
+  if (requiredIndexes.size === 0) return 0;
+
+  // Public rows expose absolute global rank, and explain mode exposes the
+  // immediate global successor. Preserving those values requires the global
+  // prefix through the deepest required row. Applying the proven top-R
+  // theorem with that exact global depth is the smallest generally valid
+  // uniform per-signature requirement; a smaller corpus-specific bucket
+  // occupancy could unlock a dominated signature too early.
+  const lastRequired = Math.max(...requiredIndexes);
+  return lastRequired + 1;
+}
+
 export class SearchEngine {
   declare schema: Schema;
   declare plugins: SearchPlugin[];
   declare relationships: RelationshipGraphApi;
+  declare lexicalIndex: LexicalIndexArtifact | null;
   declare relationshipStrategy: string;
   declare retriever: RuntimeRetriever;
   declare candidateLimit: number | null;
@@ -229,6 +282,7 @@ export class SearchEngine {
     const cfg = validateCreateOptions(options);
     this.schema = cfg.schema;
     this.plugins = cfg.plugins;
+    this.lexicalIndex = cfg.lexicalIndex;
     this.relationships = resolveGraph(cfg.relationships);
     this.relationshipStrategy = cfg.relationshipStrategy;
     this.retriever = cfg.retriever;
@@ -249,9 +303,11 @@ export class SearchEngine {
       throw new InvalidDocumentError("index(documents) requires an array", { field: "documents" });
     }
     const t0 = performance.now();
-    this._index = buildIndex(documents, this.schema, this.plugins);
+    this._index = this.lexicalIndex
+      ? loadLexicalIndex(this.lexicalIndex, documents || [], this.schema, this.plugins)
+      : buildIndex(documents, this.schema, this.plugins);
     if (this.retriever && typeof this.retriever.prepare === "function") {
-      this.retriever.prepare(this._index, { schema: this.schema });
+      this.retriever.prepare(this._index, { schema: this.schema, plugins: this.plugins });
     }
     this.indexBuildMs = performance.now() - t0;
     return { documentCount: this._index.documents.length, buildMs: this.indexBuildMs };
@@ -358,17 +414,25 @@ export class SearchEngine {
     });
     const results = sliced.map((c) => serializeHit(c, query, explain));
     const related = relatedSliced.map((c) => serializeHit(c, query, explain));
+    const retrievalStats = this.retriever?.stats?.() || {};
     const meta = {
       candidateCount: timings.candidateCount,
       candidateTitles: ranked.map((c) => c.document.title),
       retrieveMs: timings.retrieveMs,
       featureMs: timings.featureMs,
       relationshipMs: timings.relationshipMs,
+      selectionMs: timings.selectionMs || 0,
       rankMs: timings.rankMs,
       totalMs: timings.totalMs,
       indexBuildMs: this.indexBuildMs || 0,
       relationshipExpanded: timings.relationshipExpanded,
-      relatedCount: relatedRanked.length,
+      matchCount: timings.matchCount ?? timings.candidateCount,
+      representativeSelection: timings.representativeStats || null,
+      retrievalStats,
+      postingEntriesVisited: retrievalStats.postingEntriesVisited ?? null,
+      distinctDocumentsExamined: retrievalStats.distinctDocumentsExamined ?? null,
+      rawDocumentScans: retrievalStats.rawDocumentScans ?? null,
+      relatedCount: timings.relatedCount ?? relatedRanked.length,
       primaryId: timings.primaryId,
       primaryIds: timings.primaryIds,
       relationshipStrategy: strategy,
@@ -411,14 +475,47 @@ export class SearchEngine {
     });
     const retrieveMs = performance.now() - tRetrieve;
 
-    const { featured, applied, featureMs, relationshipMs } = this._expandAndFeature(retrieved, query, strategy, {
+    const expanded = this._expandAndFeature(retrieved, query, strategy, {
       signal,
       sourcePolicy,
     });
+    let featured = expanded.featured;
+    const { applied, featureMs, relationshipMs } = expanded;
+
+    const constraints = constraintsForStrategy(strategy);
+    let representativeStats: Record<string, unknown> | null = null;
+    let planningRanked: RankedHit[] | null = null;
+    const fullRelatedCount = featured.filter((hit) => hit.features.relevanceKind === "related").length;
+    const tSelect = performance.now();
+    if (this.retriever.exactSignatureSelection) {
+      const publicDepth = Math.max(0, limit, relatedLimit);
+      let representativeDepth = publicDepth + (explain && publicDepth > 0 ? 1 : 0);
+      const hasRelated = fullRelatedCount > 0;
+      if (
+        publicDepth > 0 &&
+        (explain || (relatedLimit > 0 && hasRelated) || (strategy === "separate" && limit > 0 && hasRelated))
+      ) {
+        planningRanked = rankCandidates(featured, { constraints, signal });
+        representativeDepth = Math.max(
+          representativeDepth,
+          representativeDepthForOutput(planningRanked, strategy, { limit, relatedLimit, explain })
+        );
+      }
+      const selected = selectTopPerBuiltinSignature(featured, representativeDepth, constraints);
+      featured = selected.candidates;
+      representativeStats = {
+        ...selected.stats,
+        outputDepth: representativeDepth,
+        plannedFullRanking: Boolean(planningRanked),
+      };
+    }
+    const selectionMs = performance.now() - tSelect;
 
     const tRank = performance.now();
-    const constraints = constraintsForStrategy(strategy);
     const ranked = rankCandidates(featured, { constraints, signal });
+    if (planningRanked?.[0]?.constraintMeta) {
+      for (const hit of ranked) hit.constraintMeta = planningRanked[0].constraintMeta;
+    }
     const rankMs = performance.now() - tRank;
 
     return this._finish(ranked, query, explain, strategy, {
@@ -427,12 +524,16 @@ export class SearchEngine {
       retrieveMs,
       featureMs,
       relationshipMs,
+      selectionMs,
       rankMs,
       totalMs: performance.now() - t0,
       candidateCount: featured.length,
       relationshipExpanded: applied.relatedHits.length,
+      relatedCount: fullRelatedCount,
       primaryId: applied.primaries[0]?.document?.id || null,
       primaryIds: applied.primaries.map((p) => p.document.id),
+      matchCount: retrieved.length,
+      representativeStats,
     });
   }
 
@@ -476,18 +577,51 @@ export class SearchEngine {
     await Promise.resolve();
     throwIfAborted(signal);
 
-    const { featured, applied, featureMs, relationshipMs } = this._expandAndFeature(retrieved, query, strategy, {
+    const expanded = this._expandAndFeature(retrieved, query, strategy, {
       signal,
       sourcePolicy,
     });
+    let featured = expanded.featured;
+    const { applied, featureMs, relationshipMs } = expanded;
 
     throwIfAborted(signal);
     await Promise.resolve();
     throwIfAborted(signal);
 
-    const tRank = performance.now();
     const constraints = constraintsForStrategy(strategy);
+    let representativeStats: Record<string, unknown> | null = null;
+    let planningRanked: RankedHit[] | null = null;
+    const fullRelatedCount = featured.filter((hit) => hit.features.relevanceKind === "related").length;
+    const tSelect = performance.now();
+    if (this.retriever.exactSignatureSelection) {
+      const publicDepth = Math.max(0, limit, relatedLimit);
+      let representativeDepth = publicDepth + (explain && publicDepth > 0 ? 1 : 0);
+      const hasRelated = fullRelatedCount > 0;
+      if (
+        publicDepth > 0 &&
+        (explain || (relatedLimit > 0 && hasRelated) || (strategy === "separate" && limit > 0 && hasRelated))
+      ) {
+        planningRanked = await rankCandidatesAsync(featured, { constraints, signal });
+        representativeDepth = Math.max(
+          representativeDepth,
+          representativeDepthForOutput(planningRanked, strategy, { limit, relatedLimit, explain })
+        );
+      }
+      const selected = selectTopPerBuiltinSignature(featured, representativeDepth, constraints);
+      featured = selected.candidates;
+      representativeStats = {
+        ...selected.stats,
+        outputDepth: representativeDepth,
+        plannedFullRanking: Boolean(planningRanked),
+      };
+    }
+    const selectionMs = performance.now() - tSelect;
+
+    const tRank = performance.now();
     const ranked = await rankCandidatesAsync(featured, { constraints, signal });
+    if (planningRanked?.[0]?.constraintMeta) {
+      for (const hit of ranked) hit.constraintMeta = planningRanked[0].constraintMeta;
+    }
     const rankMs = performance.now() - tRank;
 
     throwIfAborted(signal);
@@ -497,12 +631,16 @@ export class SearchEngine {
       retrieveMs,
       featureMs,
       relationshipMs,
+      selectionMs,
       rankMs,
       totalMs: performance.now() - t0,
       candidateCount: featured.length,
       relationshipExpanded: applied.relatedHits.length,
+      relatedCount: fullRelatedCount,
       primaryId: applied.primaries[0]?.document?.id || null,
       primaryIds: applied.primaries.map((p) => p.document.id),
+      matchCount: retrieved.length,
+      representativeStats,
     });
   }
 }

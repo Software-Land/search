@@ -16,6 +16,7 @@ export type ProtocolType =
 export interface InitPayload {
   documents?: import("../index.js").SearchDocument[];
   schema?: import("../index.js").Schema;
+  lexicalIndex?: import("../index.js").LexicalIndexArtifact;
   dictionaryEntries?: import("../index.js").EquivalenceEntry[];
   relationships?: import("../index.js").RelationshipArtifact | null;
   relationshipStrategy?: import("../index.js").RelationshipStrategy;
@@ -44,7 +45,13 @@ export interface WorkerSearchPayload {
     retrieveMs?: number;
     rankMs?: number;
     featureMs?: number;
+    selectionMs?: number;
     candidateCount?: number;
+    matchCount?: number;
+    representativeSelection?: Record<string, unknown> | null;
+    postingEntriesVisited?: number | null;
+    distinctDocumentsExamined?: number | null;
+    rawDocumentScans?: number | null;
     relationshipStrategy?: string;
     relatedCount?: number;
   };

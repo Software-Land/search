@@ -27,12 +27,16 @@ import {
   COMPILER_VERSION as LEX_COMPILER_VERSION,
   DEFAULT_LEXICAL_POLICY,
   LEXICAL_FREQUENCY_FORMAT,
+  LEXICAL_INDEX_FORMAT,
+  LEXICAL_INDEX_VERSION,
   attachLexicalFrequency,
+  compileLexicalIndex,
   compileLexicalFrequency,
   lookupNgramCount,
   resolveLexicalPolicy,
   saturatingFrequency,
   type LexicalFrequencyArtifact,
+  type LexicalIndexArtifact,
 } from "@software-land/search/lexical";
 
 const documents: CorpusDocument[] = [{ id: "a", title: "CPU", body: "central" }];
@@ -82,3 +86,19 @@ void resolveLexicalPolicy(null);
 void lookupNgramCount(artifact.documents.a?.ngrams, "machine learn");
 void saturatingFrequency(2);
 void attached;
+
+const lexicalIndex: LexicalIndexArtifact = compileLexicalIndex(
+  [{ id: "a", title: "Machine Learning", body: "machine learning" }],
+  {
+    lemma: (token: string) => token,
+    analyzerId: "test-identity-v1",
+    schema: {
+      title: { type: "text", role: "title" },
+      body: { type: "text", role: "body" },
+    },
+  }
+);
+const lexicalIndexVersion: 1 = LEXICAL_INDEX_VERSION;
+void LEXICAL_INDEX_FORMAT;
+void lexicalIndexVersion;
+void lexicalIndex.corpus.documentCount;

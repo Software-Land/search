@@ -33,6 +33,7 @@ import {
   type SynonymArtifact,
   type EnglishPlugin,
   type DictionaryPlugin,
+  type LexicalIndexArtifact,
 } from "@software-land/search";
 
 const schema: Schema = {
@@ -58,10 +59,25 @@ const morphologyPlugin: EnglishPlugin = morphology();
 const dictionaryPlugin: DictionaryPlugin = dictionary({ entries });
 const morphologyWithLemmas: EnglishPlugin = morphology({ lemmas: { widgets: "widget" } });
 void morphologyPlugin.lemma;
+void morphologyPlugin.indexIdentity;
+
+const lexicalIndex: LexicalIndexArtifact = {
+  format: "search-v2-lexical-index",
+  version: 1,
+  compatibility: {
+    core: "search-v2-core-analyzer-v1",
+    analyzer: morphologyPlugin.indexIdentity || "runtime-generated",
+    schema: ["title", "body"],
+  },
+  corpus: { documentCount: 1, fingerprint: "fixture" },
+  integrity: "fixture",
+  data: {},
+};
 
 const options: SearchEngineOptions = {
   schema,
   plugins: [morphologyPlugin, dictionaryPlugin, morphologyWithLemmas],
+  lexicalIndex,
   relationships,
   relationshipStrategy: "hybrid",
   retriever: "indexed",
@@ -124,6 +140,7 @@ void equivalences.entries;
 void synonyms.entries;
 void parsedGraph.relationships;
 void ARTIFACT_FORMATS.equivalences;
+void ARTIFACT_FORMATS.lexicalIndex;
 void ARTIFACT_VERSION;
 void PUBLIC_EXPORTS;
 void RELATIONSHIP_STRATEGIES;

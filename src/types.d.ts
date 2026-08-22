@@ -44,6 +44,8 @@ export interface DictionarySequence {
 
 export interface SearchPlugin {
   name?: string;
+  /** Deterministic identity for document-index-affecting plugin behavior. */
+  indexIdentity?: string;
   lemma?: (token: string) => string;
   /** Explicit lemma-table identity only; omit suffix-heuristic stems. */
   canonicalLemma?: (token: string) => string | null;
@@ -207,6 +209,10 @@ export interface SearchIndex {
   byId: Map<string, IndexedDocument>;
   titleTokenSet: Set<string>;
   surfaceVocabulary: Set<string>;
+  /** Internal compact postings compiled at build time or initialization. */
+  compiledLexical?: unknown;
+  /** Internal validated artifact header for diagnostics. */
+  lexicalArtifact?: LexicalIndexArtifact;
 }
 
 export interface RelationshipEdge {
@@ -318,7 +324,8 @@ export interface RankedHit extends FeaturedHit {
 
 export interface Retriever {
   name?: string;
-  prepare: (index: SearchIndex, extra?: { schema?: Schema }) => void;
+  exactSignatureSelection?: boolean;
+  prepare: (index: SearchIndex, extra?: { schema?: Schema; plugins?: SearchPlugin[] }) => void;
   retrieve: (query: AnalyzedQuery, index: SearchIndex, options?: RetrieveOptions) => RetrievalHit[];
   retrieveAsync: (
     query: AnalyzedQuery,
@@ -441,12 +448,30 @@ export interface ConstraintGraph {
 export interface SearchEngineOptions {
   schema?: Schema;
   plugins?: Array<SearchPlugin | null | undefined>;
+  lexicalIndex?: LexicalIndexArtifact | null;
   relationships?: RelationshipArtifact | RelationshipGraphApi | null;
   relationshipStrategy?: RelationshipStrategy | string;
   retriever?: RetrieverName | "indexed-lexical" | Retriever | IndexedLexicalOptions | AdaptiveRetrieverOptions | null;
   candidateLimit?: number | null;
   adaptive?: AdaptiveOptions | null;
   retrievalScoreWeight?: number;
+}
+
+export interface LexicalIndexArtifact {
+  format: "search-v2-lexical-index";
+  version: 1;
+  compatibility: {
+    core: string;
+    analyzer: string;
+    schema: [string, string];
+  };
+  corpus: {
+    documentCount: number;
+    fingerprint: string;
+  };
+  integrity: string;
+  /** Versioned opaque payload. Posting internals are intentionally not public API. */
+  data: unknown;
 }
 
 export interface SearchOptions {
@@ -491,10 +516,14 @@ export interface FinishTimings {
   retrieveMs: number;
   featureMs: number;
   relationshipMs: number;
+  selectionMs?: number;
   rankMs: number;
   totalMs: number;
   candidateCount: number;
   relationshipExpanded: number;
+  relatedCount?: number;
   primaryId: string | null;
   primaryIds: string[];
+  matchCount?: number;
+  representativeStats?: Record<string, unknown> | null;
 }

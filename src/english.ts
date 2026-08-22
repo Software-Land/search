@@ -6,6 +6,7 @@
  */
 
 import { collapseTrailingRepeats } from "./text.js";
+import { stableFingerprint } from "./stableHash.js";
 
 const DEFAULT_LEMMAS: Record<string, string> = {
   libraries: "library",
@@ -46,6 +47,7 @@ function stripSuffix(token: string): string {
 
 export interface EnglishPlugin {
   name: "english";
+  indexIdentity: string;
   lemma(token: string): string;
   /**
    * Lemma-table identity only. Suffix heuristics are not confident enough
@@ -57,6 +59,7 @@ export interface EnglishPlugin {
 
 export function createEnglishPlugin({ lemmas = {} }: { lemmas?: Record<string, string> } = {}): EnglishPlugin {
   const table: Record<string, string> = { ...lemmas, ...DEFAULT_LEMMAS };
+  const indexIdentity = `english-v1:${stableFingerprint(table)}`;
   function explicitLemma(token: string): string | null {
     const t = String(token || "").toLowerCase();
     if (!t) return null;
@@ -70,6 +73,7 @@ export function createEnglishPlugin({ lemmas = {} }: { lemmas?: Record<string, s
 
   return {
     name: "english",
+    indexIdentity,
     lemma(token) {
       const t = String(token || "").toLowerCase();
       if (!t) return t;

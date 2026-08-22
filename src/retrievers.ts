@@ -19,6 +19,11 @@ import {
 import { allowPrefixMatch } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
 import { throwIfAborted } from "./cancel.js";
+import {
+  ensureCompiledLexicalIndex,
+  type CompiledLexicalRuntime,
+  type CompiledTermRuntime,
+} from "./lexicalIndex.js";
 import type {
   AdaptiveRetrieverOptions,
   AnalyzedQuery,
@@ -463,9 +468,223 @@ export function createIndexedLexicalRetriever({
   };
 }
 
+/**
+ * Stage-1 exact compiled retrieval.
+ *
+ * Every potentially matching posting is visited and exact provenance is
+ * rechecked against the reconstructed indexed document. There is deliberately
+ * no candidate budget, prefix cap, posting early termination, or block/score
+ * pruning here.
+ */
+export function createCompiledLexicalRetriever(): Retriever {
+  let state: CompiledLexicalRuntime | null = null;
+  let last = {
+    postingEntriesVisited: 0,
+    distinctDocumentsExamined: 0,
+    exactMatches: 0,
+    rawDocumentScans: 0,
+  };
+
+  function prepare(index: SearchIndex, extra?: { plugins?: import("./types.js").SearchPlugin[] }) {
+    state = ensureCompiledLexicalIndex(index, extra?.plugins || []);
+  }
+
+  function flatEach(
+    flat: number[],
+    visit: (doc: number, tf: number) => void,
+    signal?: AbortSignal
+  ) {
+    let cursor = 0;
+    let row = 0;
+    while (cursor < flat.length) {
+      if ((row++ & 63) === 0) throwIfAborted(signal);
+      const doc = flat[cursor++];
+      const tf = flat[cursor++];
+      cursor += tf;
+      last.postingEntriesVisited += 1;
+      visit(doc, tf);
+    }
+  }
+
+  function retrieve(query: AnalyzedQuery, index: SearchIndex, { signal }: RetrieveOptions = {}) {
+    throwIfAborted(signal);
+    if (!state) prepare(index);
+    const compiled = state as CompiledLexicalRuntime;
+    const docs = index.documents || [];
+    const n = docs.length;
+    const byPos = new Map<number, IndexedHit>();
+    last = {
+      postingEntriesVisited: 0,
+      distinctDocumentsExamined: 0,
+      exactMatches: 0,
+      rawDocumentScans: 0,
+    };
+
+    function add(pos: number, source: string, scoreDelta = 0) {
+      let hit = byPos.get(pos);
+      if (!hit) {
+        hit = { pos, retrievalSources: [], retrievalScore: 0 };
+        byPos.set(pos, hit);
+      }
+      pushSource(hit, source);
+      if (scoreDelta) hit.retrievalScore += scoreDelta;
+    }
+
+    function accumulateSurface(
+      term: CompiledTermRuntime | undefined,
+      field: "title" | "body",
+      source: string,
+      boost: number
+    ) {
+      if (!term) return;
+      const flat = field === "title" ? term.title : term.body;
+      const df = field === "title" ? term.titleDf : term.bodyDf;
+      if (!flat.length || !df) return;
+      const avgdl = field === "title" ? compiled.avgTitleDl : compiled.avgBodyDl;
+      const lengths = field === "title" ? compiled.titleDl : compiled.bodyDl;
+      const weight = idf(n, df) * boost;
+      flatEach(flat, (doc, tf) => {
+        add(doc, source, weight * bm25Tf(tf, lengths[doc], avgdl));
+      }, signal);
+    }
+
+    function accumulateLemma(
+      terms: CompiledTermRuntime[] | undefined,
+      field: "title" | "body",
+      source: string,
+      boost: number
+    ) {
+      if (!terms?.length) return;
+      const counts = new Map<number, number>();
+      for (const term of terms) {
+        const flat = field === "title" ? term.title : term.body;
+        flatEach(flat, (doc, tf) => {
+          counts.set(doc, (counts.get(doc) || 0) + tf);
+        }, signal);
+      }
+      if (!counts.size) return;
+      const avgdl = field === "title" ? compiled.avgTitleDl : compiled.avgBodyDl;
+      const lengths = field === "title" ? compiled.titleDl : compiled.bodyDl;
+      const weight = idf(n, counts.size) * boost;
+      for (const [doc, tf] of counts) {
+        add(doc, source, weight * bm25Tf(tf, lengths[doc], avgdl));
+      }
+    }
+
+    const forms = queryForms(query);
+    const qNorm = (query.tokens || []).map((token) => token.normalized).join(" ");
+    const exact = compiled.titleByNorm.get(qNorm);
+    if (exact) for (const pos of exact) add(pos, "exact-title", 50);
+
+    if (qNorm) {
+      let i = lowerBoundNorm(compiled.sortedTitles, qNorm);
+      while (i < compiled.sortedTitles.length) {
+        const row = compiled.sortedTitles[i++];
+        if (!row.norm.startsWith(qNorm)) break;
+        add(row.pos, "title-prefix", 8 * (qNorm.length / Math.max(row.norm.length, 1)));
+      }
+    }
+
+    let step = 0;
+    for (const { form, kind } of forms) {
+      if ((step++ & 7) === 0) throwIfAborted(signal);
+      const acronym = kind === "acronym-key" || kind === "acronym-form";
+      const surface = compiled.bySurface.get(form);
+      accumulateSurface(surface, "title", acronym ? "configured-equivalence" : "title-token", TITLE_BOOST);
+      accumulateSurface(surface, "body", "body-lexical", 1);
+      accumulateLemma(compiled.byLemma.get(form), "title", "morphology", TITLE_BOOST * 0.6);
+      accumulateLemma(compiled.byLemma.get(form), "body", "morphology", 0.5);
+
+      if (!isAllDigitToken(form) && form.length >= 3) {
+        let i = lowerBoundTerm(compiled.sortedTerms, form);
+        while (i < compiled.sortedTerms.length) {
+          const term = compiled.sortedTerms[i++];
+          if (!term.startsWith(form)) break;
+          if (term === form) continue;
+          const row = compiled.bySurface.get(term);
+          if (allowPrefixMatch(form, term)) {
+            accumulateSurface(row, "title", "title-token-prefix", TITLE_BOOST * 0.5);
+          }
+          if (!isAllDigitToken(term)) {
+            accumulateSurface(row, "body", "indexed-lexical", 0.4);
+          }
+        }
+      }
+    }
+
+    for (const token of query.tokens || []) {
+      const posts = compiled.versionIndex.get(token.normalized);
+      if (posts) for (const pos of posts) add(pos, "version", 12);
+    }
+    for (const span of query.dottedSpans || []) {
+      const posts = compiled.versionIndex.get(span);
+      if (posts) for (const pos of posts) add(pos, "version", 12);
+    }
+
+    const qTokens = query.tokens || [];
+    if (qTokens.length >= 2) {
+      const first = qTokens[0];
+      const keys = [...new Set([first?.normalized, first?.lemma].filter((value): value is string => Boolean(value)))];
+      const positions = new Set<number>();
+      for (const key of keys) {
+        const surface = compiled.bySurface.get(key);
+        if (surface) flatEach(surface.title, (doc) => positions.add(doc), signal);
+        for (const term of compiled.byLemma.get(key) || []) {
+          flatEach(term.title, (doc) => positions.add(doc), signal);
+        }
+      }
+      for (const pos of [...positions].sort((a, b) => a - b)) {
+        if (matchContextualTitlePrefix(query, docs[pos])) {
+          add(pos, "contextual-title-prefix", 10);
+        }
+      }
+    }
+
+    last.distinctDocumentsExamined = byPos.size;
+    const hits: IndexedHit[] = [];
+    for (const [pos, hit] of byPos) {
+      if ((step++ & 7) === 0) throwIfAborted(signal);
+      const sources = retrievalSourcesForDocument(query, docs[pos]);
+      if (!sources.length) continue;
+      hit.retrievalSources = sources;
+      hits.push(hit);
+    }
+    hits.sort((a, b) => a.pos - b.pos);
+    last.exactMatches = hits.length;
+    return hits.map((hit) => ({
+      document: docs[hit.pos],
+      retrievalSources: hit.retrievalSources,
+      retrievalScore: hit.retrievalScore,
+    }));
+  }
+
+  return {
+    name: "indexed-lexical",
+    exactSignatureSelection: true,
+    prepare,
+    retrieve,
+    async retrieveAsync(query: AnalyzedQuery, index: SearchIndex, opts: RetrieveOptions = {}) {
+      throwIfAborted(opts.signal);
+      await Promise.resolve();
+      throwIfAborted(opts.signal);
+      return retrieve(query, index, opts);
+    },
+    stats() {
+      return {
+        kind: "compiled-indexed",
+        documents: state?.titleDl.length || 0,
+        terms: state?.terms.length || 0,
+        postingEntries: state?.postingEntries || 0,
+        ...last,
+        pruning: "none",
+      };
+    },
+  };
+}
+
 export function createAdaptiveRetriever({ documentThreshold = 1500, smallLimit, indexedOptions }: AdaptiveRetrieverOptions = {}): Retriever {
   const full = createFullScanRetriever();
-  const indexed = createIndexedLexicalRetriever(indexedOptions);
+  const indexed = createCompiledLexicalRetriever();
   const threshold =
     typeof smallLimit === "number" && Number.isInteger(smallLimit) && smallLimit > 0
       ? smallLimit
@@ -473,10 +692,13 @@ export function createAdaptiveRetriever({ documentThreshold = 1500, smallLimit, 
   let active: AdaptiveActive = "full-scan";
   return {
     name: "adaptive",
-    prepare(index: SearchIndex) {
+    get exactSignatureSelection() {
+      return active === "indexed-lexical";
+    },
+    prepare(index: SearchIndex, extra?: { plugins?: import("./types.js").SearchPlugin[] }) {
       const n = index.documents?.length || 0;
       active = n <= threshold ? "full-scan" : "indexed-lexical";
-      if (active === "indexed-lexical") indexed.prepare(index);
+      if (active === "indexed-lexical") indexed.prepare(index, extra);
     },
     retrieve(query, index, opts = {}) {
       return active === "full-scan" ? full.retrieve(query, index, opts) : indexed.retrieve(query, index, opts);
@@ -493,11 +715,11 @@ export function createAdaptiveRetriever({ documentThreshold = 1500, smallLimit, 
 
 export function resolveRetriever(spec: unknown): Retriever {
   if (spec === "full-scan") return createFullScanRetriever();
-  if (!spec) return createIndexedLexicalRetriever();
+  if (!spec) return createCompiledLexicalRetriever();
   if (typeof spec === "object" && spec && "retrieve" in spec && typeof spec.retrieve === "function") {
     return spec as Retriever;
   }
-  if (spec === "indexed" || spec === "indexed-lexical") return createIndexedLexicalRetriever();
+  if (spec === "indexed" || spec === "indexed-lexical") return createCompiledLexicalRetriever();
   if (spec === "adaptive") return createAdaptiveRetriever();
   if (typeof spec === "object" && spec && "type" in spec && spec.type === "indexed-lexical") {
     return createIndexedLexicalRetriever(spec as IndexedLexicalOptions);

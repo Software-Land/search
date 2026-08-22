@@ -134,7 +134,7 @@ describe("full-scan and adaptive ignore a hard ranker envelope", () => {
     expect(hits).toHaveLength(8);
   });
 
-  test("adaptive switches to indexed above the document threshold", () => {
+  test("adaptive switches to exact compiled retrieval above the document threshold", () => {
     const docs = Array.from({ length: 6 }, (_, i) => ({ id: `a${i}`, title: `Unrelated ${i}`, body: "zzunique" }));
     const plugins = [morphology()];
     const index = buildIndex(docs, schema, plugins);
@@ -145,7 +145,9 @@ describe("full-scan and adaptive ignore a hard ranker envelope", () => {
     retriever.prepare(index);
     expect(retriever.stats().active).toBe("indexed-lexical");
     const hits = retriever.retrieve(analyzeQuery("zzunique", { plugins }), index);
-    expect(hits.length).toBeLessThanOrEqual(2);
+    expect(hits).toHaveLength(6);
+    expect(retriever.stats().pruning).toBe("none");
+    expect(retriever.stats().rawDocumentScans).toBe(0);
   });
 });
 

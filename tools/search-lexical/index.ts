@@ -1,6 +1,7 @@
 /**
  * Public search-lexical compiler API.
- * Implementation lives in ./lib/compile.ts; this barrel freezes the v0.2.2 types.
+ * Frequency implementation lives in ./lib/compile.ts; the positional v1
+ * compiler shares Core's analyzer implementation through the built output.
  */
 import {
   COMPILER_VERSION as compilerVersion,
@@ -12,6 +13,12 @@ import {
   resolveLexicalPolicy as resolveLexicalPolicyImpl,
   saturatingFrequency as saturatingFrequencyImpl,
 } from "./lib/compile.js";
+// @ts-expect-error Internal runtime implementation intentionally has no packed declaration.
+import * as lexicalIndexRuntime from "../../dist/lexicalIndex.js";
+
+const compileLexicalIndexImpl = lexicalIndexRuntime.compileLexicalIndex;
+const lexicalIndexFormat = lexicalIndexRuntime.LEXICAL_INDEX_FORMAT;
+const lexicalIndexVersion = lexicalIndexRuntime.LEXICAL_INDEX_VERSION;
 
 export interface LexicalPolicy {
   minN?: number;
@@ -39,8 +46,37 @@ export interface LexicalFrequencyArtifact {
   documents: Record<string, LexicalDocumentNgrams>;
 }
 
+export interface LexicalIndexArtifact {
+  format: "search-v2-lexical-index";
+  version: 1;
+  compatibility: {
+    core: string;
+    analyzer: string;
+    schema: [string, string];
+  };
+  corpus: {
+    documentCount: number;
+    fingerprint: string;
+  };
+  integrity: string;
+  /** Versioned opaque payload. Posting internals are not a public API. */
+  data: unknown;
+}
+
+export interface LexicalIndexCompileOptions {
+  schema?: Record<string, { type: "text"; role?: "title" | "body" }>;
+  lemma?: (token: string) => string;
+  /**
+   * Required with `lemma`. Use the same deterministic identity exposed by the
+   * runtime morphology plugin.
+   */
+  analyzerId?: string;
+}
+
 export const COMPILER_VERSION: 1 = compilerVersion;
 export const LEXICAL_FREQUENCY_FORMAT: "search-v2-lexical-frequency" = lexicalFrequencyFormat;
+export const LEXICAL_INDEX_FORMAT: "search-v2-lexical-index" = lexicalIndexFormat;
+export const LEXICAL_INDEX_VERSION: 1 = lexicalIndexVersion;
 export const DEFAULT_LEXICAL_POLICY: {
   readonly minN: 1;
   readonly maxN: 2;
@@ -60,6 +96,24 @@ export function compileLexicalFrequency(
   opts?: LexicalCompileOptions
 ): LexicalFrequencyArtifact {
   return compileLexicalFrequencyImpl(input, opts);
+}
+
+export function compileLexicalIndex(
+  input?: unknown,
+  { schema, lemma, analyzerId }: LexicalIndexCompileOptions = {}
+): LexicalIndexArtifact {
+  if (typeof lemma === "function" && !analyzerId) {
+    throw new Error("compileLexicalIndex requires analyzerId when lemma is supplied");
+  }
+  const plugins =
+    typeof lemma === "function"
+      ? [{ name: "lexical-compiler", lemma, indexIdentity: analyzerId }]
+      : [];
+  return compileLexicalIndexImpl(input, {
+    schema,
+    plugins,
+    analyzer: analyzerId,
+  }) as LexicalIndexArtifact;
 }
 
 export function attachLexicalFrequency<T extends { id?: unknown }>(

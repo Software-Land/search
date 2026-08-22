@@ -22,6 +22,7 @@ const dictionaryFn: (options?: { entries?: { key: string }[] }) => DictionaryPlu
 
 const plugin: EnglishPlugin = morphology();
 void plugin.name;
+void plugin.indexIdentity;
 void plugin.lemma("widgets");
 void plugin.canonicalLemma("widgets");
 

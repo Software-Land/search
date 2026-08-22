@@ -45,6 +45,7 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
     engine = SearchEngine.create({
       schema: payload.schema,
       plugins,
+      lexicalIndex: payload.lexicalIndex,
       relationships: payload.relationships || null,
       relationshipStrategy: payload.relationshipStrategy,
       retriever: payload.retriever,
@@ -52,7 +53,12 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
       adaptive: payload.adaptive,
     } as SearchEngineOptions);
     const indexed = await engine.index(payload.documents || []);
-    reply({ type: MSG.READY, requestId: message.requestId, documentCount: indexed.documentCount });
+    reply({
+      type: MSG.READY,
+      requestId: message.requestId,
+      documentCount: indexed.documentCount,
+      indexBuildMs: indexed.buildMs,
+    });
   }
 
   async function handleSearch(message: ProtocolMessage, reply: ReplyFn) {
@@ -85,8 +91,14 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
             totalMs: detailed.meta?.totalMs,
             retrieveMs: detailed.meta?.retrieveMs,
             featureMs: detailed.meta?.featureMs,
+            selectionMs: detailed.meta?.selectionMs,
             rankMs: detailed.meta?.rankMs,
             candidateCount: detailed.meta?.candidateCount,
+            matchCount: detailed.meta?.matchCount,
+            representativeSelection: detailed.meta?.representativeSelection,
+            postingEntriesVisited: detailed.meta?.postingEntriesVisited,
+            distinctDocumentsExamined: detailed.meta?.distinctDocumentsExamined,
+            rawDocumentScans: detailed.meta?.rawDocumentScans,
             relationshipStrategy: detailed.meta?.relationshipStrategy,
             relatedCount: detailed.meta?.relatedCount,
           },

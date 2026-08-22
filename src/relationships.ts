@@ -7,7 +7,7 @@
 import { parseRelationships } from "./artifacts.js";
 import { classifyDirect } from "./features.js";
 import { throwIfAborted } from "./cancel.js";
-import { rankCandidates } from "./rank.js";
+import { rankCandidates, selectTopPerBuiltinSignature } from "./rank.js";
 import type {
   ConstraintDef,
   FeaturedHit,
@@ -70,7 +70,12 @@ export function pickPrimariesForExpansion(
   const directs = featured.filter((h) => (h.features?.relevanceKind || "direct") !== "related");
   const strong = directs.filter(isStrongPrimary);
   if (!strong.length) return [];
-  const ranked = rankCandidates(strong, { constraints, signal });
+  const primaryDepth = sourcePolicy === "top-n-strong" ? Math.max(1, n) : 1;
+  const primaryPool =
+    sourcePolicy === "all-strong"
+      ? strong
+      : selectTopPerBuiltinSignature(strong, primaryDepth, constraints).candidates;
+  const ranked = rankCandidates(primaryPool, { constraints, signal });
   if (sourcePolicy === "all-strong") return ranked;
   if (sourcePolicy === "top-n-strong") return ranked.slice(0, Math.max(1, n));
   return ranked.slice(0, 1);
