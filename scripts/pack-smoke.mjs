@@ -124,6 +124,11 @@ try {
     throw new Error(`tarball must not include corpus implementation declarations: ${packedCorpusImplDts.join(", ")}`);
   }
 
+  const packedBenchmarks = packedRel.filter((rel) => rel === "benchmarks" || rel.startsWith("benchmarks/"));
+  if (packedBenchmarks.length) {
+    throw new Error(`tarball must not include benchmark datasets: ${packedBenchmarks.join(", ")}`);
+  }
+
   const forbidden = packedRel.filter(
     (rel) =>
       rel.includes("node_modules/") ||

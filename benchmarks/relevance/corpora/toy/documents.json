@@ -1,0 +1,22 @@
+{
+  "format": "search-relevance-corpus",
+  "version": 1,
+  "id": "toy",
+  "documents": [
+    {
+      "id": "alpha",
+      "title": "Alpha",
+      "body": "The alpha document mentions alpha once."
+    },
+    {
+      "id": "beta",
+      "title": "Beta",
+      "body": "The beta document mentions beta once."
+    },
+    {
+      "id": "gamma",
+      "title": "Gamma",
+      "body": "The gamma document mentions gamma once."
+    }
+  ]
+}

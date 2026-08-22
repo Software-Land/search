@@ -5,6 +5,7 @@
 ### Added
 
 - Opt-in public TypeScript authoring contracts: `SearchPlugin`, `EnglishPlugin`, `DictionaryPlugin`, `SynonymPlugin`, `LexiconPlugin`, `ExperimentalRetriever`, and `ExperimentalRetrieveOptions`. These are type-only. They do not narrow `SearchEngine.create({ plugins })` (`unknown[]`), `english()` / `dictionary()` (`unknown`), or the experimental `{ retrieve: Function }` retriever slot. Custom retrievers remain experimental; query/index payloads stay opaque and Search Core internals stay unpublished.
+- Development-only exhaustive relevance-evaluation machinery under `benchmarks/relevance/` (schema, metrics, validator, toy fixture, runner). The toy fixture is not a search-quality benchmark and is not included in the npm tarball. Ranking is unchanged.
 
 ### Changed
 
