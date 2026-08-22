@@ -35,3 +35,21 @@ jobs:
         with:
           node-version: 22
       - run: npm run test:python
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm --prefix test/chromium-pack ci
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('test/chromium-pack/package-lock.json') }}
+      - run: npm --prefix test/chromium-pack exec -- playwright install --with-deps chromium
+      - run: node test/chromium-pack/runner.mjs
