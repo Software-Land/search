@@ -5,7 +5,8 @@
  * compared, then Kahn extracts SCCs with a full `ready.sort()` after every pop.
  * Production ranking may change; tests treat this module as the behavioral truth.
  *
- * Not part of the public package API. keep-public-dts strips the declaration.
+ * Not a public package API. Transpiled into test/oracles-dist/ for tests and
+ * benchmarks; excluded from production dist and the npm tarball.
  */
 
 import {
@@ -18,10 +19,10 @@ import {
   forEachOutgoingComponent,
   advanceConstraintStamp,
   DEFAULT_CONSTRAINTS,
-} from "./constraints.js";
-import { throwIfAborted } from "./cancel.js";
-import { scoreFeatures } from "./rank.js";
-import type { ConstraintDef, ConstraintGraph, FeaturedHit, RankedHit } from "./types.js";
+} from "../../src/constraints.js";
+import { throwIfAborted } from "../../src/cancel.js";
+import { scoreFeatures } from "../../src/rank.js";
+import type { ConstraintDef, ConstraintGraph, FeaturedHit, RankedHit } from "../../src/types.js";
 
 function idCmp(a: FeaturedHit, b: FeaturedHit) {
   if (a.document.id < b.document.id) return -1;

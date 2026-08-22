@@ -10,7 +10,7 @@ import { SearchEngine, morphology, dictionary } from "../dist/index.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { DEFAULT_CONSTRAINTS, HYBRID_CONSTRAINTS, compareConstraint } from "../dist/constraints.js";
 import { rankCandidates, rankCandidatesAsync, lastRankStats } from "../dist/rank.js";
-import { rankCandidatesPairwise, rankCandidatesPairwiseAsync } from "../dist/rankOracle.js";
+import { rankCandidatesPairwise, rankCandidatesPairwiseAsync } from "./oracles-dist/rankOracle.js";
 import { constraintSignature } from "../dist/rankSignature.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));

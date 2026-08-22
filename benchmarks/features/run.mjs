@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology, dictionary } from "../../dist/index.js";
 import { attachLexicalFrequency } from "../../tools/search-lexical/index.js";
 import { startFeatureProfile, lastFeatureProfile, stopFeatureProfile, extractFeatures } from "../../dist/features.js";
-import { extractFeaturesOracle } from "../../dist/featuresOracle.js";
+import { extractFeaturesOracle } from "../../test/oracles-dist/featuresOracle.js";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SCHEMA = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };

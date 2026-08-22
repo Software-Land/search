@@ -33,3 +33,8 @@ function walk(dir, rel = "") {
 }
 
 if (existsSync(dist)) walk(dist);
+
+for (const name of ["rankOracle.js", "featuresOracle.js", "rankOracle.d.ts", "featuresOracle.d.ts"]) {
+  const stale = path.join(dist, name);
+  if (existsSync(stale)) unlinkSync(stale);
+}

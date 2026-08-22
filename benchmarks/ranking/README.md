@@ -1,10 +1,10 @@
 # Ranking envelope (development)
 
-Latency at a **fixed candidate count C**. Builtin ranking groups candidates by constraint signature (B distinct signatures) and compares signatures instead of every candidate pair. Custom constraint functions still use the all-pairs path. The frozen oracle in `src/rankOracle.ts` is the behavioral truth for equivalence tests.
+Latency at a **fixed candidate count C**. Builtin ranking groups candidates by constraint signature (B distinct signatures) and compares signatures instead of every candidate pair. Custom constraint functions still use the all-pairs path. The frozen oracle in `test/oracles/rankOracle.ts` is the behavioral truth for equivalence tests.
 
 These files are **not** packed in the npm tarball (`package.json` `files` omits `benchmarks/`).
 
-Requires a built runtime (`npm run build`). Public `SearchEngine` plus internal `dist/rank.js` / `dist/rankOracle.js` for old-vs-new rank-only timing.
+Requires a built runtime (`npm run build && npm run build:oracles`). Public `SearchEngine` plus internal `dist/rank.js` and test-only `test/oracles-dist/rankOracle.js` for old-vs-new rank-only timing.
 
 ```bash
 node benchmarks/ranking/run.mjs

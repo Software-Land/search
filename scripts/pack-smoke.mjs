@@ -81,6 +81,10 @@ try {
   if (packedToolTs.length) throw new Error(`tarball must not include tool TypeScript source: ${packedToolTs.join(", ")}`);
   const packedMaps = packedRel.filter((rel) => rel.endsWith(".map"));
   if (packedMaps.length) throw new Error(`tarball must not include source maps: ${packedMaps.join(", ")}`);
+  const packedOracles = packedRel.filter((rel) => /(^|\/)(rankOracle|featuresOracle)(\.|$)/.test(rel));
+  if (packedOracles.length) {
+    throw new Error(`tarball must not include test-only oracles: ${packedOracles.join(", ")}`);
+  }
   for (const required of [
     "tools/search-lexical/index.js",
     "tools/search-lexical/index.d.ts",

@@ -1,21 +1,22 @@
 /**
  * Frozen extractFeatures / classifyDirect from the pre-optimization 0.4.0
  * engine. Tests treat this module as the feature-vector truth.
- * Not part of the public package API.
+ * Transpiled into test/oracles-dist/ for tests and benchmarks; excluded from
+ * production dist and the npm tarball.
  */
 
-import { isNearCompletePrefix, levenshtein, DEFAULT_STOP, allowPrefixMatch } from "./text.js";
-import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "./versionForms.js";
-import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix } from "./retrieve.js";
-import { saturatingFrequency } from "./saturatingFrequency.js";
-import { canonicalLexicalTokensFromQuery } from "./lexicalNormalize.js";
+import { isNearCompletePrefix, levenshtein, DEFAULT_STOP, allowPrefixMatch } from "../../src/text.js";
+import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "../../src/versionForms.js";
+import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix } from "../../src/retrieve.js";
+import { saturatingFrequency } from "../../src/saturatingFrequency.js";
+import { canonicalLexicalTokensFromQuery } from "../../src/lexicalNormalize.js";
 import {
   FULL_QUERY_COVERAGE,
   TWO_THIRDS_QUERY_COVERAGE,
   MODERATE_TITLE_PREFIX_QUALITY,
   STRONG_WITH_FULL_COVERAGE_TITLE_PREFIX_QUALITY,
   REPEATED_BODY_PHRASE_MIN,
-} from "./evidencePolicy.js";
+} from "../../src/evidencePolicy.js";
 import type {
   AnalyzedQuery,
   ContextualTitlePrefix,
@@ -25,7 +26,7 @@ import type {
   QueryConcept,
   QueryToken,
   RelationshipInfo,
-} from "./types.js";
+} from "../../src/types.js";
 
 export { saturatingFrequency };
 
