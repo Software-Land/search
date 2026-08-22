@@ -65,7 +65,7 @@ morphology({ lemmas: { intercepting: "interceptor", recursive: "recursion", foob
 
 `intercepting` → `interceptor` and `recursive` → `recursion` are catalog-specific policy examples, not universal linguistic truth. Some of those mappings already live in Core's small default table. Site entries **augment** the defaults. Explicit built-in mappings win, so a generated table cannot replace stems the runtime already relies on (`computing` stays `compute`). The Worker takes the same map as `init({ englishOptions: { lemmas } })`. Compile lexical-frequency n-grams with the same `morphology({ lemmas }).lemma` used at search time.
 
-Keep lemma generators, caches, and models in the site build. This package consumes a `Record<string, string>`, not the script. Those Python/model dependencies do not enter Search Core or the browser/runtime package dependency graph.
+Keep lemma generators, caches, and models in the site build. This package consumes a `Record<string, string>`, not the script. Those Python/model dependencies do not enter Search Core or the browser/runtime package dependency graph. `morphology({ lemmas })` accepts corpus-specific mappings as data. Python, spaCy, and related generators are not runtime dependencies of `@software-land/search`. Software.Land publishes its actual build-time generator separately at [Software-Land/search-lemma-tools](https://github.com/Software-Land/search-lemma-tools).
 
 ## Browser Worker
 
