@@ -94,3 +94,130 @@ describe("search-semantic package boundary", () => {
     expect(gatedIot).not.toContain("io");
   }, 30000);
 });
+
+function trackMkdtemp() {
+  const orig = fs.mkdtempSync;
+  const dirs = [];
+  fs.mkdtempSync = (...args) => {
+    const dir = orig.apply(fs, args);
+    dirs.push(dir);
+    return dir;
+  };
+  return {
+    dirs,
+    restore() {
+      fs.mkdtempSync = orig;
+    },
+  };
+}
+
+describe("compileSemantic outputPath lifecycle", () => {
+  const lexical = { method: "lexical" };
+
+  test("default output survives the call and matches artifact", async () => {
+    const mk = trackMkdtemp();
+    let outputPath;
+    try {
+      const result = await compileSemantic(DOCS, lexical);
+      outputPath = result.outputPath;
+      expect(fs.existsSync(result.outputPath)).toBe(true);
+      const onDisk = JSON.parse(fs.readFileSync(result.outputPath, "utf8"));
+      expect(onDisk.format).toBe("search-v2-relationships");
+      expect(onDisk.version).toBe(1);
+      expect(onDisk).toEqual(result.artifact);
+      expect(path.basename(result.outputPath)).toMatch(/^search-semantic-output-.+\.json$/);
+      for (const dir of mk.dirs) {
+        expect(fs.existsSync(dir)).toBe(false);
+        expect(result.outputPath.startsWith(`${dir}${path.sep}`)).toBe(false);
+      }
+    } finally {
+      mk.restore();
+      if (outputPath) fs.rmSync(outputPath, { force: true });
+    }
+  }, 30000);
+
+  test("explicit outputPath is unchanged", async () => {
+    const mk = trackMkdtemp();
+    const outputPath = path.join(os.tmpdir(), `search-semantic-explicit-${process.pid}-${Date.now()}.json`);
+    try {
+      const result = await compileSemantic(DOCS, { ...lexical, outputPath });
+      expect(result.outputPath).toBe(outputPath);
+      expect(fs.existsSync(outputPath)).toBe(true);
+      const onDisk = JSON.parse(fs.readFileSync(outputPath, "utf8"));
+      expect(onDisk).toEqual(result.artifact);
+      expect(onDisk.format).toBe("search-v2-relationships");
+      expect(onDisk.version).toBe(1);
+      for (const dir of mk.dirs) expect(fs.existsSync(dir)).toBe(false);
+    } finally {
+      mk.restore();
+      fs.rmSync(outputPath, { force: true });
+    }
+  }, 30000);
+
+  test("failed default compile removes the compiler-created output file and work dir", async () => {
+    const mk = trackMkdtemp();
+    const origRm = fs.rmSync;
+    const removed = [];
+    fs.rmSync = (target, opts) => {
+      removed.push(String(target));
+      return origRm.call(fs, target, opts);
+    };
+    try {
+      await expect(
+        compileSemantic(path.join(os.tmpdir(), "search-semantic-missing-corpus.json"), lexical)
+      ).rejects.toThrow();
+      const outputFiles = removed.filter(
+        (p) => path.basename(p).startsWith("search-semantic-output-") && p.endsWith(".json")
+      );
+      expect(outputFiles).toHaveLength(1);
+      expect(fs.existsSync(outputFiles[0])).toBe(false);
+      for (const dir of mk.dirs) expect(fs.existsSync(dir)).toBe(false);
+    } finally {
+      fs.rmSync = origRm;
+      mk.restore();
+    }
+  }, 30000);
+
+  test("concurrent default compiles write distinct surviving files", async () => {
+    const mk = trackMkdtemp();
+    let a;
+    let b;
+    try {
+      [a, b] = await Promise.all([compileSemantic(DOCS, lexical), compileSemantic(DOCS, lexical)]);
+      expect(a.outputPath).not.toBe(b.outputPath);
+      expect(fs.existsSync(a.outputPath)).toBe(true);
+      expect(fs.existsSync(b.outputPath)).toBe(true);
+      expect(JSON.parse(fs.readFileSync(a.outputPath, "utf8"))).toEqual(a.artifact);
+      expect(JSON.parse(fs.readFileSync(b.outputPath, "utf8"))).toEqual(b.artifact);
+      for (const dir of mk.dirs) expect(fs.existsSync(dir)).toBe(false);
+    } finally {
+      mk.restore();
+      if (a?.outputPath) fs.rmSync(a.outputPath, { force: true });
+      if (b?.outputPath) fs.rmSync(b.outputPath, { force: true });
+    }
+  }, 30000);
+
+  test("successful compile still surfaces work-dir cleanup failure", async () => {
+    const mk = trackMkdtemp();
+    const origRm = fs.rmSync;
+    const cleanupError = new Error("work-dir cleanup failed");
+    const beforeOutputs = new Set(
+      fs.readdirSync(os.tmpdir()).filter((n) => n.startsWith("search-semantic-output-") && n.endsWith(".json"))
+    );
+    fs.rmSync = (target, opts) => {
+      if (mk.dirs.includes(String(target))) throw cleanupError;
+      return origRm.call(fs, target, opts);
+    };
+    try {
+      await expect(compileSemantic(DOCS, lexical)).rejects.toBe(cleanupError);
+    } finally {
+      fs.rmSync = origRm;
+      mk.restore();
+      for (const dir of mk.dirs) origRm.call(fs, dir, { recursive: true, force: true });
+      for (const name of fs.readdirSync(os.tmpdir())) {
+        if (!name.startsWith("search-semantic-output-") || !name.endsWith(".json") || beforeOutputs.has(name)) continue;
+        origRm.call(fs, path.join(os.tmpdir(), name), { force: true });
+      }
+    }
+  }, 30000);
+});

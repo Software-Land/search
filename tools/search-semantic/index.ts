@@ -3,7 +3,7 @@
  * Search Core and the browser Worker never import this module.
  */
 import { spawn } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -148,19 +148,30 @@ function writeInput(input: unknown, tmpDir: string): string {
   return file;
 }
 
+function rmQuiet(target: string, opts: { recursive?: boolean } = {}) {
+  try {
+    fs.rmSync(target, { force: true, recursive: Boolean(opts.recursive) });
+  } catch {
+    // Cleanup must not mask the original compilation error.
+  }
+}
+
 export async function compileSemantic(input: unknown, opts: CompileSemanticOptions = {}): Promise<CompileSemanticResult> {
   const method = opts.method || DEFAULT_METHOD;
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "search-semantic-"));
+  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "search-semantic-"));
+  const callerOwnedOutput = Boolean(opts.outputPath);
+  const outputPath =
+    opts.outputPath || path.join(os.tmpdir(), `search-semantic-output-${randomUUID()}.json`);
+  let compileFailed = false;
   try {
     const { python } = await ensureSemanticEnvironment({
       method,
       pythonPath: opts.pythonPath,
       venvDir: opts.venvDir,
     });
-    const inputPath = writeInput(input, tmp);
-    const outputPath = opts.outputPath || path.join(tmp, "relationships.json");
-    const reportPath = opts.reportPath || path.join(tmp, "report.json");
-    const cacheDir = opts.cacheDir || path.join(tmp, "cache");
+    const inputPath = writeInput(input, workDir);
+    const reportPath = opts.reportPath || path.join(workDir, "report.json");
+    const cacheDir = opts.cacheDir || path.join(workDir, "cache");
     fs.mkdirSync(path.dirname(outputPath), { recursive: true });
     fs.mkdirSync(path.dirname(reportPath), { recursive: true });
     fs.mkdirSync(cacheDir, { recursive: true });
@@ -207,7 +218,12 @@ export async function compileSemantic(input: unknown, opts: CompileSemanticOptio
     }
     const report = fs.existsSync(reportPath) ? (JSON.parse(fs.readFileSync(reportPath, "utf8")) as Record<string, unknown>) : null;
     return { artifact, report, outputPath, stdout };
+  } catch (err) {
+    compileFailed = true;
+    if (!callerOwnedOutput) rmQuiet(outputPath);
+    throw err;
   } finally {
-    fs.rmSync(tmp, { recursive: true, force: true });
+    if (compileFailed) rmQuiet(workDir, { recursive: true });
+    else fs.rmSync(workDir, { recursive: true, force: true });
   }
 }

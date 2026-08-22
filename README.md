@@ -147,6 +147,8 @@ const { artifact } = await compileSemantic(corpusJson, {
 });
 ```
 
+When `outputPath` is omitted, `compileSemantic()` still writes a unique file under the system temp directory and returns that path. The file survives the call. The caller owns it and may remove it when finished. Pass `outputPath` to choose a durable location.
+
 ```bash
 node tools/search-semantic/build.mjs --input corpus.json --output graph.json --method embedding --precision-gate --mutual
 python3 tools/search-semantic/build.py --input corpus.json --method lexical --output graph.json

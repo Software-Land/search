@@ -32,6 +32,7 @@ export interface CompileSemanticOptions {
   pythonPath?: string;
   venvDir?: string;
   cacheDir?: string;
+  /** Optional durable destination. When omitted, a unique temp-location file is created and returned. */
   outputPath?: string;
   reportPath?: string;
   precisionGate?: boolean;
@@ -41,6 +42,13 @@ export interface CompileSemanticOptions {
 export interface CompileSemanticResult {
   artifact: Record<string, unknown>;
   report: Record<string, unknown> | null;
+  /**
+   * Path of the written `search-v2-relationships` v1 JSON.
+   * When `outputPath` was omitted, this is a unique file under the system temp
+   * directory that survives the call. The caller owns that file and may remove
+   * it when finished. `compileSemantic()` does not delete a successful returned
+   * default artifact.
+   */
   outputPath: string;
   stdout: string;
 }
