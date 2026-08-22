@@ -129,6 +129,18 @@ async function main() {
     if (!existsSync(installedPkgPath)) throw new Error("tarball install missing @software-land/search");
     const installedPkg = JSON.parse(readFileSync(installedPkgPath, "utf8"));
     const browserExport = resolveBrowserImport(installedPkg);
+    const lexicalSpec = installedPkg.exports?.["./lexical"];
+    if (!lexicalSpec || typeof lexicalSpec !== "object" || !lexicalSpec.import) {
+      throw new Error(`installed package missing exports["./lexical"].import: ${JSON.stringify(installedPkg.exports)}`);
+    }
+    const lexicalRel = String(lexicalSpec.import).replace(/^\.\//, "");
+    const lexicalHref = `/node_modules/@software-land/search/${lexicalRel}`;
+    const rootSpec = installedPkg.exports?.["."];
+    if (!rootSpec || typeof rootSpec !== "object" || !rootSpec.import) {
+      throw new Error(`installed package missing exports["."].import: ${JSON.stringify(installedPkg.exports)}`);
+    }
+    const rootRel = String(rootSpec.import).replace(/^\.\//, "");
+    const rootHref = `/node_modules/@software-land/search/${rootRel}`;
     const browserFile = path.join(consumer, "node_modules/@software-land/search", browserExport.rel);
     if (!existsSync(browserFile)) {
       throw new Error(`resolved browser export missing on disk: ${browserExport.rel}`);
@@ -136,7 +148,9 @@ async function main() {
 
     const importMap = {
       imports: {
+        "@software-land/search": rootHref,
         "@software-land/search/browser": browserExport.href,
+        "@software-land/search/lexical": lexicalHref,
       },
     };
     writeFileSync(
@@ -362,8 +376,27 @@ async function main() {
       throw new Error(`retrieval-bench errors: ${JSON.stringify(retrievalBoot.errors)}`);
     }
     if (retrievalConsoleErrors.length) throw new Error(`retrieval-bench console error: ${retrievalConsoleErrors.join("\n")}`);
-    if (retrievalBoot.results.length !== 18) {
-      throw new Error(`retrieval-bench expected 18 rows, got ${JSON.stringify(retrievalBoot.results)}`);
+    if (retrievalBoot.results.length !== 45) {
+      throw new Error(`retrieval-bench expected 45 rows, got ${JSON.stringify(retrievalBoot.results)}`);
+    }
+    for (const n of [1000, 2000, 5000]) {
+      for (const queryFamily of [
+        "rare-exact",
+        "high-df",
+        "adversarial-short-literal",
+        "adversarial-independent-title-token",
+        "software-land-machine-prefix",
+      ]) {
+        const rows = retrievalBoot.results.filter((row) => row.n === n && row.queryFamily === queryFamily);
+        const full = rows.find((row) => row.mode === "full-scan");
+        if (!full || rows.some((row) => row.topId !== full.topId)) {
+          throw new Error(`retrieval-bench exact-output mismatch: ${JSON.stringify({ n, queryFamily, rows })}`);
+        }
+        const indexed = rows.filter((row) => row.mode !== "full-scan");
+        if (indexed.some((row) => row.rawDocumentScans !== 0)) {
+          throw new Error(`retrieval-bench indexed path scanned raw documents: ${JSON.stringify({ n, queryFamily, rows })}`);
+        }
+      }
     }
 
     diagnostics.push({

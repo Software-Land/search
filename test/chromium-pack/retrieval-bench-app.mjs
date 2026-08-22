@@ -1,14 +1,20 @@
 import { createSearchClient, searchWorkerUrl } from "@software-land/search/browser";
+import { compileLexicalIndex } from "@software-land/search/lexical";
+import { morphology } from "@software-land/search";
 
 const SIZES = [1000, 2000, 5000];
-const RETRIEVERS = ["full-scan", "indexed"];
+const MODES = ["full-scan", "indexed-fallback", "indexed-precompiled"];
 const QUERY_RARE = "ZX9 UniqueRareTitle";
-const QUERY_COMMON = "search";
+const QUERY_COMMON = "the";
 const QUERY_ADVERSARIAL = "zz";
+const QUERY_INDEPENDENT_TITLE = "probezz";
+const QUERY_MACHINE_PREFIX = "machine l";
 const QUERIES = [
   { name: "rare-exact", query: QUERY_RARE },
   { name: "high-df", query: QUERY_COMMON },
   { name: "adversarial-short-literal", query: QUERY_ADVERSARIAL },
+  { name: "adversarial-independent-title-token", query: QUERY_INDEPENDENT_TITLE },
+  { name: "software-land-machine-prefix", query: QUERY_MACHINE_PREFIX },
 ];
 const VOCAB = [
   "the", "of", "and", "search", "index", "document", "query", "title", "body",
@@ -16,7 +22,7 @@ const VOCAB = [
 ];
 
 function mixedDocs(n) {
-  const floodN = Math.min(400, Math.max(0, n - 8));
+  const floodN = Math.min(300, Math.max(0, Math.floor((n - 10) / 3)));
   const docs = [
     { id: "rare-exact", title: QUERY_RARE, body: "unique rare title planted for exact retrieval" },
     { id: "tls", title: "TLS 1.2 Vulnerability", body: "transport layer security search document" },
@@ -25,12 +31,36 @@ function mixedDocs(n) {
       title: "Zzwinner unique ranking title analog",
       body: "unrelated body without the query token repeated",
     },
+    {
+      id: "winner-independent-title-token",
+      title: "The Probezz",
+      body: "notes",
+    },
+    {
+      id: "winner-machine-prefix",
+      title: "Machine Learning",
+      body: "guide",
+    },
   ];
   for (let i = 0; i < floodN; i += 1) {
     docs.push({
       id: `zz-flood-${String(i).padStart(5, "0")}`,
       title: `Unrelated filler ${i}`,
       body: Array.from({ length: 16 }, () => "zz").join(" "),
+    });
+  }
+  for (let i = 0; i < floodN; i += 1) {
+    docs.push({
+      id: `probezz-flood-${String(i).padStart(5, "0")}`,
+      title: `Notes probezz extra extra extra ${i}`,
+      body: Array.from({ length: 16 }, () => "probezz").join(" "),
+    });
+  }
+  for (let i = 0; i < floodN; i += 1) {
+    docs.push({
+      id: `machine-flood-${String(i).padStart(5, "0")}`,
+      title: `Machine logs extra extra extra ${i}`,
+      body: Array.from({ length: 16 }, () => "machine logs").join(" "),
     });
   }
   for (let i = docs.length; i < n; i += 1) {
@@ -69,7 +99,20 @@ window.addEventListener("error", (ev) => {
 
 window.__state = state;
 
-async function runMode(retriever, n) {
+async function runMode(mode, n) {
+  const documents = mixedDocs(n);
+  const english = morphology();
+  const precompileStarted = performance.now();
+  const lexicalIndex = mode === "indexed-precompiled"
+    ? compileLexicalIndex(documents, {
+        schema: { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } },
+        lemma: english.lemma,
+        analyzerId: english.indexIdentity,
+      })
+    : null;
+  const precompileMs = mode === "indexed-precompiled" ? performance.now() - precompileStarted : 0;
+  const artifactBytes = lexicalIndex ? new TextEncoder().encode(JSON.stringify(lexicalIndex)).byteLength : 0;
+  const retriever = mode === "full-scan" ? "full-scan" : "indexed";
   const published = [];
   const client = createSearchClient({
     workerUrl: searchWorkerUrl(),
@@ -83,18 +126,21 @@ async function runMode(retriever, n) {
       });
     },
     onError({ query: q, generation, error }) {
-      recordError(error, { kind: "onError", query: q, generation, retriever, n });
+      recordError(error, { kind: "onError", query: q, generation, mode, n });
     },
   });
-  await client.init({
-    documents: mixedDocs(n),
+  const initStarted = performance.now();
+  const ready = await client.init({
+    documents,
     schema: { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } },
+    lexicalIndex,
     dictionaryEntries: [],
     retriever,
     candidateLimit: 200,
     relationshipStrategy: "none",
   });
   await client.waitReady();
+  const initMs = performance.now() - initStarted;
   const rows = [];
   for (const { name, query } of QUERIES) {
     const generation = client.setQuery(query, { limit: 10 });
@@ -112,7 +158,7 @@ async function runMode(retriever, n) {
           return;
         }
         if (Date.now() > deadline) {
-          reject(new Error(`${retriever} n=${n} ${query} timed out`));
+          reject(new Error(`${mode} n=${n} ${query} timed out`));
           return;
         }
         setTimeout(tick, 20);
@@ -120,16 +166,27 @@ async function runMode(retriever, n) {
       tick();
     });
     rows.push({
+      mode,
       retriever,
       query,
       queryFamily: name,
       n,
       candidateCount: hit?.meta?.candidateCount ?? null,
+      matchCount: hit?.meta?.matchCount ?? null,
+      representativeSelection: hit?.meta?.representativeSelection ?? null,
+      postingEntriesVisited: hit?.meta?.postingEntriesVisited ?? null,
+      distinctDocumentsExamined: hit?.meta?.distinctDocumentsExamined ?? null,
+      rawDocumentScans: hit?.meta?.rawDocumentScans ?? null,
       retrieveMs: hit?.meta?.retrieveMs ?? null,
       featureMs: hit?.meta?.featureMs ?? null,
+      selectionMs: hit?.meta?.selectionMs ?? null,
       rankMs: hit?.meta?.rankMs ?? null,
       totalMs: hit?.meta?.totalMs ?? null,
       wallMs: performance.now() - started,
+      precompileMs,
+      artifactBytes,
+      initMs,
+      workerIndexBuildMs: ready?.indexBuildMs ?? null,
       topId: hit?.ids?.[0] ?? null,
       topTitle: hit?.titles?.[0] ?? null,
     });
@@ -140,8 +197,8 @@ async function runMode(retriever, n) {
 
 try {
   for (const n of SIZES) {
-    for (const retriever of RETRIEVERS) {
-      state.results.push(...(await runMode(retriever, n)));
+    for (const mode of MODES) {
+      state.results.push(...(await runMode(mode, n)));
     }
   }
   window.__booted = true;
