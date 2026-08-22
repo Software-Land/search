@@ -47,7 +47,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm --prefix test/chromium-pack ci
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('test/chromium-pack/package-lock.json') }}
