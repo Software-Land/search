@@ -1,6 +1,6 @@
 import {
   SearchEngine,
-  english,
+  morphology,
   dictionary,
 } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
@@ -24,7 +24,7 @@ function engine(docs, dictEntries = []) {
       title: { type: "text", role: "title" },
       body: { type: "text", role: "body" },
     },
-    plugins: [english(), dictionary({ entries: dictEntries })],
+    plugins: [morphology(), dictionary({ entries: dictEntries })],
   });
   return e.index(docs).then(() => e);
 }
@@ -107,14 +107,14 @@ describe("version forms", () => {
 
 describe("query analysis", () => {
   test("keeps surface tokens and morphology provenance", () => {
-    const q = analyzeQuery("shards", { plugins: [english()] });
+    const q = analyzeQuery("shards", { plugins: [morphology()] });
     expect(q.tokens[0].surface).toBe("shards");
     expect(q.tokens[0].lemma).toBe("shard");
     expect(q.tokens[0].sources).toContain("morphology");
   });
 
   test("collapses trailing repeats without dropping the original surface", () => {
-    const q = analyzeQuery("shardsss", { plugins: [english()] });
+    const q = analyzeQuery("shardsss", { plugins: [morphology()] });
     expect(q.tokens[0].surface).toBe("shardsss");
     expect(q.tokens[0].normalized).toBe("shard");
     expect(q.tokens[0].lemma).toBe("shard");
@@ -123,7 +123,7 @@ describe("query analysis", () => {
   });
 
   test("maps configured expansions to the same canonical query as the key", () => {
-    const plugins = [english(), dictionary({ entries: tlsDict })];
+    const plugins = [morphology(), dictionary({ entries: tlsDict })];
     const expansion = analyzeQuery("transport layer security", { plugins });
     const key = analyzeQuery("tls", { plugins });
     expect(expansion.tokens.map((t) => t.normalized)).toEqual(key.tokens.map((t) => t.normalized));
@@ -136,7 +136,7 @@ describe("query analysis", () => {
 
   test("exact expansion canonicalizes to the key and does not treat one expansion word as the key", () => {
     const gpuDict = [{ key: "gpu", expansion: ["graphics", "processing", "unit"] }];
-    const plugins = [english(), dictionary({ entries: gpuDict })];
+    const plugins = [morphology(), dictionary({ entries: gpuDict })];
     const full = analyzeQuery("graphics processing unit", { plugins });
     const keyQ = analyzeQuery("gpu", { plugins });
     expect(full.tokens.map((t) => t.normalized)).toEqual(keyQ.tokens.map((t) => t.normalized));
@@ -177,7 +177,7 @@ describe("query analysis", () => {
 
   test("http and its exact expansion share one canonical query, candidates, and ranking", async () => {
     const httpDict = [{ key: "http", expansion: ["hypertext", "transfer", "protocol"] }];
-    const plugins = [english(), dictionary({ entries: httpDict })];
+    const plugins = [morphology(), dictionary({ entries: httpDict })];
     const key = analyzeQuery("http", { plugins });
     const expansion = analyzeQuery("hypertext transfer protocol", { plugins });
     expect(key.tokens.map((t) => ({ normalized: t.normalized, lemma: t.lemma }))).toEqual(
@@ -210,7 +210,7 @@ describe("query analysis", () => {
       { key: "https", expansion: ["hypertext", "transfer", "protocol", "secure"] },
       { key: "html", expansion: ["hypertext", "markup", "language"] },
     ];
-    const plugins = [english(), dictionary({ entries: httpDict })];
+    const plugins = [morphology(), dictionary({ entries: httpDict })];
     const prefix = analyzeQuery("hypertext transfer", { plugins });
     expect(prefix.tokens.map((t) => t.normalized)).toEqual(["hypertext", "transfer"]);
     const http = prefix.concepts.filter((c) => c.kind === "acronym");
@@ -237,7 +237,7 @@ describe("query analysis", () => {
       { key: "http", expansion: ["hypertext", "transfer", "protocol"] },
       { key: "https", expansion: ["hypertext", "transfer", "protocol", "secure"] },
     ];
-    const plugins = [english(), dictionary({ entries: httpDict })];
+    const plugins = [morphology(), dictionary({ entries: httpDict })];
     const docs = [
       { id: "http-title", title: "HTTP", body: "methods and status codes" },
       { id: "http-body", title: "Request Response", body: "http methods and status codes" },
@@ -283,7 +283,7 @@ describe("query analysis", () => {
 
   test("ambiguous shared expansion prefixes are not attached", () => {
     const plugins = [
-      english(),
+      morphology(),
       dictionary({
         entries: [
           { key: "sla", expansion: ["service", "level", "agreement"] },
@@ -308,7 +308,7 @@ describe("query analysis", () => {
 
   test("unique three-token expansion prefixes attach the shorter winner", () => {
     const plugins = [
-      english(),
+      morphology(),
       dictionary({
         entries: [
           { key: "http", expansion: ["hypertext", "transfer", "protocol"] },
@@ -346,7 +346,7 @@ describe("query analysis", () => {
 
   test("incomplete key prefixes match only the final active token", () => {
     const plugins = [
-      english(),
+      morphology(),
       dictionary({
         entries: [
           { key: "graphql", expansion: ["graph", "query", "language"] },
@@ -390,7 +390,7 @@ describe("query analysis", () => {
     ];
     const reverse = [...forward].reverse();
     for (const entries of [forward, reverse]) {
-      const plugins = [english(), dictionary({ entries })];
+      const plugins = [morphology(), dictionary({ entries })];
       expect(analyzeQuery("react", { plugins }).concepts.some((c) => c.kind === "acronym")).toBe(false);
       const exact = analyzeQuery("reactjs", { plugins }).concepts.filter((c) => c.kind === "acronym");
       expect(exact).toHaveLength(1);
@@ -398,7 +398,7 @@ describe("query analysis", () => {
       expect(exact[0].provenance).toBe("key");
     }
     const unique = analyzeQuery("react", {
-      plugins: [english(), dictionary({ entries: [forward[0]] })],
+      plugins: [morphology(), dictionary({ entries: [forward[0]] })],
     }).concepts.filter((c) => c.kind === "acronym");
     expect(unique).toHaveLength(1);
     expect(unique[0].id).toBe("reactjs");
@@ -411,7 +411,7 @@ describe("query analysis", () => {
     ];
     const reverse = [...forward].reverse();
     for (const entries of [forward, reverse]) {
-      const plugins = [english(), dictionary({ entries })];
+      const plugins = [morphology(), dictionary({ entries })];
       const q = analyzeQuery("graph query language", { plugins });
       expect(q.tokens.map((t) => t.normalized)).toEqual(["graph", "query", "language"]);
       expect(q.concepts.some((c) => c.kind === "acronym")).toBe(false);
@@ -424,7 +424,7 @@ describe("query analysis", () => {
     ];
     for (const entries of [withPrimaryHint, [...withPrimaryHint].reverse()]) {
       const q = analyzeQuery("graph query language", {
-        plugins: [english(), dictionary({ entries })],
+        plugins: [morphology(), dictionary({ entries })],
       });
       expect(q.tokens.map((t) => t.normalized)).toEqual(["graph", "query", "language"]);
       expect(q.concepts.some((c) => c.kind === "acronym")).toBe(false);
@@ -433,7 +433,7 @@ describe("query analysis", () => {
 
   test("unique learn* prefixes share canonical tokens, candidates, and ranked IDs", async () => {
     const mlDict = [{ key: "ml", expansion: ["machine", "learning"] }];
-    const plugins = [english(), dictionary({ entries: mlDict })];
+    const plugins = [morphology(), dictionary({ entries: mlDict })];
     const lexicon = ["machine", "learn", "learning", "learnings", "application", "security"];
     const incomplete = ["machine learn", "machine learni", "machine learnin"];
     const analyzed = incomplete.map((raw) => analyzeQuery(raw, { plugins, lexicon, prefixLexicon: lexicon }));
@@ -487,7 +487,7 @@ describe("query analysis", () => {
 
   test("exact expansion collapse keeps pre-collapse lexical phrase evidence", async () => {
     const mlDict = [{ key: "ml", expansion: ["machine", "learning"] }];
-    const plugins = [english(), dictionary({ entries: mlDict })];
+    const plugins = [morphology(), dictionary({ entries: mlDict })];
     const lexicon = ["machine", "learn", "learning", "learnings"];
     const docs = [
       {
@@ -540,7 +540,7 @@ describe("query analysis", () => {
 
   test("unique configured-equivalence forms share canonical intent and ranked IDs", async () => {
     const mlDict = [{ key: "ml", expansion: ["machine", "learning"] }];
-    const plugins = [english(), dictionary({ entries: mlDict })];
+    const plugins = [morphology(), dictionary({ entries: mlDict })];
     const lexicon = ["machine", "learn", "learning", "learnings", "notes"];
     const forms = ["ml", "machine learning", "machine learn"];
     const analyzed = Object.fromEntries(
@@ -601,7 +601,7 @@ describe("query analysis", () => {
 
   test("ambiguous prefixes are not canonicalized", () => {
     const q = analyzeQuery("open inter", {
-      plugins: [english()],
+      plugins: [morphology()],
       lexicon: ["open", "interface", "interceptor", "internet"],
       prefixLexicon: ["open", "interface", "interceptor", "internet"],
     });
@@ -613,7 +613,7 @@ describe("query analysis", () => {
 
   test("single-letter queries do not prefix-match dictionary keys", () => {
     const q = analyzeQuery("a", {
-      plugins: [english(), dictionary({ entries: tlsDict })],
+      plugins: [morphology(), dictionary({ entries: tlsDict })],
     });
     expect(q.concepts.some((c) => c.kind === "acronym")).toBe(false);
   });
@@ -673,7 +673,7 @@ describe("morphology vs surface", () => {
 
   test("shards and sharding share the shard lemma so both titles retrieve", async () => {
     const e = await engine(docs);
-    const q = analyzeQuery("shards", { plugins: [english()] });
+    const q = analyzeQuery("shards", { plugins: [morphology()] });
     expect(q.tokens[0]).toMatchObject({ surface: "shards", surfaceNormalized: "shards", normalized: "shard", lemma: "shard" });
     const results = e.search("shards", { limit: 5 });
     expect(results.map((r) => r.title).sort()).toEqual(["Hot Shards", "Sharding"]);
@@ -758,7 +758,7 @@ describe("version compact", () => {
   });
 
   test("inferred completion is not typed compact companion evidence", async () => {
-    const plugins = [english(), dictionary({ entries: tlsDict })];
+    const plugins = [morphology(), dictionary({ entries: tlsDict })];
     const schema = {
       title: { type: "text", role: "title" },
       body: { type: "text", role: "body" },
@@ -1023,9 +1023,9 @@ describe("candidate provenance", () => {
         },
       ],
       { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } },
-      [english()]
+      [morphology()]
     );
-    const query = analyzeQuery("protobuf", { plugins: [english()] });
+    const query = analyzeQuery("protobuf", { plugins: [morphology()] });
     const hits = retrieveCandidates(query, index);
     expect(hits[0].retrievalSources).toContain("body-lexical");
   });
@@ -1036,9 +1036,9 @@ describe("features ranking and explanations", () => {
     const index = buildIndex(
       [{ id: "/object/", title: "Object", body: "An object." }],
       { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } },
-      [english()]
+      [morphology()]
     );
-    const query = analyzeQuery("object", { plugins: [english()] });
+    const query = analyzeQuery("object", { plugins: [morphology()] });
     const features = extractFeatures(query, index.documents[0]);
     expect(features.exactTitleMatch).toBe(true);
     expect(Object.keys(FEATURE_DEFINITIONS).sort()).toEqual(Object.keys(features).sort());
@@ -1075,7 +1075,7 @@ describe("features ranking and explanations", () => {
   });
 
   test("dotted query spans are kept on the raw query not token join", () => {
-    const q = analyzeQuery("1.2 vulnerability", { plugins: [english()] });
+    const q = analyzeQuery("1.2 vulnerability", { plugins: [morphology()] });
     expect(q.dottedSpans).toContain("1.2");
     expect(q.tokens.map((t) => t.normalized)).toEqual(["1", "2", "vulnerability"]);
   });

@@ -1,5 +1,5 @@
 import { analyzeQuery } from "../dist/analyze.js";
-import { english, dictionary, SearchEngine } from "../dist/index.js";
+import { morphology, dictionary, SearchEngine } from "../dist/index.js";
 import { extractFeatures } from "../dist/features.js";
 import { compoundSpellSegment, MAX_COMPOUND_REPAIR_TOKEN_LENGTH } from "../dist/analyzeRepair.js";
 import { conceptMatchesBody, conceptMatchesTitle } from "../dist/retrieve.js";
@@ -21,14 +21,14 @@ describe("exact compound segmentation", () => {
 
   test("appsecurity splits to app + security", () => {
     const q = analyzeQuery("appsecurity", {
-      plugins: [english(), dictionary({ entries: appsecDict })],
+      plugins: [morphology(), dictionary({ entries: appsecDict })],
     });
     expect(q.tokens.map((t) => t.normalized)).toEqual(["app", "security"]);
   });
 
   test("failed longest candidate backtracks to a valid split", () => {
     const q = analyzeQuery("appsecurity", {
-      plugins: [english(), dictionary({ entries: appsecDict })],
+      plugins: [morphology(), dictionary({ entries: appsecDict })],
       lexicon: ["app", "security", "appsec"],
     });
     expect(q.tokens.map((t) => t.normalized)).toEqual(["app", "security"]);
@@ -36,7 +36,7 @@ describe("exact compound segmentation", () => {
 
   test("whole known lexicon word is not split", () => {
     const q = analyzeQuery("security", {
-      plugins: [english()],
+      plugins: [morphology()],
       lexicon: ["sec", "urity", "security", "app"],
     });
     expect(q.tokens.map((t) => t.normalized)).toEqual(["security"]);
@@ -44,11 +44,11 @@ describe("exact compound segmentation", () => {
 
   test("ambiguous valid segmentation is deterministic longest-first", () => {
     const first = analyzeQuery("abcdefgh", {
-      plugins: [english()],
+      plugins: [morphology()],
       lexicon: ["abc", "defgh", "abcd", "efgh"],
     });
     const second = analyzeQuery("abcdefgh", {
-      plugins: [english()],
+      plugins: [morphology()],
       lexicon: ["efgh", "abcd", "defgh", "abc"],
     });
     expect(first.tokens.map((t) => t.normalized)).toEqual(["abcd", "efgh"]);
@@ -57,11 +57,11 @@ describe("exact compound segmentation", () => {
 
   test("numeric and version tokens remain protected", () => {
     const q = analyzeQuery("tls12", {
-      plugins: [english()],
+      plugins: [morphology()],
       lexicon: ["tls", "12"],
     });
     expect(q.tokens.map((t) => t.normalized)).toEqual(["tls12"]);
-    const dotted = analyzeQuery("tls 1.2", { plugins: [english()], prefixLexicon: ["tls", "12", "120"] });
+    const dotted = analyzeQuery("tls 1.2", { plugins: [morphology()], prefixLexicon: ["tls", "12", "120"] });
     expect(dotted.prefixCompletion).toBeNull();
     expect(dotted.tokens.map((t) => t.normalized)).toEqual(["tls", "1", "2"]);
   });
@@ -69,7 +69,7 @@ describe("exact compound segmentation", () => {
   test("pathological long token is bounded and does not segment", () => {
     const token = "abc".repeat(80);
     const q = analyzeQuery(token, {
-      plugins: [english()],
+      plugins: [morphology()],
       lexicon: ["abc"],
     });
     expect(q.tokens).toHaveLength(1);
@@ -82,7 +82,7 @@ describe("exact compound segmentation", () => {
     const token = "abcdefghij".repeat(8);
     expect(token.length).toBeGreaterThan(MAX_COMPOUND_REPAIR_TOKEN_LENGTH);
     expect(compoundSpellSegment(token, lexicon)).toBeNull();
-    const q = analyzeQuery(token, { plugins: [english()], lexicon });
+    const q = analyzeQuery(token, { plugins: [morphology()], lexicon });
     expect(q.tokens).toHaveLength(1);
     expect(q.tokens[0].normalized).toBe(token);
   });
@@ -102,7 +102,7 @@ describe("final-token prefix completion", () => {
     );
     expect(matching.length).toBeGreaterThan(48);
     const q = analyzeQuery("pref", {
-      plugins: [english()],
+      plugins: [morphology()],
       lexicon: vocab,
       prefixLexicon: vocab,
     });
@@ -115,7 +115,7 @@ describe("final-token prefix completion", () => {
     const vocab = ["machine", "learning"];
     for (let i = 0; i < 4000; i += 1) vocab.push(`zzzzword${i}`);
     const q = analyzeQuery("machine learni", {
-      plugins: [english()],
+      plugins: [morphology()],
       lexicon: vocab,
       prefixLexicon: vocab,
     });
@@ -130,7 +130,7 @@ describe("final-token prefix completion", () => {
   test("analyzeQuery replaces the final token instead of mutating the pre-completion object", () => {
     const vocab = ["machine", "learning"];
     const q = analyzeQuery("machine learni", {
-      plugins: [english()],
+      plugins: [morphology()],
       lexicon: vocab,
       prefixLexicon: vocab,
     });
@@ -142,7 +142,7 @@ describe("final-token prefix completion", () => {
   });
 
   test("exactTitleTokenMatch uses the canonical lemma, not a unique prefix completion", () => {
-    const plugins = [english()];
+    const plugins = [morphology()];
     const index = buildIndex(
       [{ id: "learn", title: "Machine Learning", body: "notes" }],
       schema,
@@ -174,7 +174,7 @@ describe("final-token prefix completion", () => {
   });
 
   test("canonical query lemma matches a lemmatized title token", () => {
-    const plugins = [english()];
+    const plugins = [morphology()];
     const index = buildIndex([{ id: "lib", title: "Library", body: "notes" }], schema, plugins);
     const q = analyzeQuery("libraries", { plugins });
     const features = extractFeatures(q, index.documents[0]);
@@ -198,7 +198,7 @@ describe("final-token prefix completion", () => {
 describe("dictionary token ownership", () => {
   test("explicit key stays one acronym concept", () => {
     const q = analyzeQuery("tls", {
-      plugins: [english(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })],
+      plugins: [morphology(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })],
     });
     expect(q.concepts.filter((c) => c.kind === "acronym" && c.id === "tls")).toHaveLength(1);
     expect(q.concepts.some((c) => c.kind === "term" && c.id === "tls")).toBe(false);
@@ -207,7 +207,7 @@ describe("dictionary token ownership", () => {
   test("single-token alias stays one acronym concept", () => {
     const q = analyzeQuery("ecmascript", {
       plugins: [
-        english(),
+        morphology(),
         dictionary({
           entries: [{ key: "js", expansion: ["javascript"], aliases: [["ecmascript"]] }],
         }),
@@ -220,7 +220,7 @@ describe("dictionary token ownership", () => {
   });
 
   test("single-token expansion canonicalizes to the same key concept as the acronym", () => {
-    const plugins = [english(), dictionary({ entries: [{ key: "js", expansion: ["javascript"] }] })];
+    const plugins = [morphology(), dictionary({ entries: [{ key: "js", expansion: ["javascript"] }] })];
     const expansion = analyzeQuery("javascript", { plugins });
     const key = analyzeQuery("js", { plugins });
     expect(expansion.tokens.map((t) => t.normalized)).toEqual(key.tokens.map((t) => t.normalized));
@@ -230,7 +230,7 @@ describe("dictionary token ownership", () => {
   });
 
   test("exact multi-token expansion canonicalizes to the dictionary key", () => {
-    const plugins = [english(), dictionary({ entries: [{ key: "ml", expansion: ["machine", "learning"] }] })];
+    const plugins = [morphology(), dictionary({ entries: [{ key: "ml", expansion: ["machine", "learning"] }] })];
     const expansion = analyzeQuery("machine learning", { plugins });
     const key = analyzeQuery("ml", { plugins });
     expect(expansion.tokens.map((t) => t.normalized)).toEqual(key.tokens.map((t) => t.normalized));
@@ -256,7 +256,7 @@ describe("acronym body evidence is contiguous", () => {
     ];
     const engine = SearchEngine.create({
       schema,
-      plugins: [english(), dictionary({ entries: dict })],
+      plugins: [morphology(), dictionary({ entries: dict })],
     });
     await engine.index(docs);
     const results = engine.searchDetailed("machine learning", { limit: 5, explain: true }).results;
@@ -268,8 +268,8 @@ describe("acronym body evidence is contiguous", () => {
       expect(learningOnly.features.configuredEquivalenceMatch).not.toBe("key-in-title");
     }
 
-    const index = buildIndex(docs, schema, [english(), dictionary({ entries: dict })]);
-    const q = analyzeQuery("machine learning", { plugins: [english(), dictionary({ entries: dict })] });
+    const index = buildIndex(docs, schema, [morphology(), dictionary({ entries: dict })]);
+    const q = analyzeQuery("machine learning", { plugins: [morphology(), dictionary({ entries: dict })] });
     const acr = q.concepts.find((c) => c.kind === "acronym");
     const learningDoc = index.documents.find((d) => d.id === "learning-only");
     const dispersed = index.documents.find((d) => d.id === "dispersed");
@@ -288,7 +288,7 @@ describe("acronym body evidence is contiguous", () => {
     ];
     const engine = SearchEngine.create({
       schema,
-      plugins: [english(), dictionary({ entries: dict })],
+      plugins: [morphology(), dictionary({ entries: dict })],
     });
     await engine.index(docs);
     const results = engine.searchDetailed("machine learning", { limit: 5, explain: true }).results;

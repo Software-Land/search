@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { compileCorpus, spellingLexiconPlugin } from "../tools/search-corpus/index.js";
-import { SearchEngine, english, dictionary } from "../dist/index.js";
+import { morphology, SearchEngine, dictionary } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
 
 import { fileURLToPath } from "node:url";
@@ -186,7 +186,7 @@ describe("search-corpus spelling plugin", () => {
     const engine = SearchEngine.create({
       schema,
       plugins: [
-        english(),
+        morphology(),
         dictionary({ entries: [] }),
         spellingLexiconPlugin(["kubernetes", "authorization", "application"]),
       ],

@@ -1,4 +1,6 @@
-import { SearchEngine, morphology, english } from "../dist/index.js";
+import { SearchEngine, morphology } from "../dist/index.js";
+import { english as internalEnglish } from "../dist/english.js";
+import * as publicApi from "../dist/index.js";
 
 const schema = {
   title: { type: "text", role: "title" },
@@ -21,29 +23,30 @@ async function titlesOf(plugin, query) {
   return engine.search(query, { limit: 3 }).map((hit) => hit.title);
 }
 
-describe("morphology() / english() compatibility", () => {
-  test("english remains importable from the public root export", () => {
+describe("0.4.0 morphology() public API", () => {
+  test("root english export is removed", () => {
     expect(typeof morphology).toBe("function");
-    expect(typeof english).toBe("function");
+    expect(publicApi).not.toHaveProperty("english");
+    expect(publicApi.PUBLIC_EXPORTS).not.toContain("english");
   });
 
-  test("english({ lemmas }) and morphology({ lemmas }) are equivalent", async () => {
+  test("morphology() is the English plugin and matches the internal factory", async () => {
     const viaMorphology = morphology({ lemmas });
-    const viaEnglish = english({ lemmas });
+    const viaInternal = internalEnglish({ lemmas });
     expect(viaMorphology.name).toBe("english");
-    expect(viaEnglish.name).toBe("english");
-    expect(viaMorphology.lemma("recurses")).toBe(viaEnglish.lemma("recurses"));
-    expect(viaMorphology.lemma("widgets")).toBe(viaEnglish.lemma("widgets"));
-    expect(viaMorphology.lemma("computing")).toBe(viaEnglish.lemma("computing"));
-    expect(viaMorphology.canonicalLemma("recurses")).toBe(viaEnglish.canonicalLemma("recurses"));
+    expect(viaInternal.name).toBe("english");
+    expect(viaMorphology.lemma("recurses")).toBe(viaInternal.lemma("recurses"));
+    expect(viaMorphology.lemma("widgets")).toBe(viaInternal.lemma("widgets"));
+    expect(viaMorphology.lemma("computing")).toBe(viaInternal.lemma("computing"));
+    expect(viaMorphology.canonicalLemma("recurses")).toBe(viaInternal.canonicalLemma("recurses"));
     expect(viaMorphology.lemma("widgets")).toBe("widget");
     expect(viaMorphology.lemma("computing")).toBe("compute");
 
     const morphDefault = morphology();
-    const englishDefault = english();
-    expect(await titlesOf(morphDefault, "recurses")).toEqual(await titlesOf(englishDefault, "recurses"));
-    expect(await titlesOf(viaMorphology, "widgets")).toEqual(await titlesOf(viaEnglish, "widgets"));
-    expect(await titlesOf(viaMorphology, "computing")).toEqual(await titlesOf(viaEnglish, "computing"));
+    const internalDefault = internalEnglish();
+    expect(await titlesOf(morphDefault, "recurses")).toEqual(await titlesOf(internalDefault, "recurses"));
+    expect(await titlesOf(viaMorphology, "widgets")).toEqual(await titlesOf(viaInternal, "widgets"));
+    expect(await titlesOf(viaMorphology, "computing")).toEqual(await titlesOf(viaInternal, "computing"));
     expect((await titlesOf(morphDefault, "recurses"))[0]).toBe("What is Recursion?");
   });
 });

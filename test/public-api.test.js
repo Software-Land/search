@@ -1,7 +1,7 @@
 import * as publicApi from "../dist/index.js";
 import {
   SearchEngine,
-  english,
+  morphology,
   dictionary,
   PUBLIC_EXPORTS,
   RETRIEVER_NAMES,
@@ -37,7 +37,7 @@ const graph = {
   },
 };
 
-const plugins = [english(), dictionary({ entries: [{ key: "wifi", expansion: ["wi", "fi"] }] })];
+const plugins = [morphology(), dictionary({ entries: [{ key: "wifi", expansion: ["wi", "fi"] }] })];
 
 async function make(opts = {}) {
   const e = SearchEngine.create({ schema, plugins, relationships: graph, ...opts });
@@ -66,7 +66,7 @@ describe("public API", () => {
   });
 
   test("index requires ids and last-wins duplicates", async () => {
-    const e = SearchEngine.create({ schema, plugins: [english()] });
+    const e = SearchEngine.create({ schema, plugins: [morphology()] });
     await expect(e.index([{ title: "No id" }])).rejects.toBeInstanceOf(InvalidDocumentError);
     const info = await e.index([
       { id: "a", title: "First", body: "x" },
@@ -134,7 +134,7 @@ describe("public API", () => {
   test("adaptive uses full-scan below threshold and indexed at or above", async () => {
     const small = SearchEngine.create({
       schema,
-      plugins: [english()],
+      plugins: [morphology()],
       retriever: "adaptive",
       adaptive: { documentThreshold: 100 },
     });
@@ -148,7 +148,7 @@ describe("public API", () => {
     }));
     const large = SearchEngine.create({
       schema,
-      plugins: [english()],
+      plugins: [morphology()],
       retriever: "adaptive",
       adaptive: { documentThreshold: 100 },
       candidateLimit: 50,
@@ -165,7 +165,7 @@ describe("public API", () => {
   });
 
   test("Worker init accepts retriever names; latest-wins still publishes the last query", async () => {
-    const runtime = createWorkerRuntime({ SearchEngine, english, dictionary });
+    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, dictionary });
     const transport = createLoopbackTransport(runtime);
     const published = [];
     const client = createSearchClient({

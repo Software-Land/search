@@ -1,4 +1,4 @@
-import { SearchEngine, english, dictionary } from "../dist/index.js";
+import { morphology, SearchEngine, dictionary } from "../dist/index.js";
 import { classifyDirect } from "../dist/features.js";
 import { analyzeQuery } from "../dist/analyze.js";
 
@@ -22,7 +22,7 @@ const graph = {
   },
 };
 
-const plugins = [english(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })];
+const plugins = [morphology(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })];
 
 describe("direct classes", () => {
   test("exact title is strong; body-only is weak; related is none", async () => {

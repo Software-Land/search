@@ -2,7 +2,7 @@
 
 v0 exposes **built-in names only**. A third-party `{ retrieve }` object is accepted as experimental and is not a stable contract (it sees internal query/index shapes). `searchAsync` calls `retrieveAsync` when present and otherwise `retrieve()`.
 
-The public `retriever` field is still `RetrieverName | "indexed-lexical" | { retrieve: Function; retrieveAsync?: Function; prepare?: Function; name?: string }`. `ExperimentalRetriever` / `ExperimentalRetrieveOptions` are opt-in authoring types for that experimental object. `query` and `index` are intentionally `unknown`; those types do not publish `AnalyzedQuery`, `SearchIndex`, or `IndexedDocument`.
+The public `retriever` field is `RetrieverName | "indexed-lexical" | ExperimentalRetriever`. `query` and `index` are intentionally `unknown`; those types do not publish `AnalyzedQuery`, `SearchIndex`, or `IndexedDocument`. Runtime still accepts a duck-typed `{ retrieve }` object.
 
 ```js
 SearchEngine.create({

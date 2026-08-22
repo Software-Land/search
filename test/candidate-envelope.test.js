@@ -8,7 +8,7 @@
  * These tests stop at retrieve() / candidateCount. They do not send thousands of
  * candidates through pairwise ranking.
  */
-import { SearchEngine, english, dictionary } from "../dist/index.js";
+import { morphology, SearchEngine, dictionary } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 import { retrieveCandidates } from "../dist/retrieve.js";
@@ -16,7 +16,7 @@ import { createIndexedLexicalRetriever, createAdaptiveRetriever } from "../dist/
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 
-function indexedRetrieve(docs, queryText, { plugins = [english()], candidateLimit = 3, prefixCap = 2 } = {}) {
+function indexedRetrieve(docs, queryText, { plugins = [morphology()], candidateLimit = 3, prefixCap = 2 } = {}) {
   const index = buildIndex(docs, schema, plugins);
   const retriever = createIndexedLexicalRetriever({ candidateLimit, prefixCap });
   retriever.prepare(index);
@@ -67,7 +67,7 @@ describe("indexed unbounded must-keep lanes", () => {
   });
 
   test("configured-equivalence title matches bypass candidateLimit", () => {
-    const plugins = [english(), dictionary({ entries: [{ key: "ml", expansion: ["machine", "learning"] }] })];
+    const plugins = [morphology(), dictionary({ entries: [{ key: "ml", expansion: ["machine", "learning"] }] })];
     const docs = [];
     for (let i = 0; i < 18; i += 1) {
       docs.push({ id: `c${i}`, title: `ML notes ${i}`, body: "x" });
@@ -94,7 +94,7 @@ describe("full-scan and adaptive ignore a hard ranker envelope", () => {
     for (let i = 0; i < 30; i += 1) {
       docs.push({ id: `f${i}`, title: `Unrelated ${i}`, body: "zzunique token here" });
     }
-    const plugins = [english()];
+    const plugins = [morphology()];
     const index = buildIndex(docs, schema, plugins);
     const query = analyzeQuery("zzunique", { plugins });
     const hits = retrieveCandidates(query, index);
@@ -108,7 +108,7 @@ describe("full-scan and adaptive ignore a hard ranker envelope", () => {
     }
     const e = SearchEngine.create({
       schema,
-      plugins: [english()],
+      plugins: [morphology()],
       retriever: "full-scan",
       candidateLimit: 4,
       relationshipStrategy: "none",
@@ -121,7 +121,7 @@ describe("full-scan and adaptive ignore a hard ranker envelope", () => {
 
   test("adaptive uses full-scan at or below the document threshold", () => {
     const docs = Array.from({ length: 8 }, (_, i) => ({ id: `a${i}`, title: `Doc ${i}`, body: "zzunique" }));
-    const plugins = [english()];
+    const plugins = [morphology()];
     const index = buildIndex(docs, schema, plugins);
     const retriever = createAdaptiveRetriever({
       documentThreshold: 1500,
@@ -135,7 +135,7 @@ describe("full-scan and adaptive ignore a hard ranker envelope", () => {
 
   test("adaptive switches to indexed above the document threshold", () => {
     const docs = Array.from({ length: 6 }, (_, i) => ({ id: `a${i}`, title: `Unrelated ${i}`, body: "zzunique" }));
-    const plugins = [english()];
+    const plugins = [morphology()];
     const index = buildIndex(docs, schema, plugins);
     const retriever = createAdaptiveRetriever({
       documentThreshold: 3,
@@ -159,7 +159,7 @@ describe("relationship expansion after retrieval", () => {
     }
     const e = SearchEngine.create({
       schema,
-      plugins: [english()],
+      plugins: [morphology()],
       retriever: "indexed",
       candidateLimit: 1,
       relationshipStrategy: "hybrid",

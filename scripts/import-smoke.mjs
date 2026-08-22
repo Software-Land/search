@@ -36,7 +36,7 @@ const lexical = await import(lexicalExp.url);
 
 if (typeof runtime.SearchEngine?.create !== "function") throw new Error("root SearchEngine missing");
 if (typeof runtime.morphology !== "function") throw new Error("root morphology missing");
-if (typeof runtime.english !== "function") throw new Error("root english missing");
+if ("english" in runtime) throw new Error("root english() must not remain a public export");
 if ("lang" in runtime) throw new Error("unreleased lang() must not remain a root export");
 if (typeof browser.createSearchClient !== "function") throw new Error("browser createSearchClient missing");
 if (typeof browser.searchWorkerUrl !== "function") throw new Error("browser searchWorkerUrl missing");

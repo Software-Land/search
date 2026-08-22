@@ -1,6 +1,6 @@
 import {
   SearchEngine,
-  english,
+  morphology,
   dictionary,
 } from "../dist/index.js";
 import { createIndexedLexicalRetriever } from "../dist/retrievers.js";
@@ -20,7 +20,7 @@ const docs = [
 ];
 
 async function engines() {
-  const plugins = [english(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })];
+  const plugins = [morphology(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })];
   const full = SearchEngine.create({ schema, plugins });
   const indexed = SearchEngine.create({
     schema,
@@ -34,7 +34,7 @@ async function engines() {
 
 describe("replaceable retrieval", () => {
   test("default retriever remains full-scan (existing tests unchanged)", async () => {
-    const e = SearchEngine.create({ schema, plugins: [english()] });
+    const e = SearchEngine.create({ schema, plugins: [morphology()] });
     await e.index(docs);
     expect(e.retriever.name).toBe("full-scan");
     expect(e.search("bluetooth")[0].title).toBe("Bluetooth");
@@ -82,7 +82,7 @@ describe("replaceable retrieval", () => {
   });
 
   test("gold candidate recall vs full-scan on the tiny corpus is complete at K=50", async () => {
-    const plugins = [english()];
+    const plugins = [morphology()];
     const index = buildIndex(docs, schema, plugins);
     const query = analyzeQuery("bluetooth", { plugins, lexicon: index.titleTokenSet });
     const full = new Set(retrieveCandidates(query, index).map((h) => h.document.id));

@@ -1,4 +1,4 @@
-import { SearchEngine, english, dictionary } from "../dist/index.js";
+import { morphology, SearchEngine, dictionary } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 import { retrieveCandidates, matchContextualTitlePrefix } from "../dist/retrieve.js";
@@ -22,7 +22,7 @@ function bothRetrievers(docs, plugins) {
 }
 
 describe("indexed vs full-scan contextual candidate parity", () => {
-  const plugins = [english()];
+  const plugins = [morphology()];
   const docs = [
     { id: "code", title: "What is Code?", body: "source" },
     { id: "clean", title: "What is Clean Code?", body: "style" },
@@ -86,7 +86,7 @@ describe("contextual MUST_KEEP bound", () => {
       body: "zz zz zz zz zz zz zz zz zz zz zz zz zz zz zz zz zz zz zz zz",
     });
     docs.push({ id: "exact", title: "what is zz", body: "exact title" });
-    const plugins = [english()];
+    const plugins = [morphology()];
     const index = buildIndex(docs, schema, plugins);
     const indexed = createIndexedLexicalRetriever({ candidateLimit, prefixCap });
     indexed.prepare(index);
@@ -116,7 +116,7 @@ describe("contextual MUST_KEEP bound", () => {
 
   test("exact-title, configured-equivalence, and version remain unbounded must-keep", () => {
     const plugins = [
-      english(),
+      morphology(),
       dictionary({ entries: [{ key: "ml", expansion: ["machine", "learning"] }] }),
     ];
     const docs = [
@@ -177,7 +177,7 @@ describe("frozen contextual regressions", () => {
   async function engine() {
     const e = SearchEngine.create({
       schema,
-      plugins: [english(), dictionary({ entries: appsecDict })],
+      plugins: [morphology(), dictionary({ entries: appsecDict })],
       relationshipStrategy: "hybrid",
     });
     await e.index(docs);
@@ -206,8 +206,8 @@ describe("frozen contextual regressions", () => {
         expect(row.features.contextualTitlePrefix).toBe(false);
       }
     }
-    const index = buildIndex(docs, schema, [english()]);
-    const machineC = analyzeQuery("machine c", { plugins: [english()] });
+    const index = buildIndex(docs, schema, [morphology()]);
+    const machineC = analyzeQuery("machine c", { plugins: [morphology()] });
     const code = index.documents.find((d) => d.id === "code");
     expect(matchContextualTitlePrefix(machineC, code)).toBeNull();
     expect(extractFeatures(machineC, code).contextualTitlePrefix).toBe(false);

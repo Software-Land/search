@@ -1,4 +1,4 @@
-import { SearchEngine, english, morphology } from "@software-land/search";
+import { SearchEngine, morphology } from "@software-land/search";
 
 // @ts-expect-error FeatureVector is not a public export
 import type { FeatureVector } from "@software-land/search";
@@ -18,6 +18,12 @@ import { createEnglishPlugin } from "@software-land/search";
 // @ts-expect-error EnglishMorphologyOptions is not a public export
 import type { EnglishMorphologyOptions } from "@software-land/search";
 
+// @ts-expect-error MorphologyPlugin is not a public export
+import type { MorphologyPlugin } from "@software-land/search";
+
+// @ts-expect-error english is not a public root export
+import { english } from "@software-land/search";
+
 const engine = SearchEngine.create();
 
 // @ts-expect-error retriever is not on the public SearchEngine class
@@ -35,14 +41,11 @@ SearchEngine.create({ retriever: "bm25" });
 // @ts-expect-error best is not a public relationshipStrategy
 SearchEngine.create({ relationshipStrategy: "best" });
 
-const plugin = english();
 const morphologyPlugin = morphology();
-// @ts-expect-error public english() is unknown, not an implementation plugin shape
-plugin.lemma;
 void morphologyPlugin.lemma;
 
 void engine;
-void plugin;
 void morphologyPlugin;
 void lang;
 void createEnglishPlugin;
+void english;

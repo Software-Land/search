@@ -18,7 +18,7 @@ These generators are deterministic (seed `0x5e1ec7`). They are not search-qualit
 
 ## Modes
 
-Requires a built runtime (`npm run build`). Public `SearchEngine` + `english()` only.
+Requires a built runtime (`npm run build`). Public `SearchEngine` + `morphology()` only.
 
 ```bash
 node --expose-gc benchmarks/memory/run.mjs --mode routine

@@ -1,20 +1,24 @@
 /**
  * morphology() returns EnglishPlugin.
- * english() keeps the 0.3.1 unknown facade.
+ * dictionary() returns DictionaryPlugin.
+ * Root english() is removed.
  */
 import {
   dictionary,
-  english,
   morphology,
+  type DictionaryPlugin,
   type EnglishPlugin,
   type MorphologyOptions,
 } from "@software-land/search";
+
+// @ts-expect-error english is not a public root export
+import { english } from "@software-land/search";
 
 const options: MorphologyOptions = {};
 const withLemmas: MorphologyOptions = { lemmas: { widgets: "widget" } };
 
 const morphologyFn: (options?: MorphologyOptions) => EnglishPlugin = morphology;
-const englishFn: (options?: { lemmas?: Record<string, string> }) => unknown = english;
+const dictionaryFn: (options?: { entries?: { key: string }[] }) => DictionaryPlugin = dictionary;
 
 const plugin: EnglishPlugin = morphology();
 void plugin.name;
@@ -24,12 +28,12 @@ void plugin.canonicalLemma("widgets");
 const withMap: EnglishPlugin = morphology({ lemmas: { widgets: "widget" } });
 void withMap.lemma("widgets");
 
-const legacy = english();
-// @ts-expect-error public english() is unknown, not an implementation plugin shape
-legacy.lemma;
+const dict: DictionaryPlugin = dictionary();
+void dict.name;
+void dict.lexicon;
 
 void options;
 void withLemmas;
 void morphologyFn;
-void englishFn;
-void dictionary();
+void dictionaryFn;
+void english;

@@ -1,5 +1,5 @@
 import { compileLexicalFrequency, attachLexicalFrequency, saturatingFrequency, resolveLexicalPolicy } from "../tools/search-lexical/index.js";
-import { SearchEngine, english, dictionary } from "../dist/index.js";
+import { morphology, SearchEngine, dictionary } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { extractFeatures, saturatingFrequency as runtimeSaturatingFrequency } from "../dist/features.js";
 import { saturatingFrequency as sharedSaturatingFrequency } from "../dist/saturatingFrequency.js";
@@ -18,7 +18,7 @@ const schema = { title: { type: "text", role: "title" }, body: { type: "text", r
 
 describe("lexical-frequency compiler", () => {
   test("counts lemmatized n-grams at build time and looks them up at query time", async () => {
-    const lemma = english().lemma;
+    const lemma = morphology().lemma;
     const docs = [
       {
         id: "a",
@@ -39,7 +39,7 @@ describe("lexical-frequency compiler", () => {
     expect(JSON.stringify(artifact)).toBe(JSON.stringify(compileLexicalFrequency(docs, { lemma })));
 
     const indexed = attachLexicalFrequency(docs, artifact);
-    const engine = SearchEngine.create({ schema, plugins: [english(), dictionary({ entries: [] })] });
+    const engine = SearchEngine.create({ schema, plugins: [morphology(), dictionary({ entries: [] })] });
     await engine.index(indexed);
     const row = engine.searchDetailed("machine learning", { limit: 5, explain: true }).results[0];
     expect(row.id).toBe("a");
@@ -56,7 +56,7 @@ describe("lexical-frequency compiler", () => {
         { id: "a", title: "A", body: "uniquephraseonlyhere" },
         { id: "b", title: "B", body: "other text" },
       ],
-      { lemma: english().lemma }
+      { lemma: morphology().lemma }
     );
     expect(artifact.documents.a.ngrams.uniquephraseonlyhere).toBeUndefined();
   });
@@ -67,7 +67,7 @@ describe("lexical-frequency compiler", () => {
         { id: "a", title: "Shard", body: "shard shard" },
         { id: "b", title: "Hot Shards", body: "shard appears here too" },
       ],
-      { lemma: english().lemma }
+      { lemma: morphology().lemma }
     );
     expect(artifact.documents.a.ngrams.shard).toBe(2);
     expect(artifact.documents.a.ngrams["hot shard"]).toBeUndefined();
@@ -92,7 +92,7 @@ describe("compiled phrase vs incidental title token", () => {
     ];
     const engine = SearchEngine.create({
       schema,
-      plugins: [english(), dictionary({ entries: [] })],
+      plugins: [morphology(), dictionary({ entries: [] })],
       relationshipStrategy: "hybrid",
     });
     await engine.index(docs);
@@ -148,7 +148,7 @@ describe("final-token prefix completion for compiled phrases", () => {
         { id: "phrase-doc", title: docs[0].title, body: docs[0].body },
         { id: "title-doc", title: docs[1].title, body: docs[1].body },
       ],
-      { lemma: english().lemma }
+      { lemma: morphology().lemma }
     );
     expect(artifact.documents["phrase-doc"].ngrams["machine learn"]).toBe(5);
     expect(artifact.documents["phrase-doc"].ngrams["machine learni"]).toBeUndefined();
@@ -156,7 +156,7 @@ describe("final-token prefix completion for compiled phrases", () => {
 
     const engine = SearchEngine.create({
       schema,
-      plugins: [english(), dictionary({ entries: [] })],
+      plugins: [morphology(), dictionary({ entries: [] })],
       relationshipStrategy: "hybrid",
     });
     await engine.index(docs);
@@ -197,8 +197,8 @@ describe("final-token prefix completion for compiled phrases", () => {
         body: "pressure is incidental and mentions systems once",
       },
     ];
-    const artifact = compileLexicalFrequency(rawDocs, { lemma: english().lemma });
-    const phraseKey = `${english().lemma("distributed")} ${english().lemma("systems")}`;
+    const artifact = compileLexicalFrequency(rawDocs, { lemma: morphology().lemma });
+    const phraseKey = `${morphology().lemma("distributed")} ${morphology().lemma("systems")}`;
     expect(phraseKey).toBe("distribut system");
     expect(artifact.documents.dist.ngrams[phraseKey]).toBeGreaterThanOrEqual(5);
     expect(artifact.documents.dist.ngrams["distributed syst"]).toBeUndefined();
@@ -206,7 +206,7 @@ describe("final-token prefix completion for compiled phrases", () => {
 
     const engine = SearchEngine.create({
       schema,
-      plugins: [english(), dictionary({ entries: [] })],
+      plugins: [morphology(), dictionary({ entries: [] })],
       relationshipStrategy: "hybrid",
     });
     await engine.index(attachLexicalFrequency(rawDocs, artifact));
@@ -220,7 +220,7 @@ describe("final-token prefix completion for compiled phrases", () => {
 
   test("ambiguous short-ish prefixes are not rewritten to one arbitrary word", () => {
     const q = analyzeQuery("open inter", {
-      plugins: [english()],
+      plugins: [morphology()],
       lexicon: ["open", "interface", "interceptor", "internet"],
       prefixLexicon: ["open", "interface", "interceptor", "internet"],
     });
@@ -253,10 +253,10 @@ describe("final-token prefix completion for compiled phrases", () => {
       { id: "interceptor", title: "Interceptor", body: "x" },
       { id: "internet", title: "Internet", body: "x" },
     ];
-    const artifact = compileLexicalFrequency(rawDocs, { lemma: english().lemma });
+    const artifact = compileLexicalFrequency(rawDocs, { lemma: morphology().lemma });
     expect(artifact.documents.iface.ngrams.interface).toBeGreaterThanOrEqual(2);
 
-    const engine = SearchEngine.create({ schema, plugins: [english()] });
+    const engine = SearchEngine.create({ schema, plugins: [morphology()] });
     await engine.index(attachLexicalFrequency(rawDocs, artifact));
     const detailed = engine.searchDetailed("open inter", { limit: 8, explain: true });
     const pc = detailed.results[0].explanation.query.prefixCompletion;
@@ -287,8 +287,8 @@ describe("final-token prefix completion for compiled phrases", () => {
       { id: "applied", title: "Applied", body: "x" },
       { id: "applies", title: "Applies", body: "x" },
     ];
-    const artifact = compileLexicalFrequency(rawDocs, { lemma: english().lemma });
-    const engine = SearchEngine.create({ schema, plugins: [english()] });
+    const artifact = compileLexicalFrequency(rawDocs, { lemma: morphology().lemma });
+    const engine = SearchEngine.create({ schema, plugins: [morphology()] });
     await engine.index(attachLexicalFrequency(rawDocs, artifact));
     const detailed = engine.searchDetailed("what is an appli", { limit: 8, explain: true });
     const pc = detailed.results[0].explanation.query.prefixCompletion;
@@ -301,7 +301,7 @@ describe("final-token prefix completion for compiled phrases", () => {
 
   test("punctuation junk and inflections do not make a unique completion ambiguous", () => {
     const q = analyzeQuery("machine learni", {
-      plugins: [english()],
+      plugins: [morphology()],
       lexicon: ["machine", "learning", "learning*", "learning**", "learnings"],
       prefixLexicon: ["machine", "learning", "learning*", "learning**", "learnings"],
     });
@@ -317,7 +317,7 @@ describe("final-token prefix completion for compiled phrases", () => {
 
   test("numeric final tokens keep strict version behavior", () => {
     const q = analyzeQuery("tls 12", {
-      plugins: [english()],
+      plugins: [morphology()],
       lexicon: ["tls", "12", "120", "128"],
       prefixLexicon: ["tls", "12", "120", "128"],
     });
@@ -329,7 +329,7 @@ describe("final-token prefix completion for compiled phrases", () => {
 
 describe("english lemma merge policy", () => {
   test("site lemmas augment defaults and do not replace explicit defaults", () => {
-    const plugin = english({
+    const plugin = morphology({
       lemmas: {
         computing: "comput",
         libraries: "libz",
@@ -342,14 +342,14 @@ describe("english lemma merge policy", () => {
   });
 
   test("compute and computing still match a Computing title", () => {
-    const qCompute = analyzeQuery("compute", { plugins: [english({ lemmas: { computing: "comput" } })] });
-    const qComputing = analyzeQuery("computing", { plugins: [english({ lemmas: { computing: "comput" } })] });
+    const qCompute = analyzeQuery("compute", { plugins: [morphology({ lemmas: { computing: "comput" } })] });
+    const qComputing = analyzeQuery("computing", { plugins: [morphology({ lemmas: { computing: "comput" } })] });
     expect(qCompute.tokens[0].lemma).toBe("compute");
     expect(qComputing.tokens[0].lemma).toBe("compute");
     const index = buildIndex(
       [{ id: "edge", title: "Edge Computing", body: "edge" }],
       schema,
-      [english({ lemmas: { computing: "comput" } })]
+      [morphology({ lemmas: { computing: "comput" } })]
     );
     const f1 = extractFeatures(qCompute, index.documents[0]);
     const f2 = extractFeatures(qComputing, index.documents[0]);
@@ -360,7 +360,7 @@ describe("english lemma merge policy", () => {
 
 describe("lexical compiler body-only n-grams", () => {
   test("does not invent a title/body boundary bigram", () => {
-    const lemma = english().lemma;
+    const lemma = morphology().lemma;
     const artifact = compileLexicalFrequency(
       [
         { id: "a", title: "Machine", body: "Learning is useful" },
@@ -375,7 +375,7 @@ describe("lexical compiler body-only n-grams", () => {
   });
 
   test("bodyPhraseCount is body occurrences only", async () => {
-    const lemma = english().lemma;
+    const lemma = morphology().lemma;
     const docs = [
       { id: "title-and-body", title: "Machine Learning", body: "machine learning is discussed once" },
       { id: "two-body", title: "Unrelated", body: "machine learning and more machine learning" },
@@ -389,7 +389,7 @@ describe("lexical compiler body-only n-grams", () => {
 
     const engine = SearchEngine.create({
       schema,
-      plugins: [english(), dictionary({ entries: [] })],
+      plugins: [morphology(), dictionary({ entries: [] })],
     });
     await engine.index(attachLexicalFrequency(docs, artifact));
     expect(
@@ -409,11 +409,11 @@ describe("lexical compiler body-only n-grams", () => {
 
 describe("compiler/runtime lexical normalization parity", () => {
   test("compiler keys match runtime phrase lookup for representative inputs", () => {
-    const lemma = english().lemma;
+    const lemma = morphology().lemma;
     const policy = { minN: 1, maxN: 2 };
     for (const text of ["machine learning", "foo the bar", "what is code", "libraries", "computing", "machine learnings"]) {
       const compiled = extractCanonicalNgrams(canonicalLexicalTokens(text, { lemma }), policy);
-      const analyzed = analyzeQuery(text, { plugins: [english()] });
+      const analyzed = analyzeQuery(text, { plugins: [morphology()] });
       const runtimeKey = lexicalPhraseKeyFromQuery(analyzed.tokens);
       expect(compiled).toContain(runtimeKey);
     }
@@ -431,7 +431,7 @@ describe("compiler/runtime lexical normalization parity", () => {
   test("compiler uses DEFAULT_STOP even if a caller still passes stopWords", () => {
     expect(DEFAULT_STOP.has("the")).toBe(true);
     expect(DEFAULT_STOP.has("bar")).toBe(false);
-    const lemma = english().lemma;
+    const lemma = morphology().lemma;
     const docs = [
       { id: "a", title: "A", body: "foo the bar foo the bar" },
       { id: "b", title: "B", body: "foo the bar also appears" },
@@ -443,7 +443,7 @@ describe("compiler/runtime lexical normalization parity", () => {
     expect(artifact.documents.a.ngrams["foo bar"]).toBe(2);
     expect(artifact.documents.a.ngrams["foo the"]).toBeUndefined();
     expect(artifact.documents.a.ngrams.bar).toBe(2);
-    const runtimeKey = lexicalPhraseKeyFromQuery(analyzeQuery("foo the bar", { plugins: [english()] }).tokens);
+    const runtimeKey = lexicalPhraseKeyFromQuery(analyzeQuery("foo the bar", { plugins: [morphology()] }).tokens);
     expect(runtimeKey).toBe("foo bar");
     expect(artifact.documents.a.ngrams[runtimeKey]).toBe(2);
   });
@@ -461,7 +461,7 @@ describe("lexical policy validation", () => {
 
 describe("lexical compiler duplicate-id parity", () => {
   test("last document wins before collection counts, matching SearchEngine.index", async () => {
-    const lemma = english().lemma;
+    const lemma = morphology().lemma;
     const docs = [
       { id: "dup", title: "First Title", body: "hapaxphrase hapaxphrase hapaxphrase" },
       { id: "dup", title: "Last Title", body: "unrelated filler" },
@@ -471,7 +471,7 @@ describe("lexical compiler duplicate-id parity", () => {
     expect(artifact.documents.dup.ngrams.hapaxphrase).toBeUndefined();
     expect(artifact.documents.other.ngrams.hapaxphrase).toBeUndefined();
 
-    const engine = SearchEngine.create({ schema, plugins: [english()] });
+    const engine = SearchEngine.create({ schema, plugins: [morphology()] });
     await engine.index(docs);
     const hit = engine.search("Last Title")[0];
     expect(hit.title).toBe("Last Title");
@@ -479,7 +479,7 @@ describe("lexical compiler duplicate-id parity", () => {
   });
 
   test("padded ids compile, attach, and index under the same canonical id", async () => {
-    const lemma = english().lemma;
+    const lemma = morphology().lemma;
     const docs = [
       { id: " foo ", title: "Foo", body: "sharedphrase sharedphrase" },
       { id: "bar", title: "Bar", body: "sharedphrase appears here too" },
@@ -489,7 +489,7 @@ describe("lexical compiler duplicate-id parity", () => {
     expect(artifact.documents[" foo "]).toBeUndefined();
     const attached = attachLexicalFrequency(docs, artifact);
     expect(attached[0].lexicalFrequency.sharedphrase).toBe(2);
-    const engine = SearchEngine.create({ schema, plugins: [english()] });
+    const engine = SearchEngine.create({ schema, plugins: [morphology()] });
     await engine.index(attached);
     const hit = engine.searchDetailed("sharedphrase", { explain: true }).results.find((r) => r.id === "foo");
     expect(hit).toBeTruthy();
@@ -507,7 +507,7 @@ describe("shared saturatingFrequency", () => {
 
 describe("copyLexicalFrequency accepted shapes", () => {
   test("indexes flat records and ngrams objects, and rejects arrays", async () => {
-    const engine = SearchEngine.create({ schema, plugins: [english()] });
+    const engine = SearchEngine.create({ schema, plugins: [morphology()] });
     await engine.index([
       { id: "flat", title: "Flat", body: "machine learning", lexicalFrequency: { "machine learn": 4, machine: 4 } },
       { id: "nested", title: "Nested", body: "machine learning", lexicalFrequency: { ngrams: { "machine learn": 3 }, ignored: 9 } },

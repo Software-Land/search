@@ -8,7 +8,6 @@
 
 import { SearchEngine as searchEngineImpl } from "./SearchEngine.js";
 import { morphology as morphologyImpl } from "./morphology.js";
-import { english as englishImpl } from "./english.js";
 import { dictionary as dictionaryImpl } from "./dictionary.js";
 import {
   RELATIONSHIP_STRATEGIES as relationshipStrategiesImpl,
@@ -53,6 +52,7 @@ import type {
   SynonymArtifact,
   EnglishPlugin,
   MorphologyOptions,
+  DictionaryPlugin,
 } from "./api.js";
 
 export type {
@@ -92,9 +92,7 @@ export type SearchEngine = SearchEngineType;
 export const SearchEngine: SearchEngineConstructor = searchEngineImpl as unknown as SearchEngineConstructor;
 
 export const morphology: (options?: MorphologyOptions) => EnglishPlugin = morphologyImpl;
-/** @deprecated Use `morphology()` instead. */
-export const english: (options?: { lemmas?: Record<string, string> }) => unknown = englishImpl;
-export const dictionary: (options?: { entries?: EquivalenceEntry[] }) => unknown = dictionaryImpl;
+export const dictionary: (options?: { entries?: EquivalenceEntry[] }) => DictionaryPlugin = dictionaryImpl;
 
 export const RELATIONSHIP_STRATEGIES: readonly RelationshipStrategy[] =
   relationshipStrategiesImpl as readonly RelationshipStrategy[];
@@ -145,7 +143,6 @@ export const IndexStateError: IndexStateErrorConstructor =
 export const PUBLIC_EXPORTS: readonly string[] = Object.freeze([
   "SearchEngine",
   "morphology",
-  "english",
   "dictionary",
   "RELATIONSHIP_STRATEGIES",
   "DEFAULT_RELATIONSHIP_STRATEGY",

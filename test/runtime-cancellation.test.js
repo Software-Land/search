@@ -1,4 +1,4 @@
-import { SearchEngine, english, dictionary, isAbortError } from "../dist/index.js";
+import { morphology, SearchEngine, dictionary, isAbortError } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { retrieveCandidates } from "../dist/retrieve.js";
 import { rankCandidates } from "../dist/rank.js";
@@ -26,7 +26,7 @@ const dictEntries = [
   },
 ];
 
-const plugins = [english(), dictionary({ entries: dictEntries })];
+const plugins = [morphology(), dictionary({ entries: dictEntries })];
 
 const graph = {
   format: "search-v2-relationships",
@@ -460,7 +460,7 @@ describe("latest-wins scheduling", () => {
 
 describe("worker adapter", () => {
   test("loopback worker inits once and latest-wins cancels stale work", async () => {
-    const runtime = createWorkerRuntime({ SearchEngine, english, dictionary });
+    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, dictionary });
     const transport = createLoopbackTransport(runtime);
     const published = [];
     const client = createSearchClient({
@@ -491,7 +491,7 @@ describe("worker adapter", () => {
   });
 
   test("worker teardown prevents later publishes", async () => {
-    const runtime = createWorkerRuntime({ SearchEngine, english, dictionary });
+    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, dictionary });
     const transport = createLoopbackTransport(runtime);
     const published = [];
     const client = createSearchClient({

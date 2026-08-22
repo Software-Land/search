@@ -1,4 +1,4 @@
-import { SearchEngine, english, dictionary } from "../dist/index.js";
+import { morphology, SearchEngine, dictionary } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { extractFeatures } from "../dist/features.js";
 import { matchContextualTitlePrefix } from "../dist/retrieve.js";
@@ -35,7 +35,7 @@ const appsecDict = [
 async function engine() {
   const e = SearchEngine.create({
     schema,
-    plugins: [english(), dictionary({ entries: appsecDict })],
+    plugins: [morphology(), dictionary({ entries: appsecDict })],
     relationshipStrategy: "hybrid",
   });
   await e.index(docs.concat([{ id: "appsec", title: "App Sec", body: "application security practices" }]));
@@ -106,14 +106,14 @@ describe("contextual title-sequence prefix", () => {
   });
 
   test("unrelated preceding context does not unlock a short final prefix", async () => {
-    const index = buildIndex(docs, schema, [english()]);
-    const q = analyzeQuery("machine ap", { plugins: [english()] });
+    const index = buildIndex(docs, schema, [morphology()]);
+    const q = analyzeQuery("machine ap", { plugins: [morphology()] });
     const api = index.documents.find((d) => d.id === "api");
     expect(matchContextualTitlePrefix(q, api)).toBeNull();
     const f = extractFeatures(q, api);
     expect(f.contextualTitlePrefix).toBe(false);
 
-    const machineC = analyzeQuery("machine c", { plugins: [english()] });
+    const machineC = analyzeQuery("machine c", { plugins: [morphology()] });
     const code = index.documents.find((d) => d.id === "code");
     expect(matchContextualTitlePrefix(machineC, code)).toBeNull();
     expect(extractFeatures(machineC, code).contextualTitlePrefix).toBe(false);
@@ -123,7 +123,7 @@ describe("contextual title-sequence prefix", () => {
 describe("compound segmentation uses vocabulary, not a hardcoded glue map", () => {
   test("dictionary-supported app+security split survives a longer key prefix", () => {
     const q = analyzeQuery("appsecurity", {
-      plugins: [english(), dictionary({ entries: appsecDict })],
+      plugins: [morphology(), dictionary({ entries: appsecDict })],
     });
     expect(q.tokens.map((t) => t.normalized)).toEqual(["app", "security"]);
     expect(q.alternatives.some((a) => a.source === "compound-segment")).toBe(true);

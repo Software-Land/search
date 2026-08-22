@@ -1,6 +1,6 @@
 import {
   SearchEngine,
-  english,
+  morphology,
   dictionary,
   parseRelationships,
   parseEquivalences,
@@ -183,7 +183,7 @@ describe("precomputed relationships", () => {
   test("direct result stays first; related enter with provenance; unrelated stay out", async () => {
     const engine = SearchEngine.create({
       schema,
-      plugins: [english(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })],
+      plugins: [morphology(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })],
       relationships: graph,
     });
     await engine.index(docs);
@@ -207,7 +207,7 @@ describe("precomputed relationships", () => {
   test("omitting the graph does not add related documents", async () => {
     const engine = SearchEngine.create({
       schema,
-      plugins: [english(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })],
+      plugins: [morphology(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })],
     });
     await engine.index(docs);
     const titles = engine.search("tls", { limit: 10 }).map((r) => r.title);
@@ -217,7 +217,7 @@ describe("precomputed relationships", () => {
 
   test("relationships are not query equivalences", async () => {
     const q = analyzeQuery("tls", {
-      plugins: [english(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })],
+      plugins: [morphology(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })],
     });
     expect(q.concepts.some((c) => c.forms.includes("vpn"))).toBe(false);
   });
@@ -227,7 +227,7 @@ describe("general lexical search", () => {
   test("partial configured expansion continuous d maps to cd with provenance", () => {
     const q = analyzeQuery("continuous d", {
       plugins: [
-        english(),
+        morphology(),
         dictionary({
           entries: [
             { key: "cd", expansion: ["continuous", "deployment"] },
@@ -244,7 +244,7 @@ describe("general lexical search", () => {
   test("prefix of a longer expansion is partial-expansion not a rewrite", () => {
     const q = analyzeQuery("application programming", {
       plugins: [
-        english(),
+        morphology(),
         dictionary({
           entries: [{ key: "api", expansion: ["application", "programming", "interface"] }],
         }),
@@ -257,7 +257,7 @@ describe("general lexical search", () => {
 
   test("single-letter still does not prefix a dictionary key", () => {
     const q = analyzeQuery("a", {
-      plugins: [english(), dictionary({ entries: [{ key: "api", expansion: ["application", "programming", "interface"] }] })],
+      plugins: [morphology(), dictionary({ entries: [{ key: "api", expansion: ["application", "programming", "interface"] }] })],
     });
     expect(q.concepts.some((c) => c.kind === "acronym")).toBe(false);
   });
@@ -265,7 +265,7 @@ describe("general lexical search", () => {
   test("configured-key query prefers a title that states the expansion", async () => {
     const engine = SearchEngine.create({
       schema,
-      plugins: [english(), dictionary({ entries: [{ key: "oop", expansion: ["object", "oriented", "programming"] }] })],
+      plugins: [morphology(), dictionary({ entries: [{ key: "oop", expansion: ["object", "oriented", "programming"] }] })],
     });
     await engine.index([
       { id: "/oop-vs/", title: "OOP vs Functional", body: "Comparing OOP and functional programming." },
@@ -286,7 +286,7 @@ describe("general lexical search", () => {
   test("synonyms participate in query interpretation only", () => {
     const q = analyzeQuery("auth", {
       plugins: [
-        english(),
+        morphology(),
         synonyms({
           format: "search-v2-synonyms",
           version: 1,

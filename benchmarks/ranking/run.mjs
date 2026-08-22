@@ -18,7 +18,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { SearchEngine, english, morphology, dictionary } from "../../dist/index.js";
+import { SearchEngine, morphology, dictionary } from "../../dist/index.js";
 import { attachLexicalFrequency } from "../../tools/search-lexical/index.js";
 import { lastRankStats, rankCandidates } from "../../dist/rank.js";
 import { rankCandidatesPairwise } from "../../dist/rankOracle.js";
@@ -133,7 +133,7 @@ async function measureSynthetic(kind, c) {
     kind === "few-buckets" ? generateFewBuckets(c) : kind === "mixed" ? generateMixed(c) : generateHomogeneous(c);
   const engine = SearchEngine.create({
     schema: SCHEMA,
-    plugins: [english()],
+    plugins: [morphology()],
     retriever: "full-scan",
     relationshipStrategy: "none",
   });

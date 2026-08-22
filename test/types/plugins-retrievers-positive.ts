@@ -1,11 +1,9 @@
 /**
- * 0.3.0-compatible plugin/retriever usage plus 0.3.1 opt-in authoring types.
- * create() slots stay unknown[] / { retrieve: Function }.
+ * 0.4.0 plugin/retriever authoring: SearchPlugin[] and ExperimentalRetriever.
  */
 import {
   SearchEngine,
   dictionary,
-  english,
   morphology,
   type DictionaryPlugin,
   type EnglishPlugin,
@@ -16,17 +14,6 @@ import {
   type SynonymPlugin,
 } from "@software-land/search";
 
-const unknownPlugins: unknown[] = [
-  morphology(),
-  english(),
-  dictionary({ entries: [{ key: "wifi" }] }),
-  { arbitrary: true },
-  1,
-  "x",
-  null,
-];
-SearchEngine.create({ plugins: unknownPlugins });
-
 const jsShaped = {
   lemma(token: string) {
     return token;
@@ -34,12 +21,12 @@ const jsShaped = {
   extra: true,
 };
 SearchEngine.create({ plugins: [jsShaped] });
-SearchEngine.create({ plugins: [morphology(), english(), dictionary()] });
+SearchEngine.create({ plugins: [morphology(), dictionary()] });
 const fromMorphology: EnglishPlugin = morphology();
 void fromMorphology.lemma;
+const fromDictionary: DictionaryPlugin = dictionary({ entries: [{ key: "wifi" }] });
+void fromDictionary.lexicon;
 
-const retrieveFn: Function = () => [];
-SearchEngine.create({ retriever: { retrieve: retrieveFn } });
 SearchEngine.create({
   retriever: {
     retrieve: () => [],

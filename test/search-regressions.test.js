@@ -1,4 +1,4 @@
-import { SearchEngine, english, dictionary, isAbortError } from "../dist/index.js";
+import { morphology, SearchEngine, dictionary, isAbortError } from "../dist/index.js";
 import { analyzeQuery, suggestTypoForms } from "../dist/analyze.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 import { pickPrimariesForExpansion } from "../dist/relationships.js";
@@ -9,7 +9,7 @@ const schema = {
   body: { type: "text", role: "body" },
 };
 
-const plugins = [english(), dictionary({ entries: [] })];
+const plugins = [morphology(), dictionary({ entries: [] })];
 
 const reversedPrimaryDocs = [
   { id: "a-guide", title: "Bluetooth Guide", body: "A longer guide to bluetooth setup." },

@@ -1,8 +1,9 @@
 /**
  * Designed public type contract for @software-land/search.
  * Implementation details (FeatureVector, AnalyzedQuery, IndexedDocument) stay internal.
- * SearchPlugin and ExperimentalRetriever are opt-in authoring contracts; they do
- * not narrow SearchEngine.create() inputs.
+ * SearchPlugin and ExperimentalRetriever are the public authoring contracts for
+ * `SearchEngine.create({ plugins, retriever })`. Runtime still duck-types plugins
+ * and custom retrievers; the declarations no longer leave those slots untyped.
  */
 
 export type TextRole = "title" | "body";
@@ -33,8 +34,9 @@ export interface AdaptiveOptions {
 }
 
 /**
- * Opt-in plugin authoring contract. `SearchEngine.create({ plugins })` still
- * accepts `unknown[]`; annotate with `SearchPlugin` only when you want checking.
+ * Opt-in plugin authoring contract. `SearchEngine.create({ plugins })` accepts
+ * `SearchPlugin[]`. Runtime still duck-types plugin objects and ignores
+ * unrecognized entries.
  *
  * Hooks are duck-typed at runtime. Provide only the hooks you implement.
  * If `sequences` is present, Core reads `tokens` and `entry.key` on each item.
@@ -61,9 +63,7 @@ export interface MorphologyOptions {
 }
 
 /**
- * Opt-in morphology plugin shape.
- * `morphology()` returns `EnglishPlugin`. Deprecated `english()` keeps the
- * 0.3.1 facade and still returns `unknown`.
+ * Public morphology plugin shape. `morphology()` returns `EnglishPlugin`.
  */
 export interface EnglishPlugin extends SearchPlugin {
   name: "english";
@@ -72,8 +72,8 @@ export interface EnglishPlugin extends SearchPlugin {
 }
 
 /**
- * Opt-in configured-equivalence plugin shape. `dictionary()` still returns
- * `unknown`. Core does not read a plugin `entries` array.
+ * Configured-equivalence plugin shape. `dictionary()` returns `DictionaryPlugin`.
+ * Core does not read a plugin `entries` array.
  */
 export interface DictionaryPlugin extends SearchPlugin {
   name: "dictionary";
@@ -103,10 +103,10 @@ export interface ExperimentalRetrieveOptions {
 }
 
 /**
- * @experimental Opt-in custom retriever authoring contract.
+ * @experimental Custom retriever authoring contract.
  * `query` and `index` are engine internals and stay `unknown` on purpose.
  * This type does not publish AnalyzedQuery, SearchIndex, or IndexedDocument.
- * `SearchEngine.create({ retriever })` still accepts `{ retrieve: Function }`.
+ * `SearchEngine.create({ retriever })` accepts `ExperimentalRetriever`.
  */
 export interface ExperimentalRetriever {
   name?: string;
@@ -121,10 +121,10 @@ export interface ExperimentalRetriever {
 
 export interface SearchEngineOptions {
   schema?: Schema;
-  plugins?: unknown[];
+  plugins?: SearchPlugin[];
   relationships?: RelationshipArtifact | null;
   relationshipStrategy?: RelationshipStrategy;
-  retriever?: RetrieverName | "indexed-lexical" | { retrieve: Function; retrieveAsync?: Function; prepare?: Function; name?: string };
+  retriever?: RetrieverName | "indexed-lexical" | ExperimentalRetriever;
   candidateLimit?: number;
   adaptive?: AdaptiveOptions;
   /** @experimental Default 0. Not a supported ranking feature. */

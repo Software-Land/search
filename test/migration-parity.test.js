@@ -3,7 +3,7 @@
  * Runs against emitted dist/ (the npm runtime), not src/.
  * Does not replace the existing 248-test suite.
  */
-import { SearchEngine, english, dictionary } from "../dist/index.js";
+import { morphology, SearchEngine, dictionary } from "../dist/index.js";
 import {
   createSearchClient,
   createWorkerRuntime,
@@ -57,7 +57,7 @@ describe("0.2.0 migration parity", () => {
       { id: "weak-incidental", title: "Unrelated Overview", body: "security notes" },
     ];
     const engine = await index(
-      SearchEngine.create({ schema, plugins: [english(), dictionary({ entries: mlDict })] }),
+      SearchEngine.create({ schema, plugins: [morphology(), dictionary({ entries: mlDict })] }),
       docs
     );
     const expectedIds = ["key-only", "strong-phrase", "machine-only", "learn-only"];
@@ -97,7 +97,7 @@ describe("0.2.0 migration parity", () => {
         body: "Hot shards happen when a subset of shards receive traffic.",
       },
     ];
-    const engine = await index(SearchEngine.create({ schema, plugins: [english()] }), docs);
+    const engine = await index(SearchEngine.create({ schema, plugins: [morphology()] }), docs);
     const shards = engine.searchDetailed("shards", { explain: true }).results;
     expect(ids(shards)).toEqual(["/hot-shards/", "/sharding/"]);
     expect(titles(shards)).toEqual(["Hot Shards", "Sharding"]);
@@ -126,7 +126,7 @@ describe("0.2.0 migration parity", () => {
         body: "Hot shards happen when a subset of shards receive traffic.",
       },
     ];
-    const engine = await index(SearchEngine.create({ schema, plugins: [english()] }), docs);
+    const engine = await index(SearchEngine.create({ schema, plugins: [morphology()] }), docs);
     const sharde = engine.searchDetailed("sharde", { explain: true }).results;
     expect(ids(sharde)).toEqual(["/sharding/", "/hot-shards/"]);
     expect(titles(sharde)).toEqual(["Sharding", "Hot Shards"]);
@@ -151,7 +151,7 @@ describe("0.2.0 migration parity", () => {
       { id: "protocol-only", title: "Network Protocol", body: "a protocol overview" },
     ];
     const engine = await index(
-      SearchEngine.create({ schema, plugins: [english(), dictionary({ entries: httpDict })] }),
+      SearchEngine.create({ schema, plugins: [morphology(), dictionary({ entries: httpDict })] }),
       docs
     );
     const httpIds = ["expansion-title", "http", "protocol-only", "transfer-only"];
@@ -186,7 +186,7 @@ describe("0.2.0 migration parity", () => {
       { id: "transfer-only", title: "Transfer Rates", body: "transfer transfer transfer" },
     ];
     const sibling = await index(
-      SearchEngine.create({ schema, plugins: [english(), dictionary({ entries: siblingDict })] }),
+      SearchEngine.create({ schema, plugins: [morphology(), dictionary({ entries: siblingDict })] }),
       siblingDocs
     );
     const siblingIds = ["http-title", "transfer-only", "http-body"];
@@ -199,7 +199,7 @@ describe("0.2.0 migration parity", () => {
     const engine = await index(
       SearchEngine.create({
         schema,
-        plugins: [english(), dictionary({ entries: [{ key: "wifi", expansion: ["wi", "fi"] }] })],
+        plugins: [morphology(), dictionary({ entries: [{ key: "wifi", expansion: ["wi", "fi"] }] })],
       }),
       [
         { id: "wifi", title: "Wi-Fi", body: "Connect to wireless networks." },
@@ -246,7 +246,7 @@ describe("0.2.0 migration parity", () => {
     const engine = await index(
       SearchEngine.create({
         schema,
-        plugins: [english(), dictionary({ entries: appsecDict })],
+        plugins: [morphology(), dictionary({ entries: appsecDict })],
         relationshipStrategy: "hybrid",
       }),
       docs
@@ -282,7 +282,7 @@ describe("0.2.0 migration parity", () => {
       { id: "nfc", title: "NFC", body: "Near-field communication." },
       { id: "vpn", title: "VPN", body: "Virtual private network." },
     ];
-    const runtime = createWorkerRuntime({ SearchEngine, english, dictionary });
+    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, dictionary });
     const transport = createLoopbackTransport(runtime);
     const published = [];
     const client = createSearchClient({
@@ -312,7 +312,7 @@ describe("0.2.0 migration parity", () => {
         { id: "b", title: "Beta", body: "machine learning notes" },
         { id: "c", title: "Gamma", body: "unrelated security notes" },
       ],
-      { lemma: english().lemma }
+      { lemma: morphology().lemma }
     );
     expect(artifact.format).toBe("search-v2-lexical-frequency");
     expect(artifact.version).toBe(1);

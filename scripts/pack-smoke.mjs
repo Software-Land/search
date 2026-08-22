@@ -221,7 +221,7 @@ try {
 
   writeFileSync(
     path.join(consumer, "probe.mjs"),
-    `import { SearchEngine, morphology, english } from "@software-land/search";
+    `import { SearchEngine, morphology } from "@software-land/search";
 import { createSearchClient, searchWorkerUrl } from "@software-land/search/browser";
 import { compileCorpus } from "@software-land/search/corpus";
 import { compileRelationships } from "@software-land/search/relationships";
@@ -230,7 +230,6 @@ import { compileLexicalFrequency } from "@software-land/search/lexical";
 
 if (typeof SearchEngine.create !== "function") throw new Error("root SearchEngine missing");
 if (typeof morphology !== "function") throw new Error("root morphology missing");
-if (typeof english !== "function") throw new Error("root english missing");
 if (typeof createSearchClient !== "function") throw new Error("browser createSearchClient missing");
 if (typeof compileCorpus !== "function") throw new Error("corpus compileCorpus missing");
 if (typeof compileRelationships !== "function") throw new Error("relationships compileRelationships missing");

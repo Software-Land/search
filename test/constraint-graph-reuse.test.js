@@ -1,4 +1,4 @@
-import { SearchEngine, english, dictionary } from "../dist/index.js";
+import { morphology, SearchEngine, dictionary } from "../dist/index.js";
 import {
   buildConstraintGraph,
   buildConstraintGraphAsync,
@@ -334,7 +334,7 @@ describe("constraint graph retains only edges and conflicts", () => {
   test("public search meta exposes cycles and conflictCount, not pairReports", async () => {
     const e = SearchEngine.create({
       schema: { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } },
-      plugins: [english()],
+      plugins: [morphology()],
     });
     await e.index([
       { id: "exact", title: "Bluetooth", body: "wireless" },
@@ -382,7 +382,7 @@ describe("query 2 ranking is unchanged", () => {
         title: { type: "text", role: "title" },
         body: { type: "text", role: "body" },
       },
-      plugins: [english(), dictionary({ entries: tlsDict })],
+      plugins: [morphology(), dictionary({ entries: tlsDict })],
     });
     await e.index(docs);
     const detailed = e.searchDetailed("2", { limit: 10, explain: true });

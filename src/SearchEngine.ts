@@ -4,7 +4,6 @@ import { extractFeatures } from "./features.js";
 import { rankCandidates, rankCandidatesAsync, scoreFeatures } from "./rank.js";
 import { constraintsForStrategy } from "./constraints.js";
 import { morphology } from "./morphology.js";
-import { english } from "./english.js";
 import { dictionary } from "./dictionary.js";
 import {
   RelationshipGraph,
@@ -508,4 +507,4 @@ export class SearchEngine {
   }
 }
 
-export { morphology, english, dictionary };
+export { morphology, dictionary };

@@ -14,7 +14,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
-import { SearchEngine, english } from "../../dist/index.js";
+import { morphology, SearchEngine } from "../../dist/index.js";
 import { aggregateQueryMetrics, queryMetrics } from "./lib/metrics.mjs";
 import { validateJudgments } from "./lib/validate.mjs";
 
@@ -118,7 +118,7 @@ export async function runEvaluation({
 
   const engine = SearchEngine.create({
     schema: SCHEMA,
-    plugins: [english()],
+    plugins: [morphology()],
   });
   await engine.index(
     corpus.documents.map((doc) => ({

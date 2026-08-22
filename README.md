@@ -57,7 +57,7 @@ engine.search("wireless");
 
 ## Morphology
 
-Lemmatization is corpus-specific. Core owns the morphology mechanism, not every catalog's morphology policy. `morphology()` is the preferred factory; it is the current English implementation (suffix heuristics, a small built-in table, and optional `lemmas`). `english()` is a deprecated compatibility wrapper for `morphology()`. It does not run spaCy, WordNet, lemminflect, or a site lemma script.
+Lemmatization is corpus-specific. Core owns the morphology mechanism, not every catalog's morphology policy. `morphology()` is the public factory; it is the current English implementation (suffix heuristics, a small built-in table, and optional `lemmas`). It does not run spaCy, WordNet, lemminflect, or a site lemma script.
 
 Pass generated or editorial maps as data:
 
@@ -186,9 +186,9 @@ npm test
 
 A repository checkout requires `npm run build` before executing the runtime, Jest tests, or `examples/catalog`. Python is outside `tsc`. Typecheck configs are not in the npm tarball; consumers use the shipped `dist` declarations for `.` and `./browser`.
 
-`SearchEngine.create({ plugins })` still accepts `unknown[]`. Deprecated `english()` and `dictionary()` still return `unknown`. `morphology()` returns `EnglishPlugin`. Custom retrievers still type as `{ retrieve: Function }`. Those 0.3.0/0.3.1 bindings for `english()` and `dictionary()` are unchanged.
+`SearchEngine.create({ plugins })` accepts `SearchPlugin[]`. `dictionary()` returns `DictionaryPlugin`. `morphology()` returns `EnglishPlugin`. Custom retrievers type as `ExperimentalRetriever`. Runtime still duck-types plugin objects and custom `retrieve` functions.
 
-Opt-in authoring interfaces (`SearchPlugin`, `EnglishPlugin`, `DictionaryPlugin`, `SynonymPlugin`, `LexiconPlugin`, `ExperimentalRetriever`) are available for extension authors who want checking. They do not publish query-analysis or index internals. Custom retrievers remain experimental; `query` and `index` arguments are intentionally `unknown`. `morphology().lemma` typechecks; `english().lemma` does not.
+Authoring interfaces (`SearchPlugin`, `EnglishPlugin`, `DictionaryPlugin`, `SynonymPlugin`, `LexiconPlugin`, `ExperimentalRetriever`) do not publish query-analysis or index internals. Custom retrievers remain experimental; `query` and `index` arguments are intentionally `unknown`. `morphology().lemma` typechecks. There is no public `english()` root export.
 
 ```ts
 import { SearchEngine, type SearchPlugin, type ExperimentalRetriever } from "@software-land/search";
@@ -210,7 +210,7 @@ v0. The runtime facade, result shape, artifact `format`+`version`, `relationship
 
 Supported imports: `@software-land/search`, `@software-land/search/browser`, `@software-land/search/corpus`, `@software-land/search/lexical`, `@software-land/search/relationships`, `@software-land/search/semantic`. The last four are build-time compilers. Root and `./browser` do not import them.
 
-Root exports: `SearchEngine`, `morphology`, deprecated `english`, `dictionary`, strategy/retriever constants, artifact parsers, abort helpers, public error classes. `searchWorkerUrl()` is exported only from `./browser`.
+Root exports: `SearchEngine`, `morphology`, `dictionary`, strategy/retriever constants, artifact parsers, abort helpers, public error classes. `searchWorkerUrl()` is exported only from `./browser`.
 
 ## Docs
 

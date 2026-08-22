@@ -1,4 +1,4 @@
-import { SearchEngine, english, morphology } from "@software-land/search";
+import { SearchEngine, morphology } from "@software-land/search";
 import type {
   ExperimentalRetriever,
   SearchPlugin,
@@ -16,10 +16,7 @@ import type { IndexedDocument } from "@software-land/search";
 // @ts-expect-error SearchIndex is not a public export
 import type { SearchIndex } from "@software-land/search";
 
-const plugin = english();
 const morphologyPlugin = morphology();
-// @ts-expect-error public english() is unknown, not an implementation plugin shape
-plugin.lemma;
 void morphologyPlugin.lemma;
 
 const badLemma: SearchPlugin = {
@@ -85,8 +82,17 @@ const badRetrieveAsync: ExperimentalRetriever = {
   },
 };
 
+// @ts-expect-error plugins is SearchPlugin[], not unknown[]
+SearchEngine.create({ plugins: [1] });
+
+// @ts-expect-error plugins is SearchPlugin[], not unknown[]
+SearchEngine.create({ plugins: ["x"] });
+
+const retrieveFn: Function = () => [];
+// @ts-expect-error untyped { retrieve: Function } is not the declared retriever API
+SearchEngine.create({ retriever: { retrieve: retrieveFn } });
+
 void SearchEngine;
-void plugin;
 void morphologyPlugin;
 void badLemma;
 void badCanonical;

@@ -10,7 +10,7 @@ import {
 } from "../tools/search-relationships/index.js";
 import { RelationshipError as ImplementationRelationshipError } from "../tools/search-relationships/lib/domain.js";
 import { filterRelationships as filterRelationshipsImpl } from "../tools/search-relationships/lib/compile.js";
-import { SearchEngine, english, dictionary } from "../dist/index.js";
+import { morphology, SearchEngine, dictionary } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
 
 import { fileURLToPath } from "node:url";
@@ -123,7 +123,7 @@ describe("search-relationships compilation", () => {
 
     const engine = SearchEngine.create({
       schema,
-      plugins: [english(), dictionary({ entries: [] })],
+      plugins: [morphology(), dictionary({ entries: [] })],
       relationships: compiled.runtime,
     });
     await engine.index(bluetoothDocs.documents);
@@ -186,7 +186,7 @@ describe("search-relationships compilation", () => {
     });
     const edges = compiled.runtime.relationships.bluetooth;
     expect(edges.filter((e) => e.target === "wifi").map((e) => e.type).sort()).toEqual(["editorial", "semantic"]);
-    const engine = SearchEngine.create({ schema, plugins: [english()], relationships: compiled.runtime });
+    const engine = SearchEngine.create({ schema, plugins: [morphology()], relationships: compiled.runtime });
     await engine.index(bluetoothDocs.documents);
     const detailed = engine.searchDetailed("bluetooth", { limit: 10, relatedLimit: 8, explain: true });
     const relatedWifi = detailed.related.filter((r) => r.title === "Wi-Fi");
@@ -259,7 +259,7 @@ describe("search-relationships compilation", () => {
     );
     const engine = SearchEngine.create({
       schema,
-      plugins: [english(), dictionary({ entries: [] })],
+      plugins: [morphology(), dictionary({ entries: [] })],
       relationships: compiled.runtime,
     });
     const tls = analyzeQuery("tls", { plugins: engine.plugins });

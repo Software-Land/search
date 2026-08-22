@@ -3,7 +3,7 @@ import { performance } from "node:perf_hooks";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { SearchEngine, english, morphology, dictionary } from "../../dist/index.js";
+import { SearchEngine, morphology, dictionary } from "../../dist/index.js";
 import { attachLexicalFrequency } from "../../tools/search-lexical/index.js";
 import { startFeatureProfile, lastFeatureProfile, stopFeatureProfile, extractFeatures } from "../../dist/features.js";
 import { extractFeaturesOracle } from "../../dist/featuresOracle.js";
@@ -49,7 +49,7 @@ function generateMixed(c) {
 async function measure(kind, docs, query) {
   const engine = SearchEngine.create({
     schema: SCHEMA,
-    plugins: [english()],
+    plugins: [morphology()],
     retriever: "full-scan",
     relationshipStrategy: "none",
   });
@@ -164,7 +164,7 @@ for (const c of sizes) {
   ]) {
     const engine = SearchEngine.create({
       schema: SCHEMA,
-      plugins: [english()],
+      plugins: [morphology()],
       retriever: "full-scan",
       relationshipStrategy: "none",
     });

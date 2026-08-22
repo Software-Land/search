@@ -15,7 +15,7 @@ import { performance } from "node:perf_hooks";
 import { pathToFileURL } from "node:url";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { SearchEngine, english } from "../../dist/index.js";
+import { morphology, SearchEngine } from "../../dist/index.js";
 import { corpusStats, generateCorpus } from "./lib/generate.mjs";
 import { deltaMb, hasExposeGc, snap } from "./lib/measure.mjs";
 
@@ -51,7 +51,7 @@ export async function runOne({
 
   const engine = SearchEngine.create({
     schema: SCHEMA,
-    plugins: [english()],
+    plugins: [morphology()],
     retriever,
     relationshipStrategy: "none",
   });
