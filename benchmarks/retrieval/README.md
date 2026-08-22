@@ -1,6 +1,6 @@
 # Retrieval-mode benchmarks (development)
 
-Candidate count **C** and search-side latency for `full-scan` / `indexed` / `adaptive` as corpus size **N** grows. **Not packed.** Not a search-quality claim. Not a CI latency gate.
+Candidate count **C** and search-side latency for `full-scan` / exact `indexed` / `adaptive` as corpus size **N** grows. **Not packed.** Not a CI latency gate.
 
 Requires a built runtime (`npm run build`).
 
@@ -14,4 +14,14 @@ The mixed generator plants rare exact titles, version/dotted-span documents, a c
 
 Full-scan at N=25k is an explicit reference only. Do not describe it as scalable. Default `full-scan-max-n` is 5000; pass `--n 25000` without `--skip-full-scan` only when you intend to wait.
 
-Indexed ordinary hits remain budgeted at `candidateLimit` (200). Exact-title, configured-equivalence, and version must-keeps stay unbounded. Contextual title-prefix and full-query title-prefix are capped at `prefixCap`.
+Exact indexed retrieval enumerates all legitimate posting matches, reconstructs the frozen current features, and reduces final ranker input with exact per-signature representatives. `candidateLimit` remains accepted for compatibility but does not truncate this path. Stage 1 deliberately performs no posting/block pruning.
+
+The permanent pressure harness also covers quality, artifact size, build/load cost, and posting instrumentation:
+
+```bash
+node scripts/budget-pressure.mjs --suite mixed --sizes 500,1000,2000,5000,10000,25000
+node scripts/budget-pressure.mjs --suite software-land --floods 400,1000,5000
+node --expose-gc scripts/budget-pressure.mjs --suite stage1 --sizes 1000,5000,10000,25000
+```
+
+The `stage1` report includes posting entries visited, distinct documents examined, raw-document scans, signatures, retained candidates, retrieve/feature/select/rank timing, deterministic artifact bytes, compile/load time, and process memory snapshots. Timing and RSS are observational, not absolute CI thresholds.

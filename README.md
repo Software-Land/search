@@ -83,7 +83,7 @@ const client = createSearchClient({
   onResult({ query, result }) { /* render */ },
 });
 
-await client.init({ documents, schema, retriever: "adaptive" });
+await client.init({ documents, schema, retriever: "indexed", lexicalIndex });
 client.setQuery("bluetooth");
 client.dispose();
 ```
@@ -91,6 +91,7 @@ client.dispose();
 `searchWorkerUrl()` resolves the bundled Worker **from this package** (`import.meta.url` of the browser entry). Consumers should not build a Worker URL against their own module; that would miss `searchWorker.js`. Omitting `workerUrl` uses the same default.
 
 Protocol is plain `postMessage`. Latest-wins: a new query replaces pending work and cancels stale running searches.
+Omit `lexicalIndex` to construct the exact fallback index once inside the Worker; a supplied invalid artifact rejects initialization.
 
 ## Corpus compiler
 
@@ -109,9 +110,11 @@ const { equivalences, synonyms, dictionaryEntries } = compileCorpus({
 });
 ```
 
-## Lexical-frequency compiler
+## Lexical compilers
 
-Build-time n-gram counts. Search Core looks up compiled keys; it does not rescan document bodies at query time.
+`@software-land/search/lexical` owns both optional build-time artifacts.
+
+Lexical-frequency n-gram counts:
 
 ```js
 import { compileLexicalFrequency, attachLexicalFrequency } from "@software-land/search/lexical";
@@ -121,6 +124,31 @@ await engine.index(attachLexicalFrequency(documents, artifact));
 ```
 
 Default policy: unigrams plus bigrams (n=1–2), keep keys whose collection occurrence count is at least 2. Phrase keys are built in the shared tokenize → lemma → stop-word removal space used by runtime query lookup (`machine learning` → `machine learn`, `foo the bar` → `foo bar`). n=2 is the smallest default that keeps adjacent-term phrase evidence without materializing every longer substring.
+
+The exact positional retrieval index:
+
+```js
+import { compileLexicalIndex } from "@software-land/search/lexical";
+
+const english = morphology({ lemmas });
+const lexicalIndex = compileLexicalIndex(documents, {
+  schema,
+  lemma: english.lemma,
+  analyzerId: english.indexIdentity,
+});
+
+const engine = SearchEngine.create({
+  schema,
+  plugins: [english],
+  retriever: "indexed",
+  lexicalIndex,
+});
+await engine.index(documents);
+```
+
+The artifact format is `search-v2-lexical-index` version 1. It contains document metadata, a sorted surface dictionary, positional title/body postings, compact surface→lemma ownership, version/dotted-span metadata, corpus statistics, and attached phrase-frequency data. Raw body text is not serialized.
+
+The default exact indexed path enumerates all legitimate matches, reconstructs the same current features, and keeps mathematically sufficient representatives per builtin constraint signature before sparse ranking. There is no WAND/MaxScore/block pruning in v1. A supplied incompatible or corrupt artifact throws. If the artifact is omitted, `index()` compiles the equivalent structure once from `documents`; `retriever: "full-scan"` remains the reference mode.
 
 ## Relationship compiler
 
@@ -165,12 +193,13 @@ Default embedding model (when requested): `sentence-transformers/all-MiniLM-L6-v
 ```text
 corpus JSON
   → search-corpus          → equivalences.json + synonyms.json
+  → search-lexical         → search-v2-lexical-index v1
   → search-semantic (opt.) → relationships (semantic)
   → search-relationships   → search-v2-relationships v1
-  → SearchEngine.create({ dictionary entries, relationships })
+  → SearchEngine.create({ lexicalIndex, dictionary entries, relationships })
 ```
 
-Runtime parsers: `parseEquivalences`, `parseSynonyms`, `parseRelationships`. Artifact `format` + `version` are part of the public contract.
+Runtime parsers validate each artifact's `format` + `version`; lexical indexes additionally fail closed on integrity, analyzer, schema, or corpus mismatch.
 
 ## TypeScript
 

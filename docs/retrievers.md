@@ -6,77 +6,90 @@ The public `retriever` field is `RetrieverName | "indexed-lexical" | Experimenta
 
 ```js
 SearchEngine.create({
-  retriever: "indexed",     // default
+  retriever: "indexed",       // default: exact compiled lexical retrieval
+  lexicalIndex,               // optional search-v2-lexical-index v1 artifact
   // retriever: "full-scan",
   // retriever: "adaptive",
-  candidateLimit: 200,      // indexed budget for non-exact hits
+  candidateLimit: 200,        // accepted for compatibility; not an exactness bound
   adaptive: { documentThreshold: 1500 },
 });
 ```
 
 | name | when |
 | --- | --- |
-| `indexed` | Default. Inverted lexical candidate generation, then the same exact match rules as full-scan. BM25 **orders the budgeted ordinary slice only**. |
+| `indexed` | Default. Enumerates every legitimate match from a compiled positional lexical index, reconstructs the current exact features, and retains exact per-signature representatives. No posting pruning in v1. |
 | `full-scan` | Explicit small-corpus / reference / debug mode. Scans every document. Does not apply `candidateLimit`. |
-| `adaptive` | Full scan while `documentCount <= adaptive.documentThreshold`, else indexed. Deterministic. No runtime benchmarking. |
+| `adaptive` | Full scan while `documentCount <= adaptive.documentThreshold`, else exact indexed retrieval. Deterministic. |
 
-0.4.0 default retrieval is `indexed`. That is a behavioral change even when Software.Land ordered results stay identical: large corpora no longer feature-extract and rank every lexical match.
+0.4.0 default retrieval is `indexed`. Its quality contract is equality with `full-scan`, not BM25 top-k recall. The old `candidateLimit = 200` setting is not the conceptual foundation of exact retrieval and cannot exclude a legitimate match. It remains accepted for API compatibility and experimental retrievers.
 
 Explicit `full-scan`, `indexed`, `adaptive`, or a custom `ExperimentalRetriever` always wins over the default.
 
-Default adaptive threshold **1500** remains a documented fallback for the adaptive mode, not a new default policy. Settings-like and article-like corpora cross at different sizes. Benchmark unusual shapes. Do not treat 1500 as a derived cost/candidate law.
+Default adaptive threshold **1500** is an adaptive-mode choice, not a correctness or candidate law.
 
-Must-keep union:
+## Compiled lexical index
 
-- `exact-title`, `configured-equivalence`, and `version` are **unbounded** deterministic must-keep.
-- `contextual-title-prefix` and `title-prefix` are **capped** must-keeps (`prefixCap`, default 800). Contextual overflow and title-prefix overflow remain eligible for the ordinary `candidateLimit` pool, keep their source names, and compete by `retrievalScore` with deterministic pos tie-break. Title-prefix is ranked by prefix tightness (`qNorm.length / titleLen`) then document position.
+`search-v2-lexical-index` version 1 contains deterministic document metadata, a sorted surface-term dictionary, title/body positional postings, one lemma per surface term, version/dotted-span metadata, corpus length statistics, and attached lexical-frequency data. It does not serialize raw body text.
 
-Title-token / body / other prefix hits are budgeted by `candidateLimit`. Independent title-token hits that do not also qualify as `title-prefix` can still lose a crowded ordinary pool.
+Build it under the existing lexical package boundary:
 
-Synonym and typo alternatives are query-interpretation only. They become ordinary retrieval forms (budgeted unless they also qualify as a must-keep source).
+```js
+import { SearchEngine, morphology } from "@software-land/search";
+import { compileLexicalIndex } from "@software-land/search/lexical";
 
-`candidateLimit` default is 200. BM25 `k1`/`b` and title boost are implementation defaults, not public knobs.
+const english = morphology({ lemmas });
+const lexicalIndex = compileLexicalIndex(documents, {
+  schema,
+  lemma: english.lemma,
+  analyzerId: english.indexIdentity,
+});
 
-## Candidate envelope
-
-`C` is `searchDetailed().meta.candidateCount`: the featured set after retrieval **and** one-hop relationship expansion, immediately before ranking.
-
-Let `k` be `candidateLimit` (default 200), `P` the contextual-prefix-only hits, and `T` the remaining `title-prefix` hits.
-
-Indexed retrieval:
-
-```text
-C_retrieve <= |U_exact ∪ U_equiv ∪ U_version| + min(|P|, prefixCap) + min(|T|, prefixCap) + k
-C        <= C_retrieve + |R_new|
+const engine = SearchEngine.create({
+  schema,
+  plugins: [english],
+  retriever: "indexed",
+  lexicalIndex,
+});
+await engine.index(documents);
 ```
 
-`U_*` are documents whose retrieval sources include unbounded must-keep. `R_new` is one-hop neighbors of expansion primaries that were not already retrieved. Default `sourcePolicy` is `top1-strong` (one primary). Dedup is by document id before ranking.
+Identical inputs serialize byte-identically with `JSON.stringify`. A supplied artifact is checked for format/version, integrity, core analyzer identity, lemma identity, schema fields, document count, and a fingerprint of ids plus searchable title/body text and lexical-frequency data. An invalid supplied artifact throws; it is never ignored in favor of an approximate path.
 
-Those `U_*` and `R_new` terms can grow with corpus size N when many documents share an exact title, a configured-equivalence title form, a version/dotted span, or a high-degree relationship neighborhood. 0.4.0 does **not** silently truncate those correctness-critical classes. Ordinary large-corpus operation is: index cheaply, apply the exact matcher to posting hits, budget the ordinary pool, then rank C. Builtin ranking is sparse in the number of constraint signatures; it is not a license to full-scan huge high-DF candidate sets.
+If `lexicalIndex` is omitted, `index()` compiles the equivalent structure once from the supplied documents. This costs initialization time but not repeated query-time raw-field analysis. `retriever: "full-scan"` remains the explicit reference path.
 
-Indexed posting hits are filtered through the same per-document match rules as full-scan before must-keep / `candidateLimit` assembly. Public `retrievalSources` are those exact names, not BM25 posting labels. Body prefix evidence uses `startsWith` at length ≥ 3, matching full-scan; it is not the stricter title `allowPrefixMatch` ratio.
+## Exact matching and feature reconstruction
 
-On the 122-document Software.Land fixture, that exact matcher plus an ordinary budget of 200 (larger than any full-scan C on that corpus) reproduces the frozen 215-row ordered result oracle, the 98 strict contracts, and the 60 regressions, including query `"2"`. That is a quality-equivalence result for this corpus, not a claim that `C ≤ 200` on every query or that high-DF posting scans are free.
+The compiled retriever performs exact surface, title/body, prefix, morphology, typo-alternative, configured-equivalence, version, dotted-span, and phrase-evidence behavior over the compiled statistics. It enumerates every legitimate matching document. v1 performs no WAND, MaxScore, block skipping, posting early termination, or prefix truncation.
 
-Full-scan does not apply `candidateLimit`. Matching documents can be Θ(N). It remains available as an explicit reference mode. Adaptive uses full-scan while `documentCount <= adaptive.documentThreshold` (default 1500), else indexed. Custom `{ retrieve }` objects are experimental and unbounded.
+With a supplied artifact, `searchDetailed().meta.rawDocumentScans` is `0`. Query-time feature work reads reconstructed indexed statistics rather than rescanning raw title/body strings. The fallback constructs those statistics during `index()`.
 
-C becomes fixed in `SearchEngine._expandAndFeature` after related hits are appended, then `rankCandidates` / `rankCandidatesAsync` consume that array.
+## Exact representative selection
 
-## BM25
+For builtin constraints, candidates with the same exact constraint signature have identical relationships to every other signature. The sparse ranker orders members of one signature by rounded final `score`, then `document.id`. Therefore a candidate below depth R in its signature has R same-signature predecessors and cannot enter the global top R.
 
-Useful as a **candidate retriever**. Not the final relevance algorithm. Default ranking weight of any BM25 score is **0**. A non-zero weight helped one corpus shape and hurt another.
+Proof sketch: let `~` be equality of the complete builtin signature. Every builtin constraint reads only signature fields, so `a ~ b` implies `compare(a, x) = compare(b, x)` and `compare(x, a) = compare(x, b)` for every candidate `x`. Thus `a` and `b` occupy the same signature node and SCC relationships, including conflicts and cycles. The ranker's only distinction inside that class is score/id. If `a` is below the first R members of its class, those R members have every predecessor/successor relationship that `a` has and are all ordered before it. At least R candidates therefore precede `a` globally, contradicting membership in the global top R. This argument does not assume an acyclic signature graph.
+
+For ordinary non-explain output, the base per-signature depth is `max(limit, relatedLimit)`. Explain output needs the immediate global successor used by `constraintsVsNext`.
+
+Relationship primary selection uses the same theorem over strong direct candidates: `top1-strong` needs one per signature and `top-n-strong` needs n; `all-strong` retains all. After expansion, public output has one further frozen requirement: every row exposes its absolute global `rank`. When a requested direct or related row lies deep in the global order, the engine retains a sufficient uniform signature prefix to preserve the complete global prefix through that row, plus its successor when explaining. This can make `representativeDepth` much larger than the public result limit.
+
+`C` is the retained candidate count reported by `searchDetailed().meta.candidateCount`. For the simple path, `C <= B × representativeDepth`, where B is the number of exact signatures encountered; B has no fixed corpus-independent bound. Relationship rank preservation can increase the derived depth. Diagnostics are available under `meta.representativeSelection`.
+
+Unknown/custom `ConstraintDef.fn` semantics are not covered by builtin signatures. The representative selector fails closed by retaining all candidates for the existing pairwise custom-constraint ranker.
 
 ## Scaling
 
-Small catalogs can remain interactive under either retriever. High-document-frequency **full-scan** at 10k+ candidates is unsuitable for typeahead and is not the 0.4.0 default. Builtin ranking is O(C log C + B²F + E_b) in the common case and Θ(C²) in the worst case (B = C or custom constraint functions). Corpus scale is a retrieval problem: default `indexed` keeps ordinary hits near `candidateLimit`. Full-scan of a high-DF term is not a large-C architecture. Do not claim a hard `C ≤ 200`, strict subquadratic worst case, or a 5 ms bound on all hardware.
+Stage 1 is correctness-first and does Θ(matches) posting and feature work. High-DF queries can therefore still be expensive, but they no longer feed every match to the final sparse ranker when the representative theorem applies. The fixed candidate-200 architecture is intentionally gone. Conservative block pruning is future work and must preserve this exact path as its oracle.
+
+BM25-like retrieval scores are diagnostic/admission-era data; their default final-ranking weight remains `0`. Representative selection uses the current final score and `document.id`, never BM25 admission rank.
 
 Fixed-C ranker timings: [ranking envelope (GitHub tree; not in the npm tarball)](https://github.com/Software-Land/search/blob/main/benchmarks/ranking/README.md).
 
-Full-scan ranking of a high-DF query previously exhausted heap by retaining Θ(C²) pair diagnostics. 0.3.1 no longer retains those objects, packs remaining directed edges, and uses CSR SCC traversal with generation-stamp component-edge deduplication instead of JS adjacency/`Set` overlays. 0.4.0 builtin ranking additionally avoids enumerating every candidate pair when signatures collapse. Article-like corpora can still cross the typeahead limit because body/prefix hit sets explode.
+Builtin ranking is O(C log C + B²F + E_b) in the common case after selection and Θ(C²) in the worst case when B = C or constraints are custom. Do not claim a fixed hard C bound or a universal 5 ms high-DF target for Stage 1.
 
 Allocation and RSS for the checked-in generators: [memory benchmarks (GitHub tree; not in the npm tarball)](https://github.com/Software-Land/search/blob/main/benchmarks/memory/README.md). That harness is not a latency or search-quality claim.
 
-The inverted postings are relatively small. The **analyzed document store** (tokens, sets, copies) can dominate memory. That is a known limitation, not a ranking bug.
+The v1 runtime currently reconstructs an object-heavy analyzed document view from the positional artifact so the frozen feature extractor remains unchanged. That duplicates some posting-derived information in memory; compact/lazy feature views are later optimization work, not part of Stage 1.
 
 See [limitations.md](limitations.md).
 
