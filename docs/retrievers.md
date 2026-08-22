@@ -29,9 +29,9 @@ Default adaptive threshold **1500** remains a documented fallback for the adapti
 Must-keep union:
 
 - `exact-title`, `configured-equivalence`, and `version` are **unbounded** deterministic must-keep.
-- `contextual-title-prefix` is a **capped** must-keep (`prefixCap`, default 800), ranked by contextual quality then document position. Overflow is not dropped: it remains eligible for the ordinary `candidateLimit` pool, keeps `contextual-title-prefix` in `retrievalSources`, and competes by `retrievalScore` with deterministic pos tie-break.
+- `contextual-title-prefix` and `title-prefix` are **capped** must-keeps (`prefixCap`, default 800). Contextual overflow and title-prefix overflow remain eligible for the ordinary `candidateLimit` pool, keep their source names, and compete by `retrievalScore` with deterministic pos tie-break. Title-prefix is ranked by prefix tightness (`qNorm.length / titleLen`) then document position.
 
-Title-token / body / other prefix hits are budgeted by `candidateLimit`.
+Title-token / body / other prefix hits are budgeted by `candidateLimit`. Independent title-token hits that do not also qualify as `title-prefix` can still lose a crowded ordinary pool.
 
 Synonym and typo alternatives are query-interpretation only. They become ordinary retrieval forms (budgeted unless they also qualify as a must-keep source).
 
@@ -41,12 +41,12 @@ Synonym and typo alternatives are query-interpretation only. They become ordinar
 
 `C` is `searchDetailed().meta.candidateCount`: the featured set after retrieval **and** one-hop relationship expansion, immediately before ranking.
 
-Let `k` be `candidateLimit` (default 200) and `P` the contextual-prefix-only hits.
+Let `k` be `candidateLimit` (default 200), `P` the contextual-prefix-only hits, and `T` the remaining `title-prefix` hits.
 
 Indexed retrieval:
 
 ```text
-C_retrieve <= |U_exact ∪ U_equiv ∪ U_version| + min(|P|, prefixCap) + k
+C_retrieve <= |U_exact ∪ U_equiv ∪ U_version| + min(|P|, prefixCap) + min(|T|, prefixCap) + k
 C        <= C_retrieve + |R_new|
 ```
 

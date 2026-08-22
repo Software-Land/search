@@ -14,4 +14,4 @@ The mixed generator plants rare exact titles, version/dotted-span documents, a c
 
 Full-scan at N=25k is an explicit reference only. Do not describe it as scalable. Default `full-scan-max-n` is 5000; pass `--n 25000` without `--skip-full-scan` only when you intend to wait.
 
-Indexed ordinary hits remain budgeted at `candidateLimit` (200). Exact-title, configured-equivalence, and version must-keeps stay unbounded.
+Indexed ordinary hits remain budgeted at `candidateLimit` (200). Exact-title, configured-equivalence, and version must-keeps stay unbounded. Contextual title-prefix and full-query title-prefix are capped at `prefixCap`.
