@@ -68,6 +68,30 @@ function copyLexicalFrequency(raw: unknown): Record<string, number> | null {
   return any ? out : null;
 }
 
+function independentTitleList(tokens: string[], marked: Set<number>) {
+  const out: string[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    if (!marked.has(i) && tokens[i]) out.push(tokens[i]);
+  }
+  return out;
+}
+
+function independentTitleSet(tokens: string[]) {
+  return new Set(tokens);
+}
+
+function tokenPositionIndex(tokens: string[]) {
+  const map = new Map<string, number[]>();
+  for (let i = 0; i < tokens.length; i++) {
+    const tok = tokens[i];
+    if (!tok) continue;
+    const arr = map.get(tok);
+    if (arr) arr.push(i);
+    else map.set(tok, [i]);
+  }
+  return map;
+}
+
 export function analyzeDocument(
   doc: unknown,
   schema: Schema | null | undefined,
@@ -89,6 +113,9 @@ export function analyzeDocument(
   const titleLemmas = titleTokens.map(lemma);
   const bodyLemmas = bodyTokens.map(lemma);
   const nonStopTitle = titleTokens.filter((t) => !DEFAULT_STOP.has(t));
+  const spanIndexes = dottedSpanComponentIndexes(title);
+  const independentTitleTokens = independentTitleList(titleTokens, spanIndexes);
+  const independentTitleLemmas = independentTitleList(titleLemmas, spanIndexes);
   return {
     id,
     raw: copyRaw(rec, id, title, body),
@@ -107,7 +134,12 @@ export function analyzeDocument(
     normalizedTitle: titleTokens.join(" "),
     versionCompactForms: extractVersionCompactForms(title),
     dottedSpans: extractDottedSpans(title),
-    dottedSpanComponentIndexes: dottedSpanComponentIndexes(title),
+    dottedSpanComponentIndexes: spanIndexes,
+    independentTitleTokens,
+    independentTitleTokenSet: independentTitleSet(independentTitleTokens),
+    independentTitleLemmaSet: independentTitleSet(independentTitleLemmas),
+    bodyTokenPositions: tokenPositionIndex(bodyTokens),
+    bodyLemmaPositions: tokenPositionIndex(bodyLemmas),
     lexicalFrequency: copyLexicalFrequency(rec.lexicalFrequency),
   };
 }

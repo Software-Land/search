@@ -82,6 +82,41 @@ export function levenshtein(a?: unknown, b?: unknown): number {
   return prev[t.length];
 }
 
+/**
+ * Exact distance when it is ≤ max, otherwise max+1.
+ * Used by typoDistance, which only distinguishes 0 / 1 / 2.
+ */
+const levPrev: number[] = [];
+const levCurr: number[] = [];
+
+export function levenshteinAtMost(a?: unknown, b?: unknown, max = 2): number {
+  const s = String(a || "");
+  const t = String(b || "");
+  if (s === t) return 0;
+  const sl = s.length;
+  const tl = t.length;
+  if (Math.abs(sl - tl) > max) return max + 1;
+  if (!sl) return tl;
+  if (!tl) return sl;
+  while (levPrev.length <= tl) levPrev.push(0);
+  while (levCurr.length <= tl) levCurr.push(0);
+  for (let j = 0; j <= tl; j++) levPrev[j] = j;
+  for (let i = 1; i <= sl; i++) {
+    levCurr[0] = i;
+    let rowMin = i;
+    const si = s.charCodeAt(i - 1);
+    for (let j = 1; j <= tl; j++) {
+      const cost = si === t.charCodeAt(j - 1) ? 0 : 1;
+      const v = Math.min(levPrev[j] + 1, levCurr[j - 1] + 1, levPrev[j - 1] + cost);
+      levCurr[j] = v;
+      if (v < rowMin) rowMin = v;
+    }
+    if (rowMin > max) return max + 1;
+    for (let j = 0; j <= tl; j++) levPrev[j] = levCurr[j];
+  }
+  return levPrev[tl];
+}
+
 export function isNearCompletePrefix(prefix?: unknown, token?: unknown): boolean {
   const p = String(prefix || "");
   const t = String(token || "");

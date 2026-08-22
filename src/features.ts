@@ -1,4 +1,4 @@
-import { isNearCompletePrefix, levenshtein, DEFAULT_STOP, allowPrefixMatch } from "./text.js";
+import { isNearCompletePrefix, levenshteinAtMost, DEFAULT_STOP, allowPrefixMatch } from "./text.js";
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "./versionForms.js";
 import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix } from "./retrieve.js";
 import { saturatingFrequency } from "./saturatingFrequency.js";
@@ -23,12 +23,107 @@ import type {
 
 export { saturatingFrequency };
 
+type FeatureProfileBucket = { ms: number; calls: number };
+let featureProfile: Record<string, FeatureProfileBucket> | null = null;
+
+/** Benchmark/test instrumentation. Not a public API. */
+export function startFeatureProfile() {
+  featureProfile = Object.create(null) as Record<string, FeatureProfileBucket>;
+}
+
+export function lastFeatureProfile() {
+  return featureProfile;
+}
+
+export function stopFeatureProfile() {
+  featureProfile = null;
+}
+
+function timeFeat<T>(name: string, fn: () => T): T {
+  if (!featureProfile) return fn();
+  const t0 = performance.now();
+  try {
+    return fn();
+  } finally {
+    const bucket = featureProfile[name] || (featureProfile[name] = { ms: 0, calls: 0 });
+    bucket.ms += performance.now() - t0;
+    bucket.calls += 1;
+  }
+}
+
+type QueryFeatPrep = {
+  joinedNorm: string;
+  nonStop: QueryToken[];
+  nonStopNorm: string[];
+  nonStopLemma: string[];
+  lexicalNonStopCount: number;
+  phraseKeys: string[];
+  primaryPhrase: string;
+  acronym: QueryConcept | null;
+  isConfiguredKey: boolean;
+  expansion: string[];
+  typoTokens: QueryToken[];
+  formSet: Set<string>;
+  shortLiteralTok: string | null;
+};
+
+const queryFeatPrep = new WeakMap<AnalyzedQuery, QueryFeatPrep>();
+
+function getQueryFeatPrep(query: AnalyzedQuery): QueryFeatPrep {
+  const cached = queryFeatPrep.get(query);
+  if (cached) return cached;
+  const tokens = query.tokens || [];
+  const nonStop = tokens.filter((t) => !DEFAULT_STOP.has(t.normalized) || tokens.length <= 2);
+  const nonStopUse = nonStop.length ? nonStop : tokens;
+  const lexicalSource = Array.isArray(query.lexicalTokens) && query.lexicalTokens.length ? query.lexicalTokens : tokens;
+  const lexicalNonStop = lexicalSource.filter((t) => !DEFAULT_STOP.has(t.normalized) || lexicalSource.length <= 2);
+  const lexicalUse = lexicalNonStop.length ? lexicalNonStop : lexicalSource;
+  const acronym = query.concepts.find((c) => c.kind === "acronym") || null;
+  const expansion =
+    acronym == null
+      ? []
+      : Array.isArray(acronym.expansion) && acronym.expansion.length
+        ? acronym.expansion.filter((f) => f !== acronym.id && !/^\d+$/.test(f))
+        : (acronym.forms || []).filter((f) => f !== acronym.id && !/^\d+$/.test(f));
+  const formSet = new Set<string>();
+  for (const c of query.concepts) {
+    if (c.kind === "acronym") continue;
+    for (const form of c.forms || []) formSet.add(form);
+  }
+  const phraseKeys = phraseKeyCandidates(query);
+  const prep: QueryFeatPrep = {
+    joinedNorm: tokens.map((t) => t.normalized).join(" "),
+    nonStop: nonStopUse,
+    nonStopNorm: nonStopUse.map((t) => t.normalized),
+    nonStopLemma: nonStopUse.map((t) => t.lemma || t.normalized),
+    lexicalNonStopCount: lexicalUse.length,
+    phraseKeys,
+    primaryPhrase: phraseKeys[0] || "",
+    acronym,
+    isConfiguredKey: Boolean(acronym && tokens.length === 1 && tokens[0].normalized === acronym.id),
+    expansion,
+    typoTokens: tokens.filter((t) => t.normalized.length >= 5),
+    formSet,
+    shortLiteralTok: tokens.length === 1 && tokens[0].normalized.length <= 3 ? tokens[0].normalized : null,
+  };
+  queryFeatPrep.set(query, prep);
+  return prep;
+}
+
 type ConfiguredEquivalenceMatch = false | "key-in-title" | "expansion";
 type VersionMatch = false | "dotted" | "compact-dotted" | "compact-weak" | "dotted-weak";
 
+function independentTitleTokensOf(doc: IndexedDocument): string[] {
+  if (doc.independentTitleTokens) return doc.independentTitleTokens;
+  const out: string[] = [];
+  for (let i = 0; i < doc.titleTokens.length; i++) {
+    if (!isDottedSpanComponentIndex(doc, i) && doc.titleTokens[i]) out.push(doc.titleTokens[i]);
+  }
+  return out;
+}
+
 function queryNonStop(query: AnalyzedQuery) {
-  const toks = query.tokens.filter((t) => !DEFAULT_STOP.has(t.normalized) || query.tokens.length <= 2);
-  return toks.length ? toks : query.tokens;
+  return getQueryFeatPrep(query).nonStop;
 }
 
 function conceptCoveredInTitle(concept: QueryConcept, doc: IndexedDocument) {
@@ -36,7 +131,7 @@ function conceptCoveredInTitle(concept: QueryConcept, doc: IndexedDocument) {
 }
 
 function exactTitle(query: AnalyzedQuery, doc: IndexedDocument) {
-  const q = query.tokens.map((t) => t.normalized).join(" ");
+  const q = getQueryFeatPrep(query).joinedNorm;
   return q.length > 0 && q === doc.normalizedTitle;
 }
 
@@ -44,10 +139,15 @@ function tokenLiteral(t: QueryToken) {
   return t.surfaceNormalized || t.surface;
 }
 
+function hasIndependentTitleTokenFast(doc: IndexedDocument, tok: string) {
+  if (doc.independentTitleTokenSet) return doc.independentTitleTokenSet.has(tok);
+  return hasIndependentTitleToken(doc, tok);
+}
+
 function exactTitleTokenMatch(query: AnalyzedQuery, doc: IndexedDocument) {
   return query.tokens.some((t) => {
     if (DEFAULT_STOP.has(t.normalized)) return false;
-    return hasIndependentTitleToken(doc, t.normalized);
+    return hasIndependentTitleTokenFast(doc, t.normalized);
   });
 }
 
@@ -57,30 +157,28 @@ function exactTitleTokenMatch(query: AnalyzedQuery, doc: IndexedDocument) {
  * Canonical lemmas and completedToken are not typed-surface evidence.
  */
 function typedSurfaceTitleMatch(query: AnalyzedQuery, doc: IndexedDocument) {
+  const independent = independentTitleTokensOf(doc);
   return query.tokens.some((t) => {
     const literal = tokenLiteral(t);
     if (!literal || DEFAULT_STOP.has(literal)) return false;
-    if (hasIndependentTitleToken(doc, literal)) return true;
-    return doc.titleTokens.some(
-      (tok, i) =>
-        !isDottedSpanComponentIndex(doc, i) &&
-        (allowPrefixMatch(literal, tok) || isNearCompletePrefix(literal, tok))
+    if (hasIndependentTitleTokenFast(doc, literal)) return true;
+    return independent.some(
+      (tok) => allowPrefixMatch(literal, tok) || isNearCompletePrefix(literal, tok)
     );
   });
 }
 
 function titlePrefixQuality(query: AnalyzedQuery, doc: IndexedDocument) {
   const qToks = queryNonStop(query);
+  const independent = independentTitleTokensOf(doc);
   if (!qToks.length || !doc.titleTokens.length) return 0;
   let matched = 0;
   let prefixChars = 0;
   let titleChars = 0;
   for (const qt of qToks) {
     titleChars += qt.normalized.length;
-    const hit = doc.titleTokens.find(
-      (tok, i) =>
-        !isDottedSpanComponentIndex(doc, i) &&
-        (allowPrefixMatch(qt.normalized, tok) || isNearCompletePrefix(qt.normalized, tok))
+    const hit = independent.find(
+      (tok) => allowPrefixMatch(qt.normalized, tok) || isNearCompletePrefix(qt.normalized, tok)
     );
     if (hit) {
       matched += 1;
@@ -94,18 +192,18 @@ function titlePrefixQuality(query: AnalyzedQuery, doc: IndexedDocument) {
   return Number((0.5 * coverage + 0.3 * completeness + 0.2 * Math.min(1, tightness)).toFixed(4));
 }
 
-function queryCoverage(query: AnalyzedQuery, doc: IndexedDocument) {
+function queryCoverage(query: AnalyzedQuery, doc: IndexedDocument, v: ReturnType<typeof versionHit> = versionHit(query, doc)) {
   const concepts = query.concepts.filter((c) => c.kind !== "number" || query.concepts.length === 1);
   const usable = concepts.length ? concepts : query.concepts;
   if (!usable.length) return 0;
+  const vOk = Boolean(v);
   let hit = 0;
   for (const c of usable) {
-    if (conceptCoveredInTitle(c, doc) || versionHit(query, doc)) hit += 1;
-    else if (c.kind === "number" && versionHit(query, doc)) hit += 1;
+    if (conceptCoveredInTitle(c, doc) || vOk) hit += 1;
+    else if (c.kind === "number" && vOk) hit += 1;
   }
   // Count number concepts via version hit once
   const hasNumber = query.concepts.some((c) => c.kind === "number");
-  const v = versionHit(query, doc);
   if (hasNumber && v) {
     const withoutNum = query.concepts.filter((c) => c.kind !== "number");
     const numOk = v.compactHit || v.dottedHit;
@@ -118,17 +216,19 @@ function queryCoverage(query: AnalyzedQuery, doc: IndexedDocument) {
 
 function titleCoverage(query: AnalyzedQuery, doc: IndexedDocument) {
   if (!doc.nonStopTitle.length) return 0;
+  const prep = getQueryFeatPrep(query);
+  const qToks = query.tokens;
   let hit = 0;
   for (let i = 0; i < doc.titleTokens.length; i++) {
     const tok = doc.titleTokens[i];
     if (DEFAULT_STOP.has(tok)) continue;
     const spanComponent = isDottedSpanComponentIndex(doc, i);
-    const ok = query.tokens.some((qt) => {
+    const ok = qToks.some((qt) => {
       if (spanComponent && (qt.normalized === tok || qt.lemma === tok)) return false;
       if (qt.normalized === tok || qt.lemma === tok) return true;
       if (spanComponent) return false;
       if (allowPrefixMatch(qt.normalized, tok) || isNearCompletePrefix(qt.normalized, tok)) return true;
-      return query.concepts.some((c) => c.forms.includes(tok) && c.kind !== "acronym");
+      return prep.formSet.has(tok);
     });
     if (ok) hit += 1;
   }
@@ -136,7 +236,7 @@ function titleCoverage(query: AnalyzedQuery, doc: IndexedDocument) {
 }
 
 function configuredEquivalenceMatch(query: AnalyzedQuery, doc: IndexedDocument): ConfiguredEquivalenceMatch {
-  const acr = query.concepts.find((c) => c.kind === "acronym");
+  const acr = getQueryFeatPrep(query).acronym;
   if (!acr) return false;
   if (doc.titleTokenSet.has(acr.id) || doc.titleLemmaSet.has(acr.id)) return "key-in-title";
   if (conceptMatchesTitle(acr, doc)) return "expansion";
@@ -154,24 +254,29 @@ function morphologyMatch(query: AnalyzedQuery, doc: IndexedDocument) {
 }
 
 function typoDistance(query: AnalyzedQuery, doc: IndexedDocument) {
+  const prep = getQueryFeatPrep(query);
   let best = 0;
-  for (const t of query.tokens) {
-    if (t.normalized.length < 5) continue;
+  for (const t of prep.typoTokens) {
     if (t.sources.includes("repeat-collapse") && doc.titleTokenSet.has(t.normalized)) {
       best = Math.max(best, 1);
       continue;
     }
+    const qn = t.normalized;
+    const qLen = qn.length;
     for (const tok of doc.titleTokens) {
-      if (Math.abs(tok.length - t.normalized.length) > 2) continue;
-      const d = levenshtein(t.normalized, tok);
-      if (d > 0 && d <= 2) best = Math.max(best, 3 - d);
+      if (tok === qn) continue;
+      if (Math.abs(tok.length - qLen) > 2) continue;
+      const d = levenshteinAtMost(qn, tok, 2);
+      if (d > 0 && d <= 2) {
+        best = Math.max(best, 3 - d);
+        if (best === 2) return best;
+      }
     }
   }
   return best;
 }
 
-function versionMatch(query: AnalyzedQuery, doc: IndexedDocument): VersionMatch {
-  const v = versionHit(query, doc);
+function versionMatch(query: AnalyzedQuery, doc: IndexedDocument, v: ReturnType<typeof versionHit> = versionHit(query, doc)): VersionMatch {
   if (!v) return false;
   if (v.dottedHit && (v.companion === "covered" || v.companion === "absent")) return "dotted";
   if (v.compactHit && v.companion === "covered") return "compact-dotted";
@@ -182,10 +287,8 @@ function versionMatch(query: AnalyzedQuery, doc: IndexedDocument): VersionMatch 
 }
 
 function shortLiteralLeadMatch(query: AnalyzedQuery, doc: IndexedDocument) {
-  const q = query.tokens.map((t) => t.normalized).join("");
-  if (query.tokens.length !== 1) return false;
-  const tok = query.tokens[0].normalized;
-  if (tok.length > 3) return false;
+  const tok = getQueryFeatPrep(query).shortLiteralTok;
+  if (tok == null) return false;
   if (!doc.firstToken) return false;
   return doc.firstToken === tok || doc.firstToken.startsWith(tok);
 }
@@ -199,19 +302,64 @@ function dottedSpanComponentTitleMatch(query: AnalyzedQuery, doc: IndexedDocumen
   });
 }
 
-function adjacentOn(queryToks: string[], fieldToks: string[]) {
+function sameStringArray(a: string[], b: string[]) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+function tokenAdjacencyMatch(qt: string, tt: string | undefined) {
+  if (!tt) return false;
+  return /^\d+$/.test(qt) || /^\d+$/.test(tt) ? tt === qt : tt === qt || tt.startsWith(qt);
+}
+
+const ADJACENCY_INDEX_MIN = 32;
+
+function adjacencyStarts(qt: string, fieldToks: string[], posMap?: Map<string, number[]>) {
+  if (!posMap || fieldToks.length < ADJACENCY_INDEX_MIN) return null;
+  const starts: number[] = [];
+  if (/^\d+$/.test(qt)) {
+    const pos = posMap.get(qt);
+    if (pos) {
+      for (const i of pos) starts.push(i);
+    }
+    return starts;
+  }
+  for (const [tok, pos] of posMap) {
+    if (tok === qt || (!/^\d+$/.test(tok) && tok.startsWith(qt))) {
+      for (const i of pos) starts.push(i);
+    }
+  }
+  return starts;
+}
+
+function adjacentOn(queryToks: string[], fieldToks: string[], posMap?: Map<string, number[]>) {
   if (queryToks.length < 2 || fieldToks.length < queryToks.length) return false;
-  for (let i = 0; i <= fieldToks.length - queryToks.length; i++) {
-    let ok = true;
-    for (let j = 0; j < queryToks.length; j++) {
-      const qt = queryToks[j];
-      const tt = fieldToks[i + j];
-      if (!tt) {
-        ok = false;
-        break;
+  const first = queryToks[0];
+  const m = queryToks.length;
+  const last = fieldToks.length - m;
+  const starts = adjacencyStarts(first, fieldToks, posMap);
+  if (starts) {
+    for (const i of starts) {
+      if (i > last) continue;
+      let ok = true;
+      for (let j = 1; j < m; j++) {
+        if (!tokenAdjacencyMatch(queryToks[j], fieldToks[i + j])) {
+          ok = false;
+          break;
+        }
       }
-      const digitSafe = /^\d+$/.test(qt) || /^\d+$/.test(tt) ? tt === qt : tt === qt || tt.startsWith(qt);
-      if (!digitSafe) {
+      if (ok) return true;
+    }
+    return false;
+  }
+  for (let i = 0; i <= last; i++) {
+    if (!tokenAdjacencyMatch(first, fieldToks[i])) continue;
+    let ok = true;
+    for (let j = 1; j < m; j++) {
+      if (!tokenAdjacencyMatch(queryToks[j], fieldToks[i + j])) {
         ok = false;
         break;
       }
@@ -222,36 +370,39 @@ function adjacentOn(queryToks: string[], fieldToks: string[]) {
 }
 
 function phraseAdjacency(query: AnalyzedQuery, doc: IndexedDocument) {
-  const qToks = queryNonStop(query).map((t) => t.normalized);
-  const qLemmas = queryNonStop(query).map((t) => t.lemma || t.normalized);
+  const prep = getQueryFeatPrep(query);
+  const qToks = prep.nonStopNorm;
+  const qLemmas = prep.nonStopLemma;
   if (qToks.length < 2) return 0;
-  if (adjacentOn(qToks, doc.titleTokens) || adjacentOn(qLemmas, doc.titleLemmas)) return 1;
-  if (adjacentOn(qToks, doc.bodyTokens) || adjacentOn(qLemmas, doc.bodyLemmas)) return 0.5;
+  const queryLemmasDiffer = !sameStringArray(qToks, qLemmas);
+  const titleLemmasDiffer = !sameStringArray(doc.titleTokens, doc.titleLemmas);
+  if (adjacentOn(qToks, doc.titleTokens) || ((queryLemmasDiffer || titleLemmasDiffer) && adjacentOn(qLemmas, doc.titleLemmas))) {
+    return 1;
+  }
+  const bodyLemmasDiffer = !sameStringArray(doc.bodyTokens, doc.bodyLemmas);
+  if (
+    adjacentOn(qToks, doc.bodyTokens, doc.bodyTokenPositions) ||
+    ((queryLemmasDiffer || bodyLemmasDiffer) && adjacentOn(qLemmas, doc.bodyLemmas, doc.bodyLemmaPositions))
+  ) {
+    return 0.5;
+  }
   return 0;
 }
 
 function expansionEvidence(query: AnalyzedQuery, doc: IndexedDocument) {
-  const acr = query.concepts.find((c) => c.kind === "acronym");
-  if (!acr) return 0;
-  const expansion =
-    Array.isArray(acr.expansion) && acr.expansion.length
-      ? acr.expansion.filter((f) => f !== acr.id && !/^\d+$/.test(f))
-      : acr.forms.filter((f) => f !== acr.id && !/^\d+$/.test(f));
+  const expansion = getQueryFeatPrep(query).expansion;
   if (!expansion.length) return 0;
   const hits = expansion.filter((f) => doc.titleTokenSet.has(f) || doc.titleLemmaSet.has(f));
   return Number((hits.length / expansion.length).toFixed(4));
 }
 
 function queryIsConfiguredKey(query: AnalyzedQuery) {
-  const acr = query.concepts.find((c) => c.kind === "acronym");
-  if (!acr) return false;
-  if (query.tokens.length !== 1) return false;
-  return query.tokens[0].normalized === acr.id;
+  return getQueryFeatPrep(query).isConfiguredKey;
 }
 
 function canonicalKeyTitle(query: AnalyzedQuery, doc: IndexedDocument) {
   if (!queryIsConfiguredKey(query)) return false;
-  const acr = query.concepts.find((c) => c.kind === "acronym");
+  const acr = getQueryFeatPrep(query).acronym;
   if (!acr) return false;
   const keyInTitle = doc.titleTokenSet.has(acr.id) || doc.titleLemmaSet.has(acr.id);
   if (!keyInTitle) return false;
@@ -285,12 +436,6 @@ function lexicalPhraseQueryTokens(query: AnalyzedQuery) {
   return query.tokens;
 }
 
-function lexicalQueryNonStop(query: AnalyzedQuery) {
-  const tokens = lexicalPhraseQueryTokens(query);
-  const toks = tokens.filter((t) => !DEFAULT_STOP.has(t.normalized) || tokens.length <= 2);
-  return toks.length ? toks : tokens;
-}
-
 function phraseKeyCandidates(query: AnalyzedQuery) {
   const source = lexicalPhraseQueryTokens(query);
   const toks = canonicalLexicalTokensFromQuery(source);
@@ -307,9 +452,10 @@ function phraseKeyCandidates(query: AnalyzedQuery) {
 }
 
 function compiledPhraseLookup(query: AnalyzedQuery, doc: IndexedDocument) {
-  const candidates = phraseKeyCandidates(query);
+  const prep = getQueryFeatPrep(query);
+  const candidates = prep.phraseKeys;
   const ngrams = doc.lexicalFrequency || null;
-  const primary = candidates[0] || "";
+  const primary = prep.primaryPhrase;
   let matchingPhraseKey: string | null = null;
   let count = 0;
   for (const key of candidates) {
@@ -350,37 +496,13 @@ function contextualFeatureFields(contextual: ContextualTitlePrefix | null) {
   };
 }
 
-export function extractFeatures(
-  query: AnalyzedQuery,
-  doc: IndexedDocument,
-  { relationship = null, retrievalScore = 0 }: { relationship?: RelationshipInfo | null; retrievalScore?: number } = {}
+function finishFeatures(
+  relationship: RelationshipInfo | null,
+  retrievalScore: number,
+  fields: ReturnType<typeof computeFeatureFields>
 ): FeatureVector {
-  const phrase = compiledPhraseLookup(query, doc);
-  const contextual = matchContextualTitlePrefix(query, doc);
   const base: FeatureVector = {
-    exactTitleMatch: exactTitle(query, doc),
-    exactTitleTokenMatch: exactTitleTokenMatch(query, doc),
-    typedSurfaceTitleMatch: typedSurfaceTitleMatch(query, doc),
-    titleCoverage: titleCoverage(query, doc),
-    queryCoverage: queryCoverage(query, doc),
-    titlePrefixQuality: titlePrefixQuality(query, doc),
-    ...contextualFeatureFields(contextual),
-    configuredEquivalenceMatch: configuredEquivalenceMatch(query, doc),
-    morphologyMatch: morphologyMatch(query, doc),
-    typoDistance: typoDistance(query, doc),
-    versionMatch: versionMatch(query, doc),
-    shortLiteralLeadMatch: shortLiteralLeadMatch(query, doc),
-    dottedSpanComponentTitleMatch: dottedSpanComponentTitleMatch(query, doc),
-    phraseAdjacency: phraseAdjacency(query, doc),
-    bodyLexicalMatch: bodyLexicalMatch(query, doc),
-    titleTokenCount: doc.nonStopTitle.length,
-    expansionEvidence: expansionEvidence(query, doc),
-    canonicalKeyTitle: canonicalKeyTitle(query, doc),
-    queryTokenCount: lexicalQueryNonStop(query).length,
-    normalizedQueryPhrase: phrase.normalizedQueryPhrase,
-    matchingPhraseKey: phrase.matchingPhraseKey,
-    bodyPhraseCount: phrase.bodyPhraseCount,
-    bodyPhraseFrequency: phrase.bodyPhraseFrequency,
+    ...fields,
     relationshipStrength: relationship?.strength || 0,
     relationshipType: relationship?.type ?? null,
     relationshipSourceId: relationship?.sourceId ?? null,
@@ -392,6 +514,77 @@ export function extractFeatures(
   base.directClass = classifyDirect(base);
   base.relevanceKind = relationship && !direct ? "related" : "direct";
   return base;
+}
+
+function computeFeatureFields(query: AnalyzedQuery, doc: IndexedDocument) {
+  getQueryFeatPrep(query);
+  const vHit = versionHit(query, doc);
+  const phrase = compiledPhraseLookup(query, doc);
+  const contextual = matchContextualTitlePrefix(query, doc);
+  return {
+    exactTitleMatch: exactTitle(query, doc),
+    exactTitleTokenMatch: exactTitleTokenMatch(query, doc),
+    typedSurfaceTitleMatch: typedSurfaceTitleMatch(query, doc),
+    titleCoverage: titleCoverage(query, doc),
+    queryCoverage: queryCoverage(query, doc, vHit),
+    titlePrefixQuality: titlePrefixQuality(query, doc),
+    ...contextualFeatureFields(contextual),
+    configuredEquivalenceMatch: configuredEquivalenceMatch(query, doc),
+    morphologyMatch: morphologyMatch(query, doc),
+    typoDistance: typoDistance(query, doc),
+    versionMatch: versionMatch(query, doc, vHit),
+    shortLiteralLeadMatch: shortLiteralLeadMatch(query, doc),
+    dottedSpanComponentTitleMatch: dottedSpanComponentTitleMatch(query, doc),
+    phraseAdjacency: phraseAdjacency(query, doc),
+    bodyLexicalMatch: bodyLexicalMatch(query, doc),
+    titleTokenCount: doc.nonStopTitle.length,
+    expansionEvidence: expansionEvidence(query, doc),
+    canonicalKeyTitle: canonicalKeyTitle(query, doc),
+    queryTokenCount: getQueryFeatPrep(query).lexicalNonStopCount,
+    normalizedQueryPhrase: phrase.normalizedQueryPhrase,
+    matchingPhraseKey: phrase.matchingPhraseKey,
+    bodyPhraseCount: phrase.bodyPhraseCount,
+    bodyPhraseFrequency: phrase.bodyPhraseFrequency,
+  };
+}
+
+export function extractFeatures(
+  query: AnalyzedQuery,
+  doc: IndexedDocument,
+  { relationship = null, retrievalScore = 0 }: { relationship?: RelationshipInfo | null; retrievalScore?: number } = {}
+): FeatureVector {
+  if (!featureProfile) {
+    return finishFeatures(relationship, retrievalScore, computeFeatureFields(query, doc));
+  }
+  timeFeat("queryPrep", () => getQueryFeatPrep(query));
+  const vHit = timeFeat("versionHit", () => versionHit(query, doc));
+  const phrase = timeFeat("compiledPhraseLookup", () => compiledPhraseLookup(query, doc));
+  const contextual = timeFeat("contextualTitlePrefix", () => matchContextualTitlePrefix(query, doc));
+  return finishFeatures(relationship, retrievalScore, {
+    exactTitleMatch: timeFeat("exactTitleMatch", () => exactTitle(query, doc)),
+    exactTitleTokenMatch: timeFeat("exactTitleTokenMatch", () => exactTitleTokenMatch(query, doc)),
+    typedSurfaceTitleMatch: timeFeat("typedSurfaceTitleMatch", () => typedSurfaceTitleMatch(query, doc)),
+    titleCoverage: timeFeat("titleCoverage", () => titleCoverage(query, doc)),
+    queryCoverage: timeFeat("queryCoverage", () => queryCoverage(query, doc, vHit)),
+    titlePrefixQuality: timeFeat("titlePrefixQuality", () => titlePrefixQuality(query, doc)),
+    ...contextualFeatureFields(contextual),
+    configuredEquivalenceMatch: timeFeat("configuredEquivalenceMatch", () => configuredEquivalenceMatch(query, doc)),
+    morphologyMatch: timeFeat("morphologyMatch", () => morphologyMatch(query, doc)),
+    typoDistance: timeFeat("typoDistance", () => typoDistance(query, doc)),
+    versionMatch: timeFeat("versionMatch", () => versionMatch(query, doc, vHit)),
+    shortLiteralLeadMatch: timeFeat("shortLiteralLeadMatch", () => shortLiteralLeadMatch(query, doc)),
+    dottedSpanComponentTitleMatch: timeFeat("dottedSpanComponentTitleMatch", () => dottedSpanComponentTitleMatch(query, doc)),
+    phraseAdjacency: timeFeat("phraseAdjacency", () => phraseAdjacency(query, doc)),
+    bodyLexicalMatch: timeFeat("bodyLexicalMatch", () => bodyLexicalMatch(query, doc)),
+    titleTokenCount: doc.nonStopTitle.length,
+    expansionEvidence: timeFeat("expansionEvidence", () => expansionEvidence(query, doc)),
+    canonicalKeyTitle: timeFeat("canonicalKeyTitle", () => canonicalKeyTitle(query, doc)),
+    queryTokenCount: getQueryFeatPrep(query).lexicalNonStopCount,
+    normalizedQueryPhrase: phrase.normalizedQueryPhrase,
+    matchingPhraseKey: phrase.matchingPhraseKey,
+    bodyPhraseCount: phrase.bodyPhraseCount,
+    bodyPhraseFrequency: phrase.bodyPhraseFrequency,
+  });
 }
 
 /**

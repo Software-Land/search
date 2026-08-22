@@ -187,6 +187,11 @@ export interface IndexedDocument {
    * component (the "2" in "1.2"). Not independent exact-title evidence.
    */
   dottedSpanComponentIndexes: Set<number>;
+  independentTitleTokens?: string[];
+  independentTitleTokenSet?: Set<string>;
+  independentTitleLemmaSet?: Set<string>;
+  bodyTokenPositions?: Map<string, number[]>;
+  bodyLemmaPositions?: Map<string, number[]>;
   lexicalFrequency: Record<string, number> | null;
 }
 
