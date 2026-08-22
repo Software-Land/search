@@ -6,8 +6,8 @@ The public `retriever` field is `RetrieverName | "indexed-lexical" | Experimenta
 
 ```js
 SearchEngine.create({
-  retriever: "full-scan",   // default
-  // retriever: "indexed",
+  retriever: "indexed",     // default
+  // retriever: "full-scan",
   // retriever: "adaptive",
   candidateLimit: 200,      // indexed budget for non-exact hits
   adaptive: { documentThreshold: 1500 },
@@ -16,11 +16,15 @@ SearchEngine.create({
 
 | name | when |
 | --- | --- |
-| `full-scan` | Small corpora. Simplest. Scans every document. |
-| `indexed` | Inverted lexical candidate generation. BM25 **orders the budgeted slice only**. |
+| `indexed` | Default. Inverted lexical candidate generation, then the same exact match rules as full-scan. BM25 **orders the budgeted ordinary slice only**. |
+| `full-scan` | Explicit small-corpus / reference / debug mode. Scans every document. Does not apply `candidateLimit`. |
 | `adaptive` | Full scan while `documentCount <= adaptive.documentThreshold`, else indexed. Deterministic. No runtime benchmarking. |
 
-Default threshold **1500** is a documented default, not a universal law. Settings-like and article-like corpora cross at different sizes. Benchmark unusual shapes.
+0.4.0 default retrieval is `indexed`. That is a behavioral change even when Software.Land ordered results stay identical: large corpora no longer feature-extract and rank every lexical match.
+
+Explicit `full-scan`, `indexed`, `adaptive`, or a custom `ExperimentalRetriever` always wins over the default.
+
+Default adaptive threshold **1500** remains a documented fallback for the adaptive mode, not a new default policy. Settings-like and article-like corpora cross at different sizes. Benchmark unusual shapes. Do not treat 1500 as a derived cost/candidate law.
 
 Must-keep union:
 
@@ -48,9 +52,13 @@ C        <= C_retrieve + |R_new|
 
 `U_*` are documents whose retrieval sources include unbounded must-keep. `R_new` is one-hop neighbors of expansion primaries that were not already retrieved. Default `sourcePolicy` is `top1-strong` (one primary). Dedup is by document id before ranking.
 
-Those `U_*` and `R_new` terms can grow with corpus size N when many documents share an exact title, a configured-equivalence title form, a version/dotted span, or a high-degree relationship neighborhood. 0.4.0 does **not** silently truncate those correctness-critical classes. Ordinary large-corpus operation is still: index cheaply, budget the ordinary pool, then rank C. Builtin ranking is sparse in the number of constraint signatures; it is not a license to full-scan huge high-DF candidate sets.
+Those `U_*` and `R_new` terms can grow with corpus size N when many documents share an exact title, a configured-equivalence title form, a version/dotted span, or a high-degree relationship neighborhood. 0.4.0 does **not** silently truncate those correctness-critical classes. Ordinary large-corpus operation is: index cheaply, apply the exact matcher to posting hits, budget the ordinary pool, then rank C. Builtin ranking is sparse in the number of constraint signatures; it is not a license to full-scan huge high-DF candidate sets.
 
-Full-scan (default retriever) does not apply `candidateLimit`. Matching documents can be Θ(N). Adaptive uses full-scan while `documentCount <= adaptive.documentThreshold` (default 1500), else indexed. Custom `{ retrieve }` objects are experimental and unbounded.
+Indexed posting hits are filtered through the same per-document match rules as full-scan before must-keep / `candidateLimit` assembly. Public `retrievalSources` are those exact names, not BM25 posting labels. Body prefix evidence uses `startsWith` at length ≥ 3, matching full-scan; it is not the stricter title `allowPrefixMatch` ratio.
+
+On the 122-document Software.Land fixture, that exact matcher plus an ordinary budget of 200 (larger than any full-scan C on that corpus) reproduces the frozen 215-row ordered result oracle, the 98 strict contracts, and the 60 regressions, including query `"2"`. That is a quality-equivalence result for this corpus, not a claim that `C ≤ 200` on every query or that high-DF posting scans are free.
+
+Full-scan does not apply `candidateLimit`. Matching documents can be Θ(N). It remains available as an explicit reference mode. Adaptive uses full-scan while `documentCount <= adaptive.documentThreshold` (default 1500), else indexed. Custom `{ retrieve }` objects are experimental and unbounded.
 
 C becomes fixed in `SearchEngine._expandAndFeature` after related hits are appended, then `rankCandidates` / `rankCandidatesAsync` consume that array.
 
@@ -60,7 +68,7 @@ Useful as a **candidate retriever**. Not the final relevance algorithm. Default 
 
 ## Scaling
 
-Small full-scan catalogs can remain interactive. High-document-frequency full-scan at 10k+ candidates is unsuitable for typeahead. Builtin ranking is O(C log C + B²F + E_b) in the common case and Θ(C²) in the worst case (B = C or custom constraint functions). Corpus scale is still a retrieval problem. Use `indexed` / `adaptive` so ordinary hits stay near `candidateLimit`. Full-scan of a high-DF term is not a large-C architecture.
+Small catalogs can remain interactive under either retriever. High-document-frequency **full-scan** at 10k+ candidates is unsuitable for typeahead and is not the 0.4.0 default. Builtin ranking is O(C log C + B²F + E_b) in the common case and Θ(C²) in the worst case (B = C or custom constraint functions). Corpus scale is a retrieval problem: default `indexed` keeps ordinary hits near `candidateLimit`. Full-scan of a high-DF term is not a large-C architecture. Do not claim a hard `C ≤ 200`, strict subquadratic worst case, or a 5 ms bound on all hardware.
 
 Fixed-C ranker timings: [ranking envelope (GitHub tree; not in the npm tarball)](https://github.com/Software-Land/search/blob/main/benchmarks/ranking/README.md).
 

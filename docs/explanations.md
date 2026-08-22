@@ -11,7 +11,7 @@ results[0].relationship; // on related hits
 
 Stable concepts:
 
-- `retrievalSources` — why the document entered the candidate set (`exact-title`, `title-token`, `configured-equivalence`, `morphology`, `version`, `body-lexical`, `indexed-lexical`, `relationship`, …)
+- `retrievalSources` — why the document entered the candidate set (`exact-title`, `title-token`, `configured-equivalence`, `morphology`, `version`, `body-lexical`, `relationship`, …)
 - named `features` and `directClass` / `relevanceKind`
 - `relationship`: `{ type, sourceId, sourceTitle, provenance, strength, rank }`
 - constraint diagnostics when present (`constraintsVsNext`, `constraintMeta`)
@@ -32,4 +32,4 @@ Not exposed: postings lists, BM25 internals, engine class instances.
 
 **Editorial related:** same rail, `type: "editorial"` / `manually-related`, provenance from explicit domain relationships.
 
-**Indexed candidate:** large corpus, `retriever: "indexed"`; provenance still uses named sources, not a lone BM25 number.
+**Indexed candidate:** default production path, `retriever: "indexed"`; inverted postings propose documents, then the same named match rules as full-scan. Provenance still uses those names, not a lone BM25 number.

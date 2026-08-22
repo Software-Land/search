@@ -10,7 +10,7 @@ Source: [github.com/Software-Land/search](https://github.com/Software-Land/searc
 
 A JavaScript **runtime** that indexes documents, searches them, explains hits, and can attach a related-document rail from a compiled graph. It does not download models, call an LLM, or depend on a CMS.
 
-Pairwise ranking used to be Θ(C²) in the candidate set C. Builtin ranking now groups constraint-equivalent candidates and compares signatures (B of them) instead of every pair; worst case remains Θ(C²) when B = C or constraints are custom. `indexed` / `adaptive` retrieval budget ordinary hits; full-scan of a high-document-frequency term is not a large-C architecture.
+Pairwise ranking used to be Θ(C²) in the candidate set C. Builtin ranking now groups constraint-equivalent candidates and compares signatures (B of them) instead of every pair; worst case remains Θ(C²) when B = C or constraints are custom. Default **indexed** retrieval budgets ordinary hits; pass `retriever: "full-scan"` only as an explicit reference mode. Full-scan of a high-document-frequency term is not a large-C architecture.
 
 **Zero production npm dependencies.** Node 18+.
 

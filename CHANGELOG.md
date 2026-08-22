@@ -6,6 +6,7 @@
 
 - Public `english()` is removed. Canonical morphology is `morphology({ lemmas? }) => EnglishPlugin`. Plugin `name` remains `"english"`. Internal `createEnglishPlugin` / `english()` stay unpublished. Worker `init({ englishOptions })` is unchanged.
 - `SearchEngine.create({ plugins })` is `SearchPlugin[]` rather than `unknown[]`. `dictionary()` returns `DictionaryPlugin`. Custom retrievers are `ExperimentalRetriever` rather than `{ retrieve: Function }`. Runtime still duck-types plugin objects and custom `retrieve` functions.
+- Default `SearchEngine.create()` retrieval is `indexed` rather than `full-scan`. Explicit `retriever: "full-scan" | "indexed" | "adaptive"` and custom `ExperimentalRetriever` objects are unchanged. Ordinary indexed hits remain budgeted at `candidateLimit` (200). Exact-title, configured-equivalence, and version stay unbounded must-keep. This is a 0.4.0 behavioral change even when Software.Land ordered results stay identical.
 
 ### Added
 
@@ -15,6 +16,8 @@
 - Identity-preserving sparse ranking for builtin constraint functions: candidates are grouped by constraint-relevant signatures, compared at the signature/bucket layer, and ordered with a heap over ready buckets. Same-class conflicts stay unordered. Incomparable buckets still interleave by score then `document.id`. Complete bipartite candidate edges are not materialized. Custom `ConstraintDef.fn` values still use the all-pairs path. Public ranking API is unchanged.
 - Development-only ranking-envelope harness under `benchmarks/ranking/` (fixed C = 100, 200, 500, 1000; homogeneous / few-bucket / mixed workloads; frozen all-pairs oracle comparison). Not packed. Not a search-quality claim.
 - Development-only feature-extraction harness under `benchmarks/features/` (fixed C; homogeneous / few-bucket / mixed / Software.Land queries; frozen extractor oracle comparison). Not packed. Not a search-quality claim.
+- Development-only retrieval-mode harness under `benchmarks/retrieval/` (mixed synthetic N = 1k / 5k / 25k; full-scan / indexed / adaptive). Not packed. Not a search-quality claim. Not a CI latency gate.
+- Fail-closed Software.Land retrieval-mode comparison: indexed and adaptive must match the frozen 215-row full-scan ordered results on that fixture.
 - `SECURITY.md` and `CONTRIBUTING.md`.
 
 ### Fixed
@@ -26,7 +29,7 @@
 - Builtin ranking no longer examines every candidate pair in the common case. Complexity is O(C log C + B²F + E_b) when the discrete signature count B is small, plus a localized pairwise fallback of size k when custom constraints are used (k = C). Worst case remains Θ(C²) when B = C or every constraint function is custom. This is not a claim of strict O(C log C) for every workload, of 5 ms search on all hardware, or of large-corpus full-scan scalability.
 - Feature extraction caches query-local prep, bounds typo distance, and reuses in-memory independent-title and long-body token indexes. Ranking semantics, scores, constraints, explanations, candidates, and current query results are unchanged.
 - Performance work was validated against all 215 production-derived Software.Land search scenarios, with the pre-optimization 0.4.0 engine used as an exact ordered-result oracle. The 98 strict contracts and 60 regression cases retain their existing stronger contract status; historical rows remain evaluation/provenance data.
-- Indexed retrieval still budgets ordinary hits at `candidateLimit` (default 200) and caps contextual title-prefix must-keep at `prefixCap` (default 800). Exact-title, configured-equivalence, and version remain unbounded must-keep; one-hop relationship expansion can still add neighbors after that budget. 0.4.0 does not silently truncate those correctness-critical classes and does not change the default full-scan retriever.
+- Indexed retrieval still budgets ordinary hits at `candidateLimit` (default 200) and caps contextual title-prefix must-keep at `prefixCap` (default 800). Exact-title, configured-equivalence, and version remain unbounded must-keep; one-hop relationship expansion can still add neighbors after that budget. 0.4.0 does not silently truncate those correctness-critical classes. Indexed posting hits are required to satisfy the same per-document match rules as full-scan before budgeting, so public provenance matches the full-scan matcher. On the 122-document Software.Land fixture that reproduces the frozen 215-row ordered-result oracle, the 98 strict contracts, and the 60 regressions. Normal production search is indexed → exact features → sparse ranking. Full-scan remains an explicit small-corpus / reference / debug mode. This is not a claim of hard `C ≤ 200`, strict subquadratic worst case, 5 ms on all hardware, or full-scan scalability.
 - Site lemma generation is documented as build-time data. This package consumes a `Record<string, string>`. Software.Land's generator lives at https://github.com/Software-Land/search-lemma-tools as source/reference tooling for that blog corpus, not as a runtime or general-purpose dependency.
 
 ### Infrastructure
