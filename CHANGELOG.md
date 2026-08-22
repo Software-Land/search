@@ -8,15 +8,9 @@
 - Development-only exhaustive relevance-evaluation machinery under `benchmarks/relevance/` (schema, metrics, validator, toy fixture, runner). The toy fixture is not a search-quality benchmark and is not included in the npm tarball. Ranking is unchanged.
 - Development-only memory benchmark under `benchmarks/memory/` (deterministic settings/article generators, RSS vs post-GC heapUsed). Not included in the npm tarball. Not a ranking-quality claim.
 
-### Changed
-
-- Ranking constructs the pairwise constraint graph once per `rankCandidates` / `rankCandidatesAsync` call and reuses that graph and its SCC result for cycle diagnosis. Pairwise evaluation remains Θ(C²). Directed edges stay packed; SCC adjacency is exact CSR. Component ordering no longer materializes per-component `Set`s. Search result order, scores, constraints, and explanation/meta shapes are unchanged.
-
 ### Fixed
 
-- Constraint-graph construction no longer retains a report object for every unordered candidate pair. Directed edges, conflict/cycle diagnostics, explanations, and ranking order are unchanged. Pairwise comparison remains Θ(C²). Default full-scan search of a high-DF query no longer OOMs from diagnostic allocation.
-- Constraint-graph directed edges are stored as packed uint32 chunks instead of one JavaScript array per edge. Ranking order, conflict/cycle diagnostics, explanations, and public APIs are unchanged. Pairwise comparison remains Θ(C²).
-- Constraint ranking no longer expands packed edges into `number[][]` adjacency lists or per-component `Set`s, and no longer recomputes SCC for diagnosis. Kosaraju uses exact CSR; component-edge dedup uses generation stamps. Ranking order, cycle/conflict diagnostics, explanations, and public APIs are unchanged.
+- High-document-frequency full-scan ranking no longer has the pathological graph-memory amplification. Unordered / no-decision pair reports are not retained; directed constraint edges are packed; SCC/order structures use compact CSR; cycle diagnosis reuses the SCC result. Ranking order, scores, explanations/meta, and public APIs are unchanged. Pairwise comparison remains Θ(C²).
 - Default `compileSemantic()` no longer returns `outputPath` inside the internal work directory that `finally` deletes. When `outputPath` is omitted, the launcher writes a unique `search-semantic-output-*.json` file under the system temp directory that survives the call. The caller owns that file. Explicit `outputPath` is unchanged. Artifact bytes and schema are unchanged.
 
 ## 0.3.0

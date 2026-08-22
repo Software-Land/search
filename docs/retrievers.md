@@ -35,14 +35,13 @@ Title-token / body / other prefix hits are budgeted by `candidateLimit`.
 
 Useful as a **candidate retriever**. Not the final relevance algorithm. Default ranking weight of any BM25 score is **0**. A non-zero weight helped one corpus shape and hurt another.
 
-## Scaling (measured, not universal)
+## Scaling
 
-On a Node / x86_64 harness:
+Small full-scan catalogs can remain interactive. High-document-frequency full-scan at 10k+ candidates is unsuitable for typeahead. Pairwise ranking remains Θ(C²) in candidate count; use `indexed` / `adaptive` for large corpora.
 
-- Settings-like ~1k remained interactive under full scan (p95 ~18 ms)
-- Settings-like ~10k full scan was unsuitable for typeahead (p95 ~653 ms)
-- Indexed Settings-like ~100k stayed tens of milliseconds; full-scan ranking of a high-DF query previously exhausted heap by retaining Θ(C²) pair diagnostics. 0.3.1 removes that allocation, packs remaining directed edges, and uses CSR + generation-stamp SCC ordering instead of JS adjacency/`Set` overlays. Comparison time remains Θ(C²) and is unsuitable for typeahead at 10k+; use `indexed` / `adaptive`.
-- Article-like corpora crossed earlier because body/prefix hit sets explode
+Full-scan ranking of a high-DF query previously exhausted heap by retaining Θ(C²) pair diagnostics. 0.3.1 no longer retains those objects, packs remaining directed edges, and uses CSR SCC traversal with generation-stamp component-edge deduplication instead of JS adjacency/`Set` overlays. Comparison time remains Θ(C²). Article-like corpora crossed the typeahead limit earlier because body/prefix hit sets explode.
+
+Allocation and RSS for the checked-in generators: [memory benchmarks (GitHub tree; not in the npm tarball)](https://github.com/Software-Land/search/blob/main/benchmarks/memory/README.md). That harness is not a latency or search-quality claim.
 
 The inverted postings are relatively small. The **analyzed document store** (tokens, sets, copies) can dominate memory. That is a known limitation, not a ranking bug.
 

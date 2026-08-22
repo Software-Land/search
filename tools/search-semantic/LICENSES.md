@@ -12,4 +12,4 @@ search runtime artifact.
 | ONNX Runtime | MIT | Transitive via FastEmbed |
 | `sentence-transformers/all-MiniLM-L6-v2` | Apache-2.0 | [Hugging Face model card](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2). Weights downloaded, not vendored. |
 
-The JavaScript runtime (`src/`) does not depend on any of the embedding stack.
+The published Search Core runtime does not depend on any of the embedding stack.

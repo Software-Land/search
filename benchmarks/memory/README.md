@@ -23,6 +23,7 @@ Requires a built runtime (`npm run build`). Public `SearchEngine` + `english()` 
 ```bash
 node --expose-gc benchmarks/memory/run.mjs --mode routine
 node --expose-gc benchmarks/memory/run.mjs --mode large
+node --expose-gc benchmarks/memory/run.mjs --mode oom-probe
 node --expose-gc --max-old-space-size=8192 benchmarks/memory/run.mjs --mode oom-probe
 node --expose-gc benchmarks/memory/run.mjs --shape settings --n 10000 --query "bluetooth settings" --json
 node --expose-gc benchmarks/memory/run.mjs --shape article-diverse --n 1000 --query tls
@@ -32,7 +33,7 @@ node --expose-gc benchmarks/memory/run.mjs --shape article-diverse --n 1000 --qu
 | --- | --- | --- |
 | `routine` | settings 1k `wifi`; article 1k `virtual private` | Ordinary local reproduction |
 | `large` | settings 10k `bluetooth settings` (~9k full-scan candidates) | Ranking-allocation / high-DF proof |
-| `oom-probe` | article 25k `tls` | Explicit 8 GB heap probe; not a unit test |
+| `oom-probe` | article 25k `tls` | Pathological high-DF stress case. After 0.3.1 ranking-memory hardening it completes under the normal Node heap on the measured environment. `--max-old-space-size=8192` is optional headroom / historical comparison. Not a unit test. Not a claim that full-scan is fast or scalable. |
 
 Each report distinguishes source-corpus heap, post-index heap before/after GC, source-drop retained heap, search pre-GC delta, search post-GC heap, and the full V8 accounting (`heapUsed`, `heapTotal`, `external`, `arrayBuffers`, RSS). Packed constraint edges live in `arrayBuffers` / `external`, not only `heapUsed`.
 

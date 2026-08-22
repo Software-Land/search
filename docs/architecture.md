@@ -14,7 +14,7 @@ Distribution: **one npm package** (`@software-land/search`) with subpath exports
 
 Tested: **Node 18+** (Jest/Node) and **in-process / loopback Worker semantics**. A real browser Worker uses the same protocol. Not promised: Deno, Bun, React Native, Android, Electron.
 
-Search Core uses `performance.now`, `AbortSignal`, and ESM-syntax sources. No `fs`, `process`, `Buffer`, or `Worker` in Core modules.
+Search Core uses `performance.now` and `AbortSignal`. TypeScript ESM sources; Node/browser execute emitted `dist/` JavaScript. No `fs`, `process`, `Buffer`, or `Worker` in Core modules.
 
 ## Android / mobile
 

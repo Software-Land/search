@@ -170,7 +170,7 @@ Runtime parsers: `parseEquivalences`, `parseSynonyms`, `parseRelationships`. Art
 
 ## TypeScript
 
-Implementation is JavaScript. The published runtime is emitted ESM in `dist/`; root and browser public types are generated from `src/index.ts` / `src/browser/index.ts` into `dist/*.d.ts`. Compiler subpaths still ship handwritten `.d.ts` under `tools/`. From a git checkout:
+Runtime implementation is authored in TypeScript and published as emitted ESM in `dist/`. Consumers execute that JavaScript, not `.ts` sources. Root and browser public types are generated from `src/index.ts` / `src/browser/index.ts` into `dist/*.d.ts`. Compiler subpaths still ship handwritten `.d.ts` under `tools/`. From a git checkout:
 
 ```bash
 npm install
@@ -223,8 +223,8 @@ Root exports: `SearchEngine`, `english`, `dictionary`, strategy/retriever consta
 | Browser Worker | [docs/browser.md](docs/browser.md) |
 | Architecture | [docs/architecture.md](docs/architecture.md) |
 | Known limitations | [docs/limitations.md](docs/limitations.md) |
-| Relevance evaluation (dev) | [benchmarks/relevance/README.md](benchmarks/relevance/README.md) |
-| Memory benchmarks (dev) | [benchmarks/memory/README.md](benchmarks/memory/README.md) |
+| Relevance evaluation (dev, GitHub tree; not in the npm tarball) | [benchmarks/relevance/README.md](https://github.com/Software-Land/search/blob/main/benchmarks/relevance/README.md) |
+| Memory benchmarks (dev, GitHub tree; not in the npm tarball) | [benchmarks/memory/README.md](https://github.com/Software-Land/search/blob/main/benchmarks/memory/README.md) |
 
 The checked-in toy fixture is evaluation machinery, not a ranking-quality claim.
 
