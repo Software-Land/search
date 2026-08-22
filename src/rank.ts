@@ -1,7 +1,8 @@
 /**
  * Rank by constraint partial order:
- *   graph of must-outrank edges → SCCs → topo order of components
- *   → score + stable id inside each component.
+ *   builtin: signature buckets → bucket constraint DAG → SCC → heap frontier
+ *   custom: all-pairs graph → SCCs → heap extraction of ready components
+ *   → score + stable id inside unordered components / cycle blocks.
  * Cycles/conflicts are attached for explain/tests; they never fail silently.
  *
  * Interpretable within-constraint score is used only inside unordered
@@ -20,7 +21,28 @@ import {
   DEFAULT_CONSTRAINTS,
 } from "./constraints.js";
 import { throwIfAborted } from "./cancel.js";
+import { BinaryMaxHeap, scoreThenIdBetter } from "./rankHeap.js";
+import { constraintsAreBuiltin, rankSparse, rankSparseAsync, type RankerStats } from "./rankSparse.js";
 import type { ConstraintDef, ConstraintGraph, FeaturedHit, FeatureVector, RankedHit } from "./types.js";
+
+let lastStats: RankerStats | null = null;
+
+/** Last rankCandidates / rankCandidatesAsync instrumentation. Not a public API. */
+export function lastRankStats(): RankerStats | null {
+  return lastStats;
+}
+
+function recordPairwiseStats(C: number, edgeCount: number) {
+  lastStats = {
+    mode: "pairwise",
+    C,
+    B: C,
+    kAmbiguous: C,
+    bucketCompares: 0,
+    candidatePairCompares: C <= 1 ? 0 : (C * (C - 1)) / 2,
+    bucketEdges: edgeCount,
+  };
+}
 
 function boolNum(v: unknown) {
   return v ? 1 : 0;
@@ -86,7 +108,11 @@ export function rankCandidates(
     ...c,
     score: Number(scoreFeatures(c.features).toFixed(6)),
   }));
+  if (constraintsAreBuiltin(constraints)) {
+    return rankSparse(decorated, constraints, { signal, onStats: (s) => (lastStats = s) });
+  }
   const graph = buildConstraintGraph(decorated, constraints, { signal });
+  recordPairwiseStats(decorated.length, graph.edges.length);
   return orderFromGraph(decorated, graph, constraints, { signal });
 }
 
@@ -101,7 +127,11 @@ export async function rankCandidatesAsync(
     ...c,
     score: Number(scoreFeatures(c.features).toFixed(6)),
   }));
+  if (constraintsAreBuiltin(constraints)) {
+    return rankSparseAsync(decorated, constraints, { signal, onStats: (s) => (lastStats = s) });
+  }
   const graph = await buildConstraintGraphAsync(decorated, constraints, { signal });
+  recordPairwiseStats(decorated.length, graph.edges.length);
   return orderFromGraph(decorated, graph, constraints, { signal });
 }
 
@@ -114,35 +144,33 @@ function orderComponents(decorated: FeaturedHit[], graph: ConstraintGraph) {
   const marks = new Uint32Array(nComp);
   let generation = 0;
 
-  const ready: number[] = [];
-  for (let g = 0; g < nComp; g++) if (indeg[g] === 0) ready.push(g);
+  const bestScore = new Float64Array(nComp);
+  const bestId: string[] = new Array(nComp);
+  for (let g = 0; g < nComp; g++) {
+    let best = decorated[groups[g][0]];
+    for (let k = 1; k < groups[g].length; k++) {
+      const cand = decorated[groups[g][k]];
+      if (scoreThenIdBetter(cand.score || 0, cand.document.id, best.score || 0, best.document.id)) best = cand;
+    }
+    bestScore[g] = best.score || 0;
+    bestId[g] = best.document.id;
+  }
 
-  function bestOf(g: number) {
-    const members = groups[g].map((i) => decorated[i]);
-    members.sort((a, b) => ((b.score || 0) !== (a.score || 0) ? (b.score || 0) - (a.score || 0) : idCmp(a, b)));
-    return members[0];
-  }
-  function readySort() {
-    ready.sort((ga, gb) => {
-      const a = bestOf(ga);
-      const b = bestOf(gb);
-      if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
-      return idCmp(a, b);
-    });
-  }
-  readySort();
+  const heap = new BinaryMaxHeap<number>((ga, gb) =>
+    scoreThenIdBetter(bestScore[ga], bestId[ga], bestScore[gb], bestId[gb])
+  );
+  for (let g = 0; g < nComp; g++) if (indeg[g] === 0) heap.push(g);
+
   const topo: number[] = [];
-  while (ready.length) {
-    const g = ready.shift() as number;
+  while (heap.size) {
+    const g = heap.pop();
     topo.push(g);
     generation = advanceConstraintStamp(marks, generation);
     forEachOutgoingComponent(g, comp, groups, adj, marks, generation, (h) => {
       indeg[h] -= 1;
-      if (indeg[h] === 0) ready.push(h);
+      if (indeg[h] === 0) heap.push(h);
     });
-    readySort();
   }
-  // If the DAG walk missed nodes (shouldn't with SCCs), append remaining by id.
   if (topo.length < groups.length) {
     for (let g = 0; g < groups.length; g++) if (!topo.includes(g)) topo.push(g);
   }
