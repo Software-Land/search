@@ -49,7 +49,7 @@ node benchmarks/ranking/run.mjs
 node benchmarks/relevance/run.mjs
 ```
 
-Document new performance workloads next to those harnesses. Ranking cost is Θ(C²) in the **candidate** count C. Corpus size N is a retrieval problem. Do not present full-scan of a large high-DF corpus as scalable ranking.
+Document new performance workloads next to those harnesses. Builtin ranking is sparse in the constraint-signature count; worst case remains Θ(C²) in the **candidate** count C. Corpus size N is a retrieval problem. Do not present full-scan of a large high-DF corpus as scalable ranking.
 
 Chromium Worker coverage lives in `test/chromium-pack/` and is isolated from root runtime dependencies. Playwright is not a production dependency.
 

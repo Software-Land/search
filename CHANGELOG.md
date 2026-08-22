@@ -1,13 +1,14 @@
 # Changelog
 
-## 0.3.2 (unreleased)
+## 0.4.0 (unreleased)
 
 ### Added
 
 - Preferred public morphology factory `morphology({ lemmas })`, typed as `(options?: MorphologyOptions) => EnglishPlugin`. `MorphologyOptions` is `{ lemmas?: Record<string, string> }`, parallel to `dictionary({ entries })`. Deprecated `english()` keeps the exact 0.3.1 public signature (`unknown`) and delegates to the same English implementation. Plugin `name` stays `"english"`. Worker `init({ englishOptions })` is unchanged.
 - Software.Land-derived real-corpus ranking coverage: 98 strict V2 contracts and 60 B-intent regressions (158 executable cases). Historical 215 scenarios remain provenance/audit data and are not Core contracts. Fixture provenance is frozen at corpus commit `dff24cf606967cb50b24d28d9142747c9203e053` and scenario commit `08e1b735ae01a3815964360ef3b9141466176dc4`.
-- Candidate-stage survival checks on that fixture: expected contract/regression targets must appear in `meta.candidateTitles` before pairwise ranking, on both full-scan and indexed retrieval. Query `"2"` still keeps `200FPS` and `TLS 1.2 Vulnerability` in the candidate set.
-- Development-only ranking-envelope harness under `benchmarks/ranking/` (fixed C = 100, 200, 500, 1000). Not packed. Documents Θ(C²) ranker cost separately from corpus-scale retrieval. Not a search-quality claim.
+- Candidate-stage survival checks on that fixture: expected contract/regression targets must appear in `meta.candidateTitles` before ranking, on both full-scan and indexed retrieval. Query `"2"` still keeps `200FPS` and `TLS 1.2 Vulnerability` in the candidate set.
+- Identity-preserving sparse ranking for builtin constraint functions: candidates are grouped by constraint-relevant signatures, compared at the signature/bucket layer, and ordered with a heap over ready buckets. Same-class conflicts stay unordered. Incomparable buckets still interleave by score then `document.id`. Complete bipartite candidate edges are not materialized. Custom `ConstraintDef.fn` values still use the all-pairs path. Public ranking API is unchanged.
+- Development-only ranking-envelope harness under `benchmarks/ranking/` (fixed C = 100, 200, 500, 1000; homogeneous / few-bucket / mixed workloads; frozen all-pairs oracle comparison). Not packed. Not a search-quality claim.
 - `SECURITY.md` and `CONTRIBUTING.md`.
 
 ### Fixed
@@ -16,7 +17,8 @@
 
 ### Changed
 
-- Indexed retrieval still budgets ordinary hits at `candidateLimit` (default 200) and caps contextual title-prefix must-keep at `prefixCap` (default 800). Exact-title, configured-equivalence, and version remain unbounded must-keep; one-hop relationship expansion can still add neighbors after that budget. 0.3.2 does not silently truncate those correctness-critical classes and does not change the default full-scan retriever.
+- Builtin ranking no longer examines every candidate pair in the common case. Complexity is O(C log C + B²F + E_b) when the discrete signature count B is small, plus a localized pairwise fallback of size k when custom constraints are used (k = C). Worst case remains Θ(C²) when B = C or every constraint function is custom. This is not a claim of strict O(C log C) for every workload, of 5 ms search on all hardware, or of large-corpus full-scan scalability.
+- Indexed retrieval still budgets ordinary hits at `candidateLimit` (default 200) and caps contextual title-prefix must-keep at `prefixCap` (default 800). Exact-title, configured-equivalence, and version remain unbounded must-keep; one-hop relationship expansion can still add neighbors after that budget. 0.4.0 does not silently truncate those correctness-critical classes and does not change the default full-scan retriever.
 - Site lemma generation is documented as build-time data. This package consumes a `Record<string, string>`. Software.Land's generator lives at https://github.com/Software-Land/search-lemma-tools as source/reference tooling for that blog corpus, not as a runtime or general-purpose dependency.
 
 ### Infrastructure

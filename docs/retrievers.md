@@ -35,7 +35,7 @@ Synonym and typo alternatives are query-interpretation only. They become ordinar
 
 ## Candidate envelope
 
-`C` is `searchDetailed().meta.candidateCount`: the featured set after retrieval **and** one-hop relationship expansion, immediately before pairwise ranking.
+`C` is `searchDetailed().meta.candidateCount`: the featured set after retrieval **and** one-hop relationship expansion, immediately before ranking.
 
 Let `k` be `candidateLimit` (default 200) and `P` the contextual-prefix-only hits.
 
@@ -48,7 +48,7 @@ C        <= C_retrieve + |R_new|
 
 `U_*` are documents whose retrieval sources include unbounded must-keep. `R_new` is one-hop neighbors of expansion primaries that were not already retrieved. Default `sourcePolicy` is `top1-strong` (one primary). Dedup is by document id before ranking.
 
-Those `U_*` and `R_new` terms can grow with corpus size N when many documents share an exact title, a configured-equivalence title form, a version/dotted span, or a high-degree relationship neighborhood. 0.3.2 does **not** silently truncate those correctness-critical classes. Ordinary large-corpus operation is still: index cheaply, budget the ordinary pool, then run the existing constraint ranker on C.
+Those `U_*` and `R_new` terms can grow with corpus size N when many documents share an exact title, a configured-equivalence title form, a version/dotted span, or a high-degree relationship neighborhood. 0.4.0 does **not** silently truncate those correctness-critical classes. Ordinary large-corpus operation is still: index cheaply, budget the ordinary pool, then rank C. Builtin ranking is sparse in the number of constraint signatures; it is not a license to full-scan huge high-DF candidate sets.
 
 Full-scan (default retriever) does not apply `candidateLimit`. Matching documents can be Θ(N). Adaptive uses full-scan while `documentCount <= adaptive.documentThreshold` (default 1500), else indexed. Custom `{ retrieve }` objects are experimental and unbounded.
 
@@ -60,11 +60,11 @@ Useful as a **candidate retriever**. Not the final relevance algorithm. Default 
 
 ## Scaling
 
-Small full-scan catalogs can remain interactive. High-document-frequency full-scan at 10k+ candidates is unsuitable for typeahead. Pairwise ranking remains Θ(C²) in **candidate count C**; corpus scale is a retrieval problem. Use `indexed` / `adaptive` so ordinary hits stay near `candidateLimit`. Full-scan plus pairwise ranking is not a large-C architecture.
+Small full-scan catalogs can remain interactive. High-document-frequency full-scan at 10k+ candidates is unsuitable for typeahead. Builtin ranking is O(C log C + B²F + E_b) in the common case and Θ(C²) in the worst case (B = C or custom constraint functions). Corpus scale is still a retrieval problem. Use `indexed` / `adaptive` so ordinary hits stay near `candidateLimit`. Full-scan of a high-DF term is not a large-C architecture.
 
 Fixed-C ranker timings: [ranking envelope (GitHub tree; not in the npm tarball)](https://github.com/Software-Land/search/blob/main/benchmarks/ranking/README.md).
 
-Full-scan ranking of a high-DF query previously exhausted heap by retaining Θ(C²) pair diagnostics. 0.3.1 no longer retains those objects, packs remaining directed edges, and uses CSR SCC traversal with generation-stamp component-edge deduplication instead of JS adjacency/`Set` overlays. Comparison time remains Θ(C²). Article-like corpora crossed the typeahead limit earlier because body/prefix hit sets explode.
+Full-scan ranking of a high-DF query previously exhausted heap by retaining Θ(C²) pair diagnostics. 0.3.1 no longer retains those objects, packs remaining directed edges, and uses CSR SCC traversal with generation-stamp component-edge deduplication instead of JS adjacency/`Set` overlays. 0.4.0 builtin ranking additionally avoids enumerating every candidate pair when signatures collapse. Article-like corpora can still cross the typeahead limit because body/prefix hit sets explode.
 
 Allocation and RSS for the checked-in generators: [memory benchmarks (GitHub tree; not in the npm tarball)](https://github.com/Software-Land/search/blob/main/benchmarks/memory/README.md). That harness is not a latency or search-quality claim.
 

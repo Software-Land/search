@@ -12,7 +12,7 @@ query
   → results (+ optional related rail)
 ```
 
-Retrieval bounds ordinary indexed hits. Pairwise ranking is Θ(C²) in the candidate count, not in corpus size N.
+Retrieval bounds ordinary indexed hits. Builtin ranking is sparse in the constraint-signature count B; worst case remains Θ(C²) when B = C.
 
 ## Equivalence ≠ synonym ≠ relatedness
 
