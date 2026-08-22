@@ -11,6 +11,10 @@ import {
 } from "../dist/constraints.js";
 import { rankCandidates, rankCandidatesAsync } from "../dist/rank.js";
 
+function edgePairs(edges) {
+  return [...edges];
+}
+
 function blankFeatures(over = {}) {
   return {
     exactTitleMatch: false,
@@ -78,7 +82,8 @@ describe("diagnoseConstraintGraph reuses a built graph", () => {
     const candidates = [hit("b"), hit("a"), hit("c")];
     const defs = [];
     const graph = buildConstraintGraph(candidates, defs);
-    expect(graph.edges).toEqual([]);
+    expect(edgePairs(graph.edges)).toEqual([]);
+    expect(graph.edges.length).toBe(0);
     expect(graph.pairReports).toEqual([]);
     expect(diagnoseConstraintGraph(graph, candidates)).toEqual(detectConstraintCycles(candidates, defs));
   });
@@ -98,7 +103,7 @@ describe("diagnoseConstraintGraph reuses a built graph", () => {
       },
     ];
     const graph = buildConstraintGraph(candidates, defs);
-    expect(graph.edges).toEqual([[1, 0]]);
+    expect(edgePairs(graph.edges)).toEqual([[1, 0]]);
     expect(graph.pairReports).toEqual([]);
     expect(diagnoseConstraintGraph(graph, candidates)).toEqual(detectConstraintCycles(candidates, defs));
   });
@@ -120,7 +125,8 @@ describe("diagnoseConstraintGraph reuses a built graph", () => {
       },
     ];
     const graph = buildConstraintGraph(candidates, defs);
-    expect(graph.edges).toEqual([]);
+    expect(edgePairs(graph.edges)).toEqual([]);
+    expect(graph.edges.length).toBe(0);
     expect(graph.pairReports[0].conflict).toBe(true);
     expect(graph.pairReports[0].resolution).toBe("unordered-same-class-conflict");
     expect(diagnoseConstraintGraph(graph, candidates)).toEqual(detectConstraintCycles(candidates, defs));
@@ -173,7 +179,8 @@ describe("ranking reuses graph construction", () => {
     const C = 200;
     const candidates = Array.from({ length: C }, (_, i) => hit(`id-${String(i).padStart(3, "0")}`));
     const graph = buildConstraintGraph(candidates, []);
-    expect(graph.edges).toEqual([]);
+    expect(edgePairs(graph.edges)).toEqual([]);
+    expect(graph.edges.length).toBe(0);
     expect(graph.pairReports).toHaveLength(0);
     const first = rankCandidates(candidates, { constraints: [] }).map((r) => r.document.id);
     const second = rankCandidates(candidates, { constraints: [] }).map((r) => r.document.id);
@@ -232,8 +239,12 @@ describe("constraint graph retains only edges and conflicts", () => {
     const candidates = [hit("c"), hit("a"), hit("b")];
     const sync = buildConstraintGraph(candidates, []);
     const asyncd = await buildConstraintGraphAsync(candidates, []);
-    expect(sync).toEqual({ n: 3, edges: [], pairReports: [] });
-    expect(asyncd).toEqual(sync);
+    expect(sync.n).toBe(3);
+    expect(edgePairs(sync.edges)).toEqual([]);
+    expect(sync.pairReports).toEqual([]);
+    expect(asyncd.n).toBe(sync.n);
+    expect(edgePairs(asyncd.edges)).toEqual(edgePairs(sync.edges));
+    expect(asyncd.pairReports).toEqual(sync.pairReports);
   });
 
   test("decisive ordered pairs become edges without a retained report", () => {
@@ -251,7 +262,7 @@ describe("constraint graph retains only edges and conflicts", () => {
       },
     ];
     const graph = buildConstraintGraph(candidates, defs);
-    expect(graph.edges).toEqual([[1, 0]]);
+    expect(edgePairs(graph.edges)).toEqual([[1, 0]]);
     expect(graph.pairReports).toEqual([]);
   });
 
@@ -272,7 +283,8 @@ describe("constraint graph retains only edges and conflicts", () => {
       },
     ];
     const graph = buildConstraintGraph(candidates, defs);
-    expect(graph.edges).toEqual([]);
+    expect(edgePairs(graph.edges)).toEqual([]);
+    expect(graph.edges.length).toBe(0);
     expect(graph.pairReports).toHaveLength(1);
     expect(graph.pairReports[0]).toMatchObject({
       i: 0,
@@ -310,7 +322,7 @@ describe("constraint graph retains only edges and conflicts", () => {
       },
     ];
     const graph = buildConstraintGraph(candidates, defs);
-    expect(graph.edges).toEqual([[0, 1]]);
+    expect(edgePairs(graph.edges)).toEqual([[0, 1]]);
     expect(graph.pairReports).toHaveLength(1);
     expect(graph.pairReports[0]).toMatchObject({
       conflict: true,

@@ -27,6 +27,7 @@ import type {
   ConstraintCompareResult,
   ConstraintDef,
   ConstraintGraph,
+  PackedConstraintEdges as PackedConstraintEdgesApi,
   FeaturedHit,
   FeatureVector,
   RelationshipStrategy,
@@ -387,19 +388,91 @@ export function compareConstraint(a: FeaturedHit, b: FeaturedHit, defs: Constrai
  * Unordered / no-decision pairs are compared but not retained. pairReports
  * keeps only conflict diagnostics (same-class conflict or weaker-class
  * disagreement). Ranking still evaluates every unordered pair once.
+ *
+ * Edges are packed uint32 pairs in fixed-capacity chunks so append does not
+ * copy a growing monolithic buffer. Chunk size is 65536 edges (512 KiB).
  */
+export const PACKED_CONSTRAINT_EDGE_CHUNK_EDGES = 65536;
+
+export class PackedConstraintEdges implements PackedConstraintEdgesApi {
+  readonly chunkEdges: number;
+  private readonly chunks: Uint32Array[] = [];
+  private size = 0;
+  private fill = 0;
+
+  constructor(chunkEdges: number = PACKED_CONSTRAINT_EDGE_CHUNK_EDGES) {
+    if (!Number.isInteger(chunkEdges) || chunkEdges < 1) {
+      throw new Error("PackedConstraintEdges chunkEdges must be a positive integer");
+    }
+    this.chunkEdges = chunkEdges;
+  }
+
+  get length() {
+    return this.size;
+  }
+
+  allocatedBytes() {
+    return this.chunks.length * this.chunkEdges * 8;
+  }
+
+  append(from: number, to: number) {
+    let cur = this.chunks.length ? this.chunks[this.chunks.length - 1] : null;
+    if (!cur || this.fill >= cur.length) {
+      cur = new Uint32Array(this.chunkEdges * 2);
+      this.chunks.push(cur);
+      this.fill = 0;
+    }
+    cur[this.fill] = from >>> 0;
+    cur[this.fill + 1] = to >>> 0;
+    this.fill += 2;
+    this.size += 1;
+  }
+
+  fromAt(i: number) {
+    if (i < 0 || i >= this.size) throw new RangeError("edge index out of range");
+    const buf = this.chunks[Math.floor(i / this.chunkEdges)];
+    return buf[(i % this.chunkEdges) * 2];
+  }
+
+  toAt(i: number) {
+    if (i < 0 || i >= this.size) throw new RangeError("edge index out of range");
+    const buf = this.chunks[Math.floor(i / this.chunkEdges)];
+    return buf[(i % this.chunkEdges) * 2 + 1];
+  }
+
+  forEachEdge(visit: (u: number, v: number) => void) {
+    const { chunks, chunkEdges, size } = this;
+    const last = chunks.length - 1;
+    for (let c = 0; c < chunks.length; c++) {
+      const buf = chunks[c];
+      const n = c === last ? size - c * chunkEdges : chunkEdges;
+      for (let e = 0, off = 0; e < n; e++, off += 2) visit(buf[off], buf[off + 1]);
+    }
+  }
+
+  *[Symbol.iterator](): IterableIterator<[number, number]> {
+    const { chunks, chunkEdges, size } = this;
+    const last = chunks.length - 1;
+    for (let c = 0; c < chunks.length; c++) {
+      const buf = chunks[c];
+      const n = c === last ? size - c * chunkEdges : chunkEdges;
+      for (let e = 0, off = 0; e < n; e++, off += 2) yield [buf[off], buf[off + 1]];
+    }
+  }
+}
+
 function recordConstraintPair(
   i: number,
   j: number,
   candidates: FeaturedHit[],
   defs: ConstraintDef[],
-  edges: number[][],
+  edges: PackedConstraintEdges,
   pairReports: Array<ConstraintCompareResult & { i: number; j: number }>
 ) {
   const cmp = compareConstraint(candidates[i], candidates[j], defs);
   if (cmp.conflict) pairReports.push({ i, j, ...cmp });
-  if (cmp.order < 0) edges.push([i, j]);
-  else if (cmp.order > 0) edges.push([j, i]);
+  if (cmp.order < 0) edges.append(i, j);
+  else if (cmp.order > 0) edges.append(j, i);
 }
 
 export function buildConstraintGraph(
@@ -408,7 +481,7 @@ export function buildConstraintGraph(
   { signal }: { signal?: AbortSignal } = {}
 ): ConstraintGraph {
   const n = candidates.length;
-  const edges: number[][] = [];
+  const edges = new PackedConstraintEdges();
   const pairReports: Array<ConstraintCompareResult & { i: number; j: number }> = [];
   let k = 0;
   for (let i = 0; i < n; i++) {
@@ -426,7 +499,7 @@ export async function buildConstraintGraphAsync(
   { signal }: { signal?: AbortSignal } = {}
 ): Promise<ConstraintGraph> {
   const n = candidates.length;
-  const edges: number[][] = [];
+  const edges = new PackedConstraintEdges();
   const pairReports: Array<ConstraintCompareResult & { i: number; j: number }> = [];
   let k = 0;
   for (let i = 0; i < n; i++) {
@@ -442,13 +515,13 @@ export async function buildConstraintGraphAsync(
   return { n, edges, pairReports };
 }
 
-export function stronglyConnectedComponents(n: number, edges: number[][]) {
+export function stronglyConnectedComponents(n: number, edges: PackedConstraintEdgesApi) {
   const adj: number[][] = Array.from({ length: n }, () => []);
   const radj: number[][] = Array.from({ length: n }, () => []);
-  for (const [u, v] of edges) {
+  edges.forEachEdge((u, v) => {
     adj[u].push(v);
     radj[v].push(u);
-  }
+  });
   const seen = new Array(n).fill(false);
   const order: number[] = [];
   function dfs1(u: number) {

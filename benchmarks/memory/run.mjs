@@ -3,7 +3,8 @@
  * Memory benchmark for SearchEngine index + search.
  *
  * RSS is process resident size, not retained index size. Prefer heapUsed
- * after forced GC for retained figures. Requires:
+ * after forced GC for retained V8-heap figures. Packed constraint edges are
+ * Uint32Array chunks: include external / arrayBuffers, not only heapUsed.
  *
  *   node --expose-gc benchmarks/memory/run.mjs --mode routine
  *
@@ -87,7 +88,31 @@ export async function runOne({
       retrieveMs: meta.retrieveMs ?? null,
       featureMs: meta.featureMs ?? null,
       rankMs: meta.rankMs ?? null,
+      before: {
+        heapUsedMb: beforeSearch.heapUsedMb,
+        heapTotalMb: beforeSearch.heapTotalMb,
+        externalMb: beforeSearch.externalMb,
+        arrayBuffersMb: beforeSearch.arrayBuffersMb,
+        rssMb: beforeSearch.rssMb,
+      },
+      afterPreGc: {
+        heapUsedMb: afterPreGc.heapUsedMb,
+        heapTotalMb: afterPreGc.heapTotalMb,
+        externalMb: afterPreGc.externalMb,
+        arrayBuffersMb: afterPreGc.arrayBuffersMb,
+        rssMb: afterPreGc.rssMb,
+      },
+      afterPostGc: {
+        heapUsedMb: afterPostGc.heapUsedMb,
+        heapTotalMb: afterPostGc.heapTotalMb,
+        externalMb: afterPostGc.externalMb,
+        arrayBuffersMb: afterPostGc.arrayBuffersMb,
+        rssMb: afterPostGc.rssMb,
+      },
       heapUsedDeltaMb: deltaMb(afterPreGc, beforeSearch, "heapUsedMb"),
+      heapTotalDeltaMb: deltaMb(afterPreGc, beforeSearch, "heapTotalMb"),
+      externalDeltaMb: deltaMb(afterPreGc, beforeSearch, "externalMb"),
+      arrayBuffersDeltaMb: deltaMb(afterPreGc, beforeSearch, "arrayBuffersMb"),
       rssDeltaMb: deltaMb(afterPreGc, beforeSearch, "rssMb"),
       afterGcHeapUsedMb: afterPostGc.heapUsedMb,
       afterGcRssMb: afterPostGc.rssMb,
@@ -164,7 +189,11 @@ function formatHuman(report) {
   if (report.search) {
     const s = report.search;
     lines.push(
-      `search q=${JSON.stringify(s.query)} candidates=${s.candidateCount} pairs=${s.pairComparisons} rankMs=${s.rankMs != null ? Number(s.rankMs).toFixed(1) : "n/a"} Δheap=${s.heapUsedDeltaMb}MB postGcHeap=${s.afterGcHeapUsedMb}MB`,
+      `search q=${JSON.stringify(s.query)} candidates=${s.candidateCount} pairs=${s.pairComparisons} rankMs=${s.rankMs != null ? Number(s.rankMs).toFixed(1) : "n/a"}`,
+      `  before    heapUsed=${s.before.heapUsedMb}MB heapTotal=${s.before.heapTotalMb}MB external=${s.before.externalMb}MB arrayBuffers=${s.before.arrayBuffersMb}MB rss=${s.before.rssMb}MB`,
+      `  after     heapUsed=${s.afterPreGc.heapUsedMb}MB heapTotal=${s.afterPreGc.heapTotalMb}MB external=${s.afterPreGc.externalMb}MB arrayBuffers=${s.afterPreGc.arrayBuffersMb}MB rss=${s.afterPreGc.rssMb}MB`,
+      `  Δ         heapUsed=${s.heapUsedDeltaMb}MB heapTotal=${s.heapTotalDeltaMb}MB external=${s.externalDeltaMb}MB arrayBuffers=${s.arrayBuffersDeltaMb}MB rss=${s.rssDeltaMb}MB`,
+      `  postGc    heapUsed=${s.afterPostGc.heapUsedMb}MB heapTotal=${s.afterPostGc.heapTotalMb}MB external=${s.afterPostGc.externalMb}MB arrayBuffers=${s.afterPostGc.arrayBuffersMb}MB rss=${s.afterPostGc.rssMb}MB`,
       `topIds=${s.topIds.join(",")}`
     );
   }

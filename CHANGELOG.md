@@ -10,11 +10,12 @@
 
 ### Changed
 
-- Ranking constructs the pairwise constraint graph once per `rankCandidates` / `rankCandidatesAsync` call and reuses it for cycle diagnosis. Pairwise evaluation remains Θ(C²). The graph retains directed edges and conflict reports only; unordered / no-decision pairs are compared but not stored. Search result order, scores, constraints, and explanation/meta shapes are unchanged.
+- Ranking constructs the pairwise constraint graph once per `rankCandidates` / `rankCandidatesAsync` call and reuses it for cycle diagnosis. Pairwise evaluation remains Θ(C²). The graph retains packed directed edges (chunked uint32 index pairs) and conflict reports only; unordered / no-decision pairs are compared but not stored. Search result order, scores, constraints, and explanation/meta shapes are unchanged.
 
 ### Fixed
 
 - Constraint-graph construction no longer retains a report object for every unordered candidate pair. Directed edges, conflict/cycle diagnostics, explanations, and ranking order are unchanged. Pairwise comparison remains Θ(C²). Default full-scan search of a high-DF query no longer OOMs from diagnostic allocation.
+- Constraint-graph directed edges are stored as packed uint32 chunks instead of one JavaScript array per edge. Ranking order, conflict/cycle diagnostics, explanations, and public APIs are unchanged. Pairwise comparison remains Θ(C²).
 - Default `compileSemantic()` no longer returns `outputPath` inside the internal work directory that `finally` deletes. When `outputPath` is omitted, the launcher writes a unique `search-semantic-output-*.json` file under the system temp directory that survives the call. The caller owns that file. Explicit `outputPath` is unchanged. Artifact bytes and schema are unchanged.
 
 ## 0.3.0

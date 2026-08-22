@@ -392,9 +392,24 @@ export interface RelationshipExpansionArgs {
   constraints?: ConstraintDef[];
 }
 
+/**
+ * Internal packed directed-edge store. Not a public package type.
+ * Each edge is two uint32 candidate indexes in insertion order.
+ */
+export interface PackedConstraintEdges {
+  readonly length: number;
+  readonly chunkEdges: number;
+  append(from: number, to: number): void;
+  forEachEdge(visit: (u: number, v: number) => void): void;
+  allocatedBytes(): number;
+  fromAt(i: number): number;
+  toAt(i: number): number;
+  [Symbol.iterator](): IterableIterator<[number, number]>;
+}
+
 export interface ConstraintGraph {
   n: number;
-  edges: number[][];
+  edges: PackedConstraintEdges;
   /**
    * Conflict diagnostics only. Unordered / no-decision pairs are compared
    * during graph construction but not retained.

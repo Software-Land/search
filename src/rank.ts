@@ -114,13 +114,13 @@ function orderFromGraph(
 
   const succ = Array.from({ length: groups.length }, () => new Set<number>());
   const indeg = new Array(groups.length).fill(0);
-  for (const [u, v] of edges) {
-    if (comp[u] === comp[v]) continue;
+  edges.forEachEdge((u, v) => {
+    if (comp[u] === comp[v]) return;
     if (!succ[comp[u]].has(comp[v])) {
       succ[comp[u]].add(comp[v]);
       indeg[comp[v]] += 1;
     }
-  }
+  });
 
   const ready: number[] = [];
   for (let g = 0; g < groups.length; g++) if (indeg[g] === 0) ready.push(g);

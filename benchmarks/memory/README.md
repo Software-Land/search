@@ -34,7 +34,7 @@ node --expose-gc benchmarks/memory/run.mjs --shape article-diverse --n 1000 --qu
 | `large` | settings 10k `bluetooth settings` (~9k full-scan candidates) | Ranking-allocation / high-DF proof |
 | `oom-probe` | article 25k `tls` | Explicit 8 GB heap probe; not a unit test |
 
-Each report distinguishes source-corpus heap, post-index heap before/after GC, source-drop retained heap, search pre-GC delta, search post-GC heap, RSS, index time, search/rank time, and `candidateCount` from `searchDetailed().meta`.
+Each report distinguishes source-corpus heap, post-index heap before/after GC, source-drop retained heap, search pre-GC delta, search post-GC heap, and the full V8 accounting (`heapUsed`, `heapTotal`, `external`, `arrayBuffers`, RSS). Packed constraint edges live in `arrayBuffers` / `external`, not only `heapUsed`.
 
 Pair-comparison count is `C*(C-1)/2` from that candidate count. Ranking comparison time remains Θ(C²) even when diagnostic objects are not retained.
 
