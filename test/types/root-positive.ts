@@ -17,6 +17,7 @@ import {
   abortError,
   dictionary,
   english,
+  morphology,
   isAbortError,
   parseEquivalences,
   parseRelationships,
@@ -31,6 +32,7 @@ import {
   type SearchOptions,
   type SearchResult,
   type SynonymArtifact,
+  type EnglishPlugin,
 } from "@software-land/search";
 
 const schema: Schema = {
@@ -52,13 +54,16 @@ const relationships: RelationshipArtifact = {
 
 const entries: EquivalenceEntry[] = [{ key: "wifi", expansion: ["wi", "fi"], aliases: [["wi", "fi"]] }];
 
+const morphologyPlugin: EnglishPlugin = morphology();
 const englishPlugin: unknown = english();
 const dictionaryPlugin: unknown = dictionary({ entries });
+const morphologyWithLemmas: EnglishPlugin = morphology({ lemmas: { widgets: "widget" } });
 const englishWithLemmas: unknown = english({ lemmas: { widgets: "widget" } });
+void morphologyPlugin.lemma;
 
 const options: SearchEngineOptions = {
   schema,
-  plugins: [englishPlugin, dictionaryPlugin, englishWithLemmas],
+  plugins: [morphologyPlugin, englishPlugin, dictionaryPlugin, morphologyWithLemmas, englishWithLemmas],
   relationships,
   relationshipStrategy: "hybrid",
   retriever: "indexed",

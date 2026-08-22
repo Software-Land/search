@@ -28,7 +28,7 @@ npm install @software-land/search
 ```
 
 ```js
-import { SearchEngine, english, dictionary } from "@software-land/search";
+import { SearchEngine, morphology, dictionary } from "@software-land/search";
 
 const engine = SearchEngine.create({
   schema: {
@@ -36,7 +36,7 @@ const engine = SearchEngine.create({
     body: { type: "text", role: "body" },
   },
   plugins: [
-    english(),
+    morphology(),
     dictionary({
       entries: [{ key: "wifi", expansion: ["wi", "fi"], aliases: [["wi", "fi"]] }],
     }),
@@ -55,15 +55,15 @@ engine.search("wireless");
 
 ## Morphology
 
-Lemmatization is corpus-specific. Core owns the morphology mechanism, not every catalog's morphology policy. `english()` ships suffix heuristics, a small built-in table, and `english({ lemmas })`. It does not run spaCy, WordNet, lemminflect, or a site lemma script.
+Lemmatization is corpus-specific. Core owns the morphology mechanism, not every catalog's morphology policy. `morphology()` is the preferred factory; it is the current English implementation (suffix heuristics, a small built-in table, and optional `lemmas`). `english()` is a deprecated compatibility wrapper for `morphology()`. It does not run spaCy, WordNet, lemminflect, or a site lemma script.
 
 Pass generated or editorial maps as data:
 
 ```js
-english({ lemmas: { intercepting: "interceptor", recursive: "recursion", foobars: "foobaz" } })
+morphology({ lemmas: { intercepting: "interceptor", recursive: "recursion", foobars: "foobaz" } })
 ```
 
-`intercepting` → `interceptor` and `recursive` → `recursion` are catalog-specific policy examples, not universal linguistic truth. Some of those mappings already live in Core's small default table. Site entries **augment** the defaults. Explicit built-in mappings win, so a generated table cannot replace stems the runtime already relies on (`computing` stays `compute`). The Worker takes the same map as `init({ englishOptions: { lemmas } })`. Compile lexical-frequency n-grams with the same `english({ lemmas }).lemma` used at search time.
+`intercepting` → `interceptor` and `recursive` → `recursion` are catalog-specific policy examples, not universal linguistic truth. Some of those mappings already live in Core's small default table. Site entries **augment** the defaults. Explicit built-in mappings win, so a generated table cannot replace stems the runtime already relies on (`computing` stays `compute`). The Worker takes the same map as `init({ englishOptions: { lemmas } })`. Compile lexical-frequency n-grams with the same `morphology({ lemmas }).lemma` used at search time.
 
 Keep lemma generators, caches, and models in the site build. This package consumes a `Record<string, string>`, not the script. Those Python/model dependencies do not enter Search Core or the browser/runtime package dependency graph.
 
@@ -112,7 +112,7 @@ Build-time n-gram counts. Search Core looks up compiled keys; it does not rescan
 ```js
 import { compileLexicalFrequency, attachLexicalFrequency } from "@software-land/search/lexical";
 
-const artifact = compileLexicalFrequency(documents, { lemma: english().lemma });
+const artifact = compileLexicalFrequency(documents, { lemma: morphology().lemma });
 await engine.index(attachLexicalFrequency(documents, artifact));
 ```
 
@@ -182,9 +182,9 @@ npm test
 
 A repository checkout requires `npm run build` before executing the runtime, Jest tests, or `examples/catalog`. Python is outside `tsc`. Typecheck configs are not in the npm tarball; consumers use the shipped `dist` declarations for `.` and `./browser`.
 
-`SearchEngine.create({ plugins })` still accepts `unknown[]`. `english()` and `dictionary()` still return `unknown`. Custom retrievers still type as `{ retrieve: Function }`. Those 0.3.0 bindings are unchanged.
+`SearchEngine.create({ plugins })` still accepts `unknown[]`. Deprecated `english()` and `dictionary()` still return `unknown`. `morphology()` returns `EnglishPlugin`. Custom retrievers still type as `{ retrieve: Function }`. Those 0.3.0/0.3.1 bindings for `english()` and `dictionary()` are unchanged.
 
-Opt-in authoring interfaces (`SearchPlugin`, `EnglishPlugin`, `DictionaryPlugin`, `SynonymPlugin`, `LexiconPlugin`, `ExperimentalRetriever`) are available for extension authors who want checking. They do not publish query-analysis or index internals. Custom retrievers remain experimental; `query` and `index` arguments are intentionally `unknown`. Annotate your own objects — do not expect `english().lemma` to typecheck.
+Opt-in authoring interfaces (`SearchPlugin`, `EnglishPlugin`, `DictionaryPlugin`, `SynonymPlugin`, `LexiconPlugin`, `ExperimentalRetriever`) are available for extension authors who want checking. They do not publish query-analysis or index internals. Custom retrievers remain experimental; `query` and `index` arguments are intentionally `unknown`. `morphology().lemma` typechecks; `english().lemma` does not.
 
 ```ts
 import { SearchEngine, type SearchPlugin, type ExperimentalRetriever } from "@software-land/search";

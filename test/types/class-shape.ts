@@ -12,11 +12,14 @@ import {
   abortError,
   dictionary,
   english,
+  morphology,
   isAbortError,
   parseEquivalences,
   parseRelationships,
   parseSynonyms,
   type EquivalenceEntry,
+  type EnglishPlugin,
+  type MorphologyOptions,
 } from "@software-land/search";
 
 class DerivedEngine extends SearchEngine {}
@@ -76,6 +79,7 @@ void new ArtifactVersionErrorConstructor("aliased");
 void new ArtifactValidationErrorConstructor("aliased");
 void new IndexStateErrorConstructor("aliased");
 
+const morphologyFn: (options?: MorphologyOptions) => EnglishPlugin = morphology;
 const englishFn: (options?: { lemmas?: Record<string, string> }) => unknown = english;
 const dictionaryFn: (options?: { entries?: EquivalenceEntry[] }) => unknown = dictionary;
 const parseEquivalencesFn: (obj?: unknown) => unknown = parseEquivalences;
@@ -84,11 +88,13 @@ const parseRelationshipsFn: (obj?: unknown) => unknown = parseRelationships;
 const abortErrorFn: (message?: string) => Error = abortError;
 const isAbortErrorFn: (err: unknown) => boolean = isAbortError;
 
+void typeof morphology;
 void typeof english;
 void typeof dictionary;
 void typeof parseEquivalences;
 void typeof abortError;
 void typeof SearchEngine;
+void morphologyFn();
 void englishFn();
 void dictionaryFn();
 void parseEquivalencesFn();
@@ -96,6 +102,7 @@ void parseSynonymsFn();
 void parseRelationshipsFn();
 void abortErrorFn("Aborted");
 void isAbortErrorFn(new Error("no"));
+void morphology({ lemmas: { widgets: "widget" } });
 void english({ lemmas: { widgets: "widget" } });
 void dictionary({ entries: [{ key: "wifi" }] });
 void parseEquivalences();

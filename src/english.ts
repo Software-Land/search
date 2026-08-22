@@ -55,7 +55,7 @@ export interface EnglishPlugin {
   collapseRepeats: typeof collapseTrailingRepeats;
 }
 
-export function english({ lemmas = {} }: { lemmas?: Record<string, string> } = {}): EnglishPlugin {
+export function createEnglishPlugin({ lemmas = {} }: { lemmas?: Record<string, string> } = {}): EnglishPlugin {
   const table: Record<string, string> = { ...lemmas, ...DEFAULT_LEMMAS };
   function explicitLemma(token: string): string | null {
     const t = String(token || "").toLowerCase();
@@ -84,4 +84,11 @@ export function english({ lemmas = {} }: { lemmas?: Record<string, string> } = {
     },
     collapseRepeats: collapseTrailingRepeats,
   };
+}
+
+/**
+ * @deprecated Use `morphology()` instead.
+ */
+export function english({ lemmas = {} }: { lemmas?: Record<string, string> } = {}): EnglishPlugin {
+  return createEnglishPlugin({ lemmas });
 }

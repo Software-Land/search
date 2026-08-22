@@ -54,6 +54,6 @@ Same documents, configuration, artifacts, and query produce the same ordering, e
 
 ## Plugins (opt-in types)
 
-`SearchEngine.create({ plugins })` remains `unknown[]`. `english()` and `dictionary()` remain `unknown`. Permissive JavaScript plugin objects are still valid.
+`SearchEngine.create({ plugins })` remains `unknown[]`. `morphology()` returns `EnglishPlugin`. Deprecated `english()` and `dictionary()` remain `unknown`. Permissive JavaScript plugin objects are still valid.
 
 Type-only contracts `SearchPlugin`, `EnglishPlugin`, `DictionaryPlugin`, `SynonymPlugin`, and `LexiconPlugin` are opt-in. Annotate objects you author when you want checking. They describe the duck-typed hooks Core actually reads (`lemma`, `canonicalLemma`, `lexicon`, `sequences` / `entry`, `byKey`, `expand`). They do not make analysis or ranking internals public, and they do not change runtime dispatch.

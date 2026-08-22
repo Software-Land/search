@@ -1,4 +1,4 @@
-import { SearchEngine, english } from "@software-land/search";
+import { SearchEngine, english, morphology } from "@software-land/search";
 
 // @ts-expect-error FeatureVector is not a public export
 import type { FeatureVector } from "@software-land/search";
@@ -27,8 +27,11 @@ SearchEngine.create({ retriever: "bm25" });
 SearchEngine.create({ relationshipStrategy: "best" });
 
 const plugin = english();
+const morphologyPlugin = morphology();
 // @ts-expect-error public english() is unknown, not an implementation plugin shape
 plugin.lemma;
+void morphologyPlugin.lemma;
 
 void engine;
 void plugin;
+void morphologyPlugin;

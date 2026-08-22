@@ -3,6 +3,7 @@ import { buildIndex } from "./indexDocuments.js";
 import { extractFeatures } from "./features.js";
 import { rankCandidates, rankCandidatesAsync, scoreFeatures } from "./rank.js";
 import { constraintsForStrategy } from "./constraints.js";
+import { morphology } from "./morphology.js";
 import { english } from "./english.js";
 import { dictionary } from "./dictionary.js";
 import {
@@ -507,4 +508,4 @@ export class SearchEngine {
   }
 }
 
-export { english, dictionary };
+export { morphology, english, dictionary };

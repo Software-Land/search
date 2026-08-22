@@ -6,7 +6,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { SearchEngine, english, dictionary } from "../dist/index.js";
+import { SearchEngine, morphology, dictionary } from "../dist/index.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -37,7 +37,7 @@ function createEngine({ useLemmas = true, useDictionary = true, useRelationships
   return SearchEngine.create({
     schema,
     plugins: [
-      english(useLemmas ? { lemmas } : {}),
+      morphology(useLemmas ? { lemmas } : {}),
       dictionary({ entries: useDictionary ? dictionaryEntries : [] }),
     ],
     relationships: useRelationships ? relationships : undefined,

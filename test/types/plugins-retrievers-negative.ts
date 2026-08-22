@@ -1,4 +1,4 @@
-import { SearchEngine, english } from "@software-land/search";
+import { SearchEngine, english, morphology } from "@software-land/search";
 import type {
   ExperimentalRetriever,
   SearchPlugin,
@@ -17,8 +17,10 @@ import type { IndexedDocument } from "@software-land/search";
 import type { SearchIndex } from "@software-land/search";
 
 const plugin = english();
+const morphologyPlugin = morphology();
 // @ts-expect-error public english() is unknown, not an implementation plugin shape
 plugin.lemma;
+void morphologyPlugin.lemma;
 
 const badLemma: SearchPlugin = {
   // @ts-expect-error lemma must be a function when provided
@@ -85,6 +87,7 @@ const badRetrieveAsync: ExperimentalRetriever = {
 
 void SearchEngine;
 void plugin;
+void morphologyPlugin;
 void badLemma;
 void badCanonical;
 void badLexicon;

@@ -3,7 +3,7 @@
  * Run: npm run example
  * (requires npm run build so dist/ exists)
  */
-import { SearchEngine, english, dictionary } from "../../dist/index.js";
+import { SearchEngine, morphology, dictionary } from "../../dist/index.js";
 
 const schema = {
   title: { type: "text", role: "title" },
@@ -21,7 +21,7 @@ const documents = [
 const engine = SearchEngine.create({
   schema,
   plugins: [
-    english(),
+    morphology(),
     dictionary({
       entries: [
         { key: "wifi", expansion: ["wi", "fi"], aliases: [["wi", "fi"]] },

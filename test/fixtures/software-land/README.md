@@ -11,7 +11,8 @@ production-derived ranking in this OSS repo without importing Gatsby, UI, V1,
 or the Software.Land E2E runner.
 
 Lemmas and dictionary/equivalence entries here are **fixture arguments only**.
-They must be passed into `english({ lemmas })` and `dictionary({ entries })`.
+They must be passed into `morphology({ lemmas })` and `dictionary({ entries })`.
+`english({ lemmas })` is a deprecated compatibility wrapper for `morphology()`.
 They must never become Core defaults.
 
 ## Provenance
@@ -49,7 +50,7 @@ and `tests/search-v2-contracts.js` from the committed scenario SHA.
 
 - `documents.json` — `id`, `title`, normalized search `body` (live V2 indexed shape)
 - `dictionary.json` — merged Software.Land acronym map + compiled equivalences as `dictionary({ entries })`
-- `lemmas.json` — site lemma table as `english({ lemmas })`
+- `lemmas.json` — site lemma table as `morphology({ lemmas })`
 - `relationships.json` — runtime relationship graph, including TLS ↔ VPN editorial edges
 - `lexical-frequency.json` — production lexical-frequency artifact
 - `v2-contracts.json` — strict accepted V2 cases (`kind: contract`)

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2 (unreleased)
+
+### Added
+
+- Preferred public morphology factory `morphology({ lemmas })`, typed as `(options?: MorphologyOptions) => EnglishPlugin`. `MorphologyOptions` is `{ lemmas?: Record<string, string> }`, parallel to `dictionary({ entries })`. Deprecated `english()` keeps the exact 0.3.1 public signature (`unknown`) and delegates to the same English implementation. Plugin `name` stays `"english"`. Worker `init({ englishOptions })` is unchanged.
+
 ## 0.3.1
 
 ### Added

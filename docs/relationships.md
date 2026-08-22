@@ -26,7 +26,7 @@ The compiler decides what is in the runtime artifact. Search Core expands **ever
 
 ```js
 const engine = SearchEngine.create({
-  plugins: [english()],
+  plugins: [morphology()],
   relationshipStrategy: "separate",
   relationships: {
     format: "search-v2-relationships",

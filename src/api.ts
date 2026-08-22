@@ -53,7 +53,18 @@ export interface SearchPlugin {
   expand?(token: string): Array<{ form: string }>;
 }
 
-/** Opt-in morphology plugin shape. `english()` still returns `unknown`. */
+/**
+ * Options for `morphology()`. Optional `lemmas` augment the built-in English table.
+ */
+export interface MorphologyOptions {
+  lemmas?: Record<string, string>;
+}
+
+/**
+ * Opt-in morphology plugin shape.
+ * `morphology()` returns `EnglishPlugin`. Deprecated `english()` keeps the
+ * 0.3.1 facade and still returns `unknown`.
+ */
 export interface EnglishPlugin extends SearchPlugin {
   name: "english";
   lemma(token: string): string;

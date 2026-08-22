@@ -6,6 +6,7 @@ import {
   SearchEngine,
   dictionary,
   english,
+  morphology,
   type DictionaryPlugin,
   type EnglishPlugin,
   type ExperimentalRetrieveOptions,
@@ -16,6 +17,7 @@ import {
 } from "@software-land/search";
 
 const unknownPlugins: unknown[] = [
+  morphology(),
   english(),
   dictionary({ entries: [{ key: "wifi" }] }),
   { arbitrary: true },
@@ -32,7 +34,9 @@ const jsShaped = {
   extra: true,
 };
 SearchEngine.create({ plugins: [jsShaped] });
-SearchEngine.create({ plugins: [english(), dictionary()] });
+SearchEngine.create({ plugins: [morphology(), english(), dictionary()] });
+const fromMorphology: EnglishPlugin = morphology();
+void fromMorphology.lemma;
 
 const retrieveFn: Function = () => [];
 SearchEngine.create({ retriever: { retrieve: retrieveFn } });

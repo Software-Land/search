@@ -7,6 +7,7 @@
  */
 
 import { SearchEngine as searchEngineImpl } from "./SearchEngine.js";
+import { morphology as morphologyImpl } from "./morphology.js";
 import { english as englishImpl } from "./english.js";
 import { dictionary as dictionaryImpl } from "./dictionary.js";
 import {
@@ -50,6 +51,8 @@ import type {
   SearchEngine as SearchEngineType,
   SearchEngineConstructor,
   SynonymArtifact,
+  EnglishPlugin,
+  MorphologyOptions,
 } from "./api.js";
 
 export type {
@@ -63,6 +66,7 @@ export type {
   ExperimentalRetriever,
   IndexResult,
   LexiconPlugin,
+  MorphologyOptions,
   PrefixCompletion,
   RelationshipArtifact,
   RelationshipEdge,
@@ -87,6 +91,8 @@ export type {
 export type SearchEngine = SearchEngineType;
 export const SearchEngine: SearchEngineConstructor = searchEngineImpl as unknown as SearchEngineConstructor;
 
+export const morphology: (options?: MorphologyOptions) => EnglishPlugin = morphologyImpl;
+/** @deprecated Use `morphology()` instead. */
 export const english: (options?: { lemmas?: Record<string, string> }) => unknown = englishImpl;
 export const dictionary: (options?: { entries?: EquivalenceEntry[] }) => unknown = dictionaryImpl;
 
@@ -138,6 +144,7 @@ export const IndexStateError: IndexStateErrorConstructor =
 
 export const PUBLIC_EXPORTS: readonly string[] = Object.freeze([
   "SearchEngine",
+  "morphology",
   "english",
   "dictionary",
   "RELATIONSHIP_STRATEGIES",
