@@ -114,6 +114,23 @@ describe("contextual MUST_KEEP bound", () => {
     expect(contextualMust.some((h) => h.document.id === "overflow-strong")).toBe(false);
   });
 
+  test("title-prefix must-keep keeps a short-literal winner out of the ordinary BM25 pool", () => {
+    const docs = [
+      { id: "winner", title: "Zzwinner unique ranking title analog", body: "unrelated" },
+    ];
+    for (let i = 0; i < 40; i += 1) {
+      docs.push({ id: `f${i}`, title: `Unrelated ${i}`, body: "zz zz zz zz zz zz zz zz zz zz zz zz" });
+    }
+    const plugins = [morphology()];
+    const index = buildIndex(docs, schema, plugins);
+    const indexed = createIndexedLexicalRetriever({ candidateLimit: 5, prefixCap: 8 });
+    indexed.prepare(index);
+    const hits = indexed.retrieve(analyzeQuery("zz", { plugins }), index);
+    const winner = hits.find((h) => h.document.id === "winner");
+    expect(winner).toBeTruthy();
+    expect(winner.retrievalSources).toContain("title-prefix");
+  });
+
   test("exact-title, configured-equivalence, and version remain unbounded must-keep", () => {
     const plugins = [
       morphology(),

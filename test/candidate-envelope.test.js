@@ -2,8 +2,9 @@
  * Indexed candidate assembly envelope.
  *
  * Ordinary hits are budgeted by candidateLimit. Exact-title, configured-equivalence,
- * and version bypass that budget without a cap. Contextual title-prefix is capped.
- * Relationship expansion happens after retrieval and can add one-hop neighbors.
+ * and version bypass that budget without a cap. Contextual title-prefix and
+ * full-query title-prefix are capped must-keeps. Relationship expansion happens
+ * after retrieval and can add one-hop neighbors.
  *
  * These tests stop at retrieve() / candidateCount. They do not send thousands of
  * candidates through pairwise ranking.
@@ -38,7 +39,7 @@ describe("indexed ordinary pool is budgeted", () => {
   test("title-token hits are capped at candidateLimit", () => {
     const docs = [];
     for (let i = 0; i < 24; i += 1) {
-      docs.push({ id: `t${i}`, title: `Zzunique ${i}`, body: "x" });
+      docs.push({ id: `t${i}`, title: `Notes zzunique ${i}`, body: "x" });
     }
     const { hits } = indexedRetrieve(docs, "zzunique", { candidateLimit: 5, prefixCap: 1 });
     expect(hits.length).toBeLessThanOrEqual(5);
@@ -175,5 +176,59 @@ describe("relationship expansion after retrieval", () => {
     expect(detailed.meta.relationshipExpanded).toBe(neighborCount);
     expect(detailed.results.some((row) => row.id === "primary")).toBe(true);
     expect(detailed.results.filter((row) => row.retrievalSources?.includes("relationship")).length).toBeGreaterThan(0);
+  });
+});
+
+describe("indexed title-prefix capped must-keep", () => {
+  test("title-prefix survives a high-TF body flood beyond candidateLimit", () => {
+    const docs = [
+      {
+        id: "winner-short-literal",
+        title: "Zzwinner unique ranking title analog",
+        body: "unrelated body without the query token repeated",
+      },
+    ];
+    for (let i = 0; i < 250; i += 1) {
+      docs.push({
+        id: `flood-${i}`,
+        title: `Unrelated filler ${i}`,
+        body: Array.from({ length: 24 }, () => "zz").join(" "),
+      });
+    }
+    for (let i = 0; i < 80; i += 1) {
+      docs.push({
+        id: `bg-${i}`,
+        title: `Background document ${i}`,
+        body: "lorem ipsum dolor sit amet unrelated content",
+      });
+    }
+    const { hits } = indexedRetrieve(docs, "zz", { candidateLimit: 200, prefixCap: 800 });
+    const winner = hits.find((h) => h.document.id === "winner-short-literal");
+    expect(winner).toBeTruthy();
+    expect(winner.retrievalSources).toContain("title-prefix");
+    expect(hits.length).toBeLessThanOrEqual(200 + 800);
+  });
+
+  test("title-prefix must-keep is capped; overflow stays budget-eligible", () => {
+    const docs = [];
+    for (let i = 0; i < 12; i += 1) {
+      docs.push({
+        id: `p${String(i).padStart(4, "0")}`,
+        title: `Zzprefix ${"q".repeat(i)} extra extra extra`,
+        body: "body",
+      });
+    }
+    docs.push({
+      id: "overflow-strong",
+      title: "Zzprefix qqqqqqqqqq extra extra extra extra extra extra extra",
+      body: "zzprefix zzprefix zzprefix zzprefix zzprefix zzprefix zzprefix zzprefix",
+    });
+    const { hits } = indexedRetrieve(docs, "zzprefix", { candidateLimit: 4, prefixCap: 2 });
+    const ids = hits.map((h) => h.document.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(hits.some((h) => h.retrievalSources.includes("title-prefix"))).toBe(true);
+    const overflow = hits.find((h) => h.document.id === "overflow-strong");
+    expect(overflow).toBeTruthy();
+    expect(overflow.retrievalSources).toContain("title-prefix");
   });
 });

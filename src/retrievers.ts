@@ -41,10 +41,13 @@ interface IndexedHit {
 }
 
 // Exact-title, configured-equivalence, and version bypass the BM25 budget
-// without a cap. Contextual title-prefix is a capped must-keep: overflow
-// stays eligible for the ordinary candidateLimit pool.
+// without a cap. Contextual title-prefix and full-query title-prefix are
+// capped must-keeps: overflow stays eligible for the ordinary candidateLimit
+// pool. Title-prefix keeps short-literal / query-"2" winners from losing to
+// high-TF body floods.
 const UNBOUNDED_MUST_KEEP = new Set<string>(["exact-title", "configured-equivalence", "version"]);
 const CONTEXTUAL_MUST_KEEP_SOURCE = "contextual-title-prefix";
+const TITLE_PREFIX_KEEP_SOURCE = "title-prefix";
 const K1 = 1.2;
 const B = 0.75;
 const TITLE_BOOST = 4;
@@ -394,13 +397,17 @@ export function createIndexedLexicalRetriever({
     const hits = [...byPos.values()];
     const unboundedMust: IndexedHit[] = [];
     const contextualMust: IndexedHit[] = [];
+    const titlePrefixMust: IndexedHit[] = [];
     const rest: IndexedHit[] = [];
     for (const h of hits) {
       const keepUnbounded = unionDeterministic && h.retrievalSources.some((s) => UNBOUNDED_MUST_KEEP.has(s));
       const keepContextual =
         unionDeterministic && h.retrievalSources.includes(CONTEXTUAL_MUST_KEEP_SOURCE);
+      const keepTitlePrefix =
+        unionDeterministic && h.retrievalSources.includes(TITLE_PREFIX_KEEP_SOURCE);
       if (keepUnbounded) unboundedMust.push(h);
       else if (keepContextual) contextualMust.push(h);
+      else if (keepTitlePrefix) titlePrefixMust.push(h);
       else rest.push(h);
     }
     contextualMust.sort((a, b) => {
@@ -409,11 +416,20 @@ export function createIndexedLexicalRetriever({
       if (qb !== qa) return qb - qa;
       return a.pos - b.pos;
     });
+    titlePrefixMust.sort((a, b) => {
+      const titleA = docs[a.pos]?.normalizedTitle || "";
+      const titleB = docs[b.pos]?.normalizedTitle || "";
+      const qa = qNorm.length / Math.max(titleA.length, 1);
+      const qb = qNorm.length / Math.max(titleB.length, 1);
+      if (qb !== qa) return qb - qa;
+      return a.pos - b.pos;
+    });
     const contextualKept = contextualMust.slice(0, prefixCap);
-    const contextualOverflow = contextualMust.slice(prefixCap);
-    for (const h of contextualOverflow) rest.push(h);
+    for (const h of contextualMust.slice(prefixCap)) rest.push(h);
+    const titlePrefixKept = titlePrefixMust.slice(0, prefixCap);
+    for (const h of titlePrefixMust.slice(prefixCap)) rest.push(h);
     rest.sort((a, b) => b.retrievalScore - a.retrievalScore || a.pos - b.pos);
-    const must = unionDeterministic ? [...unboundedMust, ...contextualKept] : [];
+    const must = unionDeterministic ? [...unboundedMust, ...contextualKept, ...titlePrefixKept] : [];
     const chosen = unionDeterministic ? [...must, ...rest.slice(0, k)] : rest.slice(0, k);
     chosen.sort((a, b) => a.pos - b.pos);
     return chosen.map((h) => ({
@@ -492,4 +508,4 @@ export function resolveRetriever(spec: unknown): Retriever {
   return createIndexedLexicalRetriever();
 }
 
-export { UNBOUNDED_MUST_KEEP, CONTEXTUAL_MUST_KEEP_SOURCE, queryForms };
+export { UNBOUNDED_MUST_KEEP, CONTEXTUAL_MUST_KEEP_SOURCE, TITLE_PREFIX_KEEP_SOURCE, queryForms };
