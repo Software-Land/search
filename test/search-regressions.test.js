@@ -1,4 +1,3 @@
-import { jest } from "@jest/globals";
 import { SearchEngine, english, dictionary, isAbortError } from "../dist/index.js";
 import { analyzeQuery, suggestTypoForms } from "../dist/analyze.js";
 import { buildIndex } from "../dist/indexDocuments.js";
@@ -215,10 +214,15 @@ describe("retrieve-only custom retriever", () => {
 
 describe("relationshipMs", () => {
   test("relationship expansion is measured separately from featureMs", async () => {
+    const original = Object.getOwnPropertyDescriptor(globalThis, "performance");
+    if (!original || original.configurable !== true) {
+      throw new Error("globalThis.performance must be configurable to install a test clock");
+    }
     let now = 0;
-    const spy = jest.spyOn(performance, "now").mockImplementation(() => {
-      now += 1;
-      return now;
+    Object.defineProperty(globalThis, "performance", {
+      configurable: true,
+      enumerable: original.enumerable,
+      value: { now: () => ++now },
     });
     try {
       const engine = await reversedPrimaryEngine();
@@ -241,7 +245,7 @@ describe("relationshipMs", () => {
       expect(asyncd.meta.relationshipExpanded).toBeGreaterThan(0);
       expect(asyncd.meta.relationshipMs).toBeGreaterThan(0);
     } finally {
-      spy.mockRestore();
+      Object.defineProperty(globalThis, "performance", original);
     }
   });
 });
