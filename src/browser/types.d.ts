@@ -43,6 +43,7 @@ export interface WorkerSearchPayload {
     totalMs?: number;
     retrieveMs?: number;
     rankMs?: number;
+    featureMs?: number;
     candidateCount?: number;
     relationshipStrategy?: string;
     relatedCount?: number;

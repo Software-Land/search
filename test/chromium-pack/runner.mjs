@@ -275,6 +275,53 @@ async function main() {
 
     await page.evaluate(() => window.__dispose());
 
+    copyFileSync(path.join(harnessDir, "rank-bench-app.mjs"), path.join(consumer, "rank-bench-app.mjs"));
+    writeFileSync(
+      path.join(consumer, "rank.html"),
+      `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>chromium-pack rank bench</title>
+    <script type="importmap">${JSON.stringify(importMap)}</script>
+  </head>
+  <body>
+    <script type="module" src="/rank-bench-app.mjs"></script>
+  </body>
+</html>
+`
+    );
+
+    const RANK_WAIT_MS = 60_000;
+    const rankPage = await browser.newPage();
+    const rankConsoleErrors = [];
+    rankPage.on("console", (msg) => {
+      if (msg.type() === "error") rankConsoleErrors.push(msg.text());
+    });
+    await rankPage.goto(`${origin}/rank.html`, { waitUntil: "load", timeout: RANK_WAIT_MS });
+    await rankPage.waitForFunction(() => window.__booted === true || window.__bootError, null, {
+      timeout: RANK_WAIT_MS,
+    });
+    const rankBoot = await rankPage.evaluate(() => ({
+      booted: window.__booted,
+      bootError: window.__bootError || null,
+      errors: window.__state?.errors || [],
+      results: window.__state?.results || [],
+      workerUrl: window.__state?.workerUrl || null,
+    }));
+    if (!rankBoot.booted) {
+      throw new Error(`rank-bench boot failed: ${rankBoot.bootError || JSON.stringify(rankBoot.errors)}`);
+    }
+    if (rankBoot.errors.length) {
+      throw new Error(`rank-bench errors: ${JSON.stringify(rankBoot.errors)}`);
+    }
+    if (rankConsoleErrors.length) throw new Error(`rank-bench console error: ${rankConsoleErrors.join("\n")}`);
+    for (const row of rankBoot.results) {
+      if (row.candidateCount !== 1000) {
+        throw new Error(`rank-bench ${row.workload} expected C=1000, got ${JSON.stringify(row)}`);
+      }
+    }
+
     diagnostics.push({
       origin,
       workerUrl,
@@ -284,6 +331,7 @@ async function main() {
       normalIds: normalHit.ids,
       latestWinsPublished: afterLatest.published.slice(beforeLatest),
       latestWinsFinal: last,
+      rankBench: rankBoot.results,
     });
     console.log(JSON.stringify({ ok: true, ...diagnostics[0] }, null, 2));
   } finally {

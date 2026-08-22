@@ -84,6 +84,7 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
           meta: {
             totalMs: detailed.meta?.totalMs,
             retrieveMs: detailed.meta?.retrieveMs,
+            featureMs: detailed.meta?.featureMs,
             rankMs: detailed.meta?.rankMs,
             candidateCount: detailed.meta?.candidateCount,
             relationshipStrategy: detailed.meta?.relationshipStrategy,
