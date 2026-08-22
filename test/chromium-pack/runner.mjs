@@ -339,7 +339,7 @@ async function main() {
 `
     );
 
-    const RETRIEVAL_WAIT_MS = 120_000;
+    const RETRIEVAL_WAIT_MS = 180_000;
     const retrievalPage = await browser.newPage();
     const retrievalConsoleErrors = [];
     retrievalPage.on("console", (msg) => {
@@ -362,8 +362,8 @@ async function main() {
       throw new Error(`retrieval-bench errors: ${JSON.stringify(retrievalBoot.errors)}`);
     }
     if (retrievalConsoleErrors.length) throw new Error(`retrieval-bench console error: ${retrievalConsoleErrors.join("\n")}`);
-    if (retrievalBoot.results.length !== 6) {
-      throw new Error(`retrieval-bench expected 6 rows, got ${JSON.stringify(retrievalBoot.results)}`);
+    if (retrievalBoot.results.length !== 18) {
+      throw new Error(`retrieval-bench expected 18 rows, got ${JSON.stringify(retrievalBoot.results)}`);
     }
 
     diagnostics.push({
