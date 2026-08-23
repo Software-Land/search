@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Stage 2D investigation: phrase-candidate taxonomy and counterfactual
- * title-first / score-bound rejection. Uses full extractFeatures as oracle.
- * Not packed. Not a CI gate.
+ * Investigation / future-work harness: phrase-candidate taxonomy and a
+ * counterfactual title-first score-bound. Uses full extractFeatures as the
+ * oracle. Does not change SearchEngine. Not packed. Not a CI gate. Not an SLA.
  *
  *   node scripts/lazy-feature-profile.mjs --n 25000
  */

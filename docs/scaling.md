@@ -21,7 +21,7 @@ Workload depends more directly on query document frequency, posting entries touc
 2. Exact feature pruning — **done** (Stage 2A)
 3. Exact posting/block pruning — **partial** (Stage 2B identical posting-array skip; unread blocks remain)
 4. Compact/lazy typed-array runtime — **done** (Stage 2C)
-5. Exact lazy FeatureVector evaluation — **investigated, not shipped** (Stage 2D; title-first bounds are exact but do not skip the large weak body-overlap class). See [lazy-features.md](lazy-features.md).
+5. Lazy FeatureVector skip — **investigated, not shipped**. Title-first score bounds are a documented theorem; production still fully evaluates high-match multi-token queries because exact `directClass` / constraint signatures can depend on body evidence. See [lazy-features.md](lazy-features.md).
 6. Benchmark 100k / 250k / 500k / 1M
 7. Build-time sharding + Worker pool if needed
 

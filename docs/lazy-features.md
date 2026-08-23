@@ -1,102 +1,58 @@
-# Exact lazy feature evaluation (Stage 2D)
+# Lazy feature evaluation (investigation)
 
-Investigation only. Production search still fully evaluates every legitimate match on the ordinary `search()` path, then keeps exact per-signature representatives. This document records why a further lazy FeatureVector pass is **not enabled**.
+**Not implemented. Not a current runtime optimization.**
 
-## Problem
+Production indexed `search()` still calls `extractFeatures` for every legitimate match that Stage 2A does not already bound-reject. Stage 2A remains limited to proven plain single-token body-only candidates. Multi-token / phrase queries stay on that exhaustive Stage-2C feature path.
 
-Mixed N=25k phrase `"virtual private network"`:
+This note keeps the bound theorem and one mixed-corpus observation so future work does not rediscover why a skip was not shipped. It is not a product feature, not a ranking change, and not a latency SLA.
 
-- ~10,041 matches, all fully featured
-- compact p50 ~276 ms
-- `phraseAdjacency` itself ~29 ms after Stage 2C
-- remaining cost is **10k × complete `extractFeatures`**, not ranking
+## Production path
 
-The question was whether most of those documents can be rejected after a cheap exact subset of feature work, with identical representatives and public results.
+```text
+compiled match enumeration
+  → extractFeatures (Stage 2C compact views)
+  → exact per-signature representatives
+  → unchanged sparse ranker
+```
 
-## Candidate taxonomy (same mixed generator / seed as the compact benches)
+There is no lazy FeatureVector evaluator, no deferred-feature mask, and no score-bound rejection in `src/`.
 
-| | |
-| --- | --- |
-| matches | 10,041 |
-| exact signatures B | 5 |
-| representatives retained (depth 10) | 43 |
-| strong | 1,167 (title phrase / full coverage) |
-| moderate | 777 |
-| weak | **8,097** (one signature, 10 retained) |
+## Why a skip is not current work
 
-The weak bucket is almost homogeneous: `queryCoverage=0`, `titleCoverage=0`, `phraseAdjacency=0` except one body-adjacent document, `bodyLexicalMatch=0.3333` except one full-body document, three distinct rounded scores (`0.083325` … `0.65`).
+Exact `directClass` and builtin `constraintSignature` membership can depend on **body** evidence:
 
-So the 10k set is **not** 10k unique ranking classes. It is a few title-evidence signatures plus one huge weak body-overlap class. The public top-10 only needs 10 members of that class.
+- `bodyLexicalMatch > 0` can establish `weak`
+- `phraseAdjacency === 1` is title/moderate; `=== 0.5` is body/score-only
+- `bodyPhraseCount` bands are signature-critical when they fire
 
-## Feature dependency graph
+Until those are known, a document cannot be assigned its exact signature. A conservative remaining-score bound that assumes the missing body contribution therefore cannot reject the common high-match phrase class without risking a later, stronger body vector.
 
-Derived from `classifyDirect`, `constraintSignature`, and `scoreFeatures`.
+High-match multi-token queries may still require **Θ(matches)** exact feature evaluation for that reason.
 
-| feature | signature | directClass | score | notes |
-| --- | --- | --- | --- | --- |
-| exactTitleMatch | A | strong | 5 | title |
-| exactTitleTokenMatch | A | moderate if coverage>0; else weak | 1.6 | title |
-| typedSurfaceTitleMatch | A | — | — | signature bit only |
-| queryCoverage | A (bands) | strong / moderate / weak | ×2.4 | title + version |
-| titleCoverage | A (band, + token count if exactish) | — | ×1.2 | title |
-| titlePrefixQuality | A (bands) | strong / moderate / weak | ×1.8 | title |
-| contextualTitlePrefix + quality | A | moderate | via quality when both contextual | title |
-| configuredEquivalenceMatch | A | strong / moderate / weak | 1.5 / 1.2 | title |
-| versionMatch | A | strong if dotted | 2.2 / 0.77 | title |
-| shortLiteralLeadMatch | A | moderate | 1.7 | title |
-| dottedSpanComponentTitleMatch | A | moderate | 0.9 | title |
-| canonicalKeyTitle | A | strong | 1.3 | title |
-| queryTokenCount | A | moderate with phrase count | — | query-local |
-| bodyPhraseCount | A (band) | moderate if ≥2 and multi-token | — | **cheap map lookup** |
-| relevanceKind | A | — | — | related vs direct |
-| **directClass** | **A (string)** | self | — | holistic |
-| phraseAdjacency **=== 1** | via class | **moderate** | 0.8 | **title** proximity |
-| phraseAdjacency **=== 0.5** | score only | **no class change** | 0.4 | **body** proximity |
-| bodyLexicalMatch | score only **except** `>0` → weak | weak | ×0.25 | body concepts |
-| morphologyMatch | score; weak if no higher class | weak | 0.4 | **title** |
-| typoDistance | score; weak if no higher class | weak | ≤0.7 | **title** |
-| expansionEvidence | C/B | — | ×0.8 | title |
-| retrievalScore | B; fail-closed if weight ≠ 0 | — | as weighted | Stage 2A already fail-closes |
-| relationship* | fail-closed | related bit | ×0.45 | Stage 2A |
+## Conservative benchmark evidence (not an SLA)
 
-`classifyDirect` already returns on the first proven class (`strong` then `moderate` then `weak`). That does **not** skip `extractFeatures`. The expensive work runs before classification.
+One mixed N=25k Node run of `"virtual private network"` (same generator/seed as the compact benches, not CI) observed:
 
-## Title-first bound
+- about **10,041** legitimate matches, all fully featured
+- about **276 ms** p50 on that machine
+- five exact signatures; the large class was weak body overlap (about 8k documents, 10 retained at depth 10)
 
-After title evidence + cheap `bodyPhraseCount`:
+Absolute milliseconds are observational. Hardware, OS noise, and corpus shape move them. Do not treat 276 ms, 10,041 matches, or the class counts as contracts.
 
-- if `phraseAdjacency` is already `1`, remaining body contribution is at most `bodyLexicalMatch × 0.25 = 0.25`
-- otherwise remaining is at most `0.5×0.8 + 0.25 = 0.65`
-- round with the production `Number((score).toFixed(6))`
-- ties use `document.id` the same way as `selectTopPerBuiltinSignature`
+A title-first shadow bound on that same snapshot did not underestimate scores and did not false-reject representatives. Counterfactual rejection of already-title-resolved documents was small and not enough to justify a second evaluator.
 
-Shadow on the 25k phrase query: **0 bound underestimates**, **0 false representative rejections**.
+## Bound theorem (future-work evidence)
 
-## Why production lazy evaluation is not enabled
+After title evidence plus cheap compiled `bodyPhraseCount`:
 
-Title-first resolves an **exact** signature for only **2,164 / 10,041** documents (the strong/moderate title hits). The other **7,877** need a body concept hit to become `weak` rather than `none`. `bodyLexicalMatch` is therefore **signature-critical** for the huge bucket, not a deferrable score term.
+- if title `phraseAdjacency` is already `1`, remaining body score is at most `bodyLexicalMatch × 0.25`
+- otherwise remaining body score is at most `0.5 × 0.8 + 0.25 = 0.65`
+- round with production `Number(score.toFixed(6))`
+- ties use `document.id` as in `selectTopPerBuiltinSignature`
 
-Once that class is known, a conservative remaining-score bound of **0.65** still dwarfs the typical weak score **~0.083**. A later document with `bodyLexicalMatch=1` or `phraseAdjacency=0.5` would beat the common `0.3333×0.25` members. The bound must not underestimate, so those body features cannot be skipped.
+`classifyDirect` already returns on the first proven class. That does not skip `extractFeatures`.
 
-Streaming rejection in **current retrieve order**, depth 10:
-
-| | full evals | lazy rejects |
-| --- | --- | --- |
-| current ordinal | 9,011 | 1,030 |
-| document-id order | 9,011 | 1,030 |
-| higher known-title-score first | 8,524 | 1,517 |
-
-~10% fewer full vectors, almost all on title-resolved signatures where only **body** work is skipped. That is a few milliseconds, not 276 ms → 100–150 ms. Reordering is allowed only if outputs stay exact; it does not fix the weak-bucket bound.
-
-Fallbacks (`searchDetailed` diagnostics, `explain`, relationships, `all-strong`, custom constraints, `retrievalScoreWeight ≠ 0`) would remain exhaustive anyway. The interactive `search()` path is the one that matters, and it is dominated by the unresolved weak class.
-
-## What would still be exact but was not shipped
-
-- Reconstruct `bodyLexicalMatch` from prefix-expanded postings instead of per-doc body scans: different mechanism, still Θ(matches) membership work, not a score-bound skip.
-- Permanent doc→posting offset tables: would spend Stage-2C heap.
-- Merging `bodyPhraseCount` with `phraseAdjacency`: different predicates; rejected earlier.
-
-Leave Stage 2C production evaluation untouched.
+Tests under `test/lazy-feature-bounds.test.js` lock those theorems against the current extractor. They do not enable a production path.
 
 ## Harness
 
@@ -104,4 +60,4 @@ Leave Stage 2C production evaluation untouched.
 node scripts/lazy-feature-profile.mjs --n 25000
 ```
 
-Not packed. Not a CI latency gate.
+Counterfactual only. Uses full `extractFeatures` as the oracle. Not packed. Not a CI latency gate.

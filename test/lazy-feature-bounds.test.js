@@ -1,7 +1,9 @@
 /**
- * Stage 2D investigation: classifyDirect already short-circuits by class,
- * and a title-first conservative score bound never underestimates. Production
- * extractFeatures stays exhaustive.
+ * Investigation / future-work theorems: classifyDirect already short-circuits
+ * by class, and a title-first conservative score bound never underestimates
+ * extractFeatures. These tests do not enable a production lazy evaluator,
+ * score-bound rejection, or ranking change. Production extractFeatures stays
+ * exhaustive.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
 import { extractFeatures, classifyDirect } from "../dist/features.js";
@@ -61,7 +63,7 @@ function baseFeat(extra = {}) {
   };
 }
 
-describe("lazy feature score bounds", () => {
+describe("lazy feature bound theorems (investigation; not a production path)", () => {
   test("classifyDirect already short-circuits: weaker predicates cannot change a proven class", () => {
     const strong = classifyDirect(baseFeat({ exactTitleMatch: true }));
     expect(strong).toBe("strong");

@@ -118,7 +118,7 @@ Builtin ranking is O(C log C + B²F + E_b) in the common case after selection an
 
 Allocation and RSS for the checked-in generators: [memory benchmarks (GitHub tree; not in the npm tarball)](https://github.com/Software-Land/search/blob/main/benchmarks/memory/README.md). That harness is not a latency or search-quality claim.
 
-The v1 runtime currently reconstructs an object-heavy analyzed document view from the positional artifact so the frozen feature extractor remains unchanged. That duplicates some posting-derived information in memory; compact/lazy feature views and conservative posting-entry skipping remain later Stage-2B/2C work.
+The compiled runtime hydrates compact document views over `search-v2-lexical-index` v1 bytes (Stage 2C). Indexed `search()` still runs `extractFeatures` for every match that Stage 2A does not bound-reject. Multi-token queries remain on that full path because exact `directClass` / constraint signatures can depend on body evidence. Unread posting-block pruning and a lazy FeatureVector evaluator are not shipped. See [compact-runtime.md](compact-runtime.md) and [lazy-features.md](lazy-features.md).
 
 See [limitations.md](limitations.md) and [scaling.md](scaling.md).
 

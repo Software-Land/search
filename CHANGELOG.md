@@ -28,7 +28,6 @@
 - Exact Stage-2B skip of posting arrays this query has already fully walked (duplicate token/concept/lemma/contextual lanes) when `retrievalScoreWeight` is `0`. Membership, provenance, and default ranking stay Stage-1 exact. Unread posting blocks, prefix expansions, and nonzero retrieval-score reconstruction stay exhaustive. No new lexical-index version or pruning extension.
 - Compact compiled lexical runtime: interned term ids, packed token/offset views, and query-time document accessors instead of reconstructing per-document token/lemma arrays, Sets, and position Maps. `search-v2-lexical-index` v1 bytes and public search semantics are unchanged. Full-scan may keep fat objects. See `docs/compact-runtime.md`.
 - Compact phrase adjacency, title-concept, and body-concept checks read packed token ids instead of `PackedTokenProxy` hot loops. Feature vectors and ranking are unchanged.
-- Development-only lazy-feature admission harness under `scripts/lazy-feature-profile.mjs`. Title-first score bounds are exact and conservative; production search still fully evaluates legitimate matches. Not packed. Not a search-quality claim.
 - `SECURITY.md` and `CONTRIBUTING.md`.
 
 ### Fixed
@@ -49,6 +48,7 @@
 ### Infrastructure
 
 - GitHub Actions Playwright cache upgraded to `actions/cache@v6`.
+- Investigation-only lazy-feature bound harness (`scripts/lazy-feature-profile.mjs`) and theorem tests. Not a production evaluator, not score-bound rejection, not a ranking change. Production still fully evaluates legitimate matches on the Stage-2C path. Not packed. Not a latency SLA.
 
 ## 0.3.1
 

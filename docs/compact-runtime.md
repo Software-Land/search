@@ -136,3 +136,5 @@ Compiled positional postings are term-oriented and cheap to walk by document ord
 Stage 2C originally scanned `PackedTokenProxy` bodies and skipped the Stage-2B `Map` start index (`instanceof Map` failed). That was a compact-runtime regression, not an inherent phrase cost.
 
 The compact adapter now applies the shared `tokenAdjacencyMatch` predicate over packed `Uint32Array` token ids and interned strings (`compactAdjacentTokens`). Fat full-scan keeps the object/`Map` adapter. No persistent side index. Query-local work is existing per-search feature state plus a small interned-id `Set` during compact body-concept membership. Title/body concept helpers used by `queryCoverage` follow the same packed-id pattern; they do not change `extractFeatures` output.
+
+Indexed `search()` still fully extracts features for every legitimate match that Stage 2A does not bound-reject. Multi-token / phrase queries are not Stage-2A pruned: exact class and constraint-signature membership can depend on body evidence. A later lazy skip was investigated and not shipped; see [limitations.md](limitations.md).

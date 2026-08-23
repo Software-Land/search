@@ -34,10 +34,11 @@ node --expose-gc scripts/heap-attribution.mjs --n 25000
 node --expose-gc scripts/compact-runtime-bench.mjs --sizes 1000,5000,10000,25000
 node scripts/phrase-compare-bench.mjs --dist ./dist --label 2C
 node --expose-gc scripts/phrase-profile.mjs --n 25000
+# Counterfactual only; does not change production evaluation:
 node scripts/lazy-feature-profile.mjs --n 25000
 ```
 
-See [compact-runtime.md](../../docs/compact-runtime.md).
+See [compact-runtime.md](../../docs/compact-runtime.md). Timing and match counts from those harnesses are observational, not SLAs.
 
 The Stage-2A report runs exhaustive and pruned compiled modes on identical corpora and records exact output equality, posting visits/skips, document blocks, full feature evaluations, bound rejections, timings, artifact/load cost, and metadata bytes for 32/64/128/256-document layouts. The implemented layout is 128. Posting skips are expected to remain zero in Stage 2A.
 
