@@ -7,7 +7,8 @@ export function normalizeRef(value: unknown): string {
 export function normalizePath(value: unknown): string {
   let s = String(value || "").trim().toLowerCase();
   if (!s) return "";
-  s = s.replace(/#.*$/, "");
+  const hash = s.indexOf("#");
+  if (hash !== -1) s = s.slice(0, hash);
   if (!s.startsWith("/")) s = `/${s}`;
   if (!s.endsWith("/")) s = `${s}/`;
   return s;

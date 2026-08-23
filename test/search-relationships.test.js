@@ -8,6 +8,7 @@ import {
   DEFAULT_RUNTIME_TYPES,
   COMPILER_VERSION,
 } from "../tools/search-relationships/index.js";
+import { normalizePath } from "../tools/search-relationships/lib/ids.js";
 import { RelationshipError as ImplementationRelationshipError } from "../tools/search-relationships/lib/domain.js";
 import { filterRelationships as filterRelationshipsImpl } from "../tools/search-relationships/lib/compile.js";
 import { morphology, SearchEngine, dictionary } from "../dist/index.js";
@@ -103,6 +104,45 @@ describe("search-relationships isolation", () => {
       const text = fs.readFileSync(file, "utf8").toLowerCase();
       expect(text.includes("search-relationships")).toBe(false);
     }
+  });
+});
+
+describe("normalizePath", () => {
+  test("canonicalizes ordinary paths and strips fragments from the first hash", () => {
+    expect(normalizePath("/foo")).toBe("/foo/");
+    expect(normalizePath("/foo/")).toBe("/foo/");
+    expect(normalizePath("/foo#section")).toBe("/foo/");
+    expect(normalizePath("/foo#section/subsection")).toBe("/foo/");
+    expect(normalizePath("#")).toBe("/");
+    expect(normalizePath("/#")).toBe("/");
+    expect(normalizePath("/foo###")).toBe("/foo/");
+  });
+
+  test("strips from the first hash even when later characters include newlines", () => {
+    expect(normalizePath("/foo#section\nstill-here")).toBe("/foo/");
+    expect(normalizePath("#\nnot-a-path")).toBe("/");
+  });
+
+  test("long hash-only suffixes are stripped with linear string operations", () => {
+    const manyHashes = "#".repeat(20_000);
+    expect(normalizePath(manyHashes)).toBe("/");
+    expect(normalizePath(`/tls-1.2-vulnerability/${manyHashes}`)).toBe("/tls-1.2-vulnerability/");
+    expect(normalizePath(`${manyHashes}\ntrailing`)).toBe("/");
+  });
+
+  test("domain path refs with URL fragments resolve to the same document", () => {
+    const compiled = compileRelationships(slEquivalentDocs, {
+      domain: {
+        relationships: [
+          {
+            source: "/tls-1.2-vulnerability/#cipher-suites",
+            target: "/what-is-vpn/",
+            type: "editorial",
+          },
+        ],
+      },
+    });
+    expect(compiled.runtime.relationships.ai?.some((e) => e.target === "bg" && e.type === "editorial")).toBe(true);
   });
 });
 
