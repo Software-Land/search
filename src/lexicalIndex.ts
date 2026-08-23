@@ -28,6 +28,10 @@ export const LEXICAL_INDEX_FORMAT = "search-v2-lexical-index" as const;
 export const LEXICAL_INDEX_VERSION = 1 as const;
 export const CORE_ANALYZER_COMPATIBILITY = "search-v2-core-analyzer-v1";
 export const IDENTITY_LEMMA_COMPATIBILITY = "identity-lemma-v1";
+export const EXACT_PRUNING_EXTENSION = "exact-pruning-v1";
+export const EXACT_PRUNING_REVISION = 1 as const;
+export const EXACT_PRUNING_BLOCK_SIZE = 128;
+export const SUPPORTED_PRUNING_BLOCK_SIZES = new Set([32, 64, 128, 256]);
 
 // Document tuple:
 // [id, titleTokenLength, bodyTokenLength, firstSurfaceToken,
@@ -51,14 +55,20 @@ type LexicalIndexPayload = {
   terms: SerializedTerm[];
   stats: [number, number];
   /**
-   * Reserved capability namespace. Stage 1 emits no pruning metadata. A later
-   * exact block-bound extension can reference stable term/document ordinals
-   * without changing the core v1 positional representation.
+   * Additive capability namespace. The exact-pruning-v1 extension references
+   * stable document ordinals without changing the core v1 positional data.
    */
   extensions: Record<string, unknown>;
 };
 
 type SourceRow = [string, string, string, Record<string, number> | null];
+
+export type ExactPruningExtensionV1 = {
+  revision: typeof EXACT_PRUNING_REVISION;
+  unit: "document-ordinal";
+  blockSize: number;
+  boundaries: number[];
+};
 
 export type CompiledTermRuntime = {
   term: string;
@@ -82,6 +92,7 @@ export type CompiledLexicalRuntime = {
   avgTitleDl: number;
   avgBodyDl: number;
   postingEntries: number;
+  exactPruning: ExactPruningExtensionV1 | null;
 };
 
 function fail(message: string, field: string): never {
@@ -196,6 +207,26 @@ function serializeDocuments(index: SearchIndex): SerializedDocument[] {
   ]);
 }
 
+export function documentBlockBoundaries(documentCount: number, blockSize = EXACT_PRUNING_BLOCK_SIZE): number[] {
+  if (!finitePositiveInteger(documentCount)) throw new TypeError("documentCount must be a non-negative integer");
+  if (!SUPPORTED_PRUNING_BLOCK_SIZES.has(blockSize)) {
+    throw new TypeError(`blockSize must be one of ${[...SUPPORTED_PRUNING_BLOCK_SIZES].join(", ")}`);
+  }
+  const out = [0];
+  for (let start = blockSize; start < documentCount; start += blockSize) out.push(start);
+  if (documentCount > 0) out.push(documentCount);
+  return out;
+}
+
+function buildExactPruningExtension(documentCount: number): ExactPruningExtensionV1 {
+  return {
+    revision: EXACT_PRUNING_REVISION,
+    unit: "document-ordinal",
+    blockSize: EXACT_PRUNING_BLOCK_SIZE,
+    boundaries: documentBlockBoundaries(documentCount),
+  };
+}
+
 function buildPayload(index: SearchIndex): LexicalIndexPayload {
   const terms = new Map<string, SerializedTerm>();
   let titleLength = 0;
@@ -213,7 +244,9 @@ function buildPayload(index: SearchIndex): LexicalIndexPayload {
     documents: serializeDocuments(index),
     terms: sortedTerms,
     stats: [n ? titleLength / n : 1, n ? bodyLength / n : 1],
-    extensions: {},
+    extensions: {
+      [EXACT_PRUNING_EXTENSION]: buildExactPruningExtension(n),
+    },
   };
 }
 
@@ -312,6 +345,46 @@ function parseTerm(value: unknown, i: number): SerializedTerm {
   ];
 }
 
+function parseExactPruningExtension(
+  value: unknown,
+  documentCount: number
+): ExactPruningExtensionV1 | null {
+  if (value === undefined) return null;
+  const field = `data.extensions.${EXACT_PRUNING_EXTENSION}`;
+  if (!plainRecord(value)) fail(`${field} must be a plain object`, field);
+  if (value.revision !== EXACT_PRUNING_REVISION) {
+    fail(`${field}.revision is unsupported`, `${field}.revision`);
+  }
+  if (value.unit !== "document-ordinal") {
+    fail(`${field}.unit must be document-ordinal`, `${field}.unit`);
+  }
+  if (
+    typeof value.blockSize !== "number" ||
+    !Number.isInteger(value.blockSize) ||
+    !SUPPORTED_PRUNING_BLOCK_SIZES.has(value.blockSize)
+  ) {
+    fail(`${field}.blockSize is unsupported`, `${field}.blockSize`);
+  }
+  if (!Array.isArray(value.boundaries) || value.boundaries.some((n) => !finitePositiveInteger(n))) {
+    fail(`${field}.boundaries must be non-negative integer offsets`, `${field}.boundaries`);
+  }
+  const blockSize = value.blockSize;
+  const boundaries = value.boundaries.map(Number);
+  const expected = documentBlockBoundaries(documentCount, blockSize);
+  if (
+    boundaries.length !== expected.length ||
+    boundaries.some((boundary, index) => boundary !== expected[index])
+  ) {
+    fail(`${field}.boundaries must cover sorted document ordinals exactly`, `${field}.boundaries`);
+  }
+  return {
+    revision: EXACT_PRUNING_REVISION,
+    unit: "document-ordinal",
+    blockSize,
+    boundaries,
+  };
+}
+
 function parsePayload(value: unknown): LexicalIndexPayload {
   if (!plainRecord(value)) fail("Lexical index data must be a plain object", "data");
   if (!Array.isArray(value.documents)) fail("Lexical index data.documents must be an array", "data.documents");
@@ -330,11 +403,14 @@ function parsePayload(value: unknown): LexicalIndexPayload {
   for (let i = 1; i < terms.length; i++) {
     if (terms[i - 1][0] >= terms[i][0]) fail("Lexical index terms must be unique and sorted", "data.terms");
   }
+  const extensions = { ...value.extensions };
+  const exactPruning = parseExactPruningExtension(extensions[EXACT_PRUNING_EXTENSION], documents.length);
+  if (exactPruning) extensions[EXACT_PRUNING_EXTENSION] = exactPruning;
   return {
     documents,
     terms,
     stats: [Number(value.stats[0]), Number(value.stats[1])],
-    extensions: { ...value.extensions },
+    extensions,
   };
 }
 
@@ -446,6 +522,7 @@ function runtimeFromPayload(
     }
   }
   sortedTitles.sort((a, b) => (a.norm < b.norm ? -1 : a.norm > b.norm ? 1 : a.pos - b.pos));
+  const exactPruning = (payload.extensions[EXACT_PRUNING_EXTENSION] as ExactPruningExtensionV1 | undefined) || null;
   return {
     terms,
     bySurface,
@@ -459,6 +536,7 @@ function runtimeFromPayload(
     avgTitleDl: payload.stats[0] || 1,
     avgBodyDl: payload.stats[1] || 1,
     postingEntries,
+    exactPruning,
   };
 }
 
@@ -636,4 +714,14 @@ export function ensureCompiledLexicalIndex(index: SearchIndex, plugins: SearchPl
   return compileLexicalIndexFromSearchIndex(index, {
     analyzer: lexicalAnalyzerIdentity(plugins),
   }).runtime;
+}
+
+export function exactPruningRuntime(index: SearchIndex): {
+  extension: ExactPruningExtensionV1;
+} | null {
+  const runtime = index.compiledLexical as CompiledLexicalRuntime | undefined;
+  if (!runtime?.exactPruning) return null;
+  return {
+    extension: runtime.exactPruning,
+  };
 }

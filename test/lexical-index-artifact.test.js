@@ -63,7 +63,12 @@ describe("search-v2-lexical-index v1", () => {
     expect(artifact.format).toBe("search-v2-lexical-index");
     expect(artifact.version).toBe(1);
     expect(artifact.corpus.documentCount).toBe(122);
-    expect(artifact.data.extensions).toEqual({});
+    expect(artifact.data.extensions["exact-pruning-v1"]).toEqual({
+      revision: 1,
+      unit: "document-ordinal",
+      blockSize: 128,
+      boundaries: [0, 122],
+    });
     expect(artifact.data.documents.every((row) =>
       row.length === 7 &&
       typeof row[0] === "string" &&
