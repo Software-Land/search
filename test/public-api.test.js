@@ -225,6 +225,7 @@ describe("public API", () => {
       "documentBlocksVisited",
       "documentsBoundRejected",
       "documentsFullyEvaluated",
+      "duplicatePostingEntriesAvoided",
       "featureMs",
       "matchCount",
       "postingBlocksSkipped",
@@ -234,6 +235,7 @@ describe("public API", () => {
       "pruningFallbackReason",
       "pruningRepresentativesRetained",
       "pruningSignaturesEncountered",
+      "queryFormsExpanded",
       "rankMs",
       "rawDocumentScans",
       "relatedCount",
@@ -241,6 +243,7 @@ describe("public API", () => {
       "representativeSelection",
       "retrieveMs",
       "selectionMs",
+      "termsExpanded",
       "totalMs",
     ]);
     client.terminate();

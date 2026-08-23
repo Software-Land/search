@@ -481,7 +481,11 @@ describe("Stage-2A exact document-feature block pruning", () => {
       expect(pruned.meta.documentsFullyEvaluated).toBeLessThan(25);
       expect(pruned.meta.documentsBoundRejected).toBeGreaterThan(4_900);
       expect(pruned.meta.documentBlocksSkipped).toBeGreaterThan(30);
-      expect(pruned.meta.postingEntriesSkipped).toBe(0);
+      expect(pruned.meta.postingEntriesSkipped).toBeGreaterThan(0);
+      expect(exhaustive.meta.postingEntriesSkipped).toBe(0);
+      expect(pruned.meta.postingEntriesVisited).toBeLessThan(
+        exhaustive.meta.postingEntriesVisited
+      );
       expect(exhaustive.meta.documentsFullyEvaluated).toBe(
         exhaustive.meta.matchCount
       );
