@@ -25,7 +25,16 @@ node --expose-gc scripts/budget-pressure.mjs --suite stage1 --sizes 1000,5000,10
 node --expose-gc scripts/exact-pruning-bench.mjs --sizes 1000,5000,10000,25000
 ```
 
-The `stage1` report includes posting entries visited, distinct documents examined, raw-document scans, signatures, retained candidates, retrieve/feature/select/rank timing, deterministic artifact bytes, compile/load time, and process memory snapshots. It also serializes comparable architecture projections for (A) TF postings only, (B) TF postings plus explicit document token-id streams, and (C) the implemented unified positional analyzed index. A/B byte projections are not claims that unimplemented browser loaders have measured heap or latency. Timing and RSS are observational, not absolute CI thresholds.
+The `stage1` report includes posting entries visited, distinct documents examined, raw-document scans, signatures, retained candidates, retrieve/feature/select/rank timing, deterministic artifact bytes, compile/load time, and process memory snapshots. Timing uses warmup plus several same-run iterations and reports p50 (and p90 where present). Absolute milliseconds are observational and are not comparable across machines or days; a previous ~169 → ~126 ms Stage-1 sample is methodology/hardware noise, not a semantic regression. A/B byte projections are not claims that unimplemented browser loaders have measured heap or latency. Timing and RSS are not CI thresholds.
+
+Compact-runtime heap and same-run latency:
+
+```bash
+node --expose-gc scripts/heap-attribution.mjs --n 25000
+node --expose-gc scripts/compact-runtime-bench.mjs --sizes 1000,5000,10000,25000
+```
+
+See [compact-runtime.md](../../docs/compact-runtime.md).
 
 The Stage-2A report runs exhaustive and pruned compiled modes on identical corpora and records exact output equality, posting visits/skips, document blocks, full feature evaluations, bound rejections, timings, artifact/load cost, and metadata bytes for 32/64/128/256-document layouts. The implemented layout is 128. Posting skips are expected to remain zero in Stage 2A.
 

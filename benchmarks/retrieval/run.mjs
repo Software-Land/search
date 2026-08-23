@@ -91,6 +91,12 @@ function median(values) {
   return s[Math.floor(s.length / 2)] ?? 0;
 }
 
+function pct(values, p) {
+  const s = [...values].sort((a, b) => a - b);
+  if (!s.length) return 0;
+  return s[Math.min(s.length - 1, Math.floor((s.length - 1) * p))];
+}
+
 function measure(engine, query, repeats) {
   const rows = [];
   engine.searchDetailed(query, { limit: 10, relatedLimit: 5 });
@@ -106,12 +112,16 @@ function measure(engine, query, repeats) {
       topTitle: detailed.results[0]?.title ?? null,
     });
   }
+  const totals = rows.map((r) => r.totalMs);
   return {
     C: rows[0].C,
     retrieveMs: Number(median(rows.map((r) => r.retrieveMs)).toFixed(3)),
     featureMs: Number(median(rows.map((r) => r.featureMs)).toFixed(3)),
     rankMs: Number(median(rows.map((r) => r.rankMs)).toFixed(3)),
-    totalMs: Number(median(rows.map((r) => r.totalMs)).toFixed(3)),
+    totalMs: Number(median(totals).toFixed(3)),
+    totalMsP90: Number(pct(totals, 0.9).toFixed(3)),
+    warmup: 1,
+    iterations: repeats,
     topId: rows[0].topId,
     topTitle: rows[0].topTitle,
   };
@@ -181,6 +191,9 @@ async function main() {
         featureMs: s.featureMs,
         rankMs: s.rankMs,
         totalMs: s.totalMs,
+        totalMsP90: s.totalMsP90,
+        warmup: s.warmup,
+        iterations: s.iterations,
         topId: s.topId,
         topMatchesFullScan: s.topMatchesFullScan ?? null,
       };

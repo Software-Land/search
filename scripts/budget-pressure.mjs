@@ -1163,6 +1163,35 @@ function quantiles(values) {
   };
 }
 
+function sampleSync(engine, query, opts, mode, { warmup = 2, iterations = 5 } = {}) {
+  const run = () => engine._searchDetailedSync(query, opts, false, mode);
+  for (let i = 0; i < warmup; i += 1) run();
+  const total = [];
+  const retrieve = [];
+  const feature = [];
+  const selection = [];
+  const rank = [];
+  let last;
+  for (let i = 0; i < iterations; i += 1) {
+    last = run();
+    total.push(last.meta.totalMs);
+    retrieve.push(last.meta.retrieveMs);
+    feature.push(last.meta.featureMs);
+    selection.push(last.meta.selectionMs);
+    rank.push(last.meta.rankMs);
+  }
+  return {
+    last,
+    warmup,
+    iterations,
+    totalMs: quantiles(total),
+    retrieveMs: quantiles(retrieve),
+    featureMs: quantiles(feature),
+    selectionMs: quantiles(selection),
+    rankMs: quantiles(rank),
+  };
+}
+
 function architectureSummary(rows) {
   const rate = (fn) => Number((rows.filter(fn).length / Math.max(rows.length, 1)).toFixed(4));
   const byM = {};
@@ -1654,14 +1683,14 @@ async function measureActualStage1(docs, extra, queries) {
     const expected = full.searchDetailed(query, { limit: 10, relatedLimit: 5 });
     // Measure the normal result/Worker path. Public searchDetailed intentionally
     // computes a full exact diagnostic plan for candidateTitles/cycles/conflicts.
-    const actual = precompiled._searchDetailedSync(query, { limit: 10, relatedLimit: 5 }, false);
-    const exhaustive = precompiled._searchDetailedSync(
-      query,
-      { limit: 10, relatedLimit: 5 },
-      false,
-      "exhaustive"
-    );
-    const fallbackResult = fallback._searchDetailedSync(query, { limit: 10, relatedLimit: 5 }, false);
+    // One-shot totals are not comparable across days/machines; p50/p90 below
+    // are same-run samples after warmup.
+    const actualSample = sampleSync(precompiled, query, { limit: 10, relatedLimit: 5 }, "auto");
+    const exhaustiveSample = sampleSync(precompiled, query, { limit: 10, relatedLimit: 5 }, "exhaustive");
+    const fallbackSample = sampleSync(fallback, query, { limit: 10, relatedLimit: 5 }, "auto");
+    const actual = actualSample.last;
+    const exhaustive = exhaustiveSample.last;
+    const fallbackResult = fallbackSample.last;
     queryRows.push({
       query,
       exact: {
@@ -1680,9 +1709,12 @@ async function measureActualStage1(docs, extra, queries) {
       exhaustiveCompiled: {
         postingEntriesVisited: exhaustive.meta.postingEntriesVisited,
         documentsFullyEvaluated: exhaustive.meta.documentsFullyEvaluated,
-        featureMs: exhaustive.meta.featureMs,
-        selectionMs: exhaustive.meta.selectionMs,
-        totalMs: exhaustive.meta.totalMs,
+        featureMs: exhaustiveSample.featureMs.p50,
+        selectionMs: exhaustiveSample.selectionMs.p50,
+        totalMs: exhaustiveSample.totalMs.p50,
+        totalMsP90: exhaustiveSample.totalMs.p90,
+        warmup: exhaustiveSample.warmup,
+        iterations: exhaustiveSample.iterations,
       },
       precompiled: {
         matches: actual.meta.matchCount,
@@ -1700,11 +1732,14 @@ async function measureActualStage1(docs, extra, queries) {
         documentsFullyEvaluated: actual.meta.documentsFullyEvaluated,
         documentsBoundRejected: actual.meta.documentsBoundRejected,
         pruningFallbackReason: actual.meta.pruningFallbackReason,
-        retrieveMs: actual.meta.retrieveMs,
-        featureMs: actual.meta.featureMs,
-        selectionMs: actual.meta.selectionMs,
-        rankMs: actual.meta.rankMs,
-        totalMs: actual.meta.totalMs,
+        retrieveMs: actualSample.retrieveMs.p50,
+        featureMs: actualSample.featureMs.p50,
+        selectionMs: actualSample.selectionMs.p50,
+        rankMs: actualSample.rankMs.p50,
+        totalMs: actualSample.totalMs.p50,
+        totalMsP90: actualSample.totalMs.p90,
+        warmup: actualSample.warmup,
+        iterations: actualSample.iterations,
       },
     });
   }
