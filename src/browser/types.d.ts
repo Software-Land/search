@@ -57,6 +57,9 @@ export interface WorkerSearchPayload {
     postingBlocksVisited?: number;
     postingBlocksSkipped?: number;
     postingEntriesSkipped?: number;
+    duplicatePostingEntriesAvoided?: number;
+    queryFormsExpanded?: number;
+    termsExpanded?: number;
     documentBlocksVisited?: number;
     documentBlocksSkipped?: number;
     boundedBlocksSkipped?: number;

@@ -481,6 +481,12 @@ export function createCompiledLexicalRetriever(): Retriever {
   let state: CompiledLexicalRuntime | null = null;
   let last = {
     postingEntriesVisited: 0,
+    postingEntriesSkipped: 0,
+    postingBlocksVisited: 0,
+    postingBlocksSkipped: 0,
+    duplicatePostingEntriesAvoided: 0,
+    queryFormsExpanded: 0,
+    termsExpanded: 0,
     distinctDocumentsExamined: 0,
     exactMatches: 0,
     rawDocumentScans: 0,
@@ -488,6 +494,10 @@ export function createCompiledLexicalRetriever(): Retriever {
 
   function prepare(index: SearchIndex, extra?: { plugins?: import("./types.js").SearchPlugin[] }) {
     state = ensureCompiledLexicalIndex(index, extra?.plugins || []);
+  }
+
+  function postingBlockCount(entries: number) {
+    return entries > 0 ? Math.ceil(entries / 128) : 0;
   }
 
   function flatEach(
@@ -507,15 +517,50 @@ export function createCompiledLexicalRetriever(): Retriever {
     }
   }
 
-  function retrieve(query: AnalyzedQuery, index: SearchIndex, { signal }: RetrieveOptions = {}) {
+  function walkPostings(
+    flat: number[],
+    df: number,
+    visit: (doc: number, tf: number) => void,
+    signal: AbortSignal | undefined,
+    walked: WeakSet<number[]>,
+    skipDuplicate: boolean
+  ) {
+    if (!flat.length) return;
+    if (skipDuplicate && walked.has(flat)) {
+      const entries = df || 0;
+      last.postingEntriesSkipped += entries;
+      last.duplicatePostingEntriesAvoided += entries;
+      last.postingBlocksSkipped += postingBlockCount(entries);
+      return;
+    }
+    if (skipDuplicate) walked.add(flat);
+    const before = last.postingEntriesVisited;
+    flatEach(flat, visit, signal);
+    const entries = last.postingEntriesVisited - before;
+    last.postingBlocksVisited += postingBlockCount(entries);
+    last.termsExpanded += 1;
+  }
+
+  function retrieve(query: AnalyzedQuery, index: SearchIndex, {
+    signal,
+    skipDuplicatePostingLists = false,
+  }: RetrieveOptions = {}) {
     throwIfAborted(signal);
     if (!state) prepare(index);
     const compiled = state as CompiledLexicalRuntime;
     const docs = index.documents || [];
     const n = docs.length;
     const byPos = new Map<number, IndexedHit>();
+    const walked = new WeakSet<number[]>();
+    const skipDuplicate = Boolean(skipDuplicatePostingLists);
     last = {
       postingEntriesVisited: 0,
+      postingEntriesSkipped: 0,
+      postingBlocksVisited: 0,
+      postingBlocksSkipped: 0,
+      duplicatePostingEntriesAvoided: 0,
+      queryFormsExpanded: 0,
+      termsExpanded: 0,
       distinctDocumentsExamined: 0,
       exactMatches: 0,
       rawDocumentScans: 0,
@@ -544,9 +589,9 @@ export function createCompiledLexicalRetriever(): Retriever {
       const avgdl = field === "title" ? compiled.avgTitleDl : compiled.avgBodyDl;
       const lengths = field === "title" ? compiled.titleDl : compiled.bodyDl;
       const weight = idf(n, df) * boost;
-      flatEach(flat, (doc, tf) => {
+      walkPostings(flat, df, (doc, tf) => {
         add(doc, source, weight * bm25Tf(tf, lengths[doc], avgdl));
-      }, signal);
+      }, signal, walked, skipDuplicate);
     }
 
     function accumulateLemma(
@@ -559,9 +604,10 @@ export function createCompiledLexicalRetriever(): Retriever {
       const counts = new Map<number, number>();
       for (const term of terms) {
         const flat = field === "title" ? term.title : term.body;
-        flatEach(flat, (doc, tf) => {
+        const df = field === "title" ? term.titleDf : term.bodyDf;
+        walkPostings(flat, df, (doc, tf) => {
           counts.set(doc, (counts.get(doc) || 0) + tf);
-        }, signal);
+        }, signal, walked, skipDuplicate);
       }
       if (!counts.size) return;
       const avgdl = field === "title" ? compiled.avgTitleDl : compiled.avgBodyDl;
@@ -573,6 +619,7 @@ export function createCompiledLexicalRetriever(): Retriever {
     }
 
     const forms = queryForms(query);
+    last.queryFormsExpanded = forms.length;
     const qNorm = (query.tokens || []).map((token) => token.normalized).join(" ");
     const exact = compiled.titleByNorm.get(qNorm);
     if (exact) for (const pos of exact) add(pos, "exact-title", 50);
@@ -629,9 +676,11 @@ export function createCompiledLexicalRetriever(): Retriever {
       const positions = new Set<number>();
       for (const key of keys) {
         const surface = compiled.bySurface.get(key);
-        if (surface) flatEach(surface.title, (doc) => positions.add(doc), signal);
+        if (surface) {
+          walkPostings(surface.title, surface.titleDf, (doc) => positions.add(doc), signal, walked, skipDuplicate);
+        }
         for (const term of compiled.byLemma.get(key) || []) {
-          flatEach(term.title, (doc) => positions.add(doc), signal);
+          walkPostings(term.title, term.titleDf, (doc) => positions.add(doc), signal, walked, skipDuplicate);
         }
       }
       for (const pos of [...positions].sort((a, b) => a - b)) {
@@ -678,7 +727,7 @@ export function createCompiledLexicalRetriever(): Retriever {
         terms: state?.terms.length || 0,
         postingEntries: state?.postingEntries || 0,
         ...last,
-        pruning: "none",
+        pruning: last.postingEntriesSkipped ? "duplicate-posting-lists" : "none",
       };
     },
   };

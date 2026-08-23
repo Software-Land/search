@@ -570,9 +570,14 @@ export class SearchEngine {
       postingEntriesVisited: retrievalStats.postingEntriesVisited ?? null,
       distinctDocumentsExamined: retrievalStats.distinctDocumentsExamined ?? null,
       rawDocumentScans: retrievalStats.rawDocumentScans ?? null,
-      postingBlocksVisited: timings.pruningStats?.postingBlocksVisited ?? 0,
-      postingBlocksSkipped: timings.pruningStats?.postingBlocksSkipped ?? 0,
-      postingEntriesSkipped: timings.pruningStats?.postingEntriesSkipped ?? 0,
+      postingBlocksVisited: retrievalStats.postingBlocksVisited ?? timings.pruningStats?.postingBlocksVisited ?? 0,
+      postingBlocksSkipped: retrievalStats.postingBlocksSkipped ?? timings.pruningStats?.postingBlocksSkipped ?? 0,
+      postingEntriesSkipped:
+        (Number(retrievalStats.postingEntriesSkipped) || 0) +
+        (timings.pruningStats?.postingEntriesSkipped ?? 0),
+      duplicatePostingEntriesAvoided: retrievalStats.duplicatePostingEntriesAvoided ?? 0,
+      queryFormsExpanded: retrievalStats.queryFormsExpanded ?? 0,
+      termsExpanded: retrievalStats.termsExpanded ?? 0,
       documentBlocksVisited: timings.pruningStats?.documentBlocksVisited ?? 0,
       documentBlocksSkipped: timings.pruningStats?.documentBlocksSkipped ?? 0,
       boundedBlocksSkipped: timings.pruningStats?.boundedBlocksSkipped ?? 0,
@@ -603,7 +608,8 @@ export class SearchEngine {
     rawQuery: unknown,
     opts: SearchOptions = {},
     exactDiagnostics = true,
-    pruningMode: "auto" | "exhaustive" = "auto"
+    pruningMode: "auto" | "exhaustive" = "auto",
+    skipDuplicatePostingLists?: boolean
   ) {
     const {
       limit = 10,
@@ -626,6 +632,9 @@ export class SearchEngine {
     const retrieved = this.retriever.retrieve(query, index, {
       signal,
       candidateLimit: opts.candidateLimit || this.candidateLimit,
+      skipDuplicatePostingLists:
+        skipDuplicatePostingLists ??
+        (this.retrievalScoreWeight === 0 && pruningMode === "auto" && !exactDiagnostics),
     });
     const retrieveMs = performance.now() - tRetrieve;
 
@@ -705,7 +714,8 @@ export class SearchEngine {
     rawQuery: unknown,
     opts: SearchOptions = {},
     exactDiagnostics = true,
-    pruningMode: "auto" | "exhaustive" = "auto"
+    pruningMode: "auto" | "exhaustive" = "auto",
+    skipDuplicatePostingLists?: boolean
   ) {
     const {
       limit = 10,
@@ -734,6 +744,9 @@ export class SearchEngine {
     const retrieveOpts = {
       signal,
       candidateLimit: opts.candidateLimit || this.candidateLimit,
+      skipDuplicatePostingLists:
+        skipDuplicatePostingLists ??
+        (this.retrievalScoreWeight === 0 && pruningMode === "auto" && !exactDiagnostics),
     };
     const retrieved =
       typeof this.retriever.retrieveAsync === "function"

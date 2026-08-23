@@ -338,6 +338,12 @@ export interface Retriever {
 export interface RetrieveOptions {
   signal?: AbortSignal;
   candidateLimit?: number | null;
+  /**
+   * Internal Stage-2B flag. When true, already-walked posting arrays are not
+   * decoded again. Membership stays exhaustive; BM25 retrievalScore is not
+   * double-counted. The engine enables this only when retrievalScoreWeight is 0.
+   */
+  skipDuplicatePostingLists?: boolean;
 }
 
 export interface AdaptiveOptions {
