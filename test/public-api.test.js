@@ -168,10 +168,12 @@ describe("public API", () => {
     const runtime = createWorkerRuntime({ SearchEngine, english: morphology, dictionary });
     const transport = createLoopbackTransport(runtime);
     const published = [];
+    const payloads = [];
     const client = createSearchClient({
       worker: transport,
-      onResult({ query }) {
+      onResult({ query, result }) {
         published.push(query);
+        payloads.push(result);
       },
     });
     await client.init({ documents: docs, schema, dictionaryEntries: [], retriever: "indexed", candidateLimit: 50 });
@@ -179,6 +181,74 @@ describe("public API", () => {
     client.setQuery("nfc");
     await new Promise((r) => setTimeout(r, 40));
     expect(published[published.length - 1]).toBe("nfc");
+    expect(payloads[payloads.length - 1].meta.representativeSelection.plannedFullRanking).toBe(false);
+    client.terminate();
+  });
+
+  test("Worker explain rows match in-process results and expose only protocol diagnostics", async () => {
+    const expectedEngine = await make({ retriever: "indexed", relationshipStrategy: "hybrid" });
+    const expected = await expectedEngine.searchDetailedAsync("bluetooth", {
+      limit: 5,
+      relatedLimit: 3,
+      explain: true,
+    });
+    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, dictionary });
+    const transport = createLoopbackTransport(runtime);
+    let publish;
+    const published = new Promise((resolve) => {
+      publish = resolve;
+    });
+    const client = createSearchClient({
+      worker: transport,
+      onResult({ result }) {
+        publish(result);
+      },
+    });
+    await client.init({
+      documents: docs,
+      schema,
+      dictionaryEntries: [{ key: "wifi", expansion: ["wi", "fi"] }],
+      relationships: graph,
+      relationshipStrategy: "hybrid",
+      retriever: "indexed",
+    });
+    client.setQuery("bluetooth", { limit: 5, relatedLimit: 3, explain: true });
+    const actual = await published;
+    expect(actual.results).toEqual(expected.results);
+    expect(actual.related).toEqual(expected.related);
+    expect(actual.results[0].explanation.constraintsVsNext).toBeTruthy();
+    expect(Object.keys(actual.meta).sort()).toEqual([
+      "candidateCount",
+      "distinctDocumentsExamined",
+      "featureMs",
+      "matchCount",
+      "postingEntriesVisited",
+      "rankMs",
+      "rawDocumentScans",
+      "relatedCount",
+      "relationshipStrategy",
+      "representativeSelection",
+      "retrieveMs",
+      "selectionMs",
+      "totalMs",
+    ]);
+    client.terminate();
+  });
+
+  test("Worker invalid lexical artifacts reject initialization instead of hanging", async () => {
+    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, dictionary });
+    const client = createSearchClient({
+      worker: createLoopbackTransport(runtime),
+    });
+    await expect(client.init({
+      documents: docs,
+      schema,
+      retriever: "indexed",
+      lexicalIndex: {
+        format: "search-v2-lexical-index",
+        version: 2,
+      },
+    })).rejects.toThrow(/version/i);
     client.terminate();
   });
 

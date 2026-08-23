@@ -1,7 +1,7 @@
 /**
  * Keep generated public facades; drop declaration emit pulled in from JS impl modules.
  */
-import { existsSync, readdirSync, statSync, unlinkSync } from "node:fs";
+import { existsSync, readdirSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -33,6 +33,25 @@ function walk(dir, rel = "") {
 }
 
 if (existsSync(dist)) walk(dist);
+
+// Build-tool bridge only. The package export map does not expose this module,
+// and the opaque payload keeps posting/analyzed-document internals private.
+writeFileSync(
+  path.join(dist, "lexicalIndex.d.ts"),
+  `import type { LexicalIndexArtifact, Schema, SearchPlugin } from "./api.js";
+
+export declare const LEXICAL_INDEX_FORMAT: "search-v2-lexical-index";
+export declare const LEXICAL_INDEX_VERSION: 1;
+export declare function compileLexicalIndex(
+  documents: unknown,
+  options?: {
+    schema?: Schema | null;
+    plugins?: SearchPlugin[];
+    analyzer?: string;
+  }
+): LexicalIndexArtifact;
+`
+);
 
 for (const name of ["rankOracle.js", "featuresOracle.js", "rankOracle.d.ts", "featuresOracle.d.ts"]) {
   const stale = path.join(dist, name);

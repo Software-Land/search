@@ -13,7 +13,6 @@ import {
   resolveLexicalPolicy as resolveLexicalPolicyImpl,
   saturatingFrequency as saturatingFrequencyImpl,
 } from "./lib/compile.js";
-// @ts-expect-error Internal runtime implementation intentionally has no packed declaration.
 import * as lexicalIndexRuntime from "../../dist/lexicalIndex.js";
 
 const compileLexicalIndexImpl = lexicalIndexRuntime.compileLexicalIndex;

@@ -1,6 +1,10 @@
 import { analyzeQuery, suggestTypoForms } from "./analyze.js";
-import { buildIndex } from "./indexDocuments.js";
-import { loadLexicalIndex } from "./lexicalIndex.js";
+import { buildIndex, resolveSchema } from "./indexDocuments.js";
+import {
+  lexicalAnalyzerIdentity,
+  lexicalCorpusFingerprint,
+  loadLexicalIndex,
+} from "./lexicalIndex.js";
 import { extractFeatures } from "./features.js";
 import {
   rankCandidates,
@@ -23,7 +27,7 @@ import {
   requireStrategy,
   requireIndexed,
 } from "./config.js";
-import { InvalidDocumentError } from "./errors.js";
+import { ArtifactValidationError, InvalidDocumentError } from "./errors.js";
 import type {
   AdaptiveOptions,
   AnalyzedQuery,
@@ -269,6 +273,11 @@ export class SearchEngine {
   declare plugins: SearchPlugin[];
   declare relationships: RelationshipGraphApi;
   declare lexicalIndex: LexicalIndexArtifact | null;
+  declare loadedLexicalIndex: {
+    fingerprint: string;
+    analyzer: string;
+    schema: [string, string];
+  } | null;
   declare relationshipStrategy: string;
   declare retriever: RuntimeRetriever;
   declare candidateLimit: number | null;
@@ -283,6 +292,7 @@ export class SearchEngine {
     this.schema = cfg.schema;
     this.plugins = cfg.plugins;
     this.lexicalIndex = cfg.lexicalIndex;
+    this.loadedLexicalIndex = null;
     this.relationships = resolveGraph(cfg.relationships);
     this.relationshipStrategy = cfg.relationshipStrategy;
     this.retriever = cfg.retriever;
@@ -303,11 +313,41 @@ export class SearchEngine {
       throw new InvalidDocumentError("index(documents) requires an array", { field: "documents" });
     }
     const t0 = performance.now();
-    this._index = this.lexicalIndex
-      ? loadLexicalIndex(this.lexicalIndex, documents || [], this.schema, this.plugins)
+    if (!this.lexicalIndex && this.loadedLexicalIndex && this._index) {
+      const resolved = resolveSchema(this.schema);
+      const analyzer = lexicalAnalyzerIdentity(this.plugins, { requireIdentified: true });
+      const fingerprint = lexicalCorpusFingerprint(documents || [], this.schema);
+      if (
+        analyzer !== this.loadedLexicalIndex.analyzer ||
+        resolved.titleField !== this.loadedLexicalIndex.schema[0] ||
+        resolved.bodyField !== this.loadedLexicalIndex.schema[1] ||
+        fingerprint !== this.loadedLexicalIndex.fingerprint
+      ) {
+        throw new ArtifactValidationError(
+          "Re-index input is incompatible with the consumed lexical index",
+          { format: "search-v2-lexical-index", field: "corpus.fingerprint" }
+        );
+      }
+      this.indexBuildMs = performance.now() - t0;
+      return { documentCount: this._index.documents.length, buildMs: this.indexBuildMs };
+    }
+    const suppliedLexicalIndex = this.lexicalIndex;
+    this._index = suppliedLexicalIndex
+      ? loadLexicalIndex(suppliedLexicalIndex, documents || [], this.schema, this.plugins)
       : buildIndex(documents, this.schema, this.plugins);
     if (this.retriever && typeof this.retriever.prepare === "function") {
       this.retriever.prepare(this._index, { schema: this.schema, plugins: this.plugins });
+    }
+    // Runtime terms retain only the positional arrays they need. Drop the
+    // validated envelope/document tuples so Worker initialization does not
+    // permanently keep both serialized and hydrated representations.
+    if (suppliedLexicalIndex) {
+      this.loadedLexicalIndex = {
+        fingerprint: suppliedLexicalIndex.corpus.fingerprint,
+        analyzer: suppliedLexicalIndex.compatibility.analyzer,
+        schema: [...suppliedLexicalIndex.compatibility.schema],
+      };
+      this.lexicalIndex = null;
     }
     this.indexBuildMs = performance.now() - t0;
     return { documentCount: this._index.documents.length, buildMs: this.indexBuildMs };
@@ -317,7 +357,7 @@ export class SearchEngine {
    * Default OSS API: returns an array. Same ranking as searchDetailed().results.
    */
   search(rawQuery: unknown, opts: SearchOptions = {}) {
-    return this.searchDetailed(rawQuery, opts).results;
+    return this._searchDetailedSync(rawQuery, opts, false).results;
   }
 
   /**
@@ -326,15 +366,15 @@ export class SearchEngine {
    * or no graph is configured).
    */
   searchDetailed(rawQuery: unknown, opts: SearchOptions = {}) {
-    return this._searchDetailedSync(rawQuery, opts);
+    return this._searchDetailedSync(rawQuery, opts, true);
   }
 
   async searchAsync(rawQuery: unknown, opts: SearchOptions = {}) {
-    return (await this.searchDetailedAsync(rawQuery, opts)).results;
+    return (await this._searchDetailedAsync(rawQuery, opts, false)).results;
   }
 
   async searchDetailedAsync(rawQuery: unknown, opts: SearchOptions = {}) {
-    return this._searchDetailedAsync(rawQuery, opts);
+    return this._searchDetailedAsync(rawQuery, opts, true);
   }
 
   _prepareQuery(rawQuery: unknown, { signal }: { signal?: AbortSignal } = {}) {
@@ -415,9 +455,10 @@ export class SearchEngine {
     const results = sliced.map((c) => serializeHit(c, query, explain));
     const related = relatedSliced.map((c) => serializeHit(c, query, explain));
     const retrievalStats = this.retriever?.stats?.() || {};
+    const diagnosticRanked = timings.diagnosticRanked || ranked;
     const meta = {
-      candidateCount: timings.candidateCount,
-      candidateTitles: ranked.map((c) => c.document.title),
+      candidateCount: timings.diagnosticRanked?.length ?? timings.candidateCount,
+      candidateTitles: diagnosticRanked.map((c) => c.document.title),
       retrieveMs: timings.retrieveMs,
       featureMs: timings.featureMs,
       relationshipMs: timings.relationshipMs,
@@ -438,8 +479,8 @@ export class SearchEngine {
       relationshipStrategy: strategy,
       retriever: this.retriever?.name || "indexed-lexical",
       related,
-      constraintCycles: ranked[0]?.constraintMeta?.cycles || [],
-      constraintConflicts: ranked[0]?.constraintMeta?.conflictCount || 0,
+      constraintCycles: diagnosticRanked[0]?.constraintMeta?.cycles || [],
+      constraintConflicts: diagnosticRanked[0]?.constraintMeta?.conflictCount || 0,
       query: {
         raw: query.raw,
         originalSurface: query.originalSurface,
@@ -450,7 +491,7 @@ export class SearchEngine {
     return { results, related, meta };
   }
 
-  _searchDetailedSync(rawQuery: unknown, opts: SearchOptions = {}) {
+  _searchDetailedSync(rawQuery: unknown, opts: SearchOptions = {}, exactDiagnostics = true) {
     const {
       limit = 10,
       explain = false,
@@ -488,6 +529,9 @@ export class SearchEngine {
     const fullRelatedCount = featured.filter((hit) => hit.features.relevanceKind === "related").length;
     const tSelect = performance.now();
     if (this.retriever.exactSignatureSelection) {
+      if (exactDiagnostics) {
+        planningRanked = rankCandidates(featured, { constraints, signal });
+      }
       const publicDepth = Math.max(0, limit, relatedLimit);
       let representativeDepth = publicDepth + (explain && publicDepth > 0 ? 1 : 0);
       const hasRelated = fullRelatedCount > 0;
@@ -495,7 +539,7 @@ export class SearchEngine {
         publicDepth > 0 &&
         (explain || (relatedLimit > 0 && hasRelated) || (strategy === "separate" && limit > 0 && hasRelated))
       ) {
-        planningRanked = rankCandidates(featured, { constraints, signal });
+        planningRanked ||= rankCandidates(featured, { constraints, signal });
         representativeDepth = Math.max(
           representativeDepth,
           representativeDepthForOutput(planningRanked, strategy, { limit, relatedLimit, explain })
@@ -534,10 +578,11 @@ export class SearchEngine {
       primaryIds: applied.primaries.map((p) => p.document.id),
       matchCount: retrieved.length,
       representativeStats,
+      diagnosticRanked: exactDiagnostics ? planningRanked : null,
     });
   }
 
-  async _searchDetailedAsync(rawQuery: unknown, opts: SearchOptions = {}) {
+  async _searchDetailedAsync(rawQuery: unknown, opts: SearchOptions = {}, exactDiagnostics = true) {
     const {
       limit = 10,
       explain = false,
@@ -594,6 +639,9 @@ export class SearchEngine {
     const fullRelatedCount = featured.filter((hit) => hit.features.relevanceKind === "related").length;
     const tSelect = performance.now();
     if (this.retriever.exactSignatureSelection) {
+      if (exactDiagnostics) {
+        planningRanked = await rankCandidatesAsync(featured, { constraints, signal });
+      }
       const publicDepth = Math.max(0, limit, relatedLimit);
       let representativeDepth = publicDepth + (explain && publicDepth > 0 ? 1 : 0);
       const hasRelated = fullRelatedCount > 0;
@@ -601,7 +649,7 @@ export class SearchEngine {
         publicDepth > 0 &&
         (explain || (relatedLimit > 0 && hasRelated) || (strategy === "separate" && limit > 0 && hasRelated))
       ) {
-        planningRanked = await rankCandidatesAsync(featured, { constraints, signal });
+        planningRanked ||= await rankCandidatesAsync(featured, { constraints, signal });
         representativeDepth = Math.max(
           representativeDepth,
           representativeDepthForOutput(planningRanked, strategy, { limit, relatedLimit, explain })
@@ -641,6 +689,7 @@ export class SearchEngine {
       primaryIds: applied.primaries.map((p) => p.document.id),
       matchCount: retrieved.length,
       representativeStats,
+      diagnosticRanked: exactDiagnostics ? planningRanked : null,
     });
   }
 }

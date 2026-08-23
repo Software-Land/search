@@ -129,33 +129,58 @@ function publicSurface(value) {
   };
 }
 
+function exactDiagnosticSurface(value) {
+  return {
+    candidateCount: value.meta.candidateCount,
+    candidateTitles: value.meta.candidateTitles,
+    relatedCount: value.meta.relatedCount,
+    constraintCycles: value.meta.constraintCycles,
+    constraintConflicts: value.meta.constraintConflicts,
+  };
+}
+
 function expectExact(full, compiled, query, options = { limit: 10, relatedLimit: 5, explain: true }) {
   const expected = full.searchDetailed(query, options);
   const actual = compiled.searchDetailed(query, { ...options, candidateLimit: 1 });
   expect(publicSurface(actual)).toEqual(publicSurface(expected));
+  expect(exactDiagnosticSurface(actual)).toEqual(exactDiagnosticSurface(expected));
   expect(compiled.retriever.stats().rawDocumentScans).toBe(0);
   return actual;
 }
 
 describe("Stage-1 exact compiled retrieval under pressure", () => {
-  test("all 215 Software.Land queries enumerate the exact full-scan hit set and provenance", async () => {
+  test("Stage 1A in-memory and Stage 1B hydrated indexes enumerate all 215 exact hit sets", async () => {
     const documents = attachLexicalFrequency(load("documents.json"), load("lexical-frequency.json"));
+    const relationships = load("relationships.json");
     const { full, compiled } = await engines(documents, {
       lemmas: load("lemmas.json"),
       entries: load("dictionary.json"),
-      relationships: load("relationships.json"),
+      relationships,
       relationshipStrategy: "hybrid",
       precompiled: true,
     });
+    const fallback = SearchEngine.create({
+      schema,
+      plugins: full.plugins,
+      relationships,
+      relationshipStrategy: "hybrid",
+      retriever: "indexed",
+      candidateLimit: 1,
+    });
+    await fallback.index(documents);
     for (const row of load("query-result-oracle.json").rows) {
       const query = full._prepareQuery(row.query);
       const expected = full.retriever.retrieve(query, full._index)
         .map((hit) => [hit.document.id, hit.retrievalSources])
         .sort((a, b) => a[0].localeCompare(b[0]));
-      const actual = compiled.retriever.retrieve(query, compiled._index)
+      const hydrated = compiled.retriever.retrieve(query, compiled._index)
         .map((hit) => [hit.document.id, hit.retrievalSources])
         .sort((a, b) => a[0].localeCompare(b[0]));
-      expect(actual).toEqual(expected);
+      const inMemory = fallback.retriever.retrieve(query, fallback._index)
+        .map((hit) => [hit.document.id, hit.retrievalSources])
+        .sort((a, b) => a[0].localeCompare(b[0]));
+      expect(inMemory).toEqual(expected);
+      expect(hydrated).toEqual(expected);
     }
   }, 120_000);
 
@@ -177,6 +202,24 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
       expect(detailed.meta.representativeSelection.retained).toBeLessThan(detailed.meta.matchCount);
     }
   }, 120_000);
+
+  test("normal search keeps representative ranking while searchDetailed restores full diagnostics", async () => {
+    const { full, compiled } = await engines(probezzCorpus());
+    const options = { limit: 3, relatedLimit: 0, explain: false };
+
+    expect(compiled.search("probezz", options)).toEqual(full.search("probezz", options));
+    expect(compiled.lastSearchMeta.representativeSelection.plannedFullRanking).toBe(false);
+
+    const expected = full.searchDetailed("probezz", options);
+    const actual = compiled.searchDetailed("probezz", options);
+    expect(publicSurface(actual)).toEqual(publicSurface(expected));
+    expect(exactDiagnosticSurface(actual)).toEqual(exactDiagnosticSurface(expected));
+    expect(actual.meta.representativeSelection.plannedFullRanking).toBe(true);
+
+    const asyncActual = await compiled.searchDetailedAsync("probezz", options);
+    expect(publicSurface(asyncActual)).toEqual(publicSurface(expected));
+    expect(exactDiagnosticSurface(asyncActual)).toEqual(exactDiagnosticSurface(expected));
+  });
 
   test("Software.Land machine l / machine le flooding equals full scan", async () => {
     const originals = attachLexicalFrequency(load("documents.json"), load("lexical-frequency.json"));
@@ -248,6 +291,50 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
     expectExact(full, compiled, "exact primary", {
       limit: 3,
       relatedLimit: 1,
+      explain: true,
+    });
+  });
+
+  test("relationship target handling keeps the complete featured candidate map", async () => {
+    const documents = [
+      { id: "primary", title: "Primary", body: "primary" },
+      { id: "strong-existing", title: "Primary Companion", body: "primary" },
+      { id: "weak-existing", title: "Unrelated Existing", body: "primary" },
+      { id: "missing-neighbor", title: "Neighbor Missing", body: "unrelated" },
+      ...Array.from({ length: 40 }, (_, i) => ({
+        id: `body-${String(i).padStart(3, "0")}`,
+        title: `Body note ${i}`,
+        body: "primary",
+      })),
+    ];
+    const relationships = {
+      format: "search-v2-relationships",
+      version: 1,
+      relationships: {
+        primary: [
+          { target: "strong-existing", type: "test", strength: 1 },
+          { target: "weak-existing", type: "test", strength: 0.9 },
+          { target: "missing-neighbor", type: "test", strength: 0.8 },
+        ],
+      },
+    };
+    const { full, compiled } = await engines(documents, {
+      relationships,
+      relationshipStrategy: "hybrid",
+    });
+
+    const query = compiled._prepareQuery("primary");
+    const retrieved = compiled.retriever.retrieve(query, compiled._index);
+    const expanded = compiled._expandAndFeature(retrieved, query, "hybrid");
+    const byId = new Map(expanded.featured.map((row) => [row.document.id, row]));
+    expect(expanded.applied.primaries[0].document.id).toBe("primary");
+    expect(byId.get("strong-existing").features.relevanceKind).toBe("direct");
+    expect(byId.get("weak-existing").features.relevanceKind).toBe("related");
+    expect(byId.get("missing-neighbor").features.relevanceKind).toBe("related");
+
+    expectExact(full, compiled, "primary", {
+      limit: 5,
+      relatedLimit: 5,
       explain: true,
     });
   });

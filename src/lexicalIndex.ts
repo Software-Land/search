@@ -4,7 +4,9 @@
  * The serialized payload stores one positional posting row per normalized
  * surface term. Each surface term carries its deterministic lemma, so lemma
  * postings are reconstructed as an inverse term mapping rather than duplicated
- * in the artifact. Raw body text is deliberately absent.
+ * in the artifact. Raw title/body text is deliberately absent; caller-supplied
+ * documents provide display titles and the separately owned lexical-frequency
+ * data after the corpus fingerprint has been validated.
  */
 
 import { assertArtifact } from "./artifacts.js";
@@ -12,7 +14,7 @@ import { canonicalDocumentId } from "./documentId.js";
 import { ArtifactValidationError } from "./errors.js";
 import { buildIndex, resolveSchema } from "./indexDocuments.js";
 import { stableFingerprint } from "./stableHash.js";
-import { DEFAULT_STOP, firstSurfaceToken } from "./text.js";
+import { DEFAULT_STOP } from "./text.js";
 import type {
   IndexedDocument,
   LexicalIndexArtifact,
@@ -28,15 +30,12 @@ export const CORE_ANALYZER_COMPATIBILITY = "search-v2-core-analyzer-v1";
 export const IDENTITY_LEMMA_COMPATIBILITY = "identity-lemma-v1";
 
 // Document tuple:
-// [id, title, titleTokenLength, bodyTokenLength, firstSurfaceToken,
-//  normalizedTitle, versionCompactForms, dottedSpans,
-//  dottedSpanComponentIndexes]
+// [id, titleTokenLength, bodyTokenLength, firstSurfaceToken,
+//  versionCompactForms, dottedSpans, dottedSpanComponentIndexes]
 type SerializedDocument = [
   string,
-  string,
   number,
   number,
-  string,
   string,
   string[],
   string[],
@@ -51,7 +50,15 @@ type LexicalIndexPayload = {
   documents: SerializedDocument[];
   terms: SerializedTerm[];
   stats: [number, number];
+  /**
+   * Reserved capability namespace. Stage 1 emits no pruning metadata. A later
+   * exact block-bound extension can reference stable term/document ordinals
+   * without changing the core v1 positional representation.
+   */
+  extensions: Record<string, unknown>;
 };
+
+type SourceRow = [string, string, string, Record<string, number> | null];
 
 export type CompiledTermRuntime = {
   term: string;
@@ -110,7 +117,7 @@ function inputDocuments(input: unknown): unknown[] {
 
 function sourceRows(documents: unknown, schema?: Schema | null) {
   const { titleField, bodyField } = resolveSchema(schema);
-  const byId = new Map<string, [string, string, string, Record<string, number> | null]>();
+  const byId = new Map<string, SourceRow>();
   const rows = inputDocuments(documents);
   for (let i = 0; i < rows.length; i++) {
     const value = rows[i];
@@ -180,11 +187,9 @@ function postingRows(tokens: string[], lemmas: string[], docPos: number, field: 
 function serializeDocuments(index: SearchIndex): SerializedDocument[] {
   return index.documents.map((doc) => [
     doc.id,
-    doc.title,
     doc.titleTokens.length,
     doc.bodyTokens.length,
     doc.firstToken,
-    doc.normalizedTitle,
     [...doc.versionCompactForms],
     [...doc.dottedSpans],
     [...doc.dottedSpanComponentIndexes].sort((a, b) => a - b),
@@ -208,6 +213,7 @@ function buildPayload(index: SearchIndex): LexicalIndexPayload {
     documents: serializeDocuments(index),
     terms: sortedTerms,
     stats: [n ? titleLength / n : 1, n ? bodyLength / n : 1],
+    extensions: {},
   };
 }
 
@@ -241,9 +247,8 @@ export function compileLexicalIndexFromSearchIndex(
 ) {
   const payload = buildPayload(index);
   const artifact = envelope(payload, index, analyzer);
-  const runtime = runtimeFromPayload(payload);
+  const runtime = runtimeFromPayload(payload, index.documents);
   index.compiledLexical = runtime;
-  index.lexicalArtifact = artifact;
   return { artifact, runtime };
 }
 
@@ -276,24 +281,20 @@ function requireNumberArray(value: unknown, field: string): number[] {
 
 function parseDocument(value: unknown, i: number): SerializedDocument {
   const field = `data.documents[${i}]`;
-  if (!Array.isArray(value) || value.length !== 9) fail(`${field} must be a 9-value document tuple`, field);
-  const [id, title, titleLength, bodyLength, first, normalized, versions, spans, marked] = value;
+  if (!Array.isArray(value) || value.length !== 7) fail(`${field} must be a 7-value document tuple`, field);
+  const [id, titleLength, bodyLength, first, versions, spans, marked] = value;
   if (typeof id !== "string" || !id) fail(`${field}[0] must be a non-empty id`, `${field}[0]`);
-  if (typeof title !== "string") fail(`${field}[1] must be a title string`, `${field}[1]`);
-  if (!finitePositiveInteger(titleLength)) fail(`${field}[2] must be a token length`, `${field}[2]`);
-  if (!finitePositiveInteger(bodyLength)) fail(`${field}[3] must be a token length`, `${field}[3]`);
-  if (typeof first !== "string") fail(`${field}[4] must be a first-token string`, `${field}[4]`);
-  if (typeof normalized !== "string") fail(`${field}[5] must be a normalized title`, `${field}[5]`);
+  if (!finitePositiveInteger(titleLength)) fail(`${field}[1] must be a token length`, `${field}[1]`);
+  if (!finitePositiveInteger(bodyLength)) fail(`${field}[2] must be a token length`, `${field}[2]`);
+  if (typeof first !== "string") fail(`${field}[3] must be a first-token string`, `${field}[3]`);
   return [
     id,
-    title,
     titleLength,
     bodyLength,
     first,
-    normalized,
-    requireStringArray(versions, `${field}[6]`),
-    requireStringArray(spans, `${field}[7]`),
-    requireNumberArray(marked, `${field}[8]`),
+    requireStringArray(versions, `${field}[4]`),
+    requireStringArray(spans, `${field}[5]`),
+    requireNumberArray(marked, `${field}[6]`),
   ];
 }
 
@@ -318,6 +319,9 @@ function parsePayload(value: unknown): LexicalIndexPayload {
   if (!Array.isArray(value.stats) || value.stats.length !== 2 || value.stats.some((n) => typeof n !== "number" || !Number.isFinite(n) || n < 0)) {
     fail("Lexical index data.stats must be [avgTitleLength, avgBodyLength]", "data.stats");
   }
+  if (!plainRecord(value.extensions)) {
+    fail("Lexical index data.extensions must be a plain object", "data.extensions");
+  }
   const documents = value.documents.map(parseDocument);
   const terms = value.terms.map(parseTerm);
   for (let i = 1; i < documents.length; i++) {
@@ -326,7 +330,12 @@ function parsePayload(value: unknown): LexicalIndexPayload {
   for (let i = 1; i < terms.length; i++) {
     if (terms[i - 1][0] >= terms[i][0]) fail("Lexical index terms must be unique and sorted", "data.terms");
   }
-  return { documents, terms, stats: [Number(value.stats[0]), Number(value.stats[1])] };
+  return {
+    documents,
+    terms,
+    stats: [Number(value.stats[0]), Number(value.stats[1])],
+    extensions: { ...value.extensions },
+  };
 }
 
 function decodeField(
@@ -376,7 +385,10 @@ function tokenPositions(tokens: string[]) {
   return out;
 }
 
-function runtimeFromPayload(payload: LexicalIndexPayload): CompiledLexicalRuntime {
+function runtimeFromPayload(
+  payload: LexicalIndexPayload,
+  documents: IndexedDocument[]
+): CompiledLexicalRuntime {
   function rows(flat: number[]) {
     let count = 0;
     let cursor = 0;
@@ -414,17 +426,20 @@ function runtimeFromPayload(payload: LexicalIndexPayload): CompiledLexicalRuntim
   const sortedTitles: Array<{ norm: string; pos: number }> = [];
   const titleByNorm = new Map<string, number[]>();
   const versionIndex = new Map<string, number[]>();
-  const titleDl = new Array<number>(payload.documents.length);
-  const bodyDl = new Array<number>(payload.documents.length);
-  for (let pos = 0; pos < payload.documents.length; pos++) {
-    const row = payload.documents[pos];
-    titleDl[pos] = row[2];
-    bodyDl[pos] = row[3];
-    sortedTitles.push({ norm: row[5], pos });
-    const exact = titleByNorm.get(row[5]);
+  if (documents.length !== payload.documents.length) {
+    fail("Hydrated document count does not match lexical index payload", "data.documents");
+  }
+  const titleDl = new Array<number>(documents.length);
+  const bodyDl = new Array<number>(documents.length);
+  for (let pos = 0; pos < documents.length; pos++) {
+    const doc = documents[pos];
+    titleDl[pos] = doc.titleTokens.length;
+    bodyDl[pos] = doc.bodyTokens.length;
+    sortedTitles.push({ norm: doc.normalizedTitle, pos });
+    const exact = titleByNorm.get(doc.normalizedTitle);
     if (exact) exact.push(pos);
-    else titleByNorm.set(row[5], [pos]);
-    for (const form of [...row[6], ...row[7]]) {
+    else titleByNorm.set(doc.normalizedTitle, [pos]);
+    for (const form of [...doc.versionCompactForms, ...doc.dottedSpans]) {
       const list = versionIndex.get(form);
       if (list) list.push(pos);
       else versionIndex.set(form, [pos]);
@@ -450,10 +465,10 @@ function runtimeFromPayload(payload: LexicalIndexPayload): CompiledLexicalRuntim
 function indexFromPayload(
   payload: LexicalIndexPayload,
   artifact: LexicalIndexArtifact,
-  frequencyById: Map<string, Record<string, number> | null>
+  sourceById: Map<string, SourceRow>
 ): SearchIndex {
-  const titleSlots = payload.documents.map((row) => new Array<string | undefined>(row[2]));
-  const bodySlots = payload.documents.map((row) => new Array<string | undefined>(row[3]));
+  const titleSlots = payload.documents.map((row) => new Array<string | undefined>(row[1]));
+  const bodySlots = payload.documents.map((row) => new Array<string | undefined>(row[2]));
   const lemmaBySurface = new Map<string, string>();
   for (let i = 0; i < payload.terms.length; i++) {
     const [term, lemma, title, body] = payload.terms[i];
@@ -463,22 +478,22 @@ function indexFromPayload(
   }
 
   const documents: IndexedDocument[] = payload.documents.map((row, pos) => {
+    const source = sourceById.get(row[0]);
+    if (!source) fail(`Missing validated source document ${row[0]}`, `data.documents[${pos}][0]`);
     const titleTokens = completeTokens(titleSlots[pos], `data.documents[${pos}].titleTokens`);
     const bodyTokens = completeTokens(bodySlots[pos], `data.documents[${pos}].bodyTokens`);
     const titleLemmas = titleTokens.map((term) => lemmaBySurface.get(term) || term);
     const bodyLemmas = bodyTokens.map((term) => lemmaBySurface.get(term) || term);
-    if (titleTokens.join(" ") !== row[5]) fail(`Normalized title mismatch for document ${row[0]}`, `data.documents[${pos}][5]`);
-    if (firstSurfaceToken(row[1]) !== row[4]) fail(`First-token mismatch for document ${row[0]}`, `data.documents[${pos}][4]`);
-    const dotted = new Set(row[8]);
+    const dotted = new Set(row[6]);
     for (const index of dotted) {
-      if (index >= titleTokens.length) fail(`Dotted component offset out of range for document ${row[0]}`, `data.documents[${pos}][8]`);
+      if (index >= titleTokens.length) fail(`Dotted component offset out of range for document ${row[0]}`, `data.documents[${pos}][6]`);
     }
     const independentTitleTokens = titleTokens.filter((_term, index) => !dotted.has(index));
     const independentTitleLemmas = titleLemmas.filter((_term, index) => !dotted.has(index));
     return {
       id: row[0],
-      raw: { id: row[0], title: row[1], body: "" },
-      title: row[1],
+      raw: { id: row[0], title: source[1], body: "" },
+      title: source[1],
       body: "",
       titleTokens,
       bodyTokens,
@@ -489,17 +504,17 @@ function indexFromPayload(
       titleTokenSet: new Set(titleTokens),
       bodyTokenSet: new Set(bodyTokens),
       nonStopTitle: titleTokens.filter((term) => !DEFAULT_STOP.has(term)),
-      firstToken: row[4],
-      normalizedTitle: row[5],
-      versionCompactForms: row[6],
-      dottedSpans: row[7],
+      firstToken: row[3],
+      normalizedTitle: titleTokens.join(" "),
+      versionCompactForms: row[4],
+      dottedSpans: row[5],
       dottedSpanComponentIndexes: dotted,
       independentTitleTokens,
       independentTitleTokenSet: new Set(independentTitleTokens),
       independentTitleLemmaSet: new Set(independentTitleLemmas),
       bodyTokenPositions: tokenPositions(bodyTokens),
       bodyLemmaPositions: tokenPositions(bodyLemmas),
-      lexicalFrequency: frequencyById.get(row[0]) || null,
+      lexicalFrequency: source[3],
     };
   });
   const titleTokenSet = new Set<string>();
@@ -512,7 +527,7 @@ function indexFromPayload(
     for (const lemma of doc.titleLemmas) titleTokenSet.add(lemma);
     for (const term of doc.bodyTokens) surfaceVocabulary.add(term);
   }
-  const runtime = runtimeFromPayload(payload);
+  const runtime = runtimeFromPayload(payload, documents);
   return {
     schema: {
       fields: {
@@ -527,7 +542,6 @@ function indexFromPayload(
     titleTokenSet,
     surfaceVocabulary,
     compiledLexical: runtime,
-    lexicalArtifact: artifact,
   };
 }
 
@@ -612,7 +626,7 @@ export function loadLexicalIndex(
   return indexFromPayload(
     payload,
     artifact,
-    new Map(rows.map((row) => [row[0], row[3]]))
+    new Map(rows.map((row) => [row[0], row]))
   );
 }
 

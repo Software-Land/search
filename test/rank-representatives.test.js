@@ -3,6 +3,7 @@ import {
   selectTopPerBuiltinSignature,
 } from "../dist/rank.js";
 import {
+  compareConstraint,
   DEFAULT_CONSTRAINTS,
   HYBRID_CONSTRAINTS,
 } from "../dist/constraints.js";
@@ -155,7 +156,7 @@ describe("top-R per builtin constraint signature", () => {
     }
   });
 
-  test("reduction preserves first-seen signature order for directional builtin comparisons", () => {
+  test("malformed queryTokenCount proves generic order-free reduction is invalid", () => {
     const candidates = [
       hit("s-low", {
         queryTokenCount: 1,
@@ -183,6 +184,26 @@ describe("top-R per builtin constraint signature", () => {
     // A stable-filter implementation would reverse first-seen bucket order
     // after dropping s-low and would incorrectly make t the winner.
     expect(ids(rankCandidates([candidates[1], selected.candidates[0]]), 1)).toEqual(["t"]);
+  });
+
+  test("representatives use the ranker's rounded score before document.id", () => {
+    const candidates = [
+      hit("z-higher-unrounded", {
+        bodyLexicalMatch: 1,
+        retrievalScore: 0.00000049,
+      }),
+      hit("a-lower-unrounded", {
+        bodyLexicalMatch: 1,
+        retrievalScore: 0.0000004,
+      }),
+    ];
+    const expected = rankCandidates(candidates);
+    expect(expected.map((row) => row.document.id)).toEqual([
+      "a-lower-unrounded",
+      "z-higher-unrounded",
+    ]);
+    expect(selectTopPerBuiltinSignature(candidates, 1).candidates.map((row) => row.document.id))
+      .toEqual(["a-lower-unrounded"]);
   });
 
   test("incomparable, dominated, stronger/weaker, and same-class-conflict signatures preserve prefixes", () => {
@@ -222,6 +243,46 @@ describe("top-R per builtin constraint signature", () => {
         expectExactPrefixWithNext(candidates, depth, constraints);
       }
     }
+  });
+
+  test("builtin same-class conflicts stay unordered and preserve score/id interleaving", () => {
+    const candidates = [
+      hit("coverage-low", {
+        queryTokenCount: 1,
+        queryCoverage: 1,
+        titleCoverage: 1,
+        titlePrefixQuality: 1,
+        typedSurfaceTitleMatch: false,
+        retrievalScore: 1,
+      }),
+      hit("surface-high", {
+        queryTokenCount: 1,
+        queryCoverage: 0.2,
+        typedSurfaceTitleMatch: true,
+        retrievalScore: 8,
+      }),
+      hit("coverage-high", {
+        queryTokenCount: 1,
+        queryCoverage: 1,
+        titleCoverage: 1,
+        titlePrefixQuality: 1,
+        typedSurfaceTitleMatch: false,
+        retrievalScore: 6,
+      }),
+    ];
+    const cmp = compareConstraint(candidates[0], candidates[1], DEFAULT_CONSTRAINTS);
+    expect(cmp).toMatchObject({
+      order: 0,
+      conflict: true,
+      resolution: "unordered-same-class-conflict",
+      decisiveClass: "strong",
+    });
+    expectExactPrefix(candidates, 2);
+    expect(ids(rankCandidates(candidates), 3)).toEqual([
+      "coverage-high",
+      "surface-high",
+      "coverage-low",
+    ]);
   });
 
   test("builtin signature cycles remain exact after per-signature prefixes", () => {
@@ -291,8 +352,12 @@ describe("top-R per builtin constraint signature", () => {
     const rng = mulberry32(0x52505245);
     for (let round = 0; round < 50; round += 1) {
       const candidates = [];
+      const queryTokenCount = pick(rng, [1, 2, 3]);
       for (let i = 0; i < 80; i += 1) {
-        candidates.push(hit(`r${round}-${String(i).padStart(3, "0")}`, randomFeatures(rng)));
+        candidates.push(hit(`r${round}-${String(i).padStart(3, "0")}`, {
+          ...randomFeatures(rng),
+          queryTokenCount,
+        }));
       }
       for (const constraints of [DEFAULT_CONSTRAINTS, HYBRID_CONSTRAINTS]) {
         for (const depth of [1, 3, 5, 10]) {

@@ -86,7 +86,10 @@ function measureCandidateSurvival(engine, rows) {
   for (const row of rows) {
     const detailed = engine.searchDetailed(row.query, { limit: SEARCH_LIMIT });
     const candidateTitles = new Set(detailed.meta.candidateTitles);
-    counts.push(detailed.meta.candidateCount);
+    counts.push(
+      detailed.meta.representativeSelection?.retained ??
+      detailed.meta.candidateCount
+    );
     for (const title of expectedTargetTitles(row)) {
       if (!candidateTitles.has(title)) {
         missing.push({ query: row.query, name: row.name, title });

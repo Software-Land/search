@@ -163,6 +163,23 @@ describe("ranking equivalence oracle", () => {
     expect(ranked[0].constraintMeta.cycles).toEqual([]);
   });
 
+  test("one-query equal signatures are a directional builtin congruence", () => {
+    const rng = mulberry32(0x5349474e);
+    for (const constraints of [DEFAULT_CONSTRAINTS, HYBRID_CONSTRAINTS]) {
+      for (let i = 0; i < 100; i += 1) {
+        const queryTokenCount = pick(rng, [1, 2, 3]);
+        const shared = { ...randomFeatures(rng), queryTokenCount };
+        const a = hit(`a-${i}`, { ...shared, retrievalScore: 0.1 });
+        const b = hit(`b-${i}`, { ...shared, retrievalScore: 9 });
+        const x = hit(`x-${i}`, { ...randomFeatures(rng), queryTokenCount });
+
+        expect(constraintSignature(a.features)).toBe(constraintSignature(b.features));
+        expect(compareConstraint(a, x, constraints)).toEqual(compareConstraint(b, x, constraints));
+        expect(compareConstraint(x, a, constraints)).toEqual(compareConstraint(x, b, constraints));
+      }
+    }
+  });
+
   test("exact title outranks non-exact; same-class remains unordered among exacts", () => {
     rankBoth([
       hit("plain", { exactTitleMatch: false, queryCoverage: 1, titlePrefixQuality: 0.9 }),

@@ -36,29 +36,34 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
       replyError(reply, message.requestId, new Error("createWorkerRuntime requires SearchEngine"));
       return;
     }
-    const payload = (message.payload || {}) as InitPayload;
-    const plugins: SearchPlugin[] = [];
-    if (typeof english === "function") plugins.push(english(payload.englishOptions || {}));
-    if (typeof dictionary === "function") {
-      plugins.push(dictionary({ entries: payload.dictionaryEntries || [] }));
+    try {
+      const payload = (message.payload || {}) as InitPayload;
+      const plugins: SearchPlugin[] = [];
+      if (typeof english === "function") plugins.push(english(payload.englishOptions || {}));
+      if (typeof dictionary === "function") {
+        plugins.push(dictionary({ entries: payload.dictionaryEntries || [] }));
+      }
+      engine = SearchEngine.create({
+        schema: payload.schema,
+        plugins,
+        lexicalIndex: payload.lexicalIndex,
+        relationships: payload.relationships || null,
+        relationshipStrategy: payload.relationshipStrategy,
+        retriever: payload.retriever,
+        candidateLimit: payload.candidateLimit ?? undefined,
+        adaptive: payload.adaptive,
+      } as SearchEngineOptions);
+      const indexed = await engine.index(payload.documents || []);
+      reply({
+        type: MSG.READY,
+        requestId: message.requestId,
+        documentCount: indexed.documentCount,
+        indexBuildMs: indexed.buildMs,
+      });
+    } catch (err) {
+      engine = null;
+      replyError(reply, message.requestId, err);
     }
-    engine = SearchEngine.create({
-      schema: payload.schema,
-      plugins,
-      lexicalIndex: payload.lexicalIndex,
-      relationships: payload.relationships || null,
-      relationshipStrategy: payload.relationshipStrategy,
-      retriever: payload.retriever,
-      candidateLimit: payload.candidateLimit ?? undefined,
-      adaptive: payload.adaptive,
-    } as SearchEngineOptions);
-    const indexed = await engine.index(payload.documents || []);
-    reply({
-      type: MSG.READY,
-      requestId: message.requestId,
-      documentCount: indexed.documentCount,
-      indexBuildMs: indexed.buildMs,
-    });
   }
 
   async function handleSearch(message: ProtocolMessage, reply: ReplyFn) {
@@ -79,7 +84,11 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
     };
     const options = { ...(message.options || {}), signal: ac.signal } as SearchOptions;
     try {
-      const detailed = await engine.searchDetailedAsync(String(message.query ?? ""), options);
+      // The Worker protocol forwards result rows and retrieval timings, not the
+      // complete SearchEngine.searchDetailed diagnostic surface. Keep it on
+      // the exact representative path instead of paying the full diagnostic
+      // ranking fallback used by the public searchDetailed API.
+      const detailed = await engine._searchDetailedAsync(String(message.query ?? ""), options, false);
       if (running && running.requestId === message.requestId) running = null;
       reply({
         type: MSG.RESULT,

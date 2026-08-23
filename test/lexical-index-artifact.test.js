@@ -63,6 +63,16 @@ describe("search-v2-lexical-index v1", () => {
     expect(artifact.format).toBe("search-v2-lexical-index");
     expect(artifact.version).toBe(1);
     expect(artifact.corpus.documentCount).toBe(122);
+    expect(artifact.data.extensions).toEqual({});
+    expect(artifact.data.documents.every((row) =>
+      row.length === 7 &&
+      typeof row[0] === "string" &&
+      typeof row[1] === "number" &&
+      typeof row[2] === "number"
+    )).toBe(true);
+    expect(artifact.data.documents.some((row) => row.some((value) =>
+      value && typeof value === "object" && !Array.isArray(value)
+    ))).toBe(false);
   });
 
   test("loaded documents reconstruct every current FeatureVector exactly", async () => {
@@ -99,12 +109,30 @@ describe("search-v2-lexical-index v1", () => {
     const compiled = SearchEngine.create({ ...options, lexicalIndex: artifact });
     await raw.index(documents);
     await compiled.index(documents);
+    expect(compiled.lexicalIndex).toBeNull();
+    await expect(compiled.index(documents)).resolves.toMatchObject({ documentCount: 122 });
+    await expect(compiled.index(
+      documents.map((doc, i) => i === 0 ? { ...doc, body: `${doc.body} changed` } : doc)
+    )).rejects.toThrow(/consumed lexical index/i);
     for (const query of queries) {
       const actual = compiled.searchDetailed(query, { limit: 10, relatedLimit: 5, explain: true });
       const expected = raw.searchDetailed(query, { limit: 10, relatedLimit: 5, explain: true });
       expect({ results: actual.results, related: actual.related }).toEqual({
         results: expected.results,
         related: expected.related,
+      });
+      expect({
+        candidateCount: actual.meta.candidateCount,
+        candidateTitles: actual.meta.candidateTitles,
+        relatedCount: actual.meta.relatedCount,
+        constraintCycles: actual.meta.constraintCycles,
+        constraintConflicts: actual.meta.constraintConflicts,
+      }).toEqual({
+        candidateCount: expected.meta.candidateCount,
+        candidateTitles: expected.meta.candidateTitles,
+        relatedCount: expected.meta.relatedCount,
+        constraintCycles: expected.meta.constraintCycles,
+        constraintConflicts: expected.meta.constraintConflicts,
       });
     }
   }, 120_000);
@@ -123,6 +151,52 @@ describe("search-v2-lexical-index v1", () => {
     ]);
   });
 
+  test("reserved extensions do not change the exact v1 base representation", () => {
+    const extended = JSON.parse(JSON.stringify(artifact));
+    extended.data.extensions["future-block-bounds"] = {
+      termOrdinal: 0,
+      field: "title",
+      rowOffsets: [0],
+    };
+    refreshIntegrity(extended);
+    const loaded = loadLexicalIndex(extended, documents, schema, plugins);
+    expect(loaded.documents.map((doc) => doc.id)).toEqual(
+      documents.map((doc) => String(doc.id)).sort()
+    );
+  });
+
+  test("artifact hydration does not invoke document lemma analysis", async () => {
+    const docs = [{ id: "mice", title: "Mice Tools", body: "mice utility" }];
+    const compilerPlugin = {
+      name: "test-lemma",
+      indexIdentity: "test-lemma-v1",
+      lemma(token) {
+        return token === "mice" ? "mouse" : token;
+      },
+    };
+    const built = compileLexicalIndex(docs, { schema, plugins: [compilerPlugin] });
+    const loaded = loadLexicalIndex(built, docs, schema, [{
+      ...compilerPlugin,
+      lemma() {
+        throw new Error("artifact load must not call lemma");
+      },
+    }]);
+    expect(loaded.documents[0].titleLemmas).toEqual(["mouse", "tools"]);
+    expect(loaded.documents[0].bodyLemmas).toEqual(["mouse", "utility"]);
+
+    const runtimeOnly = SearchEngine.create({
+      schema,
+      plugins: [{
+        name: "unidentified-runtime-lemma",
+        lemma: compilerPlugin.lemma,
+      }],
+      retriever: "indexed",
+      relationshipStrategy: "none",
+    });
+    await runtimeOnly.index(docs);
+    expect(runtimeOnly.search("mouse", { limit: 1 })[0].id).toBe("mice");
+  });
+
   test("supplied artifacts fail closed for corpus, analyzer, schema, version, integrity, and posting corruption", () => {
     expect(() => loadLexicalIndex(artifact, documents.slice(0, -1), schema, plugins)).toThrow(/document count/i);
     expect(() =>
@@ -134,6 +208,10 @@ describe("search-v2-lexical-index v1", () => {
       )
     ).toThrow(/corpus fingerprint/i);
     expect(() => loadLexicalIndex(artifact, documents, schema, [])).toThrow(/analyzer identity/i);
+    expect(() => loadLexicalIndex(artifact, documents, schema, [{
+      name: "unidentified-custom",
+      lemma: (token) => token,
+    }])).toThrow(/indexIdentity/i);
     expect(() =>
       loadLexicalIndex(artifact, documents, {
         heading: { type: "text", role: "title" },
@@ -146,7 +224,7 @@ describe("search-v2-lexical-index v1", () => {
     expect(() => parseLexicalIndex(unsupported)).toThrow(/unsupported/i);
 
     const corrupted = JSON.parse(JSON.stringify(artifact));
-    corrupted.data.documents[0][1] += " tampered";
+    corrupted.data.documents[0][3] += "-tampered";
     expect(() => parseLexicalIndex(corrupted)).toThrow(/integrity/i);
 
     const badOffset = JSON.parse(JSON.stringify(artifact));

@@ -211,8 +211,6 @@ export interface SearchIndex {
   surfaceVocabulary: Set<string>;
   /** Internal compact postings compiled at build time or initialization. */
   compiledLexical?: unknown;
-  /** Internal validated artifact header for diagnostics. */
-  lexicalArtifact?: LexicalIndexArtifact;
 }
 
 export interface RelationshipEdge {
@@ -526,4 +524,5 @@ export interface FinishTimings {
   primaryIds: string[];
   matchCount?: number;
   representativeStats?: Record<string, unknown> | null;
+  diagnosticRanked?: RankedHit[] | null;
 }
