@@ -1,6 +1,6 @@
 # Retrievers
 
-v0 exposes **built-in names only**. A third-party `{ retrieve }` object is accepted as experimental and is not a stable contract (it sees internal query/index shapes). `searchAsync` calls `retrieveAsync` when present and otherwise `retrieve()`.
+Stable retriever names are built-in only. A third-party `{ retrieve }` object is accepted as an experimental extension point and is not a stable contract (it sees internal query/index shapes). `searchAsync` calls `retrieveAsync` when present and otherwise `retrieve()`.
 
 The public `retriever` field is `RetrieverName | "indexed-lexical" | ExperimentalRetriever`. `query` and `index` are intentionally `unknown`; those types do not publish `AnalyzedQuery`, `SearchIndex`, or `IndexedDocument`. Runtime still accepts a duck-typed `{ retrieve }` object.
 
