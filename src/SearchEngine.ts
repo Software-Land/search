@@ -1,6 +1,7 @@
 import { analyzeQuery, suggestTypoForms } from "./analyze.js";
 import { buildIndex, resolveSchema } from "./indexDocuments.js";
 import {
+  compactIndexFromAnalyzed,
   exactPruningRuntime,
   lexicalAnalyzerIdentity,
   lexicalCorpusFingerprint,
@@ -340,7 +341,12 @@ export class SearchEngine {
     const suppliedLexicalIndex = this.lexicalIndex;
     this._index = suppliedLexicalIndex
       ? loadLexicalIndex(suppliedLexicalIndex, documents || [], this.schema, this.plugins)
-      : buildIndex(documents, this.schema, this.plugins);
+      : this.retriever?.name === "full-scan"
+        ? buildIndex(documents, this.schema, this.plugins)
+        : compactIndexFromAnalyzed(
+            buildIndex(documents, this.schema, this.plugins),
+            lexicalAnalyzerIdentity(this.plugins)
+          );
     if (this.retriever && typeof this.retriever.prepare === "function") {
       this.retriever.prepare(this._index, { schema: this.schema, plugins: this.plugins });
     }

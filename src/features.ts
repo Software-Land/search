@@ -318,7 +318,7 @@ function tokenAdjacencyMatch(qt: string, tt: string | undefined) {
 const ADJACENCY_INDEX_MIN = 32;
 
 function adjacencyStarts(qt: string, fieldToks: string[], posMap?: Map<string, number[]>) {
-  if (!posMap || fieldToks.length < ADJACENCY_INDEX_MIN) return null;
+  if (!(posMap instanceof Map) || fieldToks.length < ADJACENCY_INDEX_MIN) return null;
   const starts: number[] = [];
   if (/^\d+$/.test(qt)) {
     const pos = posMap.get(qt);

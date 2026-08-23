@@ -14,7 +14,11 @@ import { canonicalDocumentId } from "./documentId.js";
 import { ArtifactValidationError } from "./errors.js";
 import { buildIndex, resolveSchema } from "./indexDocuments.js";
 import { stableFingerprint } from "./stableHash.js";
-import { DEFAULT_STOP } from "./text.js";
+import {
+  compactDocuments,
+  internTerm,
+  type CompactDocumentStore,
+} from "./compactDocuments.js";
 import type {
   IndexedDocument,
   LexicalIndexArtifact,
@@ -274,13 +278,29 @@ function envelope(
   };
 }
 
+function sourceRowsFromIndex(index: SearchIndex): Map<string, SourceRow> {
+  return new Map(
+    index.documents.map((doc) => [doc.id, [doc.id, doc.title, "", doc.lexicalFrequency]])
+  );
+}
+
+export function compactIndexFromAnalyzed(
+  index: SearchIndex,
+  analyzer = IDENTITY_LEMMA_COMPATIBILITY
+): SearchIndex {
+  const payload = buildPayload(index);
+  const artifact = envelope(payload, index, analyzer);
+  return indexFromPayload(payload, artifact, sourceRowsFromIndex(index));
+}
+
 export function compileLexicalIndexFromSearchIndex(
   index: SearchIndex,
   { analyzer = IDENTITY_LEMMA_COMPATIBILITY }: { analyzer?: string } = {}
 ) {
   const payload = buildPayload(index);
   const artifact = envelope(payload, index, analyzer);
-  const runtime = runtimeFromPayload(payload, index.documents);
+  const store = compactStoreFromPayload(payload, artifact, sourceRowsFromIndex(index));
+  const runtime = runtimeFromPayload(payload, store);
   index.compiledLexical = runtime;
   return { artifact, runtime };
 }
@@ -414,56 +434,9 @@ function parsePayload(value: unknown): LexicalIndexPayload {
   };
 }
 
-function decodeField(
-  flat: number[],
-  term: string,
-  docs: Array<Array<string | undefined>>,
-  field: string
-) {
-  let cursor = 0;
-  let previousDoc = -1;
-  let rows = 0;
-  while (cursor < flat.length) {
-    if (cursor + 2 > flat.length) fail(`Truncated posting header for ${term}`, field);
-    const doc = flat[cursor++];
-    const count = flat[cursor++];
-    if (doc <= previousDoc || doc >= docs.length) fail(`Invalid document offset in postings for ${term}`, field);
-    if (count < 1 || cursor + count > flat.length) fail(`Invalid position count in postings for ${term}`, field);
-    let previousPosition = -1;
-    for (let i = 0; i < count; i++) {
-      const position = flat[cursor++];
-      if (position <= previousPosition || position >= docs[doc].length) {
-        fail(`Invalid token position in postings for ${term}`, field);
-      }
-      if (docs[doc][position] !== undefined) fail(`Overlapping token positions in postings for ${term}`, field);
-      docs[doc][position] = term;
-      previousPosition = position;
-    }
-    previousDoc = doc;
-    rows += 1;
-  }
-  return rows;
-}
-
-function completeTokens(values: Array<string | undefined>, field: string): string[] {
-  if (values.some((value) => value === undefined)) fail(`Posting positions do not cover ${field}`, field);
-  return values as string[];
-}
-
-function tokenPositions(tokens: string[]) {
-  const out = new Map<string, number[]>();
-  for (let i = 0; i < tokens.length; i++) {
-    const term = tokens[i];
-    const current = out.get(term);
-    if (current) current.push(i);
-    else out.set(term, [i]);
-  }
-  return out;
-}
-
 function runtimeFromPayload(
   payload: LexicalIndexPayload,
-  documents: IndexedDocument[]
+  store: CompactDocumentStore
 ): CompiledLexicalRuntime {
   function rows(flat: number[]) {
     let count = 0;
@@ -499,23 +472,21 @@ function runtimeFromPayload(
       }
     }
   }
+  const n = store.n;
   const sortedTitles: Array<{ norm: string; pos: number }> = [];
   const titleByNorm = new Map<string, number[]>();
   const versionIndex = new Map<string, number[]>();
-  if (documents.length !== payload.documents.length) {
-    fail("Hydrated document count does not match lexical index payload", "data.documents");
-  }
-  const titleDl = new Array<number>(documents.length);
-  const bodyDl = new Array<number>(documents.length);
-  for (let pos = 0; pos < documents.length; pos++) {
-    const doc = documents[pos];
-    titleDl[pos] = doc.titleTokens.length;
-    bodyDl[pos] = doc.bodyTokens.length;
-    sortedTitles.push({ norm: doc.normalizedTitle, pos });
-    const exact = titleByNorm.get(doc.normalizedTitle);
+  const titleDl = new Array<number>(n);
+  const bodyDl = new Array<number>(n);
+  for (let pos = 0; pos < n; pos++) {
+    titleDl[pos] = store.titleOff[pos + 1] - store.titleOff[pos];
+    bodyDl[pos] = store.bodyOff[pos + 1] - store.bodyOff[pos];
+    const norm = store.normalizedTitles[pos];
+    sortedTitles.push({ norm, pos });
+    const exact = titleByNorm.get(norm);
     if (exact) exact.push(pos);
-    else titleByNorm.set(doc.normalizedTitle, [pos]);
-    for (const form of [...doc.versionCompactForms, ...doc.dottedSpans]) {
+    else titleByNorm.set(norm, [pos]);
+    for (const form of [...store.versionForms[pos], ...store.dottedSpans[pos]]) {
       const list = versionIndex.get(form);
       if (list) list.push(pos);
       else versionIndex.set(form, [pos]);
@@ -540,72 +511,162 @@ function runtimeFromPayload(
   };
 }
 
+function decodeFieldIds(
+  flat: number[],
+  termId: number,
+  ids: Uint32Array,
+  off: Uint32Array,
+  term: string,
+  field: string
+) {
+  let cursor = 0;
+  let previousDoc = -1;
+  const documentCount = off.length - 1;
+  while (cursor < flat.length) {
+    if (cursor + 2 > flat.length) fail(`Truncated posting header for ${term}`, field);
+    const doc = flat[cursor++];
+    const count = flat[cursor++];
+    if (doc <= previousDoc || doc >= documentCount) fail(`Invalid document offset in postings for ${term}`, field);
+    if (count < 1 || cursor + count > flat.length) fail(`Invalid position count in postings for ${term}`, field);
+    const start = off[doc];
+    const len = off[doc + 1] - start;
+    let previousPosition = -1;
+    for (let i = 0; i < count; i++) {
+      const position = flat[cursor++];
+      if (position <= previousPosition || position >= len) {
+        fail(`Invalid token position in postings for ${term}`, field);
+      }
+      const slot = start + position;
+      if (ids[slot] !== 0) fail(`Overlapping token positions in postings for ${term}`, field);
+      ids[slot] = termId;
+      previousPosition = position;
+    }
+    previousDoc = doc;
+  }
+}
+
+function compactStoreFromPayload(
+  payload: LexicalIndexPayload,
+  artifact: LexicalIndexArtifact,
+  sourceById: Map<string, SourceRow>
+): CompactDocumentStore {
+  const n = payload.documents.length;
+  const strings = [""];
+  const idOf = new Map<string, number>([["", 0]]);
+  for (const [term, lemma] of payload.terms) {
+    internTerm(strings, idOf, term);
+    internTerm(strings, idOf, lemma);
+  }
+  const lemmaOf = new Uint32Array(strings.length);
+  for (const [term, lemma] of payload.terms) {
+    lemmaOf[idOf.get(term) as number] = idOf.get(lemma) as number;
+  }
+  for (let i = 1; i < strings.length; i++) {
+    if (lemmaOf[i] === 0) lemmaOf[i] = i;
+  }
+
+  const titleOff = new Uint32Array(n + 1);
+  const bodyOff = new Uint32Array(n + 1);
+  const dottedOff = new Uint32Array(n + 1);
+  let titleLen = 0;
+  let bodyLen = 0;
+  let dottedLen = 0;
+  for (let i = 0; i < n; i++) {
+    titleOff[i] = titleLen;
+    bodyOff[i] = bodyLen;
+    dottedOff[i] = dottedLen;
+    titleLen += payload.documents[i][1];
+    bodyLen += payload.documents[i][2];
+    dottedLen += payload.documents[i][6].length;
+  }
+  titleOff[n] = titleLen;
+  bodyOff[n] = bodyLen;
+  dottedOff[n] = dottedLen;
+  const titleIds = new Uint32Array(titleLen);
+  const bodyIds = new Uint32Array(bodyLen);
+  const dottedIdx = new Uint32Array(dottedLen);
+
+  const titleTokenSet = new Set<string>();
+  const surfaceVocabulary = new Set<string>();
+  for (let i = 0; i < payload.terms.length; i++) {
+    const [term, lemma, title, body] = payload.terms[i];
+    const termId = idOf.get(term) as number;
+    surfaceVocabulary.add(term);
+    decodeFieldIds(title, termId, titleIds, titleOff, term, `data.terms[${i}][2]`);
+    decodeFieldIds(body, termId, bodyIds, bodyOff, term, `data.terms[${i}][3]`);
+  }
+  for (let i = 0; i < titleLen; i++) {
+    if (titleIds[i] === 0) fail("Posting positions do not cover data.documents.titleTokens", "data.documents");
+    titleTokenSet.add(strings[titleIds[i]]);
+    titleTokenSet.add(strings[lemmaOf[titleIds[i]]]);
+  }
+  for (let i = 0; i < bodyLen; i++) {
+    if (bodyIds[i] === 0) fail("Posting positions do not cover data.documents.bodyTokens", "data.documents");
+  }
+
+  const ids = new Array<string>(n);
+  const titles = new Array<string>(n);
+  const normalizedTitles = new Array<string>(n);
+  const firstToken = new Array<string>(n);
+  const versionForms = new Array<string[]>(n);
+  const dottedSpans = new Array<string[]>(n);
+  const lexicalFrequency = new Array<Record<string, number> | null>(n);
+  for (let pos = 0; pos < n; pos++) {
+    const row = payload.documents[pos];
+    const source = sourceById.get(row[0]);
+    if (!source) fail(`Missing validated source document ${row[0]}`, `data.documents[${pos}][0]`);
+    ids[pos] = row[0];
+    titles[pos] = source[1];
+    firstToken[pos] = row[3];
+    versionForms[pos] = row[4].length ? row[4] : [];
+    dottedSpans[pos] = row[5].length ? row[5] : [];
+    lexicalFrequency[pos] = source[3];
+    const marked = row[6];
+    const dottedStart = dottedOff[pos];
+    for (let i = 0; i < marked.length; i++) {
+      if (marked[i] >= row[1]) fail(`Dotted component offset out of range for document ${row[0]}`, `data.documents[${pos}][6]`);
+      dottedIdx[dottedStart + i] = marked[i];
+    }
+    const start = titleOff[pos];
+    const end = titleOff[pos + 1];
+    let norm = "";
+    for (let i = start; i < end; i++) {
+      if (i > start) norm += " ";
+      norm += strings[titleIds[i]];
+    }
+    normalizedTitles[pos] = norm;
+  }
+
+  return {
+    n,
+    strings,
+    idOf,
+    lemmaOf,
+    titleIds,
+    titleOff,
+    bodyIds,
+    bodyOff,
+    ids,
+    titles,
+    normalizedTitles,
+    firstToken,
+    versionForms,
+    dottedSpans,
+    dottedOff,
+    dottedIdx,
+    lexicalFrequency,
+    titleTokenSet,
+    surfaceVocabulary,
+  };
+}
+
 function indexFromPayload(
   payload: LexicalIndexPayload,
   artifact: LexicalIndexArtifact,
   sourceById: Map<string, SourceRow>
 ): SearchIndex {
-  const titleSlots = payload.documents.map((row) => new Array<string | undefined>(row[1]));
-  const bodySlots = payload.documents.map((row) => new Array<string | undefined>(row[2]));
-  const lemmaBySurface = new Map<string, string>();
-  for (let i = 0; i < payload.terms.length; i++) {
-    const [term, lemma, title, body] = payload.terms[i];
-    lemmaBySurface.set(term, lemma);
-    decodeField(title, term, titleSlots, `data.terms[${i}][2]`);
-    decodeField(body, term, bodySlots, `data.terms[${i}][3]`);
-  }
-
-  const documents: IndexedDocument[] = payload.documents.map((row, pos) => {
-    const source = sourceById.get(row[0]);
-    if (!source) fail(`Missing validated source document ${row[0]}`, `data.documents[${pos}][0]`);
-    const titleTokens = completeTokens(titleSlots[pos], `data.documents[${pos}].titleTokens`);
-    const bodyTokens = completeTokens(bodySlots[pos], `data.documents[${pos}].bodyTokens`);
-    const titleLemmas = titleTokens.map((term) => lemmaBySurface.get(term) || term);
-    const bodyLemmas = bodyTokens.map((term) => lemmaBySurface.get(term) || term);
-    const dotted = new Set(row[6]);
-    for (const index of dotted) {
-      if (index >= titleTokens.length) fail(`Dotted component offset out of range for document ${row[0]}`, `data.documents[${pos}][6]`);
-    }
-    const independentTitleTokens = titleTokens.filter((_term, index) => !dotted.has(index));
-    const independentTitleLemmas = titleLemmas.filter((_term, index) => !dotted.has(index));
-    return {
-      id: row[0],
-      raw: { id: row[0], title: source[1], body: "" },
-      title: source[1],
-      body: "",
-      titleTokens,
-      bodyTokens,
-      titleLemmas,
-      bodyLemmas,
-      titleLemmaSet: new Set(titleLemmas),
-      bodyLemmaSet: new Set(bodyLemmas),
-      titleTokenSet: new Set(titleTokens),
-      bodyTokenSet: new Set(bodyTokens),
-      nonStopTitle: titleTokens.filter((term) => !DEFAULT_STOP.has(term)),
-      firstToken: row[3],
-      normalizedTitle: titleTokens.join(" "),
-      versionCompactForms: row[4],
-      dottedSpans: row[5],
-      dottedSpanComponentIndexes: dotted,
-      independentTitleTokens,
-      independentTitleTokenSet: new Set(independentTitleTokens),
-      independentTitleLemmaSet: new Set(independentTitleLemmas),
-      bodyTokenPositions: tokenPositions(bodyTokens),
-      bodyLemmaPositions: tokenPositions(bodyLemmas),
-      lexicalFrequency: source[3],
-    };
-  });
-  const titleTokenSet = new Set<string>();
-  const surfaceVocabulary = new Set<string>();
-  for (const doc of documents) {
-    for (const term of doc.titleTokens) {
-      titleTokenSet.add(term);
-      surfaceVocabulary.add(term);
-    }
-    for (const lemma of doc.titleLemmas) titleTokenSet.add(lemma);
-    for (const term of doc.bodyTokens) surfaceVocabulary.add(term);
-  }
-  const runtime = runtimeFromPayload(payload, documents);
+  const store = compactStoreFromPayload(payload, artifact, sourceById);
+  const documents = compactDocuments(store);
   return {
     schema: {
       fields: {
@@ -617,9 +678,9 @@ function indexFromPayload(
     },
     documents,
     byId: new Map(documents.map((doc) => [doc.id, doc])),
-    titleTokenSet,
-    surfaceVocabulary,
-    compiledLexical: runtime,
+    titleTokenSet: store.titleTokenSet,
+    surfaceVocabulary: store.surfaceVocabulary,
+    compiledLexical: runtimeFromPayload(payload, store),
   };
 }
 

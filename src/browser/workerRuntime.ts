@@ -46,6 +46,7 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
       }
       exactPruningMode =
         payload._exactPruningMode === "exhaustive" ? "exhaustive" : "auto";
+      const documents = payload.documents || [];
       engine = SearchEngine.create({
         schema: payload.schema,
         plugins,
@@ -56,7 +57,10 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
         candidateLimit: payload.candidateLimit ?? undefined,
         adaptive: payload.adaptive,
       } as SearchEngineOptions);
-      const indexed = await engine.index(payload.documents || []);
+      const indexed = await engine.index(documents);
+      payload.lexicalIndex = undefined;
+      payload.documents = undefined;
+      payload.relationships = undefined;
       reply({
         type: MSG.READY,
         requestId: message.requestId,
