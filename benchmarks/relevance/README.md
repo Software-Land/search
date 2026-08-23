@@ -136,7 +136,7 @@ It is enough to exercise loading, validation, public `SearchEngine.search`, metr
 
 ## Runner
 
-Requires a built runtime (`npm run build`). Public API only (`SearchEngine`, `english` from `dist/index.js`). No network, models, or generated embeddings.
+Requires a built runtime (`npm run build`). Public API only (`SearchEngine`, `morphology` from `dist/index.js`). No network, models, or generated embeddings.
 
 ```bash
 node benchmarks/relevance/run.mjs --corpus toy

@@ -23,7 +23,7 @@ Architecture was validated against an Android Settings–style catalog. There is
 
 ## Public vs experimental
 
-Public: `SearchEngine` facade, result fields above, artifact v1 envelopes, strategy names, retriever names, `AbortError`. Opt-in type-only plugin/retriever authoring contracts (`SearchPlugin`, `ExperimentalRetriever`, …) do not narrow create() inputs and do not publish analysis or index internals.
+Public: `SearchEngine` facade, result fields above, artifact v1 envelopes, strategy names, retriever names, `AbortError`. `SearchEngine.create({ plugins })` is `SearchPlugin[]`. `dictionary()` returns `DictionaryPlugin`. `morphology()` returns `EnglishPlugin`. Custom retrievers type as `ExperimentalRetriever`. Runtime still duck-types plugin objects and custom `retrieve` functions. These authoring contracts do not publish query-analysis or index internals; custom retriever `query` and `index` arguments stay `unknown`. There is no public `english()` root export.
 
 Experimental / internal: custom Retriever objects, `retrievalScore` ranking weight, analyzed query objects, feature extraction, constraints module, `meta`, `lastSearchMeta`, `sourcePolicy`, BM25 constants, and lexical-index payload/posting internals. The opaque `search-v2-lexical-index` v1 envelope and compiler are public; its internal tuples and ordinals are not.
 
