@@ -152,6 +152,147 @@ function scanLemmas(
   return false;
 }
 
+export function asCompactStore(doc: unknown): CompactDocumentStore | null {
+  if (!doc || typeof doc !== "object") return null;
+  const store = (doc as { _store?: CompactDocumentStore })._store;
+  return store && store.titleIds instanceof Uint32Array ? store : null;
+}
+
+export function compactOrdinal(doc: unknown) {
+  if (!doc || typeof doc !== "object") return 0;
+  const ordinal = (doc as { _ordinal?: number })._ordinal;
+  return typeof ordinal === "number" ? ordinal : 0;
+}
+
+export function compactLemmasDiffer(store: CompactDocumentStore, ordinal: number, field: "title" | "body") {
+  const ids = field === "title" ? store.titleIds : store.bodyIds;
+  const off = field === "title" ? store.titleOff : store.bodyOff;
+  const start = off[ordinal];
+  const end = off[ordinal + 1];
+  const lemmaOf = store.lemmaOf;
+  for (let i = start; i < end; i++) {
+    if (lemmaOf[ids[i]] !== ids[i]) return true;
+  }
+  return false;
+}
+
+/**
+ * Exact phrase-adjacency scan over packed surface or lemma ids.
+ * `match` is the existing tokenAdjacencyMatch predicate.
+ */
+export function compactAdjacentTokens(
+  store: CompactDocumentStore,
+  ordinal: number,
+  kind: TokenKind,
+  queryToks: string[],
+  match: (qt: string, tt: string | undefined) => boolean
+) {
+  if (queryToks.length < 2) return false;
+  const title = kind === KIND_TITLE || kind === KIND_TITLE_LEMMA;
+  const asLemma = kind === KIND_TITLE_LEMMA || kind === KIND_BODY_LEMMA;
+  const ids = title ? store.titleIds : store.bodyIds;
+  const off = title ? store.titleOff : store.bodyOff;
+  const start = off[ordinal];
+  const end = off[ordinal + 1];
+  const len = end - start;
+  const m = queryToks.length;
+  if (len < m) return false;
+  const last = len - m;
+  const lemmaOf = store.lemmaOf;
+  const strings = store.strings;
+  for (let i = 0; i <= last; i++) {
+    const first = asLemma ? lemmaOf[ids[start + i]] : ids[start + i];
+    if (!match(queryToks[0], strings[first])) continue;
+    let ok = true;
+    for (let j = 1; j < m; j++) {
+      const id = asLemma ? lemmaOf[ids[start + i + j]] : ids[start + i + j];
+      if (!match(queryToks[j], strings[id])) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) return true;
+  }
+  return false;
+}
+
+export function compactHasIndependentTitleForm(store: CompactDocumentStore, ordinal: number, form: string) {
+  if (!form) return false;
+  const want = store.idOf.get(form);
+  const start = store.titleOff[ordinal];
+  const end = store.titleOff[ordinal + 1];
+  const ids = store.titleIds;
+  const lemmaOf = store.lemmaOf;
+  const strings = store.strings;
+  for (let p = 0; p < end - start; p++) {
+    if (dottedHas(store, ordinal, p)) continue;
+    const surface = ids[start + p];
+    if (want !== undefined) {
+      if (surface === want || lemmaOf[surface] === want) return true;
+      continue;
+    }
+    if (strings[surface] === form || strings[lemmaOf[surface]] === form) return true;
+  }
+  return false;
+}
+
+export function compactTitleHasPrefixForm(
+  store: CompactDocumentStore,
+  ordinal: number,
+  form: string,
+  allowPrefix: (queryTok: string, titleTok: string) => boolean
+) {
+  const start = store.titleOff[ordinal];
+  const end = store.titleOff[ordinal + 1];
+  const ids = store.titleIds;
+  const strings = store.strings;
+  for (let i = start; i < end; i++) {
+    if (allowPrefix(form, strings[ids[i]])) return true;
+  }
+  return false;
+}
+
+export function compactTitleHasLemma(store: CompactDocumentStore, ordinal: number, form: string) {
+  const want = store.idOf.get(form);
+  if (want === undefined) return false;
+  const start = store.titleOff[ordinal];
+  const end = store.titleOff[ordinal + 1];
+  const ids = store.titleIds;
+  const lemmaOf = store.lemmaOf;
+  for (let i = start; i < end; i++) {
+    if (lemmaOf[ids[i]] === want) return true;
+  }
+  return false;
+}
+
+export function compactBodyMatchesConcept(store: CompactDocumentStore, ordinal: number, forms: string[]) {
+  if (!forms.length) return false;
+  const start = store.bodyOff[ordinal];
+  const end = store.bodyOff[ordinal + 1];
+  const ids = store.bodyIds;
+  const lemmaOf = store.lemmaOf;
+  const strings = store.strings;
+  const idOf = store.idOf;
+  const exact = new Set<number>();
+  const prefixes: string[] = [];
+  for (const form of forms) {
+    if (!form) continue;
+    const id = idOf.get(form);
+    if (id !== undefined) exact.add(id);
+    if (!/^\d+$/.test(form) && form.length >= 3) prefixes.push(form);
+  }
+  for (let i = start; i < end; i++) {
+    const surface = ids[i];
+    if (exact.has(surface) || exact.has(lemmaOf[surface])) return true;
+    const tok = strings[surface];
+    if (/^\d+$/.test(tok)) continue;
+    for (let p = 0; p < prefixes.length; p++) {
+      if (tok.startsWith(prefixes[p])) return true;
+    }
+  }
+  return false;
+}
+
 export function fieldHasTerm(store: CompactDocumentStore, ordinal: number, kind: TokenKind, term: string) {
   const want = store.idOf.get(term);
   if (want === undefined) return false;

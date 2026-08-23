@@ -5,6 +5,14 @@ import {
   hasIndependentTitleForm,
 } from "./versionForms.js";
 import { throwIfAborted } from "./cancel.js";
+import {
+  asCompactStore,
+  compactBodyMatchesConcept,
+  compactHasIndependentTitleForm,
+  compactOrdinal,
+  compactTitleHasLemma,
+  compactTitleHasPrefixForm,
+} from "./compactDocuments.js";
 import type {
   AnalyzedQuery,
   ContextualTitlePrefix,
@@ -114,6 +122,17 @@ function conceptMatchesTitle(concept: QueryConcept, doc: IndexedDocument): Conce
     }
     return null;
   }
+  const store = asCompactStore(doc);
+  if (store) {
+    const ordinal = compactOrdinal(doc);
+    for (const form of concept.forms) {
+      if (compactHasIndependentTitleForm(store, ordinal, form)) return "exact";
+      if (/^\d+$/.test(form)) continue;
+      if (compactTitleHasPrefixForm(store, ordinal, form, allowPrefixMatch)) return "prefix";
+      if (compactTitleHasLemma(store, ordinal, form)) return "lemma";
+    }
+    return null;
+  }
   for (const form of concept.forms) {
     if (hasIndependentTitleForm(doc, form)) return "exact";
     if (/^\d+$/.test(form)) continue;
@@ -138,6 +157,8 @@ function conceptMatchesBody(concept: QueryConcept, doc: IndexedDocument) {
       { requireContiguous: true }
     );
   }
+  const store = asCompactStore(doc);
+  if (store) return compactBodyMatchesConcept(store, compactOrdinal(doc), concept.forms || []);
   for (const form of concept.forms) {
     if (doc.bodyTokenSet.has(form) || doc.bodyLemmaSet.has(form)) return true;
     if (/^\d+$/.test(form)) continue;

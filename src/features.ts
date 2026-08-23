@@ -4,6 +4,16 @@ import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTit
 import { saturatingFrequency } from "./saturatingFrequency.js";
 import { canonicalLexicalTokensFromQuery } from "./lexicalNormalize.js";
 import {
+  asCompactStore,
+  compactAdjacentTokens,
+  compactLemmasDiffer,
+  compactOrdinal,
+  KIND_BODY,
+  KIND_BODY_LEMMA,
+  KIND_TITLE,
+  KIND_TITLE_LEMMA,
+} from "./compactDocuments.js";
+import {
   FULL_QUERY_COVERAGE,
   TWO_THIRDS_QUERY_COVERAGE,
   MODERATE_TITLE_PREFIX_QUALITY,
@@ -375,6 +385,27 @@ function phraseAdjacency(query: AnalyzedQuery, doc: IndexedDocument) {
   const qLemmas = prep.nonStopLemma;
   if (qToks.length < 2) return 0;
   const queryLemmasDiffer = !sameStringArray(qToks, qLemmas);
+  const store = asCompactStore(doc);
+  if (store) {
+    const ordinal = compactOrdinal(doc);
+    const titleLemmasDiffer = compactLemmasDiffer(store, ordinal, "title");
+    if (
+      compactAdjacentTokens(store, ordinal, KIND_TITLE, qToks, tokenAdjacencyMatch) ||
+      ((queryLemmasDiffer || titleLemmasDiffer) &&
+        compactAdjacentTokens(store, ordinal, KIND_TITLE_LEMMA, qLemmas, tokenAdjacencyMatch))
+    ) {
+      return 1;
+    }
+    const bodyLemmasDiffer = compactLemmasDiffer(store, ordinal, "body");
+    if (
+      compactAdjacentTokens(store, ordinal, KIND_BODY, qToks, tokenAdjacencyMatch) ||
+      ((queryLemmasDiffer || bodyLemmasDiffer) &&
+        compactAdjacentTokens(store, ordinal, KIND_BODY_LEMMA, qLemmas, tokenAdjacencyMatch))
+    ) {
+      return 0.5;
+    }
+    return 0;
+  }
   const titleLemmasDiffer = !sameStringArray(doc.titleTokens, doc.titleLemmas);
   if (adjacentOn(qToks, doc.titleTokens) || ((queryLemmasDiffer || titleLemmasDiffer) && adjacentOn(qLemmas, doc.titleLemmas))) {
     return 1;
