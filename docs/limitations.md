@@ -15,7 +15,7 @@
 
 ## Future work (not started)
 
-Compact analyzed representation, conservative posting-entry block pruning beyond the narrow Stage-2A feature bound, incremental updates, native ports. Do not treat those as promised.
+Compact analyzed representation, conservative posting-entry block pruning beyond the narrow Stage-2A feature bound, incremental updates, native ports. Do not treat those as promised. The practical browser target of about 10k–25k documents is an engineering/performance target, not a quality cliff; see [scaling.md](scaling.md).
 
 Ranking internals (behavior-preserving; not a ranking redesign):
 

@@ -258,6 +258,7 @@ Root exports: `SearchEngine`, `morphology`, `dictionary`, strategy/retriever con
 | Build-time tools | [docs/tooling.md](docs/tooling.md) |
 | Browser Worker | [docs/browser.md](docs/browser.md) |
 | Architecture | [docs/architecture.md](docs/architecture.md) |
+| Scaling | [docs/scaling.md](docs/scaling.md) |
 | Known limitations | [docs/limitations.md](docs/limitations.md) |
 | Security | [SECURITY.md](SECURITY.md) |
 | Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |

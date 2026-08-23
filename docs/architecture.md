@@ -28,3 +28,5 @@ Public: `SearchEngine` facade, result fields above, artifact v1 envelopes, strat
 Experimental / internal: custom Retriever objects, `retrievalScore` ranking weight, analyzed query objects, feature extraction, constraints module, `meta`, `lastSearchMeta`, `sourcePolicy`, BM25 constants, and lexical-index payload/posting internals. The opaque `search-v2-lexical-index` v1 envelope and compiler are public; its internal tuples and ordinals are not.
 
 Query-semantic / vector retrieval is not implemented. If it is added, union semantic `RetrievalHit`s after lexical candidate retrieval and before feature extraction, embed the **raw query string** (optionally repaired typed surfaces), and never embed analyzed `query.tokens`, `normalized`, post-prefix `lemma`, `completedToken`, or `concepts.forms`. See [retrievers.md](retrievers.md).
+
+Current practical browser scale is an engineering target of about 10k–25k documents, not a correctness limit. Exact retrieval quality does not degrade with N; posting work, feature work, artifact/load cost, and browser memory do. See [scaling.md](scaling.md).

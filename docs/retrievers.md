@@ -120,7 +120,7 @@ Allocation and RSS for the checked-in generators: [memory benchmarks (GitHub tre
 
 The v1 runtime currently reconstructs an object-heavy analyzed document view from the positional artifact so the frozen feature extractor remains unchanged. That duplicates some posting-derived information in memory; compact/lazy feature views and conservative posting-entry skipping remain later Stage-2B/2C work.
 
-See [limitations.md](limitations.md).
+See [limitations.md](limitations.md) and [scaling.md](scaling.md).
 
 ## Future hybrid / semantic retrieval (contract only)
 

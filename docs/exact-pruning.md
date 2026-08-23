@@ -156,4 +156,4 @@ Failing to prove eligibility is not an error; it means full Stage 1 evaluation. 
 
 ## Stage 2B/2C boundary
 
-Stage 2A can dramatically reduce full feature/signature work for common body-only floods, but it reports zero posting entries skipped because membership enumeration remains exhaustive. Stage 2B must add conservative cross-posting TF/field/evidence summaries before skipping posting entries. Stage 2C may replace hydrated Sets/Maps/token arrays with compact/lazy views; it is intentionally separate from this proof.
+Stage 2A can dramatically reduce full feature/signature work for common body-only floods, but it reports zero posting entries skipped because membership enumeration remains exhaustive. Stage 2B must add conservative cross-posting TF/field/evidence summaries before skipping posting entries. Stage 2C may replace hydrated Sets/Maps/token arrays with compact/lazy views; it is intentionally separate from this proof. See [scaling.md](scaling.md).
