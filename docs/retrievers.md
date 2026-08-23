@@ -44,7 +44,7 @@ Relationship primary reduction is temporary and does not remove entries from the
 
 `search-v2-lexical-index` version 1 is a unified positional representation: stable document ordinals and compact document-local metadata share one sorted surface-term dictionary and title/body positional streams. One deterministic lemma is stored per surface term, so lemma postings and hydrated lemma token sequences are derived without duplication. Version forms, dotted spans/components, first-token data, field lengths, and corpus length statistics complete the state needed by the frozen matcher and feature extractor.
 
-The payload serializes neither raw title/body text nor per-document lexical-frequency maps. Validated caller documents continue to own display titles and the separate `search-v2-lexical-frequency` data. Positional streams hydrate the current `IndexedDocument` token arrays, sets, position maps, and exact retriever lookup; artifact load does not invoke tokenization, lemma analysis, or raw-document posting construction. After successful initialization the engine releases the validated envelope and document tuples, retaining only a small compatibility header, posting arrays, and hydrated runtime state. Re-indexing the same validated corpus reuses that state; incompatible replacement input rejects instead of silently rebuilding.
+The payload serializes neither raw title/body text nor per-document lexical-frequency maps. Validated caller documents continue to own display titles and the separately compiled `search-v2-lexical-frequency` data attached to them. Positional streams hydrate the current `IndexedDocument` token arrays, sets, position maps, and exact retriever lookup; artifact load does not invoke tokenization, lemma analysis, or raw-document posting construction. After successful initialization the engine releases its reference to the validated envelope and parsed document tuples, retaining a small compatibility header plus the full hydrated `_index` (posting arrays, document token structures, display titles, and attached lexical-frequency references). The caller still owns any artifact reference it retained and may release it after `index()` or Worker `ready`. After a supplied artifact has been consumed, re-indexing the same validated corpus reuses that hydrated state; incompatible replacement input rejects instead of silently rebuilding.
 
 Build it under the existing lexical package boundary:
 
@@ -70,7 +70,7 @@ await engine.index(documents);
 
 Identical inputs serialize byte-identically with `JSON.stringify`. A supplied artifact is checked for format/version, integrity, core analyzer identity, lemma identity, schema fields, document count, and a fingerprint of ids plus searchable title/body text and lexical-frequency data. An invalid supplied artifact throws; it is never ignored in favor of an approximate path. A custom lemma plugin without a deterministic `indexIdentity` remains valid for artifact-omitted runtime construction but is rejected when a supplied artifact cannot prove analyzer compatibility.
 
-If `lexicalIndex` is omitted, `index()` compiles the equivalent structure once from the supplied documents. This costs initialization time but not repeated query-time raw-field analysis. `retriever: "full-scan"` remains the explicit reference path.
+If `lexicalIndex` is omitted, each `index()` call compiles equivalent state from the supplied documents. This costs initialization time but not query-time raw-field analysis. `retriever: "full-scan"` remains the explicit reference path.
 
 The v1 payload reserves an integrity-covered extension namespace keyed to stable term/document ordinals. Stage 1 emits it empty. A later exact block-bound capability can be added there without replacing the core positional representation; no block bounds or pruning behavior exist in Stage 1.
 
@@ -84,7 +84,7 @@ The rejected alternatives are:
 
 The compiled retriever performs exact surface, title/body, prefix, morphology, typo-alternative, configured-equivalence, version, dotted-span, and phrase-evidence behavior over the compiled statistics. It enumerates every legitimate matching document. v1 performs no WAND, MaxScore, block skipping, posting early termination, or prefix truncation.
 
-With a supplied artifact, `searchDetailed().meta.rawDocumentScans` is `0`. Query-time feature work reads reconstructed indexed statistics rather than rescanning raw title/body strings. The fallback constructs those statistics during `index()`.
+For exact indexed retrieval, `searchDetailed().meta.rawDocumentScans` is `0` with or without a supplied artifact. Query-time feature work reads indexed statistics rather than rescanning raw title/body strings. The supplied artifact hydrates those statistics without raw lexical analysis; the fallback constructs them from raw documents during each `index()`.
 
 ## Exact representative selection
 

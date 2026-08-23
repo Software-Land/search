@@ -3,7 +3,8 @@
 ```text
 search-core            src/                     platform-neutral runtime
 search-browser         src/browser              Worker + latest-wins
-search-corpus          tools/search-corpus      build-time lexical compiler
+search-corpus          tools/search-corpus      build-time corpus compiler
+search-lexical         tools/search-lexical     lexical-frequency + lexical-index compilers
 search-semantic        tools/search-semantic    optional Python relatedness builder
 search-relationships   tools/search-relationships
 ```
@@ -22,8 +23,8 @@ Architecture was validated against an Android Settings–style catalog. There is
 
 ## Public vs experimental
 
-Public: `SearchEngine` facade, result fields above, artifact v1, strategy names, retriever names, `AbortError`. Opt-in type-only plugin/retriever authoring contracts (`SearchPlugin`, `ExperimentalRetriever`, …) do not narrow create() inputs and do not publish analysis or index internals.
+Public: `SearchEngine` facade, result fields above, artifact v1 envelopes, strategy names, retriever names, `AbortError`. Opt-in type-only plugin/retriever authoring contracts (`SearchPlugin`, `ExperimentalRetriever`, …) do not narrow create() inputs and do not publish analysis or index internals.
 
-Experimental / internal: custom Retriever objects, `retrievalScore` ranking weight, analyzed query objects, feature extraction, constraints module, `meta`, `lastSearchMeta`, `sourcePolicy`, BM25 constants, lexical-index serialization (none).
+Experimental / internal: custom Retriever objects, `retrievalScore` ranking weight, analyzed query objects, feature extraction, constraints module, `meta`, `lastSearchMeta`, `sourcePolicy`, BM25 constants, and lexical-index payload/posting internals. The opaque `search-v2-lexical-index` v1 envelope and compiler are public; its internal tuples and ordinals are not.
 
 Query-semantic / vector retrieval is not implemented. If it is added, union semantic `RetrievalHit`s after lexical candidate retrieval and before feature extraction, embed the **raw query string** (optionally repaired typed surfaces), and never embed analyzed `query.tokens`, `normalized`, post-prefix `lemma`, `completedToken`, or `concepts.forms`. See [retrievers.md](retrievers.md).

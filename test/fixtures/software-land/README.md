@@ -12,7 +12,8 @@ or the Software.Land E2E runner.
 
 Lemmas and dictionary/equivalence entries here are **fixture arguments only**.
 They must be passed into `morphology({ lemmas })` and `dictionary({ entries })`.
-`english({ lemmas })` is a deprecated compatibility wrapper for `morphology()`.
+There is no public root `english()` helper; Worker initialization passes the same
+lemma map through `englishOptions`.
 They must never become Core defaults.
 
 ## Provenance

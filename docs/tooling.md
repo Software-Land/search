@@ -26,7 +26,9 @@ Public entry: `compileCorpus` / `analyzeCorpus` from `@software-land/search/corp
 
 ## search-lexical (`tools/search-lexical`)
 
-Build-time integer n-gram counts (unigrams and short phrases) from the **body field only**, in the same tokenize → lemma → stop-strip → contiguous 1–2 gram space as Search Core phrase lookup. Title and body are never concatenated, so n-grams cannot span the title/body boundary. Duplicate document ids follow SearchEngine.index (last document wins) **before** collection counts. Policy `minN`, `maxN`, and `minCollectionCount` must be finite positive integers with `maxN >= minN`. Public entry: `compileLexicalFrequency` from `@software-land/search/lexical`. The runtime never imports this tool; it consumes `document.lexicalFrequency` maps produced by `attachLexicalFrequency`.
+`compileLexicalFrequency` builds integer n-gram counts (unigrams and short phrases) from the **body field only**, in the same tokenize → lemma → stop-strip → contiguous 1–2 gram space as Search Core phrase lookup. Title and body are never concatenated, so n-grams cannot span the title/body boundary. Duplicate document ids follow SearchEngine.index (last document wins) **before** collection counts. Policy `minN`, `maxN`, and `minCollectionCount` must be finite positive integers with `maxN >= minN`. Runtime consumes the resulting data through `document.lexicalFrequency` maps produced by `attachLexicalFrequency`; it does not accept that artifact as a separate engine option.
+
+`compileLexicalIndex` builds the unified `search-v2-lexical-index` v1 positional/analyzed artifact used by exact indexed retrieval. Pass the same schema and document lemma function used by the runtime; supplying `lemma` also requires its deterministic `analyzerId` (`morphology().indexIdentity` for the builtin plugin). Supplied documents remain required for corpus-fingerprint validation and attached lexical-frequency ownership. Both compilers are public from `@software-land/search/lexical`; Search Core never imports the build tool.
 
 ## search-semantic (`tools/search-semantic`)
 

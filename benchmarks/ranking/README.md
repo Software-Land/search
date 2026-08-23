@@ -27,4 +27,4 @@ Workloads:
 
 Do not alter `candidateLimit` to make this look better. Do not cite Article 25k full-scan as scalable; that remains a demonstration of the algorithmic limit when C grows with a high-DF term.
 
-Indexed / adaptive retrieval is how corpus size N is supposed to stay off the ranker. Exact-title, configured-equivalence, and version must-keep, plus relationship expansion, can still grow C independently of `candidateLimit`. See [docs/retrievers.md](../../docs/retrievers.md).
+Exact indexed/adaptive retrieval keeps corpus size N off the final ranker by retaining sufficient per-signature representatives after exhaustive matching and relationship expansion. High-DF terms, many signatures, custom constraints, and deep relationship output can still grow C; `candidateLimit` is not an exact-path cap and there is no “must-keep versus budgeted rest” split. See [docs/retrievers.md](../../docs/retrievers.md).

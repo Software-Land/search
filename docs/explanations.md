@@ -32,4 +32,4 @@ Not exposed: postings lists, BM25 internals, engine class instances.
 
 **Editorial related:** same rail, `type: "editorial"` / `manually-related`, provenance from explicit domain relationships.
 
-**Indexed candidate:** default production path, `retriever: "indexed"`; inverted postings propose documents, then the same named match rules as full-scan. Provenance still uses those names, not a lone BM25 number.
+**Indexed candidate:** default production path, `retriever: "indexed"`; positional postings enumerate every legitimate matching document and `retrievalSourcesForDocument()` re-validates the same named provenance rules as full scan. There is no BM25-budgeted proposal slice on this path, and provenance remains the named source set rather than a lone retrieval score.

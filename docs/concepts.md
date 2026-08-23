@@ -12,7 +12,7 @@ query
   → results (+ optional related rail)
 ```
 
-Retrieval bounds ordinary indexed hits. Builtin ranking is sparse in the constraint-signature count B; worst case remains Θ(C²) when B = C.
+Exact indexed retrieval enumerates every legitimate posting match. After relationship expansion it retains a sufficient per-signature prefix for the final ranker; `candidateLimit` is not a retrieval bound on this path. Builtin ranking is sparse in the constraint-signature count B; worst case remains Θ(C²) when B = C.
 
 ## Equivalence ≠ synonym ≠ relatedness
 

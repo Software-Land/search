@@ -10,14 +10,14 @@ Source: [github.com/Software-Land/search](https://github.com/Software-Land/searc
 
 A JavaScript **runtime** that indexes documents, searches them, explains hits, and can attach a related-document rail from a compiled graph. It does not download models, call an LLM, or depend on a CMS.
 
-Pairwise ranking used to be Θ(C²) in the candidate set C. Builtin ranking now groups constraint-equivalent candidates and compares signatures (B of them) instead of every pair; worst case remains Θ(C²) when B = C or constraints are custom. Default **indexed** retrieval budgets ordinary hits; pass `retriever: "full-scan"` only as an explicit reference mode. Full-scan of a high-document-frequency term is not a large-C architecture.
+Pairwise ranking used to be Θ(C²) in the candidate set C. Builtin ranking now groups constraint-equivalent candidates and compares signatures (B of them) instead of every pair; worst case remains Θ(C²) when B = C or constraints are custom. Default **indexed** retrieval enumerates every legitimate match, then retains exact per-signature representatives for ranking; pass `retriever: "full-scan"` only as an explicit reference mode. High-document-frequency posting work remains Θ(matches) until conservative pruning is proven separately.
 
 **Zero production npm dependencies.** Node 18+.
 
 Optional **offline compilers** (not required to search; not imported by the runtime):
 
 - `search-corpus` — lexical equivalences and synonyms from a portable `{id,title,body}` corpus
-- `search-lexical` — integer term/phrase n-gram counts for runtime lookup
+- `search-lexical` — lexical-frequency n-gram counts and the exact positional lexical index
 - `search-relationships` — editorial / semantic relationship graphs
 - Python `tools/search-semantic` — optional relatedness builder, shipped in the npm package and launched via `@software-land/search/semantic`
 
@@ -146,9 +146,11 @@ const engine = SearchEngine.create({
 await engine.index(documents);
 ```
 
-The artifact format is `search-v2-lexical-index` version 1. It is a unified analyzed-index representation: stable document metadata, a sorted surface dictionary, positional title/body streams, compact surface→lemma ownership, version/dotted-span metadata, and corpus statistics hydrate both exact lookup and the frozen `IndexedDocument` feature state. Raw title/body text and per-document lexical-frequency maps are not duplicated; supplied documents remain fingerprint-validated owners of display titles and the separate lexical-frequency artifact.
+The artifact format is `search-v2-lexical-index` version 1. It is a unified analyzed-index representation: stable document metadata, a sorted surface dictionary, positional title/body streams, compact surface→lemma ownership, version/dotted-span metadata, and corpus statistics hydrate both exact lookup and the frozen `IndexedDocument` feature state. Raw title/body text and per-document lexical-frequency maps are not duplicated; supplied documents remain fingerprint-validated owners of display titles and attached `lexicalFrequency` data, typically produced from the separate build artifact with `attachLexicalFrequency()`.
 
-The default exact indexed path enumerates all legitimate matches, reconstructs the same current features, and keeps mathematically sufficient representatives per builtin constraint signature before sparse ranking. There is no WAND/MaxScore/block pruning in v1. A supplied incompatible or corrupt artifact throws. If the artifact is omitted, `index()` compiles the equivalent structure once from `documents`; `retriever: "full-scan"` remains the reference mode.
+The default exact indexed path enumerates all legitimate matches, reconstructs the same current features, and keeps mathematically sufficient representatives per builtin constraint signature before sparse ranking. There is no WAND/MaxScore/block pruning in v1. A supplied incompatible or corrupt artifact throws. If the artifact is omitted, each `index()` call compiles equivalent state from `documents`; this performs raw lexical analysis during initialization but still performs zero query-time raw-document scans. `retriever: "full-scan"` remains the reference mode.
+
+After successful initialization from a supplied artifact, the engine releases its reference to the artifact envelope and parsed document tuples. Callers still own their original artifact reference and can release it after `index()` resolves or a Worker reports `ready`. A subsequent identical `index()` reuses that hydrated artifact state; incompatible replacement documents reject.
 
 ## Relationship compiler
 
@@ -193,7 +195,8 @@ Default embedding model (when requested): `sentence-transformers/all-MiniLM-L6-v
 ```text
 corpus JSON
   → search-corpus          → equivalences.json + synonyms.json
-  → search-lexical         → search-v2-lexical-index v1
+  → search-lexical         → search-v2-lexical-frequency v1
+                           → search-v2-lexical-index v1
   → search-semantic (opt.) → relationships (semantic)
   → search-relationships   → search-v2-relationships v1
   → SearchEngine.create({ lexicalIndex, dictionary entries, relationships })

@@ -13,7 +13,7 @@ Core consumes a versioned `search-v2-relationships` artifact. It does not embed 
 
 Article/documentation search often wants **hybrid** (one list). Settings-like destination search often wants **separate** (a related rail, not mixed into the destination list).
 
-Expansion runs **after** strong primary retrieval. Neighbors are never indexed as lexical query terms. Truncating indexed K too low can drop the primary and starve related seeding.
+Expansion runs **after** every legitimate lexical match has been featured and strong primaries have been selected. Neighbors are never indexed as lexical query terms. Default exact indexed retrieval does not truncate primaries by `candidateLimit`; policy-specific representative selection for `top1-strong` / `top-n-strong` is exact, while `all-strong` retains every eligible primary.
 
 ## Types
 
