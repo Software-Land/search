@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology, dictionary } from "../dist/index.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { extractFeatures } from "../dist/features.js";
-import { extractFeaturesOracle } from "./oracles-dist/featuresOracle.js";
+import { extractFeaturesOracle } from "../build/test/oracles/featuresOracle.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = path.join(ROOT, "fixtures", "software-land");

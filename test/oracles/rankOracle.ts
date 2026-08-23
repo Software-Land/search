@@ -5,7 +5,7 @@
  * compared, then Kahn extracts SCCs with a full `ready.sort()` after every pop.
  * Production ranking may change; tests treat this module as the behavioral truth.
  *
- * Not a public package API. Transpiled into test/oracles-dist/ for tests and
+ * Not a public package API. Transpiled into build/test/oracles/ for tests and
  * benchmarks; excluded from production dist and the npm tarball.
  */
 

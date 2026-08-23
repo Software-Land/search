@@ -21,7 +21,7 @@ import { parseArgs } from "node:util";
 import { SearchEngine, morphology, dictionary } from "../../dist/index.js";
 import { attachLexicalFrequency } from "../../tools/search-lexical/index.js";
 import { lastRankStats, rankCandidates } from "../../dist/rank.js";
-import { rankCandidatesPairwise } from "../../test/oracles-dist/rankOracle.js";
+import { rankCandidatesPairwise } from "../../build/test/oracles/rankOracle.js";
 import { HYBRID_CONSTRAINTS, DEFAULT_CONSTRAINTS } from "../../dist/constraints.js";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..");

@@ -1,7 +1,7 @@
 /**
  * Frozen extractFeatures / classifyDirect from the pre-optimization 0.4.0
  * engine. Tests treat this module as the feature-vector truth.
- * Transpiled into test/oracles-dist/ for tests and benchmarks; excluded from
+ * Transpiled into build/test/oracles/ for tests and benchmarks; excluded from
  * production dist and the npm tarball.
  */
 

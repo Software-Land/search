@@ -3,8 +3,8 @@ coverage/
 dist/
 .DS_Store
 
-# Test-only frozen oracles (source is test/oracles/*.ts)
-test/oracles-dist/
+# Generated output (test-oracle JS is build/test/oracles/; source is test/oracles/*.ts)
+build/
 
 # Generated emit for TypeScript-migrated tools (source of truth is *.ts)
 tools/search-lexical/**/*.js

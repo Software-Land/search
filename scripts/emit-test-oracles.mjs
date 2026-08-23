@@ -12,7 +12,7 @@ const ts = require("typescript");
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const srcDir = path.join(root, "test", "oracles");
-const outDir = path.join(root, "test", "oracles-dist");
+const outDir = path.join(root, "build", "test", "oracles");
 mkdirSync(outDir, { recursive: true });
 
 const compilerOptions = {
@@ -24,6 +24,6 @@ const compilerOptions = {
 for (const name of ["rankOracle.ts", "featuresOracle.ts"]) {
   const source = readFileSync(path.join(srcDir, name), "utf8");
   const { outputText } = ts.transpileModule(source, { compilerOptions, fileName: name });
-  const rewritten = outputText.replaceAll("../../src/", "../../dist/");
+  const rewritten = outputText.replaceAll("../../src/", "../../../dist/");
   writeFileSync(path.join(outDir, name.replace(/\.ts$/, ".js")), rewritten);
 }
