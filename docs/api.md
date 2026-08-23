@@ -38,7 +38,7 @@ Unknown `relationshipStrategy` values throw `InvalidConfigurationError`.
 }
 ```
 
-Do not treat `score` as globally meaningful. Constraints dominate. `meta` on `searchDetailed` is experimental (timings, candidate counts).
+Do not treat `score` as globally meaningful. Constraints dominate. `meta` on `searchDetailed` is experimental (timings, candidate counts, posting/block work, full feature evaluations, bound rejections, and pruning fallback reason). Counter names are not a stable public optimization API.
 
 ## Cancellation
 

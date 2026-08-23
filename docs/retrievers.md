@@ -17,7 +17,7 @@ SearchEngine.create({
 
 | name | when |
 | --- | --- |
-| `indexed` | Default. Enumerates every legitimate match from a compiled positional lexical index, reconstructs the current exact features, and retains exact per-signature representatives. No posting pruning in v1. |
+| `indexed` | Default. Enumerates every legitimate match from a compiled positional lexical index, applies exact feature-block rejection where the Stage-2A proof applies, and retains exact per-signature representatives. No posting-entry pruning in v1. |
 | `full-scan` | Explicit small-corpus / reference / debug mode. Scans every document. Does not apply `candidateLimit`. |
 | `adaptive` | Full scan while `documentCount <= adaptive.documentThreshold`, else exact indexed retrieval. Deterministic. |
 
@@ -72,7 +72,7 @@ Identical inputs serialize byte-identically with `JSON.stringify`. A supplied ar
 
 If `lexicalIndex` is omitted, each `index()` call compiles equivalent state from the supplied documents. This costs initialization time but not query-time raw-field analysis. `retriever: "full-scan"` remains the explicit reference path.
 
-The v1 payload reserves an integrity-covered extension namespace keyed to stable term/document ordinals. Stage 1 emits it empty. A later exact block-bound capability can be added there without replacing the core positional representation; no block bounds or pruning behavior exist in Stage 1.
+The v1 payload has an integrity-covered extension namespace keyed to stable term/document ordinals. Current compilers add `exact-pruning-v1` with revisioned 128-document boundaries. An old v1 artifact without it remains valid and exhaustive; malformed claimed metadata rejects. The extension supports the narrow Stage-2A feature-block proof and does not yet contain posting TF/evidence bounds.
 
 The rejected alternatives are:
 
@@ -82,7 +82,7 @@ The rejected alternatives are:
 
 ## Exact matching and feature reconstruction
 
-The compiled retriever performs exact surface, title/body, prefix, morphology, typo-alternative, configured-equivalence, version, dotted-span, and phrase-evidence behavior over the compiled statistics. It enumerates every legitimate matching document. v1 performs no WAND, MaxScore, block skipping, posting early termination, or prefix truncation.
+The compiled retriever performs exact surface, title/body, prefix, morphology, typo-alternative, configured-equivalence, version, dotted-span, and phrase-evidence behavior over the compiled statistics. It enumerates every legitimate matching document. v1 performs no WAND, MaxScore, posting-block skipping, posting early termination, or prefix truncation.
 
 For exact indexed retrieval, `searchDetailed().meta.rawDocumentScans` is `0` with or without a supplied artifact. Query-time feature work reads indexed statistics rather than rescanning raw title/body strings. The supplied artifact hydrates those statistics without raw lexical analysis; the fallback constructs them from raw documents during each `index()`.
 
@@ -106,7 +106,9 @@ Unknown/custom `ConstraintDef.fn` semantics are not covered by builtin signature
 
 ## Scaling
 
-Stage 1 is correctness-first and does Θ(matches) posting and feature work. High-DF queries can therefore still be expensive, but they no longer feed every match to the final sparse ranker when the representative theorem applies. The fixed candidate-200 architecture is intentionally gone. Conservative block pruning is future work and must preserve this exact path as its oracle.
+Stage 1 is the correctness oracle and remains available through the internal exhaustive compiled mode. Stage 2A still does Θ(matches) posting/membership work, but for a proven plain single-token, body-only class it derives the exact signature/rounded score cheaply and omits full feature extraction after that signature's required score/id prefix is secure. Multi-term, uncertain analyzer/evidence, custom ranking, nonzero retrieval-score weight, full diagnostics, `all-strong`, and active relationship expansion fail closed to exhaustive evaluation. The fixed candidate-200 architecture remains intentionally gone.
+
+The experimental counters distinguish the layers: `postingEntriesSkipped` remains `0`; `documentsBoundRejected` and `documentsFullyEvaluated` expose Stage-2A savings, while `documentBlocksSkipped` counts blocks with no fully evaluated match and `boundedBlocksSkipped` counts blocks whose proven bounded subset was skipped. See [exact-pruning.md](exact-pruning.md) for the predicate and fallback proof.
 
 BM25-like retrieval scores are diagnostic/admission-era data; their default final-ranking weight remains `0`. Representative selection uses the current final score and `document.id`, never BM25 admission rank.
 
@@ -116,7 +118,7 @@ Builtin ranking is O(C log C + B²F + E_b) in the common case after selection an
 
 Allocation and RSS for the checked-in generators: [memory benchmarks (GitHub tree; not in the npm tarball)](https://github.com/Software-Land/search/blob/main/benchmarks/memory/README.md). That harness is not a latency or search-quality claim.
 
-The v1 runtime currently reconstructs an object-heavy analyzed document view from the positional artifact so the frozen feature extractor remains unchanged. That duplicates some posting-derived information in memory; compact/lazy feature views are later optimization work, not part of Stage 1.
+The v1 runtime currently reconstructs an object-heavy analyzed document view from the positional artifact so the frozen feature extractor remains unchanged. That duplicates some posting-derived information in memory; compact/lazy feature views and conservative posting-entry skipping remain later Stage-2B/2C work.
 
 See [limitations.md](limitations.md).
 
