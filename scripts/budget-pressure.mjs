@@ -64,6 +64,13 @@ function topIds(detailed, n) {
   return (detailed.results || []).slice(0, n).map((h) => h.id);
 }
 
+function publicSurface(detailed) {
+  return {
+    results: detailed.results || [],
+    related: detailed.related || [],
+  };
+}
+
 function exactPrefix(a, b, n) {
   const left = a.slice(0, n);
   const right = b.slice(0, n);
@@ -1648,12 +1655,20 @@ async function measureActualStage1(docs, extra, queries) {
     // Measure the normal result/Worker path. Public searchDetailed intentionally
     // computes a full exact diagnostic plan for candidateTitles/cycles/conflicts.
     const actual = precompiled._searchDetailedSync(query, { limit: 10, relatedLimit: 5 }, false);
+    const exhaustive = precompiled._searchDetailedSync(
+      query,
+      { limit: 10, relatedLimit: 5 },
+      false,
+      "exhaustive"
+    );
     const fallbackResult = fallback._searchDetailedSync(query, { limit: 10, relatedLimit: 5 }, false);
     queryRows.push({
       query,
       exact: {
         precompiled: JSON.stringify(topIds(expected, 10)) === JSON.stringify(topIds(actual, 10)),
         fallback: JSON.stringify(topIds(expected, 10)) === JSON.stringify(topIds(fallbackResult, 10)),
+        exhaustiveCompiled:
+          JSON.stringify(publicSurface(actual)) === JSON.stringify(publicSurface(exhaustive)),
       },
       full: {
         C: expected.meta.candidateCount,
@@ -1662,6 +1677,13 @@ async function measureActualStage1(docs, extra, queries) {
         rankMs: expected.meta.rankMs,
         totalMs: expected.meta.totalMs,
       },
+      exhaustiveCompiled: {
+        postingEntriesVisited: exhaustive.meta.postingEntriesVisited,
+        documentsFullyEvaluated: exhaustive.meta.documentsFullyEvaluated,
+        featureMs: exhaustive.meta.featureMs,
+        selectionMs: exhaustive.meta.selectionMs,
+        totalMs: exhaustive.meta.totalMs,
+      },
       precompiled: {
         matches: actual.meta.matchCount,
         C: actual.meta.candidateCount,
@@ -1669,6 +1691,15 @@ async function measureActualStage1(docs, extra, queries) {
         postingEntriesVisited: actual.meta.postingEntriesVisited,
         distinctDocumentsExamined: actual.meta.distinctDocumentsExamined,
         rawDocumentScans: actual.meta.rawDocumentScans,
+        postingBlocksVisited: actual.meta.postingBlocksVisited,
+        postingBlocksSkipped: actual.meta.postingBlocksSkipped,
+        postingEntriesSkipped: actual.meta.postingEntriesSkipped,
+        documentBlocksVisited: actual.meta.documentBlocksVisited,
+        documentBlocksSkipped: actual.meta.documentBlocksSkipped,
+        boundedBlocksSkipped: actual.meta.boundedBlocksSkipped,
+        documentsFullyEvaluated: actual.meta.documentsFullyEvaluated,
+        documentsBoundRejected: actual.meta.documentsBoundRejected,
+        pruningFallbackReason: actual.meta.pruningFallbackReason,
         retrieveMs: actual.meta.retrieveMs,
         featureMs: actual.meta.featureMs,
         selectionMs: actual.meta.selectionMs,
