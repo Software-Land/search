@@ -2,7 +2,13 @@ import { createSearchClient, searchWorkerUrl } from "@software-land/search/brows
 import { compileLexicalIndex } from "@software-land/search/lexical";
 import { morphology } from "@software-land/search";
 
-const SIZES = [1000, 2000, 5000];
+const PARAMS = new URLSearchParams(window.location.search);
+const requestedSizes = String(PARAMS.get("sizes") || "")
+  .split(",")
+  .map(Number)
+  .filter((n) => Number.isInteger(n) && n > 0);
+const SIZES = requestedSizes.length ? requestedSizes : [1000, 2000, 5000];
+const MEASURE_BROWSER_MEMORY = PARAMS.get("memory") === "1";
 const MODES = ["full-scan", "indexed-fallback", "indexed-precompiled"];
 const QUERY_RARE = "ZX9 UniqueRareTitle";
 const QUERY_COMMON = "the";
@@ -99,11 +105,25 @@ window.addEventListener("error", (ev) => {
 
 window.__state = state;
 
+async function browserMemoryBytes() {
+  if (!MEASURE_BROWSER_MEMORY) return null;
+  if (typeof performance.measureUserAgentSpecificMemory !== "function") return null;
+  try {
+    const measurement = await Promise.race([
+      performance.measureUserAgentSpecificMemory(),
+      new Promise((resolve) => setTimeout(() => resolve(null), 30_000)),
+    ]);
+    return typeof measurement?.bytes === "number" ? measurement.bytes : null;
+  } catch {
+    return null;
+  }
+}
+
 async function runMode(mode, n) {
   const documents = mixedDocs(n);
   const english = morphology();
   const precompileStarted = performance.now();
-  const lexicalIndex = mode === "indexed-precompiled"
+  let lexicalIndex = mode === "indexed-precompiled"
     ? compileLexicalIndex(documents, {
         schema: { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } },
         lemma: english.lemma,
@@ -141,6 +161,8 @@ async function runMode(mode, n) {
   });
   await client.waitReady();
   const initMs = performance.now() - initStarted;
+  lexicalIndex = null;
+  const browserHeapAfter = await browserMemoryBytes();
   const rows = [];
   for (const { name, query } of QUERIES) {
     const generation = client.setQuery(query, { limit: 10 });
@@ -187,6 +209,7 @@ async function runMode(mode, n) {
       artifactBytes,
       initMs,
       workerIndexBuildMs: ready?.indexBuildMs ?? null,
+      browserHeapBytes: browserHeapAfter,
       topId: hit?.ids?.[0] ?? null,
       topTitle: hit?.titles?.[0] ?? null,
     });

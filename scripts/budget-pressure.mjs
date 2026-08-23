@@ -5,7 +5,8 @@
  * Authoritative ranking: full-scan retrieve → current extractFeatures → sparse ranker.
  * Legacy suites retain the candidateLimit survival diagnostics. The `stage1`
  * suite measures the exact compiled path, fallback construction, posting work,
- * representative selection, artifact size, load cost, and memory.
+ * representative selection, artifact size, load cost, memory, and deterministic
+ * A/B/C serialization projections.
  *
  *   node scripts/budget-pressure.mjs
  *   node scripts/budget-pressure.mjs --suite adversarial
@@ -1506,6 +1507,98 @@ async function suiteArtifactEstimate(sizes) {
   return rows;
 }
 
+function tfOnlyRows(flat) {
+  const out = [];
+  let cursor = 0;
+  while (cursor < flat.length) {
+    const doc = flat[cursor++];
+    const tf = flat[cursor++];
+    out.push(doc, tf);
+    cursor += tf;
+  }
+  return out;
+}
+
+function compareArtifactLayouts(artifact) {
+  const payload = artifact.data;
+  const surface = payload.terms.map(([term, lemma, title, body]) => [
+    term,
+    lemma,
+    tfOnlyRows(title),
+    tfOnlyRows(body),
+  ]);
+  const lemmaMaps = new Map();
+  function addLemma(lemma, field, flat) {
+    let row = lemmaMaps.get(lemma);
+    if (!row) {
+      row = { title: new Map(), body: new Map() };
+      lemmaMaps.set(lemma, row);
+    }
+    const target = row[field];
+    const tf = tfOnlyRows(flat);
+    for (let i = 0; i < tf.length; i += 2) {
+      target.set(tf[i], (target.get(tf[i]) || 0) + tf[i + 1]);
+    }
+  }
+  for (const [, lemma, title, body] of payload.terms) {
+    addLemma(lemma, "title", title);
+    addLemma(lemma, "body", body);
+  }
+  const lemma = [...lemmaMaps.entries()]
+    .sort(([a], [b]) => idCompare(a, b))
+    .map(([term, fields]) => [
+      term,
+      [...fields.title].flat(),
+      [...fields.body].flat(),
+    ]);
+
+  const titleSlots = payload.documents.map((row) => new Array(row[1]));
+  const bodySlots = payload.documents.map((row) => new Array(row[2]));
+  function fill(slots, flat, termId) {
+    let cursor = 0;
+    while (cursor < flat.length) {
+      const doc = flat[cursor++];
+      const count = flat[cursor++];
+      for (let i = 0; i < count; i += 1) slots[doc][flat[cursor++]] = termId;
+    }
+  }
+  for (let termId = 0; termId < payload.terms.length; termId += 1) {
+    fill(titleSlots, payload.terms[termId][2], termId);
+    fill(bodySlots, payload.terms[termId][3], termId);
+  }
+
+  const postingsOnly = {
+    documents: payload.documents.map((row) => [row[0]]),
+    surface,
+    lemma,
+    stats: payload.stats,
+    extensions: {},
+  };
+  const postingsPlusDocumentState = {
+    documents: payload.documents.map((row, i) => [
+      row[0],
+      titleSlots[i],
+      bodySlots[i],
+      row[3],
+      row[4],
+      row[5],
+      row[6],
+    ]),
+    surface,
+    lemma,
+    stats: payload.stats,
+    extensions: {},
+  };
+  function artifactBytes(data) {
+    return Buffer.byteLength(JSON.stringify({ ...artifact, data }));
+  }
+  return {
+    postingsOnlyBytes: artifactBytes(postingsOnly),
+    postingsPlusDocumentStateBytes: artifactBytes(postingsPlusDocumentState),
+    unifiedAnalyzedIndexBytes: Buffer.byteLength(JSON.stringify(artifact)),
+  };
+}
+
 async function measureActualStage1(docs, extra, queries) {
   if (typeof globalThis.gc === "function") globalThis.gc();
   const english = morphology({ lemmas: extra.lemmas || {} });
@@ -1520,7 +1613,7 @@ async function measureActualStage1(docs, extra, queries) {
   const rawDocumentsBytes = Buffer.byteLength(rawJson);
   const before = process.memoryUsage();
   const compileStarted = performance.now();
-  const artifact = compileLexicalIndex(docs, {
+  let artifact = compileLexicalIndex(docs, {
     schema: SCHEMA,
     lemma: english.lemma,
     analyzerId: english.indexIdentity,
@@ -1528,6 +1621,7 @@ async function measureActualStage1(docs, extra, queries) {
   const compileMs = performance.now() - compileStarted;
   let artifactJson = JSON.stringify(artifact);
   const lexicalIndexBytes = Buffer.byteLength(artifactJson);
+  const architectureOptions = compareArtifactLayouts(artifact);
   const afterCompile = process.memoryUsage();
   rawJson = "";
   artifactJson = "";
@@ -1537,6 +1631,7 @@ async function measureActualStage1(docs, extra, queries) {
   const loadStarted = performance.now();
   await precompiled.index(docs);
   const loadMs = performance.now() - loadStarted;
+  artifact = null;
   if (typeof globalThis.gc === "function") globalThis.gc();
   const afterLoad = process.memoryUsage();
 
@@ -1550,8 +1645,10 @@ async function measureActualStage1(docs, extra, queries) {
   const queryRows = [];
   for (const query of queries) {
     const expected = full.searchDetailed(query, { limit: 10, relatedLimit: 5 });
-    const actual = precompiled.searchDetailed(query, { limit: 10, relatedLimit: 5 });
-    const fallbackResult = fallback.searchDetailed(query, { limit: 10, relatedLimit: 5 });
+    // Measure the normal result/Worker path. Public searchDetailed intentionally
+    // computes a full exact diagnostic plan for candidateTitles/cycles/conflicts.
+    const actual = precompiled._searchDetailedSync(query, { limit: 10, relatedLimit: 5 }, false);
+    const fallbackResult = fallback._searchDetailedSync(query, { limit: 10, relatedLimit: 5 }, false);
     queryRows.push({
       query,
       exact: {
@@ -1585,6 +1682,7 @@ async function measureActualStage1(docs, extra, queries) {
     N: docs.length,
     rawDocumentsBytes,
     lexicalIndexBytes,
+    architectureOptions,
     ratio: Number((lexicalIndexBytes / Math.max(rawDocumentsBytes, 1)).toFixed(3)),
     compileMs,
     loadMs,

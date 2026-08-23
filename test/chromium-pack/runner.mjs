@@ -67,6 +67,11 @@ function resolveBrowserImport(pkg) {
 
 function startServer(root) {
   const server = http.createServer((req, res) => {
+    if (String(req.url || "").split("?")[0] === "/favicon.ico") {
+      res.writeHead(204, { "cache-control": "no-store" });
+      res.end();
+      return;
+    }
     const filePath = safeFile(root, req.url || "/");
     if (!filePath) {
       res.writeHead(403, { "content-type": "text/plain; charset=utf-8" });
@@ -84,7 +89,13 @@ function startServer(root) {
       res.end("not found");
       return;
     }
-    res.writeHead(200, { "content-type": mime, "cache-control": "no-store" });
+    res.writeHead(200, {
+      "content-type": mime,
+      "cache-control": "no-store",
+      "cross-origin-opener-policy": "same-origin",
+      "cross-origin-embedder-policy": "require-corp",
+      "cross-origin-resource-policy": "same-origin",
+    });
     createReadStream(filePath).pipe(res);
   });
   return new Promise((resolve, reject) => {
@@ -174,7 +185,18 @@ async function main() {
     server = started.server;
     const origin = started.origin;
 
-    browser = await chromium.launch({ headless: true });
+    const systemChrome = [
+      process.env.CHROME_PATH,
+      "/usr/bin/google-chrome",
+      "/usr/bin/chromium",
+      "/usr/bin/chromium-browser",
+    ].find((candidate) => candidate && existsSync(candidate));
+    browser = await chromium.launch({
+      headless: true,
+      ignoreDefaultArgs: ["--headless"],
+      args: ["--headless=new", "--enable-precise-memory-info"],
+      ...(systemChrome ? { executablePath: systemChrome } : {}),
+    });
     const page = await browser.newPage();
     const consoleErrors = [];
     const pageErrors = [];
@@ -353,13 +375,25 @@ async function main() {
 `
     );
 
-    const RETRIEVAL_WAIT_MS = 180_000;
+    const retrievalSizes = String(process.env.SEARCH_RETRIEVAL_SIZES || "1000,2000,5000")
+      .split(",")
+      .map(Number)
+      .filter((n) => Number.isInteger(n) && n > 0);
+    const measureBrowserMemory = process.env.SEARCH_MEASURE_BROWSER_MEMORY === "1";
+    const RETRIEVAL_WAIT_MS = measureBrowserMemory ? 360_000 : 180_000;
     const retrievalPage = await browser.newPage();
     const retrievalConsoleErrors = [];
     retrievalPage.on("console", (msg) => {
       if (msg.type() === "error") retrievalConsoleErrors.push(msg.text());
     });
-    await retrievalPage.goto(`${origin}/retrieval.html`, { waitUntil: "load", timeout: RETRIEVAL_WAIT_MS });
+    const retrievalQuery = new URLSearchParams({
+      sizes: retrievalSizes.join(","),
+      ...(measureBrowserMemory ? { memory: "1" } : {}),
+    });
+    await retrievalPage.goto(`${origin}/retrieval.html?${retrievalQuery}`, {
+      waitUntil: "load",
+      timeout: RETRIEVAL_WAIT_MS,
+    });
     await retrievalPage.waitForFunction(() => window.__booted === true || window.__bootError, null, {
       timeout: RETRIEVAL_WAIT_MS,
     });
@@ -376,10 +410,13 @@ async function main() {
       throw new Error(`retrieval-bench errors: ${JSON.stringify(retrievalBoot.errors)}`);
     }
     if (retrievalConsoleErrors.length) throw new Error(`retrieval-bench console error: ${retrievalConsoleErrors.join("\n")}`);
-    if (retrievalBoot.results.length !== 45) {
-      throw new Error(`retrieval-bench expected 45 rows, got ${JSON.stringify(retrievalBoot.results)}`);
+    const expectedRetrievalRows = retrievalSizes.length * 3 * 5;
+    if (retrievalBoot.results.length !== expectedRetrievalRows) {
+      throw new Error(
+        `retrieval-bench expected ${expectedRetrievalRows} rows, got ${JSON.stringify(retrievalBoot.results)}`
+      );
     }
-    for (const n of [1000, 2000, 5000]) {
+    for (const n of retrievalSizes) {
       for (const queryFamily of [
         "rare-exact",
         "high-df",
@@ -392,7 +429,9 @@ async function main() {
         if (!full || rows.some((row) => row.topId !== full.topId)) {
           throw new Error(`retrieval-bench exact-output mismatch: ${JSON.stringify({ n, queryFamily, rows })}`);
         }
-        const indexed = rows.filter((row) => row.mode !== "full-scan");
+        const indexed = rows.filter((row) =>
+          row.mode === "indexed-fallback" || row.mode === "indexed-precompiled"
+        );
         if (indexed.some((row) => row.rawDocumentScans !== 0)) {
           throw new Error(`retrieval-bench indexed path scanned raw documents: ${JSON.stringify({ n, queryFamily, rows })}`);
         }
