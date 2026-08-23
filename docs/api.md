@@ -7,7 +7,7 @@ engine.searchDetailed(query, options?)  // { results, related, meta }
 engine.searchDetailedAsync(...)
 ```
 
-Invariant: `search(q, opts)` **is** `searchDetailed(q, opts).results`. There is no second ranker.
+Invariant: `search(q, opts)` is semantically identical to `searchDetailed(q, opts).results`; both use the same retrieval, relationship, representative, and sparse-ranking algorithm. `searchDetailed` may additionally compute a full exact diagnostic plan for candidate titles, cycles, conflicts, and explanation successors.
 
 `searchAsync` / `searchDetailedAsync` are the same algorithm with yields for cancellation. They must not change ordering.
 
@@ -20,7 +20,7 @@ Invariant: `search(q, opts)` **is** `searchDetailed(q, opts).results`. There is 
 | `explain` | false | Attach JSON-serializable `explanation` |
 | `relationshipStrategy` | engine default | `hybrid` \| `mixed` \| `separate` \| `none` |
 | `signal` | — | `AbortSignal`; abort throws `AbortError`, never `[]` |
-| `candidateLimit` | engine default | Indexed budget override |
+| `candidateLimit` | engine default | Compatibility/experimental-retriever budget; exact indexed retrieval does not truncate to it |
 
 Unknown `relationshipStrategy` values throw `InvalidConfigurationError`.
 

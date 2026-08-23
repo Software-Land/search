@@ -146,7 +146,7 @@ const engine = SearchEngine.create({
 await engine.index(documents);
 ```
 
-The artifact format is `search-v2-lexical-index` version 1. It contains document metadata, a sorted surface dictionary, positional title/body postings, compact surface→lemma ownership, version/dotted-span metadata, corpus statistics, and attached phrase-frequency data. Raw body text is not serialized.
+The artifact format is `search-v2-lexical-index` version 1. It is a unified analyzed-index representation: stable document metadata, a sorted surface dictionary, positional title/body streams, compact surface→lemma ownership, version/dotted-span metadata, and corpus statistics hydrate both exact lookup and the frozen `IndexedDocument` feature state. Raw title/body text and per-document lexical-frequency maps are not duplicated; supplied documents remain fingerprint-validated owners of display titles and the separate lexical-frequency artifact.
 
 The default exact indexed path enumerates all legitimate matches, reconstructs the same current features, and keeps mathematically sufficient representatives per builtin constraint signature before sparse ranking. There is no WAND/MaxScore/block pruning in v1. A supplied incompatible or corrupt artifact throws. If the artifact is omitted, `index()` compiles the equivalent structure once from `documents`; `retriever: "full-scan"` remains the reference mode.
 

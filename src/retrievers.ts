@@ -4,10 +4,11 @@
  * Query analysis and ranking stay in Search Core. Retrievers emit
  * { document, retrievalSources, retrievalScore? } only.
  *
- * Indexed lexical retrieval is the default production path: inverted
- * postings propose documents, exact scanDocument provenance is required,
- * and BM25 orders only the budgeted ordinary slice. It is not the ranker.
- * Full-scan remains an explicit small-corpus / reference mode.
+ * Exact compiled lexical retrieval is the default production path: every
+ * legitimate posting match is enumerated and provenance is reconstructed from
+ * hydrated IndexedDocument state. The older budgeted BM25-ish retriever remains
+ * below only for explicit experimental compatibility. Full-scan is the
+ * small-corpus/reference mode.
  */
 
 import {

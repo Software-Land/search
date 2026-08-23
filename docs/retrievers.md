@@ -27,9 +27,24 @@ Explicit `full-scan`, `indexed`, `adaptive`, or a custom `ExperimentalRetriever`
 
 Default adaptive threshold **1500** is an adaptive-mode choice, not a correctness or candidate law.
 
-## Compiled lexical index
+## Stage 1A: exact in-memory algorithm
 
-`search-v2-lexical-index` version 1 contains deterministic document metadata, a sorted surface-term dictionary, title/body positional postings, one lemma per surface term, version/dotted-span metadata, corpus length statistics, and attached lexical-frequency data. It does not serialize raw body text.
+The correctness proof is independent of serialization. With no artifact, `index()` first builds the existing `IndexedDocument` state and the exact retriever compiles its positional lookup once in memory. Query execution is:
+
+1. enumerate every legitimate lexical match;
+2. extract the unchanged complete feature vector, constraint signature, and rounded final score;
+3. preserve the complete featured candidate map while choosing relationship primaries and applying target reclassification/addition;
+4. feature newly added neighbors;
+5. retain the exact required representatives per builtin signature;
+6. run the unchanged sparse ranker.
+
+Relationship primary reduction is temporary and does not remove entries from the map used for target handling. `top1-strong` uses depth one, `top-n-strong` uses the requested primary depth, and `all-strong` retains every eligible strong direct.
+
+## Stage 1B: unified compiled analyzed index
+
+`search-v2-lexical-index` version 1 is a unified positional representation: stable document ordinals and compact document-local metadata share one sorted surface-term dictionary and title/body positional streams. One deterministic lemma is stored per surface term, so lemma postings and hydrated lemma token sequences are derived without duplication. Version forms, dotted spans/components, first-token data, field lengths, and corpus length statistics complete the state needed by the frozen matcher and feature extractor.
+
+The payload serializes neither raw title/body text nor per-document lexical-frequency maps. Validated caller documents continue to own display titles and the separate `search-v2-lexical-frequency` data. Positional streams hydrate the current `IndexedDocument` token arrays, sets, position maps, and exact retriever lookup; artifact load does not invoke tokenization, lemma analysis, or raw-document posting construction. After successful initialization the engine releases the validated envelope and document tuples, retaining only a small compatibility header, posting arrays, and hydrated runtime state. Re-indexing the same validated corpus reuses that state; incompatible replacement input rejects instead of silently rebuilding.
 
 Build it under the existing lexical package boundary:
 
@@ -53,9 +68,17 @@ const engine = SearchEngine.create({
 await engine.index(documents);
 ```
 
-Identical inputs serialize byte-identically with `JSON.stringify`. A supplied artifact is checked for format/version, integrity, core analyzer identity, lemma identity, schema fields, document count, and a fingerprint of ids plus searchable title/body text and lexical-frequency data. An invalid supplied artifact throws; it is never ignored in favor of an approximate path.
+Identical inputs serialize byte-identically with `JSON.stringify`. A supplied artifact is checked for format/version, integrity, core analyzer identity, lemma identity, schema fields, document count, and a fingerprint of ids plus searchable title/body text and lexical-frequency data. An invalid supplied artifact throws; it is never ignored in favor of an approximate path. A custom lemma plugin without a deterministic `indexIdentity` remains valid for artifact-omitted runtime construction but is rejected when a supplied artifact cannot prove analyzer compatibility.
 
 If `lexicalIndex` is omitted, `index()` compiles the equivalent structure once from the supplied documents. This costs initialization time but not repeated query-time raw-field analysis. `retriever: "full-scan"` remains the explicit reference path.
+
+The v1 payload reserves an integrity-covered extension namespace keyed to stable term/document ordinals. Stage 1 emits it empty. A later exact block-bound capability can be added there without replacing the core positional representation; no block bounds or pruning behavior exist in Stage 1.
+
+The rejected alternatives are:
+
+- **Postings only:** smallest initial payload, but it still requires raw-document analysis to rebuild `IndexedDocument`, duplicates runtime posting ownership, and leaves Stage 2 without document-local positional bounds.
+- **Postings plus a separate sufficient-statistics table:** avoids raw analysis, but duplicates term occurrences between posting and document streams and raises browser heap.
+- **Unified analyzed index (selected):** one positional occurrence stream hydrates both document-local state and exact lookup. It has more load-time object hydration than a future typed-array view, but no raw lexical analysis and no redundant lexical-frequency ownership.
 
 ## Exact matching and feature reconstruction
 
@@ -75,7 +98,9 @@ For ordinary non-explain output, the base per-signature depth is `max(limit, rel
 
 Relationship primary selection uses the same theorem over strong direct candidates: `top1-strong` needs one per signature and `top-n-strong` needs n; `all-strong` retains all. After expansion, public output has one further frozen requirement: every row exposes its absolute global `rank`. When a requested direct or related row lies deep in the global order, the engine retains a sufficient uniform signature prefix to preserve the complete global prefix through that row, plus its successor when explaining. This can make `representativeDepth` much larger than the public result limit.
 
-`C` is the retained candidate count reported by `searchDetailed().meta.candidateCount`. For the simple path, `C <= B × representativeDepth`, where B is the number of exact signatures encountered; B has no fixed corpus-independent bound. Relationship rank preservation can increase the derived depth. Diagnostics are available under `meta.representativeSelection`. Experimental candidate diagnostics such as `candidateTitles` describe the retained set, not the full-scan pre-reduction set; result rows, related rows, scores, ranks, and requested explanations remain the exact quality contract.
+For the normal `search()` and Worker result path, `C` is the retained candidate count reported by the path's diagnostics. For the simple path, `C <= B × representativeDepth`, where B is the number of exact signatures encountered; B has no fixed corpus-independent bound. Relationship rank preservation can increase the derived depth. The retained count is always available as `meta.representativeSelection.retained`.
+
+Public `searchDetailed()` preserves the full-scan semantic diagnostics: absolute ranks, ordered `candidateTitles`, related count, cycle membership, conflict count, and the exact global successor used by `constraintsVsNext`. Stage 1 currently computes an exact full ranking plan for that diagnostic surface, then applies representative selection to the displayed result path. `search()`/`searchAsync()` and the Worker protocol do not depend on this diagnostic fallback; explain output still plans through every displayed row's exact successor. Reconstructing all diagnostics directly from signature cardinalities, SCC/DAG state, and ordered bucket streams is a later memory/latency optimization, not a weakened contract.
 
 Unknown/custom `ConstraintDef.fn` semantics are not covered by builtin signatures. The representative selector fails closed by retaining all candidates for the existing pairwise custom-constraint ranker.
 
