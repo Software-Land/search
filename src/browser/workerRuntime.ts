@@ -17,11 +17,49 @@ import type {
 
 type RunningSearch = { requestId?: number; abort: () => void };
 
+function publicWorkerMeta(meta?: any) {
+  return {
+    totalMs: meta?.totalMs,
+    retrieveMs: meta?.retrieveMs,
+    featureMs: meta?.featureMs,
+    selectionMs: meta?.selectionMs,
+    rankMs: meta?.rankMs,
+    candidateCount: meta?.candidateCount,
+    matchCount: meta?.matchCount,
+    relatedCount: meta?.relatedCount,
+    relationshipStrategy: meta?.relationshipStrategy,
+  };
+}
+
+function retrievalDiagnosticMeta(meta?: any) {
+  return {
+    representativeSelection: meta?.representativeSelection,
+    postingEntriesVisited: meta?.postingEntriesVisited,
+    distinctDocumentsExamined: meta?.distinctDocumentsExamined,
+    rawDocumentScans: meta?.rawDocumentScans,
+    postingBlocksVisited: meta?.postingBlocksVisited,
+    postingBlocksSkipped: meta?.postingBlocksSkipped,
+    postingEntriesSkipped: meta?.postingEntriesSkipped,
+    duplicatePostingEntriesAvoided: meta?.duplicatePostingEntriesAvoided,
+    queryFormsExpanded: meta?.queryFormsExpanded,
+    termsExpanded: meta?.termsExpanded,
+    documentBlocksVisited: meta?.documentBlocksVisited,
+    documentBlocksSkipped: meta?.documentBlocksSkipped,
+    boundedBlocksSkipped: meta?.boundedBlocksSkipped,
+    documentsFullyEvaluated: meta?.documentsFullyEvaluated,
+    documentsBoundRejected: meta?.documentsBoundRejected,
+    pruningSignaturesEncountered: meta?.pruningSignaturesEncountered,
+    pruningRepresentativesRetained: meta?.pruningRepresentativesRetained,
+    pruningFallbackReason: meta?.pruningFallbackReason,
+  };
+}
+
 export function createWorkerRuntime({ SearchEngine, english, dictionary }: WorkerRuntimeFactories = {}) {
   let engine: SearchEngine | null = null;
   let running: RunningSearch | null = null;
   let disposed = false;
   let exactPruningMode: "auto" | "exhaustive" = "auto";
+  let includeRetrievalDiagnostics = false;
 
   function replyError(reply: ReplyFn, requestId: number | undefined, err: unknown) {
     const rec = err && typeof err === "object" ? (err as { name?: string; message?: unknown }) : {};
@@ -46,6 +84,7 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
       }
       exactPruningMode =
         payload._exactPruningMode === "exhaustive" ? "exhaustive" : "auto";
+      includeRetrievalDiagnostics = payload._includeRetrievalDiagnostics === true;
       const documents = payload.documents || [];
       engine = SearchEngine.create({
         schema: payload.schema,
@@ -102,41 +141,16 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
         exactPruningMode
       );
       if (running && running.requestId === message.requestId) running = null;
+      const publicMeta = publicWorkerMeta(detailed.meta);
       reply({
         type: MSG.RESULT,
         requestId: message.requestId,
         payload: {
           results: detailed.results,
           related: detailed.related,
-          meta: {
-            totalMs: detailed.meta?.totalMs,
-            retrieveMs: detailed.meta?.retrieveMs,
-            featureMs: detailed.meta?.featureMs,
-            selectionMs: detailed.meta?.selectionMs,
-            rankMs: detailed.meta?.rankMs,
-            candidateCount: detailed.meta?.candidateCount,
-            matchCount: detailed.meta?.matchCount,
-            representativeSelection: detailed.meta?.representativeSelection,
-            postingEntriesVisited: detailed.meta?.postingEntriesVisited,
-            distinctDocumentsExamined: detailed.meta?.distinctDocumentsExamined,
-            rawDocumentScans: detailed.meta?.rawDocumentScans,
-            postingBlocksVisited: detailed.meta?.postingBlocksVisited,
-            postingBlocksSkipped: detailed.meta?.postingBlocksSkipped,
-            postingEntriesSkipped: detailed.meta?.postingEntriesSkipped,
-            duplicatePostingEntriesAvoided: detailed.meta?.duplicatePostingEntriesAvoided,
-            queryFormsExpanded: detailed.meta?.queryFormsExpanded,
-            termsExpanded: detailed.meta?.termsExpanded,
-            documentBlocksVisited: detailed.meta?.documentBlocksVisited,
-            documentBlocksSkipped: detailed.meta?.documentBlocksSkipped,
-            boundedBlocksSkipped: detailed.meta?.boundedBlocksSkipped,
-            documentsFullyEvaluated: detailed.meta?.documentsFullyEvaluated,
-            documentsBoundRejected: detailed.meta?.documentsBoundRejected,
-            pruningSignaturesEncountered: detailed.meta?.pruningSignaturesEncountered,
-            pruningRepresentativesRetained: detailed.meta?.pruningRepresentativesRetained,
-            pruningFallbackReason: detailed.meta?.pruningFallbackReason,
-            relationshipStrategy: detailed.meta?.relationshipStrategy,
-            relatedCount: detailed.meta?.relatedCount,
-          },
+          meta: includeRetrievalDiagnostics
+            ? { ...publicMeta, ...retrievalDiagnosticMeta(detailed.meta) }
+            : publicMeta,
         },
       });
     } catch (err) {
@@ -161,6 +175,7 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
     running = null;
     engine = null;
     exactPruningMode = "auto";
+    includeRetrievalDiagnostics = false;
   }
 
   async function dispatch(message: ProtocolMessage | null | undefined, reply: ReplyFn) {

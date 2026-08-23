@@ -38,5 +38,5 @@
     "src/lexicalNormalize.ts",
     "src/**/*.d.ts"
   ],
-  "exclude": ["examples/**", "src/ambient-core.d.ts"]
+  "exclude": ["examples/**", "src/ambient-core.d.ts", "src/browser/types.d.ts"]
 }

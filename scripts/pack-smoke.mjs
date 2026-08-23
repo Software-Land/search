@@ -214,6 +214,33 @@ try {
   if (packedRel.includes("src/index.d.ts") || packedRel.includes("src/browser/index.d.ts")) {
     throw new Error("tarball must not include handwritten root/browser src declarations");
   }
+  if (packedRel.includes("dist/browser/types.d.ts")) {
+    throw new Error("tarball must not include internal browser protocol declarations");
+  }
+  const browserApiDts = readFileSync(path.join(packedRoot, "dist/browser/api.d.ts"), "utf8");
+  const browserIndexDts = readFileSync(path.join(packedRoot, "dist/browser/index.d.ts"), "utf8");
+  for (const leaked of ["_exactPruningMode", "_includeRetrievalDiagnostics", "postingBlocksVisited", "pruningFallbackReason", "representativeSelection"]) {
+    if (browserApiDts.includes(leaked) || browserIndexDts.includes(leaked)) {
+      throw new Error(`packed browser declarations leak ${leaked}`);
+    }
+  }
+  for (const exported of ["InitPayload", "WorkerSearchPayload", "WorkerSearchMeta"]) {
+    if (browserIndexDts.includes(`export type {`) && new RegExp(`\\b${exported}\\b`).test(browserIndexDts.split("from")[0])) {
+      throw new Error(`packed browser entry re-exports ${exported}`);
+    }
+    if (new RegExp(`export type \\{[^}]*\\b${exported}\\b`, "s").test(browserIndexDts)) {
+      throw new Error(`packed browser entry exports ${exported}`);
+    }
+    if (new RegExp(`export (?:interface|type) ${exported}\\b`).test(browserIndexDts)) {
+      throw new Error(`packed browser entry declares ${exported}`);
+    }
+    if (new RegExp(`export (?:interface|type) ${exported}\\b`).test(browserApiDts)) {
+      throw new Error(`packed browser api declarations export ${exported}`);
+    }
+  }
+  if (!browserApiDts.includes("init(payload: InitPayload)") && !browserApiDts.includes("init(payload: InitPayload):")) {
+    throw new Error("packed SearchClient.init is missing InitPayload typing");
+  }
 
   const consumer = path.join(tmp, "consumer");
   mkdirSync(consumer);

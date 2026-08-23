@@ -26,6 +26,8 @@ export interface InitPayload {
   englishOptions?: { lemmas?: Record<string, string> };
   /** Internal benchmark/reference switch; not part of the public facade. */
   _exactPruningMode?: "auto" | "exhaustive";
+  /** Internal Worker diagnostic opt-in; not part of the public facade. */
+  _includeRetrievalDiagnostics?: boolean;
 }
 
 export interface ProtocolMessage {
@@ -39,38 +41,41 @@ export interface ProtocolMessage {
   [key: string]: unknown;
 }
 
+export interface WorkerRetrievalDiagnosticMeta {
+  representativeSelection?: Record<string, unknown> | null;
+  postingEntriesVisited?: number | null;
+  distinctDocumentsExamined?: number | null;
+  rawDocumentScans?: number | null;
+  postingBlocksVisited?: number;
+  postingBlocksSkipped?: number;
+  postingEntriesSkipped?: number;
+  duplicatePostingEntriesAvoided?: number;
+  queryFormsExpanded?: number;
+  termsExpanded?: number;
+  documentBlocksVisited?: number;
+  documentBlocksSkipped?: number;
+  boundedBlocksSkipped?: number;
+  documentsFullyEvaluated?: number;
+  documentsBoundRejected?: number;
+  pruningSignaturesEncountered?: number;
+  pruningRepresentativesRetained?: number;
+  pruningFallbackReason?: string | null;
+}
+
 export interface WorkerSearchPayload {
   results?: unknown;
   related?: unknown;
   meta?: {
     totalMs?: number;
     retrieveMs?: number;
-    rankMs?: number;
     featureMs?: number;
     selectionMs?: number;
+    rankMs?: number;
     candidateCount?: number;
     matchCount?: number;
-    representativeSelection?: Record<string, unknown> | null;
-    postingEntriesVisited?: number | null;
-    distinctDocumentsExamined?: number | null;
-    rawDocumentScans?: number | null;
-    postingBlocksVisited?: number;
-    postingBlocksSkipped?: number;
-    postingEntriesSkipped?: number;
-    duplicatePostingEntriesAvoided?: number;
-    queryFormsExpanded?: number;
-    termsExpanded?: number;
-    documentBlocksVisited?: number;
-    documentBlocksSkipped?: number;
-    boundedBlocksSkipped?: number;
-    documentsFullyEvaluated?: number;
-    documentsBoundRejected?: number;
-    pruningSignaturesEncountered?: number;
-    pruningRepresentativesRetained?: number;
-    pruningFallbackReason?: string | null;
-    relationshipStrategy?: string;
     relatedCount?: number;
-  };
+    relationshipStrategy?: string;
+  } & Partial<WorkerRetrievalDiagnosticMeta>;
 }
 
 export interface WorkerLike {

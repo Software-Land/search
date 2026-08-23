@@ -181,7 +181,8 @@ describe("public API", () => {
     client.setQuery("nfc");
     await new Promise((r) => setTimeout(r, 40));
     expect(published[published.length - 1]).toBe("nfc");
-    expect(payloads[payloads.length - 1].meta.representativeSelection.plannedFullRanking).toBe(false);
+    expect(typeof payloads[payloads.length - 1].meta.candidateCount).toBe("number");
+    expect(payloads[payloads.length - 1].meta.representativeSelection).toBeUndefined();
     client.terminate();
   });
 
@@ -218,34 +219,47 @@ describe("public API", () => {
     expect(actual.related).toEqual(expected.related);
     expect(actual.results[0].explanation.constraintsVsNext).toBeTruthy();
     expect(Object.keys(actual.meta).sort()).toEqual([
-      "boundedBlocksSkipped",
       "candidateCount",
-      "distinctDocumentsExamined",
-      "documentBlocksSkipped",
-      "documentBlocksVisited",
-      "documentsBoundRejected",
-      "documentsFullyEvaluated",
-      "duplicatePostingEntriesAvoided",
       "featureMs",
       "matchCount",
-      "postingBlocksSkipped",
-      "postingBlocksVisited",
-      "postingEntriesSkipped",
-      "postingEntriesVisited",
-      "pruningFallbackReason",
-      "pruningRepresentativesRetained",
-      "pruningSignaturesEncountered",
-      "queryFormsExpanded",
       "rankMs",
-      "rawDocumentScans",
       "relatedCount",
       "relationshipStrategy",
-      "representativeSelection",
       "retrieveMs",
       "selectionMs",
-      "termsExpanded",
       "totalMs",
     ]);
+    expect(actual.meta.representativeSelection).toBeUndefined();
+    expect(actual.meta.postingBlocksVisited).toBeUndefined();
+    expect(actual.meta.pruningFallbackReason).toBeUndefined();
+    client.terminate();
+  });
+
+  test("Worker retrieval diagnostics stay opt-in and off the default protocol", async () => {
+    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, dictionary });
+    const transport = createLoopbackTransport(runtime);
+    let publish;
+    const published = new Promise((resolve) => {
+      publish = resolve;
+    });
+    const client = createSearchClient({
+      worker: transport,
+      onResult({ result }) {
+        publish(result);
+      },
+    });
+    await client.init({
+      documents: docs,
+      schema,
+      dictionaryEntries: [],
+      retriever: "indexed",
+      _includeRetrievalDiagnostics: true,
+    });
+    client.setQuery("nfc");
+    const actual = await published;
+    expect(actual.meta.representativeSelection).toEqual(expect.any(Object));
+    expect(typeof actual.meta.postingBlocksVisited).toBe("number");
+    expect(Object.prototype.hasOwnProperty.call(actual.meta, "pruningFallbackReason")).toBe(true);
     client.terminate();
   });
 

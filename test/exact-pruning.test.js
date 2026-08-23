@@ -753,6 +753,7 @@ describe("Stage-2A exact document-feature block pruning", () => {
       lexicalIndex,
       retriever: "indexed",
       relationshipStrategy: "none",
+      _includeRetrievalDiagnostics: true,
     });
     client.setQuery("the", {
       limit: 10,
@@ -774,6 +775,60 @@ describe("Stage-2A exact document-feature block pruning", () => {
     expect(actual.meta.boundedBlocksSkipped).toBe(
       expected.meta.boundedBlocksSkipped
     );
+    client.terminate();
+  }, 120_000);
+
+  test("Worker internal exhaustive pruning switch still selects exhaustive mode", async () => {
+    const documents = bodyFlood(1_000);
+    const english = morphology();
+    const lexicalIndex = compileLexicalIndex(documents, {
+      schema,
+      plugins: [english],
+    });
+    const engine = await compiledEngine(documents, {
+      lexicalIndex,
+      plugins: [english],
+    });
+    const expected = await engine._searchDetailedAsync(
+      "the",
+      { limit: 10, relatedLimit: 0, explain: true },
+      false,
+      "exhaustive"
+    );
+    const runtime = createWorkerRuntime({
+      SearchEngine,
+      english: morphology,
+      dictionary,
+    });
+    let publish;
+    const published = new Promise((resolve) => {
+      publish = resolve;
+    });
+    const client = createSearchClient({
+      worker: createLoopbackTransport(runtime),
+      onResult({ result }) {
+        publish(result);
+      },
+    });
+    await client.init({
+      documents,
+      schema,
+      lexicalIndex,
+      retriever: "indexed",
+      relationshipStrategy: "none",
+      _exactPruningMode: "exhaustive",
+      _includeRetrievalDiagnostics: true,
+    });
+    client.setQuery("the", {
+      limit: 10,
+      relatedLimit: 0,
+      explain: true,
+    });
+    const actual = await published;
+    expect(actual.results).toEqual(expected.results);
+    expect(actual.related).toEqual(expected.related);
+    expect(actual.meta.documentsFullyEvaluated).toBe(expected.meta.documentsFullyEvaluated);
+    expect(actual.meta.documentsFullyEvaluated).toBe(actual.meta.matchCount);
     client.terminate();
   }, 120_000);
 });

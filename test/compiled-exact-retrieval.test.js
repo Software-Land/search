@@ -229,6 +229,7 @@ async function searchWorker(
       relationships,
       relationshipStrategy,
       lexicalIndex,
+      _includeRetrievalDiagnostics: true,
     });
     client.setQuery(query, options);
     return await published;

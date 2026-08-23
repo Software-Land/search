@@ -175,6 +175,7 @@ async function runMode(mode, n) {
     _exactPruningMode: mode === "indexed-precompiled-exhaustive"
       ? "exhaustive"
       : "auto",
+    _includeRetrievalDiagnostics: true,
   });
   await client.waitReady();
   const initMs = performance.now() - initStarted;

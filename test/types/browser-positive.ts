@@ -31,7 +31,11 @@ const options: SearchClientOptions = {
 };
 
 const client: SearchClient = createSearchClient(options);
-void client.init;
+void client.init({
+  documents: [],
+  retriever: "indexed",
+  englishOptions: { lemmas: {} },
+});
 void client.setQuery;
 void client.dispose;
 void client.terminate;

@@ -3,6 +3,31 @@
  * Protocol/runtime implementation types stay internal.
  */
 
+import type {
+  AdaptiveOptions,
+  EquivalenceEntry,
+  ExperimentalRetriever,
+  LexicalIndexArtifact,
+  RelationshipArtifact,
+  RelationshipStrategy,
+  RetrieverName,
+  Schema,
+  SearchDocument,
+} from "../api.js";
+
+interface InitPayload {
+  documents?: SearchDocument[];
+  schema?: Schema;
+  lexicalIndex?: LexicalIndexArtifact;
+  dictionaryEntries?: EquivalenceEntry[];
+  relationships?: RelationshipArtifact | null;
+  relationshipStrategy?: RelationshipStrategy;
+  retriever?: RetrieverName | "indexed-lexical" | ExperimentalRetriever;
+  candidateLimit?: number | null;
+  adaptive?: AdaptiveOptions;
+  englishOptions?: { lemmas?: Record<string, string> };
+}
+
 export interface SearchClientOptions {
   worker?: { postMessage(msg: unknown): void; addEventListener?: Function; terminate?: Function; subscribe?: Function };
   workerUrl?: URL | string;
@@ -15,7 +40,7 @@ export interface SearchClientOptions {
 }
 
 export interface SearchClient {
-  init(payload: Record<string, unknown>): Promise<unknown>;
+  init(payload: InitPayload): Promise<unknown>;
   setQuery(query: string, options?: Record<string, unknown>): void;
   dispose(): void;
   terminate(): void;
