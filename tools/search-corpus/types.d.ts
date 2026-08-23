@@ -39,6 +39,7 @@ export interface CandidateEvidence {
   titleKeyBodyPhrase?: number;
   expansionDf?: number;
   keyDf?: number;
+  withinDocumentRepeats?: number;
   supportingDocuments?: number;
   provenances?: string[];
   dfA?: number;
@@ -77,6 +78,7 @@ export interface EquivalenceCandidate {
   expansion: string[];
   expansionPhrase?: string;
   aliases?: unknown[];
+  primary?: string | null;
   terms?: string[];
   relation?: string;
   initialsMatch?: boolean;
@@ -143,6 +145,8 @@ export interface EquivalenceDecision {
   expansionPhrase: string;
   aliases: unknown[];
   manual: boolean;
+  primary?: string | null;
+  provenance?: string | null;
 }
 
 export interface SynonymDecision {
@@ -163,9 +167,9 @@ export interface DecisionDoc {
 }
 
 export interface DecisionOverrides {
-  accept?: Array<{ key?: unknown; expansion?: unknown; aliases?: unknown }>;
+  accept?: Array<{ key?: unknown; expansion?: unknown; aliases?: unknown; primary?: unknown }>;
   reject?: Array<{ key?: unknown; expansion?: unknown }>;
-  add?: Array<{ key?: unknown; expansion?: unknown; aliases?: unknown }>;
+  add?: Array<{ key?: unknown; expansion?: unknown; aliases?: unknown; primary?: unknown }>;
 }
 
 /** @deprecated Use DecisionOverrides. */
@@ -209,6 +213,8 @@ export interface ReviewerRow {
   key?: unknown;
   expansion?: unknown;
   expansionPhrase?: unknown;
+  aliases?: unknown;
+  primary?: string | null;
   terms?: unknown;
   relation?: unknown;
   compilerStatus?: string;
@@ -258,6 +264,7 @@ export interface EquivalenceArtifact {
     key: string;
     expansion: string[];
     aliases: unknown[];
+    primary?: string | null;
     type: string;
     provenance: string;
     confidence: null;
@@ -325,6 +332,8 @@ export interface IndexedDocument {
   allSet: Set<string>;
   titleAcronymKeys: Set<string>;
   allAcronymKeys: Set<string>;
+  titleAcronymKeyList?: string[];
+  bodyAcronymKeyList?: string[];
   titleJoined: string;
   allJoined: string;
 }

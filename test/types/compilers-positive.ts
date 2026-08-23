@@ -38,6 +38,12 @@ import {
   type LexicalFrequencyArtifact,
   type LexicalIndexArtifact,
 } from "@software-land/search/lexical";
+import {
+  enrichCorpus,
+  createFunctionProvider,
+  type EnrichCorpusOptions,
+  type LexicalInferenceProvider,
+} from "@software-land/search/enrichment";
 
 const documents: CorpusDocument[] = [{ id: "a", title: "CPU", body: "central" }];
 const compileOpts: CompileOptions = {};
@@ -102,3 +108,23 @@ const lexicalIndexVersion: 1 = LEXICAL_INDEX_VERSION;
 void LEXICAL_INDEX_FORMAT;
 void lexicalIndexVersion;
 void lexicalIndex.corpus.documentCount;
+
+const provider: LexicalInferenceProvider = createFunctionProvider(async (request) => ({
+  schemaVersion: "search-enrichment-inference-v1",
+  proposals:
+    request.task === "discover-equivalences" || !request.key
+      ? []
+      : [
+          {
+            key: request.key,
+            expansion: request.minedExpansion,
+            relation: "initialism",
+            ambiguous: false,
+            alternatives: [],
+          },
+        ],
+}));
+const enrichOpts: EnrichCorpusOptions = { provider, autoAcceptVerified: false };
+export async function runEnrichment(input: unknown) {
+  return enrichCorpus(input, enrichOpts);
+}

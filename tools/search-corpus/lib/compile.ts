@@ -40,6 +40,8 @@ function reviewerRow(c: CorpusCandidate): ReviewerRow {
     lifecycle: c.lifecycle,
     initialsMatch: c.initialsMatch,
     evidence: c.evidence,
+    aliases: "aliases" in c ? c.aliases : undefined,
+    primary: "primary" in c ? (c as EquivalenceCandidate).primary : undefined,
     examples: reviewerExamples(c.provenance),
     reasons: c.reasons || [],
     flags: c.flags || [],
@@ -69,13 +71,16 @@ export function compileEquivalences(candidates: EquivalenceCandidate[]): Equival
     key: c.key || "",
     expansion: c.expansion || [],
     aliases: c.aliases || [],
+    primary: c.primary ?? null,
     type: "equivalence",
     provenance:
-      c.lifecycle === LIFECYCLE.HUMAN_ACCEPTED
-        ? c.override === "add" || c.flags?.includes("orphaned-but-complete")
-          ? "manual-addition"
-          : "human-accepted"
-        : "search-corpus",
+      c.flags?.includes("verified-enrichment")
+        ? "verified-enrichment"
+        : c.lifecycle === LIFECYCLE.HUMAN_ACCEPTED
+          ? c.override === "add" || c.flags?.includes("orphaned-but-complete")
+            ? "manual-addition"
+            : "human-accepted"
+          : "search-corpus",
     confidence: null,
     reasons: c.reasons || [],
   }));
@@ -171,11 +176,12 @@ export function compileInspection(lifecycleResult: LifecycleResult, { delta = nu
 export function dictionaryEntriesFromEquivalences(artifact?: unknown): unknown[] {
   const rec = artifact as { entries?: unknown[] } | null | undefined;
   return (rec?.entries || []).map((e) => {
-    const row = e as { key?: unknown; expansion?: unknown; aliases?: unknown; provenance?: unknown };
+    const row = e as { key?: unknown; expansion?: unknown; aliases?: unknown; provenance?: unknown; primary?: unknown };
     return {
       key: row.key,
       expansion: row.expansion,
       aliases: row.aliases || [],
+      primary: row.primary ?? null,
       provenance: row.provenance,
     };
   });

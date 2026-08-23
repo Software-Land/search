@@ -34,6 +34,10 @@
     "tools/search-semantic/index.d.ts",
     "tools/search-semantic/build.mjs",
     "tools/search-lexical/**/*.ts",
+    "tools/search-enrichment/**/*.ts",
+    "tools/search-enrichment/index.d.ts",
+    "tools/search-enrichment/types.d.ts",
+    "tools/search-enrichment/build.mjs",
     "src/index.ts",
     "src/api.ts"
   ],

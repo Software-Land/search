@@ -142,6 +142,11 @@ export function applyLifecycle(classified: EquivalenceCandidate[], synonymRows: 
       c.lifecycle = LIFECYCLE.HUMAN_ACCEPTED;
       c.status = "accepted";
       c.override = exact?.manual || keyAccept?.manual ? "manual" : "accept";
+      const record = exact || keyAccept;
+      if (record) {
+        if (Array.isArray(record.aliases) && record.aliases.length) c.aliases = record.aliases;
+        if (record.primary != null) c.primary = record.primary;
+      }
       continue;
     }
 
@@ -212,6 +217,8 @@ export function applyLifecycle(classified: EquivalenceCandidate[], synonymRows: 
       provenance: [{ type: item.manual ? "manual-addition" : "orphaned-decision", documentId: null, field: null, snippet: null }],
       flags: ["orphaned-decision"],
       override: item.manual ? "add" : "accept",
+      aliases: item.aliases || [],
+      primary: item.primary ?? null,
       decisionRecord: item,
     };
     if (item.decision === "accept" && item.expansion.length) {

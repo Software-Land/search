@@ -23,6 +23,11 @@ tools/search-semantic/build.js
 tools/search-semantic/build.d.ts
 tools/search-semantic/**/*.map
 
+tools/search-enrichment/**/*.js
+tools/search-enrichment/lib/**/*.d.ts
+tools/search-enrichment/build.d.ts
+tools/search-enrichment/**/*.map
+
 # Compiler / semantic builder generated output (never source)
 tools/search-corpus/.output/
 tools/search-relationships/.output/

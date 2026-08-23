@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Optional `@software-land/search/enrichment` build-time helper for provider-agnostic lexical review. Function/fake and OpenAI-compatible HTTP providers (built-in `fetch`) emit structured proposals with strict validation and an optional cache. `autoAcceptVerified` is off by default; model-only proposals never auto-accept. When explicitly enabled, auto-accept requires a mined or document-attested candidate, strong independent deterministic corpus evidence, a strict initials relationship, corpus occurrence of both key and expansion, no viable competing expansion (including `REVIEW_PENDING` rivals), and unambiguous exact model agreement. Model numeric confidence is ignored. Provenance is `verified-enrichment` under `AUTO_ACCEPTED`, never `HUMAN_ACCEPTED`. Enrichment never writes `decisions.json`. Search Core, `compileCorpus`, Gatsby prebuild, and `SearchEngine` do not call a model. The CLI does not read API keys from the environment. `enrichCorpus` also runs bounded per-document `discover-equivalences` (disable with `discover: false`) so a model can propose a missing acronym or expansion; one-sided world knowledge stays `REVIEW_PENDING`. Discovery requests are cached with the existing enrichment cache identity.
+- Deterministic corpus mining now extracts digit-prefixed acronyms only when that suffix is independently observed in the same document as a standalone acronym surface or as an independent token (`200FPS` + standalone `FPS` / token `fps` → `FPS`; `2FA` without standalone `FA` or token `fa` does not become `FA`). Within-document repeats remain candidate evidence. These paths do not invent keys from arbitrary phrases and do not loosen short-token auto-accept. Equivalence decisions preserve `aliases`, optional `primary`, and provenance through compile/dictionary entries. Expansion-only acronym proposal remains a provider task via `requestFromPhrase` / `propose-expansion` and bounded `discover-equivalences`, not a corpus-wide n-gram enumerator.
+
 ## 0.4.0
 
 ### Breaking

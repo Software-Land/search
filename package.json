@@ -46,6 +46,10 @@
     "./lexical": {
       "types": "./tools/search-lexical/index.d.ts",
       "import": "./tools/search-lexical/index.js"
+    },
+    "./enrichment": {
+      "types": "./tools/search-enrichment/index.d.ts",
+      "import": "./tools/search-enrichment/index.js"
     }
   },
   "files": [
@@ -61,6 +65,7 @@
     "tools/search-relationships",
     "tools/search-semantic",
     "tools/search-lexical",
+    "tools/search-enrichment",
     "!tools/**/*.ts",
     "tools/**/*.d.ts",
     "!**/*.js.map",
@@ -71,7 +76,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.emit.json && tsc -p tsconfig.dts.json && node scripts/keep-public-dts.mjs && tsc -p tsconfig.tools-emit.json && tsc -p tsconfig.tools-emit-relationships.json && tsc -p tsconfig.tools-emit-corpus.json && tsc -p tsconfig.tools-emit-semantic.json && node scripts/keep-public-tool-dts.mjs",
+    "build": "tsc -p tsconfig.emit.json && tsc -p tsconfig.dts.json && node scripts/keep-public-dts.mjs && tsc -p tsconfig.tools-emit.json && tsc -p tsconfig.tools-emit-relationships.json && tsc -p tsconfig.tools-emit-corpus.json && tsc -p tsconfig.tools-emit-semantic.json && tsc -p tsconfig.tools-emit-enrichment.json && node scripts/keep-public-tool-dts.mjs",
     "build:oracles": "node scripts/emit-test-oracles.mjs",
     "prepack": "npm run build",
     "typecheck": "npm run build && tsc -p tsconfig.core.json --noEmit && tsc -p tsconfig.browser.json --noEmit && tsc -p tsconfig.tools.json --noEmit",

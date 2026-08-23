@@ -117,8 +117,8 @@ Automatic acceptance requires explicit definition + exact initials + repeated/ti
 
 Candidates only (`alias` / `synonym` / `surface-variant`). Nothing auto-compiles. Inflections Core already handles are not proposed. Relatedness (TLS/VPN, authentication/authorization) is blocked.
 
-## Future extensions (not implemented)
+## Future extensions
 
-Lexical candidate generation is frozen. Remaining coverage belongs in the decisions file as manual additions.
+Phrase→initialism invention is **not** a deterministic compiler path. Digit-prefixed compounds (`200FPS`) count as acronym evidence only when that suffix is independently observed as a standalone acronym surface in the same document. If an attested phrase has no mined acronym, or an acronym has no mined expansion, bounded `discover-equivalences` / `propose-expansion` may propose the missing side for review. Remaining editorial coverage still belongs in the decisions file.
 
-Not in scope: LLM adjudication, automatic synonym acceptance, editorial relationship mining, category inference, package publication.
+Not in scope here: automatic synonym acceptance, editorial relationship mining, category inference, on-device model weights.

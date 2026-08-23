@@ -1,5 +1,5 @@
 /**
- * Pack the package, install it in isolation, and import all six public specifiers.
+ * Pack the package, install it in isolation, and import all seven public specifiers.
  */
 import { spawnSync } from "node:child_process";
 import {
@@ -126,6 +126,22 @@ try {
   );
   if (packedCorpusImplDts.length) {
     throw new Error(`tarball must not include corpus implementation declarations: ${packedCorpusImplDts.join(", ")}`);
+  }
+  for (const required of [
+    "tools/search-enrichment/index.js",
+    "tools/search-enrichment/index.d.ts",
+    "tools/search-enrichment/types.d.ts",
+    "tools/search-enrichment/build.mjs",
+    "tools/search-enrichment/build.js",
+    "tools/search-enrichment/lib/enrich.js",
+  ]) {
+    if (!packedRel.includes(required)) throw new Error(`packed tarball missing ${required}`);
+  }
+  const packedEnrichmentImplDts = packedRel.filter(
+    (rel) => rel.startsWith("tools/search-enrichment/lib/") && rel.endsWith(".d.ts")
+  );
+  if (packedEnrichmentImplDts.length) {
+    throw new Error(`tarball must not include enrichment implementation declarations: ${packedEnrichmentImplDts.join(", ")}`);
   }
 
   const packedBenchmarks = packedRel.filter((rel) => rel === "benchmarks" || rel.startsWith("benchmarks/"));
@@ -264,6 +280,7 @@ import { compileCorpus } from "@software-land/search/corpus";
 import { compileRelationships } from "@software-land/search/relationships";
 import { compileSemantic } from "@software-land/search/semantic";
 import { compileLexicalFrequency } from "@software-land/search/lexical";
+import { enrichCorpus } from "@software-land/search/enrichment";
 
 if (typeof SearchEngine.create !== "function") throw new Error("root SearchEngine missing");
 if (typeof morphology !== "function") throw new Error("root morphology missing");
@@ -272,6 +289,7 @@ if (typeof compileCorpus !== "function") throw new Error("corpus compileCorpus m
 if (typeof compileRelationships !== "function") throw new Error("relationships compileRelationships missing");
 if (typeof compileSemantic !== "function") throw new Error("semantic compileSemantic missing");
 if (typeof compileLexicalFrequency !== "function") throw new Error("lexical compileLexicalFrequency missing");
+if (typeof enrichCorpus !== "function") throw new Error("enrichment enrichCorpus missing");
 
 const workerUrl = String(searchWorkerUrl());
 if (!workerUrl.endsWith("searchWorker.js")) throw new Error(\`worker URL must end in searchWorker.js: \${workerUrl}\`);

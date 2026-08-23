@@ -26,6 +26,7 @@ const corpusExp = resolveExport("./corpus");
 const relExp = resolveExport("./relationships");
 const semanticExp = resolveExport("./semantic");
 const lexicalExp = resolveExport("./lexical");
+const enrichmentExp = resolveExport("./enrichment");
 
 const runtime = await import(rootExp.url);
 const browser = await import(browserExp.url);
@@ -33,6 +34,7 @@ const corpus = await import(corpusExp.url);
 const relationships = await import(relExp.url);
 const semantic = await import(semanticExp.url);
 const lexical = await import(lexicalExp.url);
+const enrichment = await import(enrichmentExp.url);
 
 if (typeof runtime.SearchEngine?.create !== "function") throw new Error("root SearchEngine missing");
 if (typeof runtime.morphology !== "function") throw new Error("root morphology missing");
@@ -44,6 +46,7 @@ if (typeof corpus.compileCorpus !== "function") throw new Error("corpus compileC
 if (typeof relationships.compileRelationships !== "function") throw new Error("relationships compileRelationships missing");
 if (typeof semantic.compileSemantic !== "function") throw new Error("semantic compileSemantic missing");
 if (typeof lexical.compileLexicalFrequency !== "function") throw new Error("lexical compileLexicalFrequency missing");
+if (typeof enrichment.enrichCorpus !== "function") throw new Error("enrichment enrichCorpus missing");
 if ("compileSemantic" in runtime) throw new Error("runtime must not export compileSemantic");
 if ("compileLexicalFrequency" in runtime) throw new Error("runtime must not export compileLexicalFrequency");
 
@@ -66,6 +69,7 @@ console.log(
         "./relationships": relExp.file,
         "./semantic": semanticExp.file,
         "./lexical": lexicalExp.file,
+        "./enrichment": enrichmentExp.file,
       },
     },
     null,

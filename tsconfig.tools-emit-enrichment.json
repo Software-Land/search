@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.tools-emit.json",
+  "compilerOptions": {
+    "declaration": false
+  },
+  "include": ["tools/search-enrichment/**/*.ts"]
+}

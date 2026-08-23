@@ -75,6 +75,7 @@ function priorityContributions(c: CorpusCandidate, { acceptedKeys = new Set<stri
   }
   if ((e.expansionDf || 0) >= 2) parts.push({ name: "independent-expansion", weight: 12 });
   if ((e.supportingDocuments || 0) >= 2) parts.push({ name: "multi-document", weight: 8 });
+  if ((e.withinDocumentRepeats || 0) >= 1) parts.push({ name: "within-document-repeat", weight: 16 });
   if (c.relation === "alias" && (e.titleDfA || e.titleDfB)) parts.push({ name: "alias-title-presence", weight: 10 });
   if (e.explicitAlias) parts.push({ name: "explicit-alias-pattern", weight: 18 });
   if (e.manualSeed || c.flags?.includes("orphaned-but-complete")) parts.push({ name: "manual-seed", weight: 12 });
@@ -218,6 +219,8 @@ export function decisionSkeleton(c?: unknown) {
     decision: "accept",
     key: row?.key,
     expansion: row?.expansion,
+    aliases: row && "aliases" in row ? row.aliases : undefined,
+    primary: row && "primary" in row ? (row as EquivalenceCandidate).primary : undefined,
   };
 }
 

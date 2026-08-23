@@ -195,7 +195,25 @@ function ngrams(tokens: string[], min: number, max: number): string[][] {
   return out;
 }
 
-export function extractAcronymSurfaces(text: unknown): string[] {
+/**
+ * Digit-prefixed compounds such as `200FPS` → `FPS`.
+ * Raw suffixes are not acronym evidence by themselves.
+ */
+export function extractEmbeddedAcronymSurfaces(text: unknown): string[] {
+  const found: string[] = [];
+  const re = /\b\d+([A-Z]{2,8})\b/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(String(text || "")))) {
+    found.push(m[1]);
+  }
+  return found;
+}
+
+/**
+ * Standalone acronym-like surfaces only. Title Case (`Css`) is skipped.
+ * Digit-prefixed compounds are not included here.
+ */
+export function extractStandaloneAcronymSurfaces(text: unknown): string[] {
   const found: string[] = [];
   const re = /\b[A-Z][A-Za-z0-9]{1,7}\b/g;
   let m: RegExpExecArray | null;
@@ -210,6 +228,89 @@ export function extractAcronymSurfaces(text: unknown): string[] {
   return found;
 }
 
+function independentAcronymKeys(scope: unknown): Set<string> {
+  const keys = new Set(
+    extractStandaloneAcronymSurfaces(scope)
+      .map((s) => acronymKey(s))
+      .filter(Boolean)
+  );
+  // Independent token observation (including lowercase "fps" beside "200FPS").
+  // Digit-prefixed compounds tokenize as one token (`2fa`, `3gb`, `200fps`) and
+  // therefore do not confirm their alphabetic suffix by themselves.
+  for (const token of tokenize(scope)) {
+    const key = acronymKey(token);
+    if (key.length >= 2 && !/^\d/.test(key)) keys.add(key);
+  }
+  return keys;
+}
+
+/**
+ * Numeric-attached suffixes count as acronym evidence only when that suffix
+ * is independently observed in `confirmWith` as a standalone acronym surface
+ * or as an independent token (the same string by default, or the full
+ * document when indexing).
+ *
+ * 200FPS + standalone FPS / token "fps" → FPS
+ * 2FA without standalone FA or token "fa" → not FA
+ * 3GB without standalone GB or token "gb" → not GB
+ */
+export function extractAcronymSurfaces(text: unknown, { confirmWith }: { confirmWith?: unknown } = {}): string[] {
+  const standalone = extractStandaloneAcronymSurfaces(text);
+  const scope = confirmWith != null ? confirmWith : text;
+  const confirmed = independentAcronymKeys(scope);
+  const extra = extractEmbeddedAcronymSurfaces(text).filter((s) => confirmed.has(acronymKey(s)));
+  return [...standalone, ...extra];
+}
+
+export function extractDocumentAcronymSurfaces(doc: { title?: unknown; body?: unknown }): { title: string[]; body: string[] } {
+  const titleText = String(doc.title || "");
+  const bodyText = String(doc.body || "");
+  const full = `${titleText}\n${bodyText}`;
+  return {
+    title: extractAcronymSurfaces(titleText, { confirmWith: full }),
+    body: extractAcronymSurfaces(bodyText, { confirmWith: full }),
+  };
+}
+
+export function countSequence(tokens: string[], seq: string[]): number {
+  if (!seq.length || !tokens.length) return 0;
+  let n = 0;
+  for (let i = 0; i + seq.length <= tokens.length; ) {
+    let ok = true;
+    for (let j = 0; j < seq.length; j++) {
+      if (tokens[i + j] !== seq[j]) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) {
+      n += 1;
+      i += seq.length;
+    } else {
+      i += 1;
+    }
+  }
+  return n;
+}
+
+function countKeyTf(idx: IndexedDocument, key: string): { title: number; body: number } {
+  const titleSurface = (idx.titleAcronymKeyList || []).filter((k) => k === key).length;
+  const bodySurface = (idx.bodyAcronymKeyList || []).filter((k) => k === key).length;
+  const titleTok = idx.title.filter((t) => t === key).length;
+  const bodyTok = idx.body.filter((t) => t === key).length;
+  return {
+    title: Math.max(titleSurface, titleTok),
+    body: Math.max(bodySurface, bodyTok),
+  };
+}
+
+export function withinDocumentRepeat(idx: IndexedDocument, key: string, expansion: string[]): boolean {
+  const tf = countKeyTf(idx, key);
+  const keyTf = tf.title + tf.body;
+  const phraseTf = countSequence(idx.title, expansion) + countSequence(idx.body, expansion);
+  return keyTf >= 2 && phraseTf >= 2;
+}
+
 /**
  * Tokenize once. Classification and co-occurrence both reuse this.
  */
@@ -218,14 +319,23 @@ export function indexDocuments(documents: CorpusDocument[]): IndexedDocument[] {
     const title = tokenize(doc.title);
     const body = tokenize(doc.body);
     const all = title.concat(body);
+    const surfaces = extractDocumentAcronymSurfaces(doc);
+    const titleAcronymKeyList = surfaces.title.map((s) => acronymKey(s)).filter(Boolean);
+    const bodyAcronymKeyList = surfaces.body.map((s) => acronymKey(s)).filter(Boolean);
     return {
       id: doc.id,
       title,
       body,
       titleSet: new Set(title),
       allSet: new Set(all),
-      titleAcronymKeys: new Set(title.map((t) => acronymKey(t)).filter(Boolean)),
-      allAcronymKeys: new Set(all.map((t) => acronymKey(t)).filter(Boolean)),
+      titleAcronymKeys: new Set([...title.map((t) => acronymKey(t)).filter(Boolean), ...titleAcronymKeyList]),
+      allAcronymKeys: new Set([
+        ...all.map((t) => acronymKey(t)).filter(Boolean),
+        ...titleAcronymKeyList,
+        ...bodyAcronymKeyList,
+      ]),
+      titleAcronymKeyList,
+      bodyAcronymKeyList,
       titleJoined: ` ${title.join(" ")} `,
       allJoined: ` ${all.join(" ")} `,
     };
@@ -262,8 +372,10 @@ export function mineInitialismCooccurrence(documents: CorpusDocument[], { titleP
   const prepared: Array<{
     doc: CorpusDocument;
     titleToks: string[];
+    allToks: string[];
     titleKeys: Set<string>;
     acronyms: string[];
+    keyTf: Map<string, number>;
     byInitials: Map<string, Array<{ phrase: string; tokens: string[] }>>;
   }> = [];
 
@@ -282,18 +394,19 @@ export function mineInitialismCooccurrence(documents: CorpusDocument[], { titleP
       phraseDf.set(phrase, (phraseDf.get(phrase) || 0) + 1);
     }
 
-    const titleSurfaces = extractAcronymSurfaces(doc.title);
-    const bodySurfaces = extractAcronymSurfaces(doc.body);
+    const { title: titleSurfaces, body: bodySurfaces } = extractDocumentAcronymSurfaces(doc);
     const titleKeys = new Set(
       titleSurfaces.map((s) => acronymKey(s)).filter((k) => k && !FUNCTION_WORDS.has(k) && !isProtectedLiteral(k))
     );
     const acronyms: string[] = [];
+    const keyTf = new Map<string, number>();
     for (const surface of titleSurfaces.concat(bodySurfaces)) {
       const key = acronymKey(surface);
       if (!isPlausibleAcronymKey(key, { original: surface })) continue;
       if (isProtectedLiteral(key) || FUNCTION_WORDS.has(key)) continue;
       if (key.length < 3 && !titleKeys.has(key)) continue;
       acronyms.push(key);
+      keyTf.set(key, (keyTf.get(key) || 0) + 1);
     }
 
     const byInitials = new Map<string, Array<{ phrase: string; tokens: string[] }>>();
@@ -310,8 +423,10 @@ export function mineInitialismCooccurrence(documents: CorpusDocument[], { titleP
     prepared.push({
       doc,
       titleToks,
+      allToks,
       titleKeys,
       acronyms: [...new Set(acronyms)],
+      keyTf,
       byInitials,
     });
   }
@@ -322,7 +437,9 @@ export function mineInitialismCooccurrence(documents: CorpusDocument[], { titleP
       const matches = row.byInitials.get(key) || [];
       for (const { phrase, tokens } of matches) {
         if (!initialsMatchCooccurrence(key, tokens)) continue;
-        const independent = titleSet.has(phrase) || (phraseDf.get(phrase) || 0) >= 2;
+        const phraseTf = countSequence(row.allToks, tokens);
+        const withinDoc = (row.keyTf.get(key) || 0) >= 2 && phraseTf >= 2;
+        const independent = titleSet.has(phrase) || (phraseDf.get(phrase) || 0) >= 2 || withinDoc;
         const titleHasKey = row.titleKeys.has(key);
         const inTitle = titleSet.has(phrase) || containsSequence(row.titleToks, tokens);
         if (!inTitle && !titleHasKey && !independent) continue;
@@ -341,10 +458,17 @@ export function mineInitialismCooccurrence(documents: CorpusDocument[], { titleP
         }
         if (item.hits && item.hits.length >= 8) continue;
         item.hits = item.hits || [];
+        const provenance = inTitle
+          ? "title-cooccurrence"
+          : withinDoc && (phraseDf.get(phrase) || 0) < 2 && !titleSet.has(phrase)
+            ? "within-document-repeat"
+            : independent
+              ? "corpus-frequency"
+              : "initialism";
         item.hits.push({
           documentId: row.doc.id,
           field: titleHasKey ? "title" : "body",
-          provenance: inTitle ? "title-cooccurrence" : independent ? "corpus-frequency" : "initialism",
+          provenance,
           snippet: phrase,
         });
       }

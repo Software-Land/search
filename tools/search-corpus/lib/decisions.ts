@@ -95,9 +95,10 @@ export function overridesToDecisions(overrides: DecisionOverrides): DecisionDoc 
       key,
       expansion,
       expansionPhrase: phraseKey(expansion),
-      aliases: Array.isArray(acc.aliases) ? acc.aliases : [],
-      manual: true,
-    });
+    aliases: Array.isArray(acc.aliases) ? acc.aliases : [],
+    manual: true,
+    primary: acc.primary == null ? null : String(acc.primary),
+  });
   }
   return { format: DECISION_FORMAT, version: 1, equivalences, synonyms: [] };
 }
@@ -134,6 +135,8 @@ function normalizeEquivalenceItem(item: Record<string, unknown>): EquivalenceDec
     expansionPhrase: phraseKey(expansion),
     aliases: Array.isArray(item.aliases) ? item.aliases : [],
     manual: Boolean(item.manual),
+    primary: item.primary == null ? null : String(item.primary),
+    provenance: item.provenance == null ? null : String(item.provenance),
   };
 }
 
