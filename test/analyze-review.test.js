@@ -127,11 +127,10 @@ describe("final-token prefix completion", () => {
     expect(q.tokens[1].lemma).toBe("learn");
   });
 
-  test("explicit recursion lemmas beat equal-distance typo correction to secure", () => {
+  test("built-in recursion lemmas beat equal-distance typo correction to secure", () => {
     const plugins = [morphology()];
     const lexicon = ["secure", "recursion", "recursive", "recurses"];
-    const inflected = ["recurse", "recurses", "recursing", "recursive"];
-    for (const query of inflected) {
+    for (const query of ["recurses", "recursing", "recursive"]) {
       const q = analyzeQuery(query, { plugins, lexicon });
       expect(q.tokens[0].normalized).toBe("recursion");
       expect(q.tokens[0].lemma).toBe("recursion");
@@ -147,6 +146,41 @@ describe("final-token prefix completion", () => {
     expect(secure.tokens[0].normalized).toBe("secure");
     const resource = analyzeQuery("resource", { plugins, lexicon: ["resource", "recursion", "secure"] });
     expect(resource.tokens[0].normalized).toBe("resource");
+  });
+
+  test("an explicit supplied lemma beats a competing edit-distance vocabulary neighbor", () => {
+    const lexicon = ["secure", "recursion"];
+    const without = analyzeQuery("recurse", {
+      plugins: [morphology()],
+      lexicon,
+    });
+    expect(without.tokens[0].normalized).toBe("secure");
+    expect(without.tokens[0].sources).toContain("typo-correction");
+
+    const withLemma = analyzeQuery("recurse", {
+      plugins: [morphology({ lemmas: { recurse: "recursion" } })],
+      lexicon,
+    });
+    expect(withLemma.tokens[0].normalized).toBe("recursion");
+    expect(withLemma.tokens[0].lemma).toBe("recursion");
+    expect(withLemma.tokens[0].sources).not.toContain("typo-correction");
+
+    const synthetic = analyzeQuery("xyzzy", {
+      plugins: [morphology({ lemmas: { xyzzy: "quux" } })],
+      lexicon: ["xyzzz", "quux"],
+    });
+    expect(synthetic.tokens[0].normalized).toBe("quux");
+    expect(synthetic.tokens[0].lemma).toBe("quux");
+    expect(synthetic.tokens[0].sources).not.toContain("typo-correction");
+  });
+
+  test("a suffix-heuristic stem does not suppress typo correction", () => {
+    const q = analyzeQuery("tests", {
+      plugins: [morphology({ lemmas: { test: "exam" } })],
+      lexicon: ["nests", "exam"],
+    });
+    expect(q.tokens[0].normalized).toBe("nests");
+    expect(q.tokens[0].sources).toContain("typo-correction");
   });
 
   test("analyzeQuery replaces the final token instead of mutating the pre-completion object", () => {

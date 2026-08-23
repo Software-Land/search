@@ -52,11 +52,12 @@ describe("0.4.0 morphology() public API", () => {
 
   test("built-in recursion family maps to recursion without a site table", () => {
     const plugin = morphology();
-    const inflected = ["recurse", "recurses", "recursing", "recursive", "recursively", "recursed"];
+    const inflected = ["recurses", "recursing", "recursive", "recursively", "recursed"];
     for (const form of inflected) {
       expect(plugin.canonicalLemma(form)).toBe("recursion");
       expect(plugin.lemma(form)).toBe("recursion");
     }
+    expect(plugin.canonicalLemma("recurse")).toBeNull();
     expect(plugin.canonicalLemma("recurs")).toBeNull();
     expect(plugin.lemma("recurs")).toBe("recur");
     expect(plugin.canonicalLemma("recursion")).toBeNull();
@@ -73,12 +74,13 @@ describe("0.4.0 morphology() public API", () => {
     expect(plugin.lemma("resource")).toBe("resource");
   });
 
-  test("recurse ranks with the recursion family on default morphology", async () => {
-    const plugin = morphology();
+  test("an explicit supplied lemma joins its canonical family", async () => {
+    const plugin = morphology({ lemmas: { recurse: "recursion", xyzzy: "widget" } });
     const expected = await titlesOf(plugin, "recursion");
     expect(expected[0]).toBe("What is Recursion?");
-    for (const query of ["recurse", "recurses", "recursing", "recursive"]) {
-      expect(await titlesOf(plugin, query)).toEqual(expected);
-    }
+    expect(plugin.canonicalLemma("recurse")).toBe("recursion");
+    expect(await titlesOf(plugin, "recurse")).toEqual(expected);
+    expect(plugin.canonicalLemma("xyzzy")).toBe("widget");
+    expect((await titlesOf(plugin, "xyzzy"))[0]).toBe("What is a Widget?");
   });
 });

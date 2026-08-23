@@ -15,7 +15,6 @@ const DEFAULT_LEMMAS: Record<string, string> = {
   recursing: "recursion",
   recurses: "recursion",
   recursed: "recursion",
-  recurse: "recursion",
   authenticating: "authentication",
   authenticated: "authentication",
   authorizing: "authorization",
@@ -61,13 +60,21 @@ export interface EnglishPlugin {
 export function createEnglishPlugin({ lemmas = {} }: { lemmas?: Record<string, string> } = {}): EnglishPlugin {
   const table: Record<string, string> = { ...lemmas, ...DEFAULT_LEMMAS };
   const indexIdentity = `english-v1:${stableFingerprint(table)}`;
-  function explicitLemma(token: string): string | null {
+  function exactTableLemma(token: string): string | null {
     const t = String(token || "").toLowerCase();
     if (!t) return null;
     if (table[t]) return table[t];
     const collapsed = collapseTrailingRepeats(t);
-    if (table[collapsed]) return table[collapsed];
-    const stripped = stripSuffix(collapsed);
+    if (collapsed !== t && table[collapsed]) return table[collapsed];
+    return null;
+  }
+
+  function explicitLemma(token: string): string | null {
+    const exact = exactTableLemma(token);
+    if (exact) return exact;
+    const t = String(token || "").toLowerCase();
+    if (!t) return null;
+    const stripped = stripSuffix(collapseTrailingRepeats(t));
     if (table[stripped]) return table[stripped];
     return null;
   }
@@ -85,7 +92,7 @@ export function createEnglishPlugin({ lemmas = {} }: { lemmas?: Record<string, s
       return stripped;
     },
     canonicalLemma(token) {
-      return explicitLemma(token);
+      return exactTableLemma(token);
     },
     collapseRepeats: collapseTrailingRepeats,
   };

@@ -659,7 +659,7 @@ export function analyzeQuery(
       alternatives.push({ tokens: [leet], source: "leet-decode", confidence: 0.75 });
     }
     // Explicit lemma-table identity is more confident than edit-distance.
-    // Otherwise recurse (→ recursion) is stolen by secure when both are d=2.
+    // Suffix-heuristic stems stay on `lemma` and do not skip typo repair.
     const tableLemma = pluginCanonicalLemma(plugins, normalized);
     const typoHits =
       lex.has(normalized) || isPrefixOfVocabulary(normalized, lex) || tableLemma
