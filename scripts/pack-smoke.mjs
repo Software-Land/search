@@ -241,6 +241,12 @@ try {
   if (!browserApiDts.includes("init(payload: InitPayload)") && !browserApiDts.includes("init(payload: InitPayload):")) {
     throw new Error("packed SearchClient.init is missing InitPayload typing");
   }
+  if (browserApiDts.includes("ExperimentalRetriever")) {
+    throw new Error("packed browser InitPayload must not accept ExperimentalRetriever");
+  }
+  if (!/retriever\?: RetrieverName \| "indexed-lexical";/.test(browserApiDts)) {
+    throw new Error("packed browser InitPayload must accept only Worker-safe retriever names");
+  }
 
   const consumer = path.join(tmp, "consumer");
   mkdirSync(consumer);

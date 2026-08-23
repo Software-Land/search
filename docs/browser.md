@@ -29,7 +29,7 @@ client.dispose();
 - empty input cancels and clears
 - teardown invalidates outstanding work
 
-Plain `postMessage`. Protocol v1 messages: `init`, `search`, `cancel`, `dispose`, `ready`, `result`, `error`, `aborted`. Payloads must be structured-clone-safe. Explanations are JSON-serializable. Stale responses must not publish.
+Plain `postMessage`. Protocol v1 messages: `init`, `search`, `cancel`, `dispose`, `ready`, `result`, `error`, `aborted`. Payloads must be structured-clone-safe. `init.retriever` is a retriever name (`"full-scan" | "indexed" | "adaptive" | "indexed-lexical"`), not an `ExperimentalRetriever` object: functions cannot cross the Worker boundary. Custom retrievers remain valid on in-process `SearchEngine.create`. Explanations are JSON-serializable. Stale responses must not publish.
 
 `init` accepts the same optional `lexicalIndex` as `SearchEngine.create`. Omission builds the exact fallback index during initialization; an invalid supplied artifact replies with `error`. When compiling with custom lemmas, pass the same map to Worker `englishOptions` so its deterministic analyzer identity matches. After `ready`, the Worker has released its envelope reference and retained compact runtime state, so the page may release its own artifact reference.
 

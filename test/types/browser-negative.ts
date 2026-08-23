@@ -1,3 +1,4 @@
+import { SearchEngine, type ExperimentalRetriever } from "@software-land/search";
 import { createSearchClient, searchWorkerUrl } from "@software-land/search/browser";
 
 // @ts-expect-error ProtocolMessage is not a public browser export
@@ -24,3 +25,16 @@ void client.init({ _exactPruningMode: "exhaustive" });
 
 // @ts-expect-error internal diagnostics switch is not a public init field
 void client.init({ _includeRetrievalDiagnostics: true });
+
+const customRetriever: ExperimentalRetriever = {
+  retrieve() {
+    return [];
+  },
+};
+SearchEngine.create({ retriever: customRetriever });
+
+void client.init({
+  documents: [],
+  // @ts-expect-error Worker init cannot accept a function-bearing custom retriever
+  retriever: customRetriever,
+});

@@ -6,7 +6,6 @@
 import type {
   AdaptiveOptions,
   EquivalenceEntry,
-  ExperimentalRetriever,
   LexicalIndexArtifact,
   RelationshipArtifact,
   RelationshipStrategy,
@@ -22,7 +21,8 @@ interface InitPayload {
   dictionaryEntries?: EquivalenceEntry[];
   relationships?: RelationshipArtifact | null;
   relationshipStrategy?: RelationshipStrategy;
-  retriever?: RetrieverName | "indexed-lexical" | ExperimentalRetriever;
+  /** Worker-safe retriever name. Function-bearing custom retrievers are not structured-cloneable. */
+  retriever?: RetrieverName | "indexed-lexical";
   candidateLimit?: number | null;
   adaptive?: AdaptiveOptions;
   englishOptions?: { lemmas?: Record<string, string> };

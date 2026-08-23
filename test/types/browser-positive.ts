@@ -36,6 +36,9 @@ void client.init({
   retriever: "indexed",
   englishOptions: { lemmas: {} },
 });
+void client.init({ documents: [], retriever: "full-scan" });
+void client.init({ documents: [], retriever: "adaptive" });
+void client.init({ documents: [], retriever: "indexed-lexical" });
 void client.setQuery;
 void client.dispose;
 void client.terminate;
