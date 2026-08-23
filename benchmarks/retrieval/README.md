@@ -32,6 +32,8 @@ Compact-runtime heap and same-run latency:
 ```bash
 node --expose-gc scripts/heap-attribution.mjs --n 25000
 node --expose-gc scripts/compact-runtime-bench.mjs --sizes 1000,5000,10000,25000
+node scripts/phrase-compare-bench.mjs --dist ./dist --label 2C
+node --expose-gc scripts/phrase-profile.mjs --n 25000
 ```
 
 See [compact-runtime.md](../../docs/compact-runtime.md).

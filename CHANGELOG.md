@@ -27,6 +27,7 @@
 - Exact Stage-2A document-feature block pruning for proven plain single-token body-only candidates. It preserves per-signature rounded-score/id prefixes, keeps an internal exhaustive compiled oracle, and exposes experimental visited/rejected/fallback counters. Posting enumeration remains exhaustive except for Stage-2B identical posting-array rewalks.
 - Exact Stage-2B skip of posting arrays this query has already fully walked (duplicate token/concept/lemma/contextual lanes) when `retrievalScoreWeight` is `0`. Membership, provenance, and default ranking stay Stage-1 exact. Unread posting blocks, prefix expansions, and nonzero retrieval-score reconstruction stay exhaustive. No new lexical-index version or pruning extension.
 - Compact compiled lexical runtime: interned term ids, packed token/offset views, and query-time document accessors instead of reconstructing per-document token/lemma arrays, Sets, and position Maps. `search-v2-lexical-index` v1 bytes and public search semantics are unchanged. Full-scan may keep fat objects. See `docs/compact-runtime.md`.
+- Compact phrase adjacency, title-concept, and body-concept checks read packed token ids instead of `PackedTokenProxy` hot loops. Feature vectors and ranking are unchanged.
 - `SECURITY.md` and `CONTRIBUTING.md`.
 
 ### Fixed

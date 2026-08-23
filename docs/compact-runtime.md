@@ -111,3 +111,28 @@ Omitted artifact, indexed/adaptive: analyze once, compile, hydrate the compact r
 ## Public API
 
 Typed arrays, term ordinals, offsets, packed stores, and document views are not exported from the root package.
+
+## Phrase adjacency fast path
+
+### Exact `phraseAdjacency` semantics
+
+Return values are `1` (title), `0.5` (body), or `0`. Title is checked first; a title hit does not also score the body.
+
+Query sequences are stop-stripped `nonStopNorm` / `nonStopLemma` from analyzed tokens (`t.normalized` and `t.lemma || t.normalized`). Tokens in `DEFAULT_STOP` are dropped unless the whole query has two or fewer tokens; if that filter empties the sequence, the original tokens are kept. Queries with fewer than two remaining tokens return `0`. Prefix completion is whatever analysis already stored on those tokens; this feature does not apply a second completion pass.
+
+A window of length `m` matches when every aligned pair satisfies `tokenAdjacencyMatch`:
+
+- if either side is all digits, equality is required
+- otherwise `tt === qt || tt.startsWith(qt)` (no `allowPrefixMatch` min-length)
+
+Repeated query tokens and overlapping field windows are ordinary sliding windows; the first hit wins. Dictionary concepts, compiled `bodyPhraseCount` / lexical-frequency n-grams, and retrieval provenance are separate features.
+
+Surface streams run first. Lemma streams run only when the query surface/lemma sequences differ **or** that field’s surface/lemma sequences differ. Surface precedence is therefore: title surface, title lemma (if needed), body surface, body lemma (if needed).
+
+### Why not posting intersection
+
+Compiled positional postings are term-oriented and cheap to walk by document ordinal, but they cannot reconstruct this feature as exact `t0@p ∧ t1@p+1 ∧ t2@p+2` term-id membership. Prefix-capable non-digit matching would require expanding every query token against the vocabulary, then intersecting those posting unions, then still applying the same window predicate for repeats, digits, and missing terms. A ~60-token packed-id scan is the exact equivalent and does not need a persistent doc→posting offset table.
+
+Stage 2C originally scanned `PackedTokenProxy` bodies and skipped the Stage-2B `Map` start index (`instanceof Map` failed). That was a compact-runtime regression, not an inherent phrase cost.
+
+The compact adapter now applies the shared `tokenAdjacencyMatch` predicate over packed `Uint32Array` token ids and interned strings (`compactAdjacentTokens`). Fat full-scan keeps the object/`Map` adapter. No persistent side index. Query-local work is existing per-search feature state plus a small interned-id `Set` during compact body-concept membership. Title/body concept helpers used by `queryCoverage` follow the same packed-id pattern; they do not change `extractFeatures` output.
