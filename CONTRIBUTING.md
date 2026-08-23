@@ -19,7 +19,6 @@ Open an issue first for public API changes, ranking/constraint changes, or retri
 Include tests for the behavior you change. Ranking and retrieval changes should not weaken:
 
 - exact-order SCC tests
-- query `"2"` pinning
 - the 98 strict V2 + 60 regression Software.Land cases
 
 ## Development commands
