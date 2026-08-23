@@ -19,12 +19,12 @@ Workload depends more directly on query document frequency, posting entries touc
 
 1. Exact compiled retrieval — **done** (Stage 1)
 2. Exact feature pruning — **done** (Stage 2A)
-3. Exact posting/block pruning — **current** (Stage 2B)
+3. Exact posting/block pruning — **current / partial** (Stage 2B)
 4. Compact/lazy typed-array runtime — **future** (Stage 2C)
 5. Benchmark 100k / 250k / 500k / 1M
 6. Build-time sharding + Worker pool if needed
 
-Stage 2B may skip posting work only with a proof that the skipped work cannot change Stage-2A membership or output. Stage 2C is a memory/runtime representation change, not a ranking change. Later corpus sizes are measurement gates, not promises.
+Stage 2B may skip posting work only with a proof that the skipped work cannot change Stage-2A membership or output. The shipped rule skips posting arrays this query has already fully decoded. Unread posting blocks remain unpruned. Stage 2C is a memory/runtime representation change, not a ranking change. Later corpus sizes are measurement gates, not promises.
 
 ## Future multi-Worker topology
 

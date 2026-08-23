@@ -156,4 +156,14 @@ Failing to prove eligibility is not an error; it means full Stage 1 evaluation. 
 
 ## Stage 2B/2C boundary
 
-Stage 2A can dramatically reduce full feature/signature work for common body-only floods, but it reports zero posting entries skipped because membership enumeration remains exhaustive. Stage 2B must add conservative cross-posting TF/field/evidence summaries before skipping posting entries. Stage 2C may replace hydrated Sets/Maps/token arrays with compact/lazy views; it is intentionally separate from this proof. See [scaling.md](scaling.md).
+Stage 2A can dramatically reduce full feature/signature work for common body-only floods.
+
+Stage 2B production pruning is only **identical posting-array rewalks**: if this query has already decoded a compiled `title`/`body` posting `number[]`, later token, concept, lemma, or contextual lanes that point at the same array are not decoded again. Membership and `retrievalSourcesForDocument` provenance stay exhaustive. Default ranking is unchanged because `retrievalScoreWeight` defaults to `0`.
+
+Unread posting blocks are not skipped. A block cannot be dropped merely because it cannot beat currently known signatures: it might still introduce an unseen stronger or incomparable signature (exact title, independent title token, contextual prefix, version, phrase band, morphology, typo, and the rest of the Stage-2A fail-closed set). Multi-term evidence is also unsafe to prune term-locally: token A in posting list X plus token B in list Y can create query coverage / phrase adjacency that neither list has alone.
+
+Prefix expansion stays exhaustive. Historical prefix recall failures must not return. Dictionary-range metadata may later accelerate lookup; it must not cap terms.
+
+Nonzero `retrievalScoreWeight` fail-closes to the exhaustive posting walk so BM25 reconstruction stays Stage-1 identical. Active relationships keep Stage-2A's fail-closed feature policy; duplicate-list skip still returns the full lexical membership set.
+
+No `search-v2-lexical-index` version bump and no `exact-pruning-v2` extension: this skip is query-time array identity, not compiled metadata. Stage 2C may replace hydrated Sets/Maps/token arrays with compact/lazy views; it is intentionally separate from this proof. See [scaling.md](scaling.md).
