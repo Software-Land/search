@@ -410,7 +410,7 @@ async function main() {
       throw new Error(`retrieval-bench errors: ${JSON.stringify(retrievalBoot.errors)}`);
     }
     if (retrievalConsoleErrors.length) throw new Error(`retrieval-bench console error: ${retrievalConsoleErrors.join("\n")}`);
-    const expectedRetrievalRows = retrievalSizes.length * 4 * 5;
+    const expectedRetrievalRows = retrievalSizes.length * 4 * 6;
     if (retrievalBoot.results.length !== expectedRetrievalRows) {
       throw new Error(
         `retrieval-bench expected ${expectedRetrievalRows} rows, got ${JSON.stringify(retrievalBoot.results)}`
@@ -423,6 +423,7 @@ async function main() {
         "adversarial-short-literal",
         "adversarial-independent-title-token",
         "software-land-machine-prefix",
+        "phrase",
       ]) {
         const rows = retrievalBoot.results.filter((row) => row.n === n && row.queryFamily === queryFamily);
         const full = rows.find((row) => row.mode === "full-scan");

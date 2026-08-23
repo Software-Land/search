@@ -40,7 +40,7 @@ describe("compact compiled lexical runtime", () => {
     dictionary({ entries: load("dictionary.json") }),
   ];
   const relationships = load("relationships.json");
-  const queries = ["2", "machine l", "the", "vpn", "nfc", "tls 1.2"];
+  const queries = ["2", "machine l", "the", "vpn", "nfc", "tls 1.2", "virtual private network"];
   let artifact;
   let fat;
   let compact;

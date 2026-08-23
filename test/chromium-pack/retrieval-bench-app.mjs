@@ -20,16 +20,19 @@ const QUERY_COMMON = "the";
 const QUERY_ADVERSARIAL = "zz";
 const QUERY_INDEPENDENT_TITLE = "probezz";
 const QUERY_MACHINE_PREFIX = "machine l";
+const QUERY_PHRASE = "virtual private network";
 const QUERIES = [
   { name: "rare-exact", query: QUERY_RARE },
   { name: "high-df", query: QUERY_COMMON },
   { name: "adversarial-short-literal", query: QUERY_ADVERSARIAL },
   { name: "adversarial-independent-title-token", query: QUERY_INDEPENDENT_TITLE },
   { name: "software-land-machine-prefix", query: QUERY_MACHINE_PREFIX },
+  { name: "phrase", query: QUERY_PHRASE },
 ];
 const VOCAB = [
   "the", "of", "and", "search", "index", "document", "query", "title", "body",
   "token", "network", "protocol", "security", "tls", "vpn", "worker", "rank",
+  "virtual", "private",
 ];
 
 function mixedDocs(n) {
@@ -51,6 +54,11 @@ function mixedDocs(n) {
       id: "winner-machine-prefix",
       title: "Machine Learning",
       body: "guide",
+    },
+    {
+      id: "winner-phrase",
+      title: "Virtual private network",
+      body: "tunnel bluetooth accessories",
     },
   ];
   for (let i = 0; i < floodN; i += 1) {
