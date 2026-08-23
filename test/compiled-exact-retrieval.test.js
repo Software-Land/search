@@ -11,6 +11,11 @@ import {
   attachLexicalFrequency,
   compileLexicalIndex,
 } from "../tools/search-lexical/index.js";
+import {
+  createLoopbackTransport,
+  createSearchClient,
+  createWorkerRuntime,
+} from "../dist/browser/index.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixture = path.join(here, "fixtures", "software-land");
@@ -129,6 +134,28 @@ function publicSurface(value) {
   };
 }
 
+function explainedHitContract(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    rank: row.rank,
+    score: row.score,
+    relevanceKind: row.relevanceKind,
+    directClass: row.directClass,
+    retrievalSources: row.retrievalSources,
+    constraints: row.constraints,
+    constraintsVsNext: row.explanation?.constraintsVsNext,
+    constraintMeta: row.explanation?.constraintMeta,
+  };
+}
+
+function explainedContractSurface(value) {
+  return {
+    results: value.results.map(explainedHitContract),
+    related: value.related.map(explainedHitContract),
+  };
+}
+
 function exactDiagnosticSurface(value) {
   return {
     candidateCount: value.meta.candidateCount,
@@ -136,6 +163,8 @@ function exactDiagnosticSurface(value) {
     relatedCount: value.meta.relatedCount,
     constraintCycles: value.meta.constraintCycles,
     constraintConflicts: value.meta.constraintConflicts,
+    primaryId: value.meta.primaryId,
+    primaryIds: value.meta.primaryIds,
   };
 }
 
@@ -143,9 +172,69 @@ function expectExact(full, compiled, query, options = { limit: 10, relatedLimit:
   const expected = full.searchDetailed(query, options);
   const actual = compiled.searchDetailed(query, { ...options, candidateLimit: 1 });
   expect(publicSurface(actual)).toEqual(publicSurface(expected));
+  if (options.explain) {
+    expect(explainedContractSurface(actual)).toEqual(explainedContractSurface(expected));
+  }
   expect(exactDiagnosticSurface(actual)).toEqual(exactDiagnosticSurface(expected));
   expect(compiled.retriever.stats().rawDocumentScans).toBe(0);
   return actual;
+}
+
+function workerStableMeta(value) {
+  return {
+    candidateCount: value.meta.candidateCount,
+    matchCount: value.meta.matchCount,
+    representativeSelection: value.meta.representativeSelection,
+    postingEntriesVisited: value.meta.postingEntriesVisited,
+    distinctDocumentsExamined: value.meta.distinctDocumentsExamined,
+    rawDocumentScans: value.meta.rawDocumentScans,
+    relationshipStrategy: value.meta.relationshipStrategy,
+    relatedCount: value.meta.relatedCount,
+  };
+}
+
+async function searchWorker(
+  documents,
+  lexicalIndex,
+  query,
+  options,
+  { relationships = null, relationshipStrategy = "none" } = {}
+) {
+  const runtime = createWorkerRuntime({
+    SearchEngine,
+    english: morphology,
+    dictionary,
+  });
+  let publish;
+  let rejectPublish;
+  const published = new Promise((resolve, reject) => {
+    publish = resolve;
+    rejectPublish = reject;
+  });
+  const client = createSearchClient({
+    worker: createLoopbackTransport(runtime),
+    onResult({ result }) {
+      publish(result);
+    },
+    onError({ error }) {
+      rejectPublish(error);
+    },
+  });
+  try {
+    await client.init({
+      documents,
+      schema,
+      dictionaryEntries: [],
+      retriever: "indexed",
+      relationships,
+      relationshipStrategy,
+      lexicalIndex,
+    });
+    client.setQuery(query, options);
+    return await published;
+  } finally {
+    client.terminate();
+  }
 }
 
 describe("Stage-1 exact compiled retrieval under pressure", () => {
@@ -221,7 +310,89 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
     expect(exactDiagnosticSurface(asyncActual)).toEqual(exactDiagnosticSurface(expected));
   });
 
-  test("Software.Land machine l / machine le flooding equals full scan", async () => {
+  test("precompiled, fallback, sync, and async paths preserve the full pressure explain contract", async () => {
+    const documents = probezzCorpus();
+    const { full, compiled: precompiled } = await engines(documents, { precompiled: true });
+    const fallback = SearchEngine.create({
+      schema,
+      plugins: full.plugins,
+      retriever: "indexed",
+      relationshipStrategy: "none",
+      candidateLimit: 1,
+    });
+    await fallback.index(documents);
+    const options = { limit: 10, relatedLimit: 0, explain: true };
+    const expected = full.searchDetailed("probezz", options);
+    const precompiledSync = precompiled.searchDetailed("probezz", options);
+    const precompiledAsync = await precompiled.searchDetailedAsync("probezz", options);
+    const fallbackSync = fallback.searchDetailed("probezz", options);
+
+    for (const actual of [precompiledSync, precompiledAsync, fallbackSync]) {
+      expect(publicSurface(actual)).toEqual(publicSurface(expected));
+      expect(explainedContractSurface(actual)).toEqual(explainedContractSurface(expected));
+      expect(exactDiagnosticSurface(actual)).toEqual(exactDiagnosticSurface(expected));
+    }
+    expect(publicSurface(precompiledSync)).toEqual(publicSurface(fallbackSync));
+    expect(precompiledSync.meta.representativeSelection.retained)
+      .toBeLessThan(precompiledSync.meta.matchCount);
+  });
+
+  test("Worker representative search matches precompiled in-process async with and without explanations", async () => {
+    const documents = [
+      ...probezzCorpus(),
+      { id: "probezz-neighbor", title: "Unrelated Neighbor", body: "unrelated" },
+    ];
+    const relationships = {
+      format: "search-v2-relationships",
+      version: 1,
+      relationships: {
+        "winner-probezz": [{
+          target: "probezz-neighbor",
+          type: "test",
+          strength: 1,
+        }],
+      },
+    };
+    const english = morphology();
+    const plugins = [english, dictionary({ entries: [] })];
+    const lexicalIndex = compileLexicalIndex(documents, {
+      schema,
+      lemma: english.lemma,
+      analyzerId: english.indexIdentity,
+    });
+    const inProcess = SearchEngine.create({
+      schema,
+      plugins,
+      relationships,
+      retriever: "indexed",
+      relationshipStrategy: "separate",
+      candidateLimit: 1,
+      lexicalIndex,
+    });
+    await inProcess.index(documents);
+
+    for (const explain of [false, true]) {
+      const options = { limit: 10, relatedLimit: 1, explain };
+      const publicAsync = await inProcess.searchDetailedAsync("probezz", options);
+      const representativeAsync = await inProcess._searchDetailedAsync("probezz", options, false);
+      const worker = await searchWorker(documents, lexicalIndex, "probezz", options, {
+        relationships,
+        relationshipStrategy: "separate",
+      });
+
+      expect(publicSurface(worker)).toEqual(publicSurface(publicAsync));
+      expect(publicSurface(worker)).toEqual(publicSurface(representativeAsync));
+      expect(workerStableMeta(worker)).toEqual(workerStableMeta(representativeAsync));
+      expect(worker.related).toHaveLength(1);
+      expect(worker.related[0].rank).toBe(publicAsync.related[0].rank);
+      expect(worker.related[0].rank).toBeGreaterThan(options.limit);
+      if (explain) {
+        expect(explainedContractSurface(worker)).toEqual(explainedContractSurface(publicAsync));
+      }
+    }
+  }, 120_000);
+
+  test("Software.Land pressure preserves machine prefixes and full conflict diagnostics", async () => {
     const originals = attachLexicalFrequency(load("documents.json"), load("lexical-frequency.json"));
     const documents = [...originals, ...softwareLandDistractors(1_000)];
     const { full, compiled } = await engines(documents, {
@@ -239,6 +410,16 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
       });
       expect(actual.meta.matchCount).toBeGreaterThan(200);
     }
+    const conflict = expectExact(full, compiled, "what are apis", {
+      limit: 10,
+      relatedLimit: 5,
+      explain: true,
+    });
+    expect(conflict.meta.constraintConflicts).toBeGreaterThan(0);
+    expect(conflict.results[0].explanation.constraintMeta.conflictCount)
+      .toBe(conflict.meta.constraintConflicts);
+    expect(conflict.meta.representativeSelection.retained)
+      .toBeLessThan(conflict.meta.candidateCount);
   }, 120_000);
 
   test.each([400, 1_000, 5_000])(
@@ -337,6 +518,55 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
       relatedLimit: 5,
       explain: true,
     });
+  });
+
+  test("precompiled top1, top-n, and all-strong relationship primaries equal full scan", async () => {
+    const primaryDocuments = [
+      { id: "z-exact", title: "Bluetooth", body: "wireless protocol" },
+      { id: "a-guide", title: "Bluetooth Guide", body: "wireless setup" },
+      { id: "b-setup", title: "Bluetooth Setup", body: "wireless setup" },
+      { id: "c-reference", title: "Bluetooth Reference", body: "wireless reference" },
+    ];
+    const neighbors = primaryDocuments.map((source) => ({
+      id: `${source.id}-neighbor`,
+      title: `Unrelated Neighbor ${source.id}`,
+      body: "unrelated",
+    }));
+    const documents = [...primaryDocuments, ...neighbors];
+    const relationships = {
+      format: "search-v2-relationships",
+      version: 1,
+      relationships: Object.fromEntries(primaryDocuments.map((source) => [
+        source.id,
+        [{ target: `${source.id}-neighbor`, type: "test", strength: 1 }],
+      ])),
+    };
+    const { full, compiled } = await engines(documents, {
+      relationships,
+      relationshipStrategy: "separate",
+      precompiled: true,
+    });
+
+    for (const [sourcePolicy, expectedCount] of [
+      ["top1-strong", 1],
+      ["top-n-strong", 3],
+      ["all-strong", 4],
+    ]) {
+      const options = {
+        limit: 4,
+        relatedLimit: 10,
+        relationshipStrategy: "separate",
+        sourcePolicy,
+        explain: true,
+      };
+      const expected = full.searchDetailed("bluetooth", options);
+      const actual = compiled.searchDetailed("bluetooth", options);
+      expect(publicSurface(actual)).toEqual(publicSurface(expected));
+      expect(explainedContractSurface(actual)).toEqual(explainedContractSurface(expected));
+      expect(exactDiagnosticSurface(actual)).toEqual(exactDiagnosticSurface(expected));
+      expect(actual.meta.primaryId).toBe("z-exact");
+      expect(actual.meta.primaryIds).toHaveLength(expectedCount);
+    }
   });
 
   test("absolute related ranks retain the smallest uniform signature prefix through the channel output", async () => {
