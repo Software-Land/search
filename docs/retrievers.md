@@ -44,7 +44,7 @@ Relationship primary reduction is temporary and does not remove entries from the
 
 `search-v2-lexical-index` version 1 is a unified positional representation: stable document ordinals and compact document-local metadata share one sorted surface-term dictionary and title/body positional streams. One deterministic lemma is stored per surface term, so lemma postings and hydrated lemma token sequences are derived without duplication. Version forms, dotted spans/components, first-token data, field lengths, and corpus length statistics complete the state needed by the frozen matcher and feature extractor.
 
-The payload serializes neither raw title/body text nor per-document lexical-frequency maps. Validated caller documents continue to own display titles and the separately compiled `search-v2-lexical-frequency` data attached to them. Positional streams hydrate the current `IndexedDocument` token arrays, sets, position maps, and exact retriever lookup; artifact load does not invoke tokenization, lemma analysis, or raw-document posting construction. After successful initialization the engine releases its reference to the validated envelope and parsed document tuples, retaining a small compatibility header plus the full hydrated `_index` (posting arrays, document token structures, display titles, and attached lexical-frequency references). The caller still owns any artifact reference it retained and may release it after `index()` or Worker `ready`. After a supplied artifact has been consumed, re-indexing the same validated corpus reuses that hydrated state; incompatible replacement input rejects instead of silently rebuilding.
+The payload serializes neither raw title/body text nor per-document lexical-frequency maps. Validated caller documents continue to own display titles and the separately compiled `search-v2-lexical-frequency` data attached to them. Positional streams hydrate exact lookup plus compact per-document views over interned term ids; artifact load does not invoke tokenization, lemma analysis, or raw-document posting construction. After successful initialization the engine releases its reference to the validated envelope and parsed document tuples, retaining a small compatibility header plus the compact `_index` (posting arrays, packed token/offset views, display titles, and attached lexical-frequency references). The caller still owns any artifact reference it retained and may release it after `index()` or Worker `ready`. After a supplied artifact has been consumed, re-indexing the same validated corpus reuses that hydrated state; incompatible replacement input rejects instead of silently rebuilding.
 
 Build it under the existing lexical package boundary:
 
@@ -70,7 +70,7 @@ await engine.index(documents);
 
 Identical inputs serialize byte-identically with `JSON.stringify`. A supplied artifact is checked for format/version, integrity, core analyzer identity, lemma identity, schema fields, document count, and a fingerprint of ids plus searchable title/body text and lexical-frequency data. An invalid supplied artifact throws; it is never ignored in favor of an approximate path. A custom lemma plugin without a deterministic `indexIdentity` remains valid for artifact-omitted runtime construction but is rejected when a supplied artifact cannot prove analyzer compatibility.
 
-If `lexicalIndex` is omitted, each `index()` call compiles equivalent state from the supplied documents. This costs initialization time but not query-time raw-field analysis. `retriever: "full-scan"` remains the explicit reference path.
+If `lexicalIndex` is omitted, each `index()` call compiles equivalent state from the supplied documents and, for indexed/adaptive retrieval, hydrates the same compact runtime. This costs initialization time but not a second query implementation. `retriever: "full-scan"` remains the explicit object-based reference path.
 
 The v1 payload has an integrity-covered extension namespace keyed to stable term/document ordinals. Current compilers add `exact-pruning-v1` with revisioned 128-document boundaries. An old v1 artifact without it remains valid and exhaustive; malformed claimed metadata rejects. The extension supports the narrow Stage-2A feature-block proof and does not yet contain posting TF/evidence bounds.
 
@@ -78,7 +78,7 @@ The rejected alternatives are:
 
 - **Postings only:** smallest initial payload, but it still requires raw-document analysis to rebuild `IndexedDocument`, duplicates runtime posting ownership, and leaves Stage 2 without document-local positional bounds.
 - **Postings plus a separate sufficient-statistics table:** avoids raw analysis, but duplicates term occurrences between posting and document streams and raises browser heap.
-- **Unified analyzed index (selected):** one positional occurrence stream hydrates both document-local state and exact lookup. It has more load-time object hydration than a future typed-array view, but no raw lexical analysis and no redundant lexical-frequency ownership.
+- **Unified analyzed index (selected):** one positional occurrence stream hydrates both compact document views and exact lookup. Stage 2C keeps those views packed at runtime. There is still no raw lexical analysis after a supplied artifact and no redundant lexical-frequency ownership.
 
 ## Exact matching and feature reconstruction
 

@@ -31,7 +31,7 @@ client.dispose();
 
 Plain `postMessage`. Protocol v1 messages: `init`, `search`, `cancel`, `dispose`, `ready`, `result`, `error`, `aborted`. Payloads must be structured-clone-safe. Explanations are JSON-serializable. Stale responses must not publish.
 
-`init` accepts the same optional `lexicalIndex` as `SearchEngine.create`. Omission builds the exact fallback index during initialization; an invalid supplied artifact replies with `error`. When compiling with custom lemmas, pass the same map to Worker `englishOptions` so its deterministic analyzer identity matches. After `ready`, the Worker has released its envelope reference and retained hydrated state, so the page may release its own artifact reference.
+`init` accepts the same optional `lexicalIndex` as `SearchEngine.create`. Omission builds the exact fallback index during initialization; an invalid supplied artifact replies with `error`. When compiling with custom lemmas, pass the same map to Worker `englishOptions` so its deterministic analyzer identity matches. After `ready`, the Worker has released its envelope reference and retained compact runtime state, so the page may release its own artifact reference.
 
 Worker searches use the normal exact representative path, including fail-closed Stage-2A feature-block pruning when its proof applies, and forward result/related rows plus a protocol-defined timing/count meta subset. That subset includes posting work, document blocks, fully evaluated/bound-rejected documents, and a fallback reason. It does not expose the complete `searchDetailed()` diagnostic meta surface; `explain: true` still preserves each returned row's explanation, exact successor, and constraint metadata.
 

@@ -1,6 +1,6 @@
 # Known limitations
 
-- **Compiled-index memory remains object-heavy.** `search-v2-lexical-index` v1 stores compact positional rows on disk, but the runtime currently reconstructs per-document token arrays, sets, and position maps for the unchanged feature extractor while retaining the required posting arrays. The validated envelope and document tuples are released after initialization, but the hydrated object view still duplicates some posting-derived information. It is the Stage-1 correctness baseline, not the final memory layout. Compact/lazy feature views and mapped artifacts remain future work.
+- **Compiled posting arrays remain JavaScript `number[]` rows.** Stage 2C keeps token/lemma/set/position state in packed views instead of per-document object graphs, but compiled posting identity for Stage 2B is still those arrays. Mapped artifacts and unread posting-block pruning remain future work.
 - **Complete `searchDetailed()` diagnostics still require a full ranking plan.** Normal `search()`/Worker results use the exact representative-reduced final ranker. Stage 1 still computes a full ordered plan when public diagnostics require candidate titles, cycle membership, conflict cardinality, absolute ranks, or explanation successors; related-channel absolute ranks and `explain: true` can also require output-depth planning outside the diagnostic API. A future implementation can derive these from signature cardinalities and ordered bucket streams without changing their semantics.
 - **High-DF posting work is still Θ(matches) for unread lists.** The exact indexed retriever enumerates every legitimate match. Stage 2B may skip a posting array only after this query has already decoded it; prefix expansion, new lemma surfaces, and unread blocks remain exhaustive. Stage 2A can reject full feature evaluation for proven plain single-token body-only candidates. `candidateLimit` is no longer an exactness bound.
 - **Relationship channels can require deep representatives.** Public direct and related rows expose absolute global `rank`; explain rows also expose `constraintsVsNext`. Preserving those values may require retaining the complete global prefix through the deepest requested channel row, so `representativeDepth` can exceed `max(limit, relatedLimit)`.
@@ -15,7 +15,7 @@
 
 ## Future work (not started)
 
-Compact analyzed representation, conservative posting-entry block pruning beyond the narrow Stage-2A feature bound, incremental updates, native ports. Do not treat those as promised. The practical browser target of about 10k–25k documents is an engineering/performance target, not a quality cliff; see [scaling.md](scaling.md).
+Conservative posting-entry block pruning beyond Stage-2B identical-list skip, incremental updates, native ports. Do not treat those as promised. The practical browser target of about 10k–25k documents is an engineering/performance target, not a quality cliff; see [scaling.md](scaling.md) and [compact-runtime.md](compact-runtime.md).
 
 Ranking internals (behavior-preserving; not a ranking redesign):
 

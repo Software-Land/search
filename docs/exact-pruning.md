@@ -166,4 +166,4 @@ Prefix expansion stays exhaustive. Historical prefix recall failures must not re
 
 Nonzero `retrievalScoreWeight` fail-closes to the exhaustive posting walk so BM25 reconstruction stays Stage-1 identical. Active relationships keep Stage-2A's fail-closed feature policy; duplicate-list skip still returns the full lexical membership set.
 
-No `search-v2-lexical-index` version bump and no `exact-pruning-v2` extension: this skip is query-time array identity, not compiled metadata. Stage 2C may replace hydrated Sets/Maps/token arrays with compact/lazy views; it is intentionally separate from this proof. See [scaling.md](scaling.md).
+No `search-v2-lexical-index` version bump and no `exact-pruning-v2` extension: this skip is query-time array identity, not compiled metadata. Stage 2C replaces hydrated Sets/Maps/token arrays with compact/lazy views over the same v1 bytes; it does not change this proof. See [scaling.md](scaling.md) and [compact-runtime.md](compact-runtime.md).

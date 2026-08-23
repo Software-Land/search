@@ -23,6 +23,8 @@ Its opaque payload has an integrity-covered additive extension namespace. New co
 
 `search-v2-lexical-frequency` remains a separate build artifact. Apply it to source documents with `attachLexicalFrequency()` before compiling or loading the lexical index. The lexical index fingerprints that attached data but does not serialize a second copy.
 
-After successful `index()`, `SearchEngine` retains only the hydrated runtime state and a small compatibility header; it drops its own reference to the supplied envelope and parsed document tuples. The caller still owns any artifact object it retained and may release it after initialization (or after Worker `ready`). Re-indexing the identical validated corpus reuses the hydrated state. Incompatible replacement documents reject instead of rebuilding or silently falling back.
+After successful `index()`, `SearchEngine` retains only the compact runtime state and a small compatibility header; it drops its own reference to the supplied envelope and parsed document tuples. The caller still owns any artifact object it retained and may release it after initialization (or after Worker `ready`). Re-indexing the identical validated corpus reuses the hydrated state. Incompatible replacement documents reject instead of rebuilding or silently falling back.
+
+See [compact-runtime.md](compact-runtime.md) for the Stage-2C packed document view. No lexical-index version bump is required for that runtime change.
 
 Pass parsed objects into `dictionary({ entries })`, `SearchEngine.create({ relationships })`, or `SearchEngine.create({ lexicalIndex })` as appropriate.

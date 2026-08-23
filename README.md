@@ -146,7 +146,7 @@ const engine = SearchEngine.create({
 await engine.index(documents);
 ```
 
-The artifact format is `search-v2-lexical-index` version 1. It is a unified analyzed-index representation: stable document metadata, a sorted surface dictionary, positional title/body streams, compact surface→lemma ownership, version/dotted-span metadata, and corpus statistics hydrate both exact lookup and the frozen `IndexedDocument` feature state. Raw title/body text and per-document lexical-frequency maps are not duplicated; supplied documents remain fingerprint-validated owners of display titles and attached `lexicalFrequency` data, typically produced from the separate build artifact with `attachLexicalFrequency()`.
+The artifact format is `search-v2-lexical-index` version 1. It is a unified analyzed-index representation: stable document metadata, a sorted surface dictionary, positional title/body streams, compact surface→lemma ownership, version/dotted-span metadata, and corpus statistics hydrate both exact lookup and compact query-time document views. Raw title/body text and per-document lexical-frequency maps are not duplicated; supplied documents remain fingerprint-validated owners of display titles and attached `lexicalFrequency` data, typically produced from the separate build artifact with `attachLexicalFrequency()`.
 
 The default exact indexed path enumerates all legitimate matches, reconstructs the same current features, and keeps mathematically sufficient representatives per builtin constraint signature before sparse ranking. Its additive v1 pruning extension can skip full feature evaluation for blocks whose reachable signature and rounded score are proved exactly; uncertain, multi-term, diagnostic, custom, and active-relationship cases remain exhaustive. It does not yet skip posting entries and has no WAND/MaxScore/early termination. A supplied incompatible or corrupt artifact throws. If the artifact is omitted, each `index()` call compiles equivalent state from `documents`; this performs raw lexical analysis during initialization but still performs zero query-time raw-document scans. `retriever: "full-scan"` remains the reference mode.
 
@@ -259,6 +259,8 @@ Root exports: `SearchEngine`, `morphology`, `dictionary`, strategy/retriever con
 | Browser Worker | [docs/browser.md](docs/browser.md) |
 | Architecture | [docs/architecture.md](docs/architecture.md) |
 | Scaling | [docs/scaling.md](docs/scaling.md) |
+| Exact pruning | [docs/exact-pruning.md](docs/exact-pruning.md) |
+| Compact lexical runtime | [docs/compact-runtime.md](docs/compact-runtime.md) |
 | Known limitations | [docs/limitations.md](docs/limitations.md) |
 | Security | [SECURITY.md](SECURITY.md) |
 | Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |
