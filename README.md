@@ -261,6 +261,7 @@ Root exports: `SearchEngine`, `morphology`, `dictionary`, strategy/retriever con
 | Scaling | [docs/scaling.md](docs/scaling.md) |
 | Exact pruning | [docs/exact-pruning.md](docs/exact-pruning.md) |
 | Compact lexical runtime | [docs/compact-runtime.md](docs/compact-runtime.md) |
+| Lazy feature evaluation | [docs/lazy-features.md](docs/lazy-features.md) |
 | Known limitations | [docs/limitations.md](docs/limitations.md) |
 | Security | [SECURITY.md](SECURITY.md) |
 | Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |
