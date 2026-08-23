@@ -259,6 +259,14 @@ describe("software-land corpus fixture", () => {
     expect(regressions.cases.every((row) => row.kind === "regression" && row.classification === "B" && !row.v1)).toBe(true);
   });
 
+  test("recurse joins the frozen recursion result sequence", () => {
+    const expected = titlesOf(engine, "recursion");
+    expect(expected[0]).toBe("What is Recursion?");
+    for (const query of ["recurs", "recurse", "recurses", "recursing", "recursive"]) {
+      expect(titlesOf(engine, query)).toEqual(expected);
+    }
+  });
+
   test('query "2" is 200FPS then TLS 1.2 Vulnerability', () => {
     expect(titlesOf(engine, "2", 2)).toEqual([
       "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
@@ -278,9 +286,12 @@ describe("software-land corpus fixture", () => {
 });
 
 describe("software-land fixture inputs are load-bearing", () => {
-  test("sort recurses #1 depends on the site lemma table", async () => {
+  test("dynamic programming #2 depends on the site lemma table", async () => {
     const without = await indexEngine(createEngine({ useLemmas: false }));
-    expect(without.search("sort recurses", { limit: 1 })[0].title).not.toBe("What is Recursion?");
+    expect(without.search("dynamic programming", { limit: 2 }).map((hit) => hit.title)).not.toEqual([
+      "Dynamic Programming Matrix",
+      "What is Recursion?",
+    ]);
   });
 
   test("aplicationsecurity #1 depends on the fixture dictionary", async () => {

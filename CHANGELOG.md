@@ -32,6 +32,7 @@
 
 ### Fixed
 
+- `recurse` is an explicit member of the built-in recursion lemma family (`recursive` / `recurses` / `recursing` / `recursed`). Query analysis applies that table identity before edit-distance typo-correction, so `recurse` is not rewritten to `secure`.
 - Indexed retrieval was dropping ranking-critical `title-prefix` / short-literal winners (the query-`"2"` / `200FPS` class) when more than `candidateLimit` high-TF body matches existed. `title-prefix` is now a capped must-keep, same `prefixCap` bound as contextual title-prefix. Ranking features and constraint semantics are unchanged.
 - Exact indexed retrieval no longer drops full-scan winners that occur below the old BM25-ish top-200 admission pool, including observed raw retrieval ranks around 5,006.
 

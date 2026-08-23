@@ -127,6 +127,28 @@ describe("final-token prefix completion", () => {
     expect(q.tokens[1].lemma).toBe("learn");
   });
 
+  test("explicit recursion lemmas beat equal-distance typo correction to secure", () => {
+    const plugins = [morphology()];
+    const lexicon = ["secure", "recursion", "recursive", "recurses"];
+    const inflected = ["recurse", "recurses", "recursing", "recursive"];
+    for (const query of inflected) {
+      const q = analyzeQuery(query, { plugins, lexicon });
+      expect(q.tokens[0].normalized).toBe("recursion");
+      expect(q.tokens[0].lemma).toBe("recursion");
+      expect(q.tokens[0].sources).not.toContain("typo-correction");
+    }
+    const identity = analyzeQuery("recursion", { plugins, lexicon });
+    expect(identity.tokens[0].normalized).toBe("recursion");
+    expect(identity.tokens[0].sources).not.toContain("typo-correction");
+    const stub = analyzeQuery("recurs", { plugins, lexicon, prefixLexicon: lexicon });
+    expect(stub.tokens[0].normalized).not.toBe("secure");
+    expect(stub.tokens[0].sources).not.toContain("typo-correction");
+    const secure = analyzeQuery("secure", { plugins, lexicon });
+    expect(secure.tokens[0].normalized).toBe("secure");
+    const resource = analyzeQuery("resource", { plugins, lexicon: ["resource", "recursion", "secure"] });
+    expect(resource.tokens[0].normalized).toBe("resource");
+  });
+
   test("analyzeQuery replaces the final token instead of mutating the pre-completion object", () => {
     const vocab = ["machine", "learning"];
     const q = analyzeQuery("machine learni", {

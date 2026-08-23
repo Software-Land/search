@@ -49,4 +49,36 @@ describe("0.4.0 morphology() public API", () => {
     expect(await titlesOf(viaMorphology, "computing")).toEqual(await titlesOf(viaInternal, "computing"));
     expect((await titlesOf(morphDefault, "recurses"))[0]).toBe("What is Recursion?");
   });
+
+  test("built-in recursion family maps to recursion without a site table", () => {
+    const plugin = morphology();
+    const inflected = ["recurse", "recurses", "recursing", "recursive", "recursively", "recursed"];
+    for (const form of inflected) {
+      expect(plugin.canonicalLemma(form)).toBe("recursion");
+      expect(plugin.lemma(form)).toBe("recursion");
+    }
+    expect(plugin.canonicalLemma("recurs")).toBeNull();
+    expect(plugin.lemma("recurs")).toBe("recur");
+    expect(plugin.canonicalLemma("recursion")).toBeNull();
+  });
+
+  test("recursion family is not an unbounded recurs* stem", () => {
+    const plugin = morphology();
+    expect(plugin.canonicalLemma("recur")).toBeNull();
+    expect(plugin.canonicalLemma("resource")).toBeNull();
+    expect(plugin.canonicalLemma("recourse")).toBeNull();
+    expect(plugin.canonicalLemma("cursor")).toBeNull();
+    expect(plugin.canonicalLemma("secure")).toBeNull();
+    expect(plugin.lemma("recur")).toBe("recur");
+    expect(plugin.lemma("resource")).toBe("resource");
+  });
+
+  test("recurse ranks with the recursion family on default morphology", async () => {
+    const plugin = morphology();
+    const expected = await titlesOf(plugin, "recursion");
+    expect(expected[0]).toBe("What is Recursion?");
+    for (const query of ["recurse", "recurses", "recursing", "recursive"]) {
+      expect(await titlesOf(plugin, query)).toEqual(expected);
+    }
+  });
 });

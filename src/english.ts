@@ -15,6 +15,7 @@ const DEFAULT_LEMMAS: Record<string, string> = {
   recursing: "recursion",
   recurses: "recursion",
   recursed: "recursion",
+  recurse: "recursion",
   authenticating: "authentication",
   authenticated: "authentication",
   authorizing: "authorization",

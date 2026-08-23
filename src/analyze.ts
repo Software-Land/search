@@ -658,8 +658,11 @@ export function analyzeQuery(
       sources.push("leet-decode");
       alternatives.push({ tokens: [leet], source: "leet-decode", confidence: 0.75 });
     }
+    // Explicit lemma-table identity is more confident than edit-distance.
+    // Otherwise recurse (→ recursion) is stolen by secure when both are d=2.
+    const tableLemma = pluginCanonicalLemma(plugins, normalized);
     const typoHits =
-      lex.has(normalized) || isPrefixOfVocabulary(normalized, lex)
+      lex.has(normalized) || isPrefixOfVocabulary(normalized, lex) || tableLemma
         ? []
         : suggestTypoForms(normalized, lex, { signal });
     const edit = typoHits.find((s) => s.provenance === "edit-distance" && lex.has(s.form));
