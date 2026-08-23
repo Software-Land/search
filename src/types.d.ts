@@ -251,6 +251,8 @@ export interface RetrievalHit {
   document: IndexedDocument;
   retrievalSources: RetrievalSource[];
   retrievalScore?: number;
+  /** Stable compiled document ordinal; internal exact-pruning metadata. */
+  documentOrdinal?: number;
   relationship?: RelationshipInfo | null;
 }
 
@@ -508,6 +510,21 @@ export interface TypoSuggestion {
   provenance: string;
 }
 
+export interface ExactPruningStats {
+  mode: "exhaustive" | "feature-blocks";
+  documentBlocksVisited: number;
+  documentBlocksSkipped: number;
+  boundedBlocksSkipped: number;
+  postingBlocksVisited: number;
+  postingBlocksSkipped: number;
+  postingEntriesSkipped: number;
+  documentsFullyEvaluated: number;
+  documentsBoundRejected: number;
+  signaturesEncountered: number;
+  representativesRetained: number;
+  pruningFallbackReason: string | null;
+}
+
 export interface FinishTimings {
   limit: number;
   relatedLimit: number;
@@ -525,4 +542,5 @@ export interface FinishTimings {
   matchCount?: number;
   representativeStats?: Record<string, unknown> | null;
   diagnosticRanked?: RankedHit[] | null;
+  pruningStats?: ExactPruningStats | null;
 }

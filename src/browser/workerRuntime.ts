@@ -21,6 +21,7 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
   let engine: SearchEngine | null = null;
   let running: RunningSearch | null = null;
   let disposed = false;
+  let exactPruningMode: "auto" | "exhaustive" = "auto";
 
   function replyError(reply: ReplyFn, requestId: number | undefined, err: unknown) {
     const rec = err && typeof err === "object" ? (err as { name?: string; message?: unknown }) : {};
@@ -43,6 +44,8 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
       if (typeof dictionary === "function") {
         plugins.push(dictionary({ entries: payload.dictionaryEntries || [] }));
       }
+      exactPruningMode =
+        payload._exactPruningMode === "exhaustive" ? "exhaustive" : "auto";
       engine = SearchEngine.create({
         schema: payload.schema,
         plugins,
@@ -88,7 +91,12 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
       // complete SearchEngine.searchDetailed diagnostic surface. Keep it on
       // the exact representative path instead of paying the full diagnostic
       // ranking fallback used by the public searchDetailed API.
-      const detailed = await engine._searchDetailedAsync(String(message.query ?? ""), options, false);
+      const detailed = await engine._searchDetailedAsync(
+        String(message.query ?? ""),
+        options,
+        false,
+        exactPruningMode
+      );
       if (running && running.requestId === message.requestId) running = null;
       reply({
         type: MSG.RESULT,
@@ -108,6 +116,17 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
             postingEntriesVisited: detailed.meta?.postingEntriesVisited,
             distinctDocumentsExamined: detailed.meta?.distinctDocumentsExamined,
             rawDocumentScans: detailed.meta?.rawDocumentScans,
+            postingBlocksVisited: detailed.meta?.postingBlocksVisited,
+            postingBlocksSkipped: detailed.meta?.postingBlocksSkipped,
+            postingEntriesSkipped: detailed.meta?.postingEntriesSkipped,
+            documentBlocksVisited: detailed.meta?.documentBlocksVisited,
+            documentBlocksSkipped: detailed.meta?.documentBlocksSkipped,
+            boundedBlocksSkipped: detailed.meta?.boundedBlocksSkipped,
+            documentsFullyEvaluated: detailed.meta?.documentsFullyEvaluated,
+            documentsBoundRejected: detailed.meta?.documentsBoundRejected,
+            pruningSignaturesEncountered: detailed.meta?.pruningSignaturesEncountered,
+            pruningRepresentativesRetained: detailed.meta?.pruningRepresentativesRetained,
+            pruningFallbackReason: detailed.meta?.pruningFallbackReason,
             relationshipStrategy: detailed.meta?.relationshipStrategy,
             relatedCount: detailed.meta?.relatedCount,
           },
@@ -134,6 +153,7 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
     if (running) running.abort();
     running = null;
     engine = null;
+    exactPruningMode = "auto";
   }
 
   async function dispatch(message: ProtocolMessage | null | undefined, reply: ReplyFn) {

@@ -9,7 +9,12 @@ const requestedSizes = String(PARAMS.get("sizes") || "")
   .filter((n) => Number.isInteger(n) && n > 0);
 const SIZES = requestedSizes.length ? requestedSizes : [1000, 2000, 5000];
 const MEASURE_BROWSER_MEMORY = PARAMS.get("memory") === "1";
-const MODES = ["full-scan", "indexed-fallback", "indexed-precompiled"];
+const MODES = [
+  "full-scan",
+  "indexed-fallback",
+  "indexed-precompiled-exhaustive",
+  "indexed-precompiled",
+];
 const QUERY_RARE = "ZX9 UniqueRareTitle";
 const QUERY_COMMON = "the";
 const QUERY_ADVERSARIAL = "zz";
@@ -123,14 +128,15 @@ async function runMode(mode, n) {
   const documents = mixedDocs(n);
   const english = morphology();
   const precompileStarted = performance.now();
-  let lexicalIndex = mode === "indexed-precompiled"
+  const precompiled = mode.startsWith("indexed-precompiled");
+  let lexicalIndex = precompiled
     ? compileLexicalIndex(documents, {
         schema: { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } },
         lemma: english.lemma,
         analyzerId: english.indexIdentity,
       })
     : null;
-  const precompileMs = mode === "indexed-precompiled" ? performance.now() - precompileStarted : 0;
+  const precompileMs = precompiled ? performance.now() - precompileStarted : 0;
   const artifactBytes = lexicalIndex ? new TextEncoder().encode(JSON.stringify(lexicalIndex)).byteLength : 0;
   const retriever = mode === "full-scan" ? "full-scan" : "indexed";
   const published = [];
@@ -158,6 +164,9 @@ async function runMode(mode, n) {
     retriever,
     candidateLimit: 200,
     relationshipStrategy: "none",
+    _exactPruningMode: mode === "indexed-precompiled-exhaustive"
+      ? "exhaustive"
+      : "auto",
   });
   await client.waitReady();
   const initMs = performance.now() - initStarted;
@@ -199,6 +208,15 @@ async function runMode(mode, n) {
       postingEntriesVisited: hit?.meta?.postingEntriesVisited ?? null,
       distinctDocumentsExamined: hit?.meta?.distinctDocumentsExamined ?? null,
       rawDocumentScans: hit?.meta?.rawDocumentScans ?? null,
+      postingBlocksVisited: hit?.meta?.postingBlocksVisited ?? null,
+      postingBlocksSkipped: hit?.meta?.postingBlocksSkipped ?? null,
+      postingEntriesSkipped: hit?.meta?.postingEntriesSkipped ?? null,
+      documentBlocksVisited: hit?.meta?.documentBlocksVisited ?? null,
+      documentBlocksSkipped: hit?.meta?.documentBlocksSkipped ?? null,
+      boundedBlocksSkipped: hit?.meta?.boundedBlocksSkipped ?? null,
+      documentsFullyEvaluated: hit?.meta?.documentsFullyEvaluated ?? null,
+      documentsBoundRejected: hit?.meta?.documentsBoundRejected ?? null,
+      pruningFallbackReason: hit?.meta?.pruningFallbackReason ?? null,
       retrieveMs: hit?.meta?.retrieveMs ?? null,
       featureMs: hit?.meta?.featureMs ?? null,
       selectionMs: hit?.meta?.selectionMs ?? null,

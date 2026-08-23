@@ -410,7 +410,7 @@ async function main() {
       throw new Error(`retrieval-bench errors: ${JSON.stringify(retrievalBoot.errors)}`);
     }
     if (retrievalConsoleErrors.length) throw new Error(`retrieval-bench console error: ${retrievalConsoleErrors.join("\n")}`);
-    const expectedRetrievalRows = retrievalSizes.length * 3 * 5;
+    const expectedRetrievalRows = retrievalSizes.length * 4 * 5;
     if (retrievalBoot.results.length !== expectedRetrievalRows) {
       throw new Error(
         `retrieval-bench expected ${expectedRetrievalRows} rows, got ${JSON.stringify(retrievalBoot.results)}`
@@ -430,7 +430,9 @@ async function main() {
           throw new Error(`retrieval-bench exact-output mismatch: ${JSON.stringify({ n, queryFamily, rows })}`);
         }
         const indexed = rows.filter((row) =>
-          row.mode === "indexed-fallback" || row.mode === "indexed-precompiled"
+          row.mode === "indexed-fallback" ||
+          row.mode === "indexed-precompiled" ||
+          row.mode === "indexed-precompiled-exhaustive"
         );
         if (indexed.some((row) => row.rawDocumentScans !== 0)) {
           throw new Error(`retrieval-bench indexed path scanned raw documents: ${JSON.stringify({ n, queryFamily, rows })}`);

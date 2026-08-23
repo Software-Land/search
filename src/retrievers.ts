@@ -656,6 +656,7 @@ export function createCompiledLexicalRetriever(): Retriever {
       document: docs[hit.pos],
       retrievalSources: hit.retrievalSources,
       retrievalScore: hit.retrievalScore,
+      documentOrdinal: hit.pos,
     }));
   }
 

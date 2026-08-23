@@ -24,6 +24,8 @@ export interface InitPayload {
   candidateLimit?: number | null;
   adaptive?: import("../index.js").AdaptiveOptions;
   englishOptions?: { lemmas?: Record<string, string> };
+  /** Internal benchmark/reference switch; not part of the public facade. */
+  _exactPruningMode?: "auto" | "exhaustive";
 }
 
 export interface ProtocolMessage {
@@ -52,6 +54,17 @@ export interface WorkerSearchPayload {
     postingEntriesVisited?: number | null;
     distinctDocumentsExamined?: number | null;
     rawDocumentScans?: number | null;
+    postingBlocksVisited?: number;
+    postingBlocksSkipped?: number;
+    postingEntriesSkipped?: number;
+    documentBlocksVisited?: number;
+    documentBlocksSkipped?: number;
+    boundedBlocksSkipped?: number;
+    documentsFullyEvaluated?: number;
+    documentsBoundRejected?: number;
+    pruningSignaturesEncountered?: number;
+    pruningRepresentativesRetained?: number;
+    pruningFallbackReason?: string | null;
     relationshipStrategy?: string;
     relatedCount?: number;
   };

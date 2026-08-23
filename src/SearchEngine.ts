@@ -1,11 +1,16 @@
 import { analyzeQuery, suggestTypoForms } from "./analyze.js";
 import { buildIndex, resolveSchema } from "./indexDocuments.js";
 import {
+  exactPruningRuntime,
   lexicalAnalyzerIdentity,
   lexicalCorpusFingerprint,
   loadLexicalIndex,
 } from "./lexicalIndex.js";
 import { extractFeatures } from "./features.js";
+import {
+  exhaustiveFeaturePruningStats,
+  planExactFeaturePruning,
+} from "./exactPruning.js";
 import {
   rankCandidates,
   rankCandidatesAsync,
@@ -18,6 +23,7 @@ import { dictionary } from "./dictionary.js";
 import {
   RelationshipGraph,
   applyRelationshipExpansion,
+  pickPrimariesForExpansion,
 } from "./relationships.js";
 import { throwIfAborted } from "./cancel.js";
 import {
@@ -394,7 +400,19 @@ export class SearchEngine {
     retrieved: RetrievalHit[],
     query: AnalyzedQuery,
     strategy: string,
-    { signal, sourcePolicy }: { signal?: AbortSignal; sourcePolicy?: SourcePolicy } = {}
+    {
+      signal,
+      sourcePolicy,
+      exactDiagnostics = true,
+      pruningMode = "auto",
+      requiredDepth = 0,
+    }: {
+      signal?: AbortSignal;
+      sourcePolicy?: SourcePolicy;
+      exactDiagnostics?: boolean;
+      pruningMode?: "auto" | "exhaustive";
+      requiredDepth?: number;
+    } = {}
   ) {
     throwIfAborted(signal);
     const weight = this.retrievalScoreWeight;
@@ -404,20 +422,99 @@ export class SearchEngine {
     }
     const retrievalScoreOf = (hit: RetrievalHit) => (weight && maxRet ? weight * ((hit.retrievalScore || 0) / maxRet) : 0);
     const tFeat = performance.now();
-    let featured: FeaturedHit[] = retrieved.map((hit, i) => {
-      if (i % 8 === 0) throwIfAborted(signal);
-      return {
-        ...hit,
-        features: extractFeatures(query, hit.document, {
-          relationship: hit.relationship || null,
-          retrievalScore: retrievalScoreOf(hit),
-        }),
-      };
-    });
+    const featureHits = (hits: RetrievalHit[]) =>
+      hits.map((hit, i) => {
+        if (i % 8 === 0) throwIfAborted(signal);
+        return {
+          ...hit,
+          features: extractFeatures(query, hit.document, {
+            relationship: hit.relationship || null,
+            retrievalScore: retrievalScoreOf(hit),
+          }),
+        };
+      });
+    const mergeFeatured = (...groups: FeaturedHit[][]) => {
+      const byId = new Map<string, FeaturedHit>();
+      for (const group of groups) {
+        for (const hit of group) byId.set(hit.document.id, hit);
+      }
+      return retrieved
+        .map((hit) => byId.get(hit.document.id))
+        .filter((hit): hit is FeaturedHit => Boolean(hit));
+    };
+    const index = requireIndexed(this);
+    let pruningStats = exhaustiveFeaturePruningStats(retrieved.length, "disabled");
+    let featured: FeaturedHit[];
+    const compiledRuntime = exactPruningRuntime(index);
+    const retrieverKind = this.retriever.stats?.().kind;
+    let fallbackReason: string | null = null;
+    if (exactDiagnostics) fallbackReason = "exact-diagnostics";
+    else if (pruningMode === "exhaustive") fallbackReason = "explicit-exhaustive";
+    else if (!this.retriever.exactSignatureSelection || retrieverKind !== "compiled-indexed") {
+      fallbackReason = "unsupported-retriever";
+    } else if (!compiledRuntime) fallbackReason = "missing-pruning-extension";
+    else if (weight) fallbackReason = "retrieval-score-weight";
+    else if (strategy !== "none" && sourcePolicy === "all-strong") {
+      fallbackReason = "all-strong-relationships";
+    }
+
+    if (fallbackReason || !compiledRuntime) {
+      featured = featureHits(retrieved);
+      pruningStats = exhaustiveFeaturePruningStats(
+        retrieved.length,
+        fallbackReason || "missing-pruning-extension"
+      );
+    } else {
+      const plan = planExactFeaturePruning({
+        retrieved,
+        query,
+        requiredDepth,
+        extension: compiledRuntime.extension,
+      });
+      if (!plan.bounded.length) {
+        featured = featureHits(retrieved);
+        pruningStats = exhaustiveFeaturePruningStats(
+          retrieved.length,
+          plan.stats.pruningFallbackReason || "no-provable-candidates"
+        );
+      } else {
+        const unboundedFeatured = featureHits(plan.unbounded);
+        const constraints = constraintsForStrategy(strategy);
+        const primaries =
+          strategy === "none"
+            ? []
+            : pickPrimariesForExpansion(unboundedFeatured, {
+                sourcePolicy,
+                constraints,
+                signal,
+              });
+        const activeRelationships = primaries.some((primary) =>
+          this.relationships.has(primary.document.id)
+        );
+        if (activeRelationships) {
+          const boundedFeatured = featureHits(plan.bounded.map((candidate) => candidate.hit));
+          featured = mergeFeatured(unboundedFeatured, boundedFeatured);
+          pruningStats = exhaustiveFeaturePruningStats(
+            retrieved.length,
+            "active-relationships"
+          );
+        } else {
+          const retainedFeatured = featureHits(plan.retainedBounded);
+          featured = mergeFeatured(unboundedFeatured, retainedFeatured);
+          pruningStats = plan.stats;
+        }
+      }
+    }
     const featureMs = performance.now() - tFeat;
 
     if (strategy === "none") {
-      return { featured, applied: { featured, relatedHits: [], primaries: [] }, featureMs, relationshipMs: 0 };
+      return {
+        featured,
+        applied: { featured, relatedHits: [], primaries: [] },
+        featureMs,
+        relationshipMs: 0,
+        pruningStats,
+      };
     }
 
     throwIfAborted(signal);
@@ -427,7 +524,7 @@ export class SearchEngine {
       query,
       extractFeatures,
       scoreFeatures,
-      index: requireIndexed(this),
+      index,
       graph: this.relationships,
       sourcePolicy,
       signal,
@@ -444,7 +541,7 @@ export class SearchEngine {
       });
     }
     const relationshipMs = performance.now() - tRel;
-    return { featured, applied, featureMs, relationshipMs };
+    return { featured, applied, featureMs, relationshipMs, pruningStats };
   }
 
   _finish(ranked: RankedHit[], query: AnalyzedQuery, explain: boolean, strategy: string, timings: FinishTimings) {
@@ -473,6 +570,17 @@ export class SearchEngine {
       postingEntriesVisited: retrievalStats.postingEntriesVisited ?? null,
       distinctDocumentsExamined: retrievalStats.distinctDocumentsExamined ?? null,
       rawDocumentScans: retrievalStats.rawDocumentScans ?? null,
+      postingBlocksVisited: timings.pruningStats?.postingBlocksVisited ?? 0,
+      postingBlocksSkipped: timings.pruningStats?.postingBlocksSkipped ?? 0,
+      postingEntriesSkipped: timings.pruningStats?.postingEntriesSkipped ?? 0,
+      documentBlocksVisited: timings.pruningStats?.documentBlocksVisited ?? 0,
+      documentBlocksSkipped: timings.pruningStats?.documentBlocksSkipped ?? 0,
+      boundedBlocksSkipped: timings.pruningStats?.boundedBlocksSkipped ?? 0,
+      documentsFullyEvaluated: timings.pruningStats?.documentsFullyEvaluated ?? timings.matchCount ?? 0,
+      documentsBoundRejected: timings.pruningStats?.documentsBoundRejected ?? 0,
+      pruningSignaturesEncountered: timings.pruningStats?.signaturesEncountered ?? 0,
+      pruningRepresentativesRetained: timings.pruningStats?.representativesRetained ?? 0,
+      pruningFallbackReason: timings.pruningStats?.pruningFallbackReason ?? null,
       relatedCount: timings.relatedCount ?? relatedRanked.length,
       primaryId: timings.primaryId,
       primaryIds: timings.primaryIds,
@@ -491,7 +599,12 @@ export class SearchEngine {
     return { results, related, meta };
   }
 
-  _searchDetailedSync(rawQuery: unknown, opts: SearchOptions = {}, exactDiagnostics = true) {
+  _searchDetailedSync(
+    rawQuery: unknown,
+    opts: SearchOptions = {},
+    exactDiagnostics = true,
+    pruningMode: "auto" | "exhaustive" = "auto"
+  ) {
     const {
       limit = 10,
       explain = false,
@@ -516,12 +629,18 @@ export class SearchEngine {
     });
     const retrieveMs = performance.now() - tRetrieve;
 
+    const publicDepth = Math.max(0, limit, relatedLimit);
+    const initialRepresentativeDepth =
+      publicDepth + (explain && publicDepth > 0 ? 1 : 0);
     const expanded = this._expandAndFeature(retrieved, query, strategy, {
       signal,
       sourcePolicy,
+      exactDiagnostics,
+      pruningMode,
+      requiredDepth: initialRepresentativeDepth,
     });
     let featured = expanded.featured;
-    const { applied, featureMs, relationshipMs } = expanded;
+    const { applied, featureMs, relationshipMs, pruningStats } = expanded;
 
     const constraints = constraintsForStrategy(strategy);
     let representativeStats: Record<string, unknown> | null = null;
@@ -532,7 +651,6 @@ export class SearchEngine {
       if (exactDiagnostics) {
         planningRanked = rankCandidates(featured, { constraints, signal });
       }
-      const publicDepth = Math.max(0, limit, relatedLimit);
       let representativeDepth = publicDepth + (explain && publicDepth > 0 ? 1 : 0);
       const hasRelated = fullRelatedCount > 0;
       if (
@@ -579,10 +697,16 @@ export class SearchEngine {
       matchCount: retrieved.length,
       representativeStats,
       diagnosticRanked: exactDiagnostics ? planningRanked : null,
+      pruningStats,
     });
   }
 
-  async _searchDetailedAsync(rawQuery: unknown, opts: SearchOptions = {}, exactDiagnostics = true) {
+  async _searchDetailedAsync(
+    rawQuery: unknown,
+    opts: SearchOptions = {},
+    exactDiagnostics = true,
+    pruningMode: "auto" | "exhaustive" = "auto"
+  ) {
     const {
       limit = 10,
       explain = false,
@@ -622,12 +746,18 @@ export class SearchEngine {
     await Promise.resolve();
     throwIfAborted(signal);
 
+    const publicDepth = Math.max(0, limit, relatedLimit);
+    const initialRepresentativeDepth =
+      publicDepth + (explain && publicDepth > 0 ? 1 : 0);
     const expanded = this._expandAndFeature(retrieved, query, strategy, {
       signal,
       sourcePolicy,
+      exactDiagnostics,
+      pruningMode,
+      requiredDepth: initialRepresentativeDepth,
     });
     let featured = expanded.featured;
-    const { applied, featureMs, relationshipMs } = expanded;
+    const { applied, featureMs, relationshipMs, pruningStats } = expanded;
 
     throwIfAborted(signal);
     await Promise.resolve();
@@ -642,7 +772,6 @@ export class SearchEngine {
       if (exactDiagnostics) {
         planningRanked = await rankCandidatesAsync(featured, { constraints, signal });
       }
-      const publicDepth = Math.max(0, limit, relatedLimit);
       let representativeDepth = publicDepth + (explain && publicDepth > 0 ? 1 : 0);
       const hasRelated = fullRelatedCount > 0;
       if (
@@ -690,6 +819,7 @@ export class SearchEngine {
       matchCount: retrieved.length,
       representativeStats,
       diagnosticRanked: exactDiagnostics ? planningRanked : null,
+      pruningStats,
     });
   }
 }

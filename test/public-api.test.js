@@ -218,11 +218,22 @@ describe("public API", () => {
     expect(actual.related).toEqual(expected.related);
     expect(actual.results[0].explanation.constraintsVsNext).toBeTruthy();
     expect(Object.keys(actual.meta).sort()).toEqual([
+      "boundedBlocksSkipped",
       "candidateCount",
       "distinctDocumentsExamined",
+      "documentBlocksSkipped",
+      "documentBlocksVisited",
+      "documentsBoundRejected",
+      "documentsFullyEvaluated",
       "featureMs",
       "matchCount",
+      "postingBlocksSkipped",
+      "postingBlocksVisited",
+      "postingEntriesSkipped",
       "postingEntriesVisited",
+      "pruningFallbackReason",
+      "pruningRepresentativesRetained",
+      "pruningSignaturesEncountered",
       "rankMs",
       "rawDocumentScans",
       "relatedCount",
