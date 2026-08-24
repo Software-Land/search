@@ -2,18 +2,31 @@
 
 ## Unreleased
 
+## 0.5.0
+
 ### Added
 
-- Stage 3A exact unread body-block skipping for ordinary exact multi-token compiled `search()`: additive `exact-pruning-v2` per-document body presence masks on the existing 128-document ordinal grid. Stronger co-occurrence classes are evaluated first; remaining 1-of-k body-only ordinals may be skipped only after the weak representative stream is full. Results stay identical to exhaustive compiled search. `searchDetailed()`, prefix, repaired, acronym, numeric, and custom-constraint paths fail closed. Stage 3A `postingBlocks*` counters are unique 128-document body-presence blocks (`total = decoded + classifiedFromMasks`); they are not Stage 2B duplicate-array `postingBlocksSkipped`.
-
 - `@software-land/search/corpus` exports `normalizeExternalEquivalences` and `ExternalEquivalenceError` for application-generated `{ key, expansion, aliases, primary }` rows. The compiler does not call a model and does not accept a multi-sense `expansions: []` public schema.
+- Safe symbolic / compact-key normalization: separator punctuation between alphanumeric groups folds (`CI/CD` → `cicd`, `TCP/IP` → `tcpip`). Significant symbols are not silently collapsed (`A*`, `C++`, `C#`, `O(1)`). Spoken expansions such as `C++` → `c plus plus` and `C#` → `c sharp` are kept; unsupported symbolic structures reject rather than collapsing to `c` / `on`.
 - `classifyExpansionRelation` treats British/American suffix spelling (`acknowledgement`/`acknowledgment`, `colour`/`color`, `optimisation`/`optimization`) and conservative short-form abbreviations of an aligned longer token (`tech`/`technical`) as compatible. Distinct meanings (`authentication`/`authorization`, CI/CD delivery vs deployment) stay unresolved.
-- Compact-key normalization folds separator punctuation between alphanumeric groups (`CI/CD` → `cicd`, `TCP/IP` → `tcpip`) and refuses silent collapse of significant symbols (`A*`, `C++`, `C#`, `O(1)`).
-- Deterministic corpus mining now extracts digit-prefixed acronyms only when that suffix is independently observed in the same document as a standalone acronym surface or as an independent token (`200FPS` + standalone `FPS` / token `fps` → `FPS`; `2FA` without standalone `FA` or token `fa` does not become `FA`). Within-document repeats remain candidate evidence. These paths do not invent keys from arbitrary phrases and do not loosen short-token auto-accept. Equivalence decisions preserve `aliases`, optional `primary`, and provenance through compile/dictionary entries.
+- Contextual lexical completion (Model B) from trusted configured expansions. Typed identity stays typed; canonical lexical intent is separate. Explain/query diagnostics may add `contextualCompletion`, `lexicalTokens`, and `lexicalPhraseKey` without changing `search()` result semantics.
+- Bound trailing-token evidence consumption so a completed expansion does not donate independent title evidence for a leftover stub (`sec` in `frames per sec` does not rank App Sec; `prot` in `hypertext transfer prot` does not rank Protobuf).
+- Stage 3A exact unread body-block skipping for ordinary exact multi-token compiled `search()`: additive `exact-pruning-v2` per-document body presence masks on the existing 128-document ordinal grid. Stronger co-occurrence classes are evaluated first; remaining 1-of-k body-only ordinals may be skipped only after the weak representative stream is full. Results stay identical to exhaustive compiled search. `searchDetailed()`, prefix, repaired, acronym, numeric, and custom-constraint paths fail closed. No new public `SearchEngine` method. Stage 3A `postingBlocks*` counters are unique 128-document body-presence blocks (`total = decoded + classifiedFromMasks`); they are not Stage 2B duplicate-array `postingBlocksSkipped`.
+- Deterministic corpus mining now extracts digit-prefixed acronyms only when that suffix is independently observed in the same document as a standalone acronym surface or as an independent token (`200FPS` + standalone `FPS` / token `fps` → `FPS`; `2FA` without standalone `FA` or token `fa` does not become `FA`). Within-document repeats remain candidate evidence. These paths do not invent keys from arbitrary phrases and do not loosen short-token auto-accept.
+
+### Changed
+
+- Morphology / title-prefix scoring no longer treats `frames` as a title-prefix of `framework`. Independent morphology such as `libraries` ↔ `library` is unchanged.
+- Weak single-token body-frequency is a last-resort tie-break only. It does not attach an `fps` acronym concept to query `frames`.
+- Stage 3A on a mixed N=25k VPN-like workload (`"virtual private network"`) decoded about 13.9× fewer posting entries (59,294 → 4,279), materialized and featured about 5.1× fewer documents (10,041 → 1,954), and cut p50 about 5.1× on the acceptance machine (238.5 ms → 46.3 ms). N=100k stayed exact; remaining conjunction work scaled about 4× with a 4× corpus (matches 10,041 → 40,195; materialized 1,954 → 7,792; posting entries 4,279 → 17,117; p50 937 ms → 182 ms vs exhaustive). That removes much of the 1-of-k body flood before decode/materialization. It does not make query cost flat with corpus size, and is not an SLA, O(1), or 1M/50 ms claim.
+
+### Security
+
+- CI workflow permissions are `contents: read`. Path normalization is hardened. The known ReDoS regression remains fixed. The published package has no model/provider adapters, API-key configuration, or enrichment orchestration.
 
 ### Removed
 
-- `@software-land/search/enrichment` and its model-orchestration surface (providers, prompts, inference cache, local GGUF/Python runner). Application build tooling generates lexical entries; the corpus compiler consumes them.
+- Unpublished `@software-land/search/enrichment` and its model-orchestration surface (providers, prompts, inference cache, local GGUF/Python runner) from the 0.5 development line. Published 0.4.0 never shipped that export. Application build tooling generates lexical entries; the corpus compiler consumes them.
 
 ## 0.4.0
 
