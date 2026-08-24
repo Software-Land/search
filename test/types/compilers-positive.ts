@@ -5,6 +5,9 @@ import {
   compileAnalysis,
   compileCorpus,
   loadCorpus,
+  normalizeExternalEquivalences,
+  classifyExpansionRelation,
+  ExternalEquivalenceError,
   type AnalyzeResult,
   type CompileOptions,
   type CorpusDocument,
@@ -38,12 +41,6 @@ import {
   type LexicalFrequencyArtifact,
   type LexicalIndexArtifact,
 } from "@software-land/search/lexical";
-import {
-  enrichCorpus,
-  createFunctionProvider,
-  type EnrichCorpusOptions,
-  type LexicalInferenceProvider,
-} from "@software-land/search/enrichment";
 
 const documents: CorpusDocument[] = [{ id: "a", title: "CPU", body: "central" }];
 const compileOpts: CompileOptions = {};
@@ -109,22 +106,27 @@ void LEXICAL_INDEX_FORMAT;
 void lexicalIndexVersion;
 void lexicalIndex.corpus.documentCount;
 
-const provider: LexicalInferenceProvider = createFunctionProvider(async (request) => ({
-  schemaVersion: "search-enrichment-inference-v1",
-  proposals:
-    request.task === "discover-equivalences" || !request.key
-      ? []
-      : [
-          {
-            key: request.key,
-            expansion: request.minedExpansion,
-            relation: "initialism",
-            ambiguous: false,
-            alternatives: [],
-          },
-        ],
-}));
-const enrichOpts: EnrichCorpusOptions = { provider, autoAcceptVerified: false };
-export async function runEnrichment(input: unknown) {
-  return enrichCorpus(input, enrichOpts);
+const normalized = normalizeExternalEquivalences([
+  {
+    key: "API",
+    expansion: "Application Programming Interface",
+    aliases: [["app", "programming", "interface"]],
+    primary: "interface",
+    evidenceDocumentIds: ["doc-1"],
+    provenance: "application-generated",
+  },
+]);
+void normalized.entries[0].key;
+void normalized.unresolved;
+void normalized.reconciliations;
+const relation: "identical" | "compatible" | "ambiguous" | "conflict" = classifyExpansionRelation(
+  "grpc",
+  "grpc remote procedure calls",
+  "google remote procedure call"
+);
+void relation;
+try {
+  normalizeExternalEquivalences([{ key: "", expansion: ["x"] }]);
+} catch (err) {
+  if (!(err instanceof ExternalEquivalenceError)) throw err;
 }

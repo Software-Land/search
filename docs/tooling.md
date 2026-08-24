@@ -22,7 +22,7 @@ node tools/search-corpus/build.mjs compile --input corpus.json --output dir --de
 node tools/search-corpus/build.mjs review --pending --output dir
 ```
 
-Public entry: `compileCorpus` / `analyzeCorpus` from `@software-land/search/corpus`. Internal miners are not a supported app API. Optional model-assisted review lives in `@software-land/search/enrichment` and never writes the decisions file.
+Public entry: `compileCorpus` / `analyzeCorpus` / `normalizeExternalEquivalences` / `classifyExpansionRelation` from `@software-land/search/corpus`. Internal miners are not a supported app API. Applications may generate acronym/equivalence rows outside the package; `normalizeExternalEquivalences` validates, normalizes, sorts, collapses identical and trivially compatible duplicates (including British/American suffix spelling and conservative short-form abbreviations such as tech/technical), and records material same-key ambiguity or genuine conflict as unresolved inspection evidence instead of deleting the key. Compact keys fold separator punctuation between alphanumeric groups (`CI/CD` → `cicd`, `TCP/IP` → `tcpip`) and refuse silent collapse of significant symbols (`A*`, `C++`, `C#`, `O(1)`). The package does not select, download, or run a model.
 
 ## search-lexical (`tools/search-lexical`)
 
@@ -42,12 +42,4 @@ Merges semantic graph + explicit domain relationships. Stable relationship ident
 node tools/search-relationships/build.mjs compile \
   --input corpus.json --domain domain.json \
   --semantic relationships-from-builder.json --output dir
-```
-
-## search-enrichment (`tools/search-enrichment`)
-
-Optional build-time lexical review helper. `enrichCorpus` never writes `decisions.json` and is not imported by Search Core, `compileCorpus`, or `SearchEngine`. Providers are caller-supplied: a function/fake provider for tests, or an OpenAI-compatible HTTP provider using built-in `fetch`. Structured responses are validated strictly. `autoAcceptVerified` is off by default. `enrichCorpus` also runs bounded per-document `discover-equivalences` so a model can propose a missing acronym or expansion; one-sided proposals stay in review. Discovery uses the same enrichment cache. The CLI does not read API keys from the environment; pass `--api-key` explicitly if the HTTP server requires auth.
-
-```bash
-node tools/search-enrichment/build.mjs enrich --input corpus.json --output dir --provider function --provider-module ./fake-provider.mjs
 ```

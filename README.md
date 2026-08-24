@@ -101,11 +101,15 @@ node tools/search-corpus/build.mjs compile --input corpus.json --output dir --de
 ```
 
 ```js
-import { compileCorpus } from "@software-land/search/corpus";
+import { compileCorpus, normalizeExternalEquivalences } from "@software-land/search/corpus";
 
 const { equivalences, synonyms, dictionaryEntries } = compileCorpus({
   documents: [{ id: "a", title: "Central Processing Unit (CPU)", body: "The CPU fetches instructions." }],
 });
+
+const generated = normalizeExternalEquivalences([
+  { key: "cpu", expansion: "central processing unit", aliases: [], primary: null },
+]);
 ```
 
 ## Lexical compilers
@@ -238,7 +242,7 @@ SearchEngine.create({ plugins: [plugin], retriever });
 
 v0. The runtime facade, result shape, artifact `format`+`version`, `relationshipStrategy` values, and retriever names are intended to stabilize. Internal feature vectors, BM25 constants, and ranking modules are not public exports.
 
-Supported imports: `@software-land/search`, `@software-land/search/browser`, `@software-land/search/corpus`, `@software-land/search/lexical`, `@software-land/search/relationships`, `@software-land/search/semantic`, `@software-land/search/enrichment`. The last five are build-time compilers/helpers. Root and `./browser` do not import them.
+Supported imports: `@software-land/search`, `@software-land/search/browser`, `@software-land/search/corpus`, `@software-land/search/lexical`, `@software-land/search/relationships`, `@software-land/search/semantic`. The last four are build-time compilers/helpers. Root and `./browser` do not import them.
 
 Root exports: `SearchEngine`, `morphology`, `dictionary`, strategy/retriever constants, artifact parsers, abort helpers, public error classes. `searchWorkerUrl()` is exported only from `./browser`.
 

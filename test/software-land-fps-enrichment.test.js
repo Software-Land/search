@@ -2,7 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { compileCorpus, LIFECYCLE } from "../tools/search-corpus/index.js";
-import { createFunctionProvider, enrichCorpus } from "../tools/search-enrichment/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -50,7 +49,7 @@ const siblingRoots = [
   "/home/sam/dev/software.land-search-wire",
 ];
 
-describe("Software.Land fps enrichment diagnostic", () => {
+describe("Software.Land fps mining diagnostic", () => {
   test("always-on 200FPS excerpt mines fps as review-pending", () => {
     const result = compileCorpus(ALWAYS_ON);
     const fps = result.inspection.candidates.find(
@@ -61,7 +60,7 @@ describe("Software.Land fps enrichment diagnostic", () => {
     expect(result.equivalences.entries.some((e) => e.key === "fps")).toBe(false);
   });
 
-  test("optional sibling Software.Land corpus keeps fps in review unless verified auto-accept agrees", async () => {
+  test("optional sibling Software.Land corpus keeps fps in review", () => {
     const root = siblingRoots.find((dir) => fs.existsSync(path.join(dir, "content", "blog")));
     if (!root) return;
     const corpus = loadSoftwareLandBlog(root);
@@ -73,31 +72,5 @@ describe("Software.Land fps enrichment diagnostic", () => {
     expect(fps).toBeTruthy();
     expect(fps.lifecycle).toBe(LIFECYCLE.REVIEW_PENDING);
     expect(compiled.equivalences.entries.some((e) => e.key === "fps")).toBe(false);
-
-    const enriched = await enrichCorpus(corpus, {
-      autoAcceptVerified: true,
-      provider: createFunctionProvider((request) => {
-        if (request.task === "discover-equivalences" || !request.key) {
-          return { schemaVersion: "search-enrichment-inference-v1", proposals: [] };
-        }
-        return {
-          schemaVersion: "search-enrichment-inference-v1",
-          proposals: [
-            {
-              key: request.key,
-              expansion: request.minedExpansion,
-              relation: "initialism",
-              ambiguous: false,
-              alternatives: [],
-            },
-          ],
-        };
-      }),
-    });
-    const trusted = enriched.compiled.equivalences.entries.find((e) => e.key === "fps");
-    if (trusted) {
-      expect(trusted.expansion).toEqual(["frames", "per", "second"]);
-      expect(trusted.provenance).toBe("verified-enrichment");
-    }
   });
 });

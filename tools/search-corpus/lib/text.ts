@@ -38,11 +38,44 @@ export function tokenize(text?: unknown): string[] {
     .filter(Boolean);
 }
 
+/**
+ * Foldable punctuation joins alphanumeric groups (CI/CD, TCP/IP, i.e.).
+ * Anything left after removing those separators is significant (*, +, #, ())
+ * and must not silently collapse A* → a, C++ → c, C# → c, O(1) → o1.
+ */
+const FOLDABLE_KEY_SEPARATORS = /[\/._\s:-]+/g;
+const FOLDABLE_EXPANSION_PUNCTUATION = /[\/._\s:\-;,!?'"`‘’]+/g;
+
+/**
+ * Spoken words for significant compact-form symbols.
+ * Generic operator names only — not a per-acronym table.
+ */
+function speakSignificantSymbols(raw: string): string {
+  return raw
+    .replace(/\+/g, " plus ")
+    .replace(/#/g, " sharp ")
+    .replace(/\*/g, " star ");
+}
+
+function leftoverAfterFoldable(surface: string, foldable = FOLDABLE_KEY_SEPARATORS): string {
+  return surface.replace(/[A-Za-z0-9]+/g, "").replace(foldable, "");
+}
+
+export function hasUnsafeSymbolicSurface(surface?: unknown): boolean {
+  const raw = String(surface || "").trim();
+  if (!raw) return false;
+  return leftoverAfterFoldable(speakSignificantSymbols(raw), FOLDABLE_EXPANSION_PUNCTUATION).length > 0;
+}
+
 export function acronymKey(surface?: unknown): string {
-  let t = String(surface || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const raw = String(surface || "").trim();
+  if (!raw) return "";
+  const leftover = leftoverAfterFoldable(raw);
+  if (leftover.length) return "";
+  let t = raw.toLowerCase().replace(/[^a-z0-9]/g, "");
   if (!t) return "";
   // Plural surfaces only: APIs, SDKs. Never strip TLS, RBAC, OS, etc.
-  if (/^[A-Z]{2,5}s$/.test(String(surface || "")) && !/\d/.test(t)) {
+  if (/^[A-Z]{2,5}s$/.test(raw) && !/\d/.test(t)) {
     t = t.slice(0, -1);
   }
   return t;
@@ -73,8 +106,12 @@ export function isProtectedLiteral(token: unknown): boolean {
   return false;
 }
 
-export function expansionTokens(phrase: unknown): string[] {
-  return tokenize(phrase).filter(Boolean);
+export function expansionTokens(phrase?: unknown): string[] {
+  const raw = String(phrase || "").trim();
+  if (!raw) return [];
+  const spoken = speakSignificantSymbols(raw);
+  if (leftoverAfterFoldable(spoken, FOLDABLE_EXPANSION_PUNCTUATION).length) return [];
+  return tokenize(spoken).filter(Boolean);
 }
 
 export function contentTokens(tokens: string[]): string[] {

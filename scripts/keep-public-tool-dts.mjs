@@ -6,7 +6,6 @@
  * search-relationships/index.d.ts and types.d.ts are handwritten v0.2.2 contracts.
  * search-corpus/index.d.ts and types.d.ts are handwritten v0.2.2 contracts.
  * search-semantic/index.d.ts is the handwritten v0.2.2 contract.
- * search-enrichment/index.d.ts and types.d.ts are handwritten.
  */
 import { existsSync, readdirSync, statSync, unlinkSync } from "node:fs";
 import path from "node:path";
@@ -15,7 +14,7 @@ import { fileURLToPath } from "node:url";
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 /** Tool directories whose JS is generated from TypeScript. */
-const migratedTools = ["search-lexical", "search-relationships", "search-corpus", "search-semantic", "search-enrichment"];
+const migratedTools = ["search-lexical", "search-relationships", "search-corpus", "search-semantic"];
 
 const keep = new Set([
   "tools/search-lexical/index.d.ts",
@@ -24,8 +23,6 @@ const keep = new Set([
   "tools/search-corpus/index.d.ts",
   "tools/search-corpus/types.d.ts",
   "tools/search-semantic/index.d.ts",
-  "tools/search-enrichment/index.d.ts",
-  "tools/search-enrichment/types.d.ts",
 ]);
 
 function walk(dir, rel) {

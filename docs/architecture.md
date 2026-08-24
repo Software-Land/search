@@ -7,10 +7,9 @@ search-corpus          tools/search-corpus      build-time corpus compiler
 search-lexical         tools/search-lexical     lexical-frequency + lexical-index compilers
 search-semantic        tools/search-semantic    optional Python relatedness builder
 search-relationships   tools/search-relationships
-search-enrichment      tools/search-enrichment  optional lexical review helper
 ```
 
-Distribution: **one npm package** (`@software-land/search`) with subpath exports `.`, `./browser`, `./corpus`, `./relationships`, `./semantic`, `./lexical`, and `./enrichment`. Runtime and browser execute from emitted `dist/` JavaScript; root and browser public types are generated into `dist/*.d.ts`. Corpus, relationships, lexical, enrichment, and Python semantic tooling remain source-shipped under `tools/`. Search Core and the browser Worker do not import `./semantic`, `./corpus`, `./relationships`, or `./enrichment`.
+Distribution: **one npm package** (`@software-land/search`) with subpath exports `.`, `./browser`, `./corpus`, `./relationships`, `./semantic`, and `./lexical`. Runtime and browser execute from emitted `dist/` JavaScript; root and browser public types are generated into `dist/*.d.ts`. Corpus, relationships, lexical, and Python semantic tooling remain source-shipped under `tools/`. Search Core and the browser Worker do not import `./semantic`, `./corpus`, `./relationships`, or `./lexical`. Application-owned model generation may supply external equivalence rows; the corpus compiler consumes them. The package does not own model execution.
 
 ## Environments
 

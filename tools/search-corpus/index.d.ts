@@ -35,6 +35,49 @@ export declare function compileCorpus(input?: unknown, opts?: import("./types.js
 export declare function loadCorpus(input?: unknown): import("./types.js").LoadedCorpus;
 export declare function spellingLexiconPlugin(options?: unknown): unknown;
 export declare function dictionaryEntriesFromEquivalences(equivalences?: unknown): unknown[];
+export declare class ExternalEquivalenceError extends Error {
+  details: string[];
+}
+export declare function classifyExpansionRelation(
+  key?: unknown,
+  left?: unknown,
+  right?: unknown
+): "identical" | "compatible" | "ambiguous" | "conflict";
+export declare function normalizeExternalEquivalences(
+  rows?: unknown,
+  opts?: { strict?: boolean }
+): {
+  format: "search-corpus-external-equivalences";
+  version: 1;
+  entries: Array<{
+    key: string;
+    expansion: string[];
+    aliases: string[][];
+    primary: string | null;
+    evidenceDocumentIds: string[];
+    ambiguous: boolean;
+    alternatives: Array<{ expansion: string[]; note?: string }>;
+    provenance: string;
+  }>;
+  rejected: Array<{ index: number; reason: string }>;
+  conflicts: Array<{ key: string; expansions: string[][] }>;
+  unresolved: Array<{
+    key: string;
+    kind: "ambiguous" | "conflict";
+    expansions: string[][];
+    evidenceDocumentIds: string[];
+    eligible: false;
+  }>;
+  reconciliations: Array<{
+    key: string;
+    kind: "identical" | "compatible" | "ambiguous" | "conflict";
+    eligible: boolean;
+    canonicalExpansion?: string[];
+    aliases?: string[][];
+    expansions: string[][];
+    evidenceDocumentIds: string[];
+  }>;
+};
 export declare function loadDecisions(input?: unknown): unknown;
 export declare function validateDecisions(input?: unknown): unknown;
 export declare function equivalenceId(candidate?: unknown): string;

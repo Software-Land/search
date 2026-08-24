@@ -36,6 +36,9 @@ describe("runtime isolation", () => {
       "hnsw",
       "pytorch",
       "onnxruntime",
+      "search-enrichment",
+      "llama.cpp",
+      "gguf",
     ];
     for (const file of walkJs(root)) {
       const text = fs.readFileSync(file, "utf8").toLowerCase();

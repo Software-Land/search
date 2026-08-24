@@ -2,6 +2,11 @@ export { compileCorpus, analyzeCorpus, compileAnalysis, COMPILER_VERSION } from 
 export { loadCorpus } from "./lib/loadCorpus.js";
 export { spellingLexiconPlugin } from "./lib/vocabulary.js";
 export { dictionaryEntriesFromEquivalences } from "./lib/compile.js";
+export {
+  normalizeExternalEquivalences,
+  classifyExpansionRelation,
+  ExternalEquivalenceError,
+} from "./lib/externalEquivalences.js";
 export { loadDecisions, validateDecisions, DecisionError } from "./lib/decisions.js";
 export { equivalenceId, synonymId } from "./lib/ids.js";
 export { LIFECYCLE } from "./lib/lifecycle.js";
