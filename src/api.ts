@@ -218,6 +218,11 @@ export interface SearchExplanation {
       canonicalToken: string;
       source: "configured-expansion-prefix";
     } | null;
+    configuredSequenceIntent?: {
+      key: string;
+      expansion: string[];
+      matchedKinds: string[];
+    } | null;
     lexicalTokens?: unknown[];
     lexicalPhraseKey?: string;
     normalizedQueryPhrase?: string;

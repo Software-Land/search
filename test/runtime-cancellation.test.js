@@ -294,7 +294,8 @@ describe("query analysis repair", () => {
   test("http salvage from junk uses a dictionary key", () => {
     const q = analyzeQuery("asdfsafhttp", { plugins });
     expect(q.originalSurface).toEqual(["asdfsafhttp"]);
-    expect(q.tokens.map((t) => t.normalized)).toEqual(["hypertext", "transfer", "protocol"]);
+    expect(q.tokens.map((t) => t.normalized)).toEqual(["http"]);
+    expect(q.lexicalPhraseTokens).toEqual(["hypertext", "transfer", "protocol"]);
     expect(q.concepts.some((c) => c.id === "http" && c.provenance === "key")).toBe(true);
   });
 

@@ -288,7 +288,8 @@ describe("dictionary token ownership", () => {
     const plugins = [morphology(), dictionary({ entries: [{ key: "js", expansion: ["javascript"] }] })];
     const expansion = analyzeQuery("javascript", { plugins });
     const key = analyzeQuery("js", { plugins });
-    expect(expansion.tokens.map((t) => t.normalized)).toEqual(key.tokens.map((t) => t.normalized));
+    expect(expansion.lexicalPhraseKey).toEqual(key.lexicalPhraseKey);
+    expect(key.tokens.map((t) => t.normalized)).toEqual(["js"]);
     expect(expansion.concepts.filter((c) => c.kind === "acronym").map((c) => c.id)).toEqual(["js"]);
     expect(expansion.concepts.some((c) => c.kind === "term")).toBe(false);
     expect(key.concepts.some((c) => c.kind === "term")).toBe(false);
@@ -298,8 +299,9 @@ describe("dictionary token ownership", () => {
     const plugins = [morphology(), dictionary({ entries: [{ key: "ml", expansion: ["machine", "learning"] }] })];
     const expansion = analyzeQuery("machine learning", { plugins });
     const key = analyzeQuery("ml", { plugins });
-    expect(expansion.tokens.map((t) => t.normalized)).toEqual(key.tokens.map((t) => t.normalized));
-    expect(expansion.tokens.map((t) => t.normalized)).toEqual(["machine", "learn"]);
+    expect(expansion.lexicalPhraseKey).toEqual(key.lexicalPhraseKey);
+    expect(expansion.lexicalPhraseTokens).toEqual(["machine", "learn"]);
+    expect(key.tokens.map((t) => t.normalized)).toEqual(["ml"]);
     expect(expansion.concepts.find((c) => c.kind === "acronym")?.id).toBe("ml");
     expect(expansion.concepts.find((c) => c.kind === "acronym")?.provenance).toBe("expansion");
     expect(key.concepts.find((c) => c.kind === "acronym")?.provenance).toBe("key");

@@ -18,6 +18,8 @@ import {
   retrievalSourcesForDocument,
   unboundTypedTokens,
   isBoundTrailingTermConcept,
+  identityTokens,
+  evidenceTokens,
 } from "./retrieve.js";
 import { allowPrefixMatch } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
@@ -105,7 +107,7 @@ function queryForms(query: AnalyzedQuery) {
     seen.add(`${kind}:${f}`);
     forms.push({ form: f, kind });
   }
-  for (const tok of unboundTypedTokens(query)) {
+  for (const tok of evidenceTokens(query)) {
     add(tok.normalized, "token");
     if (tok.lemma && tok.lemma !== tok.normalized) add(tok.lemma, "lemma");
   }
@@ -297,7 +299,7 @@ export function createIndexedLexicalRetriever({
     const byPos = new Map<number, IndexedHit>();
     const k = limitOverride || candidateLimit;
     const forms = queryForms(query);
-    const qNorm = (query.tokens || []).map((t) => t.normalized).join(" ");
+    const qNorm = identityTokens(query).map((t) => t.normalized).join(" ");
 
     const exact = state.titleByNorm.get(qNorm);
     if (exact) {
@@ -653,7 +655,7 @@ export function createCompiledLexicalRetriever(): Retriever {
 
     const forms = queryForms(query);
     last.queryFormsExpanded = forms.length;
-    const qNorm = (query.tokens || []).map((token) => token.normalized).join(" ");
+    const qNorm = identityTokens(query).map((token) => token.normalized).join(" ");
     const exact = compiled.titleByNorm.get(qNorm);
     if (exact) for (const pos of exact) add(pos, "exact-title", 50);
 

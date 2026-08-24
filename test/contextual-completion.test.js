@@ -134,7 +134,8 @@ describe("contextual expansion completion representation", () => {
     const q = analyze("application sec");
     expect(q.tokens.map((t) => t.surfaceNormalized || t.normalized)).toEqual(["application", "sec"]);
     expect(q.contextualCompletion).toBeNull();
-    expect(q.lexicalPhraseKey).not.toContain("security");
+    expect(q.configuredSequenceIntent).toMatchObject({ key: "appsec" });
+    expect(q.lexicalPhraseKey).toMatch(/security$/);
   });
 });
 

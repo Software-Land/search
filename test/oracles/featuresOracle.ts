@@ -7,7 +7,7 @@
 
 import { isNearCompletePrefix, levenshtein, DEFAULT_STOP, allowPrefixMatch } from "../../src/text.js";
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "../../src/versionForms.js";
-import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, unboundTypedTokens, isBoundTrailingTypedToken, isBoundTrailingTermConcept } from "../../src/retrieve.js";
+import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, identityTokens, evidenceTokens } from "../../src/retrieve.js";
 import { saturatingFrequency } from "../../src/saturatingFrequency.js";
 import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "../../src/lexicalNormalize.js";
 import {
@@ -34,8 +34,9 @@ type ConfiguredEquivalenceMatch = false | "key-in-title" | "expansion";
 type VersionMatch = false | "dotted" | "compact-dotted" | "compact-weak" | "dotted-weak";
 
 function queryNonStop(query: AnalyzedQuery) {
-  const toks = query.tokens.filter((t) => !DEFAULT_STOP.has(t.normalized) || query.tokens.length <= 2);
-  return toks.length ? toks : query.tokens;
+  const ranking = identityTokens(query);
+  const toks = ranking.filter((t) => !DEFAULT_STOP.has(t.normalized) || ranking.length <= 2);
+  return toks.length ? toks : ranking;
 }
 
 function conceptCoveredInTitle(concept: QueryConcept, doc: IndexedDocument) {
@@ -43,7 +44,7 @@ function conceptCoveredInTitle(concept: QueryConcept, doc: IndexedDocument) {
 }
 
 function exactTitle(query: AnalyzedQuery, doc: IndexedDocument) {
-  const q = query.tokens.map((t) => t.normalized).join(" ");
+  const q = identityTokens(query).map((t) => t.normalized).join(" ");
   return q.length > 0 && q === doc.normalizedTitle;
 }
 
@@ -56,7 +57,7 @@ function hasBoundContextualCompletion(query: AnalyzedQuery) {
 }
 
 function exactTitleTokenMatch(query: AnalyzedQuery, doc: IndexedDocument) {
-  return unboundTypedTokens(query).some((t) => {
+  return evidenceTokens(query).some((t) => {
     if (DEFAULT_STOP.has(t.normalized)) return false;
     return hasIndependentTitleToken(doc, t.normalized);
   });
@@ -68,9 +69,10 @@ function exactTitleTokenMatch(query: AnalyzedQuery, doc: IndexedDocument) {
  * Canonical lemmas and completedToken are not typed-surface evidence.
  */
 function typedSurfaceTitleMatch(query: AnalyzedQuery, doc: IndexedDocument) {
-  const last = query.tokens[query.tokens.length - 1];
-  const skipLast = hasBoundContextualCompletion(query);
-  return query.tokens.some((t) => {
+  const stream = hasConfiguredSequenceIntent(query) ? identityTokens(query) : query.tokens;
+  const last = stream[stream.length - 1];
+  const skipLast = !hasConfiguredSequenceIntent(query) && hasBoundContextualCompletion(query);
+  return stream.some((t) => {
     if (skipLast && t === last) return false;
     const literal = tokenLiteral(t);
     if (!literal || DEFAULT_STOP.has(literal)) return false;
@@ -135,7 +137,7 @@ function queryCoverage(query: AnalyzedQuery, doc: IndexedDocument) {
 
 function titleCoverage(query: AnalyzedQuery, doc: IndexedDocument) {
   if (!doc.nonStopTitle.length) return 0;
-  const qToks = unboundTypedTokens(query);
+  const qToks = evidenceTokens(query);
   let hit = 0;
   for (let i = 0; i < doc.titleTokens.length; i++) {
     const tok = doc.titleTokens[i];
@@ -164,7 +166,7 @@ function configuredEquivalenceMatch(query: AnalyzedQuery, doc: IndexedDocument):
 }
 
 function morphologyMatch(query: AnalyzedQuery, doc: IndexedDocument) {
-  return unboundTypedTokens(query).some((t) => {
+  return evidenceTokens(query).some((t) => {
     const lemma = t.lemma || t.normalized;
     if (!lemma) return false;
     const lemmaHit = doc.titleLemmaSet.has(lemma) || doc.titleTokenSet.has(lemma);
@@ -175,7 +177,7 @@ function morphologyMatch(query: AnalyzedQuery, doc: IndexedDocument) {
 
 function typoDistance(query: AnalyzedQuery, doc: IndexedDocument) {
   let best = 0;
-  for (const t of query.tokens) {
+  for (const t of identityTokens(query)) {
     if (isBoundTrailingTypedToken(query, t)) continue;
     if (t.normalized.length < 5) continue;
     if (t.sources.includes("repeat-collapse") && doc.titleTokenSet.has(t.normalized)) {
@@ -391,7 +393,7 @@ export function extractFeaturesOracle(
   { relationship = null, retrievalScore = 0 }: { relationship?: RelationshipInfo | null; retrievalScore?: number } = {}
 ): FeatureVector {
   const phrase = compiledPhraseLookup(query, doc);
-  const contextual = matchContextualTitlePrefix(query, doc);
+  const contextual = hasConfiguredSequenceIntent(query) ? null : matchContextualTitlePrefix(query, doc);
   const base: FeatureVector = {
     exactTitleMatch: exactTitle(query, doc),
     exactTitleTokenMatch: exactTitleTokenMatch(query, doc),

@@ -62,8 +62,8 @@ const rows = historical.rows.map((row) => {
 const out = {
   format: "software-land-query-result-oracle",
   version: 1,
-  note: "Identity freeze after bound-token consumption, morphology-derived lemma-prefix restriction, and weak single-token body-frequency tie-break. Package version remains 0.4.0. Not a Core ranking contract.",
-  head: "f3c21dc9953e8cfc63644d1c7f6bd24ee2d4c2e7",
+  note: "Identity freeze after configured-sequence intent: unique complete-query key/expansion/alias alignment projects canonical expansion as lexical ranking intent while preserving typed tokens. Distinct keys fail closed. Package version remains 0.5.0. Not a Core ranking contract.",
+  head: "d598451db4098ab79d4f226b82683a975d2b9b78",
   resultLimit: RESULT_LIMIT,
   relatedLimit: RELATED_LIMIT,
   documentCount: documents.length,

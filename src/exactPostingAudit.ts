@@ -7,7 +7,7 @@
  * every posting entry.
  */
 import { queryForms } from "./retrievers.js";
-import { retrievalSourcesForDocument } from "./retrieve.js";
+import { retrievalSourcesForDocument, identityTokens } from "./retrieve.js";
 import { allowPrefixMatch } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
 import type { CompiledLexicalRuntime, CompiledTermRuntime } from "./lexicalIndex.js";
@@ -252,7 +252,7 @@ export function auditCompiledPostingWork(
   }
 
   const forms = queryForms(query);
-  const qNorm = (query.tokens || []).map((token) => token.normalized).join(" ");
+  const qNorm = identityTokens(query).map((token) => token.normalized).join(" ");
   if (qNorm) {
     const exact = compiled.titleByNorm.get(qNorm);
     if (exact) {

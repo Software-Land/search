@@ -14,9 +14,11 @@ import {
   MAX_COMPOUND_REPAIR_TOKEN_LENGTH,
 } from "./analyzeRepair.js";
 import { canonicalLexicalTokensFromQuery } from "./lexicalNormalize.js";
+import { resolveConfiguredSequence } from "./configuredSequence.js";
 import type {
   AnalyzedQuery,
   AnalyzeOptions,
+  ConfiguredSequenceIntent,
   ContextualCompletion,
   DictionaryEntry,
   PrefixCompletion,
@@ -227,20 +229,14 @@ function expansionPrefixEntriesAt(tokens: QueryToken[], dict: SearchPlugin, from
   return entries;
 }
 
-/**
- * Expansion uniquely owned by one key. Shared expansions do not project.
- */
-function uniquelyOwnedExpansion(dict: SearchPlugin | null, key: string) {
-  const byKey = dict?.byKey;
-  if (!byKey) return null;
-  const entry = byKey.get(key);
-  if (!entry?.expansion?.length) return null;
-  const sig = entry.expansion.join("\0");
-  let owners = 0;
-  for (const other of byKey.values()) {
-    if ((other.expansion || []).join("\0") === sig) owners += 1;
-  }
-  return owners === 1 ? [...entry.expansion] : null;
+function provenanceForSequenceKinds(kinds: string[], usedPrefix: boolean) {
+  if (usedPrefix) return "partial-expansion";
+  if (kinds.length === 1 && kinds[0] === "key") return "key";
+  if (kinds.includes("expansion") && !kinds.includes("alias")) return "expansion";
+  if (kinds.includes("alias") && !kinds.includes("expansion") && !kinds.includes("key")) return "alias";
+  if (kinds.includes("expansion")) return "expansion";
+  if (kinds.includes("alias")) return "alias";
+  return "key";
 }
 
 /**
@@ -272,26 +268,38 @@ function lemmatizedExpansionTokens(expansion: string[], plugins: SearchPlugin[])
   return out;
 }
 
-/**
- * Unique exact-key queries inherit the canonical lexical intent of their
- * expansion. Concept identity/provenance stay on the acronym concept.
- * Shared expansions and partial matches are not rewritten.
- */
-function projectUniqueKeyCanonicalIntent(
-  tokens: QueryToken[],
+function attachConfiguredSequenceConcept(
   concepts: QueryConcept[],
-  dict: SearchPlugin | null,
-  plugins: SearchPlugin[]
-) {
-  const acronyms = (concepts || []).filter((c) => c.kind === "acronym");
-  if (acronyms.length !== 1) return tokens;
-  const acr = acronyms[0];
-  if (acr.provenance !== "key") return tokens;
-  if (tokens.length !== 1 || tokens[0].normalized !== acr.id) return tokens;
-  const expansion = uniquelyOwnedExpansion(dict, acr.id);
-  if (!expansion) return tokens;
-  const projected = lemmatizedExpansionTokens(expansion, plugins);
-  return projected.length ? projected : tokens;
+  covered: Set<number>,
+  tokenCount: number,
+  resolution: ReturnType<typeof resolveConfiguredSequence>
+): ConfiguredSequenceIntent | null {
+  if (resolution.status === "ambiguous") {
+    const drop = new Set(resolution.keys);
+    for (let i = concepts.length - 1; i >= 0; i--) {
+      if (concepts[i].kind === "acronym" && drop.has(concepts[i].id)) concepts.splice(i, 1);
+    }
+    covered.clear();
+    return null;
+  }
+  if (resolution.status !== "unique") return null;
+  const { intent, entry, usedPrefix } = resolution;
+  const exists = concepts.some((c) => c.kind === "acronym" && c.id === intent.key);
+  if (!exists) {
+    concepts.push({
+      id: entry.key,
+      kind: "acronym",
+      forms: formsForEntry(entry),
+      expansion: [...(entry.expansion || [])],
+      aliases: (entry.aliases || []).map((a) => [...a]),
+      provenance: provenanceForSequenceKinds(intent.matchedKinds, usedPrefix),
+      matchedExpansionTokens: tokenCount,
+      expansionTokenCount: (entry.expansion || []).length,
+      expansionCoverage: Number((tokenCount / Math.max((entry.expansion || []).length, 1)).toFixed(4)),
+    });
+  }
+  for (let i = 0; i < tokenCount; i++) covered.add(i);
+  return intent;
 }
 
 function entryOwnsExactTypedToken(entry: DictionaryEntry | undefined, typed: string) {
@@ -859,6 +867,14 @@ export function analyzeQuery(
     }
   }
 
+  const sequenceResolution = resolveConfiguredSequence(analyzedTokens, dict);
+  const configuredSequenceIntent = attachConfiguredSequenceConcept(
+    concepts,
+    covered,
+    analyzedTokens.length,
+    sequenceResolution
+  );
+
   for (let i = 0; i < analyzedTokens.length; i++) {
     if (covered.has(i)) continue;
     const tok = analyzedTokens[i];
@@ -896,27 +912,33 @@ export function analyzeQuery(
   const dotted = extractDottedSpans(raw);
   throwIfAborted(signal);
 
-  const intentTokens = projectUniqueKeyCanonicalIntent(analyzedTokens, concepts, dict, plugins);
   const contextual = projectContextualExpansionIntent(analyzedTokens, dict, plugins);
-  const lexicalTokens = contextual?.tokens?.length ? contextual.tokens : intentTokens;
+  const lexicalTokens = configuredSequenceIntent
+    ? contextual?.tokens?.length
+      ? contextual.tokens
+      : lemmatizedExpansionTokens(configuredSequenceIntent.expansion, plugins)
+    : contextual?.tokens?.length
+      ? contextual.tokens
+      : analyzedTokens;
   const lexicalPhraseTokens = canonicalLexicalTokensFromQuery(lexicalTokens);
 
   return {
     raw,
     originalSurface: tokenize(raw),
-    tokens: intentTokens,
+    tokens: analyzedTokens,
     concepts,
     alternatives,
     dottedSpans: dotted,
     prefixCompletion,
     contextualCompletion: contextual?.meta ?? null,
+    configuredSequenceIntent,
     lexicalTokens,
     lexicalPhraseTokens,
     lexicalPhraseKey: lexicalPhraseTokens.join(" "),
     stopstripped:
-      intentTokens.length > 2
-        ? intentTokens.filter((t) => !DEFAULT_STOP.has(t.normalized))
-        : intentTokens,
+      analyzedTokens.length > 2
+        ? analyzedTokens.filter((t) => !DEFAULT_STOP.has(t.normalized))
+        : analyzedTokens,
   };
 }
 

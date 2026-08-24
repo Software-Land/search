@@ -120,6 +120,16 @@ export interface ContextualCompletion {
   source: "configured-expansion-prefix";
 }
 
+/**
+ * Unique complete-query alignment to one configured concept.
+ * Canonical expansion is lexical intent; typed tokens stay typed.
+ */
+export interface ConfiguredSequenceIntent {
+  key: string;
+  expansion: string[];
+  matchedKinds: string[];
+}
+
 export interface ContextualTitlePrefix {
   matchedPrefixTokens: string[];
   activeFinalPrefix: string;
@@ -156,9 +166,9 @@ export interface AnalyzedQuery {
   raw: string;
   originalSurface: string[];
   /**
-   * Lexical intent after analysis, including unique-prefix rewrite and unique
-   * configured-key projection. This is retrieval identity, not a slot for
-   * contextual expansion completion of a trailing typed stub.
+   * Typed query identity after analysis, including unique-prefix rewrite of
+   * the final token when applicable. Unique configured-key matches no longer
+   * rewrite these tokens; canonical expansion lives on `lexicalTokens`.
    */
   tokens: QueryToken[];
   concepts: QueryConcept[];
@@ -171,10 +181,15 @@ export interface AnalyzedQuery {
    */
   contextualCompletion?: ContextualCompletion | null;
   /**
+   * Unique complete-query alignment to one configured concept key.
+   * Absent when no sequence matches or multiple keys remain plausible.
+   */
+  configuredSequenceIntent?: ConfiguredSequenceIntent | null;
+  /**
    * Canonical lexical-intent stream for compiled phrase lookup. May include
-   * unique-key projection or contextual expansion completion. Not typed
-   * identity; ranking features that mean "what the user typed" must use
-   * `tokens` / `surfaceNormalized`.
+   * unique configured-sequence projection or contextual expansion completion.
+   * Not typed identity; ranking features that mean "what the user typed" must
+   * use `tokens` / `surfaceNormalized`.
    */
   lexicalTokens: QueryToken[];
   lexicalPhraseTokens: string[];

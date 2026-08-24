@@ -222,10 +222,29 @@ export function shouldConsumeBoundTrailingToken(query: AnalyzedQuery) {
   return true;
 }
 
+export function hasConfiguredSequenceIntent(query: AnalyzedQuery) {
+  return Boolean(query.configuredSequenceIntent?.key);
+}
+
+export function identityTokens(query: AnalyzedQuery): QueryToken[] {
+  if (hasConfiguredSequenceIntent(query) && query.lexicalTokens?.length) {
+    return query.lexicalTokens;
+  }
+  return query.tokens || [];
+}
+
 export function unboundTypedTokens(query: AnalyzedQuery): QueryToken[] {
+  if (hasConfiguredSequenceIntent(query)) return [];
   const tokens = query.tokens || [];
   if (!tokens.length || !shouldConsumeBoundTrailingToken(query)) return tokens;
   return tokens.slice(0, -1);
+}
+
+export function evidenceTokens(query: AnalyzedQuery): QueryToken[] {
+  if (hasConfiguredSequenceIntent(query) && query.lexicalTokens?.length) {
+    return query.lexicalTokens;
+  }
+  return unboundTypedTokens(query);
 }
 
 export function isBoundTrailingTypedToken(query: AnalyzedQuery, token: QueryToken) {
@@ -337,13 +356,14 @@ function scanDocument(
   doc: IndexedDocument,
   add: (doc: IndexedDocument, source: string) => void
 ) {
-  if (doc.normalizedTitle === query.tokens.map((t) => t.normalized).join(" ")) {
+  const identity = identityTokens(query);
+  if (doc.normalizedTitle === identity.map((t) => t.normalized).join(" ")) {
     add(doc, "exact-title");
   }
 
-  const qNorm = query.tokens.map((t) => t.normalized).join(" ");
+  const qNorm = identity.map((t) => t.normalized).join(" ");
   if (qNorm && doc.normalizedTitle.startsWith(qNorm)) add(doc, "title-prefix");
-  const unbound = unboundTypedTokens(query);
+  const unbound = evidenceTokens(query);
   if (
     doc.titleTokens.some((tok) =>
       unbound.some((t) => allowPrefixMatch(t.normalized, tok))
@@ -372,7 +392,9 @@ function scanDocument(
     if (conceptMatchesBody(concept, doc)) add(doc, "body-lexical");
   }
 
-  if (matchContextualTitlePrefix(query, doc)) add(doc, "contextual-title-prefix");
+  if (!hasConfiguredSequenceIntent(query) && matchContextualTitlePrefix(query, doc)) {
+    add(doc, "contextual-title-prefix");
+  }
 }
 
 function createHitBag() {

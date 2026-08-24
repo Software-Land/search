@@ -126,8 +126,10 @@ describe("query analysis", () => {
     const plugins = [morphology(), dictionary({ entries: tlsDict })];
     const expansion = analyzeQuery("transport layer security", { plugins });
     const key = analyzeQuery("tls", { plugins });
-    expect(expansion.tokens.map((t) => t.normalized)).toEqual(key.tokens.map((t) => t.normalized));
-    expect(expansion.tokens.map((t) => t.lemma)).toEqual(key.tokens.map((t) => t.lemma));
+    expect(expansion.lexicalPhraseTokens).toEqual(key.lexicalPhraseTokens);
+    expect(expansion.lexicalPhraseKey).toEqual(key.lexicalPhraseKey);
+    expect(key.tokens.map((t) => t.normalized)).toEqual(["tls"]);
+    expect(expansion.tokens.map((t) => t.normalized)).toEqual(["transport", "layer", "security"]);
     expect(expansion.concepts.map((c) => `${c.kind}:${c.id}`).sort()).toEqual(
       key.concepts.map((c) => `${c.kind}:${c.id}`).sort()
     );
@@ -139,7 +141,8 @@ describe("query analysis", () => {
     const plugins = [morphology(), dictionary({ entries: gpuDict })];
     const full = analyzeQuery("graphics processing unit", { plugins });
     const keyQ = analyzeQuery("gpu", { plugins });
-    expect(full.tokens.map((t) => t.normalized)).toEqual(keyQ.tokens.map((t) => t.normalized));
+    expect(full.lexicalPhraseKey).toEqual(keyQ.lexicalPhraseKey);
+    expect(keyQ.tokens.map((t) => t.normalized)).toEqual(["gpu"]);
     expect(full.concepts.some((c) => c.id === "gpu" && c.kind === "acronym")).toBe(true);
     expect(analyzeQuery("graphics", { plugins }).concepts.some((c) => c.id === "gpu")).toBe(false);
 
@@ -180,9 +183,8 @@ describe("query analysis", () => {
     const plugins = [morphology(), dictionary({ entries: httpDict })];
     const key = analyzeQuery("http", { plugins });
     const expansion = analyzeQuery("hypertext transfer protocol", { plugins });
-    expect(key.tokens.map((t) => ({ normalized: t.normalized, lemma: t.lemma }))).toEqual(
-      expansion.tokens.map((t) => ({ normalized: t.normalized, lemma: t.lemma }))
-    );
+    expect(key.lexicalPhraseTokens).toEqual(expansion.lexicalPhraseTokens);
+    expect(key.tokens.map((t) => t.normalized)).toEqual(["http"]);
     expect(key.concepts.map((c) => ({ id: c.id, kind: c.kind })).sort((a, b) => a.id.localeCompare(b.id))).toEqual(
       expansion.concepts.map((c) => ({ id: c.id, kind: c.kind })).sort((a, b) => a.id.localeCompare(b.id))
     );
@@ -276,9 +278,10 @@ describe("query analysis", () => {
       const tlsAt = row.ids.indexOf("tls");
       if (tlsAt >= 0) expect(row.ids.indexOf("http-body")).toBeLessThan(tlsAt);
     }
-    expect(analyzeQuery("http", { plugins }).tokens.map((t) => t.normalized)).toEqual(
-      analyzeQuery("hypertext transfer protocol", { plugins }).tokens.map((t) => t.normalized)
+    expect(analyzeQuery("http", { plugins }).lexicalPhraseKey).toEqual(
+      analyzeQuery("hypertext transfer protocol", { plugins }).lexicalPhraseKey
     );
+    expect(analyzeQuery("http", { plugins }).tokens.map((t) => t.normalized)).toEqual(["http"]);
   });
 
   test("ambiguous shared expansion prefixes are not attached", () => {
@@ -456,8 +459,9 @@ describe("query analysis", () => {
 
     const full = analyzeQuery("machine learning", { plugins, lexicon, prefixLexicon: lexicon });
     const key = analyzeQuery("ml", { plugins, lexicon, prefixLexicon: lexicon });
-    expect(full.tokens.map((t) => t.normalized)).toEqual(key.tokens.map((t) => t.normalized));
-    expect(full.tokens.map((t) => t.normalized)).toEqual(["machine", "learn"]);
+    expect(full.lexicalPhraseKey).toEqual(key.lexicalPhraseKey);
+    expect(key.tokens.map((t) => t.normalized)).toEqual(["ml"]);
+    expect(full.lexicalPhraseTokens).toEqual(["machine", "learn"]);
     expect(full.concepts.find((c) => c.kind === "acronym")?.provenance).toBe("expansion");
     expect(key.concepts.find((c) => c.kind === "acronym")?.provenance).toBe("key");
 
@@ -474,22 +478,15 @@ describe("query analysis", () => {
     ];
     const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
     const index = buildIndex(docs, schema, plugins);
-    const stubQueries = analyzed.slice(1);
-    const stubCandidateSets = stubQueries.map((q) => retrieveCandidates(q, index).map((h) => h.document.id).sort());
-    for (const ids of stubCandidateSets) expect(ids).toEqual(stubCandidateSets[0]);
-    expect(stubCandidateSets[0]).toContain("linear");
-    expect(stubCandidateSets[0]).not.toContain("learn-code");
-    expect(stubCandidateSets[0]).not.toContain("linkedin");
-    const completeLemmaIds = retrieveCandidates(analyzed[0], index).map((h) => h.document.id).sort();
-    expect(completeLemmaIds).toEqual([...new Set([...stubCandidateSets[0], "learn-code", "linkedin"])].sort());
+    const candidateSets = analyzed.map((q) => retrieveCandidates(q, index).map((h) => h.document.id).sort());
+    for (const ids of candidateSets) expect(ids).toEqual(candidateSets[0]);
+    expect(candidateSets[0]).toContain("linear");
+    expect(candidateSets[0]).not.toContain("appsec");
 
     const e = await engine(docs, mlDict);
-    const stubRanked = incomplete.slice(1).map((raw) => e.search(raw).map((r) => r.id));
+    const stubRanked = incomplete.map((raw) => e.search(raw).map((r) => r.id));
     for (const ids of stubRanked) expect(ids).toEqual(stubRanked[0]);
     expect(stubRanked[0][0]).toBe("linear");
-    expect(analyzeQuery("machine learning", { plugins, lexicon, prefixLexicon: lexicon }).tokens.map((t) => t.normalized)).toEqual(
-      ["machine", "learn"]
-    );
   });
 
   test("exact expansion collapse keeps pre-collapse lexical phrase evidence", async () => {
@@ -569,10 +566,11 @@ describe("query analysis", () => {
 
     const intent = ["machine", "learn"];
     for (const raw of forms) {
-      expect(analyzed[raw].tokens.map((t) => t.normalized)).toEqual(intent);
       expect(analyzed[raw].lexicalPhraseTokens).toEqual(intent);
       expect(analyzed[raw].lexicalPhraseKey).toBe("machine learn");
     }
+    expect(analyzed.ml.tokens.map((t) => t.normalized)).toEqual(["ml"]);
+    expect(analyzed.ml.configuredSequenceIntent).toMatchObject({ key: "ml" });
 
     const docs = [
       {
