@@ -367,6 +367,12 @@ export interface RetrieveOptions {
    * double-counted. The engine enables this only when retrievalScoreWeight is 0.
    */
   skipDuplicatePostingLists?: boolean;
+  /**
+   * Internal Stage-3A flag. When set, compiled retrieval may skip unread
+   * 1-of-k body blocks after stronger co-occurrence classes are evaluated.
+   * Fail closed to exhaustive compiled retrieval if the proof does not hold.
+   */
+  exactBlockSkip?: false | { requiredDepth: number };
 }
 
 export interface AdaptiveOptions {
@@ -569,6 +575,7 @@ export interface FinishTimings {
   primaryId: string | null;
   primaryIds: string[];
   matchCount?: number;
+  featureVectorsConstructed?: number;
   representativeStats?: Record<string, unknown> | null;
   diagnosticRanked?: RankedHit[] | null;
   pruningStats?: ExactPruningStats | null;

@@ -4,6 +4,8 @@
 
 ### Added
 
+- Stage 3A exact unread body-block skipping for ordinary exact multi-token compiled `search()`: additive `exact-pruning-v2` per-document body presence masks on the existing 128-document ordinal grid. Stronger co-occurrence classes are evaluated first; remaining 1-of-k body-only ordinals may be skipped only after the weak representative stream is full. Results stay identical to exhaustive compiled search. `searchDetailed()`, prefix, repaired, acronym, numeric, and custom-constraint paths fail closed. Stage 3A `postingBlocks*` counters are unique 128-document body-presence blocks (`total = decoded + classifiedFromMasks`); they are not Stage 2B duplicate-array `postingBlocksSkipped`.
+
 - `@software-land/search/corpus` exports `normalizeExternalEquivalences` and `ExternalEquivalenceError` for application-generated `{ key, expansion, aliases, primary }` rows. The compiler does not call a model and does not accept a multi-sense `expansions: []` public schema.
 - `classifyExpansionRelation` treats British/American suffix spelling (`acknowledgement`/`acknowledgment`, `colour`/`color`, `optimisation`/`optimization`) and conservative short-form abbreviations of an aligned longer token (`tech`/`technical`) as compatible. Distinct meanings (`authentication`/`authorization`, CI/CD delivery vs deployment) stay unresolved.
 - Compact-key normalization folds separator punctuation between alphanumeric groups (`CI/CD` → `cicd`, `TCP/IP` → `tcpip`) and refuses silent collapse of significant symbols (`A*`, `C++`, `C#`, `O(1)`).

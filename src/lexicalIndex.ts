@@ -36,6 +36,9 @@ export const EXACT_PRUNING_EXTENSION = "exact-pruning-v1";
 export const EXACT_PRUNING_REVISION = 1 as const;
 export const EXACT_PRUNING_BLOCK_SIZE = 128;
 export const SUPPORTED_PRUNING_BLOCK_SIZES = new Set([32, 64, 128, 256]);
+export const EXACT_PRUNING_V2_EXTENSION = "exact-pruning-v2";
+export const EXACT_PRUNING_V2_REVISION = 1 as const;
+export const EXACT_PRUNING_V2_MASK_WORDS = 4;
 
 // Document tuple:
 // [id, titleTokenLength, bodyTokenLength, firstSurfaceToken,
@@ -74,6 +77,20 @@ export type ExactPruningExtensionV1 = {
   boundaries: number[];
 };
 
+export type ExactPruningExtensionV2 = {
+  revision: typeof EXACT_PRUNING_V2_REVISION;
+  unit: "document-ordinal";
+  blockSize: number;
+  documentCount: number;
+  maskWords: typeof EXACT_PRUNING_V2_MASK_WORDS;
+  terms: Array<[string, number[][]]>;
+};
+
+export type TermBodyPresence = {
+  blockIndexes: Uint32Array;
+  words: Uint32Array;
+};
+
 export type CompiledTermRuntime = {
   term: string;
   lemma: string;
@@ -81,6 +98,7 @@ export type CompiledTermRuntime = {
   body: number[];
   titleDf: number;
   bodyDf: number;
+  bodyPresence: TermBodyPresence | null;
 };
 
 export type CompiledLexicalRuntime = {
@@ -97,6 +115,7 @@ export type CompiledLexicalRuntime = {
   avgBodyDl: number;
   postingEntries: number;
   exactPruning: ExactPruningExtensionV1 | null;
+  exactPruningV2: ExactPruningExtensionV2 | null;
 };
 
 function fail(message: string, field: string): never {
@@ -231,6 +250,49 @@ function buildExactPruningExtension(documentCount: number): ExactPruningExtensio
   };
 }
 
+function buildExactPruningV2Extension(terms: SerializedTerm[], documentCount: number): ExactPruningExtensionV2 {
+  const blockSize = EXACT_PRUNING_BLOCK_SIZE;
+  const encoded: Array<[string, number[][]]> = [];
+  for (const row of terms) {
+    const body = row[3];
+    if (!body.length) continue;
+    let minDoc = Infinity;
+    let maxDoc = -1;
+    const blocks = new Map<number, [number, number, number, number]>();
+    let cursor = 0;
+    while (cursor < body.length) {
+      const doc = body[cursor++];
+      const tf = body[cursor++];
+      cursor += tf;
+      if (doc < minDoc) minDoc = doc;
+      if (doc > maxDoc) maxDoc = doc;
+      const block = Math.floor(doc / blockSize);
+      let words = blocks.get(block);
+      if (!words) {
+        words = [0, 0, 0, 0];
+        blocks.set(block, words);
+      }
+      const bit = doc - block * blockSize;
+      const word = (bit / 32) | 0;
+      words[word] = (words[word] | (1 << (bit % 32))) >>> 0;
+    }
+    if (minDoc === Infinity) continue;
+    if (Math.floor(minDoc / blockSize) === Math.floor(maxDoc / blockSize)) continue;
+    const blockRows = [...blocks.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([index, words]) => [index, words[0], words[1], words[2], words[3]]);
+    encoded.push([row[0], blockRows]);
+  }
+  return {
+    revision: EXACT_PRUNING_V2_REVISION,
+    unit: "document-ordinal",
+    blockSize,
+    documentCount,
+    maskWords: EXACT_PRUNING_V2_MASK_WORDS,
+    terms: encoded,
+  };
+}
+
 function buildPayload(index: SearchIndex): LexicalIndexPayload {
   const terms = new Map<string, SerializedTerm>();
   let titleLength = 0;
@@ -250,6 +312,7 @@ function buildPayload(index: SearchIndex): LexicalIndexPayload {
     stats: [n ? titleLength / n : 1, n ? bodyLength / n : 1],
     extensions: {
       [EXACT_PRUNING_EXTENSION]: buildExactPruningExtension(n),
+      [EXACT_PRUNING_V2_EXTENSION]: buildExactPruningV2Extension(sortedTerms, n),
     },
   };
 }
@@ -405,6 +468,95 @@ function parseExactPruningExtension(
   };
 }
 
+function unsigned32(value: unknown, field: string) {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > 0xffffffff) {
+    fail(`${field} must be an unsigned 32-bit integer`, field);
+  }
+  return value >>> 0;
+}
+
+function parseExactPruningV2Extension(
+  value: unknown,
+  documentCount: number,
+  termNames: string[],
+  blockSize: number
+): ExactPruningExtensionV2 | null {
+  if (value === undefined) return null;
+  const field = `data.extensions.${EXACT_PRUNING_V2_EXTENSION}`;
+  if (!plainRecord(value)) fail(`${field} must be a plain object`, field);
+  if (value.revision !== EXACT_PRUNING_V2_REVISION) {
+    fail(`${field}.revision is unsupported`, `${field}.revision`);
+  }
+  if (value.unit !== "document-ordinal") {
+    fail(`${field}.unit must be document-ordinal`, `${field}.unit`);
+  }
+  if (value.blockSize !== blockSize) {
+    fail(`${field}.blockSize must match exact-pruning-v1`, `${field}.blockSize`);
+  }
+  if (value.documentCount !== documentCount) {
+    fail(`${field}.documentCount must match the compiled corpus`, `${field}.documentCount`);
+  }
+  if (value.maskWords !== EXACT_PRUNING_V2_MASK_WORDS) {
+    fail(`${field}.maskWords must be ${EXACT_PRUNING_V2_MASK_WORDS}`, `${field}.maskWords`);
+  }
+  if (!Array.isArray(value.terms)) fail(`${field}.terms must be an array`, `${field}.terms`);
+  const knownTerms = new Set(termNames);
+  const nBlocks = Math.max(1, Math.ceil(documentCount / blockSize));
+  const lastBlockWidth = documentCount === 0 ? 0 : ((documentCount - 1) % blockSize) + 1;
+  const parsed: Array<[string, number[][]]> = [];
+  let previousTerm = "";
+  for (let i = 0; i < value.terms.length; i++) {
+    const row = value.terms[i];
+    const rowField = `${field}.terms[${i}]`;
+    if (!Array.isArray(row) || row.length !== 2) fail(`${rowField} must be [term, blocks]`, rowField);
+    const term = row[0];
+    const blocks = row[1];
+    if (typeof term !== "string" || !term) fail(`${rowField}[0] must be a non-empty term`, `${rowField}[0]`);
+    if (term <= previousTerm) fail(`${rowField}[0] must be sorted and unique`, `${rowField}[0]`);
+    if (!knownTerms.has(term)) fail(`${rowField}[0] is not a compiled term`, `${rowField}[0]`);
+    previousTerm = term;
+    if (!Array.isArray(blocks)) fail(`${rowField}[1] must be an array`, `${rowField}[1]`);
+    const encoded: number[][] = [];
+    let previousBlock = -1;
+    for (let b = 0; b < blocks.length; b++) {
+      const blockRow = blocks[b];
+      const blockField = `${rowField}[1][${b}]`;
+      if (!Array.isArray(blockRow) || blockRow.length !== 5) {
+        fail(`${blockField} must be [blockIndex, w0, w1, w2, w3]`, blockField);
+      }
+      const blockIndex = unsigned32(blockRow[0], `${blockField}[0]`);
+      if (blockIndex <= previousBlock) fail(`${blockField}[0] must be sorted and unique`, `${blockField}[0]`);
+      if (blockIndex >= nBlocks) fail(`${blockField}[0] is out of range`, `${blockField}[0]`);
+      previousBlock = blockIndex;
+      const words = [
+        unsigned32(blockRow[1], `${blockField}[1]`),
+        unsigned32(blockRow[2], `${blockField}[2]`),
+        unsigned32(blockRow[3], `${blockField}[3]`),
+        unsigned32(blockRow[4], `${blockField}[4]`),
+      ];
+      if (words.every((word) => word === 0)) fail(`${blockField} must be a non-empty mask`, blockField);
+      if (blockIndex === nBlocks - 1 && lastBlockWidth < EXACT_PRUNING_BLOCK_SIZE) {
+        for (let bit = lastBlockWidth; bit < EXACT_PRUNING_BLOCK_SIZE; bit++) {
+          const word = (bit / 32) | 0;
+          if (words[word] & (1 << (bit % 32))) {
+            fail(`${blockField} has bits past the final document ordinal`, blockField);
+          }
+        }
+      }
+      encoded.push([blockIndex, ...words]);
+    }
+    parsed.push([term, encoded]);
+  }
+  return {
+    revision: EXACT_PRUNING_V2_REVISION,
+    unit: "document-ordinal",
+    blockSize,
+    documentCount,
+    maskWords: EXACT_PRUNING_V2_MASK_WORDS,
+    terms: parsed,
+  };
+}
+
 function parsePayload(value: unknown): LexicalIndexPayload {
   if (!plainRecord(value)) fail("Lexical index data must be a plain object", "data");
   if (!Array.isArray(value.documents)) fail("Lexical index data.documents must be an array", "data.documents");
@@ -426,6 +578,13 @@ function parsePayload(value: unknown): LexicalIndexPayload {
   const extensions = { ...value.extensions };
   const exactPruning = parseExactPruningExtension(extensions[EXACT_PRUNING_EXTENSION], documents.length);
   if (exactPruning) extensions[EXACT_PRUNING_EXTENSION] = exactPruning;
+  const exactPruningV2 = parseExactPruningV2Extension(
+    extensions[EXACT_PRUNING_V2_EXTENSION],
+    documents.length,
+    terms.map((row) => row[0]),
+    exactPruning?.blockSize || EXACT_PRUNING_BLOCK_SIZE
+  );
+  if (exactPruningV2) extensions[EXACT_PRUNING_V2_EXTENSION] = exactPruningV2;
   return {
     documents,
     terms,
@@ -454,6 +613,7 @@ function runtimeFromPayload(
     body: row[3],
     titleDf: rows(row[2]),
     bodyDf: rows(row[3]),
+    bodyPresence: null,
   }));
   const bySurface = new Map<string, CompiledTermRuntime>();
   const byLemma = new Map<string, CompiledTermRuntime[]>();
@@ -494,6 +654,25 @@ function runtimeFromPayload(
   }
   sortedTitles.sort((a, b) => (a.norm < b.norm ? -1 : a.norm > b.norm ? 1 : a.pos - b.pos));
   const exactPruning = (payload.extensions[EXACT_PRUNING_EXTENSION] as ExactPruningExtensionV1 | undefined) || null;
+  const exactPruningV2 = (payload.extensions[EXACT_PRUNING_V2_EXTENSION] as ExactPruningExtensionV2 | undefined) || null;
+  if (exactPruningV2) {
+    const byTerm = new Map(terms.map((term) => [term.term, term]));
+    for (const [name, blocks] of exactPruningV2.terms) {
+      const term = byTerm.get(name);
+      if (!term) continue;
+      const blockIndexes = new Uint32Array(blocks.length);
+      const words = new Uint32Array(blocks.length * EXACT_PRUNING_V2_MASK_WORDS);
+      for (let i = 0; i < blocks.length; i++) {
+        const row = blocks[i];
+        blockIndexes[i] = row[0];
+        words[i * EXACT_PRUNING_V2_MASK_WORDS] = row[1];
+        words[i * EXACT_PRUNING_V2_MASK_WORDS + 1] = row[2];
+        words[i * EXACT_PRUNING_V2_MASK_WORDS + 2] = row[3];
+        words[i * EXACT_PRUNING_V2_MASK_WORDS + 3] = row[4];
+      }
+      term.bodyPresence = { blockIndexes, words };
+    }
+  }
   return {
     terms,
     bySurface,
@@ -508,6 +687,7 @@ function runtimeFromPayload(
     avgBodyDl: payload.stats[1] || 1,
     postingEntries,
     exactPruning,
+    exactPruningV2,
   };
 }
 

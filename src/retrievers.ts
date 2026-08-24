@@ -27,6 +27,7 @@ import {
   type CompiledLexicalRuntime,
   type CompiledTermRuntime,
 } from "./lexicalIndex.js";
+import { planStage3ABodyOrdinals, stage3AUnsupportedReason } from "./exactBlockSkip.js";
 import type {
   AdaptiveRetrieverOptions,
   AnalyzedQuery,
@@ -476,9 +477,10 @@ export function createIndexedLexicalRetriever({
  * Stage-1 exact compiled retrieval.
  *
  * Every potentially matching posting is visited and exact provenance is
- * rechecked against the reconstructed indexed document. There is deliberately
- * no candidate budget, prefix cap, posting early termination, or block/score
- * pruning here.
+ * rechecked against the reconstructed indexed document, except Stage 3A
+ * unread 1-of-k body skip (presence masks) and Stage 2B skip of posting
+ * arrays this query already walked. There is no candidate budget, prefix
+ * cap, or approximate top-K.
  */
 export function createCompiledLexicalRetriever(): Retriever {
   let state: CompiledLexicalRuntime | null = null;
@@ -493,6 +495,16 @@ export function createCompiledLexicalRetriever(): Retriever {
     distinctDocumentsExamined: 0,
     exactMatches: 0,
     rawDocumentScans: 0,
+    postingBlocksTotal: 0,
+    postingBlocksDecoded: 0,
+    postingBlocksClassifiedFromMasks: 0,
+    postingBlocksSkippedUnread: 0,
+    duplicatePostingBlocksAvoided: 0,
+    postingEntriesDecoded: 0,
+    candidateDocumentsMaterialized: 0,
+    provenanceDocumentsScanned: 0,
+    stage3A: "off",
+    stage3AFallbackReason: null as string | null,
   };
 
   function prepare(index: SearchIndex, extra?: { plugins?: import("./types.js").SearchPlugin[] }) {
@@ -533,7 +545,12 @@ export function createCompiledLexicalRetriever(): Retriever {
       const entries = df || 0;
       last.postingEntriesSkipped += entries;
       last.duplicatePostingEntriesAvoided += entries;
-      last.postingBlocksSkipped += postingBlockCount(entries);
+      // Stage 2B: ceil(df/128) of duplicate already-walked posting arrays.
+      // Not unread skip. postingBlocksSkipped is the legacy name of
+      // duplicatePostingBlocksAvoided.
+      const duplicateBlocks = postingBlockCount(entries);
+      last.postingBlocksSkipped += duplicateBlocks;
+      last.duplicatePostingBlocksAvoided += duplicateBlocks;
       return;
     }
     if (skipDuplicate) walked.add(flat);
@@ -547,6 +564,7 @@ export function createCompiledLexicalRetriever(): Retriever {
   function retrieve(query: AnalyzedQuery, index: SearchIndex, {
     signal,
     skipDuplicatePostingLists = false,
+    exactBlockSkip = false,
   }: RetrieveOptions = {}) {
     throwIfAborted(signal);
     if (!state) prepare(index);
@@ -567,7 +585,19 @@ export function createCompiledLexicalRetriever(): Retriever {
       distinctDocumentsExamined: 0,
       exactMatches: 0,
       rawDocumentScans: 0,
+      postingBlocksTotal: 0,
+      postingBlocksDecoded: 0,
+      postingBlocksClassifiedFromMasks: 0,
+      postingBlocksSkippedUnread: 0,
+      duplicatePostingBlocksAvoided: 0,
+      postingEntriesDecoded: 0,
+      candidateDocumentsMaterialized: 0,
+      provenanceDocumentsScanned: 0,
+      stage3A: "off",
+      stage3AFallbackReason: null as string | null,
     };
+    const skipPlan = typeof exactBlockSkip === "object" && exactBlockSkip ? exactBlockSkip : null;
+    const skipScore = skipPlan !== null;
 
     function add(pos: number, source: string, scoreDelta = 0) {
       let hit = byPos.get(pos);
@@ -593,7 +623,7 @@ export function createCompiledLexicalRetriever(): Retriever {
       const lengths = field === "title" ? compiled.titleDl : compiled.bodyDl;
       const weight = idf(n, df) * boost;
       walkPostings(flat, df, (doc, tf) => {
-        add(doc, source, weight * bm25Tf(tf, lengths[doc], avgdl));
+        add(doc, source, skipScore ? 0 : weight * bm25Tf(tf, lengths[doc], avgdl));
       }, signal, walked, skipDuplicate);
     }
 
@@ -617,7 +647,7 @@ export function createCompiledLexicalRetriever(): Retriever {
       const lengths = field === "title" ? compiled.titleDl : compiled.bodyDl;
       const weight = idf(n, counts.size) * boost;
       for (const [doc, tf] of counts) {
-        add(doc, source, weight * bm25Tf(tf, lengths[doc], avgdl));
+        add(doc, source, skipScore ? 0 : weight * bm25Tf(tf, lengths[doc], avgdl));
       }
     }
 
@@ -637,14 +667,15 @@ export function createCompiledLexicalRetriever(): Retriever {
     }
 
     let step = 0;
+    const skipBodyWalk = skipPlan !== null;
     for (const { form, kind } of forms) {
       if ((step++ & 7) === 0) throwIfAborted(signal);
       const acronym = kind === "acronym-key" || kind === "acronym-form";
       const surface = compiled.bySurface.get(form);
       accumulateSurface(surface, "title", acronym ? "configured-equivalence" : "title-token", TITLE_BOOST);
-      accumulateSurface(surface, "body", "body-lexical", 1);
+      if (!skipBodyWalk) accumulateSurface(surface, "body", "body-lexical", 1);
       accumulateLemma(compiled.byLemma.get(form), "title", "morphology", TITLE_BOOST * 0.6);
-      accumulateLemma(compiled.byLemma.get(form), "body", "morphology", 0.5);
+      if (!skipBodyWalk) accumulateLemma(compiled.byLemma.get(form), "body", "morphology", 0.5);
 
       if (!isAllDigitToken(form) && form.length >= 3) {
         let i = lowerBoundTerm(compiled.sortedTerms, form);
@@ -656,7 +687,7 @@ export function createCompiledLexicalRetriever(): Retriever {
           if (allowPrefixMatch(form, term)) {
             accumulateSurface(row, "title", "title-token-prefix", TITLE_BOOST * 0.5);
           }
-          if (!isAllDigitToken(term)) {
+          if (!skipBodyWalk && !isAllDigitToken(term)) {
             accumulateSurface(row, "body", "indexed-lexical", 0.4);
           }
         }
@@ -693,17 +724,60 @@ export function createCompiledLexicalRetriever(): Retriever {
       }
     }
 
+    if (skipBodyWalk) {
+      const plan = planStage3ABodyOrdinals({
+        query,
+        compiled,
+        documents: docs,
+        titleOrdinals: new Set(byPos.keys()),
+        requiredDepth: skipPlan ? skipPlan.requiredDepth : 0,
+        signal,
+      });
+      if (plan) {
+        last.stage3A = "applied";
+        last.postingBlocksTotal = plan.stats.postingBlocksTotal;
+        last.postingBlocksDecoded = plan.stats.postingBlocksDecoded;
+        last.postingBlocksClassifiedFromMasks = plan.stats.postingBlocksClassifiedFromMasks;
+        last.postingBlocksSkippedUnread = plan.stats.postingBlocksSkippedUnread;
+        last.postingEntriesDecoded = last.postingEntriesVisited + plan.stats.postingEntriesDecoded;
+        for (const pos of plan.bodyOrdinals) add(pos, "body-lexical", 0);
+      } else {
+        last.stage3A = "fallback";
+        last.stage3AFallbackReason = stage3AUnsupportedReason(query) || "unbounded-presence";
+        for (const { form, kind } of forms) {
+          if ((step++ & 7) === 0) throwIfAborted(signal);
+          const surface = compiled.bySurface.get(form);
+          accumulateSurface(surface, "body", kind === "acronym-key" || kind === "acronym-form" ? "body-lexical" : "body-lexical", 1);
+          accumulateLemma(compiled.byLemma.get(form), "body", "morphology", 0.5);
+          if (!isAllDigitToken(form) && form.length >= 3) {
+            let i = lowerBoundTerm(compiled.sortedTerms, form);
+            while (i < compiled.sortedTerms.length) {
+              const term = compiled.sortedTerms[i++];
+              if (!term.startsWith(form)) break;
+              if (term === form || isAllDigitToken(term)) continue;
+              accumulateSurface(compiled.bySurface.get(term), "body", "indexed-lexical", 0.4);
+            }
+          }
+        }
+      }
+    }
+
     last.distinctDocumentsExamined = byPos.size;
+    last.candidateDocumentsMaterialized = byPos.size;
     const hits: IndexedHit[] = [];
     for (const [pos, hit] of byPos) {
       if ((step++ & 7) === 0) throwIfAborted(signal);
       const sources = retrievalSourcesForDocument(query, docs[pos]);
+      last.provenanceDocumentsScanned += 1;
       if (!sources.length) continue;
       hit.retrievalSources = sources;
       hits.push(hit);
     }
     hits.sort((a, b) => a.pos - b.pos);
     last.exactMatches = hits.length;
+    if (last.stage3A !== "applied") {
+      last.postingEntriesDecoded = last.postingEntriesVisited;
+    }
     return hits.map((hit) => ({
       document: docs[hit.pos],
       retrievalSources: hit.retrievalSources,
@@ -730,7 +804,13 @@ export function createCompiledLexicalRetriever(): Retriever {
         terms: state?.terms.length || 0,
         postingEntries: state?.postingEntries || 0,
         ...last,
-        pruning: last.postingEntriesSkipped ? "duplicate-posting-lists" : "none",
+        postingEntriesDecoded: last.postingEntriesDecoded || last.postingEntriesVisited,
+        candidateDocumentsMaterialized: last.candidateDocumentsMaterialized,
+        provenanceDocumentsScanned: last.provenanceDocumentsScanned,
+        stage3A: last.stage3A,
+        stage3AFallbackReason: last.stage3AFallbackReason,
+        postingEntriesVisited: last.postingEntriesVisited,
+        pruning: last.postingEntriesSkipped ? "duplicate-posting-lists" : last.stage3A === "applied" ? "unread-body-blocks" : "none",
       };
     },
   };

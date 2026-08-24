@@ -431,9 +431,11 @@ export class SearchEngine {
     }
     const retrievalScoreOf = (hit: RetrievalHit) => (weight && maxRet ? weight * ((hit.retrievalScore || 0) / maxRet) : 0);
     const tFeat = performance.now();
+    let featureVectorsConstructed = 0;
     const featureHits = (hits: RetrievalHit[]) =>
       hits.map((hit, i) => {
         if (i % 8 === 0) throwIfAborted(signal);
+        featureVectorsConstructed += 1;
         return {
           ...hit,
           features: extractFeatures(query, hit.document, {
@@ -523,6 +525,7 @@ export class SearchEngine {
         featureMs,
         relationshipMs: 0,
         pruningStats,
+        featureVectorsConstructed,
       };
     }
 
@@ -550,7 +553,7 @@ export class SearchEngine {
       });
     }
     const relationshipMs = performance.now() - tRel;
-    return { featured, applied, featureMs, relationshipMs, pruningStats };
+    return { featured, applied, featureMs, relationshipMs, pruningStats, featureVectorsConstructed };
   }
 
   _finish(ranked: RankedHit[], query: AnalyzedQuery, explain: boolean, strategy: string, timings: FinishTimings) {
@@ -581,6 +584,7 @@ export class SearchEngine {
       rawDocumentScans: retrievalStats.rawDocumentScans ?? null,
       postingBlocksVisited: retrievalStats.postingBlocksVisited ?? timings.pruningStats?.postingBlocksVisited ?? 0,
       postingBlocksSkipped: retrievalStats.postingBlocksSkipped ?? timings.pruningStats?.postingBlocksSkipped ?? 0,
+      duplicatePostingBlocksAvoided: retrievalStats.duplicatePostingBlocksAvoided ?? retrievalStats.postingBlocksSkipped ?? 0,
       postingEntriesSkipped:
         (Number(retrievalStats.postingEntriesSkipped) || 0) +
         (timings.pruningStats?.postingEntriesSkipped ?? 0),
@@ -595,6 +599,19 @@ export class SearchEngine {
       pruningSignaturesEncountered: timings.pruningStats?.signaturesEncountered ?? 0,
       pruningRepresentativesRetained: timings.pruningStats?.representativesRetained ?? 0,
       pruningFallbackReason: timings.pruningStats?.pruningFallbackReason ?? null,
+      postingBlocksTotal: retrievalStats.postingBlocksTotal ?? 0,
+      postingBlocksDecoded: retrievalStats.postingBlocksDecoded ?? 0,
+      postingBlocksClassifiedFromMasks: retrievalStats.postingBlocksClassifiedFromMasks ?? 0,
+      postingBlocksSkippedUnread: retrievalStats.postingBlocksSkippedUnread ?? 0,
+      postingEntriesDecoded: retrievalStats.postingEntriesDecoded ?? retrievalStats.postingEntriesVisited ?? 0,
+      candidateDocumentsMaterialized: retrievalStats.candidateDocumentsMaterialized ?? timings.matchCount ?? 0,
+      provenanceDocumentsScanned: retrievalStats.provenanceDocumentsScanned ?? 0,
+      featureVectorsConstructed: timings.featureVectorsConstructed ?? 0,
+      signaturesDiscovered: (timings.representativeStats as { signatures?: number } | null)?.signatures ?? 0,
+      representativesInserted: (timings.representativeStats as { retained?: number } | null)?.retained ?? 0,
+      representativesReplaced: 0,
+      stage3A: retrievalStats.stage3A ?? "off",
+      stage3AFallbackReason: retrievalStats.stage3AFallbackReason ?? null,
       relatedCount: timings.relatedCount ?? relatedRanked.length,
       primaryId: timings.primaryId,
       primaryIds: timings.primaryIds,
@@ -638,18 +655,26 @@ export class SearchEngine {
     const index = requireIndexed(this);
 
     const tRetrieve = performance.now();
+    const publicDepth = Math.max(0, limit, relatedLimit);
+    const initialRepresentativeDepth =
+      publicDepth + (explain && publicDepth > 0 ? 1 : 0);
     const retrieved = this.retriever.retrieve(query, index, {
       signal,
       candidateLimit: opts.candidateLimit || this.candidateLimit,
       skipDuplicatePostingLists:
         skipDuplicatePostingLists ??
         (this.retrievalScoreWeight === 0 && pruningMode === "auto" && !exactDiagnostics),
+      exactBlockSkip: (
+        !exactDiagnostics &&
+        pruningMode === "auto" &&
+        this.retrievalScoreWeight === 0 &&
+        sourcePolicy !== "all-strong"
+          ? { requiredDepth: initialRepresentativeDepth }
+          : false
+      ) as false | { requiredDepth: number },
     });
     const retrieveMs = performance.now() - tRetrieve;
 
-    const publicDepth = Math.max(0, limit, relatedLimit);
-    const initialRepresentativeDepth =
-      publicDepth + (explain && publicDepth > 0 ? 1 : 0);
     const expanded = this._expandAndFeature(retrieved, query, strategy, {
       signal,
       sourcePolicy,
@@ -658,7 +683,7 @@ export class SearchEngine {
       requiredDepth: initialRepresentativeDepth,
     });
     let featured = expanded.featured;
-    const { applied, featureMs, relationshipMs, pruningStats } = expanded;
+    const { applied, featureMs, relationshipMs, pruningStats, featureVectorsConstructed } = expanded;
 
     const constraints = constraintsForStrategy(strategy);
     let representativeStats: Record<string, unknown> | null = null;
@@ -716,6 +741,7 @@ export class SearchEngine {
       representativeStats,
       diagnosticRanked: exactDiagnostics ? planningRanked : null,
       pruningStats,
+      featureVectorsConstructed,
     });
   }
 
@@ -750,12 +776,23 @@ export class SearchEngine {
 
     const tRetrieve = performance.now();
     throwIfAborted(signal);
+    const publicDepth = Math.max(0, limit, relatedLimit);
+    const initialRepresentativeDepth =
+      publicDepth + (explain && publicDepth > 0 ? 1 : 0);
     const retrieveOpts = {
       signal,
       candidateLimit: opts.candidateLimit || this.candidateLimit,
       skipDuplicatePostingLists:
         skipDuplicatePostingLists ??
         (this.retrievalScoreWeight === 0 && pruningMode === "auto" && !exactDiagnostics),
+      exactBlockSkip: (
+        !exactDiagnostics &&
+        pruningMode === "auto" &&
+        this.retrievalScoreWeight === 0 &&
+        sourcePolicy !== "all-strong"
+          ? { requiredDepth: initialRepresentativeDepth }
+          : false
+      ) as false | { requiredDepth: number },
     };
     const retrieved =
       typeof this.retriever.retrieveAsync === "function"
@@ -768,9 +805,6 @@ export class SearchEngine {
     await Promise.resolve();
     throwIfAborted(signal);
 
-    const publicDepth = Math.max(0, limit, relatedLimit);
-    const initialRepresentativeDepth =
-      publicDepth + (explain && publicDepth > 0 ? 1 : 0);
     const expanded = this._expandAndFeature(retrieved, query, strategy, {
       signal,
       sourcePolicy,
@@ -779,7 +813,7 @@ export class SearchEngine {
       requiredDepth: initialRepresentativeDepth,
     });
     let featured = expanded.featured;
-    const { applied, featureMs, relationshipMs, pruningStats } = expanded;
+    const { applied, featureMs, relationshipMs, pruningStats, featureVectorsConstructed } = expanded;
 
     throwIfAborted(signal);
     await Promise.resolve();
@@ -842,6 +876,7 @@ export class SearchEngine {
       representativeStats,
       diagnosticRanked: exactDiagnostics ? planningRanked : null,
       pruningStats,
+      featureVectorsConstructed,
     });
   }
 }

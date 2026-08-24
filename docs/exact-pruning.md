@@ -154,16 +154,49 @@ Pruning is disabled for:
 
 Failing to prove eligibility is not an error; it means full Stage 1 evaluation. Malformed claimed extension metadata is an artifact error.
 
+## Stage 3A unread body-block skipping
+
+Stage 3A is additive `exact-pruning-v2` metadata on the same 128-document ordinal grid as v1. For each body term whose postings span more than one ordinal block, the compiler stores four uint32 presence words per occupied block. Bit i means document `blockStart+i` contains that term in body. Single-block lists omit masks; queries that need those terms reconstruct presence from the list itself only when it still occupies one block.
+
+Supported `search()` path: builtin ranking, compiled indexed retriever, exact multi-token query with ≥2 unrepaired non-number term concepts, `retrievalScoreWeight === 0`, not `all-strong`, not diagnostics/explain-exhaustive. Title postings are always walked. Body  k-of-k and (k-1)..2-of-k ordinals are always evaluated so phrase adjacency / `bodyPhraseCount` can mint signatures. After those classes fill the weak representative stream to `representativeDepth`, remaining 1-of-k body-only ordinals are skipped without posting decode, materialization, provenance, or `extractFeatures`.
+
+Skip is exact: unread 1-of-k members cannot beat a full same-signature heap on rounded `scoreFeatures` then `document.id`. Document ordinals follow sorted ids, so later unread equal-score ids lose the tie. Missing, single-block-only, or malformed v2 metadata fails closed (omit extension → exhaustive; claimed malformed → load reject). `searchDetailed()` stays exhaustive.
+
+Prefix expansion, classic WAND/BMW, worker sharding, and approximate top-K are out of scope.
+
+### Stage 3A block counters
+
+Stage 3A `postingBlocks*` fields count unique **128-document ordinal body-presence blocks** for the query (v2 masks, or synthesized from a still-single-block body list). They do not count title posting chunks, duplicate already-walked arrays, or class-pop masks as if those were physical blocks.
+
+| field | meaning |
+| --- | --- |
+| `postingBlocksTotal` | unique presence blocks |
+| `postingBlocksDecoded` | presence blocks whose **body posting payloads** were walked |
+| `postingBlocksClassifiedFromMasks` | presence blocks classified from v2 bits without walking body postings |
+| `postingBlocksSkippedUnread` | presence blocks that still contain skipped 1-of-k docs whose body postings were never walked |
+
+Invariant: `postingBlocksTotal = postingBlocksDecoded + postingBlocksClassifiedFromMasks`.
+
+`postingBlocksSkippedUnread` is a subset of `postingBlocksClassifiedFromMasks`. It is **not** added into that sum. One presence block can contain both evaluated conjunction docs (from bits, no body-list walk) and skipped 1-of-k docs.
+
+Stage 2B remains separate:
+
+- `duplicatePostingEntriesAvoided` — posting entries not re-decoded because this query already walked that array
+- `postingBlocksSkipped` — legacy name; `ceil(df/128)` of those duplicate arrays. Same value as `duplicatePostingBlocksAvoided`
+- `postingBlocksVisited` — `ceil(entries/128)` of posting arrays actually walked this query, including title
+
+Title walks stay on `postingBlocksVisited` / `postingEntriesVisited` and are not added into Stage 3 `postingBlocksDecoded`.
+
 ## Stage 2B/2C boundary
 
 Stage 2A can dramatically reduce full feature/signature work for common body-only floods.
 
 Stage 2B production pruning is only **identical posting-array rewalks**: if this query has already decoded a compiled `title`/`body` posting `number[]`, later token, concept, lemma, or contextual lanes that point at the same array are not decoded again. Membership and `retrievalSourcesForDocument` provenance stay exhaustive. Default ranking is unchanged because `retrievalScoreWeight` defaults to `0`.
 
-Unread posting blocks are not skipped. A block cannot be dropped merely because it cannot beat currently known signatures: it might still introduce an unseen stronger or incomparable signature (exact title, independent title token, contextual prefix, version, phrase band, morphology, typo, and the rest of the Stage-2A fail-closed set). Multi-term evidence is also unsafe to prune term-locally: token A in posting list X plus token B in list Y can create query coverage / phrase adjacency that neither list has alone.
+Stage 3A may skip unread 1-of-k body regions after stronger co-occurrence classes on the shared document-ordinal grid have been evaluated. A block still cannot be dropped merely because a term-local posting envelope looks weak: unseen signatures, phrase/direct-class jumps, and title evidence force evaluation. Multi-term evidence is never proven from “all terms occur somewhere in this 128-doc block”; Stage 3A uses per-document presence bits.
 
 Prefix expansion stays exhaustive. Historical prefix recall failures must not return. Dictionary-range metadata may later accelerate lookup; it must not cap terms.
 
 Nonzero `retrievalScoreWeight` fail-closes to the exhaustive posting walk so BM25 reconstruction stays Stage-1 identical. Active relationships keep Stage-2A's fail-closed feature policy; duplicate-list skip still returns the full lexical membership set.
 
-No `search-v2-lexical-index` version bump and no `exact-pruning-v2` extension: this skip is query-time array identity, not compiled metadata. Stage 2C replaces hydrated Sets/Maps/token arrays with compact/lazy views over the same v1 bytes; it does not change this proof. See [scaling.md](scaling.md) and [compact-runtime.md](compact-runtime.md).
+Stage 2B itself still has no version bump: identical-array skip is query-time identity. Stage 3A adds the additive `exact-pruning-v2` extension described above; older artifacts without it remain exhaustive. Stage 2C replaces hydrated Sets/Maps/token arrays with compact/lazy views over the same v1 bytes; it does not change the Stage 2B proof. See [scaling.md](scaling.md) and [compact-runtime.md](compact-runtime.md).
