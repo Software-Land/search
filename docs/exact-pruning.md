@@ -156,13 +156,13 @@ Failing to prove eligibility is not an error; it means full Stage 1 evaluation. 
 
 ## Stage 3A unread body-block skipping
 
-Stage 3A is additive `exact-pruning-v2` metadata on the same 128-document ordinal grid as v1. For each body term whose postings span more than one ordinal block, the compiler stores four uint32 presence words per occupied block. Bit i means document `blockStart+i` contains that term in body. Single-block lists omit masks; queries that need those terms reconstruct presence from the list itself only when it still occupies one block.
+Stage 3A is **shipped**. It is additive `exact-pruning-v2` metadata on the same 128-document ordinal grid as v1. For each body term whose postings span more than one ordinal block, the compiler stores four uint32 presence words per occupied block. Bit i means document `blockStart+i` contains that term in body. Single-block lists omit masks; queries that need those terms reconstruct presence from the list itself only when it still occupies one block.
 
 Supported `search()` path: builtin ranking, compiled indexed retriever, exact multi-token query with ≥2 unrepaired non-number term concepts, `retrievalScoreWeight === 0`, not `all-strong`, not diagnostics/explain-exhaustive. Title postings are always walked. Body  k-of-k and (k-1)..2-of-k ordinals are always evaluated so phrase adjacency / `bodyPhraseCount` can mint signatures. After those classes fill the weak representative stream to `representativeDepth`, remaining 1-of-k body-only ordinals are skipped without posting decode, materialization, provenance, or `extractFeatures`.
 
 Skip is exact: unread 1-of-k members cannot beat a full same-signature heap on rounded `scoreFeatures` then `document.id`. Document ordinals follow sorted ids, so later unread equal-score ids lose the tie. Missing, single-block-only, or malformed v2 metadata fails closed (omit extension → exhaustive; claimed malformed → load reject). `searchDetailed()` stays exhaustive.
 
-Prefix expansion, classic WAND/BMW, worker sharding, and approximate top-K are out of scope.
+Prefix expansion, classic WAND/BMW, and approximate top-K are out of scope. Stage 3A is shipped exact signature-aware unread-block skipping, not a global-threshold WAND/MaxScore walker. Corpus sharding is not the query-scaling plan; see [scaling.md](scaling.md).
 
 ### Stage 3A block counters
 

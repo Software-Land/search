@@ -2,7 +2,7 @@
 
 **Not implemented. Not a current runtime optimization.**
 
-Production indexed `search()` still calls `extractFeatures` for every legitimate match that Stage 2A does not already bound-reject. Stage 2A remains limited to proven plain single-token body-only candidates. Multi-token / phrase queries stay on that exhaustive Stage-2C feature path.
+Production indexed `search()` still calls `extractFeatures` for every legitimate match that Stage 2A does not already bound-reject and that Stage 3A does not skip as unread 1-of-k body-only. Stage 2A remains limited to proven plain single-token body-only candidates. Multi-token / phrase **conjunction** documents stay on that exhaustive Stage-2C feature path; Stage 3A only removes the noncompetitive 1-of-k body flood before feature construction.
 
 This note keeps the bound theorem and one mixed-corpus observation so future work does not rediscover why a skip was not shipped. It is not a product feature, not a ranking change, and not a latency SLA.
 
