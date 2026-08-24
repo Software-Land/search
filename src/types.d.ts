@@ -109,6 +109,17 @@ export interface PrefixCompletion {
   ambiguous: boolean;
 }
 
+/**
+ * Unique configured-expansion completion of a trailing typed stub.
+ * Ranking evidence only. Never a rewrite of the typed QueryToken.
+ */
+export interface ContextualCompletion {
+  activePrefix: string;
+  completedToken: string;
+  canonicalToken: string;
+  source: "configured-expansion-prefix";
+}
+
 export interface ContextualTitlePrefix {
   matchedPrefixTokens: string[];
   activeFinalPrefix: string;
@@ -146,13 +157,25 @@ export interface AnalyzedQuery {
   originalSurface: string[];
   /**
    * Lexical intent after analysis, including unique-prefix rewrite and unique
-   * configured-key projection. Not the typed key; not a semantic embed string.
+   * configured-key projection. This is retrieval identity, not a slot for
+   * contextual expansion completion of a trailing typed stub.
    */
   tokens: QueryToken[];
   concepts: QueryConcept[];
   alternatives: QueryAlternative[];
   dottedSpans: string[];
   prefixCompletion?: PrefixCompletion | null;
+  /**
+   * Unique configured-expansion completion of the trailing typed token.
+   * Present only when the completion is unambiguous under trusted expansions.
+   */
+  contextualCompletion?: ContextualCompletion | null;
+  /**
+   * Canonical lexical-intent stream for compiled phrase lookup. May include
+   * unique-key projection or contextual expansion completion. Not typed
+   * identity; ranking features that mean "what the user typed" must use
+   * `tokens` / `surfaceNormalized`.
+   */
   lexicalTokens: QueryToken[];
   lexicalPhraseTokens: string[];
   lexicalPhraseKey: string;

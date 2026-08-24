@@ -2,7 +2,7 @@ import { isNearCompletePrefix, levenshteinAtMost, DEFAULT_STOP, allowPrefixMatch
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "./versionForms.js";
 import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix } from "./retrieve.js";
 import { saturatingFrequency } from "./saturatingFrequency.js";
-import { canonicalLexicalTokensFromQuery } from "./lexicalNormalize.js";
+import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "./lexicalNormalize.js";
 import {
   asCompactStore,
   compactAdjacentTokens,
@@ -149,6 +149,10 @@ function tokenLiteral(t: QueryToken) {
   return t.surfaceNormalized || t.surface;
 }
 
+function hasBoundContextualCompletion(query: AnalyzedQuery) {
+  return Boolean(query.contextualCompletion?.completedToken);
+}
+
 function hasIndependentTitleTokenFast(doc: IndexedDocument, tok: string) {
   if (doc.independentTitleTokenSet) return doc.independentTitleTokenSet.has(tok);
   return hasIndependentTitleToken(doc, tok);
@@ -168,7 +172,10 @@ function exactTitleTokenMatch(query: AnalyzedQuery, doc: IndexedDocument) {
  */
 function typedSurfaceTitleMatch(query: AnalyzedQuery, doc: IndexedDocument) {
   const independent = independentTitleTokensOf(doc);
+  const last = query.tokens[query.tokens.length - 1];
+  const skipLast = hasBoundContextualCompletion(query);
   return query.tokens.some((t) => {
+    if (skipLast && t === last) return false;
     const literal = tokenLiteral(t);
     if (!literal || DEFAULT_STOP.has(literal)) return false;
     if (hasIndependentTitleTokenFast(doc, literal)) return true;
@@ -179,7 +186,9 @@ function typedSurfaceTitleMatch(query: AnalyzedQuery, doc: IndexedDocument) {
 }
 
 function titlePrefixQuality(query: AnalyzedQuery, doc: IndexedDocument) {
-  const qToks = queryNonStop(query);
+  const last = query.tokens[query.tokens.length - 1];
+  const skipLast = hasBoundContextualCompletion(query);
+  const qToks = queryNonStop(query).filter((qt) => !(skipLast && qt === last));
   const independent = independentTitleTokensOf(doc);
   if (!qToks.length || !doc.titleTokens.length) return 0;
   let matched = 0;
@@ -472,6 +481,15 @@ function phraseKeyCandidates(query: AnalyzedQuery) {
   const toks = canonicalLexicalTokensFromQuery(source);
   if (!toks.length) return [];
   const keys = [toks.join(" ")];
+  // Compiler stores contiguous 1–2 grams. A 3+ token canonical stream cannot
+  // hit as a full join; look up its compiled bigrams instead of unigrams.
+  // Restricted to unique contextual completion so unrelated 3-token queries
+  // keep their existing full-join lookup.
+  if (hasBoundContextualCompletion(query) && toks.length >= 3) {
+    for (const ng of extractCanonicalNgrams(toks, { minN: 2, maxN: 2 })) {
+      if (ng && !keys.includes(ng)) keys.push(ng);
+    }
+  }
   const pc = query.prefixCompletion;
   // Ambiguous completions are explain/provenance only. They must not mint
   // alternate compiled phrase keys or pick a max bodyPhraseCount.
@@ -489,8 +507,17 @@ function compiledPhraseLookup(query: AnalyzedQuery, doc: IndexedDocument) {
   const primary = prep.primaryPhrase;
   let matchingPhraseKey: string | null = null;
   let count = 0;
+  const firstPositive = hasBoundContextualCompletion(query) && candidates.length > 1;
   for (const key of candidates) {
     const n = key && ngrams && Number.isFinite(ngrams[key]) ? ngrams[key] : 0;
+    if (firstPositive) {
+      if (n > 0) {
+        matchingPhraseKey = key;
+        count = n;
+        break;
+      }
+      continue;
+    }
     if (n > count) {
       count = n;
       matchingPhraseKey = key;
@@ -667,10 +694,10 @@ export function classifyDirect(f: Partial<FeatureVector>): DirectClass {
 export const FEATURE_DEFINITIONS = {
   exactTitleMatch: "True when normalized query equals the full normalized title.",
   exactTitleTokenMatch: "True when a non-stop canonical query token occurs as an independent title token (not a digit split from a dotted numeric span such as 1.2). Unique prefix completions and morphology use the lemma; typed stubs and completedToken are not exact surface evidence.",
-  typedSurfaceTitleMatch: "True when the typed/repaired surface (before lemma or unique-prefix rewrite) occurs as an independent title token or is a legitimate prefix of one. Digits produced by splitting a dotted span are not typed-surface evidence. Canonical retrieval lemmas are not typed-surface evidence.",
+  typedSurfaceTitleMatch: "True when the typed/repaired surface (before lemma or unique-prefix rewrite) occurs as an independent title token or is a legitimate prefix of one. Digits produced by splitting a dotted span are not typed-surface evidence. Canonical retrieval lemmas are not typed-surface evidence. A trailing stub bound by unique contextual expansion completion is not unbound title-prefix evidence.",
   titleCoverage: "Fraction of non-stop title tokens accounted for by the query.",
   queryCoverage: "Fraction of query concepts evidenced in the title (or via a legitimate version alias).",
-  titlePrefixQuality: "How completely query tokens prefix title tokens, tightened by extra title tokens.",
+  titlePrefixQuality: "How completely query tokens prefix title tokens, tightened by extra title tokens. A trailing stub bound by unique contextual expansion completion is excluded.",
   contextualTitlePrefix: "True when preceding query tokens align with the title start and only the final token is a proper prefix of the aligned title token.",
   matchedPrefixTokens: "Preceding query tokens that aligned exactly/canonically with the title start.",
   activeFinalPrefix: "Final query token used as a contextual title prefix, or null.",

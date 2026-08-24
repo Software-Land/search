@@ -62,7 +62,7 @@ const rows = historical.rows.map((row) => {
 const out = {
   format: "software-land-query-result-oracle",
   version: 1,
-  note: "Pre-optimization 0.4.0 ordered search results. Not a Core ranking contract. Fail-closed identity for feature/API work.",
+  note: "Identity freeze of ordered Software.Land results after contextual expansion completion (Model-B). Package version remains 0.4.0. Not a Core ranking contract.",
   head: "e91c57bccd630e2bad1821b80d1a918fde41325b",
   resultLimit: RESULT_LIMIT,
   relatedLimit: RELATED_LIMIT,

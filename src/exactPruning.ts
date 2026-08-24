@@ -57,7 +57,8 @@ function bodyOnlySingleTokenContext(query: AnalyzedQuery): BoundContext | null {
   const normalized = token?.normalized || "";
   const unsupportedCompletion = Boolean(
     query.prefixCompletion?.completedToken ||
-    query.prefixCompletion?.canonicalToken
+    query.prefixCompletion?.canonicalToken ||
+    query.contextualCompletion?.completedToken
   );
   const supported = Boolean(
     token &&

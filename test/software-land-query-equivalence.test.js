@@ -1,6 +1,6 @@
 /**
  * Fail-closed identity: every Software.Land historical query must keep the
- * pre-optimization 0.4.0 ordered result list. Not a new Core ranking contract.
+ * frozen ordered result list. Not a new Core ranking contract.
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";

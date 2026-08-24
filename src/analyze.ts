@@ -17,6 +17,7 @@ import { canonicalLexicalTokensFromQuery } from "./lexicalNormalize.js";
 import type {
   AnalyzedQuery,
   AnalyzeOptions,
+  ContextualCompletion,
   DictionaryEntry,
   PrefixCompletion,
   QueryAlternative,
@@ -129,6 +130,28 @@ function tokenExactDictWord(tok: QueryToken, want: string) {
   return false;
 }
 
+function typedTokenForm(tok: QueryToken) {
+  return String(tok.surfaceNormalized || tok.surface || "").toLowerCase();
+}
+
+/**
+ * Preceding configured-expansion tokens compare against typed surface first,
+ * then retrieval identity. Morphology (`frames` → `frame`) must not block
+ * alignment with a configured word such as `frames`.
+ */
+function tokenAlignsConfiguredExact(tok: QueryToken, want: string) {
+  if (tokenExactDictWord(tok, want)) return true;
+  if (tok.normalized === want || tok.lemma === want) return true;
+  return false;
+}
+
+function tokenAlignsConfiguredPrefix(tok: QueryToken, want: string) {
+  const forms = [typedTokenForm(tok), tok.normalized, tok.lemma].filter(Boolean);
+  return forms.some((form) =>
+    tokenSatisfiesDictToken(form, want, { isLast: true, allowShortLastPrefix: true })
+  );
+}
+
 /**
  * Distinct keys for a span. Two or more keys sharing the same exact
  * expansion do not collapse. Insertion order, lexicographic order, and
@@ -189,12 +212,9 @@ function expansionPrefixEntriesAt(tokens: QueryToken[], dict: SearchPlugin, from
     for (let j = 0; j < n; j++) {
       const tok = tokens[from + j];
       const want = seq.tokens[j];
-      if (tokenExactDictWord(tok, want)) continue;
+      if (tokenAlignsConfiguredExact(tok, want)) continue;
       const isLast = j === n - 1;
-      if (
-        isLast &&
-        tokenSatisfiesDictToken(tok.normalized, want, { isLast: true, allowShortLastPrefix: true })
-      ) {
+      if (isLast && tokenAlignsConfiguredPrefix(tok, want)) {
         continue;
       }
       ok = false;
@@ -274,6 +294,88 @@ function projectUniqueKeyCanonicalIntent(
   return projected.length ? projected : tokens;
 }
 
+function entryOwnsExactTypedToken(entry: DictionaryEntry | undefined, typed: string) {
+  if (!entry || !typed) return false;
+  if (entry.key === typed) return true;
+  if ((entry.expansion || []).includes(typed)) return true;
+  for (const alias of entry.aliases || []) {
+    if (alias.includes(typed)) return true;
+  }
+  return false;
+}
+
+/**
+ * Unique configured-expansion prefix completion of the trailing typed token.
+ *
+ * Typed tokens are not rewritten. The completed expansion prefix is a separate
+ * canonical lexical-intent projection for phrase/ranking evidence.
+ *
+ * Trust/uniqueness: only configured expansion sequences (not aliases, not
+ * corpus vocabulary). Preceding tokens must align exactly with E[0..k-2].
+ * The last typed surface must be a non-empty proper prefix of E[k-1], and
+ * must not already be an exact configured token of that same entry (key,
+ * expansion word, or alias). If more than one distinct lemmatized
+ * completed-prefix signature fits, do not project.
+ */
+function projectContextualExpansionIntent(
+  tokens: QueryToken[],
+  dict: SearchPlugin | null,
+  plugins: SearchPlugin[]
+): { tokens: QueryToken[]; meta: ContextualCompletion } | null {
+  if (!dict?.sequences || tokens.length < 2) return null;
+  const k = tokens.length;
+  const last = tokens[k - 1];
+  const typedLast = typedTokenForm(last);
+  if (!typedLast || isAllDigitToken(typedLast) || DEFAULT_STOP.has(typedLast)) return null;
+
+  const matches: Array<{ completedPrefix: string[]; completedWord: string }> = [];
+  const signatures = new Set<string>();
+  for (const seq of dict.sequences) {
+    if (seq.kind !== "expansion") continue;
+    const expansion = seq.tokens || [];
+    if (expansion.length < k) continue;
+    if (entryOwnsExactTypedToken(seq.entry, typedLast)) continue;
+    let precedingOk = true;
+    for (let j = 0; j < k - 1; j++) {
+      if (!tokenAlignsConfiguredExact(tokens[j], expansion[j])) {
+        precedingOk = false;
+        break;
+      }
+    }
+    if (!precedingOk) continue;
+    const want = expansion[k - 1];
+    if (!want || tokenExactDictWord(last, want)) continue;
+    if (!want.startsWith(typedLast) || typedLast.length >= want.length) continue;
+    const completedPrefix = expansion.slice(0, k);
+    const projected = lemmatizedExpansionTokens(completedPrefix, plugins);
+    if (projected.length !== completedPrefix.length) continue;
+    const signature = projected.map((t) => t.lemma || t.normalized).join("\0");
+    if (!signatures.has(signature)) {
+      signatures.add(signature);
+      matches.push({ completedPrefix, completedWord: want });
+    }
+  }
+  if (matches.length !== 1) return null;
+  const chosen = matches[0];
+  const projected = lemmatizedExpansionTokens(chosen.completedPrefix, plugins).map((t) => ({
+    ...t,
+    sources: t.sources.includes("contextual-completion")
+      ? t.sources
+      : [...t.sources, "contextual-completion"],
+  }));
+  const canonicalLast = projected[projected.length - 1];
+  if (!canonicalLast) return null;
+  return {
+    tokens: projected,
+    meta: {
+      activePrefix: typedLast,
+      completedToken: chosen.completedWord,
+      canonicalToken: canonicalLast.lemma || canonicalLast.normalized,
+      source: "configured-expansion-prefix",
+    },
+  };
+}
+
 function isSingleExpansionWordAliasSequence(seq: {
   kind?: string;
   tokens?: string[];
@@ -305,7 +407,9 @@ function matchDictionarySequences(tokens: QueryToken[], dict: SearchPlugin | nul
         }
         const tok = norms[i + j];
         const want = seq.tokens[j];
-        const earlierExact = j === 0 || norms.slice(i, i + j).every((t, k) => t === seq.tokens[k]);
+        const earlierExact =
+          j === 0 ||
+          tokens.slice(i, i + j).every((t, k) => tokenAlignsConfiguredExact(t, seq.tokens[k]));
         const allowShortLastPrefix =
           seq.kind !== "key" && n >= 2 && j === n - 1 && earlierExact;
         // Exact keys may match anywhere. Incomplete key prefixes are applied
@@ -394,15 +498,14 @@ function matchExpansionPrefixes(tokens: QueryToken[], dict: SearchPlugin | null,
         ok = false;
         break;
       }
-      const tok = norms[j];
       const want = seq.tokens[j];
       const isLast = j === k - 1;
       if (isLast) {
-        if (!tokenSatisfiesDictToken(tok, want, { isLast: true, allowShortLastPrefix: true })) {
+        if (!tokenAlignsConfiguredPrefix(tokens[j], want)) {
           ok = false;
           break;
         }
-      } else if (tok !== want) {
+      } else if (!tokenAlignsConfiguredExact(tokens[j], want)) {
         ok = false;
         break;
       }
@@ -794,7 +897,9 @@ export function analyzeQuery(
   throwIfAborted(signal);
 
   const intentTokens = projectUniqueKeyCanonicalIntent(analyzedTokens, concepts, dict, plugins);
-  const lexicalPhraseTokens = canonicalLexicalTokensFromQuery(intentTokens);
+  const contextual = projectContextualExpansionIntent(analyzedTokens, dict, plugins);
+  const lexicalTokens = contextual?.tokens?.length ? contextual.tokens : intentTokens;
+  const lexicalPhraseTokens = canonicalLexicalTokensFromQuery(lexicalTokens);
 
   return {
     raw,
@@ -804,7 +909,8 @@ export function analyzeQuery(
     alternatives,
     dottedSpans: dotted,
     prefixCompletion,
-    lexicalTokens: intentTokens,
+    contextualCompletion: contextual?.meta ?? null,
+    lexicalTokens,
     lexicalPhraseTokens,
     lexicalPhraseKey: lexicalPhraseTokens.join(" "),
     stopstripped:

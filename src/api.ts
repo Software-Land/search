@@ -212,6 +212,14 @@ export interface SearchExplanation {
     concepts?: unknown[];
     alternatives?: unknown[];
     prefixCompletion?: PrefixCompletion | null;
+    contextualCompletion?: {
+      activePrefix: string;
+      completedToken: string;
+      canonicalToken: string;
+      source: "configured-expansion-prefix";
+    } | null;
+    lexicalTokens?: unknown[];
+    lexicalPhraseKey?: string;
     normalizedQueryPhrase?: string;
   };
   retrievalSources: string[];
