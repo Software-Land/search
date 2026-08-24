@@ -185,7 +185,7 @@ describe("contextual expansion completion ranking", () => {
     const http = detailed.results.find((r) => r.id === "http");
     const proto = detailed.results.find((r) => r.id === "proto");
     expect(http).toBeTruthy();
-    expect(http.rank).toBeLessThan(proto.rank);
+    expect(proto).toBeUndefined();
     expect(detailed.results[0].explanation.query.tokens[2].surface).toBe("prot");
     expect(detailed.results[0].explanation.query.lexicalPhraseKey).toBe("hypertext transfer protocol");
   });

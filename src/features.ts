@@ -1,6 +1,6 @@
 import { isNearCompletePrefix, levenshteinAtMost, DEFAULT_STOP, allowPrefixMatch } from "./text.js";
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "./versionForms.js";
-import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix } from "./retrieve.js";
+import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, unboundTypedTokens, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept } from "./retrieve.js";
 import { saturatingFrequency } from "./saturatingFrequency.js";
 import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "./lexicalNormalize.js";
 import {
@@ -98,6 +98,7 @@ function getQueryFeatPrep(query: AnalyzedQuery): QueryFeatPrep {
   const formSet = new Set<string>();
   for (const c of query.concepts) {
     if (c.kind === "acronym") continue;
+    if (isBoundTrailingTermConcept(query, c)) continue;
     for (const form of c.forms || []) formSet.add(form);
   }
   const phraseKeys = phraseKeyCandidates(query);
@@ -149,17 +150,13 @@ function tokenLiteral(t: QueryToken) {
   return t.surfaceNormalized || t.surface;
 }
 
-function hasBoundContextualCompletion(query: AnalyzedQuery) {
-  return Boolean(query.contextualCompletion?.completedToken);
-}
-
 function hasIndependentTitleTokenFast(doc: IndexedDocument, tok: string) {
   if (doc.independentTitleTokenSet) return doc.independentTitleTokenSet.has(tok);
   return hasIndependentTitleToken(doc, tok);
 }
 
 function exactTitleTokenMatch(query: AnalyzedQuery, doc: IndexedDocument) {
-  return query.tokens.some((t) => {
+  return unboundTypedTokens(query).some((t) => {
     if (DEFAULT_STOP.has(t.normalized)) return false;
     return hasIndependentTitleTokenFast(doc, t.normalized);
   });
@@ -212,8 +209,9 @@ function titlePrefixQuality(query: AnalyzedQuery, doc: IndexedDocument) {
 }
 
 function queryCoverage(query: AnalyzedQuery, doc: IndexedDocument, v: ReturnType<typeof versionHit> = versionHit(query, doc)) {
-  const concepts = query.concepts.filter((c) => c.kind !== "number" || query.concepts.length === 1);
-  const usable = concepts.length ? concepts : query.concepts;
+  const unboundConcepts = query.concepts.filter((c) => !isBoundTrailingTermConcept(query, c));
+  const concepts = unboundConcepts.filter((c) => c.kind !== "number" || unboundConcepts.length === 1);
+  const usable = concepts.length ? concepts : unboundConcepts;
   if (!usable.length) return 0;
   const vOk = Boolean(v);
   let hit = 0;
@@ -222,9 +220,9 @@ function queryCoverage(query: AnalyzedQuery, doc: IndexedDocument, v: ReturnType
     else if (c.kind === "number" && vOk) hit += 1;
   }
   // Count number concepts via version hit once
-  const hasNumber = query.concepts.some((c) => c.kind === "number");
+  const hasNumber = unboundConcepts.some((c) => c.kind === "number");
   if (hasNumber && v) {
-    const withoutNum = query.concepts.filter((c) => c.kind !== "number");
+    const withoutNum = unboundConcepts.filter((c) => c.kind !== "number");
     const numOk = v.compactHit || v.dottedHit;
     const otherHits = withoutNum.filter((c) => conceptCoveredInTitle(c, doc)).length;
     const denom = withoutNum.length + 1;
@@ -236,7 +234,7 @@ function queryCoverage(query: AnalyzedQuery, doc: IndexedDocument, v: ReturnType
 function titleCoverage(query: AnalyzedQuery, doc: IndexedDocument) {
   if (!doc.nonStopTitle.length) return 0;
   const prep = getQueryFeatPrep(query);
-  const qToks = query.tokens;
+  const qToks = unboundTypedTokens(query);
   let hit = 0;
   for (let i = 0; i < doc.titleTokens.length; i++) {
     const tok = doc.titleTokens[i];
@@ -263,7 +261,7 @@ function configuredEquivalenceMatch(query: AnalyzedQuery, doc: IndexedDocument):
 }
 
 function morphologyMatch(query: AnalyzedQuery, doc: IndexedDocument) {
-  return query.tokens.some((t) => {
+  return unboundTypedTokens(query).some((t) => {
     const lemma = t.lemma || t.normalized;
     if (!lemma) return false;
     const lemmaHit = doc.titleLemmaSet.has(lemma) || doc.titleTokenSet.has(lemma);
@@ -276,6 +274,7 @@ function typoDistance(query: AnalyzedQuery, doc: IndexedDocument) {
   const prep = getQueryFeatPrep(query);
   let best = 0;
   for (const t of prep.typoTokens) {
+    if (isBoundTrailingTypedToken(query, t)) continue;
     if (t.sources.includes("repeat-collapse") && doc.titleTokenSet.has(t.normalized)) {
       best = Math.max(best, 1);
       continue;
@@ -693,10 +692,10 @@ export function classifyDirect(f: Partial<FeatureVector>): DirectClass {
 
 export const FEATURE_DEFINITIONS = {
   exactTitleMatch: "True when normalized query equals the full normalized title.",
-  exactTitleTokenMatch: "True when a non-stop canonical query token occurs as an independent title token (not a digit split from a dotted numeric span such as 1.2). Unique prefix completions and morphology use the lemma; typed stubs and completedToken are not exact surface evidence.",
+  exactTitleTokenMatch: "True when a non-stop canonical query token occurs as an independent title token (not a digit split from a dotted numeric span such as 1.2). Unique prefix completions and morphology use the lemma; typed stubs and completedToken are not exact surface evidence. A trailing stub bound by unique contextual expansion completion is not unbound exact-title-token evidence.",
   typedSurfaceTitleMatch: "True when the typed/repaired surface (before lemma or unique-prefix rewrite) occurs as an independent title token or is a legitimate prefix of one. Digits produced by splitting a dotted span are not typed-surface evidence. Canonical retrieval lemmas are not typed-surface evidence. A trailing stub bound by unique contextual expansion completion is not unbound title-prefix evidence.",
-  titleCoverage: "Fraction of non-stop title tokens accounted for by the query.",
-  queryCoverage: "Fraction of query concepts evidenced in the title (or via a legitimate version alias).",
+  titleCoverage: "Fraction of non-stop title tokens accounted for by the query. A trailing stub bound by unique contextual expansion completion is excluded.",
+  queryCoverage: "Fraction of query concepts evidenced in the title (or via a legitimate version alias). A trailing term concept bound by unique contextual expansion completion is excluded.",
   titlePrefixQuality: "How completely query tokens prefix title tokens, tightened by extra title tokens. A trailing stub bound by unique contextual expansion completion is excluded.",
   contextualTitlePrefix: "True when preceding query tokens align with the title start and only the final token is a proper prefix of the aligned title token.",
   matchedPrefixTokens: "Preceding query tokens that aligned exactly/canonically with the title start.",
@@ -706,7 +705,7 @@ export const FEATURE_DEFINITIONS = {
   titleSequenceTightness: "1 / (1 + unmatchedTitleTokensAfter). Prefer titles that complete the query and end there.",
   contextualPrefixQuality: "completeness * titleSequenceTightness, where completeness is finalPrefix.length / completedTitleToken.length.",
   configuredEquivalenceMatch: "Dictionary hit: key-in-title | expansion | false.",
-  morphologyMatch: "Query lemma matches a title token/lemma while surface may differ.",
+  morphologyMatch: "Query lemma matches a title token/lemma while surface may differ. A trailing stub bound by unique contextual expansion completion is excluded.",
   typoDistance: "0–2 style evidence: 0 none, 1 repeat-collapse or edit-distance 2, 2 edit-distance 1.",
   versionMatch: "false | compact-weak | compact-dotted | dotted | dotted-weak.",
   shortLiteralLeadMatch: "Short query (≤3) matches the first surface title token as exact or prefix.",

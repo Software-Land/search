@@ -163,6 +163,27 @@ describe("ranking equivalence oracle", () => {
     expect(ranked[0].constraintMeta.cycles).toEqual([]);
   });
 
+  test("weak single-token body pack ties break on bodyPhraseCount before id", () => {
+    const ranked = rankBoth([
+      hit("a-rare", {
+        queryTokenCount: 1,
+        directClass: "weak",
+        bodyLexicalMatch: 1,
+        bodyPhraseCount: 1,
+        queryCoverage: 0,
+      }),
+      hit("z-common", {
+        queryTokenCount: 1,
+        directClass: "weak",
+        bodyLexicalMatch: 1,
+        bodyPhraseCount: 8,
+        queryCoverage: 0,
+      }),
+    ]);
+    expect(ranked.map((row) => row.document.id)).toEqual(["z-common", "a-rare"]);
+    expect(ranked[0].score).toBe(ranked[1].score);
+  });
+
   test("one-query equal signatures are a directional builtin congruence", () => {
     const rng = mulberry32(0x5349474e);
     for (const constraints of [DEFAULT_CONSTRAINTS, HYBRID_CONSTRAINTS]) {

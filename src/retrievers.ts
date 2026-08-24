@@ -16,6 +16,8 @@ import {
   retrieveCandidatesAsync,
   matchContextualTitlePrefix,
   retrievalSourcesForDocument,
+  unboundTypedTokens,
+  isBoundTrailingTermConcept,
 } from "./retrieve.js";
 import { allowPrefixMatch } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
@@ -102,11 +104,12 @@ function queryForms(query: AnalyzedQuery) {
     seen.add(`${kind}:${f}`);
     forms.push({ form: f, kind });
   }
-  for (const tok of query.tokens || []) {
+  for (const tok of unboundTypedTokens(query)) {
     add(tok.normalized, "token");
     if (tok.lemma && tok.lemma !== tok.normalized) add(tok.lemma, "lemma");
   }
   for (const c of query.concepts || []) {
+    if (isBoundTrailingTermConcept(query, c)) continue;
     add(c.id, c.kind === "acronym" ? "acronym-key" : "concept");
     for (const f of c.forms || []) add(f, c.kind === "acronym" ? "acronym-form" : "concept");
   }

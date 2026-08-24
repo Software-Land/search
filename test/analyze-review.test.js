@@ -239,6 +239,15 @@ describe("final-token prefix completion", () => {
     expect(features.morphologyMatch).toBe(false);
   });
 
+  test("derived lemma does not prefix a longer distinct title token", () => {
+    const plugins = [morphology()];
+    const index = buildIndex([{ id: "fw", title: "Framework vs Library", body: "notes" }], schema, plugins);
+    const q = analyzeQuery("frames", { plugins });
+    expect(q.tokens[0].lemma).toBe("frame");
+    expect(conceptMatchesTitle(q.concepts.find((c) => c.kind === "term"), index.documents[0])).toBeNull();
+    expect(extractFeatures(q, index.documents[0]).queryCoverage).toBe(0);
+  });
+
   test("compoundSpellSegment still repairs a valid-sized glued typo", () => {
     const lexicon = ["application", "security"];
     const token = "aplicationsecurity";

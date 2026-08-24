@@ -21,9 +21,10 @@ import {
   DEFAULT_CONSTRAINTS,
 } from "./constraints.js";
 import { throwIfAborted } from "./cancel.js";
-import { BinaryMaxHeap, scoreThenIdBetter } from "./rankHeap.js";
+import { BinaryMaxHeap } from "./rankHeap.js";
 import { constraintsAreBuiltin, rankSparse, rankSparseAsync, type RankerStats } from "./rankSparse.js";
 import { constraintSignature } from "./rankSignature.js";
+import { compareScoreThenWeakBodyThenId, scoreThenWeakBodyThenIdBetter } from "./rankTieBreak.js";
 import type { ConstraintDef, ConstraintGraph, FeaturedHit, FeatureVector, RankedHit } from "./types.js";
 
 let lastStats: RankerStats | null = null;
@@ -168,10 +169,7 @@ export function selectTopPerBuiltinSignature(
   // Intentionally iterate Map insertion order to preserve rankSparse's
   // first-seen signature order.
   for (const group of groups.values()) {
-    group.sort((a, b) => {
-      if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
-      return idCmp(a, b);
-    });
+    group.sort(compareScoreThenWeakBodyThenId);
     const take = Math.min(requestedDepth, group.length);
     maxRepresentativesPerSignature = Math.max(maxRepresentativesPerSignature, take);
     for (let i = 0; i < take; i++) retained.push(group[i]);
@@ -190,17 +188,10 @@ export function selectTopPerBuiltinSignature(
   };
 }
 
-function idCmp(a: FeaturedHit, b: FeaturedHit) {
-  if (a.document.id < b.document.id) return -1;
-  if (a.document.id > b.document.id) return 1;
-  return 0;
-}
-
 export function compareCandidates(a: FeaturedHit, b: FeaturedHit, defs: ConstraintDef[] = DEFAULT_CONSTRAINTS) {
   const constrained = compareConstraint(a, b, defs);
   if (constrained.order !== 0) return constrained.order;
-  if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
-  return idCmp(a, b);
+  return compareScoreThenWeakBodyThenId(a, b);
 }
 
 export function rankCandidates(
@@ -248,21 +239,17 @@ function orderComponents(decorated: FeaturedHit[], graph: ConstraintGraph) {
   const marks = new Uint32Array(nComp);
   let generation = 0;
 
-  const bestScore = new Float64Array(nComp);
-  const bestId: string[] = new Array(nComp);
+  const bestHit: FeaturedHit[] = new Array(nComp);
   for (let g = 0; g < nComp; g++) {
     let best = decorated[groups[g][0]];
     for (let k = 1; k < groups[g].length; k++) {
       const cand = decorated[groups[g][k]];
-      if (scoreThenIdBetter(cand.score || 0, cand.document.id, best.score || 0, best.document.id)) best = cand;
+      if (scoreThenWeakBodyThenIdBetter(cand, best)) best = cand;
     }
-    bestScore[g] = best.score || 0;
-    bestId[g] = best.document.id;
+    bestHit[g] = best;
   }
 
-  const heap = new BinaryMaxHeap<number>((ga, gb) =>
-    scoreThenIdBetter(bestScore[ga], bestId[ga], bestScore[gb], bestId[gb])
-  );
+  const heap = new BinaryMaxHeap<number>((ga, gb) => scoreThenWeakBodyThenIdBetter(bestHit[ga], bestHit[gb]));
   for (let g = 0; g < nComp; g++) if (indeg[g] === 0) heap.push(g);
 
   const topo: number[] = [];
@@ -282,10 +269,7 @@ function orderComponents(decorated: FeaturedHit[], graph: ConstraintGraph) {
   const ordered: FeaturedHit[] = [];
   for (const g of topo) {
     const members = groups[g].map((i) => decorated[i]);
-    members.sort((a, b) => {
-      if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
-      return idCmp(a, b);
-    });
+    members.sort(compareScoreThenWeakBodyThenId);
     ordered.push(...members);
   }
   // Reverse CSR was never stored on the SCC result. Forward CSR / groups /

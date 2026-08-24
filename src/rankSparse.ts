@@ -26,8 +26,9 @@ import {
   advanceConstraintStamp,
 } from "./constraints.js";
 import { throwIfAborted } from "./cancel.js";
-import { BinaryMaxHeap, scoreThenIdBetter } from "./rankHeap.js";
+import { BinaryMaxHeap } from "./rankHeap.js";
 import { constraintSignature } from "./rankSignature.js";
+import { compareScoreThenWeakBodyThenId, scoreThenWeakBodyThenIdBetter } from "./rankTieBreak.js";
 import type { ConstraintDef, FeaturedHit, RankedHit } from "./types.js";
 
 const BUILTIN_FNS = new Set<(a: FeaturedHit, b: FeaturedHit) => number>();
@@ -48,19 +49,8 @@ export type RankerStats = {
   bucketEdges: number;
 };
 
-function idOf(hit: FeaturedHit) {
-  return hit.document.id;
-}
-
-function scoreOf(hit: FeaturedHit) {
-  return hit.score || 0;
-}
-
 function cmpScoreId(a: FeaturedHit, b: FeaturedHit) {
-  if (scoreOf(b) !== scoreOf(a)) return scoreOf(b) - scoreOf(a);
-  if (idOf(a) < idOf(b)) return -1;
-  if (idOf(a) > idOf(b)) return 1;
-  return 0;
+  return compareScoreThenWeakBodyThenId(a, b);
 }
 
 function attachRankMeta(
@@ -170,18 +160,13 @@ export function rankSparse(
   let generation = 0;
   const inHeap = new Uint8Array(nSuper);
 
-  function keyOf(g: number) {
+  function keyHit(g: number) {
     const node = supers[g];
     const i = node.isBlock ? node.sorted[0] : node.sorted[node.cursor];
-    const hit = decorated[i];
-    return { score: scoreOf(hit), id: idOf(hit) };
+    return decorated[i];
   }
 
-  const heap = new BinaryMaxHeap<number>((ga, gb) => {
-    const a = keyOf(ga);
-    const b = keyOf(gb);
-    return scoreThenIdBetter(a.score, a.id, b.score, b.id);
-  });
+  const heap = new BinaryMaxHeap<number>((ga, gb) => scoreThenWeakBodyThenIdBetter(keyHit(ga), keyHit(gb)));
 
   function offer(g: number) {
     if (inHeap[g]) return;

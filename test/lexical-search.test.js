@@ -474,12 +474,19 @@ describe("query analysis", () => {
     ];
     const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
     const index = buildIndex(docs, schema, plugins);
-    const candidateSets = analyzed.map((q) => retrieveCandidates(q, index).map((h) => h.document.id).sort());
-    for (const ids of candidateSets) expect(ids).toEqual(candidateSets[0]);
+    const stubQueries = analyzed.slice(1);
+    const stubCandidateSets = stubQueries.map((q) => retrieveCandidates(q, index).map((h) => h.document.id).sort());
+    for (const ids of stubCandidateSets) expect(ids).toEqual(stubCandidateSets[0]);
+    expect(stubCandidateSets[0]).toContain("linear");
+    expect(stubCandidateSets[0]).not.toContain("learn-code");
+    expect(stubCandidateSets[0]).not.toContain("linkedin");
+    const completeLemmaIds = retrieveCandidates(analyzed[0], index).map((h) => h.document.id).sort();
+    expect(completeLemmaIds).toEqual([...new Set([...stubCandidateSets[0], "learn-code", "linkedin"])].sort());
 
     const e = await engine(docs, mlDict);
-    const ranked = incomplete.map((raw) => e.search(raw).map((r) => r.id));
-    for (const ids of ranked) expect(ids).toEqual(ranked[0]);
+    const stubRanked = incomplete.slice(1).map((raw) => e.search(raw).map((r) => r.id));
+    for (const ids of stubRanked) expect(ids).toEqual(stubRanked[0]);
+    expect(stubRanked[0][0]).toBe("linear");
     expect(analyzeQuery("machine learning", { plugins, lexicon, prefixLexicon: lexicon }).tokens.map((t) => t.normalized)).toEqual(
       ["machine", "learn"]
     );

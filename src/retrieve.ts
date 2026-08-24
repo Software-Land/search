@@ -105,6 +105,20 @@ function acronymFieldEvidence(
   return false;
 }
 
+/**
+ * Forms that may generate title-token PREFIX evidence. A morphology-derived
+ * lemma that is a proper prefix of another form in the same concept
+ * (`frame` of typed `frames`) must not prefix a longer different title token
+ * (`framework`). Independent exact/lemma token matches still use the full bag.
+ */
+function titlePrefixableForms(forms: string[] | undefined) {
+  const list = forms || [];
+  return list.filter((form) => {
+    if (!form || /^\d+$/.test(form)) return false;
+    return !list.some((other) => other !== form && other.startsWith(form) && other.length > form.length);
+  });
+}
+
 function conceptMatchesTitle(concept: QueryConcept, doc: IndexedDocument): ConceptTitleMatch | null {
   if (concept.kind === "acronym") {
     if (doc.titleTokenSet.has(concept.id) || doc.titleLemmaSet.has(concept.id)) return "key";
@@ -127,20 +141,22 @@ function conceptMatchesTitle(concept: QueryConcept, doc: IndexedDocument): Conce
     const ordinal = compactOrdinal(doc);
     for (const form of concept.forms) {
       if (compactHasIndependentTitleForm(store, ordinal, form)) return "exact";
-      if (/^\d+$/.test(form)) continue;
-      if (compactTitleHasPrefixForm(store, ordinal, form, allowPrefixMatch)) return "prefix";
       if (compactTitleHasLemma(store, ordinal, form)) return "lemma";
+    }
+    for (const form of titlePrefixableForms(concept.forms)) {
+      if (compactTitleHasPrefixForm(store, ordinal, form, allowPrefixMatch)) return "prefix";
     }
     return null;
   }
   for (const form of concept.forms) {
     if (hasIndependentTitleForm(doc, form)) return "exact";
-    if (/^\d+$/.test(form)) continue;
-    for (const tok of doc.titleTokens) {
-      if (allowPrefixMatch(form, tok)) return "prefix";
-    }
     for (const tok of doc.titleLemmas) {
       if (form === tok) return "lemma";
+    }
+  }
+  for (const form of titlePrefixableForms(concept.forms)) {
+    for (const tok of doc.titleTokens) {
+      if (allowPrefixMatch(form, tok)) return "prefix";
     }
   }
   return null;
@@ -179,6 +195,56 @@ function conceptMatchesBody(concept: QueryConcept, doc: IndexedDocument) {
  */
 export function typedForm(token: Pick<QueryToken, "surface" | "surfaceNormalized">): string {
   return token.surfaceNormalized ?? token.surface;
+}
+
+/**
+ * Unique contextual expansion completion binds the trailing typed token to one
+ * configured expansion word. The typed stub stays on the query for explain;
+ * it must not independently generate unbound lexical evidence unless the user
+ * already typed that completed word or its canonical lemma (`learn` of
+ * `learning`). Short proper prefixes (`sec`, `prot`, `l`) are consumed.
+ */
+export function hasBoundContextualCompletion(query: AnalyzedQuery) {
+  return Boolean(query.contextualCompletion?.completedToken);
+}
+
+export function shouldConsumeBoundTrailingToken(query: AnalyzedQuery) {
+  if (!hasBoundContextualCompletion(query)) return false;
+  const tokens = query.tokens || [];
+  if (!tokens.length) return false;
+  const last = tokens[tokens.length - 1];
+  const typed = String(last.surfaceNormalized || last.surface || last.normalized || "").toLowerCase();
+  if (!typed) return true;
+  const meta = query.contextualCompletion;
+  if (typed === meta?.completedToken || typed === meta?.canonicalToken) return false;
+  const tail = query.lexicalTokens?.[query.lexicalTokens.length - 1];
+  if (tail && (typed === tail.normalized || typed === tail.lemma)) return false;
+  return true;
+}
+
+export function unboundTypedTokens(query: AnalyzedQuery): QueryToken[] {
+  const tokens = query.tokens || [];
+  if (!tokens.length || !shouldConsumeBoundTrailingToken(query)) return tokens;
+  return tokens.slice(0, -1);
+}
+
+export function isBoundTrailingTypedToken(query: AnalyzedQuery, token: QueryToken) {
+  const tokens = query.tokens || [];
+  if (!tokens.length || !shouldConsumeBoundTrailingToken(query)) return false;
+  return token === tokens[tokens.length - 1];
+}
+
+export function isBoundTrailingTermConcept(query: AnalyzedQuery, concept: QueryConcept) {
+  if (!concept || concept.kind === "acronym") return false;
+  const tokens = query.tokens || [];
+  if (!tokens.length || !shouldConsumeBoundTrailingToken(query)) return false;
+  const last = tokens[tokens.length - 1];
+  const forms = new Set(
+    [last.normalized, last.lemma, last.surfaceNormalized, last.surface].filter(
+      (v): v is string => typeof v === "string" && v.length > 0
+    )
+  );
+  return forms.has(concept.id);
 }
 
 function versionHit(query: AnalyzedQuery, doc: IndexedDocument): VersionHit | null {
@@ -277,15 +343,17 @@ function scanDocument(
 
   const qNorm = query.tokens.map((t) => t.normalized).join(" ");
   if (qNorm && doc.normalizedTitle.startsWith(qNorm)) add(doc, "title-prefix");
+  const unbound = unboundTypedTokens(query);
   if (
     doc.titleTokens.some((tok) =>
-      query.tokens.some((t) => allowPrefixMatch(t.normalized, tok))
+      unbound.some((t) => allowPrefixMatch(t.normalized, tok))
     )
   ) {
     add(doc, "title-token-prefix");
   }
 
   for (const concept of query.concepts) {
+    if (isBoundTrailingTermConcept(query, concept)) continue;
     const kind = conceptMatchesTitle(concept, doc);
     if (concept.kind === "acronym") {
       if (kind) add(doc, "configured-equivalence");
@@ -300,6 +368,7 @@ function scanDocument(
   if (v) add(doc, "version");
 
   for (const concept of query.concepts) {
+    if (isBoundTrailingTermConcept(query, concept)) continue;
     if (conceptMatchesBody(concept, doc)) add(doc, "body-lexical");
   }
 

@@ -62,8 +62,8 @@ const rows = historical.rows.map((row) => {
 const out = {
   format: "software-land-query-result-oracle",
   version: 1,
-  note: "Identity freeze of ordered Software.Land results after contextual expansion completion (Model-B). Package version remains 0.4.0. Not a Core ranking contract.",
-  head: "e91c57bccd630e2bad1821b80d1a918fde41325b",
+  note: "Identity freeze after bound-token consumption, morphology-derived lemma-prefix restriction, and weak single-token body-frequency tie-break. Package version remains 0.4.0. Not a Core ranking contract.",
+  head: "f3c21dc9953e8cfc63644d1c7f6bd24ee2d4c2e7",
   resultLimit: RESULT_LIMIT,
   relatedLimit: RELATED_LIMIT,
   documentCount: documents.length,

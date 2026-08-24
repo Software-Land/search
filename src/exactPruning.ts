@@ -14,6 +14,7 @@ export type ExactCandidateBound = {
   ordinal: number;
   signature: string;
   roundedScore: number;
+  bodyPhraseCount: number;
 };
 
 export type ExactFeaturePruningStats = {
@@ -142,11 +143,13 @@ export function exactBodyOnlySingleTokenBound(
     ordinal,
     signature: constraintSignature(exactFeatures),
     roundedScore: roundedFeatureScore(exactFeatures),
+    bodyPhraseCount,
   };
 }
 
 function compareBoundCandidates(a: ExactCandidateBound, b: ExactCandidateBound) {
   if (a.roundedScore !== b.roundedScore) return b.roundedScore - a.roundedScore;
+  if (b.bodyPhraseCount !== a.bodyPhraseCount) return b.bodyPhraseCount - a.bodyPhraseCount;
   return a.hit.document.id < b.hit.document.id
     ? -1
     : a.hit.document.id > b.hit.document.id

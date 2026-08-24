@@ -22,13 +22,8 @@ import {
 } from "../../src/constraints.js";
 import { throwIfAborted } from "../../src/cancel.js";
 import { scoreFeatures } from "../../src/rank.js";
+import { compareScoreThenWeakBodyThenId } from "../../src/rankTieBreak.js";
 import type { ConstraintDef, ConstraintGraph, FeaturedHit, RankedHit } from "../../src/types.js";
-
-function idCmp(a: FeaturedHit, b: FeaturedHit) {
-  if (a.document.id < b.document.id) return -1;
-  if (a.document.id > b.document.id) return 1;
-  return 0;
-}
 
 function orderComponentsRepeatedSort(decorated: FeaturedHit[], graph: ConstraintGraph) {
   const { n, edges } = graph;
@@ -44,16 +39,11 @@ function orderComponentsRepeatedSort(decorated: FeaturedHit[], graph: Constraint
 
   function bestOf(g: number) {
     const members = groups[g].map((i) => decorated[i]);
-    members.sort((a, b) => ((b.score || 0) !== (a.score || 0) ? (b.score || 0) - (a.score || 0) : idCmp(a, b)));
+    members.sort(compareScoreThenWeakBodyThenId);
     return members[0];
   }
   function readySort() {
-    ready.sort((ga, gb) => {
-      const a = bestOf(ga);
-      const b = bestOf(gb);
-      if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
-      return idCmp(a, b);
-    });
+    ready.sort((ga, gb) => compareScoreThenWeakBodyThenId(bestOf(ga), bestOf(gb)));
   }
   readySort();
   const topo: number[] = [];
@@ -74,10 +64,7 @@ function orderComponentsRepeatedSort(decorated: FeaturedHit[], graph: Constraint
   const ordered: FeaturedHit[] = [];
   for (const g of topo) {
     const members = groups[g].map((i) => decorated[i]);
-    members.sort((a, b) => {
-      if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
-      return idCmp(a, b);
-    });
+    members.sort(compareScoreThenWeakBodyThenId);
     ordered.push(...members);
   }
   return { ordered, cycles };
