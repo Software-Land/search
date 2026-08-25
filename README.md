@@ -69,6 +69,33 @@ morphology({ lemmas: { intercepting: "interceptor", recursive: "recursion", foob
 
 Keep lemma generators, caches, and models in the site build. This package consumes a `Record<string, string>`, not the generator itself. Those Python/model dependencies do not enter Search Core or the browser/runtime package dependency graph.
 
+## Search equivalences
+
+Directional, one-hop recall. Not query rewrite, not relatedness, not automatic reverse maps.
+
+```js
+import { SearchEngine, morphology, dictionary, synonyms } from "@software-land/search";
+
+const engine = SearchEngine.create({
+  schema: {
+    title: { type: "text", role: "title" },
+    body: { type: "text", role: "body" },
+  },
+  plugins: [
+    morphology(),
+    dictionary({
+      entries: [{ key: "qa", expansion: ["quality", "assurance"] }],
+    }),
+    synonyms({
+      qa: ["testing"],
+      docker: ["container", "containers"],
+    }),
+  ],
+});
+```
+
+`qa -> testing` does not imply `testing -> qa`. Phrase sources such as `"quality assurance": ["testing"]` match as exact contiguous normalized phrases. Legacy compiled `{ terms: ["auth", "authentication"] }` groups remain bidirectional.
+
 ## Browser Worker
 
 Optional. Core does not import `Worker` or `window`.

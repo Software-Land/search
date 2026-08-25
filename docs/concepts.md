@@ -19,7 +19,7 @@ Exact indexed retrieval enumerates every legitimate posting match. After relatio
 | | Lives where | Affects |
 | --- | --- | --- |
 | Equivalence (`tls` ↔ transport layer security) | dictionary / equivalences artifact | query interpretation |
-| Near-synonym | synonyms artifact | query interpretation |
+| Search equivalence / near-synonym | `synonyms({ qa: ["testing"] })` or compiled synonyms artifact | candidate recall only (no query rewrite) |
 | Morphology (site lemma table) | `morphology({ lemmas })` / Worker `englishOptions` | query and document analysis |
 | Related documents (Bluetooth → Connected devices) | relationships artifact | expansion after strong primaries |
 

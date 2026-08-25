@@ -12,6 +12,7 @@ import {
   abortError,
   dictionary,
   morphology,
+  synonyms,
   isAbortError,
   parseEquivalences,
   parseRelationships,
@@ -20,6 +21,7 @@ import {
   type EnglishPlugin,
   type DictionaryPlugin,
   type MorphologyOptions,
+  type SynonymPlugin,
 } from "@software-land/search";
 
 class DerivedEngine extends SearchEngine {}
@@ -89,6 +91,7 @@ const isAbortErrorFn: (err: unknown) => boolean = isAbortError;
 
 void typeof morphology;
 void typeof dictionary;
+void typeof synonyms;
 void typeof parseEquivalences;
 void typeof abortError;
 void typeof SearchEngine;
@@ -101,6 +104,9 @@ void abortErrorFn("Aborted");
 void isAbortErrorFn(new Error("no"));
 void morphology({ lemmas: { widgets: "widget" } });
 void dictionary({ entries: [{ key: "wifi" }] });
+void synonyms({ qa: ["testing"] });
+const synonymPlugin: SynonymPlugin = synonyms({ "quality assurance": ["testing"] });
+void synonymPlugin.expand;
 void parseEquivalences();
 void parseSynonyms();
 void parseRelationships();

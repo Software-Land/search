@@ -90,6 +90,7 @@ export interface SearchPlugin {
   format?: string;
   version?: number;
   lookup?: Map<string, unknown>;
+  directionality?: "directional" | "symmetric";
 }
 
 export interface QueryToken {
@@ -206,6 +207,11 @@ export interface QueryConcept {
   expansionCoverage?: number;
 }
 
+export interface SearchEquivalenceRecall {
+  source: string;
+  target: string;
+}
+
 export interface QueryAlternative {
   tokens: string[];
   source: string;
@@ -262,6 +268,12 @@ export interface AnalyzedQuery {
    * configuredSequenceIntent.
    */
   topicalRecall?: TopicalRecall | null;
+  /**
+   * One-hop search-equivalence recall pairs admitted from accepted query
+   * semantics. Absent or empty when no synonym plugin fires. Does not rewrite
+   * tokens, lexical intent, or configured identity.
+   */
+  synonymRecall?: SearchEquivalenceRecall[];
   /**
    * Canonical lexical-intent stream for compiled phrase lookup. May include
    * unique configured-sequence projection or contextual expansion completion.

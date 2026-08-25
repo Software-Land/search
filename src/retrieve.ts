@@ -7,11 +7,16 @@ import {
 import { throwIfAborted } from "./cancel.js";
 import {
   asCompactStore,
+  compactAdjacentTokens,
   compactBodyMatchesConcept,
   compactHasIndependentTitleForm,
   compactOrdinal,
   compactTitleHasLemma,
   compactTitleHasPrefixForm,
+  KIND_BODY,
+  KIND_BODY_LEMMA,
+  KIND_TITLE,
+  KIND_TITLE_LEMMA,
 } from "./compactDocuments.js";
 import type {
   AnalyzedQuery,
@@ -116,9 +121,47 @@ function acronymFieldEvidence(
 function titlePrefixableForms(forms: string[] | undefined) {
   const list = forms || [];
   return list.filter((form) => {
-    if (!form || /^\d+$/.test(form)) return false;
+    if (!form || /^\d+$/.test(form) || /\s/.test(form)) return false;
     return !list.some((other) => other !== form && other.startsWith(form) && other.length > form.length);
   });
+}
+
+function phraseFormTokens(form: string): string[] | null {
+  const seq = String(form || "").split(/\s+/).filter(Boolean);
+  return seq.length >= 2 ? seq : null;
+}
+
+function conceptPhraseMatchesTitle(concept: QueryConcept, doc: IndexedDocument): ConceptTitleMatch | null {
+  const store = asCompactStore(doc);
+  const ordinal = store ? compactOrdinal(doc) : 0;
+  for (const form of concept.forms || []) {
+    const seq = phraseFormTokens(form);
+    if (!seq) continue;
+    if (store) {
+      if (compactAdjacentTokens(store, ordinal, KIND_TITLE, seq, (qt, tt) => qt === tt)) return "exact";
+      if (compactAdjacentTokens(store, ordinal, KIND_TITLE_LEMMA, seq, (qt, tt) => qt === tt)) return "lemma";
+      continue;
+    }
+    if (sequencePresent(seq, doc.titleTokens)) return "exact";
+    if (sequencePresent(seq, doc.titleLemmas)) return "lemma";
+  }
+  return null;
+}
+
+function conceptPhraseMatchesBody(concept: QueryConcept, doc: IndexedDocument): boolean {
+  const store = asCompactStore(doc);
+  const ordinal = store ? compactOrdinal(doc) : 0;
+  for (const form of concept.forms || []) {
+    const seq = phraseFormTokens(form);
+    if (!seq) continue;
+    if (store) {
+      if (compactAdjacentTokens(store, ordinal, KIND_BODY, seq, (qt, tt) => qt === tt)) return true;
+      if (compactAdjacentTokens(store, ordinal, KIND_BODY_LEMMA, seq, (qt, tt) => qt === tt)) return true;
+      continue;
+    }
+    if (sequencePresent(seq, doc.bodyTokens) || sequencePresent(seq, doc.bodyLemmas)) return true;
+  }
+  return false;
 }
 
 function conceptMatchesTitle(concept: QueryConcept, doc: IndexedDocument): ConceptTitleMatch | null {
@@ -138,10 +181,13 @@ function conceptMatchesTitle(concept: QueryConcept, doc: IndexedDocument): Conce
     }
     return null;
   }
+  const phraseHit = conceptPhraseMatchesTitle(concept, doc);
+  if (phraseHit) return phraseHit;
   const store = asCompactStore(doc);
   if (store) {
     const ordinal = compactOrdinal(doc);
     for (const form of concept.forms) {
+      if (phraseFormTokens(form)) continue;
       if (compactHasIndependentTitleForm(store, ordinal, form)) return "exact";
       if (compactTitleHasLemma(store, ordinal, form)) return "lemma";
     }
@@ -151,6 +197,7 @@ function conceptMatchesTitle(concept: QueryConcept, doc: IndexedDocument): Conce
     return null;
   }
   for (const form of concept.forms) {
+    if (phraseFormTokens(form)) continue;
     if (hasIndependentTitleForm(doc, form)) return "exact";
     for (const tok of doc.titleLemmas) {
       if (form === tok) return "lemma";
@@ -175,9 +222,17 @@ function conceptMatchesBody(concept: QueryConcept, doc: IndexedDocument) {
       { requireContiguous: true }
     );
   }
+  if (conceptPhraseMatchesBody(concept, doc)) return true;
   const store = asCompactStore(doc);
-  if (store) return compactBodyMatchesConcept(store, compactOrdinal(doc), concept.forms || []);
+  if (store) {
+    return compactBodyMatchesConcept(
+      store,
+      compactOrdinal(doc),
+      (concept.forms || []).filter((form) => !phraseFormTokens(form))
+    );
+  }
   for (const form of concept.forms) {
+    if (phraseFormTokens(form)) continue;
     if (doc.bodyTokenSet.has(form) || doc.bodyLemmaSet.has(form)) return true;
     if (/^\d+$/.test(form)) continue;
     for (const tok of doc.bodyTokens) {

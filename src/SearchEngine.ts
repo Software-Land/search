@@ -224,6 +224,9 @@ function serializeHit(c: RankedHit, query: AnalyzedQuery, explain?: boolean): Se
         topicalRecall: query.topicalRecall
           ? { key: query.topicalRecall.key, forms: query.topicalRecall.forms.map((form) => [...form]) }
           : null,
+        synonymRecall: query.synonymRecall?.length
+          ? query.synonymRecall.map((pair) => ({ source: pair.source, target: pair.target }))
+          : undefined,
         lexicalTokens: query.lexicalTokens,
         lexicalPhraseKey: query.lexicalPhraseKey,
         normalizedQueryPhrase: f.normalizedQueryPhrase ?? "",

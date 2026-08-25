@@ -46,6 +46,8 @@ if (typeof semantic.compileSemantic !== "function") throw new Error("semantic co
 if (typeof lexical.compileLexicalFrequency !== "function") throw new Error("lexical compileLexicalFrequency missing");
 if (typeof corpus.normalizeExternalEquivalences !== "function") throw new Error("corpus normalizeExternalEquivalences missing");
 if (typeof corpus.classifyExpansionRelation !== "function") throw new Error("corpus classifyExpansionRelation missing");
+if (typeof runtime.synonyms !== "function") throw new Error("root synonyms missing");
+if (typeof runtime.normalizeSearchEquivalences !== "function") throw new Error("root normalizeSearchEquivalences missing");
 if ("compileSemantic" in runtime) throw new Error("runtime must not export compileSemantic");
 if ("compileLexicalFrequency" in runtime) throw new Error("runtime must not export compileLexicalFrequency");
 

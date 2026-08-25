@@ -175,6 +175,100 @@ function synonymPlugin(plugins: SearchPlugin[]) {
   return plugins.find((p) => p && typeof p.expand === "function" && p.name === "synonyms") || null;
 }
 
+function uniqueConfiguredSearchEquivalenceSource(
+  configuredSequenceIntent: { key?: string } | null | undefined,
+  configuredSpans: Array<{ key: string }> | undefined,
+  configuredPrefixSpans: Array<{ key: string }> | undefined
+): string | null {
+  const sequenceKey = configuredSequenceIntent?.key;
+  if (sequenceKey) return sequenceKey;
+  const keys = new Set<string>();
+  for (const span of configuredSpans || []) {
+    if (span?.key) keys.add(span.key);
+  }
+  for (const span of configuredPrefixSpans || []) {
+    if (span?.key) keys.add(span.key);
+  }
+  if (keys.size === 1) return [...keys][0];
+  return null;
+}
+
+function admitSearchEquivalenceTargets(
+  syn: SearchPlugin,
+  source: string,
+  seenPairs: Set<string>,
+  pairs: Array<{ source: string; target: string }>
+) {
+  if (!source || typeof syn.expand !== "function") return;
+  for (const alt of syn.expand(source)) {
+    const target = String(alt?.form || "");
+    if (!target) continue;
+    const pairKey = `${source}\t${target}`;
+    if (seenPairs.has(pairKey)) continue;
+    seenPairs.add(pairKey);
+    pairs.push({ source, target });
+  }
+}
+
+/**
+ * Additive one-hop synonym recall after configured occupancy.
+ * Lookup uses accepted configured/phrase/uncovered semantics only.
+ * Does not rewrite tokens, lexical intent, or configured identity.
+ */
+function attachSearchEquivalenceRecall(
+  query: {
+    configuredSequenceIntent?: { key?: string } | null;
+    configuredSpans?: Array<{ key: string }>;
+    configuredPrefixSpans?: Array<{ key: string }>;
+    lexicalPhraseKey?: string;
+    concepts: QueryConcept[];
+    synonymRecall?: Array<{ source: string; target: string }>;
+  },
+  analyzedTokens: QueryToken[],
+  covered: Set<number>,
+  plugins: SearchPlugin[]
+) {
+  const syn = synonymPlugin(plugins);
+  if (!syn || typeof syn.expand !== "function") return;
+  const pairs: Array<{ source: string; target: string }> = [];
+  const seenPairs = new Set<string>();
+  const configured = uniqueConfiguredSearchEquivalenceSource(
+    query.configuredSequenceIntent,
+    query.configuredSpans,
+    query.configuredPrefixSpans
+  );
+  if (configured) admitSearchEquivalenceTargets(syn, configured, seenPairs, pairs);
+  const phraseKey = query.lexicalPhraseKey;
+  if (phraseKey) admitSearchEquivalenceTargets(syn, phraseKey, seenPairs, pairs);
+  for (let i = 0; i < analyzedTokens.length; i++) {
+    if (covered.has(i)) continue;
+    const tok = analyzedTokens[i];
+    if (DEFAULT_STOP.has(tok.normalized) && analyzedTokens.length > 2) continue;
+    if (isAllDigitToken(tok.normalized)) continue;
+    admitSearchEquivalenceTargets(syn, tok.normalized, seenPairs, pairs);
+    if (tok.lemma && tok.lemma !== tok.normalized) {
+      admitSearchEquivalenceTargets(syn, tok.lemma, seenPairs, pairs);
+    }
+  }
+  if (!pairs.length) return;
+  pairs.sort((a, b) => a.source.localeCompare(b.source) || a.target.localeCompare(b.target));
+  const existingForms = new Set<string>();
+  for (const concept of query.concepts) {
+    for (const form of concept.forms || []) existingForms.add(form);
+  }
+  for (const pair of pairs) {
+    if (existingForms.has(pair.target)) continue;
+    query.concepts.push({
+      id: pair.target,
+      kind: "term",
+      forms: [pair.target],
+      provenance: "synonym",
+    });
+    existingForms.add(pair.target);
+  }
+  query.synonymRecall = pairs;
+}
+
 function lexiconFrom(plugins: SearchPlugin[], extra: Iterable<string> | Set<string> | null | undefined) {
   const words = new Set(extra || []);
   for (const plugin of plugins) {
@@ -1057,7 +1151,7 @@ export function analyzeQuery(
     topicalRecall = topicalRecallForKey(uniqueStopRemainderSpanKey(analyzedTokens, configuredSpans), dict);
   }
 
-  return {
+  const analyzed: AnalyzedQuery = {
     raw,
     originalSurface: tokenize(raw),
     tokens: analyzedTokens,
@@ -1079,6 +1173,8 @@ export function analyzeQuery(
         ? analyzedTokens.filter((t) => !DEFAULT_STOP.has(t.normalized))
         : analyzedTokens,
   };
+  attachSearchEquivalenceRecall(analyzed, analyzedTokens, covered, plugins);
+  return analyzed;
 }
 
 /**

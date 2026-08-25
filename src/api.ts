@@ -96,6 +96,30 @@ export interface SynonymPlugin extends SearchPlugin {
   expand(token: string): Array<{ form: string }>;
 }
 
+/** Directional search-equivalence map. Keys and values are source/target phrases. */
+export type SearchEquivalenceMap = Record<string, string[]>;
+
+export interface SearchEquivalencePair {
+  source: string;
+  target: string;
+}
+
+export interface NormalizedSearchEquivalenceEntry {
+  source: string;
+  targets: string[];
+}
+
+export interface SearchEquivalenceRejection {
+  source: string;
+  target?: string;
+  reason: string;
+}
+
+export interface NormalizedSearchEquivalences {
+  entries: NormalizedSearchEquivalenceEntry[];
+  rejected: SearchEquivalenceRejection[];
+}
+
 /** Opt-in lexicon-only plugin shape (typo vocabulary / prefix words). */
 export interface LexiconPlugin extends SearchPlugin {
   lexicon(): Iterable<string>;
@@ -250,6 +274,7 @@ export interface SearchExplanation {
       key: string;
       forms: string[][];
     } | null;
+    synonymRecall?: SearchEquivalencePair[];
     lexicalTokens?: unknown[];
     lexicalPhraseKey?: string;
     normalizedQueryPhrase?: string;

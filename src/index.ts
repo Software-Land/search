@@ -25,6 +25,11 @@ import {
 } from "./artifacts.js";
 import { abortError as abortErrorImpl, isAbortError as isAbortErrorImpl } from "./cancel.js";
 import {
+  synonyms as synonymsImpl,
+  normalizeSearchEquivalences as normalizeSearchEquivalencesImpl,
+  MAX_SEARCH_EQUIVALENCE_TARGETS as maxSearchEquivalenceTargetsImpl,
+} from "./synonyms.js";
+import {
   InvalidConfigurationError as invalidConfigurationErrorImpl,
   InvalidDocumentError as invalidDocumentErrorImpl,
   ArtifactVersionError as artifactVersionErrorImpl,
@@ -50,9 +55,12 @@ import type {
   SearchEngine as SearchEngineType,
   SearchEngineConstructor,
   SynonymArtifact,
+  SynonymPlugin,
   EnglishPlugin,
   MorphologyOptions,
   DictionaryPlugin,
+  SearchEquivalenceMap,
+  NormalizedSearchEquivalences,
 } from "./api.js";
 
 export type {
@@ -87,6 +95,11 @@ export type {
   SynonymArtifact,
   SynonymPlugin,
   TextRole,
+  SearchEquivalenceMap,
+  SearchEquivalencePair,
+  SearchEquivalenceRejection,
+  NormalizedSearchEquivalenceEntry,
+  NormalizedSearchEquivalences,
 } from "./api.js";
 
 export type SearchEngine = SearchEngineType;
@@ -94,6 +107,14 @@ export const SearchEngine: SearchEngineConstructor = searchEngineImpl as unknown
 
 export const morphology: (options?: MorphologyOptions) => EnglishPlugin = morphologyImpl;
 export const dictionary: (options?: { entries?: EquivalenceEntry[] }) => DictionaryPlugin = dictionaryImpl;
+export const synonyms: (
+  input?: SearchEquivalenceMap | SynonymArtifact | { entries?: unknown[]; format?: string; version?: number }
+) => SynonymPlugin = synonymsImpl as (
+  input?: SearchEquivalenceMap | SynonymArtifact | { entries?: unknown[]; format?: string; version?: number }
+) => SynonymPlugin;
+export const normalizeSearchEquivalences: (input?: unknown) => NormalizedSearchEquivalences =
+  normalizeSearchEquivalencesImpl as (input?: unknown) => NormalizedSearchEquivalences;
+export const MAX_SEARCH_EQUIVALENCE_TARGETS: 8 = maxSearchEquivalenceTargetsImpl as 8;
 
 export const RELATIONSHIP_STRATEGIES: readonly RelationshipStrategy[] =
   relationshipStrategiesImpl as readonly RelationshipStrategy[];
@@ -147,6 +168,9 @@ export const PUBLIC_EXPORTS: readonly string[] = Object.freeze([
   "SearchEngine",
   "morphology",
   "dictionary",
+  "synonyms",
+  "normalizeSearchEquivalences",
+  "MAX_SEARCH_EQUIVALENCE_TARGETS",
   "RELATIONSHIP_STRATEGIES",
   "DEFAULT_RELATIONSHIP_STRATEGY",
   "RETRIEVER_NAMES",

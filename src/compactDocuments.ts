@@ -276,7 +276,7 @@ export function compactBodyMatchesConcept(store: CompactDocumentStore, ordinal: 
   const exact = new Set<number>();
   const prefixes: string[] = [];
   for (const form of forms) {
-    if (!form) continue;
+    if (!form || /\s/.test(form)) continue;
     const id = idOf.get(form);
     if (id !== undefined) exact.add(id);
     if (!/^\d+$/.test(form) && form.length >= 3) prefixes.push(form);

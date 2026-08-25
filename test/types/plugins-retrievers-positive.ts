@@ -5,6 +5,7 @@ import {
   SearchEngine,
   dictionary,
   morphology,
+  synonyms,
   type DictionaryPlugin,
   type EnglishPlugin,
   type ExperimentalRetrieveOptions,
@@ -67,6 +68,11 @@ const s: SynonymPlugin = {
     return [{ form: token }];
   },
 };
+const fromSynonyms: SynonymPlugin = synonyms({
+  qa: ["testing"],
+  "quality assurance": ["testing"],
+});
+void fromSynonyms.expand;
 
 const l: LexiconPlugin = {
   name: "corpus-spelling-lexicon",

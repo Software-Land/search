@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Public `synonyms({ qa: ["testing"] })` directional search-equivalence plugin and `normalizeSearchEquivalences()`. Object-map entries are one-hop and directional; they do not auto-reverse. Legacy `{ format, entries: [{ terms }] }` compiled synonyms stay bidirectional. Synonym lookup may use a unique configured key/span, an exact lexical phrase source, or uncovered tokens. It does not rewrite typed identity, lexical intent, or configured occupancy, and it does not activate topical or standalone recall.
+
 ## 0.5.0
 
 ### Added

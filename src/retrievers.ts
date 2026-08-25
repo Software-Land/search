@@ -141,7 +141,14 @@ function queryForms(query: AnalyzedQuery) {
   for (const c of query.concepts || []) {
     if (isBoundTrailingTermConcept(query, c)) continue;
     add(c.id, c.kind === "acronym" ? "acronym-key" : "concept");
-    for (const f of c.forms || []) add(f, c.kind === "acronym" ? "acronym-form" : "concept");
+    for (const f of c.forms || []) {
+      const kind = c.kind === "acronym" ? "acronym-form" : "concept";
+      add(f, kind);
+      const parts = String(f).split(/\s+/).filter(Boolean);
+      if (parts.length >= 2) {
+        for (const part of parts) add(part, kind);
+      }
+    }
   }
   const hint = standaloneRecallHint(query);
   if (hint) {

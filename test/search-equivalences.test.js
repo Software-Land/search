@@ -1,0 +1,348 @@
+/**
+ * Directional search-equivalence / synonym recall.
+ * Synthetic only. Does not change Software.Land expectedTop/oracle files.
+ */
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  SearchEngine,
+  morphology,
+  dictionary,
+  synonyms,
+  normalizeSearchEquivalences,
+  MAX_SEARCH_EQUIVALENCE_TARGETS,
+  InvalidConfigurationError,
+} from "../dist/index.js";
+import { analyzeQuery } from "../dist/analyze.js";
+import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
+
+const ROOT = path.dirname(fileURLToPath(import.meta.url));
+const FIXTURE = path.join(ROOT, "fixtures", "software-land");
+const schema = {
+  title: { type: "text", role: "title" },
+  body: { type: "text", role: "body" },
+};
+
+const docs = [
+  { id: "load", title: "Load Testing", body: "performance load testing notes" },
+  { id: "software", title: "Software Testing", body: "software testing methods" },
+  { id: "qa-guide", title: "Quality Assurance Guide", body: "process quality assurance handbook" },
+  { id: "unrelated", title: "Gardening Tips", body: "tomatoes and soil" },
+  { id: "verify", title: "Verification Methods", body: "verification of requirements" },
+  { id: "software-only", title: "Software Notes", body: "compilers and runtimes" },
+  { id: "reversed", title: "Testing Software", body: "order reversed phrase" },
+];
+
+function ids(hits) {
+  return hits.map((hit) => hit.id);
+}
+
+function plugins({ dict = [{ key: "qa", expansion: ["quality", "assurance"] }], map = { qa: ["testing"] } } = {}) {
+  const list = [morphology(), dictionary({ entries: dict })];
+  if (map) list.push(synonyms(map));
+  return list;
+}
+
+async function engine(opts = {}) {
+  const e = SearchEngine.create({
+    schema,
+    plugins: plugins(opts),
+    retriever: opts.retriever || "indexed",
+    relationshipStrategy: "none",
+  });
+  await e.index(opts.docs || docs);
+  return e;
+}
+
+function assertSearchParity(eng, query) {
+  const searchHits = eng.search(query, { limit: 50 });
+  const detailedHits = eng.searchDetailed(query, { limit: 50 }).results;
+  expect(ids(searchHits)).toEqual(ids(detailedHits));
+  return searchHits;
+}
+
+async function assertIndexedFullScan(query, pluginOpts = {}) {
+  const indexed = await engine({ ...pluginOpts, retriever: "indexed" });
+  const full = await engine({ ...pluginOpts, retriever: "full-scan" });
+  const indexedHits = assertSearchParity(indexed, query);
+  const fullHits = assertSearchParity(full, query);
+  expect(ids(indexedHits)).toEqual(ids(fullHits));
+  return { indexed, full, indexedHits, fullHits };
+}
+
+describe("normalizeSearchEquivalences", () => {
+  test("normalizes, unions duplicate sources, dedupes targets, bounds fan-out", () => {
+    const nine = Array.from({ length: MAX_SEARCH_EQUIVALENCE_TARGETS + 1 }, (_, i) => `t${String(i).padStart(2, "0")}`);
+    const out = normalizeSearchEquivalences({
+      QA: ["Testing", "testing"],
+      qa: ["exam"],
+      "Quality Assurance": ["testing"],
+      "": ["x"],
+      blank: [],
+      self: ["self"],
+      tooMany: nine,
+    });
+    expect(out.entries.find((e) => e.source === "qa").targets).toEqual(["exam", "testing"]);
+    expect(out.entries.find((e) => e.source === "quality assurance").targets).toEqual(["testing"]);
+    expect(out.entries.find((e) => e.source === "toomany").targets).toHaveLength(MAX_SEARCH_EQUIVALENCE_TARGETS);
+    expect(out.rejected.some((r) => r.reason === "empty-or-unsafe-source")).toBe(true);
+    expect(out.rejected.some((r) => r.reason === "empty-targets")).toBe(true);
+    expect(out.rejected.some((r) => r.reason === "source-equals-target")).toBe(true);
+    expect(out.rejected.some((r) => r.reason === "target-limit")).toBe(true);
+  });
+
+  test("fails closed on tokenizer-destructive symbolic targets and keeps a*", () => {
+    const out = normalizeSearchEquivalences({
+      astar: ["a*"],
+      cpp: ["c++"],
+      csharp: ["c#"],
+      bigo: ["O(1)"],
+    });
+    expect(out.entries).toEqual([{ source: "astar", targets: ["a*"] }]);
+    expect(new Set(out.rejected.map((r) => r.source))).toEqual(new Set(["bigo", "cpp", "csharp"]));
+    expect(out.entries.some((e) => e.targets.includes("c"))).toBe(false);
+    expect(out.entries.some((e) => e.targets.includes("a"))).toBe(false);
+  });
+});
+
+describe("directional search equivalences", () => {
+  test("configured qa admits testing titles without rewriting identity", async () => {
+    const { indexedHits } = await assertIndexedFullScan("qa");
+    const q = analyzeQuery("qa", { plugins: plugins() });
+    expect(q.tokens.map((t) => t.normalized)).toEqual(["qa"]);
+    expect(q.tokens.map((t) => t.surfaceNormalized)).toEqual(["qa"]);
+    expect(q.configuredSequenceIntent.key).toBe("qa");
+    expect(q.lexicalPhraseKey).toBe("quality assurance");
+    expect(q.synonymRecall).toEqual([{ source: "qa", target: "testing" }]);
+    expect(q.topicalRecall).toBeFalsy();
+    expect(q.standaloneRecall).toBeFalsy();
+    expect(q.concepts.some((c) => c.kind === "acronym" && c.id === "qa")).toBe(true);
+    expect(q.concepts.some((c) => c.provenance === "synonym" && c.forms.includes("testing"))).toBe(true);
+    expect(ids(indexedHits)).toEqual(expect.arrayContaining(["load", "software"]));
+    expect(stage3AUnsupportedReason(q)).not.toBeNull();
+
+    const eng = await engine({ retriever: "indexed" });
+    const explained = eng.searchDetailed("qa", { limit: 50, explain: true }).results[0];
+    expect(explained.explanation.query.synonymRecall).toEqual([{ source: "qa", target: "testing" }]);
+    expect(explained.explanation.query.raw).toBe("qa");
+  });
+
+  test("phrase source quality assurance admits testing titles", async () => {
+    const map = { "quality assurance": ["testing"] };
+    const { indexedHits } = await assertIndexedFullScan("quality assurance", { dict: [], map });
+    const q = analyzeQuery("quality assurance", { plugins: plugins({ dict: [], map }) });
+    expect(q.tokens.map((t) => t.normalized)).toEqual(["quality", "assurance"]);
+    expect(q.configuredSequenceIntent).toBeNull();
+    expect(q.synonymRecall).toEqual([{ source: "quality assurance", target: "testing" }]);
+    expect(ids(indexedHits)).toEqual(expect.arrayContaining(["load", "software"]));
+    expect(stage3AUnsupportedReason(q)).toBe("concept-provenance");
+  });
+
+  test("directionality is authored, not automatic", async () => {
+    const forward = await assertIndexedFullScan("testing", { dict: [], map: { qa: ["testing"] } });
+    expect(ids(forward.indexedHits)).not.toContain("qa-guide");
+    const q = analyzeQuery("testing", { plugins: plugins({ dict: [], map: { qa: ["testing"] } }) });
+    expect(q.synonymRecall || []).toEqual([]);
+
+    const reverse = await assertIndexedFullScan("testing", {
+      dict: [],
+      map: { qa: ["testing"], testing: ["quality assurance"] },
+    });
+    expect(ids(reverse.indexedHits)).toEqual(expect.arrayContaining(["qa-guide"]));
+  });
+
+  test("one hop only: qa admits testing, not verification", async () => {
+    const map = { qa: ["testing"], testing: ["verification"] };
+    const { indexedHits } = await assertIndexedFullScan("qa", { map });
+    expect(ids(indexedHits)).toEqual(expect.arrayContaining(["load", "software"]));
+    expect(ids(indexedHits)).not.toContain("verify");
+    const q = analyzeQuery("qa", { plugins: plugins({ map }) });
+    expect(q.synonymRecall).toEqual([{ source: "qa", target: "testing" }]);
+    expect(q.synonymRecall.some((p) => p.target === "verification")).toBe(false);
+  });
+
+  test("uncovered token source admits the target", async () => {
+    const { indexedHits } = await assertIndexedFullScan("docker", {
+      dict: [],
+      map: { docker: ["container"] },
+      docs: [
+        { id: "c", title: "Container Runtime", body: "linux containers" },
+        { id: "g", title: "Gardening Tips", body: "soil" },
+      ],
+    });
+    expect(ids(indexedHits)).toEqual(expect.arrayContaining(["c"]));
+  });
+
+  test("multi-token target requires contiguous phrase, not bag matching", async () => {
+    const map = { qa: ["software testing"] };
+    const { indexedHits } = await assertIndexedFullScan("qa", { map });
+    expect(ids(indexedHits)).toEqual(expect.arrayContaining(["software"]));
+    expect(ids(indexedHits)).not.toContain("software-only");
+    expect(ids(indexedHits)).not.toContain("reversed");
+    expect(ids(indexedHits)).not.toContain("load");
+  });
+
+  test("ambiguous configured keys fail closed and do not pick qa for a synonym", async () => {
+    const dict = [
+      { key: "qa", expansion: ["quality", "assurance"] },
+      { key: "testing", expansion: ["quality", "assurance"] },
+    ];
+    const map = { qa: ["testing"] };
+    const q = analyzeQuery("quality assurance", { plugins: plugins({ dict, map }) });
+    expect(q.configuredSequenceIntent).toBeNull();
+    expect(q.synonymRecall || []).toEqual([]);
+    expect(q.concepts.some((c) => c.kind === "acronym")).toBe(false);
+    const { indexedHits } = await assertIndexedFullScan("quality assurance", { dict, map });
+    expect(ids(indexedHits)).not.toContain("load");
+    expect(ids(indexedHits)).not.toContain("software");
+    expect(ids(indexedHits)).toEqual(expect.arrayContaining(["qa-guide"]));
+  });
+
+  test("synonym recall does not activate topical or standalone even when those keys exist", async () => {
+    const dict = [
+      { key: "qa", expansion: ["quality", "assurance"] },
+      {
+        key: "testing",
+        expansion: ["test", "practice"],
+        topicalRecall: [["unit"]],
+        standaloneRecall: ["testing"],
+      },
+    ];
+    const q = analyzeQuery("qa", { plugins: plugins({ dict, map: { qa: ["testing"] } }) });
+    expect(q.configuredSequenceIntent.key).toBe("qa");
+    expect(q.synonymRecall).toEqual([{ source: "qa", target: "testing" }]);
+    expect(q.topicalRecall).toBeFalsy();
+    expect(q.standaloneRecall).toBeFalsy();
+  });
+
+  test("does not prefix-match synonym sources from typed stubs", () => {
+    const map = { security: ["safety"], quality: ["testing"], testing: ["verification"] };
+    const plugin = plugins({ dict: [], map });
+    expect(analyzeQuery("secu", { plugins: plugin }).synonymRecall || []).toEqual([]);
+    expect(analyzeQuery("qual", { plugins: plugin }).synonymRecall || []).toEqual([]);
+    expect(analyzeQuery("tes", { plugins: plugin }).synonymRecall || []).toEqual([]);
+  });
+
+  test("legacy compiled { terms } groups stay bidirectional", () => {
+    const plugin = [
+      morphology(),
+      synonyms({
+        format: "search-v2-synonyms",
+        version: 1,
+        entries: [{ terms: ["auth", "authentication"], type: "near-equivalence" }],
+      }),
+    ];
+    const auth = analyzeQuery("auth", { plugins: plugin });
+    const authentication = analyzeQuery("authentication", { plugins: plugin });
+    expect(auth.concepts.some((c) => c.forms.includes("authentication"))).toBe(true);
+    expect(authentication.concepts.some((c) => c.forms.includes("auth"))).toBe(true);
+    expect(auth.concepts.find((c) => c.forms.includes("auth")).provenance).toBe("synonym");
+  });
+
+  test("empty synonyms plugin does not change results", async () => {
+    const none = await engine({ map: null });
+    const empty = await engine({ map: {} });
+    for (const query of ["qa", "quality assurance", "testing", "gardening"]) {
+      expect(ids(assertSearchParity(none, query))).toEqual(ids(assertSearchParity(empty, query)));
+    }
+  });
+
+  test("synonyms() rejects non-objects", () => {
+    expect(() => synonyms("qa")).toThrow(InvalidConfigurationError);
+    expect(() => synonyms(["testing"])).toThrow(InvalidConfigurationError);
+  });
+});
+
+describe("search-equivalence morphology / symbols", () => {
+  test("suffix lemmas can look up an uncovered source without synonym+lemma explosion", async () => {
+    const map = { test: ["probe"] };
+    const extra = [
+      { id: "probe", title: "Probe Guide", body: "instrumentation" },
+      { id: "garden", title: "Gardening Tips", body: "soil" },
+    ];
+    const plugin = plugins({ dict: [], map });
+    const cases = {
+      test: analyzeQuery("test", { plugins: plugin }),
+      tests: analyzeQuery("tests", { plugins: plugin }),
+      testing: analyzeQuery("testing", { plugins: plugin }),
+    };
+    expect(cases.test.tokens[0].lemma).toBe("test");
+    expect(cases.tests.tokens[0].lemma).toBe("test");
+    expect(cases.testing.tokens[0].lemma).toBe("test");
+    expect(cases.test.synonymRecall).toEqual([{ source: "test", target: "probe" }]);
+    expect(cases.tests.synonymRecall).toEqual([{ source: "test", target: "probe" }]);
+    expect(cases.testing.synonymRecall).toEqual([{ source: "test", target: "probe" }]);
+    expect(cases.testing.concepts.filter((c) => c.provenance === "synonym").length).toBeLessThanOrEqual(1);
+    const { indexedHits } = await assertIndexedFullScan("tests", { dict: [], map, docs: extra });
+    expect(ids(indexedHits)).toEqual(expect.arrayContaining(["probe"]));
+  });
+});
+
+describe("search-equivalence regression controls without synonyms", () => {
+  const regressionQueries = [
+    "appsec",
+    "application security",
+    "what is an app sec",
+    "what is an applicatio security",
+    "hypertext",
+    "machine l",
+    "frames per sec",
+    "12 vulnerability",
+    "12 vuln",
+  ];
+
+  let baseline;
+  let emptyPlugin;
+
+  beforeAll(async () => {
+    function loadJson(name) {
+      return JSON.parse(readFileSync(path.join(FIXTURE, name), "utf8"));
+    }
+    const documents = loadJson("documents.json");
+    const common = {
+      schema,
+      relationships: loadJson("relationships.json"),
+      relationshipStrategy: "hybrid",
+      retriever: "full-scan",
+    };
+    const basePlugins = [morphology({ lemmas: loadJson("lemmas.json") }), dictionary({ entries: loadJson("dictionary.json") })];
+    baseline = SearchEngine.create({ ...common, plugins: basePlugins });
+    emptyPlugin = SearchEngine.create({ ...common, plugins: [...basePlugins, synonyms({})] });
+    await baseline.index(documents);
+    await emptyPlugin.index(documents);
+  });
+
+  test.each(regressionQueries)("%s is unchanged by an empty synonyms plugin", (query) => {
+    const a = baseline.search(query, { limit: 20 });
+    const b = emptyPlugin.search(query, { limit: 20 });
+    expect(ids(b)).toEqual(ids(a));
+    expect(ids(baseline.searchDetailed(query, { limit: 20 }).results)).toEqual(ids(a));
+    expect(ids(emptyPlugin.searchDetailed(query, { limit: 20 }).results)).toEqual(ids(b));
+  });
+});
+
+describe("search-equivalence memory envelope", () => {
+  test("map lookup stays O(1) per source and memory is small at V1 / 500 / 1000 keys", () => {
+    function measure(n, fanout) {
+      const map = {};
+      for (let i = 0; i < n; i++) {
+        const targets = [];
+        for (let j = 0; j < fanout; j++) targets.push(`t${i}_${j}`);
+        map[`k${i}`] = targets;
+      }
+      const normalized = normalizeSearchEquivalences(map);
+      const plugin = synonyms(map);
+      const jsonBytes = Buffer.byteLength(JSON.stringify(normalized.entries), "utf8");
+      expect(plugin.expand("k0").length).toBe(Math.min(fanout, MAX_SEARCH_EQUIVALENCE_TARGETS));
+      expect(plugin.expand("missing")).toEqual([]);
+      return { keys: n, edges: n * Math.min(fanout, MAX_SEARCH_EQUIVALENCE_TARGETS), jsonBytes };
+    }
+    const v1 = measure(76, 2);
+    const mid = measure(500, 2);
+    const large = measure(1000, 2);
+    expect(v1.jsonBytes).toBeLessThan(20_000);
+    expect(mid.jsonBytes).toBeLessThan(80_000);
+    expect(large.jsonBytes).toBeLessThan(160_000);
+  });
+});

@@ -21,6 +21,9 @@ import {
   parseEquivalences,
   parseRelationships,
   parseSynonyms,
+  synonyms,
+  normalizeSearchEquivalences,
+  MAX_SEARCH_EQUIVALENCE_TARGETS,
   type EquivalenceArtifact,
   type EquivalenceEntry,
   type RelationshipArtifact,
@@ -31,9 +34,12 @@ import {
   type SearchOptions,
   type SearchResult,
   type SynonymArtifact,
+  type SynonymPlugin,
   type EnglishPlugin,
   type DictionaryPlugin,
   type LexicalIndexArtifact,
+  type SearchEquivalenceMap,
+  type NormalizedSearchEquivalences,
 } from "@software-land/search";
 
 const schema: Schema = {
@@ -134,14 +140,27 @@ const equivalences: EquivalenceArtifact = parseEquivalences({
   version: 1,
   entries,
 });
-const synonyms: SynonymArtifact = parseSynonyms({
+const synonymsArtifact: SynonymArtifact = parseSynonyms({
   format: "search-v2-synonyms",
   version: 1,
   entries: [{ terms: ["auth", "authentication"] }],
 });
+const directionalMap: SearchEquivalenceMap = {
+  qa: ["testing"],
+  "quality assurance": ["testing"],
+  docker: ["container", "containers"],
+};
+const directionalPlugin: SynonymPlugin = synonyms(directionalMap);
+const phrasePlugin: SynonymPlugin = synonyms({ "quality assurance": ["testing"] });
+const normalizedEquivalences: NormalizedSearchEquivalences = normalizeSearchEquivalences(directionalMap);
+const targetBound: 8 = MAX_SEARCH_EQUIVALENCE_TARGETS;
+void synonymsArtifact.entries;
+void directionalPlugin.expand;
+void phrasePlugin.name;
+void normalizedEquivalences.entries;
+void targetBound;
 const parsedGraph: RelationshipArtifact = parseRelationships(relationships);
 void equivalences.entries;
-void synonyms.entries;
 void parsedGraph.relationships;
 void ARTIFACT_FORMATS.equivalences;
 void ARTIFACT_FORMATS.lexicalIndex;

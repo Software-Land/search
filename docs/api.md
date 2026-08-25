@@ -57,3 +57,23 @@ Same documents, configuration, artifacts, and query produce the same ordering, e
 `SearchEngine.create({ plugins })` accepts `SearchPlugin[]`. `morphology()` returns `EnglishPlugin`. `dictionary()` returns `DictionaryPlugin`. Custom retrievers type as `ExperimentalRetriever`. Permissive duck-typed plugin objects remain valid at runtime.
 
 Type contracts `SearchPlugin`, `EnglishPlugin`, `DictionaryPlugin`, `SynonymPlugin`, and `LexiconPlugin` describe the duck-typed hooks Core actually reads (`lemma`, `canonicalLemma`, `lexicon`, `sequences` / `entry`, `byKey`, `expand`). They do not make analysis or ranking internals public, and they do not change runtime dispatch. `english()` is not a public root export.
+
+## Search equivalences
+
+`synonyms({ qa: ["testing"], docker: ["container", "containers"] })` is a directional, one-hop recall map. It does not rewrite typed tokens and does not auto-reverse. Phrase sources and targets are exact contiguous normalized phrases.
+
+```js
+import { SearchEngine, morphology, dictionary, synonyms } from "@software-land/search";
+
+SearchEngine.create({
+  plugins: [
+    morphology(),
+    dictionary({ entries: [{ key: "qa", expansion: ["quality", "assurance"] }] }),
+    synonyms({ qa: ["testing"] }),
+  ],
+});
+```
+
+`normalizeSearchEquivalences(map)` validates that input (empty source/targets, source==target, unsafe symbols, max 8 targets/source). Applications merge curated and generated rows before calling it; Core does not rank those sources.
+
+The compiled `search-v2-synonyms` `{ terms: [...] }` artifact remains a bidirectional compatibility path via `synonyms({ format, entries })` / `parseSynonyms()`. Do not pass a directional object map to `parseSynonyms()`.
