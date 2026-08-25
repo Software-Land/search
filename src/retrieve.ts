@@ -230,15 +230,15 @@ export function hasConfiguredSequenceIntent(query: AnalyzedQuery) {
 
 /**
  * Narrow 2-character title-token prefix admission.
- * Activates only when the final typed token has normalized length 2 and every
- * other typed token is already in DEFAULT_STOP. Query identity is unchanged;
- * this is candidate evidence only. Digits stay closed.
+ * Activates only when the final typed token is a non-stop, non-digit stub of
+ * length 2 and every other typed token is already in DEFAULT_STOP. Query
+ * identity is unchanged; this is candidate evidence only.
  */
 export function shortTitleTokenPrefixStub(query: AnalyzedQuery): string | null {
   const tokens = query.tokens || [];
   if (!tokens.length) return null;
   const stub = String(tokens[tokens.length - 1]?.normalized || "");
-  if (stub.length !== 2 || isAllDigitToken(stub)) return null;
+  if (stub.length !== 2 || isAllDigitToken(stub) || DEFAULT_STOP.has(stub)) return null;
   for (let i = 0; i < tokens.length - 1; i++) {
     if (!DEFAULT_STOP.has(String(tokens[i]?.normalized || ""))) return null;
   }

@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology, dictionary } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import {
@@ -6,6 +9,7 @@ import {
 } from "../dist/retrieve.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
 import { allowPrefixMatch, DEFAULT_STOP } from "../dist/text.js";
+import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 
 const dict = [
   {
@@ -97,7 +101,15 @@ describe("short title-token prefix admission", () => {
     expect(shortTitleTokenPrefixStub(analyzeQuery("d", { plugins: plugins() }))).toBeNull();
     expect(shortTitleTokenPrefixStub(analyzeQuery("m", { plugins: plugins() }))).toBeNull();
     expect(shortTitleTokenPrefixStub(analyzeQuery("12", { plugins: plugins() }))).toBeNull();
+    expect(shortTitleTokenPrefixStub(analyzeQuery("what is an in", { plugins: plugins() }))).toBeNull();
+    expect(shortTitleTokenPrefixStub(analyzeQuery("what is a to", { plugins: plugins() }))).toBeNull();
+    expect(shortTitleTokenPrefixStub(analyzeQuery("what is a as", { plugins: plugins() }))).toBeNull();
+    expect(shortTitleTokenPrefixStub(analyzeQuery("what is a vs", { plugins: plugins() }))).toBeNull();
+    for (const query of ["in", "to", "as", "vs", "an", "is", "of"]) {
+      expect(shortTitleTokenPrefixStub(analyzeQuery(query, { plugins: plugins() }))).toBeNull();
+    }
     expect(DEFAULT_STOP.has("what")).toBe(true);
+    expect(DEFAULT_STOP.has("in")).toBe(true);
     expect(DEFAULT_STOP.has("dev")).toBe(false);
   });
 
@@ -214,5 +226,56 @@ describe("short title-token prefix admission", () => {
       expect(q.configuredSequenceIntent ?? null).toBeNull();
       expect(q.topicalRecall ?? null).toBeNull();
     }
+  });
+
+  test("stopword finals do not use the special 2-char title-prefix path", () => {
+    for (const query of ["what is an in", "what is a to", "what is a as", "what is a vs", "in", "to", "as", "vs"]) {
+      expect(shortTitleTokenPrefixStub(analyzeQuery(query, { plugins: plugins() }))).toBeNull();
+    }
+  });
+});
+
+describe("short title-token prefix on Software.Land fixture", () => {
+  const fixtureRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "software-land");
+  const load = (name) => JSON.parse(readFileSync(path.join(fixtureRoot, name), "utf8"));
+  let full;
+  let indexed;
+  let fixturePlugins;
+
+  beforeAll(async () => {
+    fixturePlugins = [
+      morphology({ lemmas: load("lemmas.json") }),
+      dictionary({ entries: load("dictionary.json") }),
+    ];
+    const documents = attachLexicalFrequency(load("documents.json"), load("lexical-frequency.json"));
+    const opts = {
+      schema,
+      plugins: fixturePlugins,
+      relationships: load("relationships.json"),
+      relationshipStrategy: "hybrid",
+    };
+    full = SearchEngine.create({ ...opts, retriever: "full-scan" });
+    indexed = SearchEngine.create({ ...opts, retriever: "indexed" });
+    await full.index(documents);
+    await indexed.index(documents);
+  });
+
+  test("what is an ap keeps API first and App Sec in historical topN", () => {
+    const q = analyzeQuery("what is an ap", { plugins: fixturePlugins });
+    expect(shortTitleTokenPrefixStub(q)).toBe("ap");
+    const titles = full.search("what is an ap", { limit: 3 }).map((row) => row.title);
+    expect(titles[0]).toBe("What is an API?");
+    expect(titles).toContain("App Sec");
+    expect(ids(indexed.search("what is an ap", { limit: 20 }))).toEqual(ids(full.search("what is an ap", { limit: 20 })));
+  });
+
+  test("io keeps What is IO? first", () => {
+    expect(shortTitleTokenPrefixStub(analyzeQuery("io", { plugins: fixturePlugins }))).toBe("io");
+    expect(full.search("io", { limit: 1 })[0].title).toBe("What is IO?");
+  });
+
+  test("what is a co keeps What is a Container? first", () => {
+    expect(shortTitleTokenPrefixStub(analyzeQuery("what is a co", { plugins: fixturePlugins }))).toBe("co");
+    expect(full.search("what is a co", { limit: 1 })[0].title).toBe("What is a Container?");
   });
 });
