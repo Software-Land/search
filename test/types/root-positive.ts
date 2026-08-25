@@ -54,12 +54,13 @@ const relationships: RelationshipArtifact = {
 };
 
 const entries: EquivalenceEntry[] = [
-  { key: "wifi", expansion: ["wi", "fi"], aliases: [["wi", "fi"]], standaloneRecall: [] },
+  { key: "wifi", expansion: ["wi", "fi"], aliases: [["wi", "fi"]], standaloneRecall: [], topicalRecall: [] },
 ];
 
 const morphologyPlugin: EnglishPlugin = morphology();
 const dictionaryPlugin: DictionaryPlugin = dictionary({ entries });
 void dictionaryPlugin.standaloneRecallByToken;
+void dictionaryPlugin.topicalRecallByKey;
 const morphologyWithLemmas: EnglishPlugin = morphology({ lemmas: { widgets: "widget" } });
 void morphologyPlugin.lemma;
 void morphologyPlugin.indexIdentity;

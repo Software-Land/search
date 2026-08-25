@@ -23,6 +23,7 @@ import type {
   RetrieveOptions,
   SearchIndex,
   StandaloneRecall,
+  TopicalRecall,
 } from "./types.js";
 
 type ConceptTitleMatch = "key" | "expansion" | "exact" | "prefix" | "lemma";
@@ -252,6 +253,46 @@ export function documentMatchesStandaloneRecall(query: AnalyzedQuery, doc: Index
   return Boolean(conceptMatchesTitle(concept, doc) || conceptMatchesBody(concept, doc));
 }
 
+export function topicalRecallHint(query: AnalyzedQuery | null | undefined): TopicalRecall | null {
+  const hint = query?.topicalRecall;
+  if (!hint?.key || !Array.isArray(hint.forms) || !hint.forms.length) return null;
+  return hint;
+}
+
+export type TopicalFormEvidence = {
+  hit: boolean;
+  title: boolean;
+  phrase: boolean;
+};
+
+export function topicalFormEvidence(doc: IndexedDocument, form: string[]): TopicalFormEvidence {
+  const tokens = (form || []).filter(Boolean);
+  if (!tokens.length) return { hit: false, title: false, phrase: false };
+  if (tokens.length === 1) {
+    const token = tokens[0];
+    const title = Boolean(doc.titleTokenSet.has(token) || doc.titleLemmaSet.has(token));
+    const body = Boolean(doc.bodyTokenSet.has(token) || doc.bodyLemmaSet.has(token));
+    return { hit: title || body, title, phrase: false };
+  }
+  const title = sequencePresent(tokens, doc.titleTokens) || sequencePresent(tokens, doc.titleLemmas);
+  const body = sequencePresent(tokens, doc.bodyTokens) || sequencePresent(tokens, doc.bodyLemmas);
+  return { hit: title || body, title, phrase: title || body };
+}
+
+export function matchedTopicalForms(query: AnalyzedQuery, doc: IndexedDocument): string[][] {
+  const hint = topicalRecallHint(query);
+  if (!hint) return [];
+  const out: string[][] = [];
+  for (const form of hint.forms) {
+    if (topicalFormEvidence(doc, form).hit) out.push(form);
+  }
+  return out;
+}
+
+export function documentMatchesTopicalRecall(query: AnalyzedQuery, doc: IndexedDocument) {
+  return matchedTopicalForms(query, doc).length > 0;
+}
+
 export function identityTokens(query: AnalyzedQuery): QueryToken[] {
   if (hasConfiguredSequenceIntent(query) && query.lexicalTokens?.length) {
     return query.lexicalTokens;
@@ -424,6 +465,10 @@ function scanDocument(
 
   if (documentMatchesStandaloneRecall(query, doc)) {
     add(doc, "standalone-recall");
+  }
+
+  if (documentMatchesTopicalRecall(query, doc)) {
+    add(doc, "topical-recall");
   }
 }
 

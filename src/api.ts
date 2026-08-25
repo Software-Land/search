@@ -56,6 +56,8 @@ export interface SearchPlugin {
   byKey?: ReadonlyMap<string, EquivalenceEntry>;
   /** Unique reviewed standalone token → configured key. Collisions are omitted. */
   standaloneRecallByToken?: ReadonlyMap<string, string>;
+  /** Configured key → reviewed topical phrase forms. */
+  topicalRecallByKey?: ReadonlyMap<string, string[][]>;
   expand?(token: string): Array<{ form: string }>;
 }
 
@@ -84,6 +86,7 @@ export interface DictionaryPlugin extends SearchPlugin {
   sequences: NonNullable<SearchPlugin["sequences"]>;
   byKey: ReadonlyMap<string, EquivalenceEntry>;
   standaloneRecallByToken?: ReadonlyMap<string, string>;
+  topicalRecallByKey?: ReadonlyMap<string, string[][]>;
   lexicon(): Iterable<string>;
 }
 
@@ -230,6 +233,10 @@ export interface SearchExplanation {
       key: string;
       sourceToken: string;
     } | null;
+    topicalRecall?: {
+      key: string;
+      forms: string[][];
+    } | null;
     lexicalTokens?: unknown[];
     lexicalPhraseKey?: string;
     normalizedQueryPhrase?: string;
@@ -290,6 +297,8 @@ export interface EquivalenceEntry {
   primary?: string | null;
   /** Reviewed exact standalone tokens that may open secondary configured recall. */
   standaloneRecall?: string[];
+  /** Reviewed one-hop topical phrase forms. Not aliases or lexical intent. */
+  topicalRecall?: string[][];
   type?: string;
   provenance?: string | null;
   confidence?: number | null;

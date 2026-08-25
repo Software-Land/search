@@ -383,6 +383,27 @@ describe("normalizeExternalEquivalences spelling and abbreviation compatibility"
     ]);
     expect(result.entries).toHaveLength(1);
     expect(result.entries[0].standaloneRecall).toEqual(["hypertext"]);
+    expect(result.entries[0].topicalRecall).toEqual([]);
+  });
+
+  test("topicalRecall round-trips tokenized phrases and rejects malformed values", () => {
+    const result = normalizeExternalEquivalences([
+      {
+        key: "appsec",
+        expansion: "application security",
+        topicalRecall: [
+          ["Authentication"],
+          ["authentication"],
+          ["bearer", "token"],
+          ["bearer token"],
+          "oauth",
+          [],
+          ["  "],
+        ],
+      },
+    ]);
+    expect(result.entries).toHaveLength(1);
+    expect(result.entries[0].topicalRecall).toEqual([["authentication"], ["bearer", "token"]]);
   });
 
   test("public input is {key, expansion, aliases, primary}; expansions[] is not a substitute", () => {

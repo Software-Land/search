@@ -1,6 +1,6 @@
 import { isNearCompletePrefix, levenshteinAtMost, DEFAULT_STOP, allowPrefixMatch } from "./text.js";
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "./versionForms.js";
-import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall } from "./retrieve.js";
+import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall, topicalRecallHint, topicalFormEvidence } from "./retrieve.js";
 import { scoreFeatures } from "./rank.js";
 import { saturatingFrequency } from "./saturatingFrequency.js";
 import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "./lexicalNormalize.js";
@@ -589,10 +589,40 @@ function shadowStandaloneQuery(query: AnalyzedQuery): AnalyzedQuery | null {
       matchedKinds: ["key"],
     },
     standaloneRecall: null,
+    topicalRecall: null,
     lexicalTokens,
     lexicalPhraseTokens,
     lexicalPhraseKey: lexicalPhraseTokens.join(" "),
     stopstripped: [keyTok],
+  };
+}
+
+function withTopicalRecallFields(
+  query: AnalyzedQuery,
+  doc: IndexedDocument,
+  fields: ReturnType<typeof computeFeatureFields>
+) {
+  const hint = topicalRecallHint(query);
+  if (!hint) return fields;
+  let formCount = 0;
+  let titleCount = 0;
+  let phraseCount = 0;
+  for (const form of hint.forms) {
+    const ev = topicalFormEvidence(doc, form);
+    if (!ev.hit) continue;
+    formCount += 1;
+    if (ev.title) titleCount += 1;
+    if (ev.phrase) phraseCount += 1;
+  }
+  const match = formCount > 0;
+  const score = match ? titleCount * 2 + phraseCount * 0.6 + formCount * 0.3 : 0;
+  return {
+    ...fields,
+    topicalRecallMatch: match,
+    topicalRecallFormCount: formCount,
+    topicalRecallTitleMatch: titleCount > 0,
+    topicalRecallPhraseMatch: phraseCount > 0,
+    topicalRecallScore: Number(score.toFixed(4)),
   };
 }
 
@@ -676,7 +706,7 @@ export function extractFeatures(
     return finishFeatures(
       relationship,
       retrievalScore,
-      withStandaloneRecallFields(query, doc, computeFeatureFields(query, doc))
+      withTopicalRecallFields(query, doc, withStandaloneRecallFields(query, doc, computeFeatureFields(query, doc)))
     );
   }
   timeFeat("queryPrep", () => getQueryFeatPrep(query));
@@ -688,7 +718,7 @@ export function extractFeatures(
   return finishFeatures(
     relationship,
     retrievalScore,
-    withStandaloneRecallFields(query, doc, {
+    withTopicalRecallFields(query, doc, withStandaloneRecallFields(query, doc, {
     exactTitleMatch: timeFeat("exactTitleMatch", () => exactTitle(query, doc)),
     exactTitleTokenMatch: timeFeat("exactTitleTokenMatch", () => exactTitleTokenMatch(query, doc)),
     typedSurfaceTitleMatch: timeFeat("typedSurfaceTitleMatch", () => typedSurfaceTitleMatch(query, doc)),
@@ -712,7 +742,7 @@ export function extractFeatures(
     matchingPhraseKey: phrase.matchingPhraseKey,
     bodyPhraseCount: phrase.bodyPhraseCount,
     bodyPhraseFrequency: phrase.bodyPhraseFrequency,
-    })
+    }))
   );
 }
 

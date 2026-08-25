@@ -16,6 +16,7 @@ export type ExternalEquivalenceRow = {
   aliases: string[][];
   primary: string | null;
   standaloneRecall: string[];
+  topicalRecall: string[][];
   evidenceDocumentIds: string[];
   ambiguous: boolean;
   alternatives: Array<{ expansion: string[]; note?: string }>;
@@ -274,12 +275,42 @@ export function classifyExpansionRelation(
   return "conflict";
 }
 
+function topicalRecallOf(raw: unknown): string[][] {
+  if (!Array.isArray(raw)) return [];
+  const out: string[][] = [];
+  const seen = new Set<string>();
+  for (const item of raw) {
+    if (!Array.isArray(item) || !item.length) continue;
+    const form: string[] = [];
+    let malformed = false;
+    for (const tok of item) {
+      const token = String(tok ?? "").toLowerCase().trim();
+      if (!token || /\s/.test(token)) {
+        malformed = true;
+        break;
+      }
+      form.push(token);
+    }
+    if (malformed || !form.length) continue;
+    const key = form.join("\u001f");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(form);
+  }
+  return out;
+}
+
+function mergeTopicalRecall(into: string[][], extra: string[][]): string[][] {
+  return topicalRecallOf([...into, ...extra]);
+}
+
 function cloneRow(row: ExternalEquivalenceRow): ExternalEquivalenceRow {
   return {
     ...row,
     expansion: [...row.expansion],
     aliases: row.aliases.map((a) => [...a]),
     standaloneRecall: [...(row.standaloneRecall || [])],
+    topicalRecall: (row.topicalRecall || []).map((form) => [...form]),
     evidenceDocumentIds: [...row.evidenceDocumentIds],
     alternatives: row.alternatives.map((alt) => ({
       expansion: [...alt.expansion],
@@ -295,6 +326,7 @@ function mergeRows(into: ExternalEquivalenceRow, extra: ExternalEquivalenceRow):
   if (into.primary == null && extra.primary) into.primary = extra.primary;
   else if (into.primary && extra.primary && into.primary !== extra.primary) into.primary = null;
   into.standaloneRecall = [...new Set([...(into.standaloneRecall || []), ...(extra.standaloneRecall || [])])];
+  into.topicalRecall = mergeTopicalRecall(into.topicalRecall || [], extra.topicalRecall || []);
   into.ambiguous = into.ambiguous || extra.ambiguous;
 }
 
@@ -424,6 +456,7 @@ export function normalizeExternalEquivalences(
               .filter((token) => token && !/\s/.test(token))
           )]
         : [];
+      const topicalRecall = topicalRecallOf(rec.topicalRecall);
       const evidenceDocumentIds = asEvidenceIds(rec.evidenceDocumentIds);
       if (rec.ambiguous != null && typeof rec.ambiguous !== "boolean") {
         throw new ExternalEquivalenceError("ambiguous must be boolean");
@@ -434,6 +467,7 @@ export function normalizeExternalEquivalences(
         aliases,
         primary,
         standaloneRecall,
+        topicalRecall,
         evidenceDocumentIds,
         ambiguous: rec.ambiguous === true,
         alternatives: asAlternatives(rec.alternatives),

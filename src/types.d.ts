@@ -33,6 +33,11 @@ export interface DictionaryEntry {
   primary?: string | null;
   /** Reviewed exact standalone tokens that may open secondary configured recall. */
   standaloneRecall?: string[];
+  /**
+   * Reviewed one-hop topical phrase forms for this configured key.
+   * Recall metadata only; not aliases, expansion, or lexical intent.
+   */
+  topicalRecall?: string[][];
   type?: string;
   provenance?: string | null;
   confidence?: number | null;
@@ -45,6 +50,15 @@ export interface StandaloneRecall {
   expansion: string[];
   aliases: string[][];
   forms: string[];
+}
+
+/**
+ * One-hop topical recall attached to a trusted configured concept.
+ * Forms are tokenized phrases. Not query identity and not reverse edges.
+ */
+export interface TopicalRecall {
+  key: string;
+  forms: string[][];
 }
 
 export interface DictionarySequence {
@@ -64,6 +78,7 @@ export interface SearchPlugin {
   sequences?: DictionarySequence[];
   byKey?: Map<string, DictionaryEntry>;
   standaloneRecallByToken?: Map<string, string>;
+  topicalRecallByKey?: Map<string, string[][]>;
   expand?: (token: string) => Array<{
     form: string;
     type?: string;
@@ -203,6 +218,12 @@ export interface AnalyzedQuery {
    * Does not rewrite tokens, lexical intent, or configuredSequenceIntent.
    */
   standaloneRecall?: StandaloneRecall | null;
+  /**
+   * One-hop topical recall for a trusted configuredSequenceIntent key.
+   * Absent unless that key declares topicalRecall forms.
+   * Does not rewrite tokens, lexical intent, or configuredSequenceIntent.
+   */
+  topicalRecall?: TopicalRecall | null;
   /**
    * Canonical lexical-intent stream for compiled phrase lookup. May include
    * unique configured-sequence projection or contextual expansion completion.
@@ -344,6 +365,11 @@ export interface FeatureVector {
   bodyPhraseFrequency: number;
   standaloneRecallMatch?: boolean;
   standaloneRecallScore?: number;
+  topicalRecallMatch?: boolean;
+  topicalRecallFormCount?: number;
+  topicalRecallTitleMatch?: boolean;
+  topicalRecallPhraseMatch?: boolean;
+  topicalRecallScore?: number;
   relationshipStrength: number;
   relationshipType: string | null;
   relationshipSourceId: string | null;

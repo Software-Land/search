@@ -102,6 +102,9 @@ export function constraintSignature(f: Partial<FeatureVector> | undefined) {
     feat.relevanceKind === "related" ? 1 : 0,
     String(feat.directClass || ""),
     bit(feat.standaloneRecallMatch),
+    bit(feat.topicalRecallMatch),
+    bit(feat.topicalRecallTitleMatch),
+    bit(feat.topicalRecallPhraseMatch),
     titleTokens,
     prefixQ,
   ].join("\u001f");

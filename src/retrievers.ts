@@ -21,6 +21,7 @@ import {
   identityTokens,
   evidenceTokens,
   standaloneRecallHint,
+  topicalRecallHint,
 } from "./retrieve.js";
 import { allowPrefixMatch } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
@@ -42,7 +43,7 @@ import type {
   SearchIndex,
 } from "./types.js";
 
-type QueryFormKind = "token" | "lemma" | "acronym-key" | "concept" | "acronym-form" | "standalone-recall";
+type QueryFormKind = "token" | "lemma" | "acronym-key" | "concept" | "acronym-form" | "standalone-recall" | "topical-recall";
 type QueryForm = { form: string; kind: QueryFormKind };
 type AdaptiveActive = "full-scan" | "indexed-lexical";
 
@@ -67,11 +68,13 @@ const TITLE_BOOST = 4;
 function postingTitleSource(kind: QueryFormKind) {
   if (kind === "acronym-key" || kind === "acronym-form") return "configured-equivalence";
   if (kind === "standalone-recall") return "standalone-recall";
+  if (kind === "topical-recall") return "topical-recall";
   return "title-token";
 }
 
 function postingBodySource(kind: QueryFormKind) {
   if (kind === "standalone-recall") return "standalone-recall";
+  if (kind === "topical-recall") return "topical-recall";
   return "body-lexical";
 }
 
@@ -132,6 +135,12 @@ function queryForms(query: AnalyzedQuery) {
   if (hint) {
     add(hint.key, "standalone-recall");
     for (const f of hint.forms || []) add(f, "standalone-recall");
+  }
+  const topical = topicalRecallHint(query);
+  if (topical) {
+    for (const form of topical.forms || []) {
+      for (const token of form) add(token, "topical-recall");
+    }
   }
   return forms;
 }
@@ -358,7 +367,7 @@ export function createIndexedLexicalRetriever({
       const bodyL = state.bodyLemmaPostings.get(form);
       if (bodyL) accumulatePosting(byPos, bodyL, "morphology", 0.5, state.avgBodyDl, state.bodyDl, { signal, n });
 
-      if (!isAllDigitToken(form) && form.length >= 3) {
+      if (kind !== "topical-recall" && !isAllDigitToken(form) && form.length >= 3) {
         for (const term of prefixTerms(form, (t) => allowPrefixMatch(form, t))) {
           if (term === form) continue;
           const tp = state.titlePostings.get(term);
@@ -694,7 +703,7 @@ export function createCompiledLexicalRetriever(): Retriever {
       accumulateLemma(compiled.byLemma.get(form), "title", "morphology", TITLE_BOOST * 0.6);
       if (!skipBodyWalk) accumulateLemma(compiled.byLemma.get(form), "body", "morphology", 0.5);
 
-      if (!isAllDigitToken(form) && form.length >= 3) {
+      if (kind !== "topical-recall" && !isAllDigitToken(form) && form.length >= 3) {
         let i = lowerBoundTerm(compiled.sortedTerms, form);
         while (i < compiled.sortedTerms.length) {
           const term = compiled.sortedTerms[i++];
@@ -766,7 +775,7 @@ export function createCompiledLexicalRetriever(): Retriever {
           const surface = compiled.bySurface.get(form);
           accumulateSurface(surface, "body", postingBodySource(kind), 1);
           accumulateLemma(compiled.byLemma.get(form), "body", "morphology", 0.5);
-          if (!isAllDigitToken(form) && form.length >= 3) {
+          if (kind !== "topical-recall" && !isAllDigitToken(form) && form.length >= 3) {
             let i = lowerBoundTerm(compiled.sortedTerms, form);
             while (i < compiled.sortedTerms.length) {
               const term = compiled.sortedTerms[i++];

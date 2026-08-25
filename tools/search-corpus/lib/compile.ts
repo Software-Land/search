@@ -21,6 +21,31 @@ import type {
   SynonymCandidate,
 } from "../types.js";
 
+function topicalRecallOf(raw: unknown): string[][] {
+  if (!Array.isArray(raw)) return [];
+  const out: string[][] = [];
+  const seen = new Set<string>();
+  for (const item of raw) {
+    if (!Array.isArray(item) || !item.length) continue;
+    const form: string[] = [];
+    let malformed = false;
+    for (const tok of item) {
+      const token = String(tok ?? "").toLowerCase().trim();
+      if (!token || /\s/.test(token)) {
+        malformed = true;
+        break;
+      }
+      form.push(token);
+    }
+    if (malformed || !form.length) continue;
+    const key = form.join("\u001f");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(form);
+  }
+  return out;
+}
+
 function standaloneRecallOf(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
   const out: string[] = [];
@@ -86,6 +111,7 @@ export function compileEquivalences(candidates: EquivalenceCandidate[]): Equival
     aliases: c.aliases || [],
     primary: c.primary ?? null,
     standaloneRecall: standaloneRecallOf((c as { standaloneRecall?: unknown }).standaloneRecall),
+    topicalRecall: topicalRecallOf((c as { topicalRecall?: unknown }).topicalRecall),
     type: "equivalence",
     provenance:
       c.flags?.includes("verified-enrichment")
@@ -190,13 +216,14 @@ export function compileInspection(lifecycleResult: LifecycleResult, { delta = nu
 export function dictionaryEntriesFromEquivalences(artifact?: unknown): unknown[] {
   const rec = artifact as { entries?: unknown[] } | null | undefined;
   return (rec?.entries || []).map((e) => {
-    const row = e as { key?: unknown; expansion?: unknown; aliases?: unknown; provenance?: unknown; primary?: unknown; standaloneRecall?: unknown };
+    const row = e as { key?: unknown; expansion?: unknown; aliases?: unknown; provenance?: unknown; primary?: unknown; standaloneRecall?: unknown; topicalRecall?: unknown };
     return {
       key: row.key,
       expansion: row.expansion,
       aliases: row.aliases || [],
       primary: row.primary ?? null,
       standaloneRecall: standaloneRecallOf(row.standaloneRecall),
+      topicalRecall: topicalRecallOf(row.topicalRecall),
       provenance: row.provenance,
     };
   });

@@ -27,6 +27,7 @@ import type {
   QueryToken,
   SearchPlugin,
   StandaloneRecall,
+  TopicalRecall,
   TypoSuggestion,
 } from "./types.js";
 
@@ -91,6 +92,22 @@ function resolveStandaloneRecall(
     expansion: [...(entry.expansion || [])],
     aliases: (entry.aliases || []).map((alias) => [...alias]),
     forms: formsForEntry(entry),
+  };
+}
+
+function resolveTopicalRecall(
+  configuredSequenceIntent: ConfiguredSequenceIntent | null,
+  dict: SearchPlugin | null
+): TopicalRecall | null {
+  const key = configuredSequenceIntent?.key;
+  if (!key || !dict) return null;
+  const fromLookup = dict.topicalRecallByKey?.get(key);
+  const fromEntry = dict.byKey?.get(key)?.topicalRecall;
+  const forms = fromLookup?.length ? fromLookup : fromEntry;
+  if (!Array.isArray(forms) || !forms.length) return null;
+  return {
+    key,
+    forms: forms.map((form) => [...form]),
   };
 }
 
@@ -966,6 +983,7 @@ export function analyzeQuery(
     concepts,
     dict
   );
+  const topicalRecall = resolveTopicalRecall(configuredSequenceIntent, dict);
 
   return {
     raw,
@@ -978,6 +996,7 @@ export function analyzeQuery(
     contextualCompletion: contextual?.meta ?? null,
     configuredSequenceIntent,
     standaloneRecall,
+    topicalRecall,
     lexicalTokens,
     lexicalPhraseTokens,
     lexicalPhraseKey: lexicalPhraseTokens.join(" "),

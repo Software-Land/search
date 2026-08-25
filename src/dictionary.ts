@@ -3,7 +3,7 @@
  * Host-specific acronyms are data, not engine code.
  *
  * Entry shape:
- * { key: "tls", expansion: ["transport","layer","security"], aliases: [["..."]] }
+ * { key: "tls", expansion: ["transport","layer","security"], aliases: [["..."]], topicalRecall: [["authentication"]] }
  */
 
 import type { DictionaryEntry, DictionarySequence } from "./types.js";
@@ -14,6 +14,7 @@ export interface DictionaryPlugin {
   byKey: Map<string, DictionaryEntry>;
   sequences: DictionarySequence[];
   standaloneRecallByToken: Map<string, string>;
+  topicalRecallByKey: Map<string, string[][]>;
   lexicon(): Set<string>;
 }
 
@@ -45,6 +46,7 @@ export function dictionary({ entries = [] }: { entries?: unknown[] } = {}): Dict
     byKey,
     sequences,
     standaloneRecallByToken: compileStandaloneRecallLookup(list),
+    topicalRecallByKey: compileTopicalRecallLookup(list),
     lexicon() {
       const words = new Set<string>();
       for (const entry of list) {
@@ -83,6 +85,55 @@ export function normalizeStandaloneRecall(raw: unknown): string[] {
  * Unique standalone token → configured key. Collisions fail closed
  * (the token is omitted). Insertion order is not a tie-break.
  */
+function normalizeTopicalToken(raw: unknown): string | null {
+  if (raw == null) return null;
+  const token = String(raw).toLowerCase().trim();
+  if (!token || /\s/.test(token)) return null;
+  return token;
+}
+
+/**
+ * Reviewed topical phrase forms. Each form is a tokenized phrase.
+ * Empty, blank, non-array, and space-containing tokens are dropped.
+ * Duplicate forms (same token sequence) are removed in first-seen order.
+ */
+export function normalizeTopicalRecall(raw: unknown): string[][] {
+  if (!Array.isArray(raw)) return [];
+  const out: string[][] = [];
+  const seen = new Set<string>();
+  for (const item of raw) {
+    if (!Array.isArray(item) || !item.length) continue;
+    const form: string[] = [];
+    let malformed = false;
+    for (const tok of item) {
+      const token = normalizeTopicalToken(tok);
+      if (!token) {
+        malformed = true;
+        break;
+      }
+      form.push(token);
+    }
+    if (malformed || !form.length) continue;
+    const key = form.join("\u001f");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(form);
+  }
+  return out;
+}
+
+export function compileTopicalRecallLookup(entries: DictionaryEntry[]): Map<string, string[][]> {
+  const lookup = new Map<string, string[][]>();
+  for (const entry of entries || []) {
+    const key = entry?.key;
+    if (!key) continue;
+    const forms = Array.isArray(entry.topicalRecall) ? entry.topicalRecall : [];
+    if (!forms.length) continue;
+    lookup.set(key, forms.map((form) => [...form]));
+  }
+  return lookup;
+}
+
 export function compileStandaloneRecallLookup(entries: DictionaryEntry[]): Map<string, string> {
   const claimed = new Map<string, Set<string>>();
   for (const entry of entries || []) {
@@ -113,6 +164,7 @@ function normalizeEntry(raw: unknown): DictionaryEntry | null {
     aliases?: unknown;
     primary?: unknown;
     standaloneRecall?: unknown;
+    topicalRecall?: unknown;
     type?: unknown;
     provenance?: unknown;
     confidence?: unknown;
@@ -132,6 +184,7 @@ function normalizeEntry(raw: unknown): DictionaryEntry | null {
     aliases,
     primary: rec.primary == null ? null : String(rec.primary),
     standaloneRecall: normalizeStandaloneRecall(rec.standaloneRecall),
+    topicalRecall: normalizeTopicalRecall(rec.topicalRecall),
     type: rec.type == null ? "equivalence" : String(rec.type),
     provenance: rec.provenance == null ? null : String(rec.provenance),
     confidence: rec.confidence == null ? null : Number(rec.confidence),
@@ -146,6 +199,7 @@ export function entriesFromAcronymMap(
       aliases?: string[][];
       primary?: string | null;
       standaloneRecall?: string[];
+      topicalRecall?: string[][];
     }
   > | null
 ) {
@@ -155,5 +209,6 @@ export function entriesFromAcronymMap(
     aliases: Array.isArray(def?.aliases) ? def.aliases : [],
     primary: def?.primary ?? null,
     standaloneRecall: Array.isArray(def?.standaloneRecall) ? def.standaloneRecall : [],
+    topicalRecall: Array.isArray(def?.topicalRecall) ? def.topicalRecall : [],
   }));
 }

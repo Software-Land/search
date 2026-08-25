@@ -84,6 +84,7 @@ export function scoreFeatures(f: Partial<FeatureVector>) {
     (f.phraseAdjacency || 0) * 0.8 +
     (f.bodyLexicalMatch || 0) * 0.25 +
     (Number(f.standaloneRecallScore) || 0) +
+    (Number(f.topicalRecallScore) || 0) +
     (f.relationshipStrength || 0) * 0.45 +
     (f.retrievalScore || 0)
   );

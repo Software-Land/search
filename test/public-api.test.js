@@ -288,6 +288,7 @@ describe("public API", () => {
     });
     expect(parsed.entries[0].primary).toBe("Wi-Fi");
     expect(parsed.entries[0].standaloneRecall).toEqual([]);
+    expect(parsed.entries[0].topicalRecall).toEqual([]);
     const e = await make();
     const row = e.searchDetailed("bluetooth", { explain: true }).results[0];
     expect(Array.isArray(row.constraints)).toBe(true);

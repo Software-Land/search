@@ -80,6 +80,7 @@ export interface EquivalenceCandidate {
   aliases?: unknown[];
   primary?: string | null;
   standaloneRecall?: string[];
+  topicalRecall?: string[][];
   terms?: string[];
   relation?: string;
   initialsMatch?: boolean;
@@ -267,6 +268,7 @@ export interface EquivalenceArtifact {
     aliases: unknown[];
     primary?: string | null;
     standaloneRecall?: string[];
+    topicalRecall?: string[][];
     type: string;
     provenance: string;
     confidence: null;

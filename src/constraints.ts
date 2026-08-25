@@ -330,10 +330,72 @@ function standaloneRecallBandConstraint(a: FeaturedHit, b: FeaturedHit) {
   return aBand > bBand ? -1 : 1;
 }
 
+function topicalRecallBand(f: Partial<FeatureVector>) {
+  if (
+    f.exactTitleMatch ||
+    f.exactTitleTokenMatch ||
+    f.typedSurfaceTitleMatch ||
+    (f.queryCoverage || 0) > 0 ||
+    (f.titleCoverage || 0) > 0 ||
+    (f.titlePrefixQuality || 0) > 0 ||
+    f.contextualTitlePrefix ||
+    f.configuredEquivalenceMatch ||
+    f.canonicalKeyTitle ||
+    f.morphologyMatch ||
+    (f.typoDistance || 0) > 0 ||
+    f.versionMatch ||
+    f.shortLiteralLeadMatch ||
+    f.dottedSpanComponentTitleMatch ||
+    (f.bodyLexicalMatch || 0) > 0 ||
+    (f.bodyPhraseCount || 0) > 0 ||
+    (f.phraseAdjacency || 0) > 0
+  ) {
+    return 2;
+  }
+  if (f.topicalRecallMatch) return 1;
+  return 0;
+}
+
+/**
+ * Direct/configured/strong literal evidence outranks topical-recall-only hits,
+ * which outrank true none. No-ops when neither candidate has topical recall.
+ */
+function topicalRecallBandConstraint(a: FeaturedHit, b: FeaturedHit) {
+  if (!a.features.topicalRecallMatch && !b.features.topicalRecallMatch) return 0;
+  const aBand = topicalRecallBand(a.features);
+  const bBand = topicalRecallBand(b.features);
+  if (aBand === bBand) return 0;
+  return aBand > bBand ? -1 : 1;
+}
+
+function topicalRecallOnly(f: Partial<FeatureVector>) {
+  return Boolean(f.topicalRecallMatch) && topicalRecallBand(f) === 1;
+}
+
+function topicalQualityBand(f: Partial<FeatureVector>) {
+  if (f.topicalRecallTitleMatch) return 2;
+  if (f.topicalRecallPhraseMatch) return 1;
+  return 0;
+}
+
+/**
+ * Inside the topical-only band, title topical matches outrank phrase-body,
+ * which outrank unigram-body. No-ops unless both hits are topical-only.
+ */
+function topicalRecallQualityConstraint(a: FeaturedHit, b: FeaturedHit) {
+  if (!topicalRecallOnly(a.features) || !topicalRecallOnly(b.features)) return 0;
+  const aBand = topicalQualityBand(a.features);
+  const bBand = topicalQualityBand(b.features);
+  if (aBand === bBand) return 0;
+  return aBand > bBand ? -1 : 1;
+}
+
 export const DEFAULT_CONSTRAINTS: ConstraintDef[] = [
   { id: "exact-title-over-non-exact", invariant: "H1", class: "absolute", fn: exactTitleConstraint },
   { id: "direct-over-related", invariant: "H1", class: "absolute", fn: directOverRelatedConstraint },
   { id: "literal-over-standalone-recall", invariant: "H8", class: "strong", fn: standaloneRecallBandConstraint },
+  { id: "literal-over-topical-recall", invariant: "H8", class: "strong", fn: topicalRecallBandConstraint },
+  { id: "topical-title-over-topical-body", invariant: "H8", class: "strong", fn: topicalRecallQualityConstraint },
   { id: "canonical-key-expansion-over-key-only", invariant: "H2", class: "strong", fn: canonicalKeyConstraint },
   { id: "repeated-phrase-over-weak-direct", invariant: "H8", class: "strong", fn: repeatedPhraseOverWeakDirectConstraint },
   { id: "contextual-title-prefix-over-unaligned", invariant: "H8", class: "absolute", fn: contextualTitlePrefixConstraint },
@@ -351,6 +413,8 @@ export const HYBRID_CONSTRAINTS: ConstraintDef[] = [
   { id: "strong-moderate-direct-over-related", invariant: "H1", class: "absolute", fn: hybridDirectOverRelatedConstraint },
   { id: "related-over-weak-direct", invariant: "H1", class: "strong", fn: relatedOverWeakDirectConstraint },
   { id: "literal-over-standalone-recall", invariant: "H8", class: "strong", fn: standaloneRecallBandConstraint },
+  { id: "literal-over-topical-recall", invariant: "H8", class: "strong", fn: topicalRecallBandConstraint },
+  { id: "topical-title-over-topical-body", invariant: "H8", class: "strong", fn: topicalRecallQualityConstraint },
   { id: "canonical-key-expansion-over-key-only", invariant: "H2", class: "strong", fn: canonicalKeyConstraint },
   { id: "repeated-phrase-over-weak-direct", invariant: "H8", class: "strong", fn: repeatedPhraseOverWeakDirectConstraint },
   { id: "contextual-title-prefix-over-unaligned", invariant: "H8", class: "absolute", fn: contextualTitlePrefixConstraint },

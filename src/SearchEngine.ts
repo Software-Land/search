@@ -208,6 +208,9 @@ function serializeHit(c: RankedHit, query: AnalyzedQuery, explain?: boolean): Se
         standaloneRecall: query.standaloneRecall
           ? { key: query.standaloneRecall.key, sourceToken: query.standaloneRecall.sourceToken }
           : null,
+        topicalRecall: query.topicalRecall
+          ? { key: query.topicalRecall.key, forms: query.topicalRecall.forms.map((form) => [...form]) }
+          : null,
         lexicalTokens: query.lexicalTokens,
         lexicalPhraseKey: query.lexicalPhraseKey,
         normalizedQueryPhrase: f.normalizedQueryPhrase ?? "",

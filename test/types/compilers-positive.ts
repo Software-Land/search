@@ -113,6 +113,7 @@ const normalized = normalizeExternalEquivalences([
     aliases: [["app", "programming", "interface"]],
     primary: "interface",
     standaloneRecall: ["hypertext"],
+    topicalRecall: [["authentication"], ["bearer", "token"]],
     evidenceDocumentIds: ["doc-1"],
     provenance: "application-generated",
   },
