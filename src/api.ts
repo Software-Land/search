@@ -235,6 +235,13 @@ export interface SearchExplanation {
       end: number;
       matchedKinds: string[];
     }>;
+    configuredPrefixSpans?: Array<{
+      key: string;
+      start: number;
+      end: number;
+      matchedKinds: string[];
+      usedPrefix: true;
+    }>;
     standaloneRecall?: {
       key: string;
       sourceToken: string;

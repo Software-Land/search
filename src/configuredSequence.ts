@@ -1,5 +1,6 @@
 import { allowPrefixMatch } from "./text.js";
 import type {
+  ConfiguredPrefixSpan,
   ConfiguredSpan,
   DictionaryEntry,
   DictionarySequence,
@@ -7,7 +8,7 @@ import type {
   SearchPlugin,
 } from "./types.js";
 
-export type { ConfiguredSpan };
+export type { ConfiguredPrefixSpan, ConfiguredSpan };
 
 /**
  * Unique complete-query alignment to trusted configured sequences
@@ -215,6 +216,63 @@ export function resolveConfiguredSpans(
       start: row.start,
       end: row.end,
       matchedKinds: [...row.kinds].sort(),
+    }))
+    .sort((a, b) => a.start - b.start || a.end - b.end || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+}
+
+const PREFIX_SPAN_SEQUENCE_KINDS = new Set(["expansion", "alias"]);
+
+function windowId(start: number, end: number) {
+  return `${start}\t${end}`;
+}
+
+/**
+ * Incomplete configured key/expansion/alias windows using the same
+ * `sequenceAligns` prefix rules as whole-query resolution. n>=2 only.
+ * Exact windows stay on `resolveConfiguredSpans`. Same-key forms at the
+ * same indexes collapse. Distinct keys at the same indexes are dropped.
+ */
+export function resolveConfiguredPrefixSpans(
+  tokens: QueryToken[],
+  dict: SearchPlugin | null | undefined
+): ConfiguredPrefixSpan[] {
+  if (!dict?.sequences?.length || !tokens.length) return [];
+  const exactWindows = new Set(
+    resolveConfiguredSpans(tokens, dict).map((span) => windowId(span.start, span.end))
+  );
+  const grouped = new Map<
+    string,
+    { start: number; end: number; kinds: Set<string>; keys: Set<string> }
+  >();
+  for (const seq of dict.sequences) {
+    if (!seq?.entry?.key || !seq.tokens?.length) continue;
+    if (!PREFIX_SPAN_SEQUENCE_KINDS.has(String(seq.kind || ""))) continue;
+    if (isSingleExpansionWordAlias(seq)) continue;
+    const n = seq.tokens.length;
+    if (n < 2) continue;
+    for (let start = 0; start <= tokens.length - n; start++) {
+      const aligned = sequenceAligns(tokens.slice(start, start + n), seq);
+      if (!aligned.ok || !aligned.usedPrefix) continue;
+      const end = start + n;
+      if (exactWindows.has(windowId(start, end))) continue;
+      const id = windowId(start, end);
+      let row = grouped.get(id);
+      if (!row) {
+        row = { start, end, kinds: new Set(), keys: new Set() };
+        grouped.set(id, row);
+      }
+      row.keys.add(seq.entry.key);
+      if (seq.kind) row.kinds.add(String(seq.kind));
+    }
+  }
+  return [...grouped.values()]
+    .filter((row) => row.keys.size === 1)
+    .map((row) => ({
+      key: [...row.keys][0],
+      start: row.start,
+      end: row.end,
+      matchedKinds: [...row.kinds].sort(),
+      usedPrefix: true as const,
     }))
     .sort((a, b) => a.start - b.start || a.end - b.end || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
 }

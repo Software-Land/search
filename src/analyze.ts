@@ -14,10 +14,15 @@ import {
   MAX_COMPOUND_REPAIR_TOKEN_LENGTH,
 } from "./analyzeRepair.js";
 import { canonicalLexicalTokensFromQuery } from "./lexicalNormalize.js";
-import { resolveConfiguredSequence, resolveConfiguredSpans } from "./configuredSequence.js";
+import {
+  resolveConfiguredPrefixSpans,
+  resolveConfiguredSequence,
+  resolveConfiguredSpans,
+} from "./configuredSequence.js";
 import type {
   AnalyzedQuery,
   AnalyzeOptions,
+  ConfiguredPrefixSpan,
   ConfiguredSequenceIntent,
   ConfiguredSpan,
   ContextualCompletion,
@@ -108,7 +113,10 @@ function topicalRecallForKey(key: string | null | undefined, dict: SearchPlugin 
   };
 }
 
-function uniqueStopRemainderSpanKey(tokens: QueryToken[], spans: ConfiguredSpan[]): string | null {
+function uniqueStopRemainderSpanKey(
+  tokens: QueryToken[],
+  spans: Array<{ key: string; start: number; end: number }>
+): string | null {
   const keys = new Set(spans.map((span) => span.key));
   if (keys.size !== 1) return null;
   const occupied = new Set<number>();
@@ -120,6 +128,47 @@ function uniqueStopRemainderSpanKey(tokens: QueryToken[], spans: ConfiguredSpan[
     if (!DEFAULT_STOP.has(tokens[i].normalized)) return null;
   }
   return [...keys][0];
+}
+
+/**
+ * Occupy one unique incomplete configured window. Remainder tokens must
+ * already be DEFAULT_STOP. Does not set configuredSequenceIntent or topical
+ * recall. Exact spans and whole-query intent keep their existing paths.
+ */
+function attachConfiguredPrefixSpanConcept(
+  concepts: QueryConcept[],
+  covered: Set<number>,
+  tokens: QueryToken[],
+  dict: SearchPlugin | null,
+  configuredSequenceIntent: ConfiguredSequenceIntent | null,
+  exactSpans: ConfiguredSpan[]
+): ConfiguredPrefixSpan[] {
+  if (configuredSequenceIntent?.key || !dict) return [];
+  if (exactSpans.length) return [];
+  const spans = resolveConfiguredPrefixSpans(tokens, dict);
+  if (spans.length !== 1) return [];
+  const span = spans[0];
+  if (uniqueStopRemainderSpanKey(tokens, [span]) !== span.key) return [];
+  if (concepts.some((c) => c.kind === "acronym" && c.id !== span.key)) return [];
+  const entry = dict.byKey?.get(span.key);
+  if (!entry?.key) return [];
+  const tokenCount = span.end - span.start;
+  const concept = {
+    id: entry.key,
+    kind: "acronym",
+    forms: formsForEntry(entry),
+    expansion: [...(entry.expansion || [])],
+    aliases: (entry.aliases || []).map((a) => [...a]),
+    provenance: provenanceForSequenceKinds(span.matchedKinds, true),
+    matchedExpansionTokens: tokenCount,
+    expansionTokenCount: (entry.expansion || []).length,
+    expansionCoverage: Number((tokenCount / Math.max((entry.expansion || []).length, 1)).toFixed(4)),
+  };
+  const existing = concepts.find((c) => c.kind === "acronym" && c.id === span.key);
+  if (existing) Object.assign(existing, concept);
+  else concepts.push(concept);
+  for (let i = span.start; i < span.end; i++) covered.add(i);
+  return [span];
 }
 
 function synonymPlugin(plugins: SearchPlugin[]) {
@@ -940,6 +989,15 @@ export function analyzeQuery(
     analyzedTokens.length,
     sequenceResolution
   );
+  const configuredSpans = resolveConfiguredSpans(analyzedTokens, dict);
+  const configuredPrefixSpans = attachConfiguredPrefixSpanConcept(
+    concepts,
+    covered,
+    analyzedTokens,
+    dict,
+    configuredSequenceIntent,
+    configuredSpans
+  );
 
   for (let i = 0; i < analyzedTokens.length; i++) {
     if (covered.has(i)) continue;
@@ -994,7 +1052,6 @@ export function analyzeQuery(
     concepts,
     dict
   );
-  const configuredSpans = resolveConfiguredSpans(analyzedTokens, dict);
   let topicalRecall = topicalRecallForKey(configuredSequenceIntent?.key, dict);
   if (!topicalRecall && !configuredSequenceIntent?.key) {
     topicalRecall = topicalRecallForKey(uniqueStopRemainderSpanKey(analyzedTokens, configuredSpans), dict);
@@ -1011,6 +1068,7 @@ export function analyzeQuery(
     contextualCompletion: contextual?.meta ?? null,
     configuredSequenceIntent,
     configuredSpans,
+    configuredPrefixSpans,
     standaloneRecall,
     topicalRecall,
     lexicalTokens,

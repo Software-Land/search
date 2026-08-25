@@ -168,6 +168,19 @@ export interface ConfiguredSpan {
   matchedKinds: string[];
 }
 
+/**
+ * Incomplete configured subspan aligned with sequenceAligns prefix rules.
+ * Occupies configured/acronym evidence only. Not exact configuredSpans,
+ * not whole-query configuredSequenceIntent, and not topical recall.
+ */
+export interface ConfiguredPrefixSpan {
+  key: string;
+  start: number;
+  end: number;
+  matchedKinds: string[];
+  usedPrefix: true;
+}
+
 export interface ContextualTitlePrefix {
   matchedPrefixTokens: string[];
   activeFinalPrefix: string;
@@ -228,6 +241,13 @@ export interface AnalyzedQuery {
    * exact subspan matches. Not whole-query configuredSequenceIntent.
    */
   configuredSpans?: ConfiguredSpan[];
+  /**
+   * Unique incomplete configured windows aligned with sequenceAligns.
+   * Present only when activated: n>=2, usedPrefix, unique key, remainder
+   * tokens are existing stopwords, and whole-query intent is absent.
+   * Not exact configuredSpans and not topical recall.
+   */
+  configuredPrefixSpans?: ConfiguredPrefixSpan[];
   /**
    * Reviewed exact-standalone recall hint. Absent unless the complete query is
    * one typed token that uniquely matches a `standaloneRecall` declaration.

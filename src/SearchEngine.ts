@@ -211,6 +211,13 @@ function serializeHit(c: RankedHit, query: AnalyzedQuery, explain?: boolean): Se
           end: span.end,
           matchedKinds: [...(span.matchedKinds || [])],
         })),
+        configuredPrefixSpans: (query.configuredPrefixSpans || []).map((span) => ({
+          key: span.key,
+          start: span.start,
+          end: span.end,
+          matchedKinds: [...(span.matchedKinds || [])],
+          usedPrefix: true as const,
+        })),
         standaloneRecall: query.standaloneRecall
           ? { key: query.standaloneRecall.key, sourceToken: query.standaloneRecall.sourceToken }
           : null,
