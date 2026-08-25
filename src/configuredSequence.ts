@@ -22,12 +22,15 @@ export interface ConfiguredSequenceIntent {
   matchedKinds: string[];
 }
 
+export type ConfiguredAlignmentKind = "full" | "left-prefix" | "suffix";
+
 export type ConfiguredSequenceResolution =
   | {
       status: "unique";
       intent: ConfiguredSequenceIntent;
       entry: DictionaryEntry;
       usedPrefix: boolean;
+      alignment: ConfiguredAlignmentKind;
     }
   | { status: "ambiguous"; keys: string[] }
   | { status: "none" };
@@ -121,17 +124,112 @@ function alignsKey(tok: QueryToken, want: string, dict?: SearchPlugin | null): b
   return tokenAlignsConfiguredKey(tok, want, dict);
 }
 
-function sequenceAligns(
-  tokens: QueryToken[],
-  seq: DictionarySequence,
-  dict?: SearchPlugin | null
-): { ok: boolean; usedPrefix: boolean } {
-  const want = seq.tokens || [];
-  if (!want.length || want.length !== tokens.length) return { ok: false, usedPrefix: false };
-  if (seq.kind === "key") {
-    if (tokens.length !== 1 || !alignsKey(tokens[0], want[0], dict)) return { ok: false, usedPrefix: false };
-    return { ok: true, usedPrefix: false };
+function tokenIsStop(tok: QueryToken): boolean {
+  return DEFAULT_STOP.has(String(tok.normalized || "").toLowerCase());
+}
+
+function lastTypedContentIndex(tokens: QueryToken[]): number {
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    if (!tokenIsStop(tokens[i])) return i;
   }
+  return -1;
+}
+
+/**
+ * Leading wrapper stops (`what is an …`) must not be skipped for whole-query
+ * occupancy. Interior typed stops may be skipped during expansion/alias alignment.
+ */
+function leadingTypedStopBlocks(tokens: QueryToken[], want0: string): boolean {
+  if (!tokens.length || !tokenIsStop(tokens[0])) return false;
+  return !alignsExact(tokens[0], want0) && !alignsNonLast(tokens[0], want0);
+}
+
+type SequentialAlign = {
+  ok: boolean;
+  usedPrefix: boolean;
+  matchedWant: number;
+  typedContentMatched: number;
+  consumedAllTyped: boolean;
+  consumedAllWant: boolean;
+};
+
+/**
+ * Sequential content alignment. Typed stop tokens may be skipped after the
+ * first token; expansion tokens are never skipped. Content order is exact.
+ * Prefixes are allowed only under the same last/non-last rules as positional
+ * `sequenceAligns`. No corpus scan.
+ */
+function alignSequential(
+  tokens: QueryToken[],
+  want: string[],
+  startJ: number,
+  { allowNonLastPrefix }: { allowNonLastPrefix: boolean }
+): SequentialAlign {
+  const fail: SequentialAlign = {
+    ok: false,
+    usedPrefix: false,
+    matchedWant: 0,
+    typedContentMatched: 0,
+    consumedAllTyped: false,
+    consumedAllWant: false,
+  };
+  if (!tokens.length || !want.length || startJ < 0 || startJ >= want.length) return fail;
+  const lastContent = lastTypedContentIndex(tokens);
+  if (lastContent < 0) return fail;
+  let i = 0;
+  let j = startJ;
+  let usedPrefix = false;
+  let typedContentMatched = 0;
+  while (i < tokens.length && j < want.length) {
+    const tok = tokens[i];
+    const target = want[j];
+    const isLastTypedContent = i === lastContent;
+    if (alignsExact(tok, target)) {
+      if (!tokenIsStop(tok)) typedContentMatched += 1;
+      i += 1;
+      j += 1;
+      continue;
+    }
+    if (isLastTypedContent && alignsLast(tok, target)) {
+      usedPrefix = true;
+      typedContentMatched += 1;
+      i += 1;
+      j += 1;
+      continue;
+    }
+    if (!isLastTypedContent && allowNonLastPrefix && alignsNonLast(tok, target)) {
+      usedPrefix = true;
+      if (!tokenIsStop(tok)) typedContentMatched += 1;
+      i += 1;
+      j += 1;
+      continue;
+    }
+    if (i > 0 && tokenIsStop(tok)) {
+      i += 1;
+      continue;
+    }
+    return fail;
+  }
+  while (i < tokens.length && tokenIsStop(tokens[i])) i += 1;
+  const consumedAllTyped = i === tokens.length;
+  const consumedAllWant = j === want.length;
+  const matchedWant = j - startJ;
+  if (!consumedAllTyped || matchedWant < 1) return fail;
+  return {
+    ok: true,
+    usedPrefix,
+    matchedWant,
+    typedContentMatched,
+    consumedAllTyped,
+    consumedAllWant,
+  };
+}
+
+function positionalSequenceAligns(
+  tokens: QueryToken[],
+  want: string[]
+): { ok: boolean; usedPrefix: boolean } {
+  if (want.length !== tokens.length) return { ok: false, usedPrefix: false };
   let usedPrefix = false;
   for (let i = 0; i < want.length; i++) {
     const tok = tokens[i];
@@ -150,13 +248,36 @@ function sequenceAligns(
   return { ok: true, usedPrefix };
 }
 
+function sequenceAligns(
+  tokens: QueryToken[],
+  seq: DictionarySequence,
+  dict?: SearchPlugin | null
+): { ok: boolean; usedPrefix: boolean } {
+  const want = seq.tokens || [];
+  if (!want.length || !tokens.length) return { ok: false, usedPrefix: false };
+  if (seq.kind === "key") {
+    if (tokens.length !== 1 || !alignsKey(tokens[0], want[0], dict)) return { ok: false, usedPrefix: false };
+    return { ok: true, usedPrefix: false };
+  }
+  if (seq.kind !== "expansion" && seq.kind !== "alias") return { ok: false, usedPrefix: false };
+  if (want.length === tokens.length) {
+    const positional = positionalSequenceAligns(tokens, want);
+    if (positional.ok) return positional;
+  }
+  if (leadingTypedStopBlocks(tokens, want[0])) return { ok: false, usedPrefix: false };
+  const aligned = alignSequential(tokens, want, 0, { allowNonLastPrefix: true });
+  if (!aligned.ok || !aligned.consumedAllWant) return { ok: false, usedPrefix: aligned.usedPrefix };
+  return { ok: true, usedPrefix: aligned.usedPrefix };
+}
+
 const MIN_EXPANSION_PREFIX_TOKENS = 2;
 const MIN_EXPANSION_PREFIX_COVERAGE = 2 / 3;
 
 function uniqueResolution(
   entry: DictionaryEntry,
   matchedKinds: string[],
-  usedPrefix: boolean
+  usedPrefix: boolean,
+  alignment: ConfiguredAlignmentKind = "full"
 ): ConfiguredSequenceResolution {
   return {
     status: "unique",
@@ -167,6 +288,7 @@ function uniqueResolution(
     },
     entry,
     usedPrefix,
+    alignment,
   };
 }
 
@@ -224,7 +346,104 @@ function uniqueExpansionLeftPrefix(
   if (keys.size !== 1) return { status: "none" };
   const hit = top[0];
   const entry = dict.byKey?.get(hit.seq.entry.key) || hit.seq.entry;
-  return uniqueResolution(entry, ["expansion"], hit.usedPrefix);
+  return uniqueResolution(entry, ["expansion"], hit.usedPrefix, "left-prefix");
+}
+
+const MIN_EXPANSION_SUFFIX_CONTENT = 3;
+
+type ExpansionAlignCandidate = {
+  seq: DictionarySequence;
+  coverage: number;
+  n: number;
+  usedPrefix: boolean;
+};
+
+function uniqueCandidateResolution(
+  candidates: ExpansionAlignCandidate[],
+  dict: SearchPlugin,
+  alignment: ConfiguredAlignmentKind
+): ConfiguredSequenceResolution {
+  if (!candidates.length) return { status: "none" };
+  candidates.sort((a, b) => b.coverage - a.coverage || a.n - b.n);
+  const best = candidates[0].coverage;
+  const top = candidates.filter((c) => c.coverage === best);
+  const keys = new Set(top.map((c) => c.seq.entry.key));
+  if (keys.size !== 1) return { status: "none" };
+  const hit = top[0];
+  const entry = dict.byKey?.get(hit.seq.entry.key) || hit.seq.entry;
+  return uniqueResolution(entry, ["expansion"], hit.usedPrefix, alignment);
+}
+
+/**
+ * Left-prefix when typed stops inflate query length so n <= k and the
+ * positional `n > k` path cannot run. Interior typed stops may be skipped.
+ * Non-last content tokens must be exact; the last typed content token may use
+ * existing last-token prefix rules. Unique best coverage else none.
+ */
+function uniqueStopTolerantLeftPrefix(
+  tokens: QueryToken[],
+  dict: SearchPlugin
+): ConfiguredSequenceResolution {
+  if (tokens.length < MIN_EXPANSION_PREFIX_TOKENS || !dict.sequences?.length) return { status: "none" };
+  if (tokenIsStop(tokens[0])) return { status: "none" };
+  const candidates: ExpansionAlignCandidate[] = [];
+  const seen = new Set<string>();
+  for (const seq of dict.sequences) {
+    if (seq.kind !== "expansion" || !seq.entry?.key || !seq.tokens?.length) continue;
+    const n = seq.tokens.length;
+    if (n < MIN_EXPANSION_PREFIX_TOKENS) continue;
+    if (seen.has(seq.entry.key)) continue;
+    if (leadingTypedStopBlocks(tokens, seq.tokens[0])) continue;
+    const aligned = alignSequential(tokens, seq.tokens, 0, { allowNonLastPrefix: false });
+    if (!aligned.ok || aligned.consumedAllWant) continue;
+    if (aligned.typedContentMatched < MIN_EXPANSION_PREFIX_TOKENS) continue;
+    const coverage = aligned.matchedWant / n;
+    if (coverage < MIN_EXPANSION_PREFIX_COVERAGE) continue;
+    seen.add(seq.entry.key);
+    candidates.push({ seq, coverage, n, usedPrefix: aligned.usedPrefix });
+  }
+  return uniqueCandidateResolution(candidates, dict, "left-prefix");
+}
+
+/**
+ * Unique suffix of a configured expansion. Typed content must align
+ * contiguously (stop skips only) through the last expansion token, with at
+ * least 3 typed content tokens. One-token and two-token interior fragments
+ * fail closed. Distinct keys at the best coverage fail closed (`none`).
+ */
+function uniqueExpansionSuffix(
+  tokens: QueryToken[],
+  dict: SearchPlugin
+): ConfiguredSequenceResolution {
+  if (tokenIsStop(tokens[0]) || !dict.sequences?.length) return { status: "none" };
+  const candidates: ExpansionAlignCandidate[] = [];
+  const seen = new Set<string>();
+  for (const seq of dict.sequences) {
+    if (seq.kind !== "expansion" || !seq.entry?.key || !seq.tokens?.length) continue;
+    const want = seq.tokens;
+    const n = want.length;
+    if (n < MIN_EXPANSION_SUFFIX_CONTENT + 1) continue;
+    if (seen.has(seq.entry.key)) continue;
+    let best: SequentialAlign | null = null;
+    for (let startJ = 1; startJ < n; startJ++) {
+      if (!alignsExact(tokens[0], want[startJ])) continue;
+      const aligned = alignSequential(tokens, want, startJ, { allowNonLastPrefix: false });
+      if (!aligned.ok || !aligned.consumedAllWant) continue;
+      if (aligned.typedContentMatched < MIN_EXPANSION_SUFFIX_CONTENT) continue;
+      const coverage = aligned.matchedWant / n;
+      if (coverage < MIN_EXPANSION_PREFIX_COVERAGE) continue;
+      if (!best || aligned.matchedWant > best.matchedWant) best = aligned;
+    }
+    if (!best) continue;
+    seen.add(seq.entry.key);
+    candidates.push({
+      seq,
+      coverage: best.matchedWant / n,
+      n,
+      usedPrefix: best.usedPrefix,
+    });
+  }
+  return uniqueCandidateResolution(candidates, dict, "suffix");
 }
 
 function configuredKeyPrefixKeys(tok: QueryToken, dict: SearchPlugin): string[] {
@@ -304,28 +523,33 @@ export function resolveConfiguredSequence(
 ): ConfiguredSequenceResolution {
   if (!dict?.sequences?.length || !tokens.length) return { status: "none" };
   const matches: Array<{ seq: DictionarySequence; usedPrefix: boolean }> = [];
-  const keys = new Set<string>();
   for (const seq of dict.sequences) {
     if (!seq?.entry?.key || !seq.tokens?.length) continue;
     if (isSingleExpansionWordAlias(seq)) continue;
     const aligned = sequenceAligns(tokens, seq, dict);
     if (!aligned.ok) continue;
     matches.push({ seq, usedPrefix: aligned.usedPrefix });
-    keys.add(seq.entry.key);
   }
   if (matches.length) {
-    if (keys.size > 1) return { status: "ambiguous", keys: [...keys] };
-    const key = matches[0].seq.entry.key;
-    const entry = dict.byKey?.get(key) || matches[0].seq.entry;
-    const matchedKinds = [...new Set(matches.map((m) => String(m.seq.kind || "")))].filter(Boolean);
-    const usedPrefix = matches.some((m) => m.usedPrefix);
-    return uniqueResolution(entry, matchedKinds, usedPrefix);
+    const exact = matches.filter((m) => !m.usedPrefix);
+    const chosen = exact.length ? exact : matches;
+    const chosenKeys = new Set(chosen.map((m) => m.seq.entry.key));
+    if (chosenKeys.size > 1) return { status: "ambiguous", keys: [...chosenKeys] };
+    const key = chosen[0].seq.entry.key;
+    const entry = dict.byKey?.get(key) || chosen[0].seq.entry;
+    const matchedKinds = [...new Set(chosen.map((m) => String(m.seq.kind || "")))].filter(Boolean);
+    const usedPrefix = chosen.some((m) => m.usedPrefix);
+    return uniqueResolution(entry, matchedKinds, usedPrefix, "full");
   }
   const leftPrefix = uniqueExpansionLeftPrefix(tokens, dict);
   if (leftPrefix.status !== "none") return leftPrefix;
+  const stopTolerantLeft = uniqueStopTolerantLeftPrefix(tokens, dict);
+  if (stopTolerantLeft.status !== "none") return stopTolerantLeft;
+  const suffix = uniqueExpansionSuffix(tokens, dict);
+  if (suffix.status !== "none") return suffix;
   if (tokens.length === 1) {
     const hit = uniqueLongestFirstExpansionPrefix(tokens[0], dict);
-    if (hit) return uniqueResolution(hit.entry, ["expansion"], true);
+    if (hit) return uniqueResolution(hit.entry, ["expansion"], true, "left-prefix");
   }
   return { status: "none" };
 }

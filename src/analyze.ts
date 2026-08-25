@@ -560,6 +560,9 @@ function attachConfiguredSequenceConcept(
   }
   if (resolution.status !== "unique") return null;
   const { intent, entry, usedPrefix } = resolution;
+  for (let i = concepts.length - 1; i >= 0; i--) {
+    if (concepts[i].kind === "acronym" && concepts[i].id !== intent.key) concepts.splice(i, 1);
+  }
   const exists = concepts.some((c) => c.kind === "acronym" && c.id === intent.key);
   if (!exists) {
     concepts.push({
