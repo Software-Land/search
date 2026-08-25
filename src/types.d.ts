@@ -157,6 +157,17 @@ export interface ConfiguredSequenceIntent {
   matchedKinds: string[];
 }
 
+/**
+ * Exact configured subspan in analyzed query tokens. Indexes are [start, end).
+ * Diagnostic and span-triggered topical activation only; not lexical identity.
+ */
+export interface ConfiguredSpan {
+  key: string;
+  start: number;
+  end: number;
+  matchedKinds: string[];
+}
+
 export interface ContextualTitlePrefix {
   matchedPrefixTokens: string[];
   activeFinalPrefix: string;
@@ -213,15 +224,22 @@ export interface AnalyzedQuery {
    */
   configuredSequenceIntent?: ConfiguredSequenceIntent | null;
   /**
+   * Exact configured key/expansion/alias windows. Absent or empty when no
+   * exact subspan matches. Not whole-query configuredSequenceIntent.
+   */
+  configuredSpans?: ConfiguredSpan[];
+  /**
    * Reviewed exact-standalone recall hint. Absent unless the complete query is
    * one typed token that uniquely matches a `standaloneRecall` declaration.
    * Does not rewrite tokens, lexical intent, or configuredSequenceIntent.
    */
   standaloneRecall?: StandaloneRecall | null;
   /**
-   * One-hop topical recall for a trusted configuredSequenceIntent key.
-   * Absent unless that key declares topicalRecall forms.
-   * Does not rewrite tokens, lexical intent, or configuredSequenceIntent.
+   * One-hop topical recall for a trusted configured identity: either
+   * configuredSequenceIntent.key or a unique exact configured span whose
+   * remaining tokens are existing stopwords. Absent unless that key declares
+   * topicalRecall forms. Does not rewrite tokens, lexical intent, or
+   * configuredSequenceIntent.
    */
   topicalRecall?: TopicalRecall | null;
   /**

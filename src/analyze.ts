@@ -14,11 +14,12 @@ import {
   MAX_COMPOUND_REPAIR_TOKEN_LENGTH,
 } from "./analyzeRepair.js";
 import { canonicalLexicalTokensFromQuery } from "./lexicalNormalize.js";
-import { resolveConfiguredSequence } from "./configuredSequence.js";
+import { resolveConfiguredSequence, resolveConfiguredSpans } from "./configuredSequence.js";
 import type {
   AnalyzedQuery,
   AnalyzeOptions,
   ConfiguredSequenceIntent,
+  ConfiguredSpan,
   ContextualCompletion,
   DictionaryEntry,
   PrefixCompletion,
@@ -95,11 +96,7 @@ function resolveStandaloneRecall(
   };
 }
 
-function resolveTopicalRecall(
-  configuredSequenceIntent: ConfiguredSequenceIntent | null,
-  dict: SearchPlugin | null
-): TopicalRecall | null {
-  const key = configuredSequenceIntent?.key;
+function topicalRecallForKey(key: string | null | undefined, dict: SearchPlugin | null): TopicalRecall | null {
   if (!key || !dict) return null;
   const fromLookup = dict.topicalRecallByKey?.get(key);
   const fromEntry = dict.byKey?.get(key)?.topicalRecall;
@@ -109,6 +106,20 @@ function resolveTopicalRecall(
     key,
     forms: forms.map((form) => [...form]),
   };
+}
+
+function uniqueStopRemainderSpanKey(tokens: QueryToken[], spans: ConfiguredSpan[]): string | null {
+  const keys = new Set(spans.map((span) => span.key));
+  if (keys.size !== 1) return null;
+  const occupied = new Set<number>();
+  for (const span of spans) {
+    for (let i = span.start; i < span.end; i++) occupied.add(i);
+  }
+  for (let i = 0; i < tokens.length; i++) {
+    if (occupied.has(i)) continue;
+    if (!DEFAULT_STOP.has(tokens[i].normalized)) return null;
+  }
+  return [...keys][0];
 }
 
 function synonymPlugin(plugins: SearchPlugin[]) {
@@ -983,7 +994,11 @@ export function analyzeQuery(
     concepts,
     dict
   );
-  const topicalRecall = resolveTopicalRecall(configuredSequenceIntent, dict);
+  const configuredSpans = resolveConfiguredSpans(analyzedTokens, dict);
+  let topicalRecall = topicalRecallForKey(configuredSequenceIntent?.key, dict);
+  if (!topicalRecall && !configuredSequenceIntent?.key) {
+    topicalRecall = topicalRecallForKey(uniqueStopRemainderSpanKey(analyzedTokens, configuredSpans), dict);
+  }
 
   return {
     raw,
@@ -995,6 +1010,7 @@ export function analyzeQuery(
     prefixCompletion,
     contextualCompletion: contextual?.meta ?? null,
     configuredSequenceIntent,
+    configuredSpans,
     standaloneRecall,
     topicalRecall,
     lexicalTokens,

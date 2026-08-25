@@ -229,6 +229,12 @@ export interface SearchExplanation {
       expansion: string[];
       matchedKinds: string[];
     } | null;
+    configuredSpans?: Array<{
+      key: string;
+      start: number;
+      end: number;
+      matchedKinds: string[];
+    }>;
     standaloneRecall?: {
       key: string;
       sourceToken: string;

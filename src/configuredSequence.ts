@@ -1,10 +1,13 @@
 import { allowPrefixMatch } from "./text.js";
 import type {
+  ConfiguredSpan,
   DictionaryEntry,
   DictionarySequence,
   QueryToken,
   SearchPlugin,
 } from "./types.js";
+
+export type { ConfiguredSpan };
 
 /**
  * Unique complete-query alignment to trusted configured sequences
@@ -145,4 +148,73 @@ export function resolveConfiguredSequence(
     entry,
     usedPrefix,
   };
+}
+
+const SPAN_SEQUENCE_KINDS = new Set(["key", "expansion", "alias"]);
+
+/**
+ * Typed identity only. Prefix completion, lemma rewrite, and last-token stubs
+ * must not create a configured span. `sequenceAligns` keeps prefix behavior
+ * for whole-query callers.
+ */
+function exactTypedToken(tok: QueryToken, want: string): boolean {
+  if (!want || !tok) return false;
+  const typed = String(tok.surfaceNormalized || tok.surface || "").toLowerCase();
+  return typed === want;
+}
+
+function sequenceAlignsExactAt(tokens: QueryToken[], start: number, seq: DictionarySequence): boolean {
+  const want = seq.tokens || [];
+  const n = want.length;
+  if (!n || start < 0 || start + n > tokens.length) return false;
+  if (seq.kind === "key") {
+    return n === 1 && exactTypedToken(tokens[start], want[0]);
+  }
+  if (seq.kind !== "expansion" && seq.kind !== "alias") return false;
+  for (let j = 0; j < n; j++) {
+    if (!exactTypedToken(tokens[start + j], want[j])) return false;
+  }
+  return true;
+}
+
+function spanKeyId(key: string, start: number, end: number) {
+  return `${key}\t${start}\t${end}`;
+}
+
+/**
+ * Exact configured key/expansion/alias windows. Independent of corpus size.
+ * Same-key duplicate forms at the same indexes collapse. Distinct keys are
+ * all returned; callers fail closed for topical activation.
+ */
+export function resolveConfiguredSpans(
+  tokens: QueryToken[],
+  dict: SearchPlugin | null | undefined
+): ConfiguredSpan[] {
+  if (!dict?.sequences?.length || !tokens.length) return [];
+  const grouped = new Map<string, { key: string; start: number; end: number; kinds: Set<string> }>();
+  for (const seq of dict.sequences) {
+    if (!seq?.entry?.key || !seq.tokens?.length) continue;
+    if (!SPAN_SEQUENCE_KINDS.has(String(seq.kind || ""))) continue;
+    if (isSingleExpansionWordAlias(seq)) continue;
+    const n = seq.tokens.length;
+    for (let start = 0; start <= tokens.length - n; start++) {
+      if (!sequenceAlignsExactAt(tokens, start, seq)) continue;
+      const end = start + n;
+      const id = spanKeyId(seq.entry.key, start, end);
+      let row = grouped.get(id);
+      if (!row) {
+        row = { key: seq.entry.key, start, end, kinds: new Set() };
+        grouped.set(id, row);
+      }
+      if (seq.kind) row.kinds.add(String(seq.kind));
+    }
+  }
+  return [...grouped.values()]
+    .map((row) => ({
+      key: row.key,
+      start: row.start,
+      end: row.end,
+      matchedKinds: [...row.kinds].sort(),
+    }))
+    .sort((a, b) => a.start - b.start || a.end - b.end || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
 }

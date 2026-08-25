@@ -205,6 +205,12 @@ function serializeHit(c: RankedHit, query: AnalyzedQuery, explain?: boolean): Se
         prefixCompletion: query.prefixCompletion ?? null,
         contextualCompletion: query.contextualCompletion ?? null,
         configuredSequenceIntent: query.configuredSequenceIntent ?? null,
+        configuredSpans: (query.configuredSpans || []).map((span) => ({
+          key: span.key,
+          start: span.start,
+          end: span.end,
+          matchedKinds: [...(span.matchedKinds || [])],
+        })),
         standaloneRecall: query.standaloneRecall
           ? { key: query.standaloneRecall.key, sourceToken: query.standaloneRecall.sourceToken }
           : null,
