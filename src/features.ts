@@ -1,6 +1,6 @@
 import { isNearCompletePrefix, levenshteinAtMost, DEFAULT_STOP, allowPrefixMatch } from "./text.js";
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "./versionForms.js";
-import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall, topicalRecallHint, topicalFormEvidence } from "./retrieve.js";
+import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall, topicalRecallHint, topicalFormEvidence, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts, coverageConcepts } from "./retrieve.js";
 import { scoreFeatures } from "./rank.js";
 import { saturatingFrequency } from "./saturatingFrequency.js";
 import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "./lexicalNormalize.js";
@@ -101,6 +101,7 @@ function getQueryFeatPrep(query: AnalyzedQuery): QueryFeatPrep {
   for (const c of query.concepts) {
     if (c.kind === "acronym") continue;
     if (isBoundTrailingTermConcept(query, c)) continue;
+    if (isSearchEquivalenceRecallConcept(query, c)) continue;
     for (const form of c.forms || []) formSet.add(form);
   }
   const phraseKeys = phraseKeyCandidates(query);
@@ -214,7 +215,7 @@ function titlePrefixQuality(query: AnalyzedQuery, doc: IndexedDocument) {
 function queryCoverage(query: AnalyzedQuery, doc: IndexedDocument, v: ReturnType<typeof versionHit> = versionHit(query, doc)) {
   const unboundConcepts = query.concepts.filter((c) => !isBoundTrailingTermConcept(query, c));
   const concepts = unboundConcepts.filter((c) => c.kind !== "number" || unboundConcepts.length === 1);
-  const usable = concepts.length ? concepts : unboundConcepts;
+  const usable = coverageConcepts(query, concepts.length ? concepts : unboundConcepts);
   if (!usable.length) return 0;
   const vOk = Boolean(v);
   let hit = 0;
@@ -225,7 +226,7 @@ function queryCoverage(query: AnalyzedQuery, doc: IndexedDocument, v: ReturnType
   // Count number concepts via version hit once
   const hasNumber = unboundConcepts.some((c) => c.kind === "number");
   if (hasNumber && v) {
-    const withoutNum = unboundConcepts.filter((c) => c.kind !== "number");
+    const withoutNum = coverageConcepts(query, unboundConcepts.filter((c) => c.kind !== "number"));
     const numOk = v.compactHit || v.dottedHit;
     const otherHits = withoutNum.filter((c) => conceptCoveredInTitle(c, doc)).length;
     const denom = withoutNum.length + 1;
@@ -465,12 +466,13 @@ function hasDirectTitleEvidence(f: Partial<FeatureVector>) {
 }
 
 function bodyLexicalMatch(query: AnalyzedQuery, doc: IndexedDocument) {
+  const usable = coverageConcepts(query, query.concepts || []);
+  if (!usable.length) return 0;
   let hits = 0;
-  for (const c of query.concepts) {
+  for (const c of usable) {
     if (conceptMatchesBody(c, doc)) hits += 1;
   }
-  if (!query.concepts.length) return 0;
-  return Number((hits / query.concepts.length).toFixed(4));
+  return Number((hits / usable.length).toFixed(4));
 }
 
 function lexicalPhraseQueryTokens(query: AnalyzedQuery) {
@@ -626,6 +628,36 @@ function withTopicalRecallFields(
   };
 }
 
+function withSynonymRecallFields(
+  query: AnalyzedQuery,
+  doc: IndexedDocument,
+  fields: ReturnType<typeof computeFeatureFields>
+) {
+  const extras = searchEquivalenceRecallConcepts(query);
+  if (!extras.length) return fields;
+  let formCount = 0;
+  let titleCount = 0;
+  let bodyCount = 0;
+  for (const concept of extras) {
+    const title = conceptMatchesTitle(concept, doc) != null;
+    const body = conceptMatchesBody(concept, doc);
+    if (!title && !body) continue;
+    formCount += 1;
+    if (title) titleCount += 1;
+    else bodyCount += 1;
+  }
+  const match = formCount > 0;
+  const score = match ? titleCount * 2 + bodyCount * 0.3 + formCount * 0.3 : 0;
+  return {
+    ...fields,
+    synonymRecallMatch: match,
+    synonymRecallFormCount: formCount,
+    synonymRecallTitleMatch: titleCount > 0,
+    synonymRecallBodyMatch: bodyCount > 0,
+    synonymRecallScore: Number(score.toFixed(4)),
+  };
+}
+
 function withStandaloneRecallFields(
   query: AnalyzedQuery,
   doc: IndexedDocument,
@@ -706,7 +738,11 @@ export function extractFeatures(
     return finishFeatures(
       relationship,
       retrievalScore,
-      withTopicalRecallFields(query, doc, withStandaloneRecallFields(query, doc, computeFeatureFields(query, doc)))
+      withSynonymRecallFields(
+        query,
+        doc,
+        withTopicalRecallFields(query, doc, withStandaloneRecallFields(query, doc, computeFeatureFields(query, doc)))
+      )
     );
   }
   timeFeat("queryPrep", () => getQueryFeatPrep(query));
@@ -718,7 +754,10 @@ export function extractFeatures(
   return finishFeatures(
     relationship,
     retrievalScore,
-    withTopicalRecallFields(query, doc, withStandaloneRecallFields(query, doc, {
+    withSynonymRecallFields(
+      query,
+      doc,
+      withTopicalRecallFields(query, doc, withStandaloneRecallFields(query, doc, {
     exactTitleMatch: timeFeat("exactTitleMatch", () => exactTitle(query, doc)),
     exactTitleTokenMatch: timeFeat("exactTitleTokenMatch", () => exactTitleTokenMatch(query, doc)),
     typedSurfaceTitleMatch: timeFeat("typedSurfaceTitleMatch", () => typedSurfaceTitleMatch(query, doc)),
@@ -742,7 +781,8 @@ export function extractFeatures(
     matchingPhraseKey: phrase.matchingPhraseKey,
     bodyPhraseCount: phrase.bodyPhraseCount,
     bodyPhraseFrequency: phrase.bodyPhraseFrequency,
-    }))
+      }))
+    )
   );
 }
 
@@ -797,7 +837,7 @@ export const FEATURE_DEFINITIONS = {
   exactTitleTokenMatch: "True when a non-stop canonical query token occurs as an independent title token (not a digit split from a dotted numeric span such as 1.2). Unique prefix completions and morphology use the lemma; typed stubs and completedToken are not exact surface evidence. A trailing stub bound by unique contextual expansion completion is not unbound exact-title-token evidence.",
   typedSurfaceTitleMatch: "True when the typed/repaired surface (before lemma or unique-prefix rewrite) occurs as an independent title token or is a legitimate prefix of one. Digits produced by splitting a dotted span are not typed-surface evidence. Canonical retrieval lemmas are not typed-surface evidence. A trailing stub bound by unique contextual expansion completion is not unbound title-prefix evidence.",
   titleCoverage: "Fraction of non-stop title tokens accounted for by the query. A trailing stub bound by unique contextual expansion completion is excluded.",
-  queryCoverage: "Fraction of query concepts evidenced in the title (or via a legitimate version alias). A trailing term concept bound by unique contextual expansion completion is excluded.",
+  queryCoverage: "Fraction of typed/configured query concepts evidenced in the title (or via a legitimate version alias). Extra search-equivalence recall concepts attached after configured occupancy are excluded. A trailing term concept bound by unique contextual expansion completion is excluded. Synonym forms merged into an ordinary term concept still count with that concept.",
   titlePrefixQuality: "How completely query tokens prefix title tokens, tightened by extra title tokens. A trailing stub bound by unique contextual expansion completion is excluded.",
   contextualTitlePrefix: "True when preceding query tokens align with the title start and only the final token is a proper prefix of the aligned title token.",
   matchedPrefixTokens: "Preceding query tokens that aligned exactly/canonically with the title start.",
@@ -813,7 +853,7 @@ export const FEATURE_DEFINITIONS = {
   shortLiteralLeadMatch: "Short query (≤3) matches the first surface title token as exact or prefix.",
   dottedSpanComponentTitleMatch: "True when a typed all-digit query token equals a component of a dotted numeric title span (the 2 in 1.2). Not independent exact-title evidence and not a versionMatch.",
   phraseAdjacency: "1 title-adjacent query tokens, 0.5 body-adjacent, else 0.",
-  bodyLexicalMatch: "Fraction of query concepts evidenced in the body field.",
+  bodyLexicalMatch: "Fraction of typed/configured query concepts evidenced in the body field. Extra search-equivalence recall concepts attached after configured occupancy are excluded from the numerator and denominator. Synonym forms merged into an ordinary term concept still count with that concept.",
   titleTokenCount: "Non-stop title token count; used for tightness, not as a boost constant.",
   expansionEvidence: "Fraction of a configured expansion evidenced in the title.",
   canonicalKeyTitle: "True when the query is exactly a configured key and the title also states most of the expansion.",

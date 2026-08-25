@@ -420,6 +420,11 @@ export interface FeatureVector {
   topicalRecallTitleMatch?: boolean;
   topicalRecallPhraseMatch?: boolean;
   topicalRecallScore?: number;
+  synonymRecallMatch?: boolean;
+  synonymRecallFormCount?: number;
+  synonymRecallTitleMatch?: boolean;
+  synonymRecallBodyMatch?: boolean;
+  synonymRecallScore?: number;
   relationshipStrength: number;
   relationshipType: string | null;
   relationshipSourceId: string | null;

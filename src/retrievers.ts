@@ -23,6 +23,7 @@ import {
   standaloneRecallHint,
   topicalRecallHint,
   shortTitleTokenPrefixStub,
+  isSearchEquivalenceRecallConcept,
 } from "./retrieve.js";
 import { allowPrefixMatch } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
@@ -44,7 +45,7 @@ import type {
   SearchIndex,
 } from "./types.js";
 
-type QueryFormKind = "token" | "lemma" | "acronym-key" | "concept" | "acronym-form" | "standalone-recall" | "topical-recall";
+type QueryFormKind = "token" | "lemma" | "acronym-key" | "concept" | "acronym-form" | "standalone-recall" | "topical-recall" | "synonym-recall";
 type QueryForm = { form: string; kind: QueryFormKind };
 type AdaptiveActive = "full-scan" | "indexed-lexical";
 
@@ -70,13 +71,19 @@ function postingTitleSource(kind: QueryFormKind) {
   if (kind === "acronym-key" || kind === "acronym-form") return "configured-equivalence";
   if (kind === "standalone-recall") return "standalone-recall";
   if (kind === "topical-recall") return "topical-recall";
+  if (kind === "synonym-recall") return "synonym-recall";
   return "title-token";
 }
 
 function postingBodySource(kind: QueryFormKind) {
   if (kind === "standalone-recall") return "standalone-recall";
   if (kind === "topical-recall") return "topical-recall";
+  if (kind === "synonym-recall") return "synonym-recall";
   return "body-lexical";
+}
+
+function formKindAllowsPrefix(kind: QueryFormKind) {
+  return kind !== "topical-recall" && kind !== "synonym-recall";
 }
 
 function pushSource(hit: { retrievalSources: string[] }, source: string) {
@@ -140,6 +147,17 @@ function queryForms(query: AnalyzedQuery) {
   }
   for (const c of query.concepts || []) {
     if (isBoundTrailingTermConcept(query, c)) continue;
+    if (isSearchEquivalenceRecallConcept(query, c)) {
+      add(c.id, "synonym-recall");
+      for (const f of c.forms || []) {
+        add(f, "synonym-recall");
+        const parts = String(f).split(/\s+/).filter(Boolean);
+        if (parts.length >= 2) {
+          for (const part of parts) add(part, "synonym-recall");
+        }
+      }
+      continue;
+    }
     add(c.id, c.kind === "acronym" ? "acronym-key" : "concept");
     for (const f of c.forms || []) {
       const kind = c.kind === "acronym" ? "acronym-form" : "concept";
@@ -386,7 +404,7 @@ export function createIndexedLexicalRetriever({
       const bodyL = state.bodyLemmaPostings.get(form);
       if (bodyL) accumulatePosting(byPos, bodyL, "morphology", 0.5, state.avgBodyDl, state.bodyDl, { signal, n });
 
-      if (kind !== "topical-recall" && !isAllDigitToken(form) && form.length >= 3) {
+      if (formKindAllowsPrefix(kind) && !isAllDigitToken(form) && form.length >= 3) {
         for (const term of prefixTerms(form, (t) => allowPrefixMatch(form, t))) {
           if (term === form) continue;
           const tp = state.titlePostings.get(term);
@@ -730,7 +748,7 @@ export function createCompiledLexicalRetriever(): Retriever {
       accumulateLemma(compiled.byLemma.get(form), "title", "morphology", TITLE_BOOST * 0.6);
       if (!skipBodyWalk) accumulateLemma(compiled.byLemma.get(form), "body", "morphology", 0.5);
 
-      if (kind !== "topical-recall" && !isAllDigitToken(form) && form.length >= 3) {
+      if (formKindAllowsPrefix(kind) && !isAllDigitToken(form) && form.length >= 3) {
         let i = lowerBoundTerm(compiled.sortedTerms, form);
         while (i < compiled.sortedTerms.length) {
           const term = compiled.sortedTerms[i++];
@@ -809,7 +827,7 @@ export function createCompiledLexicalRetriever(): Retriever {
           const surface = compiled.bySurface.get(form);
           accumulateSurface(surface, "body", postingBodySource(kind), 1);
           accumulateLemma(compiled.byLemma.get(form), "body", "morphology", 0.5);
-          if (kind !== "topical-recall" && !isAllDigitToken(form) && form.length >= 3) {
+          if (formKindAllowsPrefix(kind) && !isAllDigitToken(form) && form.length >= 3) {
             let i = lowerBoundTerm(compiled.sortedTerms, form);
             while (i < compiled.sortedTerms.length) {
               const term = compiled.sortedTerms[i++];

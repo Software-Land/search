@@ -337,6 +337,32 @@ export function documentMatchesStandaloneRecall(query: AnalyzedQuery, doc: Index
   return Boolean(conceptMatchesTitle(concept, doc) || conceptMatchesBody(concept, doc));
 }
 
+/**
+ * Extra search-equivalence concepts attached after configured/phrase occupancy.
+ * Distinct from ordinary term concepts whose synonym forms were merged into the
+ * typed token (provenance may also be "synonym" on that merged concept).
+ * Extra concepts have id === a synonymRecall target and are not a recall source.
+ */
+export function isSearchEquivalenceRecallConcept(query: AnalyzedQuery | null | undefined, concept: QueryConcept | null | undefined) {
+  if (!query || !concept || concept.kind === "acronym") return false;
+  if (concept.provenance !== "synonym") return false;
+  const pairs = query.synonymRecall;
+  if (!pairs?.length) return false;
+  const id = concept.id;
+  if (!id) return false;
+  if (!pairs.some((pair) => pair.target === id)) return false;
+  if (pairs.some((pair) => pair.source === id)) return false;
+  return true;
+}
+
+export function searchEquivalenceRecallConcepts(query: AnalyzedQuery | null | undefined): QueryConcept[] {
+  return (query?.concepts || []).filter((concept) => isSearchEquivalenceRecallConcept(query, concept));
+}
+
+export function coverageConcepts(query: AnalyzedQuery, concepts: QueryConcept[]) {
+  return concepts.filter((concept) => !isSearchEquivalenceRecallConcept(query, concept));
+}
+
 export function topicalRecallHint(query: AnalyzedQuery | null | undefined): TopicalRecall | null {
   const hint = query?.topicalRecall;
   if (!hint?.key || !Array.isArray(hint.forms) || !hint.forms.length) return null;
@@ -526,6 +552,10 @@ function scanDocument(
 
   for (const concept of query.concepts) {
     if (isBoundTrailingTermConcept(query, concept)) continue;
+    if (isSearchEquivalenceRecallConcept(query, concept)) {
+      if (conceptMatchesTitle(concept, doc)) add(doc, "synonym-recall");
+      continue;
+    }
     const kind = conceptMatchesTitle(concept, doc);
     if (concept.kind === "acronym") {
       if (kind) add(doc, "configured-equivalence");
@@ -541,6 +571,10 @@ function scanDocument(
 
   for (const concept of query.concepts) {
     if (isBoundTrailingTermConcept(query, concept)) continue;
+    if (isSearchEquivalenceRecallConcept(query, concept)) {
+      if (conceptMatchesBody(concept, doc)) add(doc, "synonym-recall");
+      continue;
+    }
     if (conceptMatchesBody(concept, doc)) add(doc, "body-lexical");
   }
 

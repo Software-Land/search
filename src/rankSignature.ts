@@ -105,6 +105,9 @@ export function constraintSignature(f: Partial<FeatureVector> | undefined) {
     bit(feat.topicalRecallMatch),
     bit(feat.topicalRecallTitleMatch),
     bit(feat.topicalRecallPhraseMatch),
+    bit(feat.synonymRecallMatch),
+    bit(feat.synonymRecallTitleMatch),
+    bit(feat.synonymRecallBodyMatch),
     titleTokens,
     prefixQ,
   ].join("\u001f");

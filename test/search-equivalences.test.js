@@ -16,6 +16,8 @@ import {
 } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
+import { isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts } from "../dist/retrieve.js";
+import { compareConstraint } from "../dist/constraints.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = path.join(ROOT, "fixtures", "software-land");
@@ -344,5 +346,127 @@ describe("search-equivalence memory envelope", () => {
     expect(v1.jsonBytes).toBeLessThan(20_000);
     expect(mid.jsonBytes).toBeLessThan(80_000);
     expect(large.jsonBytes).toBeLessThan(160_000);
+  });
+});
+
+describe("extra synonym recall vs merged ordinary-term synonyms", () => {
+  test("configured occupancy attaches extra synonym concepts that do not dilute typed coverage", async () => {
+    const extraDocs = [
+      { id: "rbac", title: "RBAC Guide", body: "role based access control overview" },
+      { id: "react-auth", title: "React Authentication", body: "compares rbac versus abac in the client" },
+      { id: "zero-trust", title: "Zero-Trust Security", body: "perimeter notes" },
+      { id: "sec-body", title: "Garden Notes", body: "application security checklist without the key" },
+      { id: "unrelated", title: "Tomatoes", body: "soil and water" },
+    ];
+    const dict = [{ key: "rbac", expansion: ["role", "based", "access", "control"] }];
+    const map = { rbac: ["security", "appsec", "vulnerability"] };
+    const { indexed, indexedHits } = await assertIndexedFullScan("rbac", { dict, map, docs: extraDocs });
+    expect(ids(indexedHits)).toEqual(expect.arrayContaining(["rbac", "react-auth", "zero-trust", "sec-body"]));
+
+    const q = analyzeQuery("rbac", { plugins: plugins({ dict, map }) });
+    expect(q.concepts.filter((c) => c.kind === "acronym" && c.id === "rbac")).toHaveLength(1);
+    const extras = searchEquivalenceRecallConcepts(q);
+    expect(extras.map((c) => c.id).sort()).toEqual(["appsec", "security", "vulnerability"]);
+    expect(extras.every((c) => c.provenance === "synonym")).toBe(true);
+    expect(q.concepts.filter((c) => isSearchEquivalenceRecallConcept(q, c))).toHaveLength(3);
+
+    const detailed = indexed.searchDetailed("rbac", { limit: 50, explain: true });
+    const byId = Object.fromEntries(detailed.results.map((row) => [row.id, row]));
+
+    expect(byId["react-auth"].features.bodyLexicalMatch).toBe(1);
+    expect(byId["react-auth"].features.queryCoverage).toBe(0);
+    expect(byId["react-auth"].retrievalSources).toContain("body-lexical");
+    expect(byId["react-auth"].retrievalSources).not.toContain("synonym-recall");
+
+    expect(byId["zero-trust"].retrievalSources).toContain("synonym-recall");
+    expect(byId["zero-trust"].retrievalSources).not.toContain("title-token");
+    expect(byId["zero-trust"].features.queryCoverage).toBe(0);
+    expect(byId["zero-trust"].features.bodyLexicalMatch).toBe(0);
+    expect(byId["zero-trust"].features.configuredEquivalenceMatch).toBe(false);
+    expect(byId["zero-trust"].features.exactTitleTokenMatch).toBe(false);
+    expect(byId["zero-trust"].features.synonymRecallMatch).toBe(true);
+    expect(byId["zero-trust"].features.synonymRecallTitleMatch).toBe(true);
+    expect(byId["zero-trust"].features.synonymRecallBodyMatch).toBe(false);
+
+    expect(byId["sec-body"].retrievalSources).toContain("synonym-recall");
+    expect(byId["sec-body"].retrievalSources).not.toContain("body-lexical");
+    expect(byId["sec-body"].features.queryCoverage).toBe(0);
+    expect(byId["sec-body"].features.bodyLexicalMatch).toBe(0);
+    expect(byId["sec-body"].features.synonymRecallMatch).toBe(true);
+    expect(byId["sec-body"].features.synonymRecallTitleMatch).toBe(false);
+    expect(byId["sec-body"].features.synonymRecallBodyMatch).toBe(true);
+
+    expect(ids(detailed.results).indexOf("react-auth")).toBeLessThan(ids(detailed.results).indexOf("zero-trust"));
+    expect(ids(detailed.results).indexOf("zero-trust")).toBeLessThan(ids(detailed.results).indexOf("sec-body"));
+
+    const titleVsBody = compareConstraint(
+      { document: { id: "zero-trust" }, features: byId["zero-trust"].features, retrievalSources: byId["zero-trust"].retrievalSources },
+      { document: { id: "sec-body" }, features: byId["sec-body"].features, retrievalSources: byId["sec-body"].retrievalSources }
+    );
+    expect(titleVsBody.order).toBe(-1);
+    expect(titleVsBody.applied.some((row) => row.id === "synonym-title-over-synonym-body")).toBe(true);
+
+    const identityVsSynonym = compareConstraint(
+      { document: { id: "react-auth" }, features: byId["react-auth"].features, retrievalSources: byId["react-auth"].retrievalSources },
+      { document: { id: "zero-trust" }, features: byId["zero-trust"].features, retrievalSources: byId["zero-trust"].retrievalSources }
+    );
+    expect(identityVsSynonym.order).toBe(-1);
+    expect(identityVsSynonym.applied.some((row) => row.id === "literal-over-synonym-recall")).toBe(true);
+  });
+
+  test("qa extra testing recall stays retrievable and is not typed coverage", async () => {
+    const extraDocs = [
+      { id: "qa-title", title: "QA Handbook", body: "process notes" },
+      { id: "testing-title", title: "Load Testing", body: "performance notes" },
+      { id: "testing-body", title: "Garden Notes", body: "unit testing soil moisture" },
+    ];
+    const { indexedHits } = await assertIndexedFullScan("qa", { docs: extraDocs });
+    expect(ids(indexedHits)).toEqual(expect.arrayContaining(["qa-title", "testing-title", "testing-body"]));
+    const q = analyzeQuery("qa", { plugins: plugins() });
+    expect(searchEquivalenceRecallConcepts(q).map((c) => c.id)).toEqual(["testing"]);
+    const eng = await engine({ docs: extraDocs });
+    const detailed = eng.searchDetailed("qa", { limit: 20, explain: true });
+    const byId = Object.fromEntries(detailed.results.map((row) => [row.id, row]));
+    expect(byId["qa-title"].features.configuredEquivalenceMatch).toBe("key-in-title");
+    expect(byId["testing-title"].features.queryCoverage).toBe(0);
+    expect(byId["testing-title"].features.configuredEquivalenceMatch).toBe(false);
+    expect(byId["testing-title"].retrievalSources).toContain("synonym-recall");
+    expect(byId["testing-title"].features.synonymRecallTitleMatch).toBe(true);
+    expect(byId["testing-body"].retrievalSources).toContain("synonym-recall");
+    expect(byId["testing-body"].features.synonymRecallBodyMatch).toBe(true);
+    expect(stage3AUnsupportedReason(q)).not.toBeNull();
+  });
+
+  test("uncovered ordinary-term synonyms stay merged into the typed concept", async () => {
+    const map = { authentication: ["vulnerability"], interceptor: ["middleware"] };
+    const extraDocs = [
+      { id: "auth", title: "Login Flow", body: "password authentication cookies" },
+      { id: "vuln", title: "TLS 1.2 Vulnerability", body: "cipher notes" },
+      { id: "mw", title: "Authorization Middleware", body: "request interceptors" },
+    ];
+    const pluginOpts = { dict: [], map, docs: extraDocs };
+    const { indexedHits: authHits } = await assertIndexedFullScan("authentication", pluginOpts);
+    const { indexedHits: interceptorHits } = await assertIndexedFullScan("interceptor", pluginOpts);
+    expect(ids(authHits)).toEqual(expect.arrayContaining(["auth", "vuln"]));
+    expect(ids(interceptorHits)).toEqual(expect.arrayContaining(["mw"]));
+
+    const authQ = analyzeQuery("authentication", { plugins: plugins({ dict: [], map }) });
+    const interceptorQ = analyzeQuery("interceptor", { plugins: plugins({ dict: [], map }) });
+    expect(searchEquivalenceRecallConcepts(authQ)).toEqual([]);
+    expect(searchEquivalenceRecallConcepts(interceptorQ)).toEqual([]);
+    const authConcept = authQ.concepts.find((c) => c.kind === "term" && (c.id === "authentication" || c.forms.includes("authentication")));
+    const interceptorConcept = interceptorQ.concepts.find((c) => c.kind === "term" && (c.id === "interceptor" || c.forms.includes("interceptor")));
+    expect(authConcept.forms).toEqual(expect.arrayContaining(["authentication", "vulnerability"]));
+    expect(["synonym", "morphology", "surface"]).toContain(authConcept.provenance);
+    expect(isSearchEquivalenceRecallConcept(authQ, authConcept)).toBe(false);
+    expect(interceptorConcept.forms).toEqual(expect.arrayContaining(["interceptor", "middleware"]));
+    expect(isSearchEquivalenceRecallConcept(interceptorQ, interceptorConcept)).toBe(false);
+
+    const authEng = await engine(pluginOpts);
+    const vuln = authEng.searchDetailed("authentication", { limit: 20, explain: true }).results.find((row) => row.id === "vuln");
+    expect(vuln.retrievalSources).toContain("title-token");
+    expect(vuln.retrievalSources).not.toContain("synonym-recall");
+    expect(vuln.features.queryCoverage).toBeGreaterThan(0);
+    expect(vuln.features.synonymRecallMatch).toBeFalsy();
   });
 });

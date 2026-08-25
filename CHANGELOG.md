@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- Extra search-equivalence concepts attached after configured occupancy (`provenance: "synonym"` targets such as `rbac → security`) no longer count as typed/configured lexical coverage. `queryCoverage`, `bodyLexicalMatch`, and title `formSet` use the real query concept set. Retrieval source is `synonym-recall`. Named features `synonymRecallMatch` / `synonymRecallTitleMatch` / `synonymRecallBodyMatch` expose recall quality. Constraints `literal-over-synonym-recall` and `synonym-title-over-synonym-body` rank identity evidence above synonym-only recall, and synonym title above synonym body. Ordinary uncovered-term synonym forms remain merged into the same term concept and are unchanged. `synonymRecallScore` uses the same title×2 + body-only×0.3 + formCount×0.3 shape as topical/standalone recall.
+
 ### Added
 
 - Public `synonyms({ qa: ["testing"] })` directional search-equivalence plugin and `normalizeSearchEquivalences()`. Object-map entries are one-hop and directional; they do not auto-reverse. Legacy `{ format, entries: [{ terms }] }` compiled synonyms stay bidirectional. Synonym lookup may use a unique configured key/span, an exact lexical phrase source, or uncovered tokens. It does not rewrite typed identity, lexical intent, or configured occupancy, and it does not activate topical or standalone recall.

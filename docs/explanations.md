@@ -11,7 +11,7 @@ results[0].relationship; // on related hits
 
 Stable concepts:
 
-- `retrievalSources` — why the document entered the candidate set (`exact-title`, `title-token`, `configured-equivalence`, `morphology`, `version`, `body-lexical`, `relationship`, …)
+- `retrievalSources` — why the document entered the candidate set (`exact-title`, `title-token`, `configured-equivalence`, `morphology`, `version`, `body-lexical`, `synonym-recall`, `relationship`, …)
 - named `features` and `directClass` / `relevanceKind`
 - `relationship`: `{ type, sourceId, sourceTitle, provenance, strength, rank }`
 - constraint diagnostics when present (`constraintsVsNext`, `constraintMeta`)
