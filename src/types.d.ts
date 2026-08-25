@@ -31,9 +31,20 @@ export interface DictionaryEntry {
   expansion: string[];
   aliases: string[][];
   primary?: string | null;
+  /** Reviewed exact standalone tokens that may open secondary configured recall. */
+  standaloneRecall?: string[];
   type?: string;
   provenance?: string | null;
   confidence?: number | null;
+}
+
+/** Exact one-token recall bridge. Not configured equivalence or lexical intent. */
+export interface StandaloneRecall {
+  key: string;
+  sourceToken: string;
+  expansion: string[];
+  aliases: string[][];
+  forms: string[];
 }
 
 export interface DictionarySequence {
@@ -52,6 +63,7 @@ export interface SearchPlugin {
   lexicon?: () => Iterable<string>;
   sequences?: DictionarySequence[];
   byKey?: Map<string, DictionaryEntry>;
+  standaloneRecallByToken?: Map<string, string>;
   expand?: (token: string) => Array<{
     form: string;
     type?: string;
@@ -185,6 +197,12 @@ export interface AnalyzedQuery {
    * Absent when no sequence matches or multiple keys remain plausible.
    */
   configuredSequenceIntent?: ConfiguredSequenceIntent | null;
+  /**
+   * Reviewed exact-standalone recall hint. Absent unless the complete query is
+   * one typed token that uniquely matches a `standaloneRecall` declaration.
+   * Does not rewrite tokens, lexical intent, or configuredSequenceIntent.
+   */
+  standaloneRecall?: StandaloneRecall | null;
   /**
    * Canonical lexical-intent stream for compiled phrase lookup. May include
    * unique configured-sequence projection or contextual expansion completion.
@@ -324,6 +342,8 @@ export interface FeatureVector {
   matchingPhraseKey: string | null;
   bodyPhraseCount: number;
   bodyPhraseFrequency: number;
+  standaloneRecallMatch?: boolean;
+  standaloneRecallScore?: number;
   relationshipStrength: number;
   relationshipType: string | null;
   relationshipSourceId: string | null;

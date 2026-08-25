@@ -22,6 +22,7 @@ import type {
   RetrievalHit,
   RetrieveOptions,
   SearchIndex,
+  StandaloneRecall,
 } from "./types.js";
 
 type ConceptTitleMatch = "key" | "expansion" | "exact" | "prefix" | "lemma";
@@ -226,6 +227,31 @@ export function hasConfiguredSequenceIntent(query: AnalyzedQuery) {
   return Boolean(query.configuredSequenceIntent?.key);
 }
 
+export function standaloneRecallHint(query: AnalyzedQuery | null | undefined): StandaloneRecall | null {
+  const hint = query?.standaloneRecall;
+  if (!hint?.key || !hint.sourceToken) return null;
+  return hint;
+}
+
+export function standaloneRecallConcept(query: AnalyzedQuery | null | undefined): QueryConcept | null {
+  const hint = standaloneRecallHint(query);
+  if (!hint) return null;
+  return {
+    id: hint.key,
+    kind: "acronym",
+    forms: Array.isArray(hint.forms) && hint.forms.length ? hint.forms : [hint.key, ...(hint.expansion || [])],
+    expansion: [...(hint.expansion || [])],
+    aliases: (hint.aliases || []).map((alias) => [...alias]),
+    provenance: "standalone-recall",
+  };
+}
+
+export function documentMatchesStandaloneRecall(query: AnalyzedQuery, doc: IndexedDocument) {
+  const concept = standaloneRecallConcept(query);
+  if (!concept) return false;
+  return Boolean(conceptMatchesTitle(concept, doc) || conceptMatchesBody(concept, doc));
+}
+
 export function identityTokens(query: AnalyzedQuery): QueryToken[] {
   if (hasConfiguredSequenceIntent(query) && query.lexicalTokens?.length) {
     return query.lexicalTokens;
@@ -394,6 +420,10 @@ function scanDocument(
 
   if (!hasConfiguredSequenceIntent(query) && matchContextualTitlePrefix(query, doc)) {
     add(doc, "contextual-title-prefix");
+  }
+
+  if (documentMatchesStandaloneRecall(query, doc)) {
+    add(doc, "standalone-recall");
   }
 }
 

@@ -54,6 +54,8 @@ export interface SearchPlugin {
     entry: EquivalenceEntry;
   }>;
   byKey?: ReadonlyMap<string, EquivalenceEntry>;
+  /** Unique reviewed standalone token → configured key. Collisions are omitted. */
+  standaloneRecallByToken?: ReadonlyMap<string, string>;
   expand?(token: string): Array<{ form: string }>;
 }
 
@@ -81,6 +83,7 @@ export interface DictionaryPlugin extends SearchPlugin {
   name: "dictionary";
   sequences: NonNullable<SearchPlugin["sequences"]>;
   byKey: ReadonlyMap<string, EquivalenceEntry>;
+  standaloneRecallByToken?: ReadonlyMap<string, string>;
   lexicon(): Iterable<string>;
 }
 
@@ -223,6 +226,10 @@ export interface SearchExplanation {
       expansion: string[];
       matchedKinds: string[];
     } | null;
+    standaloneRecall?: {
+      key: string;
+      sourceToken: string;
+    } | null;
     lexicalTokens?: unknown[];
     lexicalPhraseKey?: string;
     normalizedQueryPhrase?: string;
@@ -281,6 +288,8 @@ export interface EquivalenceEntry {
   expansion?: string[];
   aliases?: string[][];
   primary?: string | null;
+  /** Reviewed exact standalone tokens that may open secondary configured recall. */
+  standaloneRecall?: string[];
   type?: string;
   provenance?: string | null;
   confidence?: number | null;

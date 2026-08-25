@@ -20,6 +20,7 @@ import {
   isBoundTrailingTermConcept,
   identityTokens,
   evidenceTokens,
+  standaloneRecallHint,
 } from "./retrieve.js";
 import { allowPrefixMatch } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
@@ -41,7 +42,7 @@ import type {
   SearchIndex,
 } from "./types.js";
 
-type QueryFormKind = "token" | "lemma" | "acronym-key" | "concept" | "acronym-form";
+type QueryFormKind = "token" | "lemma" | "acronym-key" | "concept" | "acronym-form" | "standalone-recall";
 type QueryForm = { form: string; kind: QueryFormKind };
 type AdaptiveActive = "full-scan" | "indexed-lexical";
 
@@ -62,6 +63,17 @@ const TITLE_PREFIX_KEEP_SOURCE = "title-prefix";
 const K1 = 1.2;
 const B = 0.75;
 const TITLE_BOOST = 4;
+
+function postingTitleSource(kind: QueryFormKind) {
+  if (kind === "acronym-key" || kind === "acronym-form") return "configured-equivalence";
+  if (kind === "standalone-recall") return "standalone-recall";
+  return "title-token";
+}
+
+function postingBodySource(kind: QueryFormKind) {
+  if (kind === "standalone-recall") return "standalone-recall";
+  return "body-lexical";
+}
 
 function pushSource(hit: { retrievalSources: string[] }, source: string) {
   if (!hit.retrievalSources.includes(source)) hit.retrievalSources.push(source);
@@ -115,6 +127,11 @@ function queryForms(query: AnalyzedQuery) {
     if (isBoundTrailingTermConcept(query, c)) continue;
     add(c.id, c.kind === "acronym" ? "acronym-key" : "concept");
     for (const f of c.forms || []) add(f, c.kind === "acronym" ? "acronym-form" : "concept");
+  }
+  const hint = standaloneRecallHint(query);
+  if (hint) {
+    add(hint.key, "standalone-recall");
+    for (const f of hint.forms || []) add(f, "standalone-recall");
   }
   return forms;
 }
@@ -330,11 +347,10 @@ export function createIndexedLexicalRetriever({
     let step = 0;
     for (const { form, kind } of forms) {
       if ((step++ & 7) === 0) throwIfAborted(signal);
-      const acronym = kind === "acronym-key" || kind === "acronym-form";
       const titleP = state.titlePostings.get(form);
-      if (titleP) accumulatePosting(byPos, titleP, acronym ? "configured-equivalence" : "title-token", titleBoost, state.avgTitleDl, state.titleDl, { signal, n });
+      if (titleP) accumulatePosting(byPos, titleP, postingTitleSource(kind), titleBoost, state.avgTitleDl, state.titleDl, { signal, n });
       const bodyP = state.bodyPostings.get(form);
-      if (bodyP) accumulatePosting(byPos, bodyP, "body-lexical", 1, state.avgBodyDl, state.bodyDl, { signal, n });
+      if (bodyP) accumulatePosting(byPos, bodyP, postingBodySource(kind), 1, state.avgBodyDl, state.bodyDl, { signal, n });
       const titleL = state.titleLemmaPostings.get(form);
       if (titleL && titleL !== titleP) {
         accumulatePosting(byPos, titleL, "morphology", titleBoost * 0.6, state.avgTitleDl, state.titleDl, { signal, n });
@@ -672,10 +688,9 @@ export function createCompiledLexicalRetriever(): Retriever {
     const skipBodyWalk = skipPlan !== null;
     for (const { form, kind } of forms) {
       if ((step++ & 7) === 0) throwIfAborted(signal);
-      const acronym = kind === "acronym-key" || kind === "acronym-form";
       const surface = compiled.bySurface.get(form);
-      accumulateSurface(surface, "title", acronym ? "configured-equivalence" : "title-token", TITLE_BOOST);
-      if (!skipBodyWalk) accumulateSurface(surface, "body", "body-lexical", 1);
+      accumulateSurface(surface, "title", postingTitleSource(kind), TITLE_BOOST);
+      if (!skipBodyWalk) accumulateSurface(surface, "body", postingBodySource(kind), 1);
       accumulateLemma(compiled.byLemma.get(form), "title", "morphology", TITLE_BOOST * 0.6);
       if (!skipBodyWalk) accumulateLemma(compiled.byLemma.get(form), "body", "morphology", 0.5);
 
@@ -749,7 +764,7 @@ export function createCompiledLexicalRetriever(): Retriever {
         for (const { form, kind } of forms) {
           if ((step++ & 7) === 0) throwIfAborted(signal);
           const surface = compiled.bySurface.get(form);
-          accumulateSurface(surface, "body", kind === "acronym-key" || kind === "acronym-form" ? "body-lexical" : "body-lexical", 1);
+          accumulateSurface(surface, "body", postingBodySource(kind), 1);
           accumulateLemma(compiled.byLemma.get(form), "body", "morphology", 0.5);
           if (!isAllDigitToken(form) && form.length >= 3) {
             let i = lowerBoundTerm(compiled.sortedTerms, form);

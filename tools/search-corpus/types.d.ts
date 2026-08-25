@@ -79,6 +79,7 @@ export interface EquivalenceCandidate {
   expansionPhrase?: string;
   aliases?: unknown[];
   primary?: string | null;
+  standaloneRecall?: string[];
   terms?: string[];
   relation?: string;
   initialsMatch?: boolean;
@@ -265,6 +266,7 @@ export interface EquivalenceArtifact {
     expansion: string[];
     aliases: unknown[];
     primary?: string | null;
+    standaloneRecall?: string[];
     type: string;
     provenance: string;
     confidence: null;

@@ -292,9 +292,48 @@ function canonicalKeyConstraint(a: FeaturedHit, b: FeaturedHit) {
   return 0;
 }
 
+function standaloneRecallBand(f: Partial<FeatureVector>) {
+  if (
+    f.exactTitleMatch ||
+    f.exactTitleTokenMatch ||
+    f.typedSurfaceTitleMatch ||
+    (f.queryCoverage || 0) > 0 ||
+    (f.titleCoverage || 0) > 0 ||
+    (f.titlePrefixQuality || 0) > 0 ||
+    f.contextualTitlePrefix ||
+    f.configuredEquivalenceMatch ||
+    f.canonicalKeyTitle ||
+    f.morphologyMatch ||
+    (f.typoDistance || 0) > 0 ||
+    f.versionMatch ||
+    f.shortLiteralLeadMatch ||
+    f.dottedSpanComponentTitleMatch ||
+    (f.bodyLexicalMatch || 0) > 0 ||
+    (f.bodyPhraseCount || 0) > 0 ||
+    (f.phraseAdjacency || 0) > 0
+  ) {
+    return 2;
+  }
+  if (f.standaloneRecallMatch) return 1;
+  return 0;
+}
+
+/**
+ * Literal/direct evidence outranks standalone-recall-only hits, which outrank
+ * true none. No-ops when neither candidate has standalone-recall evidence.
+ */
+function standaloneRecallBandConstraint(a: FeaturedHit, b: FeaturedHit) {
+  if (!a.features.standaloneRecallMatch && !b.features.standaloneRecallMatch) return 0;
+  const aBand = standaloneRecallBand(a.features);
+  const bBand = standaloneRecallBand(b.features);
+  if (aBand === bBand) return 0;
+  return aBand > bBand ? -1 : 1;
+}
+
 export const DEFAULT_CONSTRAINTS: ConstraintDef[] = [
   { id: "exact-title-over-non-exact", invariant: "H1", class: "absolute", fn: exactTitleConstraint },
   { id: "direct-over-related", invariant: "H1", class: "absolute", fn: directOverRelatedConstraint },
+  { id: "literal-over-standalone-recall", invariant: "H8", class: "strong", fn: standaloneRecallBandConstraint },
   { id: "canonical-key-expansion-over-key-only", invariant: "H2", class: "strong", fn: canonicalKeyConstraint },
   { id: "repeated-phrase-over-weak-direct", invariant: "H8", class: "strong", fn: repeatedPhraseOverWeakDirectConstraint },
   { id: "contextual-title-prefix-over-unaligned", invariant: "H8", class: "absolute", fn: contextualTitlePrefixConstraint },
@@ -311,6 +350,7 @@ export const HYBRID_CONSTRAINTS: ConstraintDef[] = [
   { id: "exact-title-over-non-exact", invariant: "H1", class: "absolute", fn: exactTitleConstraint },
   { id: "strong-moderate-direct-over-related", invariant: "H1", class: "absolute", fn: hybridDirectOverRelatedConstraint },
   { id: "related-over-weak-direct", invariant: "H1", class: "strong", fn: relatedOverWeakDirectConstraint },
+  { id: "literal-over-standalone-recall", invariant: "H8", class: "strong", fn: standaloneRecallBandConstraint },
   { id: "canonical-key-expansion-over-key-only", invariant: "H2", class: "strong", fn: canonicalKeyConstraint },
   { id: "repeated-phrase-over-weak-direct", invariant: "H8", class: "strong", fn: repeatedPhraseOverWeakDirectConstraint },
   { id: "contextual-title-prefix-over-unaligned", invariant: "H8", class: "absolute", fn: contextualTitlePrefixConstraint },

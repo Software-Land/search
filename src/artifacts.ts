@@ -7,6 +7,7 @@
  */
 
 import { ArtifactVersionError, ArtifactValidationError } from "./errors.js";
+import { normalizeStandaloneRecall } from "./dictionary.js";
 
 const FORBIDDEN_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 
@@ -98,6 +99,7 @@ export function parseEquivalences(obj?: unknown) {
           provenance?: unknown;
           confidence?: unknown;
           primary?: unknown;
+          standaloneRecall?: unknown;
         };
         return {
         key: String(row.key).toLowerCase(),
@@ -107,6 +109,7 @@ export function parseEquivalences(obj?: unknown) {
         provenance: row.provenance || null,
         confidence: row.confidence == null ? null : Number(row.confidence),
         primary: row.primary ?? null,
+        standaloneRecall: normalizeStandaloneRecall(row.standaloneRecall),
       };
       }),
   };

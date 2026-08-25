@@ -83,6 +83,7 @@ export function scoreFeatures(f: Partial<FeatureVector>) {
     boolNum(f.dottedSpanComponentTitleMatch) * 0.9 +
     (f.phraseAdjacency || 0) * 0.8 +
     (f.bodyLexicalMatch || 0) * 0.25 +
+    (Number(f.standaloneRecallScore) || 0) +
     (f.relationshipStrength || 0) * 0.45 +
     (f.retrievalScore || 0)
   );

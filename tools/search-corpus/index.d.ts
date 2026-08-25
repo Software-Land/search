@@ -54,6 +54,7 @@ export declare function normalizeExternalEquivalences(
     expansion: string[];
     aliases: string[][];
     primary: string | null;
+    standaloneRecall?: string[];
     evidenceDocumentIds: string[];
     ambiguous: boolean;
     alternatives: Array<{ expansion: string[]; note?: string }>;

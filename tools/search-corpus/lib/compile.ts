@@ -21,6 +21,19 @@ import type {
   SynonymCandidate,
 } from "../types.js";
 
+function standaloneRecallOf(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const item of raw) {
+    const token = String(item ?? "").toLowerCase().trim();
+    if (!token || /\s/.test(token) || seen.has(token)) continue;
+    seen.add(token);
+    out.push(token);
+  }
+  return out;
+}
+
 function reviewerExamples(provenance: EvidenceHit[] | undefined): EvidenceHit[] {
   return (provenance || []).slice(0, 3);
 }
@@ -72,6 +85,7 @@ export function compileEquivalences(candidates: EquivalenceCandidate[]): Equival
     expansion: c.expansion || [],
     aliases: c.aliases || [],
     primary: c.primary ?? null,
+    standaloneRecall: standaloneRecallOf((c as { standaloneRecall?: unknown }).standaloneRecall),
     type: "equivalence",
     provenance:
       c.flags?.includes("verified-enrichment")
@@ -176,12 +190,13 @@ export function compileInspection(lifecycleResult: LifecycleResult, { delta = nu
 export function dictionaryEntriesFromEquivalences(artifact?: unknown): unknown[] {
   const rec = artifact as { entries?: unknown[] } | null | undefined;
   return (rec?.entries || []).map((e) => {
-    const row = e as { key?: unknown; expansion?: unknown; aliases?: unknown; provenance?: unknown; primary?: unknown };
+    const row = e as { key?: unknown; expansion?: unknown; aliases?: unknown; provenance?: unknown; primary?: unknown; standaloneRecall?: unknown };
     return {
       key: row.key,
       expansion: row.expansion,
       aliases: row.aliases || [],
       primary: row.primary ?? null,
+      standaloneRecall: standaloneRecallOf(row.standaloneRecall),
       provenance: row.provenance,
     };
   });

@@ -205,6 +205,9 @@ function serializeHit(c: RankedHit, query: AnalyzedQuery, explain?: boolean): Se
         prefixCompletion: query.prefixCompletion ?? null,
         contextualCompletion: query.contextualCompletion ?? null,
         configuredSequenceIntent: query.configuredSequenceIntent ?? null,
+        standaloneRecall: query.standaloneRecall
+          ? { key: query.standaloneRecall.key, sourceToken: query.standaloneRecall.sourceToken }
+          : null,
         lexicalTokens: query.lexicalTokens,
         lexicalPhraseKey: query.lexicalPhraseKey,
         normalizedQueryPhrase: f.normalizedQueryPhrase ?? "",

@@ -15,6 +15,7 @@ export type ExternalEquivalenceRow = {
   expansion: string[];
   aliases: string[][];
   primary: string | null;
+  standaloneRecall: string[];
   evidenceDocumentIds: string[];
   ambiguous: boolean;
   alternatives: Array<{ expansion: string[]; note?: string }>;
@@ -278,6 +279,7 @@ function cloneRow(row: ExternalEquivalenceRow): ExternalEquivalenceRow {
     ...row,
     expansion: [...row.expansion],
     aliases: row.aliases.map((a) => [...a]),
+    standaloneRecall: [...(row.standaloneRecall || [])],
     evidenceDocumentIds: [...row.evidenceDocumentIds],
     alternatives: row.alternatives.map((alt) => ({
       expansion: [...alt.expansion],
@@ -292,6 +294,7 @@ function mergeRows(into: ExternalEquivalenceRow, extra: ExternalEquivalenceRow):
   into.alternatives = mergeAlternatives(into.alternatives, extra.alternatives);
   if (into.primary == null && extra.primary) into.primary = extra.primary;
   else if (into.primary && extra.primary && into.primary !== extra.primary) into.primary = null;
+  into.standaloneRecall = [...new Set([...(into.standaloneRecall || []), ...(extra.standaloneRecall || [])])];
   into.ambiguous = into.ambiguous || extra.ambiguous;
 }
 
@@ -414,6 +417,13 @@ export function normalizeExternalEquivalences(
       const aliases = asAliases(rec.aliases);
       const primary =
         rec.primary == null || rec.primary === "" ? null : String(rec.primary).toLowerCase().trim() || null;
+      const standaloneRecall = Array.isArray(rec.standaloneRecall)
+        ? [...new Set(
+            rec.standaloneRecall
+              .map((token) => String(token || "").toLowerCase().trim())
+              .filter((token) => token && !/\s/.test(token))
+          )]
+        : [];
       const evidenceDocumentIds = asEvidenceIds(rec.evidenceDocumentIds);
       if (rec.ambiguous != null && typeof rec.ambiguous !== "boolean") {
         throw new ExternalEquivalenceError("ambiguous must be boolean");
@@ -423,6 +433,7 @@ export function normalizeExternalEquivalences(
         expansion,
         aliases,
         primary,
+        standaloneRecall,
         evidenceDocumentIds,
         ambiguous: rec.ambiguous === true,
         alternatives: asAlternatives(rec.alternatives),

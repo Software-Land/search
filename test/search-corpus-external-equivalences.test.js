@@ -29,6 +29,7 @@ describe("normalizeExternalEquivalences", () => {
     expect(result.entries[0].expansion).toEqual(["application", "programming", "interface"]);
     expect(result.entries[0].aliases).toEqual([["app", "programming", "interface"]]);
     expect(result.entries[0].primary).toBe("interface");
+    expect(result.entries[0].standaloneRecall).toEqual([]);
     expect(result.entries[1].expansion).toEqual(["machine", "learning"]);
     expect(result.entries[1].evidenceDocumentIds).toEqual(["a", "b"]);
     expect(result.entries[1].provenance).toBe("application-generated");
@@ -372,6 +373,18 @@ describe("normalizeExternalEquivalences spelling and abbreviation compatibility"
     expect(result.reconciliations[0]).toMatchObject({ key: "techdebt", kind: "compatible", eligible: true });
   });
 
+  test("standaloneRecall round-trips unique tokens and rejects malformed values", () => {
+    const result = normalizeExternalEquivalences([
+      {
+        key: "http",
+        expansion: "hypertext transfer protocol",
+        standaloneRecall: ["Hypertext", "hypertext", "", "hypertext transfer"],
+      },
+    ]);
+    expect(result.entries).toHaveLength(1);
+    expect(result.entries[0].standaloneRecall).toEqual(["hypertext"]);
+  });
+
   test("public input is {key, expansion, aliases, primary}; expansions[] is not a substitute", () => {
     expect(() =>
       normalizeExternalEquivalences([{ key: "cd", expansions: [["continuous", "delivery"]] }])
@@ -386,6 +399,7 @@ describe("normalizeExternalEquivalences spelling and abbreviation compatibility"
       aliases: [],
       primary: null,
     });
+    expect(ok.entries[0].standaloneRecall).toEqual([]);
     expect(ok.entries[0].expansions).toBeUndefined();
   });
 });

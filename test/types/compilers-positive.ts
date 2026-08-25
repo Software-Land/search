@@ -112,6 +112,7 @@ const normalized = normalizeExternalEquivalences([
     expansion: "Application Programming Interface",
     aliases: [["app", "programming", "interface"]],
     primary: "interface",
+    standaloneRecall: ["hypertext"],
     evidenceDocumentIds: ["doc-1"],
     provenance: "application-generated",
   },

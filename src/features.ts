@@ -1,6 +1,7 @@
 import { isNearCompletePrefix, levenshteinAtMost, DEFAULT_STOP, allowPrefixMatch } from "./text.js";
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "./versionForms.js";
-import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, identityTokens, evidenceTokens } from "./retrieve.js";
+import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall } from "./retrieve.js";
+import { scoreFeatures } from "./rank.js";
 import { saturatingFrequency } from "./saturatingFrequency.js";
 import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "./lexicalNormalize.js";
 import {
@@ -555,6 +556,65 @@ function contextualFeatureFields(contextual: ContextualTitlePrefix | null) {
   };
 }
 
+function shadowStandaloneQuery(query: AnalyzedQuery): AnalyzedQuery | null {
+  const hint = query.standaloneRecall;
+  if (!hint?.key) return null;
+  const keyTok: QueryToken = {
+    surface: hint.key,
+    surfaceNormalized: hint.key,
+    normalized: hint.key,
+    lemma: hint.key,
+    sources: [],
+  };
+  const expansionToks: QueryToken[] = (hint.expansion || []).map((token) => ({
+    surface: token,
+    surfaceNormalized: token,
+    normalized: token,
+    lemma: token,
+    sources: [],
+  }));
+  const lexicalTokens = expansionToks.length ? expansionToks : [keyTok];
+  const lexicalPhraseTokens = lexicalTokens.map((token) => token.lemma || token.normalized);
+  const concept = standaloneRecallConcept(query);
+  return {
+    ...query,
+    tokens: [keyTok],
+    concepts: concept ? [concept] : [],
+    alternatives: [],
+    prefixCompletion: null,
+    contextualCompletion: null,
+    configuredSequenceIntent: {
+      key: hint.key,
+      expansion: [...(hint.expansion || [])],
+      matchedKinds: ["key"],
+    },
+    standaloneRecall: null,
+    lexicalTokens,
+    lexicalPhraseTokens,
+    lexicalPhraseKey: lexicalPhraseTokens.join(" "),
+    stopstripped: [keyTok],
+  };
+}
+
+function withStandaloneRecallFields(
+  query: AnalyzedQuery,
+  doc: IndexedDocument,
+  fields: ReturnType<typeof computeFeatureFields>
+) {
+  if (!query.standaloneRecall?.key) return fields;
+  const match = documentMatchesStandaloneRecall(query, doc);
+  let standaloneRecallScore = 0;
+  if (match) {
+    const shadow = shadowStandaloneQuery(query);
+    if (shadow) standaloneRecallScore = scoreFeatures(extractFeatures(shadow, doc));
+  }
+  return {
+    ...fields,
+    standaloneRecallMatch: match,
+    standaloneRecallScore,
+  };
+}
+
 function finishFeatures(
   relationship: RelationshipInfo | null,
   retrievalScore: number,
@@ -613,7 +673,11 @@ export function extractFeatures(
   { relationship = null, retrievalScore = 0 }: { relationship?: RelationshipInfo | null; retrievalScore?: number } = {}
 ): FeatureVector {
   if (!featureProfile) {
-    return finishFeatures(relationship, retrievalScore, computeFeatureFields(query, doc));
+    return finishFeatures(
+      relationship,
+      retrievalScore,
+      withStandaloneRecallFields(query, doc, computeFeatureFields(query, doc))
+    );
   }
   timeFeat("queryPrep", () => getQueryFeatPrep(query));
   const vHit = timeFeat("versionHit", () => versionHit(query, doc));
@@ -621,7 +685,10 @@ export function extractFeatures(
   const contextual = timeFeat("contextualTitlePrefix", () =>
     hasConfiguredSequenceIntent(query) ? null : matchContextualTitlePrefix(query, doc)
   );
-  return finishFeatures(relationship, retrievalScore, {
+  return finishFeatures(
+    relationship,
+    retrievalScore,
+    withStandaloneRecallFields(query, doc, {
     exactTitleMatch: timeFeat("exactTitleMatch", () => exactTitle(query, doc)),
     exactTitleTokenMatch: timeFeat("exactTitleTokenMatch", () => exactTitleTokenMatch(query, doc)),
     typedSurfaceTitleMatch: timeFeat("typedSurfaceTitleMatch", () => typedSurfaceTitleMatch(query, doc)),
@@ -645,7 +712,8 @@ export function extractFeatures(
     matchingPhraseKey: phrase.matchingPhraseKey,
     bodyPhraseCount: phrase.bodyPhraseCount,
     bodyPhraseFrequency: phrase.bodyPhraseFrequency,
-  });
+    })
+  );
 }
 
 /**

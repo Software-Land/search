@@ -26,6 +26,7 @@ import type {
   QueryConcept,
   QueryToken,
   SearchPlugin,
+  StandaloneRecall,
   TypoSuggestion,
 } from "./types.js";
 
@@ -54,6 +55,43 @@ function pluginCanonicalLemma(plugins: SearchPlugin[], token: string) {
 
 function dictionaryPlugin(plugins: SearchPlugin[]) {
   return plugins.find((p) => p && p.sequences) || null;
+}
+
+const STANDALONE_RECALL_BLOCKED_SOURCES = new Set([
+  "typo-correction",
+  "leet-decode",
+  "repeat-collapse",
+  "final-token-prefix",
+  "contextual-completion",
+]);
+
+function resolveStandaloneRecall(
+  tokens: QueryToken[],
+  prefixCompletion: PrefixCompletion | null | undefined,
+  configuredSequenceIntent: ConfiguredSequenceIntent | null,
+  concepts: QueryConcept[],
+  dict: SearchPlugin | null
+): StandaloneRecall | null {
+  if (!dict || tokens.length !== 1) return null;
+  if (configuredSequenceIntent?.key) return null;
+  if (concepts.some((c) => c.kind === "acronym")) return null;
+  if (prefixCompletion) return null;
+  const tok = tokens[0];
+  if (tok.completedToken) return null;
+  if ((tok.sources || []).some((source) => STANDALONE_RECALL_BLOCKED_SOURCES.has(source))) return null;
+  const typed = String(tok.surfaceNormalized || tok.surface || "").toLowerCase();
+  if (!typed || typed !== tok.normalized) return null;
+  const key = dict.standaloneRecallByToken?.get(typed);
+  if (!key) return null;
+  const entry = dict.byKey?.get(key);
+  if (!entry || entry.key !== key) return null;
+  return {
+    key: entry.key,
+    sourceToken: typed,
+    expansion: [...(entry.expansion || [])],
+    aliases: (entry.aliases || []).map((alias) => [...alias]),
+    forms: formsForEntry(entry),
+  };
 }
 
 function synonymPlugin(plugins: SearchPlugin[]) {
@@ -921,6 +959,13 @@ export function analyzeQuery(
       ? contextual.tokens
       : analyzedTokens;
   const lexicalPhraseTokens = canonicalLexicalTokensFromQuery(lexicalTokens);
+  const standaloneRecall = resolveStandaloneRecall(
+    analyzedTokens,
+    prefixCompletion,
+    configuredSequenceIntent,
+    concepts,
+    dict
+  );
 
   return {
     raw,
@@ -932,6 +977,7 @@ export function analyzeQuery(
     prefixCompletion,
     contextualCompletion: contextual?.meta ?? null,
     configuredSequenceIntent,
+    standaloneRecall,
     lexicalTokens,
     lexicalPhraseTokens,
     lexicalPhraseKey: lexicalPhraseTokens.join(" "),
