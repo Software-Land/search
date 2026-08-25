@@ -4,6 +4,7 @@ import {
   levenshtein,
   DEFAULT_STOP,
   allowPrefixMatch,
+  spokenSignificantSymbolTokens,
 } from "./text.js";
 import { isAllDigitToken, extractDottedSpans } from "./versionForms.js";
 import { throwIfAborted } from "./cancel.js";
@@ -1185,6 +1186,20 @@ export function analyzeQuery(
         if (alt.form) forms.add(alt.form);
         provenance = provenance === "surface" ? "synonym" : provenance;
       }
+    }
+    let spoken: string[] | null = null;
+    for (const candidate of [tok.surface, tok.surfaceNormalized, tok.normalized]) {
+      spoken = spokenSignificantSymbolTokens(candidate);
+      if (spoken) break;
+    }
+    if (spoken) {
+      forms.add(spoken.join(" "));
+      if (!tok.sources.includes("significant-symbol")) tok.sources.push("significant-symbol");
+      alternatives.push({
+        tokens: spoken,
+        source: "significant-symbol",
+        confidence: 1,
+      });
     }
     concepts.push({
       id: tok.lemma || tok.normalized,

@@ -52,6 +52,59 @@ export function tokenize(text?: unknown): string[] {
   return tokenizeWithRanges(text).map((t) => t.token);
 }
 
+/**
+ * Foldable punctuation joins alphanumeric groups (CI/CD). Leftover after
+ * speaking significant compact-form symbols is unsafe (`O(1)` parentheses).
+ */
+export const FOLDABLE_EXPANSION_PUNCTUATION = /[\/._\s:\-;,!?'"`‘’]+/g;
+
+/**
+ * Spoken words for significant compact-form symbols.
+ * Generic operator names only — not a per-acronym table.
+ * `+` → plus, `#` → sharp, `*` → star.
+ */
+export function speakSignificantSymbols(raw: string): string {
+  return String(raw || "")
+    .replace(/\+/g, " plus ")
+    .replace(/#/g, " sharp ")
+    .replace(/\*/g, " star ");
+}
+
+export function leftoverAfterFoldable(
+  surface: string,
+  foldable: RegExp = FOLDABLE_EXPANSION_PUNCTUATION
+): string {
+  return String(surface || "")
+    .replace(/[A-Za-z0-9]+/g, "")
+    .replace(foldable, "");
+}
+
+export function hasUnsafeSymbolicSurface(surface?: unknown): boolean {
+  const raw = String(surface || "").trim();
+  if (!raw) return false;
+  return leftoverAfterFoldable(speakSignificantSymbols(raw)).length > 0;
+}
+
+/**
+ * Spoken lexical tokens for a compact significant-symbol token.
+ * Returns null when the token is not a safe significant-symbol compact form
+ * or speaking does not yield a multi-token alternative.
+ * Query tokenize currently preserves `*` inside tokens; `+` / `#` are stripped
+ * to spaces, so those maps apply when a compact token still contains them.
+ */
+export function spokenSignificantSymbolTokens(token?: unknown): string[] | null {
+  const raw = String(token || "").trim();
+  if (!raw) return null;
+  if (!/[+*#]/.test(raw)) return null;
+  if (!/[A-Za-z0-9]/.test(raw)) return null;
+  if (/[^A-Za-z0-9+*#]/.test(raw)) return null;
+  if (hasUnsafeSymbolicSurface(raw)) return null;
+  const spoken = tokenize(speakSignificantSymbols(raw));
+  if (spoken.length < 2) return null;
+  if (spoken.join(" ") === raw.toLowerCase()) return null;
+  return spoken;
+}
+
 export function normalizeSurface(text?: unknown): string {
   return tokenize(text).join(" ");
 }

@@ -12,7 +12,12 @@
 
 import { parseSynonyms } from "./artifacts.js";
 import { InvalidConfigurationError } from "./errors.js";
-import { tokenize } from "./text.js";
+import {
+  tokenize,
+  leftoverAfterFoldable,
+  hasUnsafeSymbolicSurface,
+  FOLDABLE_EXPANSION_PUNCTUATION,
+} from "./text.js";
 
 type SynonymEntry = ReturnType<typeof parseSynonyms>["entries"][number];
 
@@ -63,21 +68,6 @@ export type SearchEquivalenceMap = Record<string, string[]>;
 export const MAX_SEARCH_EQUIVALENCE_TARGETS = 8;
 
 const FORBIDDEN_KEYS = new Set(["__proto__", "prototype", "constructor"]);
-const FOLDABLE_EXPANSION_PUNCTUATION = /[\/._\s:\-;,!?'"`‘’]+/g;
-
-function speakSignificantSymbols(raw: string): string {
-  return raw.replace(/\+/g, " plus ").replace(/#/g, " sharp ").replace(/\*/g, " star ");
-}
-
-function leftoverAfterFoldable(surface: string, foldable: RegExp): string {
-  return surface.replace(/[A-Za-z0-9]+/g, "").replace(foldable, "");
-}
-
-function hasUnsafeSymbolicSurface(surface: string): boolean {
-  const raw = String(surface || "").trim();
-  if (!raw) return false;
-  return leftoverAfterFoldable(speakSignificantSymbols(raw), FOLDABLE_EXPANSION_PUNCTUATION).length > 0;
-}
 
 function lostSignificantSymbols(raw: string, tokens: string[]): boolean {
   const leftover = leftoverAfterFoldable(raw, FOLDABLE_EXPANSION_PUNCTUATION);
