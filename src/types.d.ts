@@ -172,9 +172,10 @@ export interface ConfiguredSpan {
 }
 
 /**
- * Incomplete configured subspan aligned with sequenceAligns prefix rules.
- * Occupies configured/acronym evidence only. Not exact configuredSpans,
- * not whole-query configuredSequenceIntent, and not topical recall.
+ * Incomplete configured subspan aligned with sequenceAligns prefix rules,
+ * plus unique 1-token first-expansion prefixes. Occupies configured/acronym
+ * evidence only. Not exact configuredSpans, not whole-query
+ * configuredSequenceIntent, and not topical recall.
  */
 export interface ConfiguredPrefixSpan {
   key: string;

@@ -18,6 +18,7 @@ import {
   resolveConfiguredPrefixSpans,
   resolveConfiguredSequence,
   resolveConfiguredSpans,
+  tokenAlignsConfiguredKey,
 } from "./configuredSequence.js";
 import type {
   AnalyzedQuery,
@@ -134,6 +135,8 @@ function uniqueStopRemainderSpanKey(
  * Occupy one unique incomplete configured window. Remainder tokens must
  * already be DEFAULT_STOP. Does not set configuredSequenceIntent or topical
  * recall. Exact spans and whole-query intent keep their existing paths.
+ * One-token first-expansion prefixes may occupy when the longest expansion
+ * is unique.
  */
 function attachConfiguredPrefixSpanConcept(
   concepts: QueryConcept[],
@@ -695,7 +698,7 @@ function matchDictionarySequences(tokens: QueryToken[], dict: SearchPlugin | nul
         // Exact keys may match anywhere. Incomplete key prefixes are applied
         // later, and only to the unused final active token.
         if (seq.kind === "key") {
-          if (tok === want) continue;
+          if (tokenAlignsConfiguredKey(tokens[i + j], want, dict)) continue;
           ok = false;
           break;
         }

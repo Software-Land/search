@@ -111,10 +111,33 @@ describe("configured prefix span resolver", () => {
     ]);
   });
 
-  test("one-token prefixes never become prefix spans", () => {
+  test("unsafe short one-token prefixes never become prefix spans", () => {
     for (const raw of ["what is c", "what is a c", "what is dev", "c", "dev", "what is an ap"]) {
       const q = analyzeQuery(raw, { plugins: plugins() });
       expect(resolveConfiguredPrefixSpans(q.tokens, plugins()[1])).toEqual([]);
+    }
+  });
+
+  test("unique longest first-expansion prefix occupies the longer configured entry", () => {
+    for (const raw of ["appl", "appli", "applic", "applica", "what is an appl", "what is an applica"]) {
+      const q = analyzeQuery(raw, { plugins: plugins() });
+      const spans = resolveConfiguredPrefixSpans(q.tokens, plugins()[1]);
+      if (raw.split(/\s+/).length === 1) {
+        expect(resolveConfiguredSequence(q.tokens, plugins()[1])).toMatchObject({
+          status: "unique",
+          intent: { key: "api" },
+        });
+        expect(q.configuredSequenceIntent?.key).toBe("api");
+        expect(q.configuredPrefixSpans).toEqual([]);
+      } else {
+        expect(q.configuredSequenceIntent).toBeNull();
+        expect(spans).toEqual([
+          expect.objectContaining({ key: "api", usedPrefix: true }),
+        ]);
+        expect(q.configuredPrefixSpans).toEqual(spans);
+      }
+      expect(q.topicalRecall ?? null).toBeNull();
+      expect(q.tokens.map((t) => t.surface)).toEqual(raw.split(/\s+/));
     }
   });
 
