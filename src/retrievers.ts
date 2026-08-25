@@ -22,6 +22,7 @@ import {
   evidenceTokens,
   standaloneRecallHint,
   topicalRecallHint,
+  shortTitleTokenPrefixStub,
 } from "./retrieve.js";
 import { allowPrefixMatch } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
@@ -111,6 +112,17 @@ function lowerBoundTerm(terms: string[], key: string) {
     else hi = mid;
   }
   return lo;
+}
+
+function eachTitlePrefixTerm(sortedTerms: string[], stub: string, onTerm: (term: string) => void) {
+  if (!stub) return;
+  let i = lowerBoundTerm(sortedTerms, stub);
+  while (i < sortedTerms.length) {
+    const term = sortedTerms[i++];
+    if (!term.startsWith(stub)) break;
+    if (term === stub || isAllDigitToken(term)) continue;
+    onTerm(term);
+  }
 }
 
 function queryForms(query: AnalyzedQuery) {
@@ -380,6 +392,14 @@ export function createIndexedLexicalRetriever({
           if (bp) accumulatePosting(byPos, bp, "indexed-lexical", 0.4, state.avgBodyDl, state.bodyDl, { signal, n });
         }
       }
+    }
+
+    const shortStub = shortTitleTokenPrefixStub(query);
+    if (shortStub) {
+      eachTitlePrefixTerm(state.sortedTerms, shortStub, (term) => {
+        const tp = state.titlePostings.get(term);
+        if (tp) accumulatePosting(byPos, tp, "title-token-prefix", titleBoost * 0.5, state.avgTitleDl, state.titleDl, { signal, n });
+      });
     }
 
     for (const tok of query.tokens || []) {
@@ -718,6 +738,13 @@ export function createCompiledLexicalRetriever(): Retriever {
           }
         }
       }
+    }
+
+    const shortStub = shortTitleTokenPrefixStub(query);
+    if (shortStub) {
+      eachTitlePrefixTerm(compiled.sortedTerms, shortStub, (term) => {
+        accumulateSurface(compiled.bySurface.get(term), "title", "title-token-prefix", TITLE_BOOST * 0.5);
+      });
     }
 
     for (const token of query.tokens || []) {

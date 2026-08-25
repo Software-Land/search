@@ -7,7 +7,7 @@
  * every posting entry.
  */
 import { queryForms } from "./retrievers.js";
-import { retrievalSourcesForDocument, identityTokens } from "./retrieve.js";
+import { retrievalSourcesForDocument, identityTokens, shortTitleTokenPrefixStub } from "./retrieve.js";
 import { allowPrefixMatch } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
 import type { CompiledLexicalRuntime, CompiledTermRuntime } from "./lexicalIndex.js";
@@ -293,6 +293,18 @@ export function auditCompiledPostingWork(
           accumulate(row, "body", form, kind, "prefix", true);
         }
       }
+    }
+  }
+
+  const shortStub = shortTitleTokenPrefixStub(query);
+  if (shortStub) {
+    let i = lowerBound(compiled.sortedTerms, shortStub);
+    while (i < compiled.sortedTerms.length) {
+      const term = compiled.sortedTerms[i++];
+      if (!term.startsWith(shortStub)) break;
+      if (term === shortStub || isAllDigitToken(term)) continue;
+      prefixTermsExpanded += 1;
+      accumulate(compiled.bySurface.get(term), "title", shortStub, "token", "prefix", true);
     }
   }
 

@@ -1,4 +1,4 @@
-import { isNearCompletePrefix, allowPrefixMatch } from "./text.js";
+import { isNearCompletePrefix, allowPrefixMatch, DEFAULT_STOP } from "./text.js";
 import {
   isAllDigitToken,
   queryTokenMatchesVersionCompact,
@@ -228,6 +228,35 @@ export function hasConfiguredSequenceIntent(query: AnalyzedQuery) {
   return Boolean(query.configuredSequenceIntent?.key);
 }
 
+/**
+ * Narrow 2-character title-token prefix admission.
+ * Activates only when the final typed token has normalized length 2 and every
+ * other typed token is already in DEFAULT_STOP. Query identity is unchanged;
+ * this is candidate evidence only. Digits stay closed.
+ */
+export function shortTitleTokenPrefixStub(query: AnalyzedQuery): string | null {
+  const tokens = query.tokens || [];
+  if (!tokens.length) return null;
+  const stub = String(tokens[tokens.length - 1]?.normalized || "");
+  if (stub.length !== 2 || isAllDigitToken(stub)) return null;
+  for (let i = 0; i < tokens.length - 1; i++) {
+    if (!DEFAULT_STOP.has(String(tokens[i]?.normalized || ""))) return null;
+  }
+  return stub;
+}
+
+export function documentHasShortTitleTokenPrefix(query: AnalyzedQuery, doc: IndexedDocument): boolean {
+  const stub = shortTitleTokenPrefixStub(query);
+  if (!stub) return false;
+  const store = asCompactStore(doc);
+  if (store) {
+    return compactTitleHasPrefixForm(store, compactOrdinal(doc), stub, (form, tok) =>
+      Boolean(tok) && tok.startsWith(form) && !isAllDigitToken(tok)
+    );
+  }
+  return (doc.titleTokens || []).some((tok) => tok.startsWith(stub) && !isAllDigitToken(tok));
+}
+
 export function standaloneRecallHint(query: AnalyzedQuery | null | undefined): StandaloneRecall | null {
   const hint = query?.standaloneRecall;
   if (!hint?.key || !hint.sourceToken) return null;
@@ -434,7 +463,8 @@ function scanDocument(
   if (
     doc.titleTokens.some((tok) =>
       unbound.some((t) => allowPrefixMatch(t.normalized, tok))
-    )
+    ) ||
+    documentHasShortTitleTokenPrefix(query, doc)
   ) {
     add(doc, "title-token-prefix");
   }

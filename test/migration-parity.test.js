@@ -254,6 +254,7 @@ describe("0.2.0 migration parity", () => {
 
     expect(ids(engine.search("what is an ap", { limit: 5 }))).toEqual([
       "api",
+      "appsec",
       "clean",
       "code",
       "container",
@@ -270,6 +271,7 @@ describe("0.2.0 migration parity", () => {
       "api",
       "clean",
       "code",
+      "edge",
     ]);
     expect(ids(engine.search("appsecurity"))).toEqual(["appsec"]);
     expect(ids(engine.search("machine learning", { limit: 5 }))).toEqual(["ml", "learn"]);
