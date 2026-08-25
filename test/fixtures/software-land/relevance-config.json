@@ -1,6 +1,6 @@
 {
   "description": "Software.Land live V2 SearchEngine inputs for the historical relevance suite. Not Core default ranking policy.",
-  "softwareLandCommit": "4845a9f171af23f8c713924046efecf35d4c6ab3",
+  "softwareLandCommit": "db5a070dbc6ac112dfae403f38fdfd0fffbedbf6",
   "searchPackageVersion": "0.5.0",
   "omitDictionaryKeys": [
     "testing"

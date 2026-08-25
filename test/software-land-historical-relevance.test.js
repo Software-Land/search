@@ -170,7 +170,7 @@ describe("Software.Land historical relevance contracts", () => {
   });
 
   test("fixture models current Software.Land 0.5 curated synonym and AppSec topical configuration", () => {
-    expect(relevanceConfig.softwareLandCommit).toBe("4845a9f171af23f8c713924046efecf35d4c6ab3");
+    expect(relevanceConfig.softwareLandCommit).toBe("db5a070dbc6ac112dfae403f38fdfd0fffbedbf6");
     expect(relevanceConfig.synonymMapKind).toBe("explicit-directional-curated-plus-generated");
     expect(omitKeys.has("testing")).toBe(true);
     expect(dictionaryEntries.some((entry) => entry.key === "testing")).toBe(false);
@@ -185,12 +185,13 @@ describe("Software.Land historical relevance contracts", () => {
       ["application", "sec"],
     ]);
     expect(appsec.topicalRecall).toEqual(APPSEC_TOPICAL);
-    expect(synonymFixture.softwareLandCommit).toBe("4845a9f171af23f8c713924046efecf35d4c6ab3");
-    expect(synonymFixture.stats).toEqual({ sources: 233, edges: 260, jsonBytes: 8186 });
+    expect(synonymFixture.softwareLandCommit).toBe("db5a070dbc6ac112dfae403f38fdfd0fffbedbf6");
+    expect(synonymFixture.stats).toEqual({ sources: 119, edges: 146, jsonBytes: 3081 });
     expect(synonymFixture.map.qa).toEqual(["testing"]);
     expect(synonymFixture.map.testing).toBeUndefined();
     expect(synonymFixture.map.appsec).toEqual(["oath"]);
-    expect(synonymFixture.map["tech debt"]).toEqual(["technical debt"]);
+    expect(synonymFixture.map["i o"]).toEqual(["io"]);
+    expect(synonymFixture.map["tech debt"]).toBeUndefined();
     expect(synonymFixture.map["ai assisted coding"]).toBeUndefined();
     expect(synonymFixture.map.vpn).toEqual(["tls"]);
     expect(synonymFixture.map.tls).toEqual(["ssl"]);

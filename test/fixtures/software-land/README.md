@@ -29,7 +29,7 @@ They must never become Core defaults.
 | Strict V2 contracts | 98 (`v2-contracts.json`) |
 | B-intent regressions | 60 (`regression-scenarios.json`, compatibility coverage, not Core policy) |
 | Historical inventory | 215 rows (`historical-scenarios.json`); 214 executable relevance contracts |
-| Historical relevance config | `relevance-config.json` + `synonym-map.json` (Software.Land `4845a9f171af23f8c713924046efecf35d4c6ab3`) |
+| Historical relevance config | `relevance-config.json` + `synonym-map.json` (Software.Land `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6`) |
 | Omitted empty-intent rows | 44 (not mined into V2 intent/regression; still in historical relevance) |
 | Omitted V1-only source rows | 126 (B + A without intent; some re-enter as regressions; still in historical relevance when `expectedTop` exists) |
 | Omitted browser/UI-only | 1 (`zzz-no-hit` no-results copy) |
@@ -48,9 +48,9 @@ exact order). Classification C is omitted. That suite is not the exact-output
 oracle and not Core default ranking policy. The relevance engine loads the live curated-plus-generated synonym map from
 `synonym-map.json`, omits the `testing` dictionary key, and patches
 AppSec aliases/`topicalRecall` from `relevance-config.json`. The synonym map
-matches Software.Land commit `4845a9f171af23f8c713924046efecf35d4c6ab3`
-(`LIVE_SEARCH_EQUIVALENCE_MAP`: curated `SYNONYM_MAP` plus validated generated
-additions; curated wins; no auto-reverse). AppSec `topicalRecall` still matches
+matches Software.Land commit `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6`
+(`LIVE_SEARCH_EQUIVALENCE_MAP`: curated `SYNONYM_MAP` plus four generated
+additions with isolated incremental value; curated wins; no auto-reverse). AppSec `topicalRecall` still matches
 Software.Land commit `eac7a90a15d772f0f0626a0fa9481eb9efa55521`.
 Corpus artifacts and the exact-output `dictionary.json` snapshot are unchanged. Empty-intent rows
 are not mined into V2 intent/regression cases; they still participate in
@@ -71,7 +71,7 @@ and `tests/search-v2-contracts.js` from the committed scenario SHA.
 - `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy
 - `historical-scenarios.json` — full 215-row inventory; `v1.expectedTop`/`titlePrefix`/`topN` are executable historical relevance contracts
 - `relevance-config.json` — Software.Land 0.5 relevance-engine inputs (omit `testing`, patch AppSec topicalRecall, load synonym map)
-- `synonym-map.json` — live Software.Land search-equivalence map from `4845a9f` (curated `SYNONYM_MAP` plus validated generated additions; no reverse materialization)
+- `synonym-map.json` — live Software.Land search-equivalence map from `db5a070` (curated `SYNONYM_MAP` plus four pruned generated additions; no reverse materialization)
 - `scenarios.json` — index, counts, and disposition totals
 - `manifest.json` — format, corpus/scenario source commits, package version, document count, scenario provenance, SHA256s
 
