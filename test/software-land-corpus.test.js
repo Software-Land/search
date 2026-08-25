@@ -192,6 +192,8 @@ describe("software-land corpus fixture", () => {
     expect(manifest.corpusSourceCommit).toBe("dff24cf606967cb50b24d28d9142747c9203e053");
     expect(manifest.scenarioSourceCommit).toBe("08e1b735ae01a3815964360ef3b9141466176dc4");
     expect(manifest.softwareLandCommit).toBeUndefined();
+    expect(manifest.relevanceSoftwareLandCommit).toBe("f72444b530ea44a4d3b9cd430c4db1568a24548c");
+    expect(manifest.historicalRelevanceApplicable).toBe(214);
     expect(manifest.searchPackageVersion).toBe("0.3.1");
     expect(manifest.documentCount).toBe(122);
     expect(documents).toHaveLength(122);
@@ -210,6 +212,8 @@ describe("software-land corpus fixture", () => {
     expect(contracts.cases).toHaveLength(98);
     expect(regressions.cases).toHaveLength(60);
     expect(historical.rows).toHaveLength(215);
+    expect(historical.kind).toBe("historical-relevance-contracts");
+    expect(historical.counts.historicalRelevanceApplicable).toBe(214);
     expect(index.counts.executableContracts).toBe(98);
     expect(index.counts.executableRegressions).toBe(60);
   });
@@ -223,7 +227,7 @@ describe("software-land corpus fixture", () => {
     expect(readme).toContain("08e1b735ae01a3815964360ef3b9141466176dc4");
   });
 
-  test("historical inventory is non-executable provenance with dispositions", () => {
+  test("historical inventory keeps intent-mining dispositions and marks relevance applicability", () => {
     const dispositions = new Set(historical.rows.map((row) => row.disposition));
     expect(dispositions).toEqual(
       new Set([
@@ -255,6 +259,9 @@ describe("software-land corpus fixture", () => {
     }
     const emptyIntent = historical.rows.filter((row) => row.disposition === "omitted-empty-intent-observational-v1");
     expect(emptyIntent.every((row) => row.v1?.expectedTop || row.v1?.titlePrefix)).toBe(true);
+    expect(emptyIntent.every((row) => row.historicalRelevance === true)).toBe(true);
+    expect(historical.rows.filter((row) => row.historicalRelevance)).toHaveLength(214);
+    expect(historical.rows.filter((row) => row.historicalRelevance === false).map((row) => row.query)).toEqual(["sharde"]);
     expect(contracts.cases.every((row) => row.kind === "contract" && !row.v1)).toBe(true);
     expect(regressions.cases.every((row) => row.kind === "regression" && row.classification === "B" && !row.v1)).toBe(true);
   });

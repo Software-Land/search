@@ -1,9 +1,11 @@
 {
-  "kind": "historical-provenance",
+  "kind": "historical-relevance-contracts",
   "notes": [
-    "Full historical scenario inventory. Non-executable.",
-    "disposition explains why a row is a contract, a regression, or omitted.",
-    "v1.expectedTop is provenance only."
+    "Full historical scenario inventory.",
+    "v1.expectedTop / titlePrefix / topN are executable historical relevance contracts (membership within topN, not exact order).",
+    "classification C is omitted from the relevance suite (obsolete).",
+    "All other rows with expectedTop or titlePrefix participate. Failures are not silently excluded.",
+    "disposition describes V2-intent mining into v2-contracts.json / regression-scenarios.json, not relevance-suite inclusion."
   ],
   "counts": {
     "rows": 215,
@@ -14,7 +16,12 @@
     "omitted-duplicate-b-intent": 5,
     "omitted-duplicate-a-intent": 6,
     "omitted-b-intent-not-current-v2": 1,
-    "omitted-obsolete": 1
+    "omitted-obsolete": 1,
+    "historicalRelevanceApplicable": 214,
+    "historicalRelevanceOmittedObsolete": 1,
+    "titlePrefixRows": 1,
+    "expectedTopRows": 213,
+    "distinctQueries": 185
   },
   "rows": [
     {
@@ -41,7 +48,8 @@
           "React Component Libraries"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 1,
@@ -65,7 +73,8 @@
           "React Component Libraries"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 2,
@@ -90,7 +99,8 @@
           "Edge Computing"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 3,
@@ -121,7 +131,8 @@
           "Load vs Stress Testing"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 4,
@@ -139,7 +150,8 @@
       "v1": {
         "titlePrefix": "What",
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 5,
@@ -164,7 +176,8 @@
           "CI/CD"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 6,
@@ -189,7 +202,8 @@
           "Zero-Trust Security"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 7,
@@ -220,7 +234,8 @@
           "TCP vs UDP"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 8,
@@ -244,7 +259,8 @@
           "React Authentication"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 9,
@@ -268,7 +284,8 @@
           "React Authentication"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 10,
@@ -292,7 +309,8 @@
           "Request Response"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 11,
@@ -316,7 +334,8 @@
           "Request Response"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 12,
@@ -336,7 +355,8 @@
           "Maximum Flow Algorithm"
         ],
         "topN": 3
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 13,
@@ -356,7 +376,8 @@
           "Maximum Flow Algorithm"
         ],
         "topN": 3
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 14,
@@ -386,7 +407,8 @@
           "Topological Sort"
         ],
         "topN": 6
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 15,
@@ -412,7 +434,8 @@
           "What is Recursion?"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 16,
@@ -438,7 +461,8 @@
           "What is Recursion?"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 17,
@@ -463,7 +487,8 @@
           "Asynchronous vs Synchronous"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 18,
@@ -488,7 +513,8 @@
           "What is IO?"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 19,
@@ -513,7 +539,8 @@
           "What is IO?"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 20,
@@ -538,7 +565,8 @@
           "What is IoT?"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 21,
@@ -563,7 +591,8 @@
           "What is IoT?"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 22,
@@ -588,7 +617,8 @@
           "What is Code?"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 23,
@@ -613,7 +643,8 @@
           "CI/CD"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 24,
@@ -640,7 +671,8 @@
           "What is VPN?"
         ],
         "topN": 3
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 25,
@@ -667,7 +699,8 @@
           "What is VPN?"
         ],
         "topN": 3
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 26,
@@ -695,7 +728,8 @@
           "Authorization Middleware"
         ],
         "topN": 8
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 27,
@@ -723,7 +757,8 @@
           "Authorization Middleware"
         ],
         "topN": 8
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 28,
@@ -753,7 +788,8 @@
           "Zero-Trust Security"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 29,
@@ -785,7 +821,8 @@
           "Zero-Trust Security"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 30,
@@ -817,7 +854,8 @@
           "Zero-Trust Security"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 31,
@@ -849,7 +887,8 @@
           "Zero-Trust Security"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 32,
@@ -881,7 +920,8 @@
           "Zero-Trust Security"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 33,
@@ -907,7 +947,8 @@
           "Zero-Trust Security"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 34,
@@ -939,7 +980,8 @@
           "Zero-Trust Security"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 35,
@@ -965,7 +1007,8 @@
           "Zero-Trust Security"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 36,
@@ -990,7 +1033,8 @@
           "App Sec"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 37,
@@ -1016,7 +1060,8 @@
           "App Sec"
         ],
         "topN": 3
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 38,
@@ -1042,7 +1087,8 @@
           "App Sec"
         ],
         "topN": 3
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 39,
@@ -1073,7 +1119,8 @@
           "SAML vs OAuth"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 40,
@@ -1094,7 +1141,8 @@
           "Working with APIs"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 41,
@@ -1115,7 +1163,8 @@
           "Working with APIs"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 42,
@@ -1143,7 +1192,8 @@
           "Working with APIs"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 43,
@@ -1164,7 +1214,8 @@
           "Working with APIs"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 44,
@@ -1185,7 +1236,8 @@
           "Working with APIs"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 45,
@@ -1210,7 +1262,8 @@
           "App Sec"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 46,
@@ -1228,7 +1281,8 @@
           "What is an API?"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 47,
@@ -1254,7 +1308,8 @@
           "Zero-Trust Security"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 48,
@@ -1279,7 +1334,8 @@
           "App Sec"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 49,
@@ -1304,7 +1360,8 @@
           "App Sec"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 50,
@@ -1329,7 +1386,8 @@
           "App Sec"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 51,
@@ -1355,7 +1413,8 @@
           "Zero-Trust Security"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 52,
@@ -1385,7 +1444,8 @@
           "SAML vs OAuth"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 53,
@@ -1415,7 +1475,8 @@
           "SAML vs OAuth"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 54,
@@ -1439,7 +1500,8 @@
           "What is OOP (Object-Oriented Programming)?"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 55,
@@ -1464,7 +1526,8 @@
           "What is OOP (Object-Oriented Programming)?"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 56,
@@ -1489,7 +1552,8 @@
           "What is an API?"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 57,
@@ -1514,7 +1578,8 @@
           "Which Programming Language to Start?"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 58,
@@ -1550,7 +1615,8 @@
           "Dynamic Programming Matrix"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 59,
@@ -1581,7 +1647,8 @@
           "Dynamic Programming Matrix"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 60,
@@ -1610,7 +1677,8 @@
           "Class vs Interface"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 61,
@@ -1644,7 +1712,8 @@
           "REST API vs GraphQL"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 62,
@@ -1669,7 +1738,8 @@
           "What is DevOps?"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 63,
@@ -1694,7 +1764,8 @@
           "What is Code?"
         ],
         "topN": 3
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 64,
@@ -1719,7 +1790,8 @@
           "What is a Container?"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 65,
@@ -1744,7 +1816,8 @@
           "What is a Container?"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 66,
@@ -1769,7 +1842,8 @@
           "What is Clean Code?"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 67,
@@ -1794,7 +1868,8 @@
           "What is IoT?"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 68,
@@ -1819,7 +1894,8 @@
           "What is an API?"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 69,
@@ -1844,7 +1920,8 @@
           "What is an API?"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 70,
@@ -1864,7 +1941,8 @@
           "Minmax Tree"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 71,
@@ -1884,7 +1962,8 @@
           "Minmax Tree"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 72,
@@ -1904,7 +1983,8 @@
           "Minmax Tree"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 73,
@@ -1924,7 +2004,8 @@
           "Minmax Tree"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 74,
@@ -1951,7 +2032,8 @@
           "Minmax Tree"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 75,
@@ -1978,7 +2060,8 @@
           "Minmax Tree"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 76,
@@ -2006,7 +2089,8 @@
           "Minmax Tree"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 77,
@@ -2034,7 +2118,8 @@
           "Minmax Tree"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 78,
@@ -2062,7 +2147,8 @@
           "What is an Interface?"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 79,
@@ -2086,7 +2172,8 @@
           "What is OOP (Object-Oriented Programming)?"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 80,
@@ -2110,7 +2197,8 @@
           "What is OOP (Object-Oriented Programming)?"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 81,
@@ -2129,7 +2217,8 @@
           "Object"
         ],
         "topN": 3
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 82,
@@ -2155,7 +2244,8 @@
           "What is Recursion?"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 83,
@@ -2181,7 +2271,8 @@
           "What is Recursion?"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 84,
@@ -2207,7 +2298,8 @@
           "What is Recursion?"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 85,
@@ -2234,7 +2326,8 @@
           "What is an Interface?"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 86,
@@ -2259,7 +2352,8 @@
           "Shadcn UI React Components"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 87,
@@ -2284,7 +2378,8 @@
           "Staying Ahead of the AI Revolution"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 88,
@@ -2303,7 +2398,8 @@
           "What is a Container?"
         ],
         "topN": 3
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 89,
@@ -2333,7 +2429,8 @@
           "Vite React"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 90,
@@ -2356,7 +2453,8 @@
           "Vite React"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 91,
@@ -2377,7 +2475,8 @@
           "TCP vs UDP"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 92,
@@ -2403,7 +2502,8 @@
           "CI/CD"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 93,
@@ -2429,7 +2529,8 @@
           "CI/CD"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 94,
@@ -2455,7 +2556,8 @@
           "CI/CD"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 95,
@@ -2481,7 +2583,8 @@
           "CI/CD"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 96,
@@ -2500,7 +2603,8 @@
           "Testing in Software Engineering"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 97,
@@ -2526,7 +2630,8 @@
           "What is Kubernetes?"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 98,
@@ -2550,7 +2655,8 @@
           "React Data Fetching"
         ],
         "topN": 7
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 99,
@@ -2574,7 +2680,8 @@
           "React Data Fetching"
         ],
         "topN": 7
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 100,
@@ -2598,7 +2705,8 @@
           "React Data Fetching"
         ],
         "topN": 7
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 101,
@@ -2627,7 +2735,8 @@
           "Class vs Interface"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 102,
@@ -2659,7 +2768,8 @@
           "Authorization Middleware"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 103,
@@ -2688,7 +2798,8 @@
           "Class vs Interface"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 104,
@@ -2717,7 +2828,8 @@
           "Class vs Interface"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 105,
@@ -2739,7 +2851,8 @@
           "Class vs Interface"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 106,
@@ -2768,7 +2881,8 @@
           "Class vs Interface"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 107,
@@ -2790,7 +2904,8 @@
           "Class vs Interface"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 108,
@@ -2814,7 +2929,8 @@
           "gRPC vs REST"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 109,
@@ -2833,7 +2949,8 @@
           "gRPC vs REST"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 110,
@@ -2860,7 +2977,8 @@
           "gRPC vs REST"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 111,
@@ -2887,7 +3005,8 @@
           "gRPC vs REST"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 112,
@@ -2914,7 +3033,8 @@
           "Symmetric vs Asymmetric Encryption"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 113,
@@ -2941,7 +3061,8 @@
           "Symmetric vs Asymmetric Encryption"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 114,
@@ -2968,7 +3089,8 @@
           "Symmetric vs Asymmetric Encryption"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 115,
@@ -2986,7 +3108,8 @@
           "SAML vs OAuth"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 116,
@@ -3011,7 +3134,8 @@
           "What is an API?"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 117,
@@ -3041,7 +3165,8 @@
           "Topological Sort"
         ],
         "topN": 6
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 118,
@@ -3066,7 +3191,8 @@
           "A-Star Pathfinding"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 119,
@@ -3084,7 +3210,8 @@
           "A-Star Pathfinding"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 120,
@@ -3113,7 +3240,8 @@
           "gRPC vs REST"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 121,
@@ -3138,7 +3266,8 @@
           "Protobuf Encoding"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 122,
@@ -3156,7 +3285,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 123,
@@ -3174,7 +3304,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 124,
@@ -3192,7 +3323,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 125,
@@ -3210,7 +3342,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 126,
@@ -3228,7 +3361,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 127,
@@ -3246,7 +3380,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 128,
@@ -3272,7 +3407,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 129,
@@ -3301,7 +3437,8 @@
           "InOrder vs PreOrder vs PostOrder"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 130,
@@ -3328,7 +3465,8 @@
           "InOrder vs PreOrder vs PostOrder"
         ],
         "topN": 3
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 131,
@@ -3357,7 +3495,8 @@
           "InOrder vs PreOrder vs PostOrder"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 132,
@@ -3386,7 +3525,8 @@
           "InOrder vs PreOrder vs PostOrder"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 133,
@@ -3415,7 +3555,8 @@
           "InOrder vs PreOrder vs PostOrder"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 134,
@@ -3449,7 +3590,8 @@
           "gRPC vs Kafka"
         ],
         "topN": 6
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 135,
@@ -3478,7 +3620,8 @@
           "gRPC vs Kafka"
         ],
         "topN": 6
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 136,
@@ -3500,7 +3643,8 @@
           "gRPC vs Kafka"
         ],
         "topN": 6
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 137,
@@ -3525,7 +3669,8 @@
           "Hot Shards"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 138,
@@ -3550,7 +3695,8 @@
           "Hot Shards"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 139,
@@ -3575,7 +3721,8 @@
           "Sharding"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 140,
@@ -3595,7 +3742,8 @@
         ],
         "topN": 2
       },
-      "obsoleteReason": "Hot Shards #1 is not current V1 or V2 behavior for sharde. Live V1 ranks Sharding first. No supported engine is expected to retain this rank."
+      "obsoleteReason": "Hot Shards #1 is not current V1 or V2 behavior for sharde. Live V1 ranks Sharding first. No supported engine is expected to retain this rank.",
+      "historicalRelevance": false
     },
     {
       "index": 141,
@@ -3624,7 +3772,8 @@
           "InOrder vs PreOrder vs PostOrder"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 142,
@@ -3646,7 +3795,8 @@
           "InOrder vs PreOrder vs PostOrder"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 143,
@@ -3674,7 +3824,8 @@
           "SAML vs OAuth"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 144,
@@ -3702,7 +3853,8 @@
           "SAML vs OAuth"
         ],
         "topN": 10
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 145,
@@ -3733,7 +3885,8 @@
           "Authorization Middleware"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 146,
@@ -3757,7 +3910,8 @@
           "Authorization Middleware"
         ],
         "topN": 7
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 147,
@@ -3782,7 +3936,8 @@
           "Authorization Middleware"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 148,
@@ -3807,7 +3962,8 @@
           "React Authentication"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 149,
@@ -3833,7 +3989,8 @@
           "Authorization Middleware"
         ],
         "topN": 2
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 150,
@@ -3858,7 +4015,8 @@
           "gRPC Interceptor"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 151,
@@ -3883,7 +4041,8 @@
           "Zero-Trust Security"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 152,
@@ -3911,7 +4070,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 153,
@@ -3939,7 +4099,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 154,
@@ -3967,7 +4128,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 155,
@@ -3986,7 +4148,8 @@
           "What is the Cloud?"
         ],
         "topN": 3
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 156,
@@ -4005,7 +4168,8 @@
           "What is the Cloud?"
         ],
         "topN": 3
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 157,
@@ -4030,7 +4194,8 @@
           "Topological Sort"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 158,
@@ -4055,7 +4220,8 @@
           "Python Custom Sorting"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 159,
@@ -4080,7 +4246,8 @@
           "Python Custom Sorting"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 160,
@@ -4105,7 +4272,8 @@
           "Topological Sort"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 161,
@@ -4130,7 +4298,8 @@
           "Topological Sort"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 162,
@@ -4155,7 +4324,8 @@
           "React Authentication"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 163,
@@ -4180,7 +4350,8 @@
           "React Authentication"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 164,
@@ -4205,7 +4376,8 @@
           "React Authentication"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 165,
@@ -4233,7 +4405,8 @@
           "Bearer Token"
         ],
         "topN": 8
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 166,
@@ -4261,7 +4434,8 @@
           "Bearer Token"
         ],
         "topN": 8
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 167,
@@ -4289,7 +4463,8 @@
           "Bearer Token"
         ],
         "topN": 8
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 168,
@@ -4317,7 +4492,8 @@
           "Bearer Token"
         ],
         "topN": 8
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 169,
@@ -4345,7 +4521,8 @@
           "Bearer Token"
         ],
         "topN": 8
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 170,
@@ -4370,7 +4547,8 @@
           "gRPC Interceptor"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 171,
@@ -4395,7 +4573,8 @@
           "gRPC Interceptor"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 172,
@@ -4420,7 +4599,8 @@
           "gRPC Interceptor"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 173,
@@ -4441,7 +4621,8 @@
           "What is Recursion?"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 174,
@@ -4462,7 +4643,8 @@
           "What is Recursion?"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 175,
@@ -4483,7 +4665,8 @@
           "What is Recursion?"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 176,
@@ -4501,7 +4684,8 @@
           "Dynamic Programming Matrix"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 177,
@@ -4519,7 +4703,8 @@
           "Dynamic Programming Matrix"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 178,
@@ -4537,7 +4722,8 @@
           "Dynamic Programming Matrix"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 179,
@@ -4562,7 +4748,8 @@
           "Object"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 180,
@@ -4589,7 +4776,8 @@
           "Build Time"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 181,
@@ -4616,7 +4804,8 @@
           "Build Time"
         ],
         "topN": 4
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 182,
@@ -4645,7 +4834,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 183,
@@ -4674,7 +4864,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 184,
@@ -4703,7 +4894,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 185,
@@ -4732,7 +4924,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 5
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 186,
@@ -4757,7 +4950,8 @@
           "React Authentication"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 187,
@@ -4782,7 +4976,8 @@
           "React Authentication"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 188,
@@ -4807,7 +5002,8 @@
           "React Authentication"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 189,
@@ -4832,7 +5028,8 @@
           "React Authentication"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 190,
@@ -4857,7 +5054,8 @@
           "Rate Limiting"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 191,
@@ -4882,7 +5080,8 @@
           "Rate Limiting"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 192,
@@ -4914,7 +5113,8 @@
           "Rate Limiting Algorithms"
         ],
         "topN": 3
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 193,
@@ -4939,7 +5139,8 @@
           "Rate Limiting Algorithms"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 194,
@@ -4964,7 +5165,8 @@
           "Rate Limiting Algorithms"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 195,
@@ -4995,7 +5197,8 @@
           "Distributed Cloud"
         ],
         "topN": 3
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 196,
@@ -5021,7 +5224,8 @@
           "Distributed Cloud"
         ],
         "topN": 3
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 197,
@@ -5047,7 +5251,8 @@
           "Distributed Cloud"
         ],
         "topN": 3
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 198,
@@ -5072,7 +5277,8 @@
           "Monotonic Stack"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 199,
@@ -5097,7 +5303,8 @@
           "Monotonic Stack"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 200,
@@ -5122,7 +5329,8 @@
           "Monotonic Stack"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 201,
@@ -5147,7 +5355,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 202,
@@ -5172,7 +5381,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 203,
@@ -5197,7 +5407,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 204,
@@ -5222,7 +5433,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 205,
@@ -5247,7 +5459,8 @@
           "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 206,
@@ -5272,7 +5485,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 207,
@@ -5297,7 +5511,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 208,
@@ -5322,7 +5537,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 209,
@@ -5351,7 +5567,8 @@
           "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 210,
@@ -5376,7 +5593,8 @@
           "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 211,
@@ -5401,7 +5619,8 @@
           "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 212,
@@ -5426,7 +5645,8 @@
           "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 213,
@@ -5451,7 +5671,8 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     },
     {
       "index": 214,
@@ -5476,7 +5697,8 @@
           "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
         ],
         "topN": 1
-      }
+      },
+      "historicalRelevance": true
     }
   ]
 }

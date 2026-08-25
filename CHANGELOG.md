@@ -5,6 +5,7 @@
 ### Added
 
 - Public `synonyms({ qa: ["testing"] })` directional search-equivalence plugin and `normalizeSearchEquivalences()`. Object-map entries are one-hop and directional; they do not auto-reverse. Legacy `{ format, entries: [{ terms }] }` compiled synonyms stay bidirectional. Synonym lookup may use a unique configured key/span, an exact lexical phrase source, or uncovered tokens. It does not rewrite typed identity, lexical intent, or configured occupancy, and it does not activate topical or standalone recall.
+- Executable Software.Land historical relevance suite (`test/software-land-historical-relevance.test.js`): `expectedTop` / `titlePrefix` / `topN` membership-within-topN contracts from the 215-row inventory. Classification C is omitted. This is not the exact-output oracle and not Core default ranking policy.
 
 ## 0.5.0
 

@@ -7,11 +7,15 @@
  * Outputs:
  *   v2-contracts.json          strict accepted V2 (A-class intent + SEARCH_V2_CONTRACTS)
  *   regression-scenarios.json  B-class independent intent, compatibility coverage only
- *   historical-scenarios.json  all 215 source rows, non-executable provenance
+ *   historical-scenarios.json  all 215 source rows; v1.expectedTop/titlePrefix are
+ *                              executable historical relevance contracts (membership
+ *                              within topN). disposition is V2-intent mining provenance.
  *   scenarios.json             index + counts
  *
- * V1 expectedTop is provenance only and is never asserted against V2.
- * Empty-intent rows are not mined into executable cases.
+ * V1 expectedTop is the historical relevance contract. It is not a V2 intent
+ * contract and is not an exact-output oracle.
+ * Empty-intent rows are not mined into V2 intent/regression cases; they still
+ * participate in historical relevance when expectedTop/titlePrefix exist.
  */
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -61,6 +65,13 @@ function hasEngineIndependentIntent(scenario) {
 
 function isV2ApplicableScenario(scenario) {
   return scenarioClassification(scenario) === "A" && hasEngineIndependentIntent(scenario);
+}
+
+function isHistoricalRelevanceApplicable(scenario) {
+  if (scenarioClassification(scenario) === "C") return false;
+  const v1 = scenario?.v1 && typeof scenario.v1 === "object" ? scenario.v1 : {};
+  if (v1.titlePrefix) return true;
+  return Array.isArray(v1.expectedTop) && v1.expectedTop.length > 0;
 }
 
 function compactList(value) {
@@ -249,7 +260,7 @@ const historical = scenarios.map((scenario, index) => {
   } else if (classification === "B" && independent) {
     if (contractQueries.has(scenario.query)) {
       disposition = "omitted-covered-by-v2-contract";
-      note = "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.";
+      note = "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.";
     } else if (B_INTENT_NOT_CURRENT_V2.has(scenario.query)) {
       disposition = "omitted-b-intent-not-current-v2";
       note = "Recorded B intent is not current fixture V2 behavior. Not mined into regression.";
@@ -263,7 +274,7 @@ const historical = scenarios.map((scenario, index) => {
     }
   } else {
     disposition = "omitted-empty-intent-observational-v1";
-    note = "No independent intent. V1 expectedTop is observational provenance only.";
+    note = "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.";
   }
   const row = {
     index,
@@ -272,6 +283,7 @@ const historical = scenarios.map((scenario, index) => {
     disposition,
     note,
     intent: scenarioIntent(scenario),
+    historicalRelevance: isHistoricalRelevanceApplicable(scenario),
   };
   const v1 = provenanceV1(scenario);
   if (v1) row.v1 = v1;
@@ -292,6 +304,7 @@ const counts = {
   executableContracts: contractCases.length,
   executableRegressions: regressionCases.length,
   historicalRows: historical.length,
+  historicalRelevanceApplicable: historical.filter((row) => row.historicalRelevance).length,
   omittedObsolete: dispositionCounts["omitted-obsolete"] || 0,
   omittedEmptyIntent: dispositionCounts["omitted-empty-intent-observational-v1"] || 0,
   omittedCoveredByContract: dispositionCounts["omitted-covered-by-v2-contract"] || 0,
@@ -306,9 +319,10 @@ const indexPayload = {
     "Software.Land-derived realistic integration test data. It is not default package policy.",
     "v2-contracts.json is the strict accepted V2 contract set.",
     "regression-scenarios.json is B-class independent-intent compatibility coverage, not Core ranking policy.",
-    "historical-scenarios.json is the full 215-row inventory. It is not executed.",
-    "V1 expectedTop neighbor lists are provenance only and are never asserted against V2.",
-    "Empty-intent rows are not mined into executable cases.",
+    "historical-scenarios.json is the full 215-row inventory. v1.expectedTop/titlePrefix/topN are executable historical relevance contracts (membership within topN).",
+    "disposition describes V2-intent mining, not relevance-suite inclusion. Classification C is omitted from relevance.",
+    "V2 intent contracts do not replace historical expectedTop.",
+    "Empty-intent rows are not mined into V2 intent/regression cases.",
   ],
   source: {
     files: ["tests/search-scenarios.js", "tests/search-v2-contracts.js"],
@@ -319,7 +333,7 @@ const indexPayload = {
   files: {
     "v2-contracts.json": "Strict accepted V2 cases (kind: contract).",
     "regression-scenarios.json": "B-intent regression/reference cases (kind: regression).",
-    "historical-scenarios.json": "Non-executable 215-row inventory with dispositions.",
+    "historical-scenarios.json": "215-row inventory; expectedTop/titlePrefix are executable historical relevance contracts.",
   },
 };
 
@@ -346,13 +360,19 @@ const regressionPayload = {
 };
 
 const historicalPayload = {
-  kind: "historical-provenance",
+  kind: "historical-relevance-contracts",
   notes: [
-    "Full historical scenario inventory. Non-executable.",
-    "disposition explains why a row is a contract, a regression, or omitted.",
-    "v1.expectedTop is provenance only.",
+    "Full historical scenario inventory.",
+    "v1.expectedTop / titlePrefix / topN are executable historical relevance contracts (membership within topN, not exact order).",
+    "classification C is omitted from the relevance suite (obsolete).",
+    "All other rows with expectedTop or titlePrefix participate. Failures are not silently excluded.",
+    "disposition describes V2-intent mining into v2-contracts.json / regression-scenarios.json, not relevance-suite inclusion.",
   ],
-  counts: { rows: historical.length, ...dispositionCounts },
+  counts: {
+    rows: historical.length,
+    historicalRelevanceApplicable: historical.filter((row) => row.historicalRelevance).length,
+    ...dispositionCounts,
+  },
   rows: historical,
 };
 
@@ -378,6 +398,7 @@ if (args.manifest) {
   manifest.executableV2ScenarioCount = counts.executableContracts;
   manifest.executableRegressionCount = counts.executableRegressions;
   manifest.historicalScenarioCount = counts.historicalRows;
+  manifest.historicalRelevanceApplicable = counts.historicalRelevanceApplicable;
   manifest.omittedV1OnlyCount = omittedV1OnlyRows;
   manifest.omittedEmptyIntentCount = counts.omittedEmptyIntent;
   manifest.omittedBrowserUiOnlyCount = 1;

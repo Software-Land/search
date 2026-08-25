@@ -1,0 +1,14 @@
+{
+  "description": "Software.Land live V2 SearchEngine inputs for the historical relevance suite. Not Core default ranking policy.",
+  "softwareLandCommit": "f72444b530ea44a4d3b9cd430c4db1568a24548c",
+  "searchPackageVersion": "0.5.0",
+  "omitDictionaryKeys": ["testing"],
+  "synonymMapFile": "synonym-map.json",
+  "synonymMapKind": "runtime-directional-after-v1-reverse-materialization",
+  "notes": [
+    "dictionary.json remains the frozen corpus snapshot used by the exact-output oracle.",
+    "This config omits the colliding testing configured key and loads the curated runtime synonym map from softwareLandCommit.",
+    "Do not reverse generated/Luna maps through this snapshot; it is curated V1 only.",
+    "expectedTop / topN / titlePrefix values are not generated from engine output."
+  ]
+}

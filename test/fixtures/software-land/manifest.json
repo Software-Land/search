@@ -30,8 +30,8 @@
       "sha256": "b964ef45cbe2f105a259e5d284600a03d28a1521e4f911dcb65a7a9fd46334f9"
     },
     "scenarios.json": {
-      "bytes": 1789,
-      "sha256": "bec788925ea79f7efaba0393448a144a4377a3022db6cef27949c90c85e8c82b"
+      "bytes": 2059,
+      "sha256": "198b62f28132f56223328076a698a8036fddb9680cf8ca941978d49bef9f6920"
     },
     "v2-contracts.json": {
       "bytes": 37835,
@@ -42,12 +42,22 @@
       "sha256": "3f72e1f8dc2f56ea87a92fa2f1b898ef7d372ad05375a4f451cc7c9dcfd3fec4"
     },
     "historical-scenarios.json": {
-      "bytes": 135364,
-      "sha256": "84d8f71bcfe421ee08b0747552028b81518f11dd07be0041c620ef96caabc57b"
+      "bytes": 143367,
+      "sha256": "965bdcdd766fb004f176558255242281decc84a393f7e42b94817f1851193266"
+    },
+    "relevance-config.json": {
+      "bytes": 800,
+      "sha256": "8f3b9f6f5a740b257112b65860020b26353e054b9fbf2b26dde88cd2f27fdbe2"
+    },
+    "synonym-map.json": {
+      "bytes": 7700,
+      "sha256": "781f8454215ae1a4468d9a4e9851aba07aafbe76f72d9d8451cc33e0b44fed78"
     }
   },
   "scenarioCount": 215,
   "executableV2ScenarioCount": 98,
+  "historicalRelevanceApplicable": 214,
+  "relevanceSoftwareLandCommit": "f72444b530ea44a4d3b9cd430c4db1568a24548c",
   "omittedV1OnlyCount": 126,
   "omittedBrowserUiOnlyCount": 1,
   "sourceScenarioFiles": [

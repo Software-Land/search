@@ -28,10 +28,12 @@ They must never become Core defaults.
 | Source scenarios | `tests/search-scenarios.js` (215 rows) + `tests/search-v2-contracts.js` (16) |
 | Strict V2 contracts | 98 (`v2-contracts.json`) |
 | B-intent regressions | 60 (`regression-scenarios.json`, compatibility coverage, not Core policy) |
-| Historical inventory | 215 non-executable rows (`historical-scenarios.json`) |
-| Omitted empty-intent rows | 44 (observational V1 provenance only) |
-| Omitted V1-only source rows | 126 (B + A without intent; some re-enter as regressions) |
+| Historical inventory | 215 rows (`historical-scenarios.json`); 214 executable relevance contracts |
+| Historical relevance config | `relevance-config.json` + `synonym-map.json` (Software.Land `f72444b530ea44a4d3b9cd430c4db1568a24548c`) |
+| Omitted empty-intent rows | 44 (not mined into V2 intent/regression; still in historical relevance) |
+| Omitted V1-only source rows | 126 (B + A without intent; some re-enter as regressions; still in historical relevance when `expectedTop` exists) |
 | Omitted browser/UI-only | 1 (`zzz-no-hit` no-results copy) |
+| Omitted historical relevance | 1 (`sharde`, classification C obsolete) |
 
 Corpus artifacts come from a clean Software.Land worktree at
 `dff24cf606967cb50b24d28d9142747c9203e053`. Scenario policy comes from the
@@ -39,9 +41,15 @@ committed Software.Land tree at `08e1b735ae01a3815964360ef3b9141466176dc4`
 (parent of that commit is the corpus SHA). Strict V2 contracts are A-class
 independent intent plus `SEARCH_V2_CONTRACTS`. Regression cases reuse recorded
 B-class independent intent as Software.Land compatibility coverage; they are
-**not Core ranking policy**. V1 `expectedTop` neighbor lists are provenance
-only and are never asserted against V2. Empty-intent rows are not mined into
-executable cases.
+**not Core ranking policy**. Historical `expectedTop` / `titlePrefix` / `topN`
+are executable Software.Land relevance contracts in
+`test/software-land-historical-relevance.test.js` (membership within topN, not
+exact order). Classification C is omitted. That suite is not the exact-output
+oracle and not Core default ranking policy. The relevance engine loads curated
+synonyms from `synonym-map.json` and omits the `testing` dictionary key, matching
+Software.Land commit `f72444b530ea44a4d3b9cd430c4db1568a24548c`. Empty-intent rows
+are not mined into V2 intent/regression cases; they still participate in
+historical relevance when `expectedTop` or `titlePrefix` exist.
 
 Do not snapshot corpus artifacts from a dirty Software.Land worktree. Do not
 generate scenario fixtures from a dirty worktree; extract `tests/search-scenarios.js`
@@ -56,7 +64,9 @@ and `tests/search-v2-contracts.js` from the committed scenario SHA.
 - `lexical-frequency.json` — production lexical-frequency artifact
 - `v2-contracts.json` — strict accepted V2 cases (`kind: contract`)
 - `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy
-- `historical-scenarios.json` — full 215-row inventory with dispositions; not executed
+- `historical-scenarios.json` — full 215-row inventory; `v1.expectedTop`/`titlePrefix`/`topN` are executable historical relevance contracts
+- `relevance-config.json` — Software.Land 0.5 relevance-engine inputs (omit `testing`, load synonym map)
+- `synonym-map.json` — curated runtime directional synonym map from Software.Land `f72444b`
 - `scenarios.json` — index, counts, and disposition totals
 - `manifest.json` — format, corpus/scenario source commits, package version, document count, scenario provenance, SHA256s
 
@@ -95,6 +105,10 @@ node scripts/software-land-scenarios.mjs \
   --dir test/fixtures/software-land \
   --manifest test/fixtures/software-land/manifest.json
 ```
+
+Copy `synonym-map.json` from Software.Land `RUNTIME_SYNONYM_MAP` at the recorded
+`relevanceSoftwareLandCommit`. Do not generate `expectedTop` / `topN` /
+`titlePrefix` from current engine output.
 
 Do not run `compileSemantic` in OSS CI. Do not copy models, vectors, markdown
 posts, Gatsby code, V1 rankings, or the app E2E runner.

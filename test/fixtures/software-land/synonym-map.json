@@ -1,0 +1,523 @@
+{
+  "kind": "software-land-runtime-synonym-map",
+  "softwareLandCommit": "f72444b530ea44a4d3b9cd430c4db1568a24548c",
+  "notes": [
+    "Curated V1 authored map after Software.Land buildRuntimeSynonymMap reverse materialization.",
+    "Fixture input for historical relevance only. Not Core default policy.",
+    "Do not auto-reverse generated/Luna maps through this snapshot."
+  ],
+  "stats": {
+    "sources": 146,
+    "edges": 215,
+    "jsonBytes": 4116
+  },
+  "map": {
+    "a*": [
+      "astar"
+    ],
+    "agile": [
+      "kanban",
+      "scrum"
+    ],
+    "analytical": [
+      "olap"
+    ],
+    "analytics": [
+      "olap"
+    ],
+    "appsec": [
+      "authentication",
+      "authorization",
+      "bearer",
+      "oath",
+      "rbac",
+      "saml",
+      "security",
+      "vulnerability"
+    ],
+    "architecture": [
+      "design"
+    ],
+    "astar": [
+      "a*",
+      "pathfinding"
+    ],
+    "async": [
+      "asynchronous"
+    ],
+    "asynchronous": [
+      "async"
+    ],
+    "authentication": [
+      "appsec",
+      "authn",
+      "security",
+      "vulnerability"
+    ],
+    "authn": [
+      "authentication"
+    ],
+    "authorization": [
+      "appsec",
+      "authz",
+      "vulnerability"
+    ],
+    "authz": [
+      "authorization"
+    ],
+    "bandwidth": [
+      "performance",
+      "throughput"
+    ],
+    "bearer": [
+      "appsec",
+      "token",
+      "vulnerability"
+    ],
+    "cd": [
+      "devops"
+    ],
+    "ci": [
+      "devops"
+    ],
+    "cicd": [
+      "devops",
+      "sre"
+    ],
+    "cipher": [
+      "encryption"
+    ],
+    "clean": [
+      "cleancode"
+    ],
+    "cleancode": [
+      "clean"
+    ],
+    "cleanup": [
+      "refactoring"
+    ],
+    "cloud": [
+      "cloudcomputing",
+      "thecloud"
+    ],
+    "cloudcomputing": [
+      "cloud"
+    ],
+    "cockroach": [
+      "cockroachdb"
+    ],
+    "cockroachdb": [
+      "cockroach"
+    ],
+    "code": [
+      "coding",
+      "sourcecode"
+    ],
+    "codeacademy": [
+      "codecademy"
+    ],
+    "codecademy": [
+      "codeacademy"
+    ],
+    "coding": [
+      "code"
+    ],
+    "compute": [
+      "computing"
+    ],
+    "computing": [
+      "compute"
+    ],
+    "concurrency": [
+      "multithreading",
+      "parallelism"
+    ],
+    "container": [
+      "containers",
+      "docker"
+    ],
+    "containers": [
+      "container",
+      "docker"
+    ],
+    "crypto": [
+      "encryption"
+    ],
+    "ddb": [
+      "dynamodb"
+    ],
+    "declarative": [
+      "functional"
+    ],
+    "design": [
+      "architecture"
+    ],
+    "devops": [
+      "cd",
+      "ci",
+      "cicd",
+      "devsecops",
+      "sre"
+    ],
+    "devsecops": [
+      "devops"
+    ],
+    "docker": [
+      "container",
+      "containers"
+    ],
+    "dynamodb": [
+      "ddb"
+    ],
+    "ec2": [
+      "scaling"
+    ],
+    "edex": [
+      "edx"
+    ],
+    "edx": [
+      "edex"
+    ],
+    "egress": [
+      "ingress"
+    ],
+    "encryption": [
+      "cipher",
+      "crypto",
+      "tls"
+    ],
+    "faas": [
+      "serverless"
+    ],
+    "fcc": [
+      "freecodecamp"
+    ],
+    "fp": [
+      "functional"
+    ],
+    "freecodecamp": [
+      "fcc"
+    ],
+    "functional": [
+      "declarative",
+      "fp"
+    ],
+    "grpc": [
+      "rpc"
+    ],
+    "imperative": [
+      "procedural"
+    ],
+    "infra": [
+      "infrastructure"
+    ],
+    "infrastructure": [
+      "infra"
+    ],
+    "ingress": [
+      "egress"
+    ],
+    "interceptor": [
+      "middleware"
+    ],
+    "k8s": [
+      "kubernetes"
+    ],
+    "kanban": [
+      "agile"
+    ],
+    "kubernetes": [
+      "k8s"
+    ],
+    "lambda": [
+      "serverless"
+    ],
+    "latency": [
+      "performance",
+      "tail"
+    ],
+    "limiting": [
+      "throttling"
+    ],
+    "load": [
+      "stress"
+    ],
+    "longtail": [
+      "tail"
+    ],
+    "metrics": [
+      "monitoring",
+      "observability",
+      "sre"
+    ],
+    "microservice": [
+      "microservices"
+    ],
+    "microservices": [
+      "microservice"
+    ],
+    "middleware": [
+      "interceptor"
+    ],
+    "minimax": [
+      "minmax"
+    ],
+    "minmax": [
+      "minimax"
+    ],
+    "monitoring": [
+      "metrics",
+      "observability"
+    ],
+    "monolith": [
+      "monolithic"
+    ],
+    "monolithic": [
+      "monolith"
+    ],
+    "multicore": [
+      "parallelism"
+    ],
+    "multithreading": [
+      "concurrency",
+      "parallelism"
+    ],
+    "nonrelational": [
+      "nosql"
+    ],
+    "nosql": [
+      "nonrelational"
+    ],
+    "oath": [
+      "appsec"
+    ],
+    "oauth": [
+      "saml",
+      "vulnerability"
+    ],
+    "observability": [
+      "metrics",
+      "monitoring"
+    ],
+    "olap": [
+      "analytical",
+      "analytics"
+    ],
+    "oltp": [
+      "transactional"
+    ],
+    "p99": [
+      "tail"
+    ],
+    "parallelism": [
+      "concurrency",
+      "multicore",
+      "multithreading",
+      "parallelization"
+    ],
+    "parallelization": [
+      "parallelism"
+    ],
+    "partitioning": [
+      "sharding"
+    ],
+    "pathfinding": [
+      "astar"
+    ],
+    "pattern": [
+      "patterns"
+    ],
+    "patterns": [
+      "pattern"
+    ],
+    "performance": [
+      "bandwidth",
+      "latency",
+      "throughput"
+    ],
+    "pg": [
+      "postgres"
+    ],
+    "pluralsight": [
+      "pluralsite"
+    ],
+    "pluralsite": [
+      "pluralsight"
+    ],
+    "postgres": [
+      "pg",
+      "postgresql"
+    ],
+    "postgresql": [
+      "postgres"
+    ],
+    "procedural": [
+      "imperative"
+    ],
+    "process": [
+      "processes"
+    ],
+    "processes": [
+      "process"
+    ],
+    "qa": [
+      "testing"
+    ],
+    "rbac": [
+      "appsec",
+      "security",
+      "vulnerability"
+    ],
+    "refactoring": [
+      "cleanup",
+      "rewrite"
+    ],
+    "regression": [
+      "regressions"
+    ],
+    "regressions": [
+      "regression"
+    ],
+    "relational": [
+      "sql"
+    ],
+    "rest": [
+      "restful"
+    ],
+    "restful": [
+      "rest"
+    ],
+    "retries": [
+      "retry"
+    ],
+    "retry": [
+      "retries"
+    ],
+    "rewrite": [
+      "refactoring"
+    ],
+    "rpc": [
+      "grpc"
+    ],
+    "saml": [
+      "appsec",
+      "oauth",
+      "vulnerability"
+    ],
+    "scaling": [
+      "ec2"
+    ],
+    "scrum": [
+      "agile"
+    ],
+    "security": [
+      "appsec",
+      "authentication",
+      "rbac",
+      "vulnerability"
+    ],
+    "serverless": [
+      "faas",
+      "lambda"
+    ],
+    "sharding": [
+      "partitioning"
+    ],
+    "sourcecode": [
+      "code"
+    ],
+    "sql": [
+      "relational"
+    ],
+    "sre": [
+      "cicd",
+      "devops",
+      "metrics"
+    ],
+    "ssl": [
+      "tls"
+    ],
+    "stress": [
+      "load"
+    ],
+    "sync": [
+      "synchronous"
+    ],
+    "synchronous": [
+      "sync"
+    ],
+    "tail": [
+      "latency",
+      "longtail",
+      "p99"
+    ],
+    "teamtreehouse": [
+      "treehouse"
+    ],
+    "testing": [
+      "qa"
+    ],
+    "thecloud": [
+      "cloud"
+    ],
+    "thread": [
+      "threads"
+    ],
+    "threads": [
+      "thread"
+    ],
+    "throttling": [
+      "limiting"
+    ],
+    "throughput": [
+      "bandwidth",
+      "performance"
+    ],
+    "tls": [
+      "encryption",
+      "ssl",
+      "vpn"
+    ],
+    "transactional": [
+      "oltp"
+    ],
+    "treehouse": [
+      "teamtreehouse"
+    ],
+    "udaciti": [
+      "udacity"
+    ],
+    "udacity": [
+      "udaciti"
+    ],
+    "udami": [
+      "udemy"
+    ],
+    "udemmy": [
+      "udemy"
+    ],
+    "udemy": [
+      "udami",
+      "udemmy"
+    ],
+    "versus": [
+      "vs"
+    ],
+    "vpn": [
+      "tls"
+    ],
+    "vs": [
+      "versus"
+    ],
+    "vulnerability": [
+      "appsec",
+      "authentication",
+      "authorization",
+      "bearer",
+      "oauth",
+      "rbac",
+      "saml",
+      "security"
+    ]
+  }
+}

@@ -3,9 +3,10 @@
     "Software.Land-derived realistic integration test data. It is not default package policy.",
     "v2-contracts.json is the strict accepted V2 contract set.",
     "regression-scenarios.json is B-class independent-intent compatibility coverage, not Core ranking policy.",
-    "historical-scenarios.json is the full 215-row inventory. It is not executed.",
-    "V1 expectedTop neighbor lists are provenance only and are never asserted against V2.",
-    "Empty-intent rows are not mined into executable cases."
+    "historical-scenarios.json is the full 215-row inventory. v1.expectedTop/titlePrefix/topN are executable historical relevance contracts (membership within topN).",
+    "disposition describes V2-intent mining, not relevance-suite inclusion. Classification C is omitted from relevance.",
+    "V2 intent contracts do not replace historical expectedTop.",
+    "Empty-intent rows are not mined into V2 intent/regression cases."
   ],
   "source": {
     "files": [
@@ -22,6 +23,7 @@
     "executableContracts": 98,
     "executableRegressions": 60,
     "historicalRows": 215,
+    "historicalRelevanceApplicable": 214,
     "omittedObsolete": 1,
     "omittedEmptyIntent": 44,
     "omittedCoveredByContract": 16,
@@ -43,6 +45,6 @@
   "files": {
     "v2-contracts.json": "Strict accepted V2 cases (kind: contract).",
     "regression-scenarios.json": "B-intent regression/reference cases (kind: regression).",
-    "historical-scenarios.json": "Non-executable 215-row inventory with dispositions."
+    "historical-scenarios.json": "215-row inventory; expectedTop/titlePrefix are executable historical relevance contracts."
   }
 }
