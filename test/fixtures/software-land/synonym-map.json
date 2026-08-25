@@ -1,15 +1,16 @@
 {
-  "kind": "software-land-runtime-synonym-map",
-  "softwareLandCommit": "f72444b530ea44a4d3b9cd430c4db1568a24548c",
+  "kind": "software-land-explicit-directional-synonym-map",
+  "softwareLandCommit": "ddcbca0d50404e312be1c16d3ded292407077f33",
   "notes": [
-    "Curated V1 authored map after Software.Land buildRuntimeSynonymMap reverse materialization.",
+    "Explicit directional curated SYNONYM_MAP from Software.Land ddcbca0.",
+    "No V1 reverse materialization. Runtime map equals authored map after generic OSS normalization.",
     "Fixture input for historical relevance only. Not Core default policy.",
     "Do not auto-reverse generated/Luna maps through this snapshot."
   ],
   "stats": {
-    "sources": 146,
-    "edges": 215,
-    "jsonBytes": 4116
+    "sources": 115,
+    "edges": 148,
+    "jsonBytes": 2984
   },
   "map": {
     "a*": [
@@ -32,11 +33,7 @@
       "oath",
       "rbac",
       "saml",
-      "security",
       "vulnerability"
-    ],
-    "architecture": [
-      "design"
     ],
     "astar": [
       "a*",
@@ -49,30 +46,23 @@
       "async"
     ],
     "authentication": [
-      "appsec",
       "authn",
-      "security",
       "vulnerability"
     ],
     "authn": [
       "authentication"
     ],
     "authorization": [
-      "appsec",
-      "authz",
-      "vulnerability"
+      "authz"
     ],
     "authz": [
       "authorization"
     ],
     "bandwidth": [
-      "performance",
       "throughput"
     ],
     "bearer": [
-      "appsec",
-      "token",
-      "vulnerability"
+      "token"
     ],
     "cd": [
       "devops"
@@ -81,8 +71,7 @@
       "devops"
     ],
     "cicd": [
-      "devops",
-      "sre"
+      "devops"
     ],
     "cipher": [
       "encryption"
@@ -92,9 +81,6 @@
     ],
     "cleancode": [
       "clean"
-    ],
-    "cleanup": [
-      "refactoring"
     ],
     "cloud": [
       "cloudcomputing",
@@ -109,18 +95,11 @@
     "cockroachdb": [
       "cockroach"
     ],
-    "code": [
-      "coding",
-      "sourcecode"
-    ],
     "codeacademy": [
       "codecademy"
     ],
     "codecademy": [
       "codeacademy"
-    ],
-    "coding": [
-      "code"
     ],
     "compute": [
       "computing"
@@ -133,11 +112,9 @@
       "parallelism"
     ],
     "container": [
-      "containers",
       "docker"
     ],
     "containers": [
-      "container",
       "docker"
     ],
     "crypto": [
@@ -145,12 +122,6 @@
     ],
     "ddb": [
       "dynamodb"
-    ],
-    "declarative": [
-      "functional"
-    ],
-    "design": [
-      "architecture"
     ],
     "devops": [
       "cd",
@@ -169,9 +140,6 @@
     "dynamodb": [
       "ddb"
     ],
-    "ec2": [
-      "scaling"
-    ],
     "edex": [
       "edx"
     ],
@@ -183,8 +151,7 @@
     ],
     "encryption": [
       "cipher",
-      "crypto",
-      "tls"
+      "crypto"
     ],
     "faas": [
       "serverless"
@@ -199,7 +166,6 @@
       "fcc"
     ],
     "functional": [
-      "declarative",
       "fp"
     ],
     "grpc": [
@@ -232,10 +198,6 @@
     "lambda": [
       "serverless"
     ],
-    "latency": [
-      "performance",
-      "tail"
-    ],
     "limiting": [
       "throttling"
     ],
@@ -246,15 +208,7 @@
       "tail"
     ],
     "metrics": [
-      "monitoring",
-      "observability",
-      "sre"
-    ],
-    "microservice": [
-      "microservices"
-    ],
-    "microservices": [
-      "microservice"
+      "monitoring"
     ],
     "middleware": [
       "interceptor"
@@ -265,18 +219,11 @@
     "minmax": [
       "minimax"
     ],
-    "monitoring": [
-      "metrics",
-      "observability"
-    ],
     "monolith": [
       "monolithic"
     ],
     "monolithic": [
       "monolith"
-    ],
-    "multicore": [
-      "parallelism"
     ],
     "multithreading": [
       "concurrency",
@@ -288,12 +235,8 @@
     "nosql": [
       "nonrelational"
     ],
-    "oath": [
-      "appsec"
-    ],
     "oauth": [
-      "saml",
-      "vulnerability"
+      "saml"
     ],
     "observability": [
       "metrics",
@@ -311,7 +254,6 @@
     ],
     "parallelism": [
       "concurrency",
-      "multicore",
       "multithreading",
       "parallelization"
     ],
@@ -323,12 +265,6 @@
     ],
     "pathfinding": [
       "astar"
-    ],
-    "pattern": [
-      "patterns"
-    ],
-    "patterns": [
-      "pattern"
     ],
     "performance": [
       "bandwidth",
@@ -354,29 +290,11 @@
     "procedural": [
       "imperative"
     ],
-    "process": [
-      "processes"
-    ],
-    "processes": [
-      "process"
-    ],
     "qa": [
       "testing"
     ],
-    "rbac": [
-      "appsec",
-      "security",
-      "vulnerability"
-    ],
     "refactoring": [
-      "cleanup",
-      "rewrite"
-    ],
-    "regression": [
-      "regressions"
-    ],
-    "regressions": [
-      "regression"
+      "cleanup"
     ],
     "relational": [
       "sql"
@@ -387,34 +305,14 @@
     "restful": [
       "rest"
     ],
-    "retries": [
-      "retry"
-    ],
-    "retry": [
-      "retries"
-    ],
-    "rewrite": [
-      "refactoring"
-    ],
     "rpc": [
       "grpc"
     ],
     "saml": [
-      "appsec",
-      "oauth",
-      "vulnerability"
-    ],
-    "scaling": [
-      "ec2"
+      "oauth"
     ],
     "scrum": [
       "agile"
-    ],
-    "security": [
-      "appsec",
-      "authentication",
-      "rbac",
-      "vulnerability"
     ],
     "serverless": [
       "faas",
@@ -423,16 +321,11 @@
     "sharding": [
       "partitioning"
     ],
-    "sourcecode": [
-      "code"
-    ],
     "sql": [
       "relational"
     ],
     "sre": [
-      "cicd",
-      "devops",
-      "metrics"
+      "devops"
     ],
     "ssl": [
       "tls"
@@ -447,36 +340,23 @@
       "sync"
     ],
     "tail": [
-      "latency",
       "longtail",
       "p99"
     ],
     "teamtreehouse": [
       "treehouse"
     ],
-    "testing": [
-      "qa"
-    ],
     "thecloud": [
       "cloud"
-    ],
-    "thread": [
-      "threads"
-    ],
-    "threads": [
-      "thread"
     ],
     "throttling": [
       "limiting"
     ],
     "throughput": [
-      "bandwidth",
-      "performance"
+      "bandwidth"
     ],
     "tls": [
-      "encryption",
-      "ssl",
-      "vpn"
+      "ssl"
     ],
     "transactional": [
       "oltp"
@@ -489,12 +369,6 @@
     ],
     "udacity": [
       "udaciti"
-    ],
-    "udami": [
-      "udemy"
-    ],
-    "udemmy": [
-      "udemy"
     ],
     "udemy": [
       "udami",
@@ -510,14 +384,12 @@
       "versus"
     ],
     "vulnerability": [
-      "appsec",
       "authentication",
       "authorization",
       "bearer",
       "oauth",
       "rbac",
-      "saml",
-      "security"
+      "saml"
     ]
   }
 }

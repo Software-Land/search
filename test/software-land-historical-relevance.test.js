@@ -111,13 +111,24 @@ describe("Software.Land historical relevance contracts", () => {
   });
 
   test("fixture models current Software.Land 0.5 curated synonym configuration", () => {
-    expect(relevanceConfig.softwareLandCommit).toBe("f72444b530ea44a4d3b9cd430c4db1568a24548c");
+    expect(relevanceConfig.softwareLandCommit).toBe("ddcbca0d50404e312be1c16d3ded292407077f33");
+    expect(relevanceConfig.synonymMapKind).toBe("explicit-directional-authored-map");
     expect(omitKeys.has("testing")).toBe(true);
     expect(dictionaryEntries.some((entry) => entry.key === "testing")).toBe(false);
     expect(loadJson("dictionary.json").some((entry) => entry.key === "testing")).toBe(true);
+    expect(synonymFixture.softwareLandCommit).toBe("ddcbca0d50404e312be1c16d3ded292407077f33");
+    expect(synonymFixture.stats).toEqual({ sources: 115, edges: 148, jsonBytes: 2984 });
     expect(synonymFixture.map.qa).toEqual(["testing"]);
-    expect(synonymFixture.map.bearer).toEqual(expect.arrayContaining(["token"]));
+    expect(synonymFixture.map.testing).toBeUndefined();
+    expect(synonymFixture.map.vpn).toEqual(["tls"]);
+    expect(synonymFixture.map.tls).toEqual(["ssl"]);
+    expect(synonymFixture.map.tls).not.toEqual(expect.arrayContaining(["vpn"]));
+    expect(synonymFixture.map.authentication).toEqual(expect.arrayContaining(["vulnerability"]));
+    expect(synonymFixture.map.vulnerability).toEqual(expect.arrayContaining(["authentication"]));
+    expect(synonymFixture.map.bearer).toEqual(["token"]);
     expect(synonymFixture.map.token).toBeUndefined();
+    expect(synonymFixture.map.rbac).toBeUndefined();
+    expect(synonymFixture.map.architecture).toBeUndefined();
     expect(historical.counts.historicalRelevanceApplicable).toBe(214);
     expect(applicable).toHaveLength(214);
     expect(applicable.filter((row) => row.classification === "C")).toHaveLength(0);

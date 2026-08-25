@@ -29,7 +29,7 @@ They must never become Core defaults.
 | Strict V2 contracts | 98 (`v2-contracts.json`) |
 | B-intent regressions | 60 (`regression-scenarios.json`, compatibility coverage, not Core policy) |
 | Historical inventory | 215 rows (`historical-scenarios.json`); 214 executable relevance contracts |
-| Historical relevance config | `relevance-config.json` + `synonym-map.json` (Software.Land `f72444b530ea44a4d3b9cd430c4db1568a24548c`) |
+| Historical relevance config | `relevance-config.json` + `synonym-map.json` (Software.Land `ddcbca0d50404e312be1c16d3ded292407077f33`) |
 | Omitted empty-intent rows | 44 (not mined into V2 intent/regression; still in historical relevance) |
 | Omitted V1-only source rows | 126 (B + A without intent; some re-enter as regressions; still in historical relevance when `expectedTop` exists) |
 | Omitted browser/UI-only | 1 (`zzz-no-hit` no-results copy) |
@@ -47,7 +47,9 @@ are executable Software.Land relevance contracts in
 exact order). Classification C is omitted. That suite is not the exact-output
 oracle and not Core default ranking policy. The relevance engine loads curated
 synonyms from `synonym-map.json` and omits the `testing` dictionary key, matching
-Software.Land commit `f72444b530ea44a4d3b9cd430c4db1568a24548c`. Empty-intent rows
+Software.Land commit `ddcbca0d50404e312be1c16d3ded292407077f33`
+(`src/search/synonymMap.js`, explicit directional map, no auto-reverse).
+Corpus artifacts themselves are unchanged. Empty-intent rows
 are not mined into V2 intent/regression cases; they still participate in
 historical relevance when `expectedTop` or `titlePrefix` exist.
 
@@ -66,7 +68,7 @@ and `tests/search-v2-contracts.js` from the committed scenario SHA.
 - `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy
 - `historical-scenarios.json` — full 215-row inventory; `v1.expectedTop`/`titlePrefix`/`topN` are executable historical relevance contracts
 - `relevance-config.json` — Software.Land 0.5 relevance-engine inputs (omit `testing`, load synonym map)
-- `synonym-map.json` — curated runtime directional synonym map from Software.Land `f72444b`
+- `synonym-map.json` — explicit directional curated synonym map from Software.Land `ddcbca0` (`SYNONYM_MAP`; no reverse materialization)
 - `scenarios.json` — index, counts, and disposition totals
 - `manifest.json` — format, corpus/scenario source commits, package version, document count, scenario provenance, SHA256s
 
@@ -106,8 +108,9 @@ node scripts/software-land-scenarios.mjs \
   --manifest test/fixtures/software-land/manifest.json
 ```
 
-Copy `synonym-map.json` from Software.Land `RUNTIME_SYNONYM_MAP` at the recorded
-`relevanceSoftwareLandCommit`. Do not generate `expectedTop` / `topN` /
+Copy `synonym-map.json` from Software.Land committed `SYNONYM_MAP` at the recorded
+`relevanceSoftwareLandCommit` after generic OSS `normalizeSearchEquivalences()`.
+Do not reverse-materialize. Do not generate `expectedTop` / `topN` /
 `titlePrefix` from current engine output.
 
 Do not run `compileSemantic` in OSS CI. Do not copy models, vectors, markdown

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- Software.Land historical relevance synonym fixture now matches committed Software.Land `ddcbca0` explicit directional `SYNONYM_MAP` (115 sources / 148 edges, no auto-reverse). The exact-output oracle and frozen dictionary snapshot are unchanged. `testing` remains omitted only in the relevance engine config.
+
 ### Fixed
 
 - Extra search-equivalence concepts attached after configured occupancy (`provenance: "synonym"` targets such as `rbac → security`) no longer count as typed/configured lexical coverage. `queryCoverage`, `bodyLexicalMatch`, and title `formSet` use the real query concept set. Retrieval source is `synonym-recall`. Named features `synonymRecallMatch` / `synonymRecallTitleMatch` / `synonymRecallBodyMatch` expose recall quality. Constraints `literal-over-synonym-recall` and `synonym-title-over-synonym-body` rank identity evidence above synonym-only recall, and synonym title above synonym body. Ordinary uncovered-term synonym forms remain merged into the same term concept and are unchanged. `synonymRecallScore` uses the same title×2 + body-only×0.3 + formCount×0.3 shape as topical/standalone recall.
