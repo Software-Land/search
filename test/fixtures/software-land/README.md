@@ -29,7 +29,7 @@ They must never become Core defaults.
 | Strict V2 contracts | 98 (`v2-contracts.json`) |
 | B-intent regressions | 60 (`regression-scenarios.json`, compatibility coverage, not Core policy) |
 | Historical inventory | 215 rows (`historical-scenarios.json`); 214 executable relevance contracts |
-| Historical relevance config | `relevance-config.json` + `synonym-map.json` (Software.Land `ddcbca0d50404e312be1c16d3ded292407077f33`) |
+| Historical relevance config | `relevance-config.json` + `synonym-map.json` (Software.Land `eac7a90a15d772f0f0626a0fa9481eb9efa55521`) |
 | Omitted empty-intent rows | 44 (not mined into V2 intent/regression; still in historical relevance) |
 | Omitted V1-only source rows | 126 (B + A without intent; some re-enter as regressions; still in historical relevance when `expectedTop` exists) |
 | Omitted browser/UI-only | 1 (`zzz-no-hit` no-results copy) |
@@ -46,10 +46,11 @@ are executable Software.Land relevance contracts in
 `test/software-land-historical-relevance.test.js` (membership within topN, not
 exact order). Classification C is omitted. That suite is not the exact-output
 oracle and not Core default ranking policy. The relevance engine loads curated
-synonyms from `synonym-map.json` and omits the `testing` dictionary key, matching
-Software.Land commit `ddcbca0d50404e312be1c16d3ded292407077f33`
-(`src/search/synonymMap.js`, explicit directional map, no auto-reverse).
-Corpus artifacts themselves are unchanged. Empty-intent rows
+synonyms from `synonym-map.json`, omits the `testing` dictionary key, and patches
+AppSec aliases/`topicalRecall` from `relevance-config.json`, matching
+Software.Land commit `eac7a90a15d772f0f0626a0fa9481eb9efa55521`
+(`src/search/synonymMap.js` plus committed `appsec.topicalRecall`; no auto-reverse).
+Corpus artifacts and the exact-output `dictionary.json` snapshot are unchanged. Empty-intent rows
 are not mined into V2 intent/regression cases; they still participate in
 historical relevance when `expectedTop` or `titlePrefix` exist.
 
@@ -67,8 +68,8 @@ and `tests/search-v2-contracts.js` from the committed scenario SHA.
 - `v2-contracts.json` — strict accepted V2 cases (`kind: contract`)
 - `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy
 - `historical-scenarios.json` — full 215-row inventory; `v1.expectedTop`/`titlePrefix`/`topN` are executable historical relevance contracts
-- `relevance-config.json` — Software.Land 0.5 relevance-engine inputs (omit `testing`, load synonym map)
-- `synonym-map.json` — explicit directional curated synonym map from Software.Land `ddcbca0` (`SYNONYM_MAP`; no reverse materialization)
+- `relevance-config.json` — Software.Land 0.5 relevance-engine inputs (omit `testing`, patch AppSec topicalRecall, load synonym map)
+- `synonym-map.json` — explicit directional curated synonym map from Software.Land `eac7a90` (`SYNONYM_MAP`; no reverse materialization)
 - `scenarios.json` — index, counts, and disposition totals
 - `manifest.json` — format, corpus/scenario source commits, package version, document count, scenario provenance, SHA256s
 
@@ -110,8 +111,9 @@ node scripts/software-land-scenarios.mjs \
 
 Copy `synonym-map.json` from Software.Land committed `SYNONYM_MAP` at the recorded
 `relevanceSoftwareLandCommit` after generic OSS `normalizeSearchEquivalences()`.
-Do not reverse-materialize. Do not generate `expectedTop` / `topN` /
-`titlePrefix` from current engine output.
+Patch AppSec dictionary aliases/`topicalRecall` only through `relevance-config.json`;
+do not edit frozen `dictionary.json`. Do not reverse-materialize. Do not generate
+`expectedTop` / `topN` / `titlePrefix` from current engine output.
 
 Do not run `compileSemantic` in OSS CI. Do not copy models, vectors, markdown
 posts, Gatsby code, V1 rankings, or the app E2E runner.

@@ -1,16 +1,17 @@
 {
   "kind": "software-land-explicit-directional-synonym-map",
-  "softwareLandCommit": "ddcbca0d50404e312be1c16d3ded292407077f33",
+  "softwareLandCommit": "eac7a90a15d772f0f0626a0fa9481eb9efa55521",
   "notes": [
-    "Explicit directional curated SYNONYM_MAP from Software.Land ddcbca0.",
+    "Explicit directional curated SYNONYM_MAP from Software.Land eac7a90.",
+    "AppSec topical neighbors live on dictionary topicalRecall, not this map.",
     "No V1 reverse materialization. Runtime map equals authored map after generic OSS normalization.",
     "Fixture input for historical relevance only. Not Core default policy.",
     "Do not auto-reverse generated/Luna maps through this snapshot."
   ],
   "stats": {
     "sources": 115,
-    "edges": 148,
-    "jsonBytes": 2984
+    "edges": 142,
+    "jsonBytes": 2912
   },
   "map": {
     "a*": [
@@ -27,13 +28,7 @@
       "olap"
     ],
     "appsec": [
-      "authentication",
-      "authorization",
-      "bearer",
-      "oath",
-      "rbac",
-      "saml",
-      "vulnerability"
+      "oath"
     ],
     "astar": [
       "a*",

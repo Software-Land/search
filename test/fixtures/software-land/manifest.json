@@ -46,18 +46,18 @@
       "sha256": "965bdcdd766fb004f176558255242281decc84a393f7e42b94817f1851193266"
     },
     "relevance-config.json": {
-      "bytes": 901,
-      "sha256": "b3ab980f5a324263c770df5d8c80595ef01e5498251c69d7399d62685cb410d2"
+      "bytes": 1451,
+      "sha256": "81718d408d6355d87190dac40cccdbdc1729a0b2509dedf25a95b1b2e2a61b1a"
     },
     "synonym-map.json": {
-      "bytes": 5851,
-      "sha256": "41c44567e0cf12072575cb9389f82e4eb79ab535cd3ab27f62b3cf65305fda7a"
+      "bytes": 5817,
+      "sha256": "701340d872b2f45c41ee8e093a4c6d50f86acf2c7e5b188b83259de69d2db7d0"
     }
   },
   "scenarioCount": 215,
   "executableV2ScenarioCount": 98,
   "historicalRelevanceApplicable": 214,
-  "relevanceSoftwareLandCommit": "ddcbca0d50404e312be1c16d3ded292407077f33",
+  "relevanceSoftwareLandCommit": "eac7a90a15d772f0f0626a0fa9481eb9efa55521",
   "omittedV1OnlyCount": 126,
   "omittedBrowserUiOnlyCount": 1,
   "sourceScenarioFiles": [

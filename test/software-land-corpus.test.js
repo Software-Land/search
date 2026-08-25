@@ -192,7 +192,7 @@ describe("software-land corpus fixture", () => {
     expect(manifest.corpusSourceCommit).toBe("dff24cf606967cb50b24d28d9142747c9203e053");
     expect(manifest.scenarioSourceCommit).toBe("08e1b735ae01a3815964360ef3b9141466176dc4");
     expect(manifest.softwareLandCommit).toBeUndefined();
-    expect(manifest.relevanceSoftwareLandCommit).toBe("ddcbca0d50404e312be1c16d3ded292407077f33");
+    expect(manifest.relevanceSoftwareLandCommit).toBe("eac7a90a15d772f0f0626a0fa9481eb9efa55521");
     expect(manifest.historicalRelevanceApplicable).toBe(214);
     expect(manifest.searchPackageVersion).toBe("0.3.1");
     expect(manifest.documentCount).toBe(122);
@@ -225,7 +225,7 @@ describe("software-land corpus fixture", () => {
     expect(readme).toContain("not Core ranking policy");
     expect(readme).toContain("dff24cf606967cb50b24d28d9142747c9203e053");
     expect(readme).toContain("08e1b735ae01a3815964360ef3b9141466176dc4");
-    expect(readme).toContain("ddcbca0d50404e312be1c16d3ded292407077f33");
+    expect(readme).toContain("eac7a90a15d772f0f0626a0fa9481eb9efa55521");
   });
 
   test("historical inventory keeps intent-mining dispositions and marks relevance applicability", () => {
