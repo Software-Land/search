@@ -54,6 +54,11 @@ export interface EnglishPlugin {
    * to rewrite retrieval tokens (application → applicat, kubernetes → kubernete).
    */
   canonicalLemma(token: string): string | null;
+  /**
+   * Inflected lemma-table keys for query-time typo candidate generation.
+   * Internal duck-typed hook; not part of the public `EnglishPlugin` contract.
+   */
+  lemmaTableKeys(): Iterable<string>;
   collapseRepeats: typeof collapseTrailingRepeats;
 }
 
@@ -93,6 +98,9 @@ export function createEnglishPlugin({ lemmas = {} }: { lemmas?: Record<string, s
     },
     canonicalLemma(token) {
       return exactTableLemma(token);
+    },
+    lemmaTableKeys() {
+      return Object.keys(table);
     },
     collapseRepeats: collapseTrailingRepeats,
   };

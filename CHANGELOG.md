@@ -8,6 +8,7 @@
 
 ### Fixed
 
+- Unknown query tokens are repaired individually after tokenization: exact compound segmentation may split a glued token inside a multi-token query, and typo correction may use morphology lemma-table keys (for example `recursing`) as well as title/dictionary vocabulary. Typed `surface` / `originalSurface` stay what the user typed. Lemma keys join the existing bounded typo candidate set (length-band ±2, edit distance ≤ 2) and do not scan documents. Known words, configured keys, confident lemmas, and title/dictionary prefixes are not rewritten here.
 - Extra search-equivalence concepts attached after configured occupancy (`provenance: "synonym"` targets such as `rbac → security`) no longer count as typed/configured lexical coverage. `queryCoverage`, `bodyLexicalMatch`, and title `formSet` use the real query concept set. Retrieval source is `synonym-recall`. Named features `synonymRecallMatch` / `synonymRecallTitleMatch` / `synonymRecallBodyMatch` expose recall quality. Constraints `literal-over-synonym-recall` and `synonym-title-over-synonym-body` rank identity evidence above synonym-only recall, and synonym title above synonym body. Ordinary uncovered-term synonym forms remain merged into the same term concept and are unchanged. `synonymRecallScore` uses the same title×2 + body-only×0.3 + formCount×0.3 shape as topical/standalone recall.
 
 ### Added

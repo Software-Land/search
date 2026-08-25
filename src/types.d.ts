@@ -75,6 +75,8 @@ export interface SearchPlugin {
   /** Explicit lemma-table identity only; omit suffix-heuristic stems. */
   canonicalLemma?: (token: string) => string | null;
   lexicon?: () => Iterable<string>;
+  /** Inflected lemma-table keys for typo vocabulary. Not a public root export. */
+  lemmaTableKeys?: () => Iterable<string>;
   sequences?: DictionarySequence[];
   byKey?: Map<string, DictionaryEntry>;
   standaloneRecallByToken?: Map<string, string>;

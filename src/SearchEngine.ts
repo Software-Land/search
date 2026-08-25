@@ -86,6 +86,11 @@ function typoVocabulary(index: SearchIndex, plugins: SearchPlugin[]) {
         if (typeof w === "string" && w.length >= 5) set.add(w);
       }
     }
+    if (typeof plugin.lemmaTableKeys === "function") {
+      for (const w of plugin.lemmaTableKeys()) {
+        if (typeof w === "string" && w.length >= 5) set.add(w);
+      }
+    }
   }
   return set;
 }

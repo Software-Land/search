@@ -154,8 +154,11 @@ describe("final-token prefix completion", () => {
       plugins: [morphology()],
       lexicon,
     });
-    expect(without.tokens[0].normalized).toBe("secure");
+    expect(without.tokens[0].surface).toBe("recurse");
+    expect(without.tokens[0].surfaceNormalized).toBe("recursed");
+    expect(without.tokens[0].normalized).toBe("recursion");
     expect(without.tokens[0].sources).toContain("typo-correction");
+    expect(without.tokens[0].sources).toContain("morphology");
 
     const withLemma = analyzeQuery("recurse", {
       plugins: [morphology({ lemmas: { recurse: "recursion" } })],
@@ -369,6 +372,180 @@ describe("acronym body evidence is contiguous", () => {
   });
 });
 
+describe("unknown-token repair", () => {
+  const apiLexicon = ["application", "programming", "interface", "security"];
+  const apiPlugins = [
+    morphology(),
+    dictionary({
+      entries: [{ key: "api", expansion: ["application", "programming", "interface"] }],
+    }),
+  ];
+
+  test("glued first token in a multi-token query is exact-segmented", () => {
+    const q = analyzeQuery("applicationprogramming interface", {
+      plugins: apiPlugins,
+      lexicon: apiLexicon,
+    });
+    expect(q.originalSurface).toEqual(["applicationprogramming", "interface"]);
+    expect(q.tokens.map((t) => t.surface)).toEqual(["application", "programming", "interface"]);
+    expect(q.tokens.map((t) => t.normalized)).toEqual(["application", "programming", "interface"]);
+    expect(q.alternatives.some((a) => a.source === "compound-segment" && a.tokens[0] === "application")).toBe(
+      true
+    );
+    expect(q.configuredSequenceIntent?.key).toBe("api");
+  });
+
+  test("glued later token in a multi-token query is exact-segmented", () => {
+    const q = analyzeQuery("application programminginterface", {
+      plugins: apiPlugins,
+      lexicon: apiLexicon,
+    });
+    expect(q.originalSurface).toEqual(["application", "programminginterface"]);
+    expect(q.tokens.map((t) => t.surface)).toEqual(["application", "programming", "interface"]);
+    expect(q.tokens.map((t) => t.normalized)).toEqual(["application", "programming", "interface"]);
+    expect(q.alternatives.some((a) => a.source === "compound-segment" && a.tokens.includes("programming"))).toBe(
+      true
+    );
+    expect(q.configuredSequenceIntent?.key).toBe("api");
+  });
+
+  test("ambiguous multi-token segmentation stays longest-first and insertion-order independent", () => {
+    const first = analyzeQuery("abcdefgh extra", {
+      plugins: [morphology()],
+      lexicon: ["abc", "defgh", "abcd", "efgh", "extra"],
+    });
+    const second = analyzeQuery("abcdefgh extra", {
+      plugins: [morphology()],
+      lexicon: ["efgh", "abcd", "defgh", "abc", "extra"],
+    });
+    expect(first.originalSurface).toEqual(["abcdefgh", "extra"]);
+    expect(first.tokens.map((t) => t.normalized)).toEqual(["abcd", "efgh", "extra"]);
+    expect(second.tokens.map((t) => t.normalized)).toEqual(first.tokens.map((t) => t.normalized));
+  });
+
+  test("unknown token with no complete covering is not split", () => {
+    const q = analyzeQuery("applicationxyz interface", {
+      plugins: apiPlugins,
+      lexicon: apiLexicon,
+    });
+    expect(q.tokens.map((t) => t.surface)).toEqual(["applicationxyz", "interface"]);
+    expect(q.alternatives.some((a) => a.source === "compound-segment")).toBe(false);
+  });
+
+  test("recurssing repairs through the inflected lemma form without mutating typed surface", () => {
+    const q = analyzeQuery("recurssing", {
+      plugins: [morphology()],
+      lexicon: ["recursion", "secure"],
+    });
+    expect(q.raw).toBe("recurssing");
+    expect(q.originalSurface).toEqual(["recurssing"]);
+    expect(q.tokens).toHaveLength(1);
+    expect(q.tokens[0].surface).toBe("recurssing");
+    expect(q.tokens[0].surfaceNormalized).toBe("recursing");
+    expect(q.tokens[0].normalized).toBe("recursion");
+    expect(q.tokens[0].lemma).toBe("recursion");
+    expect(q.tokens[0].sources).toEqual(["surface", "typo-correction", "morphology"]);
+    expect(q.alternatives.some((a) => a.source === "typo-correction" && a.tokens[0] === "recursing")).toBe(
+      true
+    );
+  });
+
+  test("legitimate prefixes and known family forms are not unknown-token repaired", () => {
+    const lexicon = [
+      "application",
+      "applications",
+      "applicable",
+      "apple",
+      "apply",
+      "applied",
+      "applies",
+      "programming",
+      "interface",
+      "authorization",
+      "authorized",
+      "sharding",
+      "shard",
+      "recursion",
+      "authentication",
+    ];
+    const prefixLexicon = lexicon;
+    const plugins = [morphology()];
+    const prefixes = ["appl", "appli", "applic", "author", "shard", "shardin", "recursiv"];
+    for (const query of prefixes) {
+      const q = analyzeQuery(query, { plugins, lexicon, prefixLexicon });
+      expect(q.originalSurface).toEqual([query]);
+      expect(q.tokens).toHaveLength(1);
+      expect(q.tokens[0].surface).toBe(query);
+      expect(q.alternatives.some((a) => a.source === "compound-segment")).toBe(false);
+    }
+    const appl = analyzeQuery("appl", { plugins, lexicon, prefixLexicon });
+    expect(appl.tokens[0].sources).not.toContain("typo-correction");
+    expect(appl.tokens[0].normalized).toBe("appl");
+    const shard = analyzeQuery("shard", { plugins, lexicon, prefixLexicon });
+    expect(shard.tokens[0].normalized).toBe("shard");
+    expect(shard.tokens[0].sources).not.toContain("typo-correction");
+  });
+
+  test("ordinary valid words stay untouched", () => {
+    const lexicon = [
+      "authentication",
+      "authorization",
+      "recursion",
+      "sharding",
+      "application",
+      "programming",
+      "interface",
+    ];
+    const plugins = [morphology()];
+    const untouched = {
+      authentication: "authentication",
+      authorization: "authorization",
+      recursion: "recursion",
+      recursive: "recursion",
+      recursing: "recursion",
+      sharding: "shard",
+      application: "application",
+      programming: "programming",
+      interface: "interface",
+    };
+    for (const [query, normalized] of Object.entries(untouched)) {
+      const q = analyzeQuery(query, { plugins, lexicon });
+      expect(q.originalSurface).toEqual([query]);
+      expect(q.tokens).toHaveLength(1);
+      expect(q.tokens[0].surface).toBe(query);
+      expect(q.tokens[0].normalized).toBe(normalized);
+      expect(q.tokens[0].sources).not.toContain("typo-correction");
+      expect(q.alternatives.some((a) => a.source === "compound-segment")).toBe(false);
+    }
+    const phrase = analyzeQuery("application programming interface", {
+      plugins: apiPlugins,
+      lexicon: apiLexicon,
+    });
+    expect(phrase.originalSurface).toEqual(["application", "programming", "interface"]);
+    expect(phrase.tokens.map((t) => t.surface)).toEqual(["application", "programming", "interface"]);
+    expect(phrase.alternatives.some((a) => a.source === "compound-segment")).toBe(false);
+    expect(phrase.alternatives.some((a) => a.source === "typo-correction")).toBe(false);
+  });
+
+  test("recurssing retrieves Recursion as #1", async () => {
+    const engine = SearchEngine.create({
+      schema,
+      plugins: [morphology()],
+      retriever: "full-scan",
+    });
+    await engine.index([
+      { id: "recursion", title: "What is Recursion?", body: "A function that calls itself." },
+      { id: "secure", title: "App Sec", body: "Application security." },
+    ]);
+    const detailed = engine.searchDetailed("recurssing", { limit: 5, explain: true });
+    expect(detailed.results[0].title).toBe("What is Recursion?");
+    const tok = detailed.results[0].explanation.query.tokens[0];
+    expect(tok.surface).toBe("recurssing");
+    expect(tok.surfaceNormalized).toBe("recursing");
+    expect(tok.normalized).toBe("recursion");
+  });
+});
+
 describe("public PrefixCompletion typing surface", () => {
   test("index.d.ts and types.d.ts agree on PrefixCompletion and omit alignmentStartsAtZero", async () => {
     const fs = await import("node:fs");
@@ -385,5 +562,6 @@ describe("public PrefixCompletion typing surface", () => {
     expect(internal).toMatch(/source: "final-token-prefix"/);
     expect(pub).not.toMatch(/alignmentStartsAtZero/);
     expect(internal).not.toMatch(/alignmentStartsAtZero/);
+    expect(pub).not.toMatch(/lemmaTableKeys/);
   });
 });

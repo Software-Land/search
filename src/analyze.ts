@@ -279,6 +279,69 @@ function lexiconFrom(plugins: SearchPlugin[], extra: Iterable<string> | Set<stri
   return words;
 }
 
+/** Typo candidates stay length ≥ 5, matching `suggestTypoForms` and SearchEngine. */
+const MIN_SPELLING_KEY_LENGTH = 5;
+
+/**
+ * Lemma-table keys join typo candidate generation only. They are not merged
+ * into the title/dictionary lexicon used for exact compound segmentation or
+ * final-token prefix completion, so legitimate prefixes stay prefixes.
+ *
+ * Complexity: one bounded pass over each morphology table (site lemmas are a
+ * fixed compiled map, not a document scan). `suggestTypoForms` still scans
+ * the resulting candidate set with length-band ±2 and edit distance ≤ 2.
+ */
+function spellingLexiconFrom(plugins: SearchPlugin[], base: Set<string>) {
+  const words = new Set(base);
+  for (const plugin of plugins) {
+    if (typeof plugin.lemmaTableKeys !== "function") continue;
+    for (const key of plugin.lemmaTableKeys()) {
+      if (typeof key === "string" && key.length >= MIN_SPELLING_KEY_LENGTH) words.add(key);
+    }
+  }
+  return words;
+}
+
+/**
+ * Unknown-only repair gate. Known vocabulary, configured keys, confident
+ * morphology, and title/dictionary prefixes must not be rewritten here.
+ */
+function isProtectedFromUnknownRepair(
+  token: string,
+  lex: Set<string>,
+  dictionaryKeys: Set<string>,
+  plugins: SearchPlugin[]
+) {
+  if (lex.has(token) || dictionaryKeys.has(token)) return true;
+  if (pluginCanonicalLemma(plugins, token)) return true;
+  if (isPrefixOfVocabulary(token, lex)) return true;
+  return false;
+}
+
+function repairUnknownExactCompounds(
+  surface: string[],
+  lex: Set<string>,
+  dictionaryKeys: Set<string>,
+  plugins: SearchPlugin[],
+  alternatives: QueryAlternative[]
+) {
+  const out: string[] = [];
+  for (const tok of surface) {
+    if (isProtectedFromUnknownRepair(tok, lex, dictionaryKeys, plugins)) {
+      out.push(tok);
+      continue;
+    }
+    const segmented = segmentExactCompound(tok, lex);
+    if (segmented) {
+      out.push(...segmented);
+      alternatives.push({ tokens: segmented, source: "compound-segment", confidence: 1 });
+    } else {
+      out.push(tok);
+    }
+  }
+  return out;
+}
+
 const MIN_FINAL_PREFIX_LEN = 4;
 /** Reject prefix completion when more than this many vocabulary words match; the prefix is too ambiguous to rewrite. */
 const MAX_PREFIX_COMPLETIONS = 48;
@@ -940,17 +1003,15 @@ export function analyzeQuery(
   const dict = dictionaryPlugin(plugins);
   const lex = lexiconFrom(plugins, lexicon);
   const prefixLex = prefixLexicon == null ? lex : lexiconFrom(plugins, prefixLexicon);
+  const spellingLex = spellingLexiconFrom(plugins, lex);
   const dictionaryKeys = dictionaryKeysFrom(plugins);
   const alternatives: QueryAlternative[] = [];
 
   let surface = tokenize(raw);
+  surface = repairUnknownExactCompounds(surface, lex, dictionaryKeys, plugins, alternatives);
   if (surface.length === 1) {
     const original = surface[0];
-    const segmented = segmentExactCompound(original, lex);
-    if (segmented) {
-      surface = segmented;
-      alternatives.push({ tokens: segmented, source: "compound-segment", confidence: 1 });
-    } else {
+    if (!isProtectedFromUnknownRepair(original, lex, dictionaryKeys, plugins)) {
       const spelled = compoundSpellSegment(original, lex, { signal });
       if (spelled) {
         surface = spelled.tokens;
@@ -982,10 +1043,13 @@ export function analyzeQuery(
     // Suffix-heuristic stems stay on `lemma` and do not skip typo repair.
     const tableLemma = pluginCanonicalLemma(plugins, normalized);
     const typoHits =
-      lex.has(normalized) || isPrefixOfVocabulary(normalized, lex) || tableLemma
+      lex.has(normalized) ||
+      dictionaryKeys.has(normalized) ||
+      isPrefixOfVocabulary(normalized, lex) ||
+      tableLemma
         ? []
-        : suggestTypoForms(normalized, lex, { signal });
-    const edit = typoHits.find((s) => s.provenance === "edit-distance" && lex.has(s.form));
+        : suggestTypoForms(normalized, spellingLex, { signal });
+    const edit = typoHits.find((s) => s.provenance === "edit-distance" && spellingLex.has(s.form));
     if (edit) {
       alternatives.push({
         tokens: [edit.form],
@@ -1178,10 +1242,13 @@ export function analyzeQuery(
 }
 
 /**
- * Conservative typo suggestions against a candidate vocabulary (titles ∪ dictionary).
+ * Conservative typo suggestions against a candidate vocabulary
+ * (titles ∪ dictionary lexicon ∪ morphology lemma-table keys).
  * Short alphanumeric literals (s3, h2, k8) are not treated as spelling errors.
  * Equal-distance edit candidates keep the lexicographically smaller form so the
  * choice does not depend on Set/corpus insertion order or document ids.
+ * Work is O(|candidates|) with a ±2 length band and edit distance ≤ 2; lemma
+ * keys enlarge that finite set and do not scan documents at query time.
  */
 export function suggestTypoForms(
   token: unknown,

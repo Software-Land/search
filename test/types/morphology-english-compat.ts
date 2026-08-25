@@ -25,6 +25,8 @@ void plugin.name;
 void plugin.indexIdentity;
 void plugin.lemma("widgets");
 void plugin.canonicalLemma("widgets");
+// @ts-expect-error lemmaTableKeys is not a public EnglishPlugin hook
+void plugin.lemmaTableKeys;
 
 const withMap: EnglishPlugin = morphology({ lemmas: { widgets: "widget" } });
 void withMap.lemma("widgets");
