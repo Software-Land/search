@@ -4,7 +4,7 @@
 
 ### Changed
 
-- Software.Land historical relevance fixture now matches committed Software.Land `eac7a90` explicit directional `SYNONYM_MAP` (115 sources / 142 edges) plus AppSec `topicalRecall`. The exact-output oracle and frozen `dictionary.json` snapshot are unchanged. `testing` remains omitted only in the relevance engine config; AppSec alias `["security"]` is omitted and topical forms are patched only there.
+- Software.Land historical relevance fixture now matches committed Software.Land `4845a9f` live search-equivalence map (curated 115/142 plus 118 validated generated edges; 233 sources / 260 edges). AppSec `topicalRecall` remains from `eac7a90`. The exact-output oracle and frozen `dictionary.json` snapshot are unchanged. `testing` remains omitted only in the relevance engine config; AppSec alias `["security"]` is omitted and topical forms are patched only there.
 
 ### Fixed
 

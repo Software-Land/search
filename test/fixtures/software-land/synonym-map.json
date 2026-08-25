@@ -1,17 +1,17 @@
 {
   "kind": "software-land-explicit-directional-synonym-map",
-  "softwareLandCommit": "eac7a90a15d772f0f0626a0fa9481eb9efa55521",
+  "softwareLandCommit": "4845a9f171af23f8c713924046efecf35d4c6ab3",
   "notes": [
-    "Explicit directional curated SYNONYM_MAP from Software.Land eac7a90.",
+    "Live Software.Land search-equivalence map from 4845a9f: curated SYNONYM_MAP plus validated generated additions.",
+    "Curated always wins. No auto-reverse, no recursive expansion, no two-hop chaining.",
     "AppSec topical neighbors live on dictionary topicalRecall, not this map.",
-    "No V1 reverse materialization. Runtime map equals authored map after generic OSS normalization.",
-    "Fixture input for historical relevance only. Not Core default policy.",
-    "Do not auto-reverse generated/Luna maps through this snapshot."
+    "Four Luna edges are omitted at Software.Land materialize (runtime-exclusions.json); the Luna artifact is unchanged.",
+    "Fixture input for historical relevance only. Not Core default policy."
   ],
   "stats": {
-    "sources": 115,
-    "edges": 142,
-    "jsonBytes": 2912
+    "sources": 233,
+    "edges": 260,
+    "jsonBytes": 8186
   },
   "map": {
     "a*": [
@@ -385,6 +385,360 @@
       "oauth",
       "rbac",
       "saml"
+    ],
+    "a* pathfinding": [
+      "a star pathfinding"
+    ],
+    "about the blog": [
+      "about this blog"
+    ],
+    "access control middleware": [
+      "authorization middleware"
+    ],
+    "agile versus waterfall": [
+      "agile vs waterfall"
+    ],
+    "algorithms for rate limiting": [
+      "rate limiting algorithms"
+    ],
+    "api explained": [
+      "what is an api"
+    ],
+    "asymmetric information": [
+      "information asymmetry"
+    ],
+    "asynchronous versus synchronous": [
+      "asynchronous vs synchronous"
+    ],
+    "backtracking dfs": [
+      "dfs backtracking"
+    ],
+    "build phase": [
+      "build time"
+    ],
+    "class versus interface": [
+      "class vs interface"
+    ],
+    "cloud definition": [
+      "what is the cloud"
+    ],
+    "cockroachdb comparison postgres": [
+      "cockroachdb vs postgres"
+    ],
+    "cockroachdb versus postgres": [
+      "cockroachdb vs postgres"
+    ],
+    "cockroachdb vs postgresql": [
+      "cockroachdb vs postgres"
+    ],
+    "code refactoring": [
+      "refactoring"
+    ],
+    "codecademy evaluation": [
+      "codecademy review"
+    ],
+    "computing at the edge": [
+      "edge computing"
+    ],
+    "concurrency and parallelism": [
+      "concurrency vs parallelism"
+    ],
+    "concurrency versus parallelism": [
+      "concurrency vs parallelism"
+    ],
+    "custom python sorting": [
+      "python custom sorting"
+    ],
+    "custom sorting in python": [
+      "python custom sorting"
+    ],
+    "data encapsulation": [
+      "encapsulation"
+    ],
+    "data sharding": [
+      "sharding"
+    ],
+    "data structure definition": [
+      "data structure"
+    ],
+    "database sharding": [
+      "sharding"
+    ],
+    "declarative and imperative": [
+      "declarative vs imperative"
+    ],
+    "declarative versus imperative": [
+      "declarative vs imperative"
+    ],
+    "define interface": [
+      "what is an interface"
+    ],
+    "definition of code": [
+      "what is code"
+    ],
+    "design systems for react": [
+      "react design systems"
+    ],
+    "dev ops": [
+      "devops"
+    ],
+    "distributed cloud services": [
+      "distributed cloud"
+    ],
+    "docker container": [
+      "container"
+    ],
+    "edge based computing": [
+      "edge computing"
+    ],
+    "fetching data in react": [
+      "react data fetching"
+    ],
+    "free code camp review": [
+      "freecodecamp review"
+    ],
+    "function as a service": [
+      "serverless"
+    ],
+    "functional versus procedural": [
+      "functional vs procedural"
+    ],
+    "git compared to github": [
+      "git vs github"
+    ],
+    "git versus github": [
+      "git vs github"
+    ],
+    "grpc middleware": [
+      "grpc interceptor"
+    ],
+    "grpc versus kafka": [
+      "grpc vs kafka"
+    ],
+    "grpc versus rest": [
+      "grpc vs rest"
+    ],
+    "hot partitions": [
+      "hot shards"
+    ],
+    "http bearer token": [
+      "bearer token"
+    ],
+    "i o": [
+      "io"
+    ],
+    "imperative vs declarative": [
+      "declarative vs imperative"
+    ],
+    "in order traversal": [
+      "inorder"
+    ],
+    "interface definition": [
+      "what is an interface"
+    ],
+    "keyset pagination": [
+      "cursor pagination"
+    ],
+    "khan academy evaluation": [
+      "khan academy review"
+    ],
+    "knowledge graph definition": [
+      "knowledge graph"
+    ],
+    "latency tail": [
+      "tail latency"
+    ],
+    "latency vs throughput": [
+      "throughput vs latency"
+    ],
+    "linear and logistic regression": [
+      "linear vs logistic regression"
+    ],
+    "load versus stress testing": [
+      "load vs stress testing"
+    ],
+    "long tail latency": [
+      "tail latency"
+    ],
+    "max flow algorithm": [
+      "maximum flow algorithm"
+    ],
+    "microservices versus monolithic": [
+      "microservices vs monolithic"
+    ],
+    "migration to the cloud": [
+      "cloud migration"
+    ],
+    "monitoring metrics": [
+      "metrics monitoring"
+    ],
+    "monotone stack": [
+      "monotonic stack"
+    ],
+    "oauth vs saml": [
+      "saml vs oauth"
+    ],
+    "oltp versus olap": [
+      "oltp vs olap"
+    ],
+    "oop versus functional": [
+      "oop vs functional"
+    ],
+    "package dependency graph": [
+      "dependency graph"
+    ],
+    "pluralsight evaluation": [
+      "pluralsight review"
+    ],
+    "post order traversal": [
+      "postorder"
+    ],
+    "pre order traversal": [
+      "preorder"
+    ],
+    "process versus thread": [
+      "process vs thread"
+    ],
+    "protocol buffers": [
+      "protobuf"
+    ],
+    "raft consensus algorithm": [
+      "raft algorithm"
+    ],
+    "react auth": [
+      "react authentication"
+    ],
+    "react data retrieval": [
+      "react data fetching"
+    ],
+    "react performance tuning": [
+      "react performance optimization"
+    ],
+    "react ui component libraries": [
+      "react component libraries"
+    ],
+    "react with vite": [
+      "vite react"
+    ],
+    "reactjs suspense": [
+      "react suspense"
+    ],
+    "recursive function": [
+      "recursion"
+    ],
+    "recursive programming": [
+      "recursion"
+    ],
+    "request throttling": [
+      "rate limiting"
+    ],
+    "rest api versus graphql": [
+      "rest api vs graphql"
+    ],
+    "rest vs grpc": [
+      "grpc vs rest"
+    ],
+    "restful api vs graphql": [
+      "rest api vs graphql"
+    ],
+    "retry patterns": [
+      "retries"
+    ],
+    "review of coursera": [
+      "coursera review"
+    ],
+    "review of edx": [
+      "edx review"
+    ],
+    "review of khan academy": [
+      "khan academy review"
+    ],
+    "review of linkedin learning": [
+      "linkedin learning review"
+    ],
+    "review of udacity": [
+      "udacity review"
+    ],
+    "review of udemy": [
+      "udemy review"
+    ],
+    "saml versus oauth": [
+      "saml vs oauth"
+    ],
+    "seek pagination": [
+      "cursor pagination"
+    ],
+    "shadcn components": [
+      "shadcn ui react components"
+    ],
+    "shadcn react components": [
+      "shadcn ui react components"
+    ],
+    "signed cookies for cloudfront": [
+      "cloudfront signed cookies"
+    ],
+    "software dependency graph": [
+      "dependency graph"
+    ],
+    "software refactoring": [
+      "refactoring"
+    ],
+    "software testing": [
+      "testing"
+    ],
+    "sql or nosql": [
+      "sql vs nosql"
+    ],
+    "sql versus nosql": [
+      "sql vs nosql"
+    ],
+    "static vs dynamic site": [
+      "static vs dynamic websites"
+    ],
+    "strategy factory pattern comparison": [
+      "strategy vs factory pattern"
+    ],
+    "strategy versus factory pattern": [
+      "strategy vs factory pattern"
+    ],
+    "suspense in react": [
+      "react suspense"
+    ],
+    "symmetric and asymmetric encryption": [
+      "symmetric vs asymmetric encryption"
+    ],
+    "synchronous vs asynchronous": [
+      "asynchronous vs synchronous"
+    ],
+    "tcp versus udp": [
+      "tcp vs udp"
+    ],
+    "tech debt": [
+      "technical debt"
+    ],
+    "throughput versus latency": [
+      "throughput vs latency"
+    ],
+    "tls 1 2 weakness": [
+      "tls 1 2 vulnerability"
+    ],
+    "topological ordering": [
+      "topological sort"
+    ],
+    "treehouse evaluation": [
+      "treehouse review"
+    ],
+    "what does code mean": [
+      "what is code"
+    ],
+    "what is cloud": [
+      "what is the cloud"
+    ],
+    "what is docker": [
+      "docker"
+    ],
+    "zero trust": [
+      "zero trust security"
     ]
   }
 }
