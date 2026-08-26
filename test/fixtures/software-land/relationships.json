@@ -202,6 +202,18 @@
     ],
     "D": [
       {
+        "target": "bj",
+        "type": "editorial",
+        "strength": 1,
+        "provenance": "manual"
+      },
+      {
+        "target": "bz",
+        "type": "editorial",
+        "strength": 1,
+        "provenance": "manual"
+      },
+      {
         "target": "Q",
         "type": "semantic",
         "strength": 0.461957,
@@ -1443,6 +1455,18 @@
       }
     ],
     "bz": [
+      {
+        "target": "bj",
+        "type": "editorial",
+        "strength": 1,
+        "provenance": "manual"
+      },
+      {
+        "target": "D",
+        "type": "editorial",
+        "strength": 1,
+        "provenance": "manual"
+      },
       {
         "target": "e",
         "type": "semantic",
