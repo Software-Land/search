@@ -55,6 +55,7 @@
 ### Fixed
 
 - Indexed and compiled retrieval now preserve full-scan prefix recall semantics for recall-derived forms, maintaining exact retrieval-mode equivalence. The existing prefix information bound is unchanged.
+- Unambiguous configured-expansion prefixes that already meet the occupancy information bound keep their intended direct-evidence class. A 2/3 exact left prefix of a uniquely resolved expansion is moderate, not merely weak body overlap.
 
 ### Changed
 

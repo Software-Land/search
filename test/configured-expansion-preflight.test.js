@@ -198,6 +198,7 @@ describe("single-token frames ranking window", () => {
     const fpsTwo = two.results.find((r) => r.id === "fps");
     expect(fpsTwo).toBeTruthy();
     expect(fpsTwo.rank).toBe(1);
+    expect(fpsTwo.directClass).toBe("moderate");
     expect(fpsTwo.explanation.query.concepts.some((c) => c.id === "fps")).toBe(true);
     expect(fpsOne).toBeTruthy();
     expect(fpsOne.explanation.query.concepts.some((c) => c.id === "fps")).toBe(false);

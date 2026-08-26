@@ -449,6 +449,63 @@ function expansionEvidence(query: AnalyzedQuery, doc: IndexedDocument) {
   return Number((hits.length / expansion.length).toFixed(4));
 }
 
+/**
+ * Occupied configured-expansion coverage from query analysis.
+ * 0 unless the query uniquely occupies a configured concept with at least
+ * 2 matched expansion tokens (the existing prefix occupancy information bound).
+ */
+function occupiedPartialExpansion(query: AnalyzedQuery) {
+  const acr = getQueryFeatPrep(query).acronym;
+  if (!acr) return null;
+  // Same information bound as configured expansion-prefix occupancy:
+  // at least 2 tokens and 2/3 coverage. Full expansions keep existing paths.
+  if ((acr.matchedExpansionTokens || 0) < 2) return null;
+  const coverage = acr.expansionCoverage;
+  if (typeof coverage !== "number" || !Number.isFinite(coverage)) return null;
+  if (coverage < TWO_THIRDS_QUERY_COVERAGE || coverage >= FULL_QUERY_COVERAGE) return null;
+  return acr;
+}
+
+function configuredExpansionCoverage(query: AnalyzedQuery) {
+  const acr = getQueryFeatPrep(query).acronym;
+  if (!acr) return 0;
+  const coverage = acr.expansionCoverage;
+  return typeof coverage === "number" && Number.isFinite(coverage) ? coverage : 0;
+}
+
+function exactTokenSequence(seq: string[], fieldToks: string[]) {
+  if (seq.length < 2 || fieldToks.length < seq.length) return false;
+  const m = seq.length;
+  const last = fieldToks.length - m;
+  for (let i = 0; i <= last; i++) {
+    let ok = true;
+    for (let j = 0; j < m; j++) {
+      if (fieldToks[i + j] !== seq[j]) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) return true;
+  }
+  return false;
+}
+
+function configuredExpansionBodyMatch(query: AnalyzedQuery, doc: IndexedDocument) {
+  const acr = occupiedPartialExpansion(query);
+  if (!acr) return false;
+  const expansion = getQueryFeatPrep(query).expansion;
+  if (expansion.length < 3) return false;
+  const store = asCompactStore(doc);
+  if (store) {
+    const ordinal = compactOrdinal(doc);
+    return (
+      compactAdjacentTokens(store, ordinal, KIND_BODY, expansion, (qt, tt) => qt === tt) ||
+      compactAdjacentTokens(store, ordinal, KIND_BODY_LEMMA, expansion, (qt, tt) => qt === tt)
+    );
+  }
+  return exactTokenSequence(expansion, doc.bodyTokens) || exactTokenSequence(expansion, doc.bodyLemmas);
+}
+
 function queryIsConfiguredKey(query: AnalyzedQuery) {
   return getQueryFeatPrep(query).isConfiguredKey;
 }
@@ -775,6 +832,8 @@ function computeFeatureFields(query: AnalyzedQuery, doc: IndexedDocument) {
     ordinaryEquivalenceBodyMatch: ordinaryEquivalenceBodyMatch(query, doc),
     titleTokenCount: doc.nonStopTitle.length,
     expansionEvidence: expansionEvidence(query, doc),
+    configuredExpansionCoverage: configuredExpansionCoverage(query),
+    configuredExpansionBodyMatch: configuredExpansionBodyMatch(query, doc),
     canonicalKeyTitle: canonicalKeyTitle(query, doc),
     queryTokenCount: getQueryFeatPrep(query).lexicalNonStopCount,
     normalizedQueryPhrase: phrase.normalizedQueryPhrase,
@@ -831,6 +890,8 @@ export function extractFeatures(
     ordinaryEquivalenceBodyMatch: timeFeat("ordinaryEquivalenceBodyMatch", () => ordinaryEquivalenceBodyMatch(query, doc)),
     titleTokenCount: doc.nonStopTitle.length,
     expansionEvidence: timeFeat("expansionEvidence", () => expansionEvidence(query, doc)),
+    configuredExpansionCoverage: timeFeat("configuredExpansionCoverage", () => configuredExpansionCoverage(query)),
+    configuredExpansionBodyMatch: timeFeat("configuredExpansionBodyMatch", () => configuredExpansionBodyMatch(query, doc)),
     canonicalKeyTitle: timeFeat("canonicalKeyTitle", () => canonicalKeyTitle(query, doc)),
     queryTokenCount: getQueryFeatPrep(query).lexicalNonStopCount,
     normalizedQueryPhrase: phrase.normalizedQueryPhrase,
@@ -865,6 +926,8 @@ export function classifyDirect(f: Partial<FeatureVector>): DirectClass {
     (f.queryCoverage || 0) >= TWO_THIRDS_QUERY_COVERAGE ||
     (f.titlePrefixQuality || 0) >= MODERATE_TITLE_PREFIX_QUALITY ||
     f.configuredEquivalenceMatch === "expansion" ||
+    (f.expansionEvidence || 0) >= TWO_THIRDS_QUERY_COVERAGE ||
+    f.configuredExpansionBodyMatch ||
     f.phraseAdjacency === 1 ||
     f.shortLiteralLeadMatch ||
     f.dottedSpanComponentTitleMatch ||
@@ -915,6 +978,8 @@ export const FEATURE_DEFINITIONS = {
   ordinaryEquivalenceBodyMatch: "True only when the candidate BODY matches a directed target form from an ordinary same-concept search equivalence. This is provenance, not additional lexical coverage or score.",
   titleTokenCount: "Non-stop title token count; used for tightness, not as a boost constant.",
   expansionEvidence: "Fraction of a configured expansion evidenced in the title.",
+  configuredExpansionCoverage: "Occupied configured-expansion coverage from query analysis (0 when the query does not uniquely occupy a configured concept). 2/3 is the existing expansion-prefix occupancy information bound.",
+  configuredExpansionBodyMatch: "True when an unambiguous partial configured-expansion prefix (at least 2 tokens and 2/3 coverage, not full expansion) has the contiguous canonical expansion in the body.",
   canonicalKeyTitle: "True when the query is exactly a configured key and the title also states most of the expansion.",
   queryTokenCount: "Non-stop analyzed query token count.",
   normalizedQueryPhrase: "Lemmatized non-stop query tokens joined as the compiled n-gram lookup key. An incomplete final token may be completed through vocabulary+morphology first.",

@@ -266,6 +266,51 @@ function expansionEvidence(query: AnalyzedQuery, doc: IndexedDocument) {
   return Number((hits.length / expansion.length).toFixed(4));
 }
 
+function occupiedPartialExpansion(query: AnalyzedQuery) {
+  const acr = query.concepts.find((c) => c.kind === "acronym");
+  if (!acr) return null;
+  if ((acr.matchedExpansionTokens || 0) < 2) return null;
+  const coverage = acr.expansionCoverage;
+  if (typeof coverage !== "number" || !Number.isFinite(coverage)) return null;
+  if (coverage < TWO_THIRDS_QUERY_COVERAGE || coverage >= FULL_QUERY_COVERAGE) return null;
+  return acr;
+}
+
+function configuredExpansionCoverage(query: AnalyzedQuery) {
+  const acr = query.concepts.find((c) => c.kind === "acronym");
+  if (!acr) return 0;
+  const coverage = acr.expansionCoverage;
+  return typeof coverage === "number" && Number.isFinite(coverage) ? coverage : 0;
+}
+
+function exactTokenSequence(seq: string[], fieldToks: string[]) {
+  if (seq.length < 2 || fieldToks.length < seq.length) return false;
+  const m = seq.length;
+  const last = fieldToks.length - m;
+  for (let i = 0; i <= last; i++) {
+    let ok = true;
+    for (let j = 0; j < m; j++) {
+      if (fieldToks[i + j] !== seq[j]) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) return true;
+  }
+  return false;
+}
+
+function configuredExpansionBodyMatch(query: AnalyzedQuery, doc: IndexedDocument) {
+  const acr = occupiedPartialExpansion(query);
+  if (!acr) return false;
+  const expansion =
+    Array.isArray(acr.expansion) && acr.expansion.length
+      ? acr.expansion.filter((f) => f !== acr.id && !/^\d+$/.test(f))
+      : (acr.forms || []).filter((f) => f !== acr.id && !/^\d+$/.test(f));
+  if (expansion.length < 3) return false;
+  return exactTokenSequence(expansion, doc.bodyTokens) || exactTokenSequence(expansion, doc.bodyLemmas);
+}
+
 function queryIsConfiguredKey(query: AnalyzedQuery) {
   if (hasConfiguredSequenceIntent(query)) return false;
   const acr = query.concepts.find((c) => c.kind === "acronym");
@@ -431,6 +476,8 @@ export function extractFeaturesOracle(
     ...lexicalCoverageFields(query, doc),
     titleTokenCount: doc.nonStopTitle.length,
     expansionEvidence: expansionEvidence(query, doc),
+    configuredExpansionCoverage: configuredExpansionCoverage(query),
+    configuredExpansionBodyMatch: configuredExpansionBodyMatch(query, doc),
     canonicalKeyTitle: canonicalKeyTitle(query, doc),
     queryTokenCount: lexicalQueryNonStop(query).length,
     normalizedQueryPhrase: phrase.normalizedQueryPhrase,
@@ -473,6 +520,8 @@ export function classifyDirectOracle(f: Partial<FeatureVector>): DirectClass {
     (f.queryCoverage || 0) >= TWO_THIRDS_QUERY_COVERAGE ||
     (f.titlePrefixQuality || 0) >= MODERATE_TITLE_PREFIX_QUALITY ||
     f.configuredEquivalenceMatch === "expansion" ||
+    (f.expansionEvidence || 0) >= TWO_THIRDS_QUERY_COVERAGE ||
+    f.configuredExpansionBodyMatch ||
     f.phraseAdjacency === 1 ||
     f.shortLiteralLeadMatch ||
     f.dottedSpanComponentTitleMatch ||
@@ -522,6 +571,8 @@ export const FEATURE_DEFINITIONS = {
   coverageConceptCount: "Count of typed/configured coverage concepts (search-equivalence recall concepts excluded).",
   titleTokenCount: "Non-stop title token count; used for tightness, not as a boost constant.",
   expansionEvidence: "Fraction of a configured expansion evidenced in the title.",
+  configuredExpansionCoverage: "Occupied configured-expansion coverage from query analysis (0 when the query does not uniquely occupy a configured concept). 2/3 is the existing expansion-prefix occupancy information bound.",
+  configuredExpansionBodyMatch: "True when an unambiguous partial configured-expansion prefix (at least 2 tokens and 2/3 coverage, not full expansion) has the contiguous canonical expansion in the body.",
   canonicalKeyTitle: "True when the query is exactly a configured key and the title also states most of the expansion.",
   queryTokenCount: "Non-stop analyzed query token count.",
   normalizedQueryPhrase: "Lemmatized non-stop query tokens joined as the compiled n-gram lookup key. An incomplete final token may be completed through vocabulary+morphology first.",

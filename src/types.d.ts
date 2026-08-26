@@ -415,6 +415,16 @@ export interface FeatureVector {
   ordinaryEquivalenceBodyMatch: boolean;
   titleTokenCount: number;
   expansionEvidence: number;
+  /**
+   * Occupied configured-expansion coverage from query analysis.
+   * 0 when the query does not uniquely occupy a configured concept.
+   */
+  configuredExpansionCoverage: number;
+  /**
+   * Unambiguous partial configured-expansion prefix with the contiguous
+   * canonical expansion in the body.
+   */
+  configuredExpansionBodyMatch: boolean;
   canonicalKeyTitle: boolean;
   queryTokenCount: number;
   normalizedQueryPhrase: string;
