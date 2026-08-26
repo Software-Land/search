@@ -22,23 +22,23 @@ They must never become Core defaults.
 | --- | --- |
 | Fixture format | `software-land-search-fixture` v1 (`manifest.json`) |
 | Corpus source commit | `dff24cf606967cb50b24d28d9142747c9203e053` |
-| Scenario source commit | `08e1b735ae01a3815964360ef3b9141466176dc4` |
+| Scenario source commit | `3ad49e867f82db06aa06cd1c7f38dca8faecf246` |
 | `@software-land/search` | `0.3.1` |
 | Documents | 122 |
 | Source scenarios | `tests/search-scenarios.js` (215 rows) + `tests/search-v2-contracts.js` (16) |
 | Strict V2 contracts | 98 (`v2-contracts.json`) |
 | B-intent regressions | 60 (`regression-scenarios.json`, compatibility coverage, not Core policy) |
-| Historical inventory | 215 rows (`historical-scenarios.json`); 214 executable relevance contracts |
-| Historical contract updates | `historical-contract-updates.json` (Software.Land `7d2ea532f39fc0842f0aa8d612971b1b688e7dc9`) |
+| Historical inventory | 215 rows (`historical-scenarios.json`); 213 executable relevance contracts |
+| Historical contract updates | `historical-contract-updates.json` (Software.Land `3ad49e867f82db06aa06cd1c7f38dca8faecf246`) |
 | Historical relevance config | `relevance-config.json` + `synonym-map.json` (Software.Land `7628a85166781d4ab42f60646e2f66da5f336eaa` NIST aliases; synonym map still `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6`) |
-| Omitted empty-intent rows | 44 (not mined into V2 intent/regression; still in historical relevance) |
+| Omitted empty-intent rows | 43 (not mined into V2 intent/regression; still in historical relevance) |
 | Omitted V1-only source rows | 126 (B + A without intent; some re-enter as regressions; still in historical relevance when `expectedTop` exists) |
 | Omitted browser/UI-only | 1 (`zzz-no-hit` no-results copy) |
-| Omitted historical relevance | 1 (`sharde`, classification C obsolete) |
+| Omitted historical relevance | 2 (`open`, `sharde`, classification C obsolete) |
 
 Corpus artifacts come from a clean Software.Land worktree at
 `dff24cf606967cb50b24d28d9142747c9203e053`. Scenario policy comes from the
-committed Software.Land tree at `08e1b735ae01a3815964360ef3b9141466176dc4`
+committed Software.Land tree at `3ad49e867f82db06aa06cd1c7f38dca8faecf246`
 (parent of that commit is the corpus SHA). Strict V2 contracts are A-class
 independent intent plus `SEARCH_V2_CONTRACTS`. Regression cases reuse recorded
 B-class independent intent as Software.Land compatibility coverage; they are
@@ -55,7 +55,7 @@ additions with isolated incremental value; curated wins; no auto-reverse). AppSe
 Software.Land commit `eac7a90a15d772f0f0626a0fa9481eb9efa55521`. NIST aliases match
 Software.Land commit `7628a85166781d4ab42f60646e2f66da5f336eaa`.
 Product-approved historical `expectedTop` contracts match Software.Land
-`7d2ea532f39fc0842f0aa8d612971b1b688e7dc9` (`historical-contract-updates.json`).
+`3ad49e867f82db06aa06cd1c7f38dca8faecf246` (`historical-contract-updates.json`).
 Corpus artifacts and the exact-output `dictionary.json` snapshot are unchanged. Empty-intent rows
 are not mined into V2 intent/regression cases; they still participate in
 historical relevance when `expectedTop` or `titlePrefix` exist.

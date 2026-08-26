@@ -23,9 +23,9 @@
     "executableContracts": 98,
     "executableRegressions": 60,
     "historicalRows": 215,
-    "historicalRelevanceApplicable": 214,
-    "omittedObsolete": 1,
-    "omittedEmptyIntent": 44,
+    "historicalRelevanceApplicable": 213,
+    "omittedObsolete": 2,
+    "omittedEmptyIntent": 43,
     "omittedCoveredByContract": 16,
     "omittedBIntentNotCurrentV2": 1,
     "omittedDuplicateA": 6,
@@ -36,11 +36,11 @@
     "omitted-covered-by-v2-contract": 16,
     "contract-a-intent": 82,
     "regression-b-intent": 60,
-    "omitted-empty-intent-observational-v1": 44,
+    "omitted-empty-intent-observational-v1": 43,
     "omitted-duplicate-b-intent": 5,
     "omitted-duplicate-a-intent": 6,
     "omitted-b-intent-not-current-v2": 1,
-    "omitted-obsolete": 1
+    "omitted-obsolete": 2
   },
   "files": {
     "v2-contracts.json": "Strict accepted V2 cases (kind: contract).",

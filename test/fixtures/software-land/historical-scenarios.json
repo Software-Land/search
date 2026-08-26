@@ -12,13 +12,13 @@
     "omitted-covered-by-v2-contract": 16,
     "contract-a-intent": 82,
     "regression-b-intent": 60,
-    "omitted-empty-intent-observational-v1": 44,
+    "omitted-empty-intent-observational-v1": 43,
     "omitted-duplicate-b-intent": 5,
     "omitted-duplicate-a-intent": 6,
     "omitted-b-intent-not-current-v2": 1,
-    "omitted-obsolete": 1,
-    "historicalRelevanceApplicable": 214,
-    "historicalRelevanceOmittedObsolete": 1,
+    "omitted-obsolete": 2,
+    "historicalRelevanceApplicable": 213,
+    "historicalRelevanceOmittedObsolete": 2,
     "titlePrefixRows": 1,
     "expectedTopRows": 213,
     "distinctQueries": 185
@@ -1714,7 +1714,6 @@
           "What is an Interface?",
           "Class vs Interface",
           "What is an API?",
-          "Shadcn UI React Components",
           "REST API vs GraphQL"
         ],
         "topN": 5
@@ -3108,9 +3107,9 @@
     {
       "index": 115,
       "query": "open",
-      "classification": "A",
-      "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "classification": "C",
+      "disposition": "omitted-obsolete",
+      "note": "Obsolete broad V1 recall / insufficient semantic intent. SAML vs OAuth is not required for the underspecified query open.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
@@ -3122,7 +3121,8 @@
         ],
         "topN": 1
       },
-      "historicalRelevance": true
+      "obsoleteReason": "obsolete broad V1 recall / insufficient semantic intent",
+      "historicalRelevance": false
     },
     {
       "index": 116,

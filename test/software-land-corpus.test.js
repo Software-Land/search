@@ -190,10 +190,10 @@ describe("software-land corpus fixture", () => {
     expect(manifest.format).toBe("software-land-search-fixture");
     expect(manifest.version).toBe(1);
     expect(manifest.corpusSourceCommit).toBe("dff24cf606967cb50b24d28d9142747c9203e053");
-    expect(manifest.scenarioSourceCommit).toBe("08e1b735ae01a3815964360ef3b9141466176dc4");
+    expect(manifest.scenarioSourceCommit).toBe("3ad49e867f82db06aa06cd1c7f38dca8faecf246");
     expect(manifest.softwareLandCommit).toBeUndefined();
     expect(manifest.relevanceSoftwareLandCommit).toBe("db5a070dbc6ac112dfae403f38fdfd0fffbedbf6");
-    expect(manifest.historicalRelevanceApplicable).toBe(214);
+    expect(manifest.historicalRelevanceApplicable).toBe(213);
     expect(manifest.searchPackageVersion).toBe("0.3.1");
     expect(manifest.documentCount).toBe(122);
     expect(documents).toHaveLength(122);
@@ -203,7 +203,7 @@ describe("software-land corpus fixture", () => {
     expect(manifest.executableV2ScenarioCount).toBe(98);
     expect(manifest.executableRegressionCount).toBe(60);
     expect(manifest.omittedV1OnlyCount).toBe(126);
-    expect(manifest.omittedEmptyIntentCount).toBe(44);
+    expect(manifest.omittedEmptyIntentCount).toBe(43);
     expect(manifest.omittedBrowserUiOnlyCount).toBe(1);
     expect(manifest.sourceScenarioFiles).toEqual([
       "tests/search-scenarios.js",
@@ -213,7 +213,7 @@ describe("software-land corpus fixture", () => {
     expect(regressions.cases).toHaveLength(60);
     expect(historical.rows).toHaveLength(215);
     expect(historical.kind).toBe("historical-relevance-contracts");
-    expect(historical.counts.historicalRelevanceApplicable).toBe(214);
+    expect(historical.counts.historicalRelevanceApplicable).toBe(213);
     expect(index.counts.executableContracts).toBe(98);
     expect(index.counts.executableRegressions).toBe(60);
   });
@@ -224,7 +224,7 @@ describe("software-land corpus fixture", () => {
     expect(readme).toContain("They must never become Core defaults.");
     expect(readme).toContain("not Core ranking policy");
     expect(readme).toContain("dff24cf606967cb50b24d28d9142747c9203e053");
-    expect(readme).toContain("08e1b735ae01a3815964360ef3b9141466176dc4");
+    expect(readme).toContain("3ad49e867f82db06aa06cd1c7f38dca8faecf246");
     expect(readme).toContain("eac7a90a15d772f0f0626a0fa9481eb9efa55521");
     expect(readme).toContain("db5a070dbc6ac112dfae403f38fdfd0fffbedbf6");
   });
@@ -248,8 +248,8 @@ describe("software-land corpus fixture", () => {
     expect(historical.rows.filter((row) => row.disposition === "regression-b-intent")).toHaveLength(60);
     expect(historical.rows.filter((row) => row.disposition === "omitted-duplicate-b-intent")).toHaveLength(5);
     expect(historical.rows.filter((row) => row.disposition === "omitted-covered-by-v2-contract")).toHaveLength(16);
-    expect(historical.rows.filter((row) => row.disposition === "omitted-obsolete")).toHaveLength(1);
-    expect(historical.rows.filter((row) => row.disposition === "omitted-empty-intent-observational-v1")).toHaveLength(44);
+    expect(historical.rows.filter((row) => row.disposition === "omitted-obsolete")).toHaveLength(2);
+    expect(historical.rows.filter((row) => row.disposition === "omitted-empty-intent-observational-v1")).toHaveLength(43);
     expect(historical.rows.filter((row) => row.disposition === "omitted-b-intent-not-current-v2").map((row) => row.query)).toEqual([
       "what is an appli",
     ]);
@@ -262,8 +262,8 @@ describe("software-land corpus fixture", () => {
     const emptyIntent = historical.rows.filter((row) => row.disposition === "omitted-empty-intent-observational-v1");
     expect(emptyIntent.every((row) => row.v1?.expectedTop || row.v1?.titlePrefix)).toBe(true);
     expect(emptyIntent.every((row) => row.historicalRelevance === true)).toBe(true);
-    expect(historical.rows.filter((row) => row.historicalRelevance)).toHaveLength(214);
-    expect(historical.rows.filter((row) => row.historicalRelevance === false).map((row) => row.query)).toEqual(["sharde"]);
+    expect(historical.rows.filter((row) => row.historicalRelevance)).toHaveLength(213);
+    expect(historical.rows.filter((row) => row.historicalRelevance === false).map((row) => row.query)).toEqual(["open", "sharde"]);
     expect(contracts.cases.every((row) => row.kind === "contract" && !row.v1)).toBe(true);
     expect(regressions.cases.every((row) => row.kind === "regression" && row.classification === "B" && !row.v1)).toBe(true);
   });

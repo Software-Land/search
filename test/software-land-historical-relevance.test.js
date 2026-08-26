@@ -214,10 +214,10 @@ describe("Software.Land historical relevance contracts", () => {
     expect(synonymFixture.map.token).toBeUndefined();
     expect(synonymFixture.map.rbac).toBeUndefined();
     expect(synonymFixture.map.architecture).toBeUndefined();
-    expect(historical.counts.historicalRelevanceApplicable).toBe(214);
-    expect(applicable).toHaveLength(214);
+    expect(historical.counts.historicalRelevanceApplicable).toBe(213);
+    expect(applicable).toHaveLength(213);
     expect(applicable.filter((row) => row.classification === "C")).toHaveLength(0);
-    expect(historical.rows.filter((row) => row.classification === "C").map((row) => row.query)).toEqual(["sharde"]);
+    expect(historical.rows.filter((row) => row.classification === "C").map((row) => row.query)).toEqual(["open", "sharde"]);
     expect(applicable.filter((row) => row.v1?.titlePrefix)).toHaveLength(1);
   });
 

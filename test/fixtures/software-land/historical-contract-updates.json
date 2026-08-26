@@ -18,7 +18,45 @@
       ]
     }
   ],
+  "obsolete": [
+    {
+      "index": 115,
+      "query": "open",
+      "reason": "APPROVED_OBSOLETE: obsolete broad V1 recall / insufficient semantic intent",
+      "classification": "C",
+      "historicalV1": {
+        "expectedTop": [
+          "SAML vs OAuth"
+        ],
+        "topN": 1
+      }
+    }
+  ],
   "updates": [
+    {
+      "index": 61,
+      "query": "interface",
+      "reason": "APPROVED_CONTRACT_CHANGE: remove obsolete broad V1 recall without a defensible current evidence path",
+      "oldV1": {
+        "expectedTop": [
+          "What is an Interface?",
+          "Class vs Interface",
+          "What is an API?",
+          "Shadcn UI React Components",
+          "REST API vs GraphQL"
+        ],
+        "topN": 5
+      },
+      "newV1": {
+        "expectedTop": [
+          "What is an Interface?",
+          "Class vs Interface",
+          "What is an API?",
+          "REST API vs GraphQL"
+        ],
+        "topN": 5
+      }
+    },
     {
       "index": 7,
       "query": "hypertext",
