@@ -26,16 +26,16 @@ They must never become Core defaults.
 | `@software-land/search` | `0.3.1` |
 | Documents | 122 |
 | Source scenarios | `tests/search-scenarios.js` (215 rows) + `tests/search-v2-contracts.js` (16) |
-| Strict V2 contracts | 98 (`v2-contracts.json`) |
+| Strict V2 contracts | 99 (`v2-contracts.json`) |
 | B-intent regressions | 60 (`regression-scenarios.json`, compatibility coverage, not Core policy) |
-| Historical inventory | 215 rows (`historical-scenarios.json`); 213 executable relevance contracts |
+| Historical inventory | 215 rows (`historical-scenarios.json`); 214 executable relevance contracts |
 | Historical contract updates | `historical-contract-updates.json` (Software.Land `3ad49e867f82db06aa06cd1c7f38dca8faecf246`) |
 | Historical relevance config | `relevance-config.json` + `relationship-map.json` (authored equivalent + AppSec related; synonym-map.json remains the db5a070 provenance snapshot) |
 | `relevanceSoftwareLandCommit` | `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6` — live `LIVE_SEARCH_EQUIVALENCE_MAP` / `synonym-map.json` snapshot only. Not the NIST alias pin (`relevance-config.json` `7628a85`), not the later relationshipMap/editorial/semantic-rejection commits, and not HEAD. |
 | Omitted empty-intent rows | 43 (not mined into V2 intent/regression; still in historical relevance) |
-| Omitted V1-only source rows | 126 (B + A without intent; some re-enter as regressions; still in historical relevance when `expectedTop` exists) |
+| Omitted V1-only source rows | 125 (B + A without intent; some re-enter as regressions; still in historical relevance when `expectedTop` exists) |
 | Omitted browser/UI-only | 1 (`zzz-no-hit` no-results copy) |
-| Omitted historical relevance | 2 (`open`, `sharde`, classification C obsolete) |
+| Omitted historical relevance | 1 (`open`, classification C obsolete) |
 
 Corpus artifacts come from a clean Software.Land worktree at
 `dff24cf606967cb50b24d28d9142747c9203e053`. Scenario policy comes from the

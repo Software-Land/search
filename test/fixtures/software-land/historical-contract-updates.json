@@ -34,6 +34,29 @@
   ],
   "updates": [
     {
+      "index": 140,
+      "query": "sharde",
+      "reason": "APPROVED_CONTRACT_CHANGE: reactivate duplicate sharde row; Hot Shards-first expectation was stale. Current neighborhood is Sharding #1, Hot Shards #2.",
+      "oldV1": {
+        "expectedTop": [
+          "Hot Shards",
+          "Sharding"
+        ],
+        "topN": 2
+      },
+      "newV1": {
+        "expectedTop": [
+          "Sharding",
+          "Hot Shards",
+          "Throughput vs Latency",
+          "CockroachDB vs Postgres",
+          "SQL vs NoSQL",
+          "gRPC vs Kafka"
+        ],
+        "topN": 6
+      }
+    },
+    {
       "index": 61,
       "query": "interface",
       "reason": "APPROVED_CONTRACT_CHANGE: remove obsolete broad V1 recall without a defensible current evidence path",

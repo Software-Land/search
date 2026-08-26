@@ -6,7 +6,7 @@
     "V1 expectedTop is not asserted."
   ],
   "counts": {
-    "cases": 98
+    "cases": 99
   },
   "cases": [
     {
@@ -600,6 +600,28 @@
       ],
       "exactFirst": "Sharding",
       "name": "contract · scenario · sharding · #1:Sharding | Sharding@1"
+    },
+    {
+      "query": "sharde",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Sharding",
+          "topN": 1
+        },
+        {
+          "title": "Hot Shards",
+          "topN": 2
+        },
+        {
+          "title": "Throughput vs Latency",
+          "topN": 3
+        }
+      ],
+      "exactFirst": "Sharding",
+      "name": "contract · scenario · sharde · #1:Sharding | Sharding@1 | Hot Shards@2 | Throughput vs Latency@3"
     },
     {
       "query": "auth",

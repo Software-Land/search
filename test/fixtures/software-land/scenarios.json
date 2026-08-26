@@ -18,13 +18,13 @@
   "counts": {
     "sourceScenarioRows": 215,
     "distinctQueries": 185,
-    "v2ApplicableRows": 88,
+    "v2ApplicableRows": 89,
     "v2Contracts": 16,
-    "executableContracts": 98,
+    "executableContracts": 99,
     "executableRegressions": 60,
     "historicalRows": 215,
-    "historicalRelevanceApplicable": 213,
-    "omittedObsolete": 2,
+    "historicalRelevanceApplicable": 214,
+    "omittedObsolete": 1,
     "omittedEmptyIntent": 43,
     "omittedCoveredByContract": 16,
     "omittedBIntentNotCurrentV2": 1,
@@ -34,13 +34,13 @@
   },
   "dispositionCounts": {
     "omitted-covered-by-v2-contract": 16,
-    "contract-a-intent": 82,
+    "contract-a-intent": 83,
     "regression-b-intent": 60,
     "omitted-empty-intent-observational-v1": 43,
     "omitted-duplicate-b-intent": 5,
     "omitted-duplicate-a-intent": 6,
     "omitted-b-intent-not-current-v2": 1,
-    "omitted-obsolete": 2
+    "omitted-obsolete": 1
   },
   "files": {
     "v2-contracts.json": "Strict accepted V2 cases (kind: contract).",

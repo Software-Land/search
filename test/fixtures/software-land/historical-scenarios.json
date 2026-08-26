@@ -9,19 +9,15 @@
   ],
   "counts": {
     "rows": 215,
+    "historicalRelevanceApplicable": 214,
     "omitted-covered-by-v2-contract": 16,
-    "contract-a-intent": 82,
+    "contract-a-intent": 83,
     "regression-b-intent": 60,
     "omitted-empty-intent-observational-v1": 43,
     "omitted-duplicate-b-intent": 5,
     "omitted-duplicate-a-intent": 6,
     "omitted-b-intent-not-current-v2": 1,
-    "omitted-obsolete": 2,
-    "historicalRelevanceApplicable": 213,
-    "historicalRelevanceOmittedObsolete": 2,
-    "titlePrefixRows": 1,
-    "expectedTopRows": 213,
-    "distinctQueries": 185
+    "omitted-obsolete": 1
   },
   "rows": [
     {
@@ -29,7 +25,7 @@
       "query": "library",
       "classification": "B",
       "disposition": "omitted-covered-by-v2-contract",
-      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "Framework vs Library vs Package"
@@ -42,14 +38,14 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Framework vs Library vs Package",
           "React Component Libraries"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 1,
@@ -67,14 +63,14 @@
           }
         ]
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Framework vs Library vs Package",
           "React Component Libraries"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 2,
@@ -94,13 +90,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Edge Computing"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 3,
@@ -125,14 +121,14 @@
           }
         ]
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Testing in Software Engineering",
           "Load vs Stress Testing"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 4,
@@ -147,11 +143,11 @@
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "titlePrefix": "What",
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 5,
@@ -171,13 +167,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "CI/CD"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 6,
@@ -197,13 +193,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Zero-Trust Security"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 7,
@@ -223,25 +219,26 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 8,
       "query": "hypertext tran",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability",
@@ -256,20 +253,20 @@
           "React Authentication"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 9,
       "query": "hypertext transfer",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability",
@@ -284,20 +281,20 @@
           "React Authentication"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 10,
       "query": "hypertext transfer protocol",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability",
@@ -312,20 +309,20 @@
           "React Authentication"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 11,
       "query": "http",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability",
@@ -340,20 +337,20 @@
           "React Authentication"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 12,
       "query": "bfs",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "InOrder vs PreOrder vs PostOrder",
@@ -361,20 +358,20 @@
           "Maximum Flow Algorithm"
         ],
         "topN": 3
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 13,
       "query": "breadth first search",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "InOrder vs PreOrder vs PostOrder",
@@ -382,8 +379,7 @@
           "Maximum Flow Algorithm"
         ],
         "topN": 3
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 14,
@@ -403,6 +399,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "DFS Backtracking",
@@ -413,8 +410,7 @@
           "Maximum Flow Algorithm"
         ],
         "topN": 6
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 15,
@@ -434,14 +430,14 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "DFS Backtracking",
           "What is Recursion?"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 16,
@@ -461,14 +457,14 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "DFS Backtracking",
           "A-Star Pathfinding"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 17,
@@ -488,13 +484,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Asynchronous vs Synchronous"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 18,
@@ -514,13 +510,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is IO?"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 19,
@@ -540,13 +536,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is IO?"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 20,
@@ -566,13 +562,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is IoT?"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 21,
@@ -592,13 +588,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is IoT?"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 22,
@@ -618,13 +614,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is Code?"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 23,
@@ -644,13 +640,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "CI/CD"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 24,
@@ -670,6 +666,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability",
@@ -677,15 +674,14 @@
           "Zero-Trust Security"
         ],
         "topN": 3
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 25,
       "query": "tls",
       "classification": "B",
       "disposition": "omitted-covered-by-v2-contract",
-      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "TLS 1.2 Vulnerability"
@@ -698,6 +694,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability",
@@ -705,8 +702,7 @@
           "Zero-Trust Security"
         ],
         "topN": 3
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 26,
@@ -726,6 +722,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "RBAC (Role Based Access Control)",
@@ -734,8 +731,7 @@
           "Authorization Middleware"
         ],
         "topN": 8
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 27,
@@ -755,6 +751,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "RBAC (Role Based Access Control)",
@@ -763,8 +760,7 @@
           "Authorization Middleware"
         ],
         "topN": 8
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 28,
@@ -784,6 +780,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec",
@@ -794,8 +791,7 @@
           "Zero-Trust Security"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 29,
@@ -815,6 +811,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec",
@@ -827,8 +824,7 @@
           "Zero-Trust Security"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 30,
@@ -848,6 +844,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec",
@@ -860,15 +857,14 @@
           "Zero-Trust Security"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 31,
       "query": "appsecurity",
       "classification": "B",
       "disposition": "omitted-covered-by-v2-contract",
-      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "App Sec"
@@ -881,6 +877,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec",
@@ -893,8 +890,7 @@
           "Zero-Trust Security"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 32,
@@ -914,6 +910,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec",
@@ -926,8 +923,7 @@
           "Zero-Trust Security"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 33,
@@ -947,14 +943,14 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec",
           "Zero-Trust Security"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 34,
@@ -974,6 +970,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec",
@@ -986,8 +983,7 @@
           "Zero-Trust Security"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 35,
@@ -1007,14 +1003,14 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec",
           "Zero-Trust Security"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 36,
@@ -1034,13 +1030,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 37,
@@ -1060,14 +1056,14 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?",
           "App Sec"
         ],
         "topN": 3
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 38,
@@ -1087,14 +1083,14 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?",
           "App Sec"
         ],
         "topN": 3
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 39,
@@ -1114,6 +1110,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec",
@@ -1125,20 +1122,20 @@
           "SAML vs OAuth"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 40,
       "query": "what is an applica",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?",
@@ -1147,20 +1144,20 @@
           "Working with APIs"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 41,
       "query": "what is an appl",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?",
@@ -1169,8 +1166,7 @@
           "Working with APIs"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 42,
@@ -1190,6 +1186,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?",
@@ -1198,20 +1195,20 @@
           "Working with APIs"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 43,
       "query": "what is an applic",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?",
@@ -1220,20 +1217,20 @@
           "Working with APIs"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 44,
       "query": "applic",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?",
@@ -1242,8 +1239,7 @@
           "Working with APIs"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 45,
@@ -1263,32 +1259,32 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 46,
       "query": "appl",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 47,
@@ -1308,14 +1304,14 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec",
           "Zero-Trust Security"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 48,
@@ -1335,13 +1331,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 49,
@@ -1361,13 +1357,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 50,
@@ -1387,20 +1383,20 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 51,
       "query": "aplicationsecurity",
       "classification": "B",
       "disposition": "omitted-covered-by-v2-contract",
-      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "App Sec"
@@ -1413,21 +1409,21 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec",
           "Zero-Trust Security"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 52,
       "query": "aplication s3curity",
       "classification": "B",
       "disposition": "omitted-covered-by-v2-contract",
-      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "App Sec"
@@ -1440,6 +1436,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec",
@@ -1450,8 +1447,7 @@
           "SAML vs OAuth"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 53,
@@ -1471,6 +1467,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec",
@@ -1481,8 +1478,7 @@
           "SAML vs OAuth"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 54,
@@ -1500,14 +1496,14 @@
           }
         ]
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "OOP vs Functional",
           "What is OOP (Object-Oriented Programming)?"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 55,
@@ -1527,13 +1523,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is OOP (Object-Oriented Programming)?"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 56,
@@ -1553,13 +1549,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 57,
@@ -1579,13 +1575,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Which Programming Language to Start?"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 58,
@@ -1614,6 +1610,7 @@
           }
         ]
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is OOP (Object-Oriented Programming)?",
@@ -1621,8 +1618,7 @@
           "Dynamic Programming Matrix"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 59,
@@ -1647,14 +1643,14 @@
           }
         ]
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is OOP (Object-Oriented Programming)?",
           "Dynamic Programming Matrix"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 60,
@@ -1674,6 +1670,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Working with APIs",
@@ -1683,8 +1680,7 @@
           "Class vs Interface"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 61,
@@ -1709,6 +1705,7 @@
           }
         ]
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an Interface?",
@@ -1717,8 +1714,7 @@
           "REST API vs GraphQL"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 62,
@@ -1738,13 +1734,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is DevOps?"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 63,
@@ -1764,13 +1760,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is Code?"
         ],
         "topN": 3
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 64,
@@ -1790,13 +1786,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is a Container?"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 65,
@@ -1816,13 +1812,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is a Container?"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 66,
@@ -1842,13 +1838,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is Clean Code?"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 67,
@@ -1868,13 +1864,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is IoT?"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 68,
@@ -1894,13 +1890,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 69,
@@ -1920,25 +1916,26 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 70,
       "query": "machine l",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Linear vs Logistic Regression",
@@ -1947,20 +1944,20 @@
           "Why Learn to Code?"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 71,
       "query": "machine le",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Linear vs Logistic Regression",
@@ -1969,20 +1966,20 @@
           "Why Learn to Code?"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 72,
       "query": "machine lea",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Linear vs Logistic Regression",
@@ -1991,20 +1988,20 @@
           "Why Learn to Code?"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 73,
       "query": "machine lear",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Linear vs Logistic Regression",
@@ -2013,15 +2010,14 @@
           "Why Learn to Code?"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 74,
       "query": "machine learn",
       "classification": "B",
       "disposition": "omitted-covered-by-v2-contract",
-      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "Linear vs Logistic Regression"
@@ -2034,6 +2030,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Linear vs Logistic Regression",
@@ -2042,15 +2039,14 @@
           "Why Learn to Code?"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 75,
       "query": "machine learning",
       "classification": "B",
       "disposition": "omitted-covered-by-v2-contract",
-      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "Linear vs Logistic Regression"
@@ -2063,6 +2059,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Linear vs Logistic Regression",
@@ -2072,8 +2069,7 @@
           "Best Learn to Code Platforms"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 76,
@@ -2093,6 +2089,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Linear vs Logistic Regression",
@@ -2101,8 +2098,7 @@
           "Why Learn to Code?"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 77,
@@ -2122,6 +2118,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Linear vs Logistic Regression",
@@ -2130,15 +2127,14 @@
           "Why Learn to Code?"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 78,
       "query": "application programming",
       "classification": "B",
       "disposition": "omitted-covered-by-v2-contract",
-      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "What is an API?"
@@ -2151,6 +2147,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?",
@@ -2159,8 +2156,7 @@
           "What is an Interface?"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 79,
@@ -2178,14 +2174,14 @@
           }
         ]
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "OOP vs Functional",
           "What is OOP (Object-Oriented Programming)?"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 80,
@@ -2203,34 +2199,34 @@
           }
         ]
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "OOP vs Functional",
           "What is OOP (Object-Oriented Programming)?"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 81,
       "query": "object oriented",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "OOP vs Functional",
           "Object"
         ],
         "topN": 3
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 82,
@@ -2250,14 +2246,14 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Dynamic Programming Matrix",
           "What is Recursion?"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 83,
@@ -2277,14 +2273,14 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Dynamic Programming Matrix",
           "What is Recursion?"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 84,
@@ -2304,14 +2300,14 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Dynamic Programming Matrix",
           "What is Recursion?"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 85,
@@ -2331,6 +2327,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?",
@@ -2338,8 +2335,7 @@
           "What is an Interface?"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 86,
@@ -2359,13 +2355,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Shadcn UI React Components"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 87,
@@ -2385,33 +2381,33 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Staying Ahead of the AI Revolution"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 88,
       "query": "asdfasdfcontainerasdfadfs",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is Docker?",
           "What is a Container?"
         ],
         "topN": 3
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 89,
@@ -2431,6 +2427,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability",
@@ -2441,20 +2438,20 @@
           "Vite React"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 90,
       "query": "https",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability",
@@ -2465,20 +2462,20 @@
           "Vite React"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 91,
       "query": "asdfsafhttp",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability",
@@ -2487,8 +2484,7 @@
           "TCP vs UDP"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 92,
@@ -2508,14 +2504,14 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is DevOps?",
           "CI/CD"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 93,
@@ -2535,14 +2531,14 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is DevOps?",
           "CI/CD"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 94,
@@ -2562,14 +2558,14 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is DevOps?",
           "CI/CD"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 95,
@@ -2589,34 +2585,34 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is DevOps?",
           "CI/CD"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 96,
       "query": "quality ass",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Load vs Stress Testing",
           "Testing in Software Engineering"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 97,
@@ -2636,26 +2632,27 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is a Service Mesh?",
           "Protobuf Encoding"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 98,
       "query": "next",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Shadcn UI React Components",
@@ -2667,20 +2664,20 @@
           "React Data Fetching"
         ],
         "topN": 7
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 99,
       "query": "nextjs",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Shadcn UI React Components",
@@ -2692,20 +2689,20 @@
           "React Data Fetching"
         ],
         "topN": 7
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 100,
       "query": "next js",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Shadcn UI React Components",
@@ -2717,8 +2714,7 @@
           "React Data Fetching"
         ],
         "topN": 7
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 101,
@@ -2738,6 +2734,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?",
@@ -2747,8 +2744,7 @@
           "Class vs Interface"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 102,
@@ -2768,6 +2764,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "App Sec",
@@ -2780,8 +2777,7 @@
           "Authorization Middleware"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 103,
@@ -2801,6 +2797,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?",
@@ -2810,8 +2807,7 @@
           "Class vs Interface"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 104,
@@ -2831,6 +2827,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?",
@@ -2840,20 +2837,20 @@
           "Class vs Interface"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 105,
       "query": "applicationprogramming interface",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?",
@@ -2863,8 +2860,7 @@
           "Class vs Interface"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 106,
@@ -2884,6 +2880,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?",
@@ -2893,20 +2890,20 @@
           "Class vs Interface"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 107,
       "query": "application programminginterface",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?",
@@ -2916,8 +2913,7 @@
           "Class vs Interface"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 108,
@@ -2935,34 +2931,34 @@
           }
         ]
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Protobuf Encoding",
           "gRPC vs REST"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 109,
       "query": "grpc remote procedure call",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Protobuf Encoding",
           "gRPC vs REST"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 110,
@@ -2982,6 +2978,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "gRPC vs Kafka",
@@ -2989,8 +2986,7 @@
           "gRPC vs REST"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 111,
@@ -3010,6 +3006,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "gRPC vs Kafka",
@@ -3017,8 +3014,7 @@
           "gRPC vs REST"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 112,
@@ -3038,6 +3034,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is VPN?",
@@ -3045,8 +3042,7 @@
           "Symmetric vs Asymmetric Encryption"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 113,
@@ -3066,6 +3062,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is VPN?",
@@ -3073,8 +3070,7 @@
           "Symmetric vs Asymmetric Encryption"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 114,
@@ -3094,6 +3090,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is VPN?",
@@ -3101,28 +3098,26 @@
           "Symmetric vs Asymmetric Encryption"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 115,
       "query": "open",
       "classification": "C",
       "disposition": "omitted-obsolete",
-      "note": "Obsolete broad V1 recall / insufficient semantic intent. SAML vs OAuth is not required for the underspecified query open.",
+      "note": "Obsolete. Enforced on neither V1 nor V2.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": false,
       "v1": {
         "expectedTop": [
           "SAML vs OAuth"
         ],
         "topN": 1
-      },
-      "obsoleteReason": "obsolete broad V1 recall / insufficient semantic intent",
-      "historicalRelevance": false
+      }
     },
     {
       "index": 116,
@@ -3142,13 +3137,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is an API?"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 117,
@@ -3168,6 +3163,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "DFS Backtracking",
@@ -3178,8 +3174,7 @@
           "Maximum Flow Algorithm"
         ],
         "topN": 6
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 118,
@@ -3199,32 +3194,32 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "A-Star Pathfinding"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 119,
       "query": "a*",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "A-Star Pathfinding"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 120,
@@ -3244,6 +3239,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Build Time",
@@ -3253,8 +3249,7 @@
           "gRPC vs REST"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 121,
@@ -3274,127 +3269,127 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Protobuf Encoding"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 122,
       "query": "national institute of standards and technology",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 123,
       "query": "national institute of stan",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 124,
       "query": "national institute of standards and tec",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 125,
       "query": "national institute of standard",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 126,
       "query": "institute of standards and technology",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 127,
       "query": "institute standards",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 128,
@@ -3414,13 +3409,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 129,
@@ -3440,6 +3435,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is Recursion?",
@@ -3449,8 +3445,7 @@
           "InOrder vs PreOrder vs PostOrder"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 130,
@@ -3470,6 +3465,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is Recursion?",
@@ -3477,8 +3473,7 @@
           "InOrder vs PreOrder vs PostOrder"
         ],
         "topN": 3
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 131,
@@ -3498,6 +3493,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is Recursion?",
@@ -3507,8 +3503,7 @@
           "InOrder vs PreOrder vs PostOrder"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 132,
@@ -3528,6 +3523,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is Recursion?",
@@ -3537,8 +3533,7 @@
           "InOrder vs PreOrder vs PostOrder"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 133,
@@ -3558,6 +3553,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is Recursion?",
@@ -3567,8 +3563,7 @@
           "InOrder vs PreOrder vs PostOrder"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 134,
@@ -3593,6 +3588,7 @@
           }
         ]
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Sharding",
@@ -3602,8 +3598,7 @@
           "gRPC vs Kafka"
         ],
         "topN": 6
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 135,
@@ -3623,6 +3618,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Sharding",
@@ -3632,20 +3628,20 @@
           "gRPC vs Kafka"
         ],
         "topN": 6
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 136,
       "query": "sharde",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Sharding",
@@ -3655,8 +3651,7 @@
           "gRPC vs Kafka"
         ],
         "topN": 6
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 137,
@@ -3676,13 +3671,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Hot Shards"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 138,
@@ -3702,13 +3697,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Hot Shards"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 139,
@@ -3728,34 +3723,52 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Sharding"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 140,
       "query": "sharde",
-      "classification": "C",
-      "disposition": "omitted-obsolete",
-      "note": "Hot Shards #1 is not current V1 or V2 behavior for sharde. Live V1 ranks Sharding first. No supported engine is expected to retain this rank.",
+      "classification": "A",
+      "disposition": "contract-a-intent",
+      "note": "Executable strict V2 contract from A-class independent intent.",
       "intent": {
-        "requiredPrimary": [],
-        "requiredWithin": [],
-        "requiredAnyWithin": []
-      },
-      "v1": {
-        "expectedTop": [
-          "Hot Shards",
+        "requiredPrimary": [
           "Sharding"
         ],
-        "topN": 2
+        "requiredWithin": [
+          {
+            "title": "Sharding",
+            "topN": 1
+          },
+          {
+            "title": "Hot Shards",
+            "topN": 2
+          },
+          {
+            "title": "Throughput vs Latency",
+            "topN": 3
+          }
+        ],
+        "requiredAnyWithin": []
       },
-      "obsoleteReason": "Hot Shards #1 is not current V1 or V2 behavior for sharde. Live V1 ranks Sharding first. No supported engine is expected to retain this rank.",
-      "historicalRelevance": false
+      "historicalRelevance": true,
+      "v1": {
+        "expectedTop": [
+          "Sharding",
+          "Hot Shards",
+          "Throughput vs Latency",
+          "CockroachDB vs Postgres",
+          "SQL vs NoSQL",
+          "gRPC vs Kafka"
+        ],
+        "topN": 6
+      }
     },
     {
       "index": 141,
@@ -3775,6 +3788,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is Recursion?",
@@ -3784,20 +3798,20 @@
           "InOrder vs PreOrder vs PostOrder"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 142,
       "query": "recurssing",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is Recursion?",
@@ -3807,8 +3821,7 @@
           "InOrder vs PreOrder vs PostOrder"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 143,
@@ -3828,6 +3841,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "React Authentication",
@@ -3836,15 +3850,14 @@
           "SAML vs OAuth"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 144,
       "query": "authentication",
       "classification": "B",
       "disposition": "omitted-covered-by-v2-contract",
-      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "React Authentication"
@@ -3857,6 +3870,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "React Authentication",
@@ -3865,8 +3879,7 @@
           "SAML vs OAuth"
         ],
         "topN": 10
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 145,
@@ -3891,21 +3904,21 @@
           }
         ]
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "React Authentication",
           "Authorization Middleware"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 146,
       "query": "author",
       "classification": "B",
       "disposition": "omitted-covered-by-v2-contract",
-      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
@@ -3916,14 +3929,14 @@
           }
         ]
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "React Authentication",
           "Authorization Middleware"
         ],
         "topN": 7
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 147,
@@ -3943,13 +3956,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Authorization Middleware"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 148,
@@ -3969,20 +3982,20 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "React Authentication"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 149,
       "query": "interceptor",
       "classification": "B",
       "disposition": "omitted-covered-by-v2-contract",
-      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "gRPC Interceptor"
@@ -3995,14 +4008,14 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "gRPC Interceptor",
           "Authorization Middleware"
         ],
         "topN": 2
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 150,
@@ -4022,13 +4035,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "gRPC Interceptor"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 151,
@@ -4048,13 +4061,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Zero-Trust Security"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 152,
@@ -4074,6 +4087,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is IoT?",
@@ -4082,8 +4096,7 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 153,
@@ -4103,6 +4116,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is IoT?",
@@ -4111,15 +4125,14 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 154,
       "query": "iot",
       "classification": "B",
       "disposition": "omitted-covered-by-v2-contract",
-      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "What is IoT?"
@@ -4132,6 +4145,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is IoT?",
@@ -4140,48 +4154,47 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 155,
       "query": "platform as a service",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is Kubernetes?",
           "What is the Cloud?"
         ],
         "topN": 3
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 156,
       "query": "paas",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is Kubernetes?",
           "What is the Cloud?"
         ],
         "topN": 3
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 157,
@@ -4201,13 +4214,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Topological Sort"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 158,
@@ -4227,13 +4240,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Python Custom Sorting"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 159,
@@ -4253,13 +4266,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Python Custom Sorting"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 160,
@@ -4279,13 +4292,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Topological Sort"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 161,
@@ -4305,13 +4318,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Topological Sort"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 162,
@@ -4331,13 +4344,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "React Authentication"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 163,
@@ -4357,13 +4370,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "React Authentication"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 164,
@@ -4383,13 +4396,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "React Authentication"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 165,
@@ -4409,6 +4422,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Authorization Middleware",
@@ -4417,8 +4431,7 @@
           "Bearer Token"
         ],
         "topN": 8
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 166,
@@ -4438,6 +4451,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Authorization Middleware",
@@ -4446,8 +4460,7 @@
           "Bearer Token"
         ],
         "topN": 8
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 167,
@@ -4467,6 +4480,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Authorization Middleware",
@@ -4475,8 +4489,7 @@
           "Bearer Token"
         ],
         "topN": 8
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 168,
@@ -4496,6 +4509,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Authorization Middleware",
@@ -4504,8 +4518,7 @@
           "Bearer Token"
         ],
         "topN": 8
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 169,
@@ -4525,6 +4538,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Authorization Middleware",
@@ -4533,8 +4547,7 @@
           "Bearer Token"
         ],
         "topN": 8
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 170,
@@ -4554,13 +4567,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "gRPC Interceptor"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 171,
@@ -4580,13 +4593,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "gRPC Interceptor"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 172,
@@ -4606,25 +4619,26 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "gRPC Interceptor"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 173,
       "query": "sort recurses",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Dynamic Programming Matrix",
@@ -4633,20 +4647,20 @@
           "What is Recursion?"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 174,
       "query": "sort recursion",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Dynamic Programming Matrix",
@@ -4655,20 +4669,20 @@
           "What is Recursion?"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 175,
       "query": "sort recursing",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Dynamic Programming Matrix",
@@ -4677,65 +4691,64 @@
           "What is Recursion?"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 176,
       "query": "sort recurses",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Dynamic Programming Matrix"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 177,
       "query": "sort recursing",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Dynamic Programming Matrix"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 178,
       "query": "sort recursion",
       "classification": "B",
       "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent intent. V1 expectedTop is observational provenance only.",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
       "intent": {
         "requiredPrimary": [],
         "requiredWithin": [],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Dynamic Programming Matrix"
         ],
         "topN": 4
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 179,
@@ -4755,13 +4768,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Object"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 180,
@@ -4781,6 +4794,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is DevOps?",
@@ -4790,8 +4804,7 @@
           "Build Time"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 181,
@@ -4811,6 +4824,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What is DevOps?",
@@ -4820,15 +4834,14 @@
           "Build Time"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 182,
       "query": "authenticat",
       "classification": "B",
       "disposition": "omitted-covered-by-v2-contract",
-      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "React Authentication"
@@ -4841,6 +4854,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "React Authentication",
@@ -4850,15 +4864,14 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 183,
       "query": "authenticated",
       "classification": "B",
       "disposition": "omitted-covered-by-v2-contract",
-      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "React Authentication"
@@ -4871,6 +4884,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "React Authentication",
@@ -4880,15 +4894,14 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 184,
       "query": "authenticating",
       "classification": "B",
       "disposition": "omitted-covered-by-v2-contract",
-      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "React Authentication"
@@ -4901,6 +4914,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "React Authentication",
@@ -4910,15 +4924,14 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 185,
       "query": "authentication",
       "classification": "B",
       "disposition": "omitted-covered-by-v2-contract",
-      "note": "Query is already asserted by a strict V2 contract. V1 neighbors remain provenance only.",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "React Authentication"
@@ -4931,6 +4944,7 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "React Authentication",
@@ -4940,8 +4954,7 @@
           "TLS 1.2 Vulnerability"
         ],
         "topN": 5
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 186,
@@ -4961,13 +4974,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "React Authentication"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 187,
@@ -4987,13 +5000,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "React Authentication"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 188,
@@ -5013,13 +5026,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "React Authentication"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 189,
@@ -5039,13 +5052,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "React Authentication"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 190,
@@ -5065,13 +5078,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Rate Limiting"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 191,
@@ -5091,13 +5104,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Rate Limiting"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 192,
@@ -5122,6 +5135,7 @@
           }
         ]
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Raft Algorithm",
@@ -5129,8 +5143,7 @@
           "Rate Limiting Algorithms"
         ],
         "topN": 3
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 193,
@@ -5150,13 +5163,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Rate Limiting Algorithms"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 194,
@@ -5176,13 +5189,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Rate Limiting Algorithms"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 195,
@@ -5207,14 +5220,14 @@
           }
         ]
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What are Distributed Systems?",
           "Distributed Cloud"
         ],
         "topN": 3
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 196,
@@ -5234,14 +5247,14 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What are Distributed Systems?",
           "Distributed Cloud"
         ],
         "topN": 3
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 197,
@@ -5261,14 +5274,14 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "What are Distributed Systems?",
           "Distributed Cloud"
         ],
         "topN": 3
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 198,
@@ -5288,13 +5301,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Monotonic Stack"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 199,
@@ -5314,13 +5327,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Monotonic Stack"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 200,
@@ -5340,13 +5353,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "Monotonic Stack"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 201,
@@ -5366,13 +5379,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 202,
@@ -5392,13 +5405,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 203,
@@ -5418,13 +5431,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 204,
@@ -5444,13 +5457,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 205,
@@ -5470,13 +5483,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 206,
@@ -5496,13 +5509,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 207,
@@ -5522,13 +5535,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 208,
@@ -5548,13 +5561,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 209,
@@ -5578,13 +5591,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 210,
@@ -5604,13 +5617,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 211,
@@ -5630,13 +5643,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 212,
@@ -5656,13 +5669,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 213,
@@ -5682,13 +5695,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     },
     {
       "index": 214,
@@ -5708,13 +5721,13 @@
         ],
         "requiredAnyWithin": []
       },
+      "historicalRelevance": true,
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
-      },
-      "historicalRelevance": true
+      }
     }
   ]
 }

@@ -193,28 +193,28 @@ describe("software-land corpus fixture", () => {
     expect(manifest.scenarioSourceCommit).toBe("3ad49e867f82db06aa06cd1c7f38dca8faecf246");
     expect(manifest.softwareLandCommit).toBeUndefined();
     expect(manifest.relevanceSoftwareLandCommit).toBe("db5a070dbc6ac112dfae403f38fdfd0fffbedbf6");
-    expect(manifest.historicalRelevanceApplicable).toBe(213);
+    expect(manifest.historicalRelevanceApplicable).toBe(214);
     expect(manifest.searchPackageVersion).toBe("0.3.1");
     expect(manifest.documentCount).toBe(122);
     expect(documents).toHaveLength(122);
     expect(manifest.description).toMatch(/not default package policy/i);
     expect(manifest.scenarioCount).toBe(215);
     expect(manifest.historicalScenarioCount).toBe(215);
-    expect(manifest.executableV2ScenarioCount).toBe(98);
+    expect(manifest.executableV2ScenarioCount).toBe(99);
     expect(manifest.executableRegressionCount).toBe(60);
-    expect(manifest.omittedV1OnlyCount).toBe(126);
+    expect(manifest.omittedV1OnlyCount).toBe(125);
     expect(manifest.omittedEmptyIntentCount).toBe(43);
     expect(manifest.omittedBrowserUiOnlyCount).toBe(1);
     expect(manifest.sourceScenarioFiles).toEqual([
       "tests/search-scenarios.js",
       "tests/search-v2-contracts.js",
     ]);
-    expect(contracts.cases).toHaveLength(98);
+    expect(contracts.cases).toHaveLength(99);
     expect(regressions.cases).toHaveLength(60);
     expect(historical.rows).toHaveLength(215);
     expect(historical.kind).toBe("historical-relevance-contracts");
-    expect(historical.counts.historicalRelevanceApplicable).toBe(213);
-    expect(index.counts.executableContracts).toBe(98);
+    expect(historical.counts.historicalRelevanceApplicable).toBe(214);
+    expect(index.counts.executableContracts).toBe(99);
     expect(index.counts.executableRegressions).toBe(60);
   });
 
@@ -243,12 +243,12 @@ describe("software-land corpus fixture", () => {
         "omitted-obsolete",
       ])
     );
-    expect(historical.rows.filter((row) => row.disposition === "contract-a-intent")).toHaveLength(82);
+    expect(historical.rows.filter((row) => row.disposition === "contract-a-intent")).toHaveLength(83);
     expect(historical.rows.filter((row) => row.disposition === "omitted-duplicate-a-intent")).toHaveLength(6);
     expect(historical.rows.filter((row) => row.disposition === "regression-b-intent")).toHaveLength(60);
     expect(historical.rows.filter((row) => row.disposition === "omitted-duplicate-b-intent")).toHaveLength(5);
     expect(historical.rows.filter((row) => row.disposition === "omitted-covered-by-v2-contract")).toHaveLength(16);
-    expect(historical.rows.filter((row) => row.disposition === "omitted-obsolete")).toHaveLength(2);
+    expect(historical.rows.filter((row) => row.disposition === "omitted-obsolete")).toHaveLength(1);
     expect(historical.rows.filter((row) => row.disposition === "omitted-empty-intent-observational-v1")).toHaveLength(43);
     expect(historical.rows.filter((row) => row.disposition === "omitted-b-intent-not-current-v2").map((row) => row.query)).toEqual([
       "what is an appli",
@@ -262,8 +262,8 @@ describe("software-land corpus fixture", () => {
     const emptyIntent = historical.rows.filter((row) => row.disposition === "omitted-empty-intent-observational-v1");
     expect(emptyIntent.every((row) => row.v1?.expectedTop || row.v1?.titlePrefix)).toBe(true);
     expect(emptyIntent.every((row) => row.historicalRelevance === true)).toBe(true);
-    expect(historical.rows.filter((row) => row.historicalRelevance)).toHaveLength(213);
-    expect(historical.rows.filter((row) => row.historicalRelevance === false).map((row) => row.query)).toEqual(["open", "sharde"]);
+    expect(historical.rows.filter((row) => row.historicalRelevance)).toHaveLength(214);
+    expect(historical.rows.filter((row) => row.historicalRelevance === false).map((row) => row.query)).toEqual(["open"]);
     expect(contracts.cases.every((row) => row.kind === "contract" && !row.v1)).toBe(true);
     expect(regressions.cases.every((row) => row.kind === "regression" && row.classification === "B" && !row.v1)).toBe(true);
   });
@@ -342,7 +342,7 @@ describe("software-land candidate-stage survival", () => {
   test("full-scan retains contract and regression targets before ranking", () => {
     const contractStats = measureCandidateSurvival(fullScan, contracts.cases);
     const regressionStats = measureCandidateSurvival(fullScan, regressions.cases);
-    expect(contractStats.n).toBe(98);
+    expect(contractStats.n).toBe(99);
     expect(regressionStats.n).toBe(60);
     expect(contractStats.missing).toEqual([]);
     expect(regressionStats.missing).toEqual([]);

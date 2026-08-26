@@ -31,19 +31,19 @@
     },
     "scenarios.json": {
       "bytes": 2059,
-      "sha256": "eb9938abe125d6030d822cb2110de844a22c0443675e05f983defe4d62ef77aa"
+      "sha256": "04b57f5bae05c4439687bbdefa4f315e53c08bbb8240de83601568effcfbee68"
     },
     "v2-contracts.json": {
-      "bytes": 37835,
-      "sha256": "420b0a0d1fcb4e7fdc27f7873310703f227c387c6c672fee801d942f40235a5f"
+      "bytes": 38369,
+      "sha256": "7c8c230a76d4961511d6ebc4f2681b1f6dddc7f05f8acee64e23e695a68d7df8"
     },
     "regression-scenarios.json": {
       "bytes": 24108,
       "sha256": "8f190da45151f6523cbfadfe818b05a262658fd0c259e7a3aa885a90ca1daa80"
     },
     "historical-scenarios.json": {
-      "bytes": 144123,
-      "sha256": "74e08a2001253f1bce0e5349268c299ed5bbf210215c2ae13303ed3cd2e06569"
+      "bytes": 145799,
+      "sha256": "62b740ae54c7debbd380764c89f85043da1111df8e30a476cd14a10f7c3ccc46"
     },
     "relevance-config.json": {
       "bytes": 1415,
@@ -63,11 +63,11 @@
     }
   },
   "scenarioCount": 215,
-  "executableV2ScenarioCount": 98,
-  "historicalRelevanceApplicable": 213,
+  "executableV2ScenarioCount": 99,
+  "historicalRelevanceApplicable": 214,
   "relevanceSoftwareLandCommit": "db5a070dbc6ac112dfae403f38fdfd0fffbedbf6",
   "historicalContractSoftwareLandCommit": "3ad49e867f82db06aa06cd1c7f38dca8faecf246",
-  "omittedV1OnlyCount": 126,
+  "omittedV1OnlyCount": 125,
   "omittedBrowserUiOnlyCount": 1,
   "sourceScenarioFiles": [
     "tests/search-scenarios.js",
