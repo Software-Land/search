@@ -31,6 +31,7 @@ They must never become Core defaults.
 | Historical inventory | 215 rows (`historical-scenarios.json`); 213 executable relevance contracts |
 | Historical contract updates | `historical-contract-updates.json` (Software.Land `3ad49e867f82db06aa06cd1c7f38dca8faecf246`) |
 | Historical relevance config | `relevance-config.json` + `relationship-map.json` (authored equivalent + AppSec related; synonym-map.json remains the db5a070 provenance snapshot) |
+| `relevanceSoftwareLandCommit` | `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6` — live `LIVE_SEARCH_EQUIVALENCE_MAP` / `synonym-map.json` snapshot only. Not the NIST alias pin (`relevance-config.json` `7628a85`), not the later relationshipMap/editorial/semantic-rejection commits, and not HEAD. |
 | Omitted empty-intent rows | 43 (not mined into V2 intent/regression; still in historical relevance) |
 | Omitted V1-only source rows | 126 (B + A without intent; some re-enter as regressions; still in historical relevance when `expectedTop` exists) |
 | Omitted browser/UI-only | 1 (`zzz-no-hit` no-results copy) |
@@ -117,7 +118,9 @@ node scripts/software-land-scenarios.mjs \
 ```
 
 Copy `synonym-map.json` from Software.Land live `LIVE_SEARCH_EQUIVALENCE_MAP` at the recorded
-`relevanceSoftwareLandCommit` after generic OSS `normalizeSearchEquivalences()`.
+`relevanceSoftwareLandCommit` (`db5a070`, the search-equivalence snapshot) after generic OSS
+`normalizeSearchEquivalences()`. Do not repoint that field at NIST patches, relationshipMap
+edits, historical-contract commits, or HEAD.
 Patch AppSec dictionary aliases/`topicalRecall` and NIST exact institute aliases only through `relevance-config.json`;
 do not edit frozen `dictionary.json`. Do not reverse-materialize. Do not generate
 `expectedTop` / `topN` / `titlePrefix` from current engine output.

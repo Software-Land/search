@@ -211,12 +211,20 @@
       "classification": "B",
       "requiredWithin": [
         {
-          "title": "Working with APIs",
+          "title": "What is an API?",
           "topN": 1
+        },
+        {
+          "title": "Working with APIs",
+          "topN": 2
+        },
+        {
+          "title": "REST API vs GraphQL",
+          "topN": 3
         }
       ],
-      "exactFirst": "Working with APIs",
-      "name": "regression · scenario · what are apis · #1:Working with APIs | Working with APIs@1"
+      "exactFirst": "What is an API?",
+      "name": "regression · scenario · what are apis · #1:What is an API? | What is an API?@1 | Working with APIs@2 | REST API vs GraphQL@3"
     },
     {
       "query": "interface",

@@ -38,8 +38,8 @@
       "sha256": "420b0a0d1fcb4e7fdc27f7873310703f227c387c6c672fee801d942f40235a5f"
     },
     "regression-scenarios.json": {
-      "bytes": 23906,
-      "sha256": "3f72e1f8dc2f56ea87a92fa2f1b898ef7d372ad05375a4f451cc7c9dcfd3fec4"
+      "bytes": 24108,
+      "sha256": "8f190da45151f6523cbfadfe818b05a262658fd0c259e7a3aa885a90ca1daa80"
     },
     "historical-scenarios.json": {
       "bytes": 144123,
@@ -65,7 +65,7 @@
   "scenarioCount": 215,
   "executableV2ScenarioCount": 98,
   "historicalRelevanceApplicable": 213,
-  "relevanceSoftwareLandCommit": "7628a85166781d4ab42f60646e2f66da5f336eaa",
+  "relevanceSoftwareLandCommit": "db5a070dbc6ac112dfae403f38fdfd0fffbedbf6",
   "historicalContractSoftwareLandCommit": "3ad49e867f82db06aa06cd1c7f38dca8faecf246",
   "omittedV1OnlyCount": 126,
   "omittedBrowserUiOnlyCount": 1,

@@ -157,11 +157,8 @@ describe("0.2.0 migration parity", () => {
     const httpIds = ["expansion-title", "http", "protocol-only", "transfer-only"];
     expect(ids(engine.search("http"))).toEqual(httpIds);
     expect(ids(engine.search("hypertext transfer protocol"))).toEqual(httpIds);
-    expect(ids(engine.search("hypertext transfer"))).toEqual([
-      "expansion-title",
-      "http",
-      "transfer-only",
-    ]);
+    // Partial expansion occupancy still projects the HTTP expansion, so protocol-only is legitimate weak-direct evidence.
+    expect(ids(engine.search("hypertext transfer"))).toEqual(httpIds);
 
     const exact = engine.searchDetailed("http", { explain: true }).results;
     expect(stableSurface(exact[0])).toMatchObject({
