@@ -221,6 +221,66 @@ describe("Software.Land historical relevance contracts", () => {
     expect(applicable.filter((row) => row.v1?.titlePrefix)).toHaveLength(1);
   });
 
+  test("one-token recursion family ranks lexical neighbors ahead of relationship-only false friends", () => {
+    const titles = engine.search("recursion", { limit: 8 }).map((hit) => hit.title);
+    expect(titles.slice(0, 5)).toEqual([
+      "What is Recursion?",
+      "DFS Backtracking",
+      "InOrder vs PreOrder vs PostOrder",
+      "Dynamic Programming Matrix",
+      "React Performance Optimization",
+    ]);
+    expect(titles.indexOf("Monotonic Stack")).toBeGreaterThan(titles.indexOf("React Performance Optimization"));
+    for (const query of ["recursing", "recursed", "recursive", "recursiv", "recurssing"]) {
+      const window = engine.search(query, { limit: 5 }).map((hit) => hit.title);
+      expect(window).toEqual(titles.slice(0, 5));
+    }
+  });
+
+  test("sort-recursion remains a separate two-concept ranking defect", () => {
+    for (const query of ["sort recursion", "sort recursing", "sort recurses"]) {
+      const titles = engine.search(query, { limit: 8 }).map((hit) => hit.title);
+      expect(titles[0]).toBe("What is Recursion?");
+      expect(titles).toContain("Python Custom Sorting");
+      expect(titles.indexOf("Dynamic Programming Matrix")).toBeGreaterThanOrEqual(4);
+    }
+  });
+
+  test("API relationship neighborhood keeps Interface and Class vs Interface", () => {
+    const whatIs = engine.search("what is an api", { limit: 6 }).map((hit) => hit.title);
+    const whatAre = engine.search("what are apis", { limit: 6 }).map((hit) => hit.title);
+    expect(whatIs.slice(0, 5)).toEqual([
+      "What is an API?",
+      "REST API vs GraphQL",
+      "Working with APIs",
+      "What is an Interface?",
+      "Class vs Interface",
+    ]);
+    expect(whatAre.slice(0, 5)).toEqual([
+      "What is an API?",
+      "Working with APIs",
+      "REST API vs GraphQL",
+      "What is an Interface?",
+      "Class vs Interface",
+    ]);
+  });
+
+  test("dfs neighborhood keeps Minmax Tree in the accepted window", () => {
+    const dfs = engine.search("dfs", { limit: 6 }).map((hit) => hit.title);
+    const depth = engine.search("depth first search", { limit: 6 }).map((hit) => hit.title);
+    expect(dfs[0]).toBe("DFS Backtracking");
+    expect(dfs.slice(0, 6)).toContain("Minmax Tree");
+    expect(depth[0]).toBe("DFS Backtracking");
+    expect(depth.slice(0, 6)).toContain("Minmax Tree");
+  });
+
+  test("devops relationship neighborhood still ranks CI/CD with DevOps", () => {
+    const titles = engine.search("devops", { limit: 6 }).map((hit) => hit.title);
+    expect(titles[0]).toBe("What is DevOps?");
+    expect(titles).toContain("CI/CD");
+    expect(titles.indexOf("CI/CD")).toBeLessThan(titles.indexOf("Build Time"));
+  });
+
   test.each(applicable.map((row) => [row.index, row.query, row]))(
     "row %s query %s historical relevance",
     (_index, _query, row) => {

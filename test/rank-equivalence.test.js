@@ -227,6 +227,45 @@ describe("ranking equivalence oracle", () => {
     rankBoth(cands, HYBRID_CONSTRAINTS);
   });
 
+  test("related vs repeated weak-direct stays sparse-equivalent and score-decided", () => {
+    rankBoth(
+      [
+        hit("related-high", {
+          relevanceKind: "related",
+          directClass: "none",
+          relationshipStrength: 1,
+          bodyPhraseCount: 0,
+        }),
+        hit("weak-repeated", {
+          relevanceKind: "direct",
+          directClass: "weak",
+          bodyLexicalMatch: 1,
+          bodyPhraseCount: 10,
+          queryCoverage: 0,
+        }),
+      ],
+      HYBRID_CONSTRAINTS
+    );
+    rankBoth(
+      [
+        hit("related-low", {
+          relevanceKind: "related",
+          directClass: "none",
+          relationshipStrength: 0.2,
+          bodyPhraseCount: 0,
+        }),
+        hit("weak-repeated", {
+          relevanceKind: "direct",
+          directClass: "weak",
+          bodyLexicalMatch: 1,
+          bodyPhraseCount: 10,
+          queryCoverage: 0,
+        }),
+      ],
+      HYBRID_CONSTRAINTS
+    );
+  });
+
   test("contextual prefix, coverage, surface/lemma, version, dotted span, title length, short literal", () => {
     rankBoth([
       hit("ctx-hi", {
