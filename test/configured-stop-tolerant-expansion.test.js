@@ -206,6 +206,68 @@ describe("stop-tolerant configured expansion alignment", () => {
   });
 });
 
+describe("explicit exact 1-token configured aliases", () => {
+  const nistAliases = [
+    {
+      key: "nist",
+      expansion: ["national", "institute", "standards", "technology"],
+      aliases: [["institute"], ["institute", "standards"]],
+    },
+    { key: "gatech", expansion: ["georgia", "institute", "of", "technology"] },
+    { key: "appsec", expansion: ["application", "security"], aliases: [["app", "sec"]] },
+  ];
+
+  test("a unique exact 1-token expansion-word alias occupies whole-query intent", () => {
+    const q = analyze("institute", nistAliases);
+    expect(q.tokens.map((t) => t.surface)).toEqual(["institute"]);
+    expect(q.configuredSequenceIntent?.key).toBe("nist");
+    expect(q.configuredSequenceIntent?.matchedKinds).toEqual(["alias"]);
+    expect(q.configuredSequenceIntent?.expansion).toEqual([
+      "national",
+      "institute",
+      "standards",
+      "technology",
+    ]);
+    expect(resolveConfiguredSequence(q.tokens, plugins(nistAliases)[1])).toMatchObject({
+      status: "unique",
+      alignment: "full",
+      usedPrefix: false,
+    });
+    expect(acronymIds(q)).toEqual(["nist"]);
+  });
+
+  test("an explicit 2-token alias occupies without prefixing unrelated institute queries", () => {
+    const q = analyze("institute standards", nistAliases);
+    expect(q.configuredSequenceIntent?.key).toBe("nist");
+    expect(q.configuredSequenceIntent?.matchedKinds).toContain("alias");
+    for (const raw of ["institute technology", "institute programming", "institute security"]) {
+      expect(analyze(raw, nistAliases).configuredSequenceIntent).toBeNull();
+    }
+  });
+
+  test("a prefix of a 1-token alias does not occupy", () => {
+    for (const raw of ["inst", "instit", "institu"]) {
+      expect(analyze(raw, nistAliases).configuredSequenceIntent?.key).not.toBe("nist");
+    }
+  });
+
+  test("colliding 1-token aliases fail closed", () => {
+    const dict = [
+      { key: "nist", expansion: ["national", "institute"], aliases: [["institute"]] },
+      { key: "gatech", expansion: ["georgia", "institute"], aliases: [["institute"]] },
+    ];
+    const q = analyze("institute", dict);
+    expect(q.configuredSequenceIntent).toBeNull();
+    expect(resolveConfiguredSequence(q.tokens, plugins(dict)[1]).status).toBe("ambiguous");
+  });
+
+  test("bare expansion words still fail closed without an explicit 1-token alias", () => {
+    expect(analyze("institute").configuredSequenceIntent).toBeNull();
+    expect(analyze("security").configuredSequenceIntent).toBeNull();
+    expect(analyze("standards").configuredSequenceIntent).toBeNull();
+  });
+});
+
 describe("NIST spoken forms on the Software.Land fixture", () => {
   const ROOT = path.dirname(fileURLToPath(import.meta.url));
   const FIXTURE = path.join(ROOT, "fixtures", "software-land");

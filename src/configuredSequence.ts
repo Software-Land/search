@@ -75,7 +75,9 @@ function alignsLast(tok: QueryToken, want: string): boolean {
 
 /**
  * A 1-token alias that is just one word of a multi-token expansion is not a
- * trusted complete-query sequence (bare `security` is not appsec).
+ * trusted complete-query sequence for prefix/span matching (bare `security`
+ * is not appsec). Explicit unique exact whole-query aliases still occupy
+ * through `uniqueExactOneTokenAlias`.
  */
 function isSingleExpansionWordAlias(seq: DictionarySequence): boolean {
   if (seq.kind !== "alias") return false;
@@ -446,6 +448,32 @@ function uniqueExpansionSuffix(
   return uniqueCandidateResolution(candidates, dict, "suffix");
 }
 
+/**
+ * Explicit 1-token aliases occupy only as a unique exact whole-query form.
+ * Prefix stubs, interior spans, and colliding aliases fail closed. Typed
+ * surface is not rewritten. Dictionary `primary` is unused.
+ */
+function uniqueExactOneTokenAlias(
+  tokens: QueryToken[],
+  dict: SearchPlugin
+): ConfiguredSequenceResolution {
+  if (tokens.length !== 1 || tokenIsStop(tokens[0]) || !dict.sequences?.length) {
+    return { status: "none" };
+  }
+  const matches: DictionarySequence[] = [];
+  const keys = new Set<string>();
+  for (const seq of dict.sequences) {
+    if (!isSingleExpansionWordAlias(seq) || !seq.entry?.key) continue;
+    if (!exactTypedToken(tokens[0], seq.tokens[0])) continue;
+    matches.push(seq);
+    keys.add(seq.entry.key);
+  }
+  if (!matches.length) return { status: "none" };
+  if (keys.size > 1) return { status: "ambiguous", keys: [...keys] };
+  const entry = dict.byKey?.get(matches[0].entry.key) || matches[0].entry;
+  return uniqueResolution(entry, ["alias"], false, "full");
+}
+
 function configuredKeyPrefixKeys(tok: QueryToken, dict: SearchPlugin): string[] {
   const form = String(tok.normalized || "").toLowerCase();
   if (!form || form.length < 3 || !dict.sequences?.length) return [];
@@ -541,6 +569,8 @@ export function resolveConfiguredSequence(
     const usedPrefix = chosen.some((m) => m.usedPrefix);
     return uniqueResolution(entry, matchedKinds, usedPrefix, "full");
   }
+  const exactOneTokenAlias = uniqueExactOneTokenAlias(tokens, dict);
+  if (exactOneTokenAlias.status !== "none") return exactOneTokenAlias;
   const leftPrefix = uniqueExpansionLeftPrefix(tokens, dict);
   if (leftPrefix.status !== "none") return leftPrefix;
   const stopTolerantLeft = uniqueStopTolerantLeftPrefix(tokens, dict);
