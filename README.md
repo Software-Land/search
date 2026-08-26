@@ -108,7 +108,7 @@ const client = createSearchClient({
   onResult({ query, result }) { /* render */ },
 });
 
-await client.init({ documents, schema, retriever: "indexed", lexicalIndex });
+await client.init({ documents, schema, dictionaryEntries, relationshipMap, relationships, retriever: "indexed", lexicalIndex });
 client.setQuery("bluetooth");
 client.dispose();
 ```
@@ -116,7 +116,7 @@ client.dispose();
 `searchWorkerUrl()` resolves the bundled Worker **from this package** (`import.meta.url` of the browser entry). Consumers should not build a Worker URL against their own module; that would miss `searchWorker.js`. Omitting `workerUrl` uses the same default.
 
 Protocol is plain `postMessage`. Latest-wins: a new query replaces pending work and cancels stale running searches.
-Omit `lexicalIndex` to construct the exact fallback index once inside the Worker; a supplied invalid artifact rejects initialization.
+Omit `lexicalIndex` to construct the exact fallback index once inside the Worker; a supplied invalid artifact rejects initialization. `relationshipMap` has the same authored meaning as in-process `compileAuthoredRelevance()`.
 
 ## Corpus compiler
 

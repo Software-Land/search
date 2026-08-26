@@ -136,6 +136,8 @@ export interface SearchClientOptions {
 export interface WorkerRuntimeFactories {
   SearchEngine?: typeof import("../SearchEngine.js").SearchEngine;
   english?: typeof import("../english.js").english;
+  compileAuthoredRelevance?: typeof import("../dictionary.js").compileAuthoredRelevance;
+  /** @deprecated Worker init uses compileAuthoredRelevance; kept so existing tests still typecheck. */
   dictionary?: typeof import("../dictionary.js").dictionary;
 }
 

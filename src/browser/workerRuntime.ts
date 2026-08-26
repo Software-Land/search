@@ -5,8 +5,10 @@
 
 import { MSG } from "./protocol.js";
 import { isAbortError } from "../cancel.js";
+import { compileAuthoredRelevance as defaultCompileAuthoredRelevance } from "../dictionary.js";
+import { mergeEditorialRelationships } from "../relationshipMap.js";
 import type { SearchEngine } from "../SearchEngine.js";
-import type { SearchEngineOptions, SearchOptions, SearchPlugin } from "../types.js";
+import type { SearchEngineOptions, SearchOptions } from "../types.js";
 import type {
   InitPayload,
   ProtocolMessage,
@@ -54,7 +56,11 @@ function retrievalDiagnosticMeta(meta?: any) {
   };
 }
 
-export function createWorkerRuntime({ SearchEngine, english, dictionary }: WorkerRuntimeFactories = {}) {
+export function createWorkerRuntime({
+  SearchEngine,
+  english,
+  compileAuthoredRelevance = defaultCompileAuthoredRelevance,
+}: WorkerRuntimeFactories = {}) {
   let engine: SearchEngine | null = null;
   let running: RunningSearch | null = null;
   let disposed = false;
@@ -77,26 +83,30 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
     }
     try {
       const payload = (message.payload || {}) as InitPayload;
-      const plugins: SearchPlugin[] = [];
+      const plugins = [];
       if (typeof english === "function") plugins.push(english(payload.englishOptions || {}));
-      if (typeof dictionary === "function") {
-        plugins.push(
-          dictionary({
-            entries: payload.dictionaryEntries || [],
-            relationshipMap: payload.relationshipMap,
-            documents: payload.documents || [],
-          })
-        );
+      // Compile once at init through the shared authored-relevance compiler.
+      const authored = compileAuthoredRelevance({
+        entries: payload.dictionaryEntries || [],
+        relationshipMap: payload.relationshipMap,
+        documents: payload.documents || [],
+      });
+      plugins.push(authored.dictionary);
+      if (Object.keys(authored.synonymMap || {}).length) {
+        plugins.push(authored.synonyms);
       }
       exactPruningMode =
         payload._exactPruningMode === "exhaustive" ? "exhaustive" : "auto";
       includeRetrievalDiagnostics = payload._includeRetrievalDiagnostics === true;
       const documents = payload.documents || [];
+      const hasEditorial = Object.keys(authored.editorialRelationships || {}).length > 0;
       engine = SearchEngine.create({
         schema: payload.schema,
         plugins,
         lexicalIndex: payload.lexicalIndex,
-        relationships: payload.relationships || null,
+        relationships: hasEditorial
+          ? mergeEditorialRelationships(payload.relationships || null, authored.editorialRelationships)
+          : payload.relationships || null,
         relationshipStrategy: payload.relationshipStrategy,
         retriever: payload.retriever,
         candidateLimit: payload.candidateLimit ?? undefined,

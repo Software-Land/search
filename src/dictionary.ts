@@ -13,7 +13,8 @@ import type { DictionaryEntry, DictionarySequence } from "./types.js";
 import { compileAuthoredConcept } from "./configuredAuthoring.js";
 import {
   applyCompiledRelationships,
-  compileRelationshipMap,
+  compileRelationshipMapInternal,
+  type CompiledRelationshipMap,
   type RelationshipDocumentRef,
 } from "./relationshipMap.js";
 import { synonyms as synonymsPlugin } from "./synonyms.js";
@@ -79,7 +80,7 @@ export function dictionary({ entries = [], relationshipMap, documents }: Diction
     if (entry) list.push(entry);
   }
   if (relationshipMap != null) {
-    const compiled = compileRelationshipMap(relationshipMap, { concepts: list, documents: documents || [] });
+    const compiled = compileRelationshipMapInternal(relationshipMap, { concepts: list, documents: documents || [] });
     applyCompiledRelationships(list, compiled);
   }
   return dictionaryFromCompiled(list);
@@ -89,7 +90,7 @@ export interface CompiledAuthoredRelevance {
   dictionary: DictionaryPlugin;
   synonymMap: Record<string, string[]>;
   synonyms: ReturnType<typeof synonymsPlugin>;
-  editorialRelationships: ReturnType<typeof compileRelationshipMap>["editorialRelationships"];
+  editorialRelationships: CompiledRelationshipMap["editorialRelationships"];
 }
 
 /**
@@ -106,7 +107,7 @@ export function compileAuthoredRelevance({
     const entry = compileAuthoredConcept(raw);
     if (entry) list.push(entry);
   }
-  const compiled = compileRelationshipMap(relationshipMap, { concepts: list, documents: documents || [] });
+  const compiled = compileRelationshipMapInternal(relationshipMap, { concepts: list, documents: documents || [] });
   applyCompiledRelationships(list, compiled);
   return {
     dictionary: dictionaryFromCompiled(list),

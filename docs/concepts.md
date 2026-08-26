@@ -22,7 +22,7 @@ Exact indexed retrieval enumerates every legitimate posting match. After relatio
 | Relationship map (`relationshipMap`) | what other forms/concepts/documents are explicitly **related** | kinds `equivalent` (existing synonym recall) and `related` (standalone / topical / editorial). Directional. No auto-reverse. No authored numeric weight. |
 | Semantic graph (generated MiniLM artifact) | what relationships the **model inferred** | separate generated pipeline with embedding provenance. Not authored in `relationshipMap`. |
 
-`equivalent` is not `related`. Generated is not authored.
+`equivalent` is not `related`. Generated is not authored. Browser `SearchClient.init({ relationshipMap })` uses this same primitive.
 
 ### Configured occupancy and ranking
 

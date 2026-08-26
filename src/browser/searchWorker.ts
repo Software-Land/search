@@ -2,14 +2,14 @@
  * Browser Worker entry. Keep this file thin so SearchEngine never imports Worker.
  */
 /* eslint-disable no-restricted-globals */
-import { SearchEngine, morphology, dictionary } from "../index.js";
+import { SearchEngine, morphology, compileAuthoredRelevance } from "../index.js";
 import { createWorkerRuntime } from "./workerRuntime.js";
 import type { WorkerRuntimeFactories } from "./types.js";
 
 const runtime = createWorkerRuntime({
   SearchEngine,
   english: morphology,
-  dictionary,
+  compileAuthoredRelevance,
 } as WorkerRuntimeFactories);
 
 self.onmessage = (ev) => {

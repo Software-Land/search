@@ -22,6 +22,8 @@ The compiler decides what is in the runtime artifact. Search Core expands **ever
 - search-eligible: `semantic`, `editorial`, `manually-related`
 - stored/structural (full artifact only): `same-category`, `prerequisite`, `supersedes`
 
+Authored `relationshipMap` document→document edges compile onto `editorial` / `manual` rows and merge with a generated semantic artifact. Browser Worker initialization uses that same authored meaning.
+
 ## Example
 
 ```js

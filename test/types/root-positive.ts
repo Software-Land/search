@@ -46,6 +46,7 @@ import {
   type RelationshipMap,
   type MigratedConfiguredEntry,
   type CompiledAuthoredRelevance,
+  type CompiledRelationshipMap,
 } from "@software-land/search";
 
 const schema: Schema = {
@@ -83,7 +84,9 @@ void migrated.discardedPrimary;
 const relationshipMap: RelationshipMap = {
   qa: [{ to: { form: "testing" }, kind: "equivalent" }],
 };
-void compileRelationshipMap(relationshipMap, { concepts: entries });
+const compiledPublic: CompiledRelationshipMap = compileRelationshipMap(relationshipMap, { concepts: entries });
+void compiledPublic.synonymMap;
+void compiledPublic.editorialRelationships;
 const authored: CompiledAuthoredRelevance = compileAuthoredRelevance({ entries, relationshipMap });
 void authored.synonymMap;
 void authored.dictionary;

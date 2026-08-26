@@ -311,6 +311,101 @@ async function main() {
 
     await page.evaluate(() => window.__dispose());
 
+    copyFileSync(path.join(harnessDir, "relationship-app.mjs"), path.join(consumer, "relationship-app.mjs"));
+    writeFileSync(
+      path.join(consumer, "relationship.html"),
+      `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>chromium-pack relationshipMap worker</title>
+    <script type="importmap">${JSON.stringify(importMap)}</script>
+  </head>
+  <body>
+    <script type="module" src="/relationship-app.mjs"></script>
+  </body>
+</html>
+`
+    );
+
+    const relationshipPage = await browser.newPage();
+    const relationshipConsoleErrors = [];
+    const relationshipPageErrors = [];
+    relationshipPage.on("console", (msg) => {
+      if (msg.type() === "error") relationshipConsoleErrors.push(msg.text());
+    });
+    relationshipPage.on("pageerror", (err) => {
+      relationshipPageErrors.push(String(err?.stack || err?.message || err));
+    });
+    await relationshipPage.goto(`${origin}/relationship.html`, { waitUntil: "load", timeout: WAIT_MS });
+    await relationshipPage.waitForFunction(() => window.__booted === true || window.__bootError, null, {
+      timeout: WAIT_MS,
+    });
+    const relationshipBoot = await relationshipPage.evaluate(() => ({
+      booted: window.__booted,
+      bootError: window.__bootError || null,
+      errors: window.__state?.errors || [],
+      workerUrl: window.__state?.workerUrl || null,
+    }));
+    if (!relationshipBoot.booted) {
+      throw new Error(`relationshipMap boot failed: ${relationshipBoot.bootError || JSON.stringify(relationshipBoot.errors)}`);
+    }
+    if (relationshipBoot.errors.length) {
+      throw new Error(`relationshipMap init errors: ${JSON.stringify(relationshipBoot.errors)}`);
+    }
+    const relationshipQueries = [
+      { query: "qa", options: { limit: 10, relatedLimit: 8, explain: true } },
+      { query: "hypertext", options: { limit: 10, relatedLimit: 8, explain: true } },
+      { query: "appsec", options: { limit: 10, relatedLimit: 8, explain: true } },
+      {
+        query: "krypton primary",
+        options: { limit: 10, relatedLimit: 8, explain: true, relationshipStrategy: "separate" },
+      },
+    ];
+    for (const row of relationshipQueries) {
+      const before = await relationshipPage.evaluate(() => window.__state.published.length);
+      await relationshipPage.evaluate(
+        ({ query, options }) => window.__runQuery(query, options),
+        row
+      );
+      await relationshipPage.waitForFunction(
+        ({ query, beforeCount }) => {
+          const s = window.__state;
+          if (s.errors.length) return true;
+          return s.published.length > beforeCount && s.published[s.published.length - 1].query === query;
+        },
+        { query: row.query, beforeCount: before },
+        { timeout: WAIT_MS }
+      );
+    }
+    const relationshipState = await relationshipPage.evaluate(() => window.__state);
+    if (relationshipState.errors.length) {
+      throw new Error(`relationshipMap search errors: ${JSON.stringify(relationshipState.errors)}`);
+    }
+    const lastByQuery = Object.fromEntries(
+      ["qa", "hypertext", "appsec", "krypton primary"].map((query) => {
+        const rows = relationshipState.published.filter((row) => row.query === query);
+        return [query, rows[rows.length - 1]];
+      })
+    );
+    if (!lastByQuery.qa?.ids?.includes("testing")) {
+      throw new Error(`relationshipMap synonym missing testing: ${JSON.stringify(lastByQuery.qa)}`);
+    }
+    if (lastByQuery.hypertext?.ids?.[0] !== "http-doc") {
+      throw new Error(`relationshipMap standalone missing http-doc: ${JSON.stringify(lastByQuery.hypertext)}`);
+    }
+    if (lastByQuery.appsec?.ids?.[0] !== "authn") {
+      throw new Error(`relationshipMap topical missing authn: ${JSON.stringify(lastByQuery.appsec)}`);
+    }
+    if (!lastByQuery["krypton primary"]?.relatedIds?.includes("doc-b")) {
+      throw new Error(`relationshipMap editorial missing doc-b: ${JSON.stringify(lastByQuery["krypton primary"])}`);
+    }
+    if (relationshipPageErrors.length) throw new Error(`relationshipMap pageerror: ${relationshipPageErrors.join("\n")}`);
+    if (relationshipConsoleErrors.length) {
+      throw new Error(`relationshipMap console error: ${relationshipConsoleErrors.join("\n")}`);
+    }
+    await relationshipPage.evaluate(() => window.__dispose());
+
     copyFileSync(path.join(harnessDir, "rank-bench-app.mjs"), path.join(consumer, "rank-bench-app.mjs"));
     writeFileSync(
       path.join(consumer, "rank.html"),
@@ -450,6 +545,7 @@ async function main() {
       normalIds: normalHit.ids,
       latestWinsPublished: afterLatest.published.slice(beforeLatest),
       latestWinsFinal: last,
+      relationshipMap: lastByQuery,
       rankBench: rankBoot.results,
       retrievalBench: retrievalBoot.results,
     });

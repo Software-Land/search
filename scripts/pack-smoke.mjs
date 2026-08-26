@@ -242,8 +242,18 @@ try {
       throw new Error(`packed browser api declarations export ${exported}`);
     }
   }
+  if (!/relationshipMap\?: import\("\.\.\/api\.js"\)\.RelationshipMap;/.test(browserApiDts) && !/relationshipMap\?: RelationshipMap;/.test(browserApiDts)) {
+    throw new Error("packed SearchClient.init must type relationshipMap");
+  }
   if (!browserApiDts.includes("init(payload: InitPayload)") && !browserApiDts.includes("init(payload: InitPayload):")) {
     throw new Error("packed SearchClient.init is missing InitPayload typing");
+  }
+  const compiledBlock = readFileSync(path.join(packedRoot, "dist/api.d.ts"), "utf8").match(
+    /export interface CompiledRelationshipMap \{[\s\S]*?\n\}/
+  );
+  if (!compiledBlock) throw new Error("packed api.d.ts missing CompiledRelationshipMap");
+  if (compiledBlock[0].includes("standaloneRecallByKey") || compiledBlock[0].includes("topicalRecallByKey")) {
+    throw new Error("packed CompiledRelationshipMap must not expose internal recall maps");
   }
   if (browserApiDts.includes("ExperimentalRetriever")) {
     throw new Error("packed browser InitPayload must not accept ExperimentalRetriever");

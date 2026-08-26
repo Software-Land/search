@@ -120,7 +120,7 @@ SearchEngine.create({
 | `related` concept → `{ form }` | existing topical-recall |
 | `related` document → `{ document }` | existing editorial relationship artifact (`type: editorial`, provenance `manual`, strength 1) |
 
-`dictionary({ entries, relationshipMap, documents })` applies related standalone/topical onto the dictionary plugin. Use `compileAuthoredRelevance()` when you also need the compiled synonym plugin and editorial document edges. Generated MiniLM relationships stay in the separate semantic artifact; they are not authored here.
+`dictionary({ entries, relationshipMap, documents })` applies related standalone/topical onto the dictionary plugin. Use `compileAuthoredRelevance()` when you also need the compiled synonym plugin and editorial document edges. Browser `SearchClient.init({ relationshipMap })` uses that same full authored-relevance meaning. Generated MiniLM relationships stay in the separate semantic artifact; they are not authored here.
 
 `migrateConfiguredEntry(old)` is a one-shot conversion from `{ key, exp|expansion, aliases, primary, standaloneRecall, topicalRecall }`. Runtime `dictionary()` / `SearchEngine` do not call it. `primary` is discarded and is not mapped to any relationship.
 

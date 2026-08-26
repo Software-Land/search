@@ -9,7 +9,8 @@
 
 import { InvalidConfigurationError } from "./errors.js";
 import { sequenceKey } from "./configuredAuthoring.js";
-import type { DictionaryEntry } from "./types.js";
+import { ARTIFACT_FORMATS, ARTIFACT_VERSION, parseRelationships } from "./artifacts.js";
+import type { DictionaryEntry, RelationshipArtifact, RelationshipEdge } from "./types.js";
 
 const FORBIDDEN_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 const KINDS = new Set(["equivalent", "related"]);
@@ -37,14 +38,22 @@ export interface RelationshipDocumentRef {
   slug?: unknown;
 }
 
+export type EditorialRelationshipEdge = {
+  target: string;
+  type: "editorial";
+  strength: 1;
+  provenance: "manual";
+};
+
+/** Public compileRelationshipMap() return value. Internal recall maps stay private. */
 export interface CompiledRelationshipMap {
   synonymMap: Record<string, string[]>;
+  editorialRelationships: Record<string, EditorialRelationshipEdge[]>;
+}
+
+export interface CompiledRelationshipInternals extends CompiledRelationshipMap {
   standaloneRecallByKey: Map<string, string[]>;
   topicalRecallByKey: Map<string, string[][]>;
-  editorialRelationships: Record<
-    string,
-    Array<{ target: string; type: "editorial"; strength: 1; provenance: "manual" }>
-  >;
 }
 
 export interface CompileRelationshipMapOptions {
@@ -195,22 +204,32 @@ function pushUniqueForm(list: string[][], form: string[]) {
   list.push([...form]);
 }
 
+function emptyCompiledInternals(): CompiledRelationshipInternals {
+  return {
+    synonymMap: emptyRecord(),
+    standaloneRecallByKey: new Map(),
+    topicalRecallByKey: new Map(),
+    editorialRelationships: emptyRecord(),
+  };
+}
+
+function projectCompiledRelationshipMap(compiled: CompiledRelationshipInternals): CompiledRelationshipMap {
+  return {
+    synonymMap: compiled.synonymMap,
+    editorialRelationships: compiled.editorialRelationships,
+  };
+}
+
 /**
- * Compile authored relationshipMap onto existing runtime machinery.
- * Directional by default. Reverse edges exist only when explicitly authored.
- * No numeric authored weights.
+ * Full compiler used by dictionary() / compileAuthoredRelevance().
+ * Not a public export.
  */
-export function compileRelationshipMap(
+export function compileRelationshipMapInternal(
   raw: unknown,
   { concepts, documents }: CompileRelationshipMapOptions = {}
-): CompiledRelationshipMap {
+): CompiledRelationshipInternals {
   if (raw == null) {
-    return {
-      synonymMap: emptyRecord(),
-      standaloneRecallByKey: new Map(),
-      topicalRecallByKey: new Map(),
-      editorialRelationships: emptyRecord(),
-    };
+    return emptyCompiledInternals();
   }
   if (!isPlainObject(raw)) {
     fail("relationshipMap must be a plain object", "relationshipMap", "Record<source, edges>");
@@ -307,7 +326,69 @@ export function compileRelationshipMap(
   return { synonymMap, standaloneRecallByKey, topicalRecallByKey, editorialRelationships };
 }
 
-export function applyCompiledRelationships(entries: DictionaryEntry[], compiled: CompiledRelationshipMap): DictionaryEntry[] {
+/**
+ * Public compiler. Returns synonym and editorial records only.
+ * Standalone/topical maps remain compiler internals.
+ */
+export function compileRelationshipMap(
+  raw: unknown,
+  options: CompileRelationshipMapOptions = {}
+): CompiledRelationshipMap {
+  return projectCompiledRelationshipMap(compileRelationshipMapInternal(raw, options));
+}
+
+function cloneRelationshipEdge(edge: RelationshipEdge): RelationshipEdge {
+  return {
+    target: edge.target,
+    type: edge.type,
+    strength: edge.strength,
+    provenance: edge.provenance,
+  };
+}
+
+function sameTypedEdge(left: RelationshipEdge, right: RelationshipEdge): boolean {
+  return left.target === right.target && String(left.type || "") === String(right.type || "");
+}
+
+/**
+ * Merge authored editorial document edges onto a base relationship artifact.
+ * Does not mutate caller objects. Same source/target/type keeps the first edge.
+ * Semantic and editorial pairs remain distinct.
+ */
+export function mergeEditorialRelationships(
+  base: unknown,
+  editorial?: CompiledRelationshipMap["editorialRelationships"] | null
+): RelationshipArtifact | null {
+  const editorialEntries = Object.entries(editorial || {}).filter(([, edges]) => Array.isArray(edges) && edges.length);
+  if (!editorialEntries.length) {
+    return base == null ? null : parseRelationships(base);
+  }
+  const parsed =
+    base == null
+      ? { format: ARTIFACT_FORMATS.relationships, version: ARTIFACT_VERSION, relationships: {} }
+      : parseRelationships(base);
+  const relationships = emptyRecord<RelationshipEdge[]>();
+  for (const [source, edges] of Object.entries(parsed.relationships || {})) {
+    relationships[source] = (edges || []).map(cloneRelationshipEdge);
+  }
+  for (const [source, edges] of editorialEntries) {
+    const list = ownedList(relationships, source);
+    for (const edge of edges) {
+      if (list.some((existing) => sameTypedEdge(existing, edge))) continue;
+      list.push(cloneRelationshipEdge(edge));
+    }
+  }
+  return {
+    format: ARTIFACT_FORMATS.relationships,
+    version: ARTIFACT_VERSION,
+    relationships,
+  };
+}
+
+export function applyCompiledRelationships(
+  entries: DictionaryEntry[],
+  compiled: CompiledRelationshipInternals
+): DictionaryEntry[] {
   for (const entry of entries) {
     const standalone = compiled.standaloneRecallByKey.get(entry.key);
     if (standalone?.length) {
