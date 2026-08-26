@@ -29,6 +29,7 @@ They must never become Core defaults.
 | Strict V2 contracts | 98 (`v2-contracts.json`) |
 | B-intent regressions | 60 (`regression-scenarios.json`, compatibility coverage, not Core policy) |
 | Historical inventory | 215 rows (`historical-scenarios.json`); 214 executable relevance contracts |
+| Historical contract updates | `historical-contract-updates.json` (Software.Land `7d2ea532f39fc0842f0aa8d612971b1b688e7dc9`) |
 | Historical relevance config | `relevance-config.json` + `synonym-map.json` (Software.Land `7628a85166781d4ab42f60646e2f66da5f336eaa` NIST aliases; synonym map still `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6`) |
 | Omitted empty-intent rows | 44 (not mined into V2 intent/regression; still in historical relevance) |
 | Omitted V1-only source rows | 126 (B + A without intent; some re-enter as regressions; still in historical relevance when `expectedTop` exists) |
@@ -53,6 +54,8 @@ matches Software.Land commit `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6`
 additions with isolated incremental value; curated wins; no auto-reverse). AppSec `topicalRecall` still matches
 Software.Land commit `eac7a90a15d772f0f0626a0fa9481eb9efa55521`. NIST aliases match
 Software.Land commit `7628a85166781d4ab42f60646e2f66da5f336eaa`.
+Product-approved historical `expectedTop` contracts match Software.Land
+`7d2ea532f39fc0842f0aa8d612971b1b688e7dc9` (`historical-contract-updates.json`).
 Corpus artifacts and the exact-output `dictionary.json` snapshot are unchanged. Empty-intent rows
 are not mined into V2 intent/regression cases; they still participate in
 historical relevance when `expectedTop` or `titlePrefix` exist.
@@ -71,6 +74,7 @@ and `tests/search-v2-contracts.js` from the committed scenario SHA.
 - `v2-contracts.json` — strict accepted V2 cases (`kind: contract`)
 - `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy
 - `historical-scenarios.json` — full 215-row inventory; `v1.expectedTop`/`titlePrefix`/`topN` are executable historical relevance contracts
+- `historical-contract-updates.json` — old V1 vs accepted V2/product `expectedTop` for rows superseded by explicit product decisions
 - `relevance-config.json` — Software.Land 0.5 relevance-engine inputs (omit `testing`, patch NIST institute aliases, patch AppSec topicalRecall, load synonym map)
 - `synonym-map.json` — live Software.Land search-equivalence map from `db5a070` (curated `SYNONYM_MAP` plus four pruned generated additions; no reverse materialization)
 - `scenarios.json` — index, counts, and disposition totals

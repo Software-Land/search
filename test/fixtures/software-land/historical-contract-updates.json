@@ -1,0 +1,522 @@
+{
+  "description": "Executable historical expectedTop contracts superseded by explicit product decisions. Old V1 remains provenance only.",
+  "softwareLandScenarios": "tests/search-scenarios.js",
+  "leftUnchangedBecauseAlreadyPassing": [
+    {
+      "query": "object oriented",
+      "reason": "already passing current V2-accepted historical contract",
+      "rows": [
+        80,
+        81
+      ]
+    },
+    {
+      "query": "institute standards",
+      "reason": "already passing TLS #1 after NIST product config",
+      "rows": [
+        127
+      ]
+    }
+  ],
+  "updates": [
+    {
+      "index": 7,
+      "query": "hypertext",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability",
+          "gRPC vs REST",
+          "Request Response",
+          "Vite React",
+          "React Authentication",
+          "REST API vs GraphQL",
+          "TCP vs UDP"
+        ],
+        "topN": 10
+      },
+      "newV1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 8,
+      "query": "hypertext tran",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "TCP vs UDP",
+          "gRPC vs REST",
+          "TLS 1.2 Vulnerability",
+          "Vite React",
+          "Request Response",
+          "REST API vs GraphQL",
+          "React Authentication"
+        ],
+        "topN": 10
+      },
+      "newV1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability",
+          "Request Response",
+          "REST API vs GraphQL",
+          "Authorization Middleware",
+          "gRPC vs REST",
+          "TCP vs UDP",
+          "What is an API?",
+          "Working with APIs",
+          "React Data Fetching",
+          "React Authentication"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 9,
+      "query": "hypertext transfer",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "TCP vs UDP",
+          "gRPC vs REST",
+          "TLS 1.2 Vulnerability",
+          "Vite React",
+          "Request Response",
+          "REST API vs GraphQL",
+          "React Authentication"
+        ],
+        "topN": 10
+      },
+      "newV1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability",
+          "Request Response",
+          "REST API vs GraphQL",
+          "Authorization Middleware",
+          "gRPC vs REST",
+          "TCP vs UDP",
+          "What is an API?",
+          "Working with APIs",
+          "React Data Fetching",
+          "React Authentication"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 10,
+      "query": "hypertext transfer protocol",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "TCP vs UDP",
+          "gRPC vs REST",
+          "Vite React",
+          "REST API vs GraphQL",
+          "TLS 1.2 Vulnerability",
+          "React Authentication",
+          "Request Response"
+        ],
+        "topN": 10
+      },
+      "newV1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability",
+          "Request Response",
+          "REST API vs GraphQL",
+          "Authorization Middleware",
+          "gRPC vs REST",
+          "TCP vs UDP",
+          "What is an API?",
+          "Working with APIs",
+          "React Data Fetching",
+          "React Authentication"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 11,
+      "query": "http",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "TCP vs UDP",
+          "gRPC vs REST",
+          "Vite React",
+          "REST API vs GraphQL",
+          "TLS 1.2 Vulnerability",
+          "React Authentication",
+          "Request Response"
+        ],
+        "topN": 10
+      },
+      "newV1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability",
+          "Request Response",
+          "REST API vs GraphQL",
+          "Authorization Middleware",
+          "gRPC vs REST",
+          "TCP vs UDP",
+          "What is an API?",
+          "Working with APIs",
+          "React Data Fetching",
+          "React Authentication"
+        ],
+        "topN": 10
+      }
+    },
+    {
+      "index": 14,
+      "query": "depth first search",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "DFS Backtracking",
+          "InOrder vs PreOrder vs PostOrder",
+          "A-Star Pathfinding",
+          "What is Recursion?",
+          "Maximum Flow Algorithm",
+          "Topological Sort"
+        ],
+        "topN": 6
+      },
+      "newV1": {
+        "expectedTop": [
+          "DFS Backtracking",
+          "InOrder vs PreOrder vs PostOrder",
+          "What is Recursion?",
+          "Topological Sort",
+          "Minmax Tree",
+          "Maximum Flow Algorithm"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "index": 16,
+      "query": "dfs backtr",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "DFS Backtracking",
+          "What is Recursion?"
+        ],
+        "topN": 2
+      },
+      "newV1": {
+        "expectedTop": [
+          "DFS Backtracking",
+          "A-Star Pathfinding"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 117,
+      "query": "dfs",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "DFS Backtracking",
+          "InOrder vs PreOrder vs PostOrder",
+          "A-Star Pathfinding",
+          "What is Recursion?",
+          "Maximum Flow Algorithm",
+          "Topological Sort"
+        ],
+        "topN": 6
+      },
+      "newV1": {
+        "expectedTop": [
+          "DFS Backtracking",
+          "InOrder vs PreOrder vs PostOrder",
+          "What is Recursion?",
+          "Topological Sort",
+          "Minmax Tree",
+          "Maximum Flow Algorithm"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "index": 24,
+      "query": "transport layer security",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability",
+          "Symmetric vs Asymmetric Encryption",
+          "What is VPN?"
+        ],
+        "topN": 3
+      },
+      "newV1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability",
+          "What is VPN?",
+          "Zero-Trust Security"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 25,
+      "query": "tls",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability",
+          "Symmetric vs Asymmetric Encryption",
+          "What is VPN?"
+        ],
+        "topN": 3
+      },
+      "newV1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability",
+          "What is VPN?",
+          "Zero-Trust Security"
+        ],
+        "topN": 3
+      }
+    },
+    {
+      "index": 70,
+      "query": "machine l",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Coursera Review",
+          "Minmax Tree"
+        ],
+        "topN": 4
+      },
+      "newV1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
+          "Coursera Review",
+          "Why Learn to Code?"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 71,
+      "query": "machine le",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Coursera Review",
+          "Minmax Tree"
+        ],
+        "topN": 4
+      },
+      "newV1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
+          "Coursera Review",
+          "Why Learn to Code?"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 72,
+      "query": "machine lea",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Coursera Review",
+          "Minmax Tree"
+        ],
+        "topN": 4
+      },
+      "newV1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
+          "Coursera Review",
+          "Why Learn to Code?"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 73,
+      "query": "machine lear",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Coursera Review",
+          "Minmax Tree"
+        ],
+        "topN": 4
+      },
+      "newV1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
+          "Coursera Review",
+          "Why Learn to Code?"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 74,
+      "query": "machine learn",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Coursera Review",
+          "Minmax Tree"
+        ],
+        "topN": 4
+      },
+      "newV1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
+          "Coursera Review",
+          "Why Learn to Code?"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 75,
+      "query": "machine learning",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Coursera Review",
+          "Minmax Tree"
+        ],
+        "topN": 5
+      },
+      "newV1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
+          "Coursera Review",
+          "Why Learn to Code?",
+          "Best Learn to Code Platforms"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 76,
+      "query": "maachine leaarning",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
+          "Coursera Review",
+          "Minmax Tree"
+        ],
+        "topN": 4
+      },
+      "newV1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
+          "Coursera Review",
+          "Why Learn to Code?"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 77,
+      "query": "what is machine learning",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
+          "Coursera Review",
+          "Minmax Tree"
+        ],
+        "topN": 4
+      },
+      "newV1": {
+        "expectedTop": [
+          "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
+          "Coursera Review",
+          "Why Learn to Code?"
+        ],
+        "topN": 4
+      }
+    },
+    {
+      "index": 97,
+      "query": "service mseh",
+      "reason": "APPROVED_REBASELINE",
+      "oldV1": {
+        "expectedTop": [
+          "What is a Service Mesh?",
+          "What is Kubernetes?"
+        ],
+        "topN": 2
+      },
+      "newV1": {
+        "expectedTop": [
+          "What is a Service Mesh?",
+          "Protobuf Encoding"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 128,
+      "query": "institute",
+      "reason": "APPROVED_CONTRACT_CHANGE",
+      "oldV1": {
+        "expectedTop": [
+          "Udacity Review",
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 2
+      },
+      "newV1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 214,
+      "query": "12",
+      "reason": "APPROVED_CONTRACT_CHANGE",
+      "oldV1": {
+        "expectedTop": [
+          "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+        ],
+        "topN": 1
+      },
+      "newV1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    }
+  ]
+}

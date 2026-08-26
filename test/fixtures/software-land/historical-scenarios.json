@@ -225,15 +225,9 @@
       },
       "v1": {
         "expectedTop": [
-          "TLS 1.2 Vulnerability",
-          "gRPC vs REST",
-          "Request Response",
-          "Vite React",
-          "React Authentication",
-          "REST API vs GraphQL",
-          "TCP vs UDP"
+          "TLS 1.2 Vulnerability"
         ],
-        "topN": 10
+        "topN": 1
       },
       "historicalRelevance": true
     },
@@ -250,12 +244,15 @@
       },
       "v1": {
         "expectedTop": [
-          "TCP vs UDP",
-          "gRPC vs REST",
           "TLS 1.2 Vulnerability",
-          "Vite React",
           "Request Response",
           "REST API vs GraphQL",
+          "Authorization Middleware",
+          "gRPC vs REST",
+          "TCP vs UDP",
+          "What is an API?",
+          "Working with APIs",
+          "React Data Fetching",
           "React Authentication"
         ],
         "topN": 10
@@ -275,12 +272,15 @@
       },
       "v1": {
         "expectedTop": [
-          "TCP vs UDP",
-          "gRPC vs REST",
           "TLS 1.2 Vulnerability",
-          "Vite React",
           "Request Response",
           "REST API vs GraphQL",
+          "Authorization Middleware",
+          "gRPC vs REST",
+          "TCP vs UDP",
+          "What is an API?",
+          "Working with APIs",
+          "React Data Fetching",
           "React Authentication"
         ],
         "topN": 10
@@ -300,13 +300,16 @@
       },
       "v1": {
         "expectedTop": [
-          "TCP vs UDP",
-          "gRPC vs REST",
-          "Vite React",
-          "REST API vs GraphQL",
           "TLS 1.2 Vulnerability",
-          "React Authentication",
-          "Request Response"
+          "Request Response",
+          "REST API vs GraphQL",
+          "Authorization Middleware",
+          "gRPC vs REST",
+          "TCP vs UDP",
+          "What is an API?",
+          "Working with APIs",
+          "React Data Fetching",
+          "React Authentication"
         ],
         "topN": 10
       },
@@ -325,13 +328,16 @@
       },
       "v1": {
         "expectedTop": [
-          "TCP vs UDP",
-          "gRPC vs REST",
-          "Vite React",
-          "REST API vs GraphQL",
           "TLS 1.2 Vulnerability",
-          "React Authentication",
-          "Request Response"
+          "Request Response",
+          "REST API vs GraphQL",
+          "Authorization Middleware",
+          "gRPC vs REST",
+          "TCP vs UDP",
+          "What is an API?",
+          "Working with APIs",
+          "React Data Fetching",
+          "React Authentication"
         ],
         "topN": 10
       },
@@ -401,10 +407,10 @@
         "expectedTop": [
           "DFS Backtracking",
           "InOrder vs PreOrder vs PostOrder",
-          "A-Star Pathfinding",
           "What is Recursion?",
-          "Maximum Flow Algorithm",
-          "Topological Sort"
+          "Topological Sort",
+          "Minmax Tree",
+          "Maximum Flow Algorithm"
         ],
         "topN": 6
       },
@@ -458,7 +464,7 @@
       "v1": {
         "expectedTop": [
           "DFS Backtracking",
-          "What is Recursion?"
+          "A-Star Pathfinding"
         ],
         "topN": 2
       },
@@ -667,8 +673,8 @@
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability",
-          "Symmetric vs Asymmetric Encryption",
-          "What is VPN?"
+          "What is VPN?",
+          "Zero-Trust Security"
         ],
         "topN": 3
       },
@@ -695,8 +701,8 @@
       "v1": {
         "expectedTop": [
           "TLS 1.2 Vulnerability",
-          "Symmetric vs Asymmetric Encryption",
-          "What is VPN?"
+          "What is VPN?",
+          "Zero-Trust Security"
         ],
         "topN": 3
       },
@@ -1937,8 +1943,9 @@
       "v1": {
         "expectedTop": [
           "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
           "Coursera Review",
-          "Minmax Tree"
+          "Why Learn to Code?"
         ],
         "topN": 4
       },
@@ -1958,8 +1965,9 @@
       "v1": {
         "expectedTop": [
           "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
           "Coursera Review",
-          "Minmax Tree"
+          "Why Learn to Code?"
         ],
         "topN": 4
       },
@@ -1979,8 +1987,9 @@
       "v1": {
         "expectedTop": [
           "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
           "Coursera Review",
-          "Minmax Tree"
+          "Why Learn to Code?"
         ],
         "topN": 4
       },
@@ -2000,8 +2009,9 @@
       "v1": {
         "expectedTop": [
           "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
           "Coursera Review",
-          "Minmax Tree"
+          "Why Learn to Code?"
         ],
         "topN": 4
       },
@@ -2028,8 +2038,9 @@
       "v1": {
         "expectedTop": [
           "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
           "Coursera Review",
-          "Minmax Tree"
+          "Why Learn to Code?"
         ],
         "topN": 4
       },
@@ -2056,8 +2067,10 @@
       "v1": {
         "expectedTop": [
           "Linear vs Logistic Regression",
+          "Working with Llama.cpp Embeddings",
           "Coursera Review",
-          "Minmax Tree"
+          "Why Learn to Code?",
+          "Best Learn to Code Platforms"
         ],
         "topN": 5
       },
@@ -2086,7 +2099,7 @@
           "Linear vs Logistic Regression",
           "Working with Llama.cpp Embeddings",
           "Coursera Review",
-          "Minmax Tree"
+          "Why Learn to Code?"
         ],
         "topN": 4
       },
@@ -2115,7 +2128,7 @@
           "Linear vs Logistic Regression",
           "Working with Llama.cpp Embeddings",
           "Coursera Review",
-          "Minmax Tree"
+          "Why Learn to Code?"
         ],
         "topN": 4
       },
@@ -2627,7 +2640,7 @@
       "v1": {
         "expectedTop": [
           "What is a Service Mesh?",
-          "What is Kubernetes?"
+          "Protobuf Encoding"
         ],
         "topN": 2
       },
@@ -3159,10 +3172,10 @@
         "expectedTop": [
           "DFS Backtracking",
           "InOrder vs PreOrder vs PostOrder",
-          "A-Star Pathfinding",
           "What is Recursion?",
-          "Maximum Flow Algorithm",
-          "Topological Sort"
+          "Topological Sort",
+          "Minmax Tree",
+          "Maximum Flow Algorithm"
         ],
         "topN": 6
       },
@@ -3403,10 +3416,9 @@
       },
       "v1": {
         "expectedTop": [
-          "Udacity Review",
           "TLS 1.2 Vulnerability"
         ],
-        "topN": 2
+        "topN": 1
       },
       "historicalRelevance": true
     },
@@ -5694,7 +5706,7 @@
       },
       "v1": {
         "expectedTop": [
-          "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+          "TLS 1.2 Vulnerability"
         ],
         "topN": 1
       },

@@ -131,23 +131,21 @@ describe("Software.Land historical relevance contracts", () => {
     ).toBe(true);
   });
 
-  test("query 12 historical contract stays 200FPS topN 1 and conflicts with V2 TLS primary", () => {
+  test("query 12 historical contract is TLS 1.2 Vulnerability #1", () => {
     const row = historical.rows.find((item) => item.query === "12");
     expect(row.historicalRelevance).toBe(true);
     expect(row.v1).toEqual({
-      expectedTop: ["200FPS: CSS vs Canvas vs WebGL vs WebGPU"],
+      expectedTop: ["TLS 1.2 Vulnerability"],
       topN: 1,
     });
     expect(row.intent.requiredPrimary).toEqual(["TLS 1.2 Vulnerability"]);
-    const v2First = evaluateHistoricalRelevance(row, [
-      "TLS 1.2 Vulnerability",
-      "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
-    ]);
-    expect(v2First.ok).toBe(false);
-    expect(v2First.kinds).toContain("primary-not-first");
+    expect(evaluateHistoricalRelevance(row, ["TLS 1.2 Vulnerability"]).ok).toBe(true);
     expect(
-      evaluateHistoricalRelevance(row, ["200FPS: CSS vs Canvas vs WebGL vs WebGPU"]).ok
-    ).toBe(true);
+      evaluateHistoricalRelevance(row, [
+        "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+        "TLS 1.2 Vulnerability",
+      ]).ok
+    ).toBe(false);
   });
 
   test("appsec uses topicalRecall for neighbors and only oath as synonym recall", () => {
