@@ -7,7 +7,7 @@
 
 import { isNearCompletePrefix, levenshtein, DEFAULT_STOP, allowPrefixMatch } from "../../src/text.js";
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "../../src/versionForms.js";
-import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, identityTokens, evidenceTokens } from "../../src/retrieve.js";
+import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, identityTokens, evidenceTokens, isSearchEquivalenceRecallConcept } from "../../src/retrieve.js";
 import { saturatingFrequency } from "../../src/saturatingFrequency.js";
 import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "../../src/lexicalNormalize.js";
 import {
@@ -294,13 +294,30 @@ function hasDirectTitleEvidence(f: Partial<FeatureVector>) {
   return false;
 }
 
-function bodyLexicalMatch(query: AnalyzedQuery, doc: IndexedDocument) {
-  let hits = 0;
-  for (const c of query.concepts) {
-    if (conceptMatchesBody(c, doc)) hits += 1;
+function lexicalCoverageFields(query: AnalyzedQuery, doc: IndexedDocument) {
+  const concepts = query.concepts || [];
+  let coverageConceptCount = 0;
+  let bodyHits = 0;
+  let unionHits = 0;
+  for (const c of concepts) {
+    if (isSearchEquivalenceRecallConcept(query, c)) continue;
+    coverageConceptCount += 1;
+    const body = conceptMatchesBody(c, doc);
+    if (body) {
+      bodyHits += 1;
+      unionHits += 1;
+      continue;
+    }
+    if (conceptMatchesTitle(c, doc) != null) unionHits += 1;
   }
-  if (!query.concepts.length) return 0;
-  return Number((hits / query.concepts.length).toFixed(4));
+  if (!coverageConceptCount) {
+    return { coverageConceptCount: 0, bodyLexicalMatch: 0, lexicalConceptCoverage: 0 };
+  }
+  return {
+    coverageConceptCount,
+    bodyLexicalMatch: Number((bodyHits / coverageConceptCount).toFixed(4)),
+    lexicalConceptCoverage: Number((unionHits / coverageConceptCount).toFixed(4)),
+  };
 }
 
 function lexicalPhraseQueryTokens(query: AnalyzedQuery) {
@@ -409,7 +426,7 @@ export function extractFeaturesOracle(
     shortLiteralLeadMatch: shortLiteralLeadMatch(query, doc),
     dottedSpanComponentTitleMatch: dottedSpanComponentTitleMatch(query, doc),
     phraseAdjacency: phraseAdjacency(query, doc),
-    bodyLexicalMatch: bodyLexicalMatch(query, doc),
+    ...lexicalCoverageFields(query, doc),
     titleTokenCount: doc.nonStopTitle.length,
     expansionEvidence: expansionEvidence(query, doc),
     canonicalKeyTitle: canonicalKeyTitle(query, doc),
@@ -499,6 +516,8 @@ export const FEATURE_DEFINITIONS = {
   dottedSpanComponentTitleMatch: "True when a typed all-digit query token equals a component of a dotted numeric title span (the 2 in 1.2). Not independent exact-title evidence and not a versionMatch.",
   phraseAdjacency: "1 title-adjacent query tokens, 0.5 body-adjacent, else 0.",
   bodyLexicalMatch: "Fraction of query concepts evidenced in the body field.",
+  lexicalConceptCoverage: "Fraction of typed/configured coverage concepts with lexical evidence in the title OR the body. Each concept counts once.",
+  coverageConceptCount: "Count of typed/configured coverage concepts (search-equivalence recall concepts excluded).",
   titleTokenCount: "Non-stop title token count; used for tightness, not as a boost constant.",
   expansionEvidence: "Fraction of a configured expansion evidenced in the title.",
   canonicalKeyTitle: "True when the query is exactly a configured key and the title also states most of the expansion.",

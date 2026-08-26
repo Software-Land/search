@@ -293,6 +293,46 @@ function repeatedPhraseOverWeakDirectConstraint(a: FeaturedHit, b: FeaturedHit) 
   return 0;
 }
 
+function isMultiConceptQuery(f: Partial<FeatureVector>) {
+  return (f.coverageConceptCount || 0) >= 2;
+}
+
+function hasFullBodyMultiConceptCoverage(f: Partial<FeatureVector>) {
+  return (
+    isMultiConceptQuery(f) &&
+    (f.bodyLexicalMatch || 0) >= FULL_QUERY_COVERAGE &&
+    (f.lexicalConceptCoverage || 0) >= FULL_QUERY_COVERAGE
+  );
+}
+
+/**
+ * Weak/none direct whose title∪body lexical evidence covers only a strict
+ * subset of coverage concepts. Related neighbors are not competitors.
+ * Moderate and strong directs are not competitors.
+ */
+function isWeakLexicalSubsetCompetitor(f: Partial<FeatureVector>) {
+  if (!isMultiConceptQuery(f)) return false;
+  if (f.relevanceKind === "related") return false;
+  if (f.directClass !== "weak" && f.directClass !== "none") return false;
+  return (f.lexicalConceptCoverage || 0) < FULL_QUERY_COVERAGE;
+}
+
+/**
+ * A document whose body lexically evidences every coverage concept outranks a
+ * weak/none document whose title∪body lexical evidence covers only a strict
+ * subset. Gated on coverageConceptCount, not queryTokenCount. Preferred side
+ * requires full BODY coverage; full union only excludes the competitor.
+ */
+function fullBodyMultiConceptOverWeakSubsetConstraint(a: FeaturedHit, b: FeaturedHit) {
+  const aPref = hasFullBodyMultiConceptCoverage(a.features);
+  const bPref = hasFullBodyMultiConceptCoverage(b.features);
+  const aSub = isWeakLexicalSubsetCompetitor(a.features);
+  const bSub = isWeakLexicalSubsetCompetitor(b.features);
+  if (aPref && bSub) return -1;
+  if (bPref && aSub) return 1;
+  return 0;
+}
+
 /**
  * When the query is a configured key, a title that also states the expansion
  * outranks a title that only contains the key (canonical vs comparison title).
@@ -495,6 +535,7 @@ export const HYBRID_CONSTRAINTS: ConstraintDef[] = [
   { id: "synonym-title-over-synonym-body", invariant: "H8", class: "strong", fn: synonymRecallQualityConstraint },
   { id: "canonical-key-expansion-over-key-only", invariant: "H2", class: "strong", fn: canonicalKeyConstraint },
   { id: "repeated-phrase-over-weak-direct", invariant: "H8", class: "strong", fn: repeatedPhraseOverWeakDirectConstraint },
+  { id: "full-body-multi-concept-over-weak-subset", invariant: "H8", class: "strong", fn: fullBodyMultiConceptOverWeakSubsetConstraint },
   { id: "contextual-title-prefix-over-unaligned", invariant: "H8", class: "absolute", fn: contextualTitlePrefixConstraint },
   { id: "full-coverage-over-partial", invariant: "H8", class: "strong", fn: coverageConstraint },
   { id: "exact-surface-over-lemma-only", invariant: "H3", class: "strong", fn: surfaceOverLemmaConstraint },

@@ -266,6 +266,52 @@ describe("ranking equivalence oracle", () => {
     );
   });
 
+  test("full-body multi-concept over weak subset stays sparse-equivalent", () => {
+    rankBoth(
+      [
+        hit("full-body", {
+          relevanceKind: "direct",
+          directClass: "weak",
+          coverageConceptCount: 2,
+          bodyLexicalMatch: 1,
+          lexicalConceptCoverage: 1,
+          queryCoverage: 0,
+        }),
+        hit("subset", {
+          relevanceKind: "direct",
+          directClass: "weak",
+          coverageConceptCount: 2,
+          bodyLexicalMatch: 0.5,
+          lexicalConceptCoverage: 0.5,
+          queryCoverage: 0.5,
+          exactTitleTokenMatch: true,
+        }),
+      ],
+      HYBRID_CONSTRAINTS
+    );
+    rankBoth(
+      [
+        hit("split-union", {
+          relevanceKind: "direct",
+          directClass: "weak",
+          coverageConceptCount: 2,
+          bodyLexicalMatch: 0.5,
+          lexicalConceptCoverage: 1,
+          queryCoverage: 0.5,
+        }),
+        hit("full-body", {
+          relevanceKind: "direct",
+          directClass: "weak",
+          coverageConceptCount: 2,
+          bodyLexicalMatch: 1,
+          lexicalConceptCoverage: 1,
+          queryCoverage: 0,
+        }),
+      ],
+      HYBRID_CONSTRAINTS
+    );
+  });
+
   test("contextual prefix, coverage, surface/lemma, version, dotted span, title length, short literal", () => {
     rankBoth([
       hit("ctx-hi", {

@@ -133,6 +133,8 @@ export function exactBodyOnlySingleTokenBound(
       : 0;
   const exactFeatures: Partial<FeatureVector> = {
     bodyLexicalMatch: 1,
+    lexicalConceptCoverage: 1,
+    coverageConceptCount: 1,
     bodyPhraseCount,
     queryTokenCount: 1,
     relevanceKind: "direct",

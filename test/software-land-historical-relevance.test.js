@@ -237,12 +237,15 @@ describe("Software.Land historical relevance contracts", () => {
     }
   });
 
-  test("sort-recursion remains a separate two-concept ranking defect", () => {
+  test("sort-recursion family ranks full-body two-concept documents in the accepted window", () => {
     for (const query of ["sort recursion", "sort recursing", "sort recurses"]) {
       const titles = engine.search(query, { limit: 8 }).map((hit) => hit.title);
       expect(titles[0]).toBe("What is Recursion?");
-      expect(titles).toContain("Python Custom Sorting");
-      expect(titles.indexOf("Dynamic Programming Matrix")).toBeGreaterThanOrEqual(4);
+      expect(titles[1]).toBe("Topological Sort");
+      const window = titles.slice(0, 4);
+      expect(window).toContain("React Performance Optimization");
+      expect(window).toContain("Dynamic Programming Matrix");
+      expect(titles.indexOf("Python Custom Sorting")).toBeGreaterThanOrEqual(4);
     }
   });
 

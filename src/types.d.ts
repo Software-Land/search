@@ -408,6 +408,8 @@ export interface FeatureVector {
   dottedSpanComponentTitleMatch: boolean;
   phraseAdjacency: number;
   bodyLexicalMatch: number;
+  lexicalConceptCoverage: number;
+  coverageConceptCount: number;
   titleTokenCount: number;
   expansionEvidence: number;
   canonicalKeyTitle: boolean;

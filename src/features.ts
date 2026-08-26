@@ -465,14 +465,36 @@ function hasDirectTitleEvidence(f: Partial<FeatureVector>) {
   return false;
 }
 
-function bodyLexicalMatch(query: AnalyzedQuery, doc: IndexedDocument) {
-  const usable = coverageConcepts(query, query.concepts || []);
-  if (!usable.length) return 0;
-  let hits = 0;
-  for (const c of usable) {
-    if (conceptMatchesBody(c, doc)) hits += 1;
+/**
+ * Body-only and title∪body coverage over typed/configured concepts.
+ * queryCoverage stays title-only and is computed separately.
+ * No extra array: skip search-equivalence recall concepts in the existing
+ * concept walk and count hits with two integer accumulators.
+ */
+function lexicalCoverageFields(query: AnalyzedQuery, doc: IndexedDocument) {
+  const concepts = query.concepts || [];
+  let coverageConceptCount = 0;
+  let bodyHits = 0;
+  let unionHits = 0;
+  for (const c of concepts) {
+    if (isSearchEquivalenceRecallConcept(query, c)) continue;
+    coverageConceptCount += 1;
+    const body = conceptMatchesBody(c, doc);
+    if (body) {
+      bodyHits += 1;
+      unionHits += 1;
+      continue;
+    }
+    if (conceptMatchesTitle(c, doc) != null) unionHits += 1;
   }
-  return Number((hits / usable.length).toFixed(4));
+  if (!coverageConceptCount) {
+    return { coverageConceptCount: 0, bodyLexicalMatch: 0, lexicalConceptCoverage: 0 };
+  }
+  return {
+    coverageConceptCount,
+    bodyLexicalMatch: Number((bodyHits / coverageConceptCount).toFixed(4)),
+    lexicalConceptCoverage: Number((unionHits / coverageConceptCount).toFixed(4)),
+  };
 }
 
 function lexicalPhraseQueryTokens(query: AnalyzedQuery) {
@@ -717,7 +739,7 @@ function computeFeatureFields(query: AnalyzedQuery, doc: IndexedDocument) {
     shortLiteralLeadMatch: shortLiteralLeadMatch(query, doc),
     dottedSpanComponentTitleMatch: dottedSpanComponentTitleMatch(query, doc),
     phraseAdjacency: phraseAdjacency(query, doc),
-    bodyLexicalMatch: bodyLexicalMatch(query, doc),
+    ...lexicalCoverageFields(query, doc),
     titleTokenCount: doc.nonStopTitle.length,
     expansionEvidence: expansionEvidence(query, doc),
     canonicalKeyTitle: canonicalKeyTitle(query, doc),
@@ -772,7 +794,7 @@ export function extractFeatures(
     shortLiteralLeadMatch: timeFeat("shortLiteralLeadMatch", () => shortLiteralLeadMatch(query, doc)),
     dottedSpanComponentTitleMatch: timeFeat("dottedSpanComponentTitleMatch", () => dottedSpanComponentTitleMatch(query, doc)),
     phraseAdjacency: timeFeat("phraseAdjacency", () => phraseAdjacency(query, doc)),
-    bodyLexicalMatch: timeFeat("bodyLexicalMatch", () => bodyLexicalMatch(query, doc)),
+    ...timeFeat("lexicalCoverageFields", () => lexicalCoverageFields(query, doc)),
     titleTokenCount: doc.nonStopTitle.length,
     expansionEvidence: timeFeat("expansionEvidence", () => expansionEvidence(query, doc)),
     canonicalKeyTitle: timeFeat("canonicalKeyTitle", () => canonicalKeyTitle(query, doc)),
@@ -854,6 +876,8 @@ export const FEATURE_DEFINITIONS = {
   dottedSpanComponentTitleMatch: "True when a typed all-digit query token equals a component of a dotted numeric title span (the 2 in 1.2). Not independent exact-title evidence and not a versionMatch.",
   phraseAdjacency: "1 title-adjacent query tokens, 0.5 body-adjacent, else 0.",
   bodyLexicalMatch: "Fraction of typed/configured query concepts evidenced in the body field. Extra search-equivalence recall concepts attached after configured occupancy are excluded from the numerator and denominator. Synonym forms merged into an ordinary term concept still count with that concept.",
+  lexicalConceptCoverage: "Fraction of typed/configured coverage concepts with lexical evidence in the title OR the body. Each concept counts once. Not max(queryCoverage, bodyLexicalMatch) and not their sum.",
+  coverageConceptCount: "Count of typed/configured coverage concepts (search-equivalence recall concepts excluded). Distinct from queryTokenCount, which includes configured expansion tokens.",
   titleTokenCount: "Non-stop title token count; used for tightness, not as a boost constant.",
   expansionEvidence: "Fraction of a configured expansion evidenced in the title.",
   canonicalKeyTitle: "True when the query is exactly a configured key and the title also states most of the expansion.",
