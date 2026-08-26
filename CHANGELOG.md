@@ -52,6 +52,10 @@
 - Stage 3A exact signature-aware unread body-block skipping for ordinary exact multi-token compiled `search()`: additive `exact-pruning-v2` per-document body presence masks on the existing 128-document ordinal grid. Stronger co-occurrence classes are evaluated first; remaining 1-of-k body-only ordinals may be skipped only after the weak representative stream is full, so noncompetitive body postings need not be decoded or materialized. Results stay identical to exhaustive compiled search on that supported indexed query class. `searchDetailed()`, prefix, repaired, acronym, numeric, custom-constraint, and other unsupported paths fail closed. No new public `SearchEngine` method. Stage 3A `postingBlocks*` counters are unique 128-document body-presence blocks (`total = decoded + classifiedFromMasks`); they are not Stage 2B duplicate-array `postingBlocksSkipped`. Measured VPN-like work reduction is documented in `docs/scaling.md`; it is not an SLA.
 - Deterministic corpus mining now extracts digit-prefixed acronyms only when that suffix is independently observed in the same document as a standalone acronym surface or as an independent token (`200FPS` + standalone `FPS` / token `fps` → `FPS`; `2FA` without standalone `FA` or token `fa` does not become `FA`). Within-document repeats remain candidate evidence. These paths do not invent keys from arbitrary phrases and do not loosen short-token auto-accept.
 
+### Fixed
+
+- Indexed and compiled retrieval now preserve full-scan prefix recall semantics for recall-derived forms, maintaining exact retrieval-mode equivalence. The existing prefix information bound is unchanged.
+
 ### Changed
 
 - Morphology / title-prefix scoring no longer treats `frames` as a title-prefix of `framework`. Independent morphology such as `libraries` ↔ `library` is unchanged.

@@ -392,6 +392,20 @@ export function topicalFormEvidence(doc: IndexedDocument, form: string[]): Topic
   return { hit: title || body, title, phrase: title || body };
 }
 
+/**
+ * Indexed posting-union prefix walks must match full-scan field eligibility.
+ *
+ * Topical recall is exact token/lemma or exact multi-token sequence
+ * (`topicalFormEvidence`). Synonym-recall, standalone-recall, and ordinary
+ * concepts use `conceptMatchesTitle` / `conceptMatchesBody`, which admit title
+ * `allowPrefixMatch` and body `form.length >= 3` `startsWith` evidence.
+ * Acronym field evidence is exact/sequence; extra prefix walks are still
+ * dropped by `retrievalSourcesForDocument` revalidation.
+ */
+export function retrievalFormKindAllowsPrefix(kind: string) {
+  return kind !== "topical-recall";
+}
+
 export function matchedTopicalForms(query: AnalyzedQuery, doc: IndexedDocument): string[][] {
   const hint = topicalRecallHint(query);
   if (!hint) return [];

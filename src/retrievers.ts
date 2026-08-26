@@ -25,6 +25,7 @@ import {
   shortTitleTokenPrefixStub,
   isSearchEquivalenceRecallConcept,
   hasConfiguredSequenceIntent,
+  retrievalFormKindAllowsPrefix,
 } from "./retrieve.js";
 import { allowPrefixMatch } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
@@ -84,7 +85,7 @@ function postingBodySource(kind: QueryFormKind) {
 }
 
 function formKindAllowsPrefix(kind: QueryFormKind) {
-  return kind !== "topical-recall" && kind !== "synonym-recall";
+  return retrievalFormKindAllowsPrefix(kind);
 }
 
 function pushSource(hit: { retrievalSources: string[] }, source: string) {

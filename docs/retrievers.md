@@ -21,7 +21,7 @@ SearchEngine.create({
 | `full-scan` | Explicit small-corpus / reference / debug mode. Scans every document. Does not apply `candidateLimit`. |
 | `adaptive` | Full scan while `documentCount <= adaptive.documentThreshold`, else exact indexed retrieval. Deterministic. |
 
-0.4.0 default retrieval is `indexed`. Its quality contract is equality with `full-scan`, not BM25 top-k recall. The old `candidateLimit = 200` setting is not the conceptual foundation of exact retrieval and cannot exclude a legitimate match. It remains accepted for API compatibility and experimental retrievers.
+0.4.0 default retrieval is `indexed`. Its quality contract is equality with `full-scan`, not BM25 top-k recall. The old `candidateLimit = 200` setting is not the conceptual foundation of exact retrieval and cannot exclude a legitimate match. It remains accepted for API compatibility and experimental retrievers. Recall-derived forms use the same lexical matching eligibility in indexed and full-scan execution, including the existing prefix information bounds. Topical recall remains exact token/lemma or exact sequence evidence.
 
 Explicit `full-scan`, `indexed`, `adaptive`, or a custom `ExperimentalRetriever` always wins over the default.
 
