@@ -4,6 +4,8 @@
     "Lossless 0.5.0 authoring of the historical relevance config.",
     "equivalent edges are the db5a070 live search-equivalence map (kind equivalent, not reclassified).",
     "appsec related forms are the eac7a90 topicalRecall phrases compiled onto existing topical-recall semantics.",
+    "interface related token→concept api is product standalone-recall for the historical engine.",
+    "paas related forms kubernetes / the cloud compile onto existing topical-recall semantics.",
     "Generated MiniLM document relationships remain in relationships.json.",
     "No HTTP standalone related edge: frozen dictionary never authored it."
   ],
@@ -568,6 +570,14 @@
         "kind": "equivalent"
       }
     ],
+    "interface": [
+      {
+        "to": {
+          "concept": "api"
+        },
+        "kind": "related"
+      }
+    ],
     "interceptor": [
       {
         "to": {
@@ -760,6 +770,23 @@
           "form": "tail"
         },
         "kind": "equivalent"
+      }
+    ],
+    "paas": [
+      {
+        "to": {
+          "form": "kubernetes"
+        },
+        "kind": "related"
+      },
+      {
+        "to": {
+          "form": [
+            "the",
+            "cloud"
+          ]
+        },
+        "kind": "related"
       }
     ],
     "parallelism": [

@@ -244,6 +244,14 @@
         "provenance": "embedding"
       }
     ],
+    "E": [
+      {
+        "target": "f",
+        "type": "editorial",
+        "strength": 1,
+        "provenance": "manual"
+      }
+    ],
     "F": [
       {
         "target": "as",
@@ -890,12 +898,6 @@
         "type": "semantic",
         "strength": 0.421948,
         "provenance": "embedding"
-      },
-      {
-        "target": "c",
-        "type": "semantic",
-        "strength": 0.397462,
-        "provenance": "embedding"
       }
     ],
     "ax": [
@@ -1491,12 +1493,6 @@
         "target": "B",
         "type": "semantic",
         "strength": 0.428197,
-        "provenance": "embedding"
-      },
-      {
-        "target": "aw",
-        "type": "semantic",
-        "strength": 0.397462,
         "provenance": "embedding"
       }
     ],

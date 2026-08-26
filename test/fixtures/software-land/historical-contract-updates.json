@@ -555,6 +555,52 @@
         ],
         "topN": 1
       }
+    },
+    {
+      "index": 180,
+      "query": "developme operations",
+      "reason": "APPROVED_CONTRACT_CHANGE: product-approved DevOps neighborhood after rejecting the false-positive DevOps↔Alignment semantic pair; Build Time is in the top-5 window",
+      "oldV1": {
+        "expectedTop": [
+          "What is DevOps?",
+          "CI/CD",
+          "Build Time"
+        ],
+        "topN": 4
+      },
+      "newV1": {
+        "expectedTop": [
+          "What is DevOps?",
+          "CI/CD",
+          "Agile vs Waterfall",
+          "What is Cloud Migration?",
+          "Build Time"
+        ],
+        "topN": 5
+      }
+    },
+    {
+      "index": 181,
+      "query": "development operations",
+      "reason": "APPROVED_CONTRACT_CHANGE: product-approved DevOps neighborhood after rejecting the false-positive DevOps↔Alignment semantic pair; Build Time is in the top-5 window",
+      "oldV1": {
+        "expectedTop": [
+          "What is DevOps?",
+          "CI/CD",
+          "Build Time"
+        ],
+        "topN": 4
+      },
+      "newV1": {
+        "expectedTop": [
+          "What is DevOps?",
+          "CI/CD",
+          "Agile vs Waterfall",
+          "What is Cloud Migration?",
+          "Build Time"
+        ],
+        "topN": 5
+      }
     }
   ]
 }

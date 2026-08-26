@@ -11,3 +11,5 @@ Each updated row records:
 - `APPROVED_REBASELINE` or `APPROVED_CONTRACT_CHANGE`
 
 Rows left unchanged because they already passed: `object oriented` (80, 81), `institute standards` (127).
+
+DevOps rows 180 (`developme operations`) and 181 (`development operations`) now require the product-approved top-5 neighborhood after the false-positive DevOps↔Alignment semantic pair was rejected: What is DevOps?, CI/CD, Agile vs Waterfall, What is Cloud Migration?, Build Time (`topN=5`).
