@@ -15,6 +15,7 @@ import {
   MAX_COMPOUND_REPAIR_TOKEN_LENGTH,
 } from "./analyzeRepair.js";
 import { canonicalLexicalTokensFromQuery } from "./lexicalNormalize.js";
+import { bindMorphologyDerivedEquivalences } from "./synonyms.js";
 import {
   resolveConfiguredPrefixSpans,
   resolveConfiguredSequence,
@@ -1006,6 +1007,7 @@ export function analyzeQuery(
   { plugins = [], lexicon = [], prefixLexicon, signal }: AnalyzeOptions = {}
 ): AnalyzedQuery {
   throwIfAborted(signal);
+  plugins = bindMorphologyDerivedEquivalences(plugins);
   const raw = String(rawQuery ?? "");
   const dict = dictionaryPlugin(plugins);
   const lex = lexiconFrom(plugins, lexicon);

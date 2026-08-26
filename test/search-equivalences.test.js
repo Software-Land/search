@@ -16,8 +16,9 @@ import {
 } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
-import { isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts } from "../dist/retrieve.js";
+import { coverageConcepts, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts } from "../dist/retrieve.js";
 import { compareConstraint } from "../dist/constraints.js";
+import { deriveMorphologyEquivalenceLookup } from "../dist/synonyms.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = path.join(ROOT, "fixtures", "software-land");
@@ -40,8 +41,8 @@ function ids(hits) {
   return hits.map((hit) => hit.id);
 }
 
-function plugins({ dict = [{ key: "qa", expansion: ["quality", "assurance"] }], map = { qa: ["testing"] } } = {}) {
-  const list = [morphology(), dictionary({ entries: dict })];
+function plugins({ dict = [{ key: "qa", expansion: ["quality", "assurance"] }], map = { qa: ["testing"] }, lemmas } = {}) {
+  const list = [morphology(lemmas ? { lemmas } : {}), dictionary({ entries: dict })];
   if (map) list.push(synonyms(map));
   return list;
 }
@@ -468,5 +469,235 @@ describe("extra synonym recall vs merged ordinary-term synonyms", () => {
     expect(vuln.retrievalSources).not.toContain("synonym-recall");
     expect(vuln.features.queryCoverage).toBeGreaterThan(0);
     expect(vuln.features.synonymRecallMatch).toBeFalsy();
+  });
+});
+
+function morphPlugins({ lemmas = {}, dict = [], map } = {}) {
+  const list = [morphology({ lemmas }), dictionary({ entries: dict })];
+  if (map) list.push(synonyms(map));
+  return list;
+}
+
+describe("morphology-aware directional search equivalences", () => {
+  const jogDocs = [
+    { id: "jog", title: "Outdoor Notes", body: "outdoor jogging form" },
+      { id: "run", title: "Track Workouts", body: "track running workouts" },
+    { id: "walk", title: "Walking Guide", body: "casual walking routes" },
+    { id: "unrelated", title: "Gardening Tips", body: "tomatoes and soil" },
+  ];
+
+  test("authored inflected key activates from the canonical lemma", async () => {
+    const lemmas = { running: "run" };
+    const map = { running: ["jogging"] };
+    const plugin = morphPlugins({ lemmas, dict: [], map });
+    const q = analyzeQuery("run", { plugins: plugin });
+    expect(q.tokens[0].surface).toBe("run");
+    expect(q.tokens[0].normalized).toBe("run");
+    expect(q.concepts).toHaveLength(1);
+    expect(q.concepts[0].forms).toEqual(expect.arrayContaining(["run", "jogging"]));
+    expect(searchEquivalenceRecallConcepts(q)).toEqual([]);
+    expect(q.synonymRecall).toEqual([{ source: "run", target: "jogging" }]);
+    const { indexedHits } = await assertIndexedFullScan("run", {
+      dict: [],
+      map,
+      lemmas,
+      docs: jogDocs,
+    });
+    expect(ids(indexedHits)).toContain("jog");
+    expect(ids(indexedHits)).not.toContain("unrelated");
+  });
+
+  test("exact authored key remains authoritative over a derived lemma alias", () => {
+    const plugin = morphPlugins({
+      lemmas: { running: "run" },
+      dict: [],
+      map: { run: ["sprinting"], running: ["jogging"] },
+    });
+    const q = analyzeQuery("run", { plugins: plugin });
+    expect(q.concepts[0].forms).toEqual(expect.arrayContaining(["run", "sprinting"]));
+    expect(q.concepts[0].forms).not.toContain("jogging");
+    expect(q.synonymRecall).toEqual([{ source: "run", target: "sprinting" }]);
+  });
+
+  test("derived canonical lookup keeps authored directionality", () => {
+    const plugin = morphPlugins({
+      lemmas: { running: "run" },
+      dict: [],
+      map: { running: ["jogging"] },
+    });
+    const forward = analyzeQuery("run", { plugins: plugin });
+    const reverse = analyzeQuery("jogging", { plugins: plugin });
+    expect(forward.synonymRecall).toEqual([{ source: "run", target: "jogging" }]);
+    expect(reverse.synonymRecall || []).toEqual([]);
+    expect(reverse.concepts[0].forms).not.toContain("running");
+    expect(reverse.concepts[0].forms).not.toContain("run");
+  });
+
+  test("legacy symmetric equivalence groups also derive from canonical keys", () => {
+    const plugin = [
+      morphology({ lemmas: { running: "run" } }),
+      synonyms({
+        format: "search-v2-synonyms",
+        version: 1,
+        entries: [{ terms: ["running", "jogging"], type: "near-equivalence" }],
+      }),
+    ];
+    const run = analyzeQuery("run", { plugins: plugin });
+    const jogging = analyzeQuery("jogging", { plugins: plugin });
+    expect(run.concepts[0].forms).toEqual(expect.arrayContaining(["run", "jogging"]));
+    expect(jogging.concepts[0].forms).toEqual(expect.arrayContaining(["jogging", "running"]));
+  });
+
+  test("identical target sets sharing a lemma may share the derived lookup", () => {
+    const authored = new Map([
+      ["running", ["jogging"]],
+      ["ran", ["jogging"]],
+    ]);
+    const derived = deriveMorphologyEquivalenceLookup(authored, (token) =>
+      token === "running" || token === "ran" ? "run" : null
+    );
+    expect([...derived.entries()]).toEqual([["run", ["jogging"]]]);
+    const plugin = morphPlugins({
+      lemmas: { running: "run", ran: "run" },
+      dict: [],
+      map: { running: ["jogging"], ran: ["jogging"] },
+    });
+    expect(analyzeQuery("run", { plugins: plugin }).synonymRecall).toEqual([{ source: "run", target: "jogging" }]);
+  });
+
+  test("incompatible target sets for one lemma fail closed", () => {
+    const authored = new Map([
+      ["running", ["jogging"]],
+      ["ran", ["walking"]],
+    ]);
+    const derived = deriveMorphologyEquivalenceLookup(authored, (token) =>
+      token === "running" || token === "ran" ? "run" : null
+    );
+    expect(derived.size).toBe(0);
+    const plugin = morphPlugins({
+      lemmas: { running: "run", ran: "run" },
+      dict: [],
+      map: { running: ["jogging"], ran: ["walking"] },
+    });
+    expect(analyzeQuery("run", { plugins: plugin }).synonymRecall || []).toEqual([]);
+    expect(analyzeQuery("run", { plugins: plugin }).concepts[0].forms).not.toContain("jogging");
+    expect(analyzeQuery("run", { plugins: plugin }).concepts[0].forms).not.toContain("walking");
+  });
+
+  test("no canonical table entry does not heuristic-fold the authored key", () => {
+    const plugin = morphPlugins({
+      lemmas: {},
+      dict: [],
+      map: { partitioning: ["sharding"] },
+    });
+    const morph = morphology();
+    expect(morph.canonicalLemma("partitioning")).toBeNull();
+    expect(morph.lemma("partitioning")).toBe("partition");
+    const partition = analyzeQuery("partition", { plugins: plugin });
+    const partit = analyzeQuery("partit", { plugins: plugin });
+    expect(partition.synonymRecall || []).toEqual([]);
+    expect(partit.synonymRecall || []).toEqual([]);
+    expect(partition.concepts[0].forms).not.toContain("sharding");
+    const exact = analyzeQuery("partitioning", { plugins: plugin });
+    expect(exact.tokens[0].normalized).toBe("partitioning");
+    expect(exact.synonymRecall).toEqual([{ source: "partitioning", target: "sharding" }]);
+  });
+
+  test("query surface is preserved when a derived target activates", () => {
+    const plugin = morphPlugins({
+      lemmas: { running: "run" },
+      dict: [],
+      map: { running: ["jogging"] },
+    });
+    const run = analyzeQuery("run", { plugins: plugin });
+    const running = analyzeQuery("running", { plugins: plugin });
+    expect(run.tokens[0].surface).toBe("run");
+    expect(run.originalSurface).toEqual(["run"]);
+    expect(running.tokens[0].surface).toBe("running");
+    expect(running.originalSurface).toEqual(["running"]);
+    expect(running.tokens[0].normalized).toBe("run");
+    expect(run.raw).toBe("run");
+    expect(running.raw).toBe("running");
+    expect(run.concepts[0].forms).not.toContain("running");
+    expect(running.concepts[0].forms).toEqual(expect.arrayContaining(["running", "run", "jogging"]));
+  });
+
+  test("morphology-derived equivalence stays on the same coverage concept", async () => {
+    const map = { running: ["jogging"] };
+    const lemmas = { running: "run" };
+    const plugin = morphPlugins({ lemmas, dict: [], map });
+    const q = analyzeQuery("run", { plugins: plugin });
+    expect(coverageConcepts(q, q.concepts)).toHaveLength(1);
+    expect(q.concepts.filter((c) => c.kind === "term")).toHaveLength(1);
+    expect(searchEquivalenceRecallConcepts(q)).toEqual([]);
+    expect(isSearchEquivalenceRecallConcept(q, q.concepts[0])).toBe(false);
+    const { indexed } = await assertIndexedFullScan("run", { dict: [], map, lemmas, docs: jogDocs });
+    const jog = indexed.searchDetailed("run", { limit: 20, explain: true }).results.find((row) => row.id === "jog");
+    expect(jog.retrievalSources).toContain("body-lexical");
+    expect(jog.retrievalSources).not.toContain("synonym-recall");
+    expect(jog.features.bodyLexicalMatch).toBe(1);
+    expect(jog.features.queryCoverage).toBe(0);
+    expect(jog.features.coverageConceptCount).toBe(1);
+    expect(jog.features.lexicalConceptCoverage).toBe(1);
+    expect(jog.features.synonymRecallMatch).toBeFalsy();
+  });
+
+  test("shard family reaches partitioning without an authored shard key", async () => {
+    const map = { sharding: ["partitioning"], partitioning: ["sharding"] };
+    const plugin = morphPlugins({ dict: [], map });
+    expect(morphology().canonicalLemma("sharding")).toBe("shard");
+    expect(morphology().canonicalLemma("shard")).toBeNull();
+    const shardDocs = [
+      { id: "cockroach", title: "CockroachDB vs Postgres", body: "geo partitioning native support" },
+      { id: "sql", title: "SQL vs NoSQL", body: "advanced table partitioning" },
+      { id: "grpc", title: "gRPC vs Kafka", body: "distributed brokers and partitioning" },
+      { id: "shard", title: "Sharding", body: "database sharding overview" },
+      { id: "unrelated", title: "Gardening Tips", body: "tomatoes and soil" },
+    ];
+    for (const query of ["shard", "shards", "sharded", "sharding", "shardin", "sharde", "shardsss"]) {
+      const q = analyzeQuery(query, { plugins: plugin });
+      expect(q.tokens[0].surface).toBe(query);
+      expect(q.tokens[0].normalized).toBe("shard");
+      expect(q.synonymRecall).toEqual([{ source: "shard", target: "partitioning" }]);
+      expect(q.concepts[0].forms).toContain("partitioning");
+      expect(searchEquivalenceRecallConcepts(q)).toEqual([]);
+      const { indexedHits } = await assertIndexedFullScan(query, { dict: [], map, docs: shardDocs });
+      expect(ids(indexedHits)).toEqual(expect.arrayContaining(["cockroach", "sql", "grpc", "shard"]));
+      expect(ids(indexedHits)).not.toContain("unrelated");
+    }
+    const reverse = analyzeQuery("partitioning", { plugins: plugin });
+    expect(reverse.synonymRecall).toEqual([{ source: "partitioning", target: "sharding" }]);
+    expect(analyzeQuery("partition", { plugins: plugin }).synonymRecall || []).toEqual([]);
+  });
+
+  test("derived partitioning evidence is not double-counted as extra recall", async () => {
+    const map = { sharding: ["partitioning"] };
+    const shardDocs = [
+      { id: "cockroach", title: "CockroachDB vs Postgres", body: "geo partitioning native support" },
+      { id: "shard", title: "Sharding", body: "database sharding overview" },
+    ];
+    const { indexed } = await assertIndexedFullScan("shard", { dict: [], map, docs: shardDocs });
+    const detailed = indexed.searchDetailed("shard", { limit: 20, explain: true });
+    const cockroach = detailed.results.find((row) => row.id === "cockroach");
+    expect(cockroach.retrievalSources).toEqual(["body-lexical"]);
+    expect(cockroach.features.bodyLexicalMatch).toBe(1);
+    expect(cockroach.features.queryCoverage).toBe(0);
+    expect(cockroach.features.coverageConceptCount).toBe(1);
+    expect(cockroach.features.lexicalConceptCoverage).toBe(1);
+    expect(cockroach.features.synonymRecallMatch).toBeFalsy();
+    expect(cockroach.features.synonymRecallBodyMatch).toBeFalsy();
+    const q = detailed.results[0].explanation.query;
+    expect(coverageConcepts(q, q.concepts)).toHaveLength(1);
+    expect(searchEquivalenceRecallConcepts(q)).toEqual([]);
+  });
+
+  test("lookup map does not grow an authored shard key", () => {
+    const plugin = synonyms({ sharding: ["partitioning"] });
+    expect(plugin.lookup.has("sharding")).toBe(true);
+    expect(plugin.lookup.has("shard")).toBe(false);
+    const bound = morphPlugins({ dict: [], map: { sharding: ["partitioning"] } }).find((p) => p.name === "synonyms");
+    analyzeQuery("shard", { plugins: morphPlugins({ dict: [], map: { sharding: ["partitioning"] } }) });
+    expect(bound.lookup.has("shard")).toBe(false);
+    expect(plugin.expand("shard")).toEqual([]);
   });
 });

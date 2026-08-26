@@ -8,6 +8,11 @@
  *   within each terms group. Not reinterpreted as directional.
  *
  * Does not imply document relatedness (TLS ↛ VPN).
+ *
+ * Directional maps may also be reached from a single-token source's
+ * canonical lemma table entry (not heuristic suffix stems). Derived aliases
+ * are query-interpretation only; they are not authored keys. Exact authored
+ * lookup stays authoritative. Multi-token morphology folding is out of scope.
  */
 
 import { parseSynonyms } from "./artifacts.js";
@@ -205,6 +210,144 @@ function directionalPlugin(normalized: NormalizedSearchEquivalences): SynonymsPl
       }));
     },
   };
+}
+
+const MORPHOLOGY_DERIVED_BOUND = Symbol.for("@software-land/search.morphologyDerivedEquivalences");
+
+type CanonicalLemmaPlugin = {
+  canonicalLemma?: (token: string) => string | null;
+};
+
+type BindableSynonymPlugin = SynonymsPlugin & {
+  [MORPHOLOGY_DERIVED_BOUND]?: boolean;
+};
+
+function isSingleTokenKey(key: string): boolean {
+  return Boolean(key) && !key.includes(" ");
+}
+
+function targetSetKey(targets: string[]): string {
+  return [...targets].sort().join("\0");
+}
+
+function authoredTargetsLookup(plugin: SynonymsPlugin): Map<string, string[]> | null {
+  if (!(plugin.lookup instanceof Map)) return null;
+  if (plugin.directionality === "directional") {
+    return plugin.lookup as Map<string, string[]>;
+  }
+  if (plugin.directionality !== "symmetric") return null;
+  const targets = new Map<string, Set<string>>();
+  for (const [source, rawHits] of plugin.lookup) {
+    const bucket = new Set<string>();
+    for (const rawHit of rawHits as SynonymLookupHit[]) {
+      for (const target of rawHit.others || []) bucket.add(target);
+    }
+    targets.set(source, bucket);
+  }
+  return new Map(
+    [...targets.entries()].map(([source, values]) => [source, [...values].sort()])
+  );
+}
+
+/**
+ * Build a lemma→targets map from single-token authored sources using table
+ * morphology only (`canonicalLemma`). Heuristic suffix stems are not used.
+ *
+ * Exact authored keys dominate: if the lemma is itself an authored source,
+ * no derived alias is installed. Distinct target sets for the same lemma
+ * fail closed (no derived lookup). Multi-token sources are left unchanged.
+ */
+export function deriveMorphologyEquivalenceLookup(
+  authored: Map<string, string[]>,
+  canonicalLemma: (token: string) => string | null
+): Map<string, string[]> {
+  const derived = new Map<string, string[]>();
+  const pending = new Map<string, string[][]>();
+  for (const [source, targets] of authored) {
+    if (!isSingleTokenKey(source)) continue;
+    const rawLemma = canonicalLemma(source);
+    if (!rawLemma || rawLemma === source) continue;
+    const lemma = canonicalizeSearchEquivalencePhrase(rawLemma);
+    if (!lemma || lemma === source || !isSingleTokenKey(lemma)) continue;
+    if (authored.has(lemma)) continue;
+    const bucket = pending.get(lemma) || [];
+    bucket.push([...targets]);
+    pending.set(lemma, bucket);
+  }
+  for (const [lemma, groups] of pending) {
+    const signatures = new Set(groups.map(targetSetKey));
+    if (signatures.size !== 1) continue;
+    derived.set(lemma, [...groups[0]]);
+  }
+  return derived;
+}
+
+function wrapDirectionalMorphologyLookup(
+  plugin: BindableSynonymPlugin,
+  authored: Map<string, string[]>,
+  derived: Map<string, string[]>
+): BindableSynonymPlugin {
+  const originalExpand = plugin.expand.bind(plugin);
+  const wrapped: BindableSynonymPlugin = {
+    ...plugin,
+    lookup: authored,
+    expand(token) {
+      const key = canonicalizeSearchEquivalencePhrase(token);
+      if (!key) return [];
+      if (authored.has(key)) return originalExpand(token);
+      const targets = derived.get(key);
+      if (!targets?.length) return [];
+      return targets.map((form) => ({
+        form,
+        type: "search-equivalence",
+        provenance: "canonical-morphology",
+        confidence: null,
+      }));
+    },
+  };
+  wrapped[MORPHOLOGY_DERIVED_BOUND] = true;
+  return wrapped;
+}
+
+const derivedWrapCache = new WeakMap<object, { morph: object; wrapped: BindableSynonymPlugin }>();
+
+/**
+ * Query-interpretation bind: authored directional maps stay unchanged.
+ * Single-token sources may be reached from their canonical lemma when that
+ * lemma is not itself an authored key and all sources that share it agree.
+ * Multi-token morphology-aware equivalence is out of scope.
+ */
+export function bindMorphologyDerivedEquivalences<T extends CanonicalLemmaPlugin & { name?: string }>(
+  plugins: T[] | null | undefined
+): T[] {
+  if (!Array.isArray(plugins) || !plugins.length) return plugins || [];
+  const morph = plugins.find((plugin) => typeof plugin.canonicalLemma === "function");
+  if (!morph || typeof morph.canonicalLemma !== "function") return plugins;
+  const synIndex = plugins.findIndex(
+    (plugin) =>
+      plugin &&
+      (plugin as { name?: string }).name === "synonyms" &&
+      typeof (plugin as unknown as SynonymsPlugin).expand === "function"
+  );
+  if (synIndex < 0) return plugins;
+  const syn = plugins[synIndex] as unknown as BindableSynonymPlugin;
+  if (syn[MORPHOLOGY_DERIVED_BOUND]) return plugins;
+  const authored = authoredTargetsLookup(syn);
+  if (!authored) return plugins;
+  const cached = derivedWrapCache.get(syn);
+  if (cached && cached.morph === morph) {
+    if ((plugins[synIndex] as unknown) === cached.wrapped) return plugins;
+    const hit = plugins.slice();
+    hit[synIndex] = cached.wrapped as unknown as T;
+    return hit;
+  }
+  const derived = deriveMorphologyEquivalenceLookup(authored, (token) => morph.canonicalLemma!(token));
+  if (!derived.size) return plugins;
+  const wrapped = wrapDirectionalMorphologyLookup(syn, authored, derived);
+  derivedWrapCache.set(syn, { morph, wrapped });
+  const next = plugins.slice();
+  next[synIndex] = wrapped as unknown as T;
+  return next;
 }
 
 function symmetricPlugin(input: Record<string, unknown>): SynonymsPlugin {

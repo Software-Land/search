@@ -21,6 +21,7 @@ import {
 import { constraintsForStrategy } from "./constraints.js";
 import { morphology } from "./morphology.js";
 import { dictionary } from "./dictionary.js";
+import { bindMorphologyDerivedEquivalences } from "./synonyms.js";
 import {
   RelationshipGraph,
   applyRelationshipExpansion,
@@ -328,7 +329,7 @@ export class SearchEngine {
   constructor(options: SearchEngineOptions = {}) {
     const cfg = validateCreateOptions(options);
     this.schema = cfg.schema;
-    this.plugins = cfg.plugins;
+    this.plugins = bindMorphologyDerivedEquivalences(cfg.plugins);
     this.lexicalIndex = cfg.lexicalIndex;
     this.loadedLexicalIndex = null;
     this.relationships = resolveGraph(cfg.relationships);
