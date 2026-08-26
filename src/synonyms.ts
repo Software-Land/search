@@ -124,11 +124,20 @@ export function normalizeSearchEquivalences(input?: unknown): NormalizedSearchEq
   }
 
   for (const [rawSource, rawTargets] of Object.entries(input)) {
-    if (FORBIDDEN_KEYS.has(rawSource)) {
+    const trimmedSource = String(rawSource || "").trim();
+    if (
+      FORBIDDEN_KEYS.has(rawSource) ||
+      FORBIDDEN_KEYS.has(trimmedSource) ||
+      FORBIDDEN_KEYS.has(trimmedSource.toLowerCase())
+    ) {
       reject(rejected, rawSource, "forbidden-key");
       continue;
     }
     const source = canonicalizeSearchEquivalencePhrase(rawSource);
+    if (source && FORBIDDEN_KEYS.has(source)) {
+      reject(rejected, rawSource, "forbidden-key");
+      continue;
+    }
     if (!source) {
       reject(rejected, String(rawSource || ""), "empty-or-unsafe-source");
       continue;

@@ -97,6 +97,21 @@ describe("normalizeSearchEquivalences", () => {
     expect(out.rejected.some((r) => r.reason === "target-limit")).toBe(true);
   });
 
+  test("rejects whitespace-normalized prototype-pollution keys", () => {
+    const out = normalizeSearchEquivalences({
+      " constructor ": ["testing"],
+      " __proto__ ": ["testing"],
+      " prototype ": ["testing"],
+      toString: ["testing"],
+    });
+    expect(out.rejected.filter((r) => r.reason === "forbidden-key").map((r) => r.source).sort()).toEqual([
+      " __proto__ ",
+      " constructor ",
+      " prototype ",
+    ]);
+    expect(out.entries).toEqual([{ source: "tostring", targets: ["testing"] }]);
+  });
+
   test("fails closed on tokenizer-destructive symbolic targets and keeps a*", () => {
     const out = normalizeSearchEquivalences({
       astar: ["a*"],

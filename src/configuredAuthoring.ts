@@ -169,8 +169,8 @@ export function compileAuthoredConcept(raw: unknown): DictionaryEntry | null {
       { field: removed[0], expected: "aliases" }
     );
   }
-  const key = String(rec.key).toLowerCase();
-  if (FORBIDDEN_KEYS.has(key)) return null;
+  const key = String(rec.key).toLowerCase().trim();
+  if (!key || FORBIDDEN_KEYS.has(key)) return null;
   const aliases = dedupeSequences(
     Array.isArray(rec.aliases) ? rec.aliases.map((alias) => asSequence(alias)).filter((alias) => alias.length) : []
   );

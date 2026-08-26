@@ -60,6 +60,27 @@ function fail(message: string, field: string, expected: string): never {
   throw new InvalidConfigurationError(message, { field, expected });
 }
 
+function emptyRecord<T>(): Record<string, T> {
+  return Object.create(null) as Record<string, T>;
+}
+
+function ownedList<T>(record: Record<string, T[]>, key: string): T[] {
+  const existing = record[key];
+  if (Array.isArray(existing)) return existing;
+  const next: T[] = [];
+  record[key] = next;
+  return next;
+}
+
+/** Reject prototype-pollution keys after the same trim used for storage. */
+function assertOrdinarySourceKey(raw: string): string {
+  const trimmed = raw.trim();
+  if (FORBIDDEN_KEYS.has(raw) || FORBIDDEN_KEYS.has(trimmed) || FORBIDDEN_KEYS.has(trimmed.toLowerCase())) {
+    fail("forbidden relationshipMap key", "relationshipMap", "ordinary source key");
+  }
+  return trimmed;
+}
+
 function conceptKeySet(concepts: CompileRelationshipMapOptions["concepts"]): Set<string> {
   const keys = new Set<string>();
   if (!concepts) return keys;
@@ -185,10 +206,10 @@ export function compileRelationshipMap(
 ): CompiledRelationshipMap {
   if (raw == null) {
     return {
-      synonymMap: {},
+      synonymMap: emptyRecord(),
       standaloneRecallByKey: new Map(),
       topicalRecallByKey: new Map(),
-      editorialRelationships: {},
+      editorialRelationships: emptyRecord(),
     };
   }
   if (!isPlainObject(raw)) {
@@ -197,15 +218,15 @@ export function compileRelationshipMap(
 
   const conceptKeys = conceptKeySet(concepts);
   const catalog = documentCatalog(documents);
-  const synonymMap: Record<string, string[]> = {};
+  const synonymMap = emptyRecord<string[]>();
   const standaloneRecallByKey = new Map<string, string[]>();
   const topicalRecallByKey = new Map<string, string[][]>();
-  const editorialRelationships: CompiledRelationshipMap["editorialRelationships"] = {};
+  const editorialRelationships = emptyRecord<
+    CompiledRelationshipMap["editorialRelationships"][string]
+  >();
 
   for (const [sourceRaw, edgesRaw] of Object.entries(raw)) {
-    if (FORBIDDEN_KEYS.has(sourceRaw)) {
-      fail("forbidden relationshipMap key", "relationshipMap", "ordinary source key");
-    }
+    assertOrdinarySourceKey(sourceRaw);
     const sourceField = `relationshipMap.${sourceRaw}`;
     if (!Array.isArray(edgesRaw)) {
       fail("relationshipMap values must be edge arrays", sourceField, "AuthoredRelationshipEdge[]");
@@ -242,8 +263,7 @@ export function compileRelationshipMap(
         }
         const source = sourceRaw.trim();
         if (!source) fail("equivalent source is empty", sourceField, "non-empty source phrase");
-        if (!synonymMap[source]) synonymMap[source] = [];
-        pushUnique(synonymMap[source], target);
+        pushUnique(ownedList(synonymMap, source), target);
         return;
       }
 
@@ -277,8 +297,7 @@ export function compileRelationshipMap(
       if (sourceId === targetId) {
         fail("document related source and target must differ", field, "distinct document ids");
       }
-      if (!editorialRelationships[sourceId]) editorialRelationships[sourceId] = [];
-      const list = editorialRelationships[sourceId];
+      const list = ownedList(editorialRelationships, sourceId);
       if (!list.some((edgeRow) => edgeRow.target === targetId)) {
         list.push({ target: targetId, type: "editorial", strength: 1, provenance: "manual" });
       }

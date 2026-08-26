@@ -79,7 +79,8 @@ export interface EnglishPlugin extends SearchPlugin {
 
 /**
  * Configured-concept plugin shape. `dictionary()` returns `DictionaryPlugin`.
- * Core does not read a plugin `entries` array. Authored entries are `{ key, aliases }`.
+ * Core does not read a plugin `entries` array. Authored entries are `{ key, aliases }`
+ * plus optional identity metadata (`type`, `provenance`, `confidence`).
  * `standaloneRecallByToken` / `topicalRecallByKey` are compiled from relationshipMap.
  */
 export interface DictionaryPlugin extends SearchPlugin {
@@ -333,6 +334,7 @@ export interface EquivalenceEntry {
   key: string;
   /** aliases[0] is the canonical lexical sequence; remaining aliases are same-intent forms. */
   aliases?: string[][];
+  /** Optional authored/compiled identity metadata. Not a ranking weight. */
   type?: string;
   provenance?: string | null;
   confidence?: number | null;

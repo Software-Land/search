@@ -80,7 +80,7 @@ The compiled `search-v2-synonyms` `{ terms: [...] }` artifact remains a bidirect
 
 ## Configured concepts and relationshipMap
 
-Configured concepts are authored as `{ key, aliases }` only. `aliases[0]` is the canonical lexical sequence (compiled internally as the existing expansion sequence). Later aliases are alternate same-intent forms. Former fields `expansion` / `exp`, `primary`, `standaloneRecall`, and `topicalRecall` are rejected on `dictionary()` entries.
+Configured concepts are authored as `{ key, aliases }` plus optional identity metadata (`type`, `provenance`, `confidence`). `aliases[0]` is the canonical lexical sequence (compiled internally as the existing expansion sequence). Later aliases are alternate same-intent forms. Former fields `expansion` / `exp`, `primary`, `standaloneRecall`, and `topicalRecall` are rejected on `dictionary()` entries. Those metadata fields are not ranking weights; `migrateConfiguredEntry()` emits `{ key, aliases }` only.
 
 Once a query unambiguously occupies one configured concept, every authored spelling of that concept is the same search intent:
 
