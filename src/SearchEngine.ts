@@ -1,4 +1,4 @@
-import { analyzeQuery, suggestTypoForms } from "./analyze.js";
+import { analyzeQuery, exactExplicitQueryIntentKeys, suggestTypoForms } from "./analyze.js";
 import { buildIndex, resolveSchema } from "./indexDocuments.js";
 import {
   compactIndexFromAnalyzed,
@@ -105,16 +105,23 @@ function isPrefixOfVocabulary(token: string, vocabulary: Set<string>) {
   return false;
 }
 
-function attachTypoAlternatives(query: AnalyzedQuery, vocabulary: Set<string>, { signal }: { signal?: AbortSignal } = {}) {
+function attachTypoAlternatives(
+  query: AnalyzedQuery,
+  vocabulary: Set<string>,
+  explicitQueryIntentKeys: Set<string>,
+  { signal }: { signal?: AbortSignal } = {}
+) {
   const extra: TypoCompanionConcept[] = [];
   const alternatives: QueryAlternative[] = [...(query.alternatives || [])];
   for (const tok of query.tokens) {
     if (!tok) continue;
     if (tok.completedToken || (tok.sources || []).includes("final-token-prefix")) continue;
+    const exactExplicitIntent = explicitQueryIntentKeys.has(tok.surface);
     if (vocabulary.has(tok.normalized) || isPrefixOfVocabulary(tok.normalized, vocabulary)) continue;
     const suggestions = suggestTypoForms(tok.normalized, vocabulary, { signal });
     for (const s of suggestions) {
       if (s.form === tok.normalized) continue;
+      if (exactExplicitIntent && explicitQueryIntentKeys.has(s.form)) continue;
       extra.push({
         id: s.form,
         kind: "term",
@@ -424,13 +431,14 @@ export class SearchEngine {
   _prepareQuery(rawQuery: unknown, { signal }: { signal?: AbortSignal } = {}) {
     throwIfAborted(signal);
     const index = requireIndexed(this);
+    const explicitQueryIntentKeys = exactExplicitQueryIntentKeys(this.plugins);
     let query = analyzeQuery(rawQuery, {
       plugins: this.plugins,
       lexicon: index.titleTokenSet,
       prefixLexicon: index.surfaceVocabulary || index.titleTokenSet,
       signal,
     });
-    query = attachTypoAlternatives(query, typoVocabulary(index, this.plugins), { signal });
+    query = attachTypoAlternatives(query, typoVocabulary(index, this.plugins), explicitQueryIntentKeys, { signal });
     return query;
   }
 

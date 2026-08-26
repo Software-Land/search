@@ -308,6 +308,51 @@ function spellingLexiconFrom(plugins: SearchPlugin[], base: Set<string>) {
 }
 
 /**
+ * Exact one-token query forms authored as configured lexical intent.
+ * Multi-token dictionary expansion words and synonym targets are deliberately
+ * excluded: they are recall forms, not independently authored query keys.
+ * A complete one-token expansion is itself an explicit configured query form.
+ */
+const explicitQueryIntentKeyCache = new WeakMap<object, Set<string>>();
+
+function exactExplicitQueryIntentKeys(plugins: SearchPlugin[]): Set<string> {
+  const keys = new Set<string>();
+
+  for (const plugin of plugins) {
+    if (plugin && typeof plugin === "object") {
+      const cached = explicitQueryIntentKeyCache.get(plugin);
+      if (cached) {
+        for (const key of cached) keys.add(key);
+        continue;
+      }
+      const pluginKeys = new Set<string>();
+      if (plugin.name === "synonyms" && plugin.lookup instanceof Map) {
+        for (const source of plugin.lookup.keys()) {
+          const tokens = tokenize(source);
+          if (tokens.length === 1) pluginKeys.add(tokens[0]);
+        }
+      }
+      for (const sequence of plugin.sequences || []) {
+        if (!sequence?.tokens?.length) continue;
+        if (
+          sequence.kind === "key" ||
+          sequence.kind === "alias" ||
+          (sequence.kind === "expansion" && sequence.tokens.length === 1)
+        ) {
+          const tokens = tokenize(sequence.tokens.join(" "));
+          if (tokens.length === 1) pluginKeys.add(tokens[0]);
+        }
+      }
+      explicitQueryIntentKeyCache.set(plugin, pluginKeys);
+      for (const key of pluginKeys) keys.add(key);
+    }
+  }
+  return keys;
+}
+
+export { exactExplicitQueryIntentKeys };
+
+/**
  * Unknown-only repair gate. Known vocabulary, configured keys, confident
  * morphology, and title/dictionary prefixes must not be rewritten here.
  */
@@ -315,9 +360,10 @@ function isProtectedFromUnknownRepair(
   token: string,
   lex: Set<string>,
   dictionaryKeys: Set<string>,
+  explicitQueryIntentKeys: Set<string>,
   plugins: SearchPlugin[]
 ) {
-  if (lex.has(token) || dictionaryKeys.has(token)) return true;
+  if (lex.has(token) || dictionaryKeys.has(token) || explicitQueryIntentKeys.has(token)) return true;
   if (pluginCanonicalLemma(plugins, token)) return true;
   if (isPrefixOfVocabulary(token, lex)) return true;
   return false;
@@ -327,12 +373,13 @@ function repairUnknownExactCompounds(
   surface: string[],
   lex: Set<string>,
   dictionaryKeys: Set<string>,
+  explicitQueryIntentKeys: Set<string>,
   plugins: SearchPlugin[],
   alternatives: QueryAlternative[]
 ) {
   const out: string[] = [];
   for (const tok of surface) {
-    if (isProtectedFromUnknownRepair(tok, lex, dictionaryKeys, plugins)) {
+    if (isProtectedFromUnknownRepair(tok, lex, dictionaryKeys, explicitQueryIntentKeys, plugins)) {
       out.push(tok);
       continue;
     }
@@ -1014,13 +1061,21 @@ export function analyzeQuery(
   const prefixLex = prefixLexicon == null ? lex : lexiconFrom(plugins, prefixLexicon);
   const spellingLex = spellingLexiconFrom(plugins, lex);
   const dictionaryKeys = dictionaryKeysFrom(plugins);
+  const explicitQueryIntentKeys = exactExplicitQueryIntentKeys(plugins);
   const alternatives: QueryAlternative[] = [];
 
   let surface = tokenize(raw);
-  surface = repairUnknownExactCompounds(surface, lex, dictionaryKeys, plugins, alternatives);
+  surface = repairUnknownExactCompounds(
+    surface,
+    lex,
+    dictionaryKeys,
+    explicitQueryIntentKeys,
+    plugins,
+    alternatives
+  );
   if (surface.length === 1) {
     const original = surface[0];
-    if (!isProtectedFromUnknownRepair(original, lex, dictionaryKeys, plugins)) {
+    if (!isProtectedFromUnknownRepair(original, lex, dictionaryKeys, explicitQueryIntentKeys, plugins)) {
       const spelled = compoundSpellSegment(original, lex, { signal });
       if (spelled) {
         surface = spelled.tokens;
@@ -1051,7 +1106,9 @@ export function analyzeQuery(
     // Explicit lemma-table identity is more confident than edit-distance.
     // Suffix-heuristic stems stay on `lemma` and do not skip typo repair.
     const tableLemma = pluginCanonicalLemma(plugins, normalized);
+    const exactExplicitIntent = explicitQueryIntentKeys.has(surfaceTok);
     const typoHits =
+      exactExplicitIntent ||
       lex.has(normalized) ||
       dictionaryKeys.has(normalized) ||
       isPrefixOfVocabulary(normalized, lex) ||

@@ -1,5 +1,5 @@
 import { analyzeQuery } from "../dist/analyze.js";
-import { morphology, dictionary, SearchEngine } from "../dist/index.js";
+import { morphology, dictionary, synonyms, SearchEngine } from "../dist/index.js";
 import { extractFeatures } from "../dist/features.js";
 import { compoundSpellSegment, MAX_COMPOUND_REPAIR_TOKEN_LENGTH } from "../dist/analyzeRepair.js";
 import { conceptMatchesBody, conceptMatchesTitle } from "../dist/retrieve.js";
@@ -309,6 +309,142 @@ describe("dictionary token ownership", () => {
     expect(expansion.concepts.find((c) => c.kind === "acronym")?.provenance).toBe("expansion");
     expect(key.concepts.find((c) => c.kind === "acronym")?.provenance).toBe("key");
     expect(expansion.concepts.some((c) => c.kind === "term")).toBe(false);
+  });
+});
+
+describe("exact authored query intent precedes typo correction", () => {
+  test("an exact configured equivalence source beats a competing typo candidate", () => {
+    const q = analyzeQuery("abcde", {
+      plugins: [synonyms({ abcde: ["conceptx"] })],
+      lexicon: ["abcdf"],
+    });
+    expect(q.tokens[0].surface).toBe("abcde");
+    expect(q.tokens[0].normalized).toBe("abcde");
+    expect(q.tokens[0].sources).not.toContain("typo-correction");
+    expect(q.concepts.find((c) => c.id === "abcde")?.forms).toContain("conceptx");
+  });
+
+  test("a non-exact typo remains eligible for correction", () => {
+    const q = analyzeQuery("abcdf", {
+      plugins: [synonyms({ abcde: ["conceptx"] })],
+      lexicon: ["abcdd"],
+    });
+    expect(q.tokens[0].normalized).toBe("abcdd");
+    expect(q.tokens[0].sources).toContain("typo-correction");
+  });
+
+  test("an exact normal vocabulary word remains unchanged", () => {
+    const q = analyzeQuery("abcde", {
+      plugins: [synonyms({ abcde: ["conceptx"] })],
+      lexicon: ["abcde", "abcdf"],
+    });
+    expect(q.tokens[0].normalized).toBe("abcde");
+    expect(q.tokens[0].sources).not.toContain("typo-correction");
+  });
+
+  test("an exact configured alias receives the same protection", () => {
+    const q = analyzeQuery("abcde", {
+      plugins: [
+        dictionary({
+          entries: [{ key: "concept", expansion: ["concept"], aliases: [["abcde"]] }],
+        }),
+      ],
+      lexicon: ["abcdf"],
+    });
+    expect(q.tokens[0].surface).toBe("abcde");
+    expect(q.tokens[0].normalized).toBe("abcde");
+    expect(q.tokens[0].sources).not.toContain("typo-correction");
+    expect(q.configuredSequenceIntent?.key).toBe("concept");
+  });
+
+  test("a generated synonym target does not become a protected query key", () => {
+    const q = analyzeQuery("conceptx", {
+      plugins: [synonyms({ abc: ["conceptx"] })],
+      lexicon: ["concepty"],
+    });
+    expect(q.tokens[0].normalized).toBe("concepty");
+    expect(q.tokens[0].sources).toContain("typo-correction");
+  });
+
+  test("directional equivalence remains directional", () => {
+    const plugins = [synonyms({ abcde: ["conceptx"] })];
+    const source = analyzeQuery("abcde", { plugins });
+    const target = analyzeQuery("conceptx", { plugins });
+    expect(source.concepts.find((c) => c.id === "abcde")?.forms).toContain("conceptx");
+    expect(target.concepts.find((c) => c.id === "conceptx")?.forms).not.toContain("abcde");
+  });
+
+  test("surface identity is preserved while exact intent expands", () => {
+    const q = analyzeQuery("abcde", {
+      plugins: [synonyms({ abcde: ["conceptx"] })],
+      lexicon: ["abcdf"],
+    });
+    expect(q.originalSurface).toEqual(["abcde"]);
+    expect(q.tokens[0].surface).toBe("abcde");
+    expect(q.tokens[0].surfaceNormalized).toBe("abcde");
+    expect(q.tokens[0].normalized).toBe("abcde");
+  });
+
+  test("exact OAuth remains OAuth", () => {
+    const q = analyzeQuery("oauth", {
+      plugins: [
+        dictionary({ entries: [{ key: "oauth", expansion: ["open", "authorization"] }] }),
+        synonyms({ oauth: ["saml"] }),
+      ],
+      lexicon: ["authn", "oauth"],
+    });
+    expect(q.tokens[0].normalized).toBe("oauth");
+    expect(q.configuredSequenceIntent?.key).toBe("oauth");
+    expect(q.tokens[0].sources).not.toContain("typo-correction");
+  });
+
+  test("authn keeps its configured authentication meaning", () => {
+    const q = analyzeQuery("authn", {
+      plugins: [synonyms({ authn: ["authentication"] })],
+      lexicon: ["oauth", "authentication"],
+    });
+    expect(q.tokens[0].surface).toBe("authn");
+    expect(q.tokens[0].normalized).toBe("authn");
+    expect(q.tokens[0].sources).not.toContain("typo-correction");
+    expect(q.concepts.find((c) => c.id === "authn")?.forms).toContain("authentication");
+  });
+
+  test("authz keeps its configured authorization meaning", () => {
+    const q = analyzeQuery("authz", {
+      plugins: [synonyms({ authz: ["authorization"] })],
+      lexicon: ["oauth", "authorization"],
+    });
+    expect(q.tokens[0].surface).toBe("authz");
+    expect(q.tokens[0].normalized).toBe("authz");
+    expect(q.tokens[0].sources).not.toContain("typo-correction");
+    expect(q.concepts.find((c) => c.id === "authz")?.forms).toContain("authorization");
+  });
+
+  test("SearchEngine does not append a typo concept over exact configured intent", async () => {
+    const engine = SearchEngine.create({
+      schema,
+      plugins: [
+        dictionary({ entries: [{ key: "oauth", expansion: ["open", "authorization"] }] }),
+        synonyms({ authn: ["authentication"], authz: ["authorization"] }),
+      ],
+      retriever: "full-scan",
+    });
+    await engine.index([
+      { id: "authn", title: "Authentication", body: "authentication" },
+      { id: "authz", title: "Authorization", body: "authorization" },
+      { id: "oauth", title: "OAuth", body: "oauth" },
+    ]);
+    for (const [query, expected] of [
+      ["authn", "authentication"],
+      ["authz", "authorization"],
+    ]) {
+      const prepared = engine._prepareQuery(query);
+      expect(prepared.concepts.some((c) => c.id === "oauth")).toBe(false);
+      expect(prepared.synonymRecall).toContainEqual({ source: query, target: expected });
+      expect(engine.search(query, { limit: 1 })[0].title).toBe(
+        expected[0].toUpperCase() + expected.slice(1)
+      );
+    }
   });
 });
 
