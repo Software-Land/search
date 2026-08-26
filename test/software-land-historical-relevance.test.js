@@ -3,61 +3,29 @@
  * Fixture-only. Not Core default ranking policy.
  * Separate from query-result-oracle.json exact-output identity.
  */
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { SearchEngine, morphology, dictionary, compileAuthoredRelevance } from "../dist/index.js";
+import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import {
   evaluateHistoricalRelevance,
   formatHistoricalRelevanceFailure,
   isHistoricalRelevanceApplicable,
 } from "./historical-relevance.js";
+import { loadSoftwareLandJson, loadSoftwareLandRelevanceInputs } from "./helpers/software-land-fixture.js";
 
-const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const FIXTURE = path.join(ROOT, "fixtures", "software-land");
-
-function loadJson(name) {
-  return JSON.parse(readFileSync(path.join(FIXTURE, name), "utf8"));
-}
-
-const documents = loadJson("documents.json");
-const historical = loadJson("historical-scenarios.json");
-const relevanceConfig = loadJson("relevance-config.json");
-const synonymFixture = loadJson("synonym-map.json");
+const {
+  documents,
+  dictionaryEntries,
+  lemmas,
+  relationshipMap,
+  relationships,
+  lexicalFrequency,
+  historical,
+  applicable,
+  relevanceConfig,
+  schema,
+} = loadSoftwareLandRelevanceInputs();
+const synonymFixture = loadSoftwareLandJson("synonym-map.json");
 const omitKeys = new Set(relevanceConfig.omitDictionaryKeys || []);
-
-function aliasKey(alias) {
-  return JSON.stringify(Array.isArray(alias) ? alias : []);
-}
-
-function applyDictionaryPatches(entries, patches) {
-  return entries.map((entry) => {
-    const patch = patches?.[entry.key];
-    if (!patch) return entry;
-    const omit = new Set((patch.omitAliases || []).map(aliasKey));
-    const aliases = (entry.aliases || []).filter((alias) => !omit.has(aliasKey(alias)));
-    const seen = new Set(aliases.map(aliasKey));
-    for (const alias of patch.addAliases || []) {
-      const form = Array.isArray(alias) ? alias : [];
-      const key = aliasKey(form);
-      if (!form.length || seen.has(key)) continue;
-      seen.add(key);
-      aliases.push([...form]);
-    }
-    return {
-      ...entry,
-      aliases,
-    };
-  });
-}
-
-const dictionaryEntries = applyDictionaryPatches(
-  loadJson("dictionary.json").filter((entry) => !omitKeys.has(entry.key)),
-  relevanceConfig.dictionaryPatches
-);
-
-const applicable = historical.rows.filter(isHistoricalRelevanceApplicable);
 const recorded = [];
 const APPSEC_TOPICAL = [
   ["authentication"],
@@ -71,22 +39,18 @@ const APPSEC_TOPICAL = [
 ];
 
 function createRelevanceEngine() {
-  const relationshipMap = loadJson(relevanceConfig.relationshipMapFile).map;
   const compiled = compileAuthoredRelevance({
     entries: dictionaryEntries,
     relationshipMap,
   });
   return SearchEngine.create({
-    schema: {
-      title: { type: "text", role: "title" },
-      body: { type: "text", role: "body" },
-    },
+    schema,
     plugins: [
-      morphology({ lemmas: loadJson("lemmas.json") }),
+      morphology({ lemmas }),
       compiled.dictionary,
       compiled.synonyms,
     ],
-    relationships: loadJson("relationships.json"),
+    relationships,
     relationshipStrategy: "hybrid",
     retriever: "full-scan",
   });
@@ -97,7 +61,7 @@ describe("Software.Land historical relevance contracts", () => {
 
   beforeAll(async () => {
     engine = createRelevanceEngine();
-    await engine.index(attachLexicalFrequency(documents, loadJson("lexical-frequency.json")));
+    await engine.index(attachLexicalFrequency(documents, lexicalFrequency));
   });
 
   afterAll(() => {
@@ -219,15 +183,15 @@ describe("Software.Land historical relevance contracts", () => {
     expect(relevanceConfig.synonymMapKind).toBe("explicit-directional-curated-plus-generated");
     expect(omitKeys.has("testing")).toBe(true);
     expect(dictionaryEntries.some((entry) => entry.key === "testing")).toBe(false);
-    expect(loadJson("dictionary.json").some((entry) => entry.key === "testing")).toBe(true);
-    const frozenAppsec = loadJson("dictionary.json").find((entry) => entry.key === "appsec");
+    expect(loadSoftwareLandJson("dictionary.json").some((entry) => entry.key === "testing")).toBe(true);
+    const frozenAppsec = loadSoftwareLandJson("dictionary.json").find((entry) => entry.key === "appsec");
     expect(frozenAppsec.aliases[0]).toEqual(["application", "security"]);
     expect(frozenAppsec.aliases).toEqual(expect.arrayContaining([["security"]]));
     expect(frozenAppsec.expansion).toBeUndefined();
     expect(frozenAppsec.primary).toBeUndefined();
     expect(frozenAppsec.topicalRecall).toBeUndefined();
     expect(frozenAppsec.standaloneRecall).toBeUndefined();
-    const frozenNist = loadJson("dictionary.json").find((entry) => entry.key === "nist");
+    const frozenNist = loadSoftwareLandJson("dictionary.json").find((entry) => entry.key === "nist");
     expect(frozenNist.aliases).toEqual([["national", "institute", "standards", "technology"]]);
     const nist = dictionaryEntries.find((entry) => entry.key === "nist");
     expect(nist.aliases).toEqual([
@@ -246,7 +210,6 @@ describe("Software.Land historical relevance contracts", () => {
     ]);
     expect(appsec.topicalRecall).toBeUndefined();
     expect(relevanceConfig.relationshipMapFile).toBe("relationship-map.json");
-    const relationshipMap = loadJson("relationship-map.json").map;
     expect(relationshipMap.appsec.filter((edge) => edge.kind === "related").map((edge) => edge.to.form)).toEqual([
       "authentication",
       "authorization",

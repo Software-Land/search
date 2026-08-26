@@ -82,7 +82,9 @@
     "test:python": "python3 -m unittest discover -s tools/search-semantic/tests -p 'test_*.py'",
     "example": "npm run build && node examples/catalog/index.mjs",
     "smoke:import": "npm run build && node scripts/import-smoke.mjs",
-    "smoke:pack": "node scripts/pack-smoke.mjs"
+    "smoke:pack": "node scripts/pack-smoke.mjs",
+    "test:chromium-pack": "node test/chromium-pack/runner.mjs",
+    "test:chromium-real-corpus": "node test/chromium-pack/software-land-scenarios.mjs"
   },
   "devDependencies": {
     "@types/node": "22.13.14",

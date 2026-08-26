@@ -55,4 +55,12 @@ jobs:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('test/chromium-pack/package-lock.json') }}
       - run: npm --prefix test/chromium-pack exec -- playwright install --with-deps chromium
-      - run: node test/chromium-pack/runner.mjs
+      - name: Pack candidate
+        run: |
+          mkdir -p "$RUNNER_TEMP/search-pack"
+          npm pack --pack-destination "$RUNNER_TEMP/search-pack"
+          echo "SEARCH_PACK_TGZ=$(ls "$RUNNER_TEMP/search-pack"/*.tgz)" >> "$GITHUB_ENV"
+      - name: packed-browser
+        run: node test/chromium-pack/runner.mjs
+      - name: software-land-real-corpus-browser
+        run: node test/chromium-pack/software-land-scenarios.mjs

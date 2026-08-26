@@ -4,199 +4,40 @@
  * Packs the repo, installs the tarball in a temp consumer, serves it over HTTP,
  * and drives a real module Worker via Playwright.
  */
-import { spawnSync } from "node:child_process";
-import {
-  copyFileSync,
-  createReadStream,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-} from "node:fs";
-import http from "node:http";
+import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
-
-const harnessDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(harnessDir, "..", "..");
-const WAIT_MS = 20_000;
-
-function run(command, args, cwd) {
-  const result = spawnSync(command, args, { cwd, encoding: "utf8", env: process.env });
-  if (result.status !== 0) {
-    throw new Error(`${command} ${args.join(" ")} failed (exit ${result.status}):\n${result.stdout}\n${result.stderr}`);
-  }
-  return result;
-}
-
-function mimeFor(filePath) {
-  if (filePath.endsWith(".html")) return "text/html; charset=utf-8";
-  if (filePath.endsWith(".js") || filePath.endsWith(".mjs")) return "text/javascript; charset=utf-8";
-  if (filePath.endsWith(".json")) return "application/json; charset=utf-8";
-  return null;
-}
-
-function safeFile(root, urlPath) {
-  const raw = decodeURIComponent(String(urlPath || "/").split("?")[0]);
-  const rel = raw === "/" ? "index.html" : raw.replace(/^\/+/, "");
-  const rootResolved = path.resolve(root);
-  const full = path.resolve(rootResolved, rel);
-  const prefix = rootResolved.endsWith(path.sep) ? rootResolved : `${rootResolved}${path.sep}`;
-  if (full !== rootResolved && !full.startsWith(prefix)) return null;
-  return full;
-}
-
-function resolveBrowserImport(pkg) {
-  const exp = pkg.exports?.["./browser"];
-  if (!exp || typeof exp !== "object" || !exp.import) {
-    throw new Error(`installed package missing exports["./browser"].import: ${JSON.stringify(pkg.exports)}`);
-  }
-  const rel = String(exp.import).replace(/^\.\//, "");
-  return {
-    rel,
-    href: `/node_modules/@software-land/search/${rel}`,
-    workerHref: `/node_modules/@software-land/search/${rel.replace(/[^/]+$/, "searchWorker.js")}`,
-  };
-}
-
-function startServer(root) {
-  const server = http.createServer((req, res) => {
-    if (String(req.url || "").split("?")[0] === "/favicon.ico") {
-      res.writeHead(204, { "cache-control": "no-store" });
-      res.end();
-      return;
-    }
-    const filePath = safeFile(root, req.url || "/");
-    if (!filePath) {
-      res.writeHead(403, { "content-type": "text/plain; charset=utf-8" });
-      res.end("forbidden");
-      return;
-    }
-    if (!existsSync(filePath) || !statSync(filePath).isFile()) {
-      res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
-      res.end("not found");
-      return;
-    }
-    const mime = mimeFor(filePath);
-    if (!mime) {
-      res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
-      res.end("not found");
-      return;
-    }
-    res.writeHead(200, {
-      "content-type": mime,
-      "cache-control": "no-store",
-      "cross-origin-opener-policy": "same-origin",
-      "cross-origin-embedder-policy": "require-corp",
-      "cross-origin-resource-policy": "same-origin",
-    });
-    createReadStream(filePath).pipe(res);
-  });
-  return new Promise((resolve, reject) => {
-    server.listen(0, "127.0.0.1", () => {
-      const addr = server.address();
-      resolve({ server, origin: `http://127.0.0.1:${addr.port}` });
-    });
-    server.on("error", reject);
-  });
-}
-
-function closeServer(server) {
-  return new Promise((resolve) => {
-    if (!server) return resolve();
-    server.close(() => resolve());
-  });
-}
+import {
+  WAIT_MS,
+  closeServer,
+  harnessDir,
+  launchChromium,
+  preparePackedConsumer,
+  startServer,
+  writeImportMapHtml,
+} from "./pack-harness.mjs";
 
 async function main() {
   const tmp = mkdtempSync(path.join(os.tmpdir(), "search-chromium-pack-"));
-  const packDir = path.join(tmp, "pack");
-  const consumer = path.join(tmp, "consumer");
   let server;
   let browser;
   const diagnostics = [];
   try {
-    run("npm", ["run", "build"], repoRoot);
-    mkdirSync(packDir, { recursive: true });
-    run("npm", ["pack", "--pack-destination", packDir], repoRoot);
-    const tarballName = readdirSync(packDir).find((name) => name.endsWith(".tgz"));
-    if (!tarballName) throw new Error("npm pack produced no tarball");
-    const tarball = path.join(packDir, tarballName);
-
-    mkdirSync(consumer, { recursive: true });
-    writeFileSync(
-      path.join(consumer, "package.json"),
-      `${JSON.stringify({ name: "search-chromium-pack-consumer", private: true, type: "module" }, null, 2)}\n`
-    );
-    run("npm", ["install", "--omit=dev", tarball], consumer);
-
-    const installedPkgPath = path.join(consumer, "node_modules/@software-land/search/package.json");
-    if (!existsSync(installedPkgPath)) throw new Error("tarball install missing @software-land/search");
-    const installedPkg = JSON.parse(readFileSync(installedPkgPath, "utf8"));
-    const browserExport = resolveBrowserImport(installedPkg);
-    const lexicalSpec = installedPkg.exports?.["./lexical"];
-    if (!lexicalSpec || typeof lexicalSpec !== "object" || !lexicalSpec.import) {
-      throw new Error(`installed package missing exports["./lexical"].import: ${JSON.stringify(installedPkg.exports)}`);
-    }
-    const lexicalRel = String(lexicalSpec.import).replace(/^\.\//, "");
-    const lexicalHref = `/node_modules/@software-land/search/${lexicalRel}`;
-    const rootSpec = installedPkg.exports?.["."];
-    if (!rootSpec || typeof rootSpec !== "object" || !rootSpec.import) {
-      throw new Error(`installed package missing exports["."].import: ${JSON.stringify(installedPkg.exports)}`);
-    }
-    const rootRel = String(rootSpec.import).replace(/^\.\//, "");
-    const rootHref = `/node_modules/@software-land/search/${rootRel}`;
-    const browserFile = path.join(consumer, "node_modules/@software-land/search", browserExport.rel);
-    if (!existsSync(browserFile)) {
-      throw new Error(`resolved browser export missing on disk: ${browserExport.rel}`);
-    }
-
-    const importMap = {
-      imports: {
-        "@software-land/search": rootHref,
-        "@software-land/search/browser": browserExport.href,
-        "@software-land/search/lexical": lexicalHref,
-      },
-    };
-    writeFileSync(
-      path.join(consumer, "index.html"),
-      `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>chromium-pack worker fixture</title>
-    <script type="importmap">${JSON.stringify(importMap)}</script>
-  </head>
-  <body>
-    <script type="module" src="/app.mjs"></script>
-  </body>
-</html>
-`
-    );
+    const packed = await preparePackedConsumer(tmp);
+    const { consumer, browserExport, importMap } = packed;
+    writeImportMapHtml(consumer, {
+      filename: "index.html",
+      title: "chromium-pack worker fixture",
+      scriptSrc: "/app.mjs",
+      importMap,
+    });
     copyFileSync(path.join(harnessDir, "app.mjs"), path.join(consumer, "app.mjs"));
 
     const started = await startServer(consumer);
     server = started.server;
     const origin = started.origin;
 
-    const systemChrome = [
-      process.env.CHROME_PATH,
-      "/usr/bin/google-chrome",
-      "/usr/bin/chromium",
-      "/usr/bin/chromium-browser",
-    ].find((candidate) => candidate && existsSync(candidate));
-    browser = await chromium.launch({
-      headless: true,
-      ignoreDefaultArgs: ["--headless"],
-      args: ["--headless=new", "--enable-precise-memory-info"],
-      ...(systemChrome ? { executablePath: systemChrome } : {}),
-    });
+    browser = await launchChromium();
     const page = await browser.newPage();
     const consoleErrors = [];
     const pageErrors = [];
@@ -312,21 +153,12 @@ async function main() {
     await page.evaluate(() => window.__dispose());
 
     copyFileSync(path.join(harnessDir, "relationship-app.mjs"), path.join(consumer, "relationship-app.mjs"));
-    writeFileSync(
-      path.join(consumer, "relationship.html"),
-      `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>chromium-pack relationshipMap worker</title>
-    <script type="importmap">${JSON.stringify(importMap)}</script>
-  </head>
-  <body>
-    <script type="module" src="/relationship-app.mjs"></script>
-  </body>
-</html>
-`
-    );
+    writeImportMapHtml(consumer, {
+      filename: "relationship.html",
+      title: "chromium-pack relationshipMap worker",
+      scriptSrc: "/relationship-app.mjs",
+      importMap,
+    });
 
     const relationshipPage = await browser.newPage();
     const relationshipConsoleErrors = [];
@@ -407,21 +239,12 @@ async function main() {
     await relationshipPage.evaluate(() => window.__dispose());
 
     copyFileSync(path.join(harnessDir, "rank-bench-app.mjs"), path.join(consumer, "rank-bench-app.mjs"));
-    writeFileSync(
-      path.join(consumer, "rank.html"),
-      `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>chromium-pack rank bench</title>
-    <script type="importmap">${JSON.stringify(importMap)}</script>
-  </head>
-  <body>
-    <script type="module" src="/rank-bench-app.mjs"></script>
-  </body>
-</html>
-`
-    );
+    writeImportMapHtml(consumer, {
+      filename: "rank.html",
+      title: "chromium-pack rank bench",
+      scriptSrc: "/rank-bench-app.mjs",
+      importMap,
+    });
 
     const RANK_WAIT_MS = 60_000;
     const rankPage = await browser.newPage();
@@ -454,21 +277,12 @@ async function main() {
     }
 
     copyFileSync(path.join(harnessDir, "retrieval-bench-app.mjs"), path.join(consumer, "retrieval-bench-app.mjs"));
-    writeFileSync(
-      path.join(consumer, "retrieval.html"),
-      `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>chromium-pack retrieval bench</title>
-    <script type="importmap">${JSON.stringify(importMap)}</script>
-  </head>
-  <body>
-    <script type="module" src="/retrieval-bench-app.mjs"></script>
-  </body>
-</html>
-`
-    );
+    writeImportMapHtml(consumer, {
+      filename: "retrieval.html",
+      title: "chromium-pack retrieval bench",
+      scriptSrc: "/retrieval-bench-app.mjs",
+      importMap,
+    });
 
     const retrievalSizes = String(process.env.SEARCH_RETRIEVAL_SIZES || "1000,2000,5000")
       .split(",")
