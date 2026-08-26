@@ -136,8 +136,12 @@ export interface SearchClientOptions {
 export interface WorkerRuntimeFactories {
   SearchEngine?: typeof import("../SearchEngine.js").SearchEngine;
   english?: typeof import("../english.js").english;
+  /** Full authored-relevance compiler. Takes precedence over `dictionary`. */
   compileAuthoredRelevance?: typeof import("../dictionary.js").compileAuthoredRelevance;
-  /** @deprecated Worker init uses compileAuthoredRelevance; kept so existing tests still typecheck. */
+  /**
+   * Legacy custom-host dictionary factory. Invoked only when init has no
+   * `relationshipMap`. `relationshipMap` requires `compileAuthoredRelevance`.
+   */
   dictionary?: typeof import("../dictionary.js").dictionary;
 }
 

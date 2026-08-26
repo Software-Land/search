@@ -5,6 +5,7 @@
 
 import { MSG } from "./protocol.js";
 import { isAbortError } from "../cancel.js";
+import { InvalidConfigurationError } from "../errors.js";
 import { compileAuthoredRelevance as defaultCompileAuthoredRelevance } from "../dictionary.js";
 import { mergeEditorialRelationships } from "../relationshipMap.js";
 import type { SearchEngine } from "../SearchEngine.js";
@@ -59,7 +60,8 @@ function retrievalDiagnosticMeta(meta?: any) {
 export function createWorkerRuntime({
   SearchEngine,
   english,
-  compileAuthoredRelevance = defaultCompileAuthoredRelevance,
+  dictionary,
+  compileAuthoredRelevance,
 }: WorkerRuntimeFactories = {}) {
   let engine: SearchEngine | null = null;
   let running: RunningSearch | null = null;
@@ -85,27 +87,50 @@ export function createWorkerRuntime({
       const payload = (message.payload || {}) as InitPayload;
       const plugins = [];
       if (typeof english === "function") plugins.push(english(payload.englishOptions || {}));
-      // Compile once at init through the shared authored-relevance compiler.
-      const authored = compileAuthoredRelevance({
-        entries: payload.dictionaryEntries || [],
-        relationshipMap: payload.relationshipMap,
-        documents: payload.documents || [],
-      });
-      plugins.push(authored.dictionary);
-      if (Object.keys(authored.synonymMap || {}).length) {
-        plugins.push(authored.synonyms);
+      const hasCustomCompiler = typeof compileAuthoredRelevance === "function";
+      const hasLegacyDictionary = typeof dictionary === "function";
+      const hasRelationshipMap = payload.relationshipMap != null;
+      // 1. custom compileAuthoredRelevance, if supplied
+      // 2. otherwise built-in full compiler when relationshipMap is authored
+      //    or no legacy dictionary factory is present
+      // 3. legacy custom dictionary factory only when relationshipMap is absent
+      if (hasLegacyDictionary && hasRelationshipMap && !hasCustomCompiler) {
+        throw new InvalidConfigurationError(
+          "createWorkerRuntime({ dictionary }) cannot compile relationshipMap; supply compileAuthoredRelevance for full authored relevance, or omit relationshipMap to use the legacy dictionary factory",
+          { field: "relationshipMap", expected: "compileAuthoredRelevance" }
+        );
       }
       exactPruningMode =
         payload._exactPruningMode === "exhaustive" ? "exhaustive" : "auto";
       includeRetrievalDiagnostics = payload._includeRetrievalDiagnostics === true;
       const documents = payload.documents || [];
-      const hasEditorial = Object.keys(authored.editorialRelationships || {}).length > 0;
+      let authored = null;
+      if (hasCustomCompiler || hasRelationshipMap || !hasLegacyDictionary) {
+        const compile = hasCustomCompiler ? compileAuthoredRelevance : defaultCompileAuthoredRelevance;
+        authored = compile({
+          entries: payload.dictionaryEntries || [],
+          relationshipMap: payload.relationshipMap,
+          documents,
+        });
+        plugins.push(authored.dictionary);
+        if (Object.keys(authored.synonymMap || {}).length) {
+          plugins.push(authored.synonyms);
+        }
+      } else {
+        plugins.push(
+          dictionary({
+            entries: payload.dictionaryEntries || [],
+            documents,
+          })
+        );
+      }
+      const hasEditorial = Object.keys(authored?.editorialRelationships || {}).length > 0;
       engine = SearchEngine.create({
         schema: payload.schema,
         plugins,
         lexicalIndex: payload.lexicalIndex,
         relationships: hasEditorial
-          ? mergeEditorialRelationships(payload.relationships || null, authored.editorialRelationships)
+          ? mergeEditorialRelationships(payload.relationships || null, authored!.editorialRelationships)
           : payload.relationships || null,
         relationshipStrategy: payload.relationshipStrategy,
         retriever: payload.retriever,
