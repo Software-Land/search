@@ -4,7 +4,7 @@
 
 ### Changed
 
-- Software.Land historical relevance fixture now matches committed Software.Land `db5a070` live search-equivalence map (curated 115/142 plus four generated edges with isolated incremental value; 119 sources / 146 edges). AppSec `topicalRecall` remains from `eac7a90`. NIST exact `institute` / `institute standards` aliases are patched from Software.Land `7628a85`. Historical `expectedTop` contracts for product-approved HTTP/DFS/TLS/ML/service-mesh windows and query `12` / `institute` follow Software.Land `7d2ea53`. The exact-output oracle and frozen `dictionary.json` snapshot are unchanged. `testing` remains omitted only in the relevance engine config; AppSec alias `["security"]` is omitted and topical forms are patched only there.
+- Software.Land historical relevance fixture now matches committed Software.Land `db5a070` live search-equivalence map (curated 115/142 plus four generated edges with isolated incremental value; 119 sources / 146 edges). AppSec `topicalRecall` remains from `eac7a90`. NIST exact `institute` / `institute standards` aliases are patched from Software.Land `7628a85`. Historical `expectedTop` contracts for product-approved HTTP/DFS/TLS/ML/service-mesh windows and query `12` / `institute` follow Software.Land `7d2ea53`. The dict-only exact-output oracle is refreshed to current 0.5 identity. `testing` remains omitted only in the relevance engine config; AppSec alias `["security"]` is omitted and topical forms are patched only there.
 
 ### Fixed
 
@@ -60,6 +60,7 @@
 
 - Morphology / title-prefix scoring no longer treats `frames` as a title-prefix of `framework`. Independent morphology such as `libraries` ↔ `library` is unchanged.
 - Weak single-token body-frequency is a last-resort tie-break only. It does not attach an `fps` acronym concept to query `frames`.
+- The dict-only Software.Land exact-output identity oracle is refreshed to current 0.5 full-scan results. It remains a change detector, not the product historical relevance contract.
 
 ### Security
 

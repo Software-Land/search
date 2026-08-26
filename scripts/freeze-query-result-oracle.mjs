@@ -62,8 +62,8 @@ const rows = historical.rows.map((row) => {
 const out = {
   format: "software-land-query-result-oracle",
   version: 1,
-  note: "Identity freeze after configured-sequence intent: unique complete-query key/expansion/alias alignment projects canonical expansion as lexical ranking intent while preserving typed tokens. Distinct keys fail closed. Package version remains 0.5.0. Not a Core ranking contract.",
-  head: "d598451db4098ab79d4f226b82683a975d2b9b78",
+  note: "Identity freeze after 0.5.0 retrieval-mode completeness and configured-concept canonicalization. Dict-only full-scan change detector for the 215 historical queries. Not a Core ranking contract and not the product historical expectedTop suite.",
+  head: "5ec5eb5c39588e6eb5beaa7341ffb4816d5f79fd",
   resultLimit: RESULT_LIMIT,
   relatedLimit: RELATED_LIMIT,
   documentCount: documents.length,

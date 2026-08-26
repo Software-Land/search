@@ -61,10 +61,7 @@ describe("Software.Land 215-query result oracle", () => {
     expect(oracle.resultLimit).toBe(RESULT_LIMIT);
     expect(oracle.relatedLimit).toBe(RELATED_LIMIT);
     expect(oracle.rows.map((row) => row.query)).toEqual(historical.rows.map((row) => row.query));
-    expect(oracle.rows.filter((row) => row.results.length === 0).map((row) => row.query).sort()).toEqual([
-      "a*",
-      "recurssing",
-    ]);
+    expect(oracle.rows.filter((row) => row.results.length === 0).map((row) => row.query).sort()).toEqual([]);
   });
 
   test("query 2 remains 200FPS then TLS 1.2 Vulnerability", () => {
