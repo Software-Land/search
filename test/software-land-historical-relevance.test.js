@@ -37,6 +37,14 @@ function applyDictionaryPatches(entries, patches) {
     if (!patch) return entry;
     const omit = new Set((patch.omitAliases || []).map(aliasKey));
     const aliases = (entry.aliases || []).filter((alias) => !omit.has(aliasKey(alias)));
+    const seen = new Set(aliases.map(aliasKey));
+    for (const alias of patch.addAliases || []) {
+      const form = Array.isArray(alias) ? alias : [];
+      const key = aliasKey(form);
+      if (!form.length || seen.has(key)) continue;
+      seen.add(key);
+      aliases.push([...form]);
+    }
     return {
       ...entry,
       aliases,
@@ -170,7 +178,7 @@ describe("Software.Land historical relevance contracts", () => {
   });
 
   test("fixture models current Software.Land 0.5 curated synonym and AppSec topical configuration", () => {
-    expect(relevanceConfig.softwareLandCommit).toBe("db5a070dbc6ac112dfae403f38fdfd0fffbedbf6");
+    expect(relevanceConfig.softwareLandCommit).toBe("7628a85166781d4ab42f60646e2f66da5f336eaa");
     expect(relevanceConfig.synonymMapKind).toBe("explicit-directional-curated-plus-generated");
     expect(omitKeys.has("testing")).toBe(true);
     expect(dictionaryEntries.some((entry) => entry.key === "testing")).toBe(false);
@@ -178,6 +186,12 @@ describe("Software.Land historical relevance contracts", () => {
     const frozenAppsec = loadJson("dictionary.json").find((entry) => entry.key === "appsec");
     expect(frozenAppsec.aliases).toEqual(expect.arrayContaining([["security"]]));
     expect(frozenAppsec.topicalRecall).toBeUndefined();
+    const frozenNist = loadJson("dictionary.json").find((entry) => entry.key === "nist");
+    expect(frozenNist.aliases).toEqual([]);
+    const nist = dictionaryEntries.find((entry) => entry.key === "nist");
+    expect(nist.aliases).toEqual([["institute"], ["institute", "standards"]]);
+    const gatech = dictionaryEntries.find((entry) => entry.key === "gatech");
+    expect(gatech.aliases).toEqual([]);
     const appsec = dictionaryEntries.find((entry) => entry.key === "appsec");
     expect(appsec.aliases).toEqual([
       ["app", "sec"],

@@ -46,8 +46,8 @@
       "sha256": "965bdcdd766fb004f176558255242281decc84a393f7e42b94817f1851193266"
     },
     "relevance-config.json": {
-      "bytes": 1468,
-      "sha256": "0c16a04abd43612ce47c78afb2aba6d828d78ef64a2c90fe0b2a4189e54cc7d4"
+      "bytes": 1686,
+      "sha256": "1839a1b6f856c05964f8febb88669b3eb2d7b0e9efb67fba816fb8c9dd8bf671"
     },
     "synonym-map.json": {
       "bytes": 6165,
@@ -57,7 +57,7 @@
   "scenarioCount": 215,
   "executableV2ScenarioCount": 98,
   "historicalRelevanceApplicable": 214,
-  "relevanceSoftwareLandCommit": "db5a070dbc6ac112dfae403f38fdfd0fffbedbf6",
+  "relevanceSoftwareLandCommit": "7628a85166781d4ab42f60646e2f66da5f336eaa",
   "omittedV1OnlyCount": 126,
   "omittedBrowserUiOnlyCount": 1,
   "sourceScenarioFiles": [

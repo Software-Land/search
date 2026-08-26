@@ -4,7 +4,7 @@
 
 ### Changed
 
-- Software.Land historical relevance fixture now matches committed Software.Land `db5a070` live search-equivalence map (curated 115/142 plus four generated edges with isolated incremental value; 119 sources / 146 edges). AppSec `topicalRecall` remains from `eac7a90`. The exact-output oracle and frozen `dictionary.json` snapshot are unchanged. `testing` remains omitted only in the relevance engine config; AppSec alias `["security"]` is omitted and topical forms are patched only there.
+- Software.Land historical relevance fixture now matches committed Software.Land `db5a070` live search-equivalence map (curated 115/142 plus four generated edges with isolated incremental value; 119 sources / 146 edges). AppSec `topicalRecall` remains from `eac7a90`. NIST exact `institute` / `institute standards` aliases are patched from Software.Land `7628a85`. The exact-output oracle and frozen `dictionary.json` snapshot are unchanged. `testing` remains omitted only in the relevance engine config; AppSec alias `["security"]` is omitted and topical forms are patched only there.
 
 ### Fixed
 

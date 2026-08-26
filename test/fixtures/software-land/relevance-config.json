@@ -1,6 +1,6 @@
 {
   "description": "Software.Land live V2 SearchEngine inputs for the historical relevance suite. Not Core default ranking policy.",
-  "softwareLandCommit": "db5a070dbc6ac112dfae403f38fdfd0fffbedbf6",
+  "softwareLandCommit": "7628a85166781d4ab42f60646e2f66da5f336eaa",
   "searchPackageVersion": "0.5.0",
   "omitDictionaryKeys": [
     "testing"
@@ -8,6 +8,17 @@
   "synonymMapFile": "synonym-map.json",
   "synonymMapKind": "explicit-directional-curated-plus-generated",
   "dictionaryPatches": {
+    "nist": {
+      "addAliases": [
+        [
+          "institute"
+        ],
+        [
+          "institute",
+          "standards"
+        ]
+      ]
+    },
     "appsec": {
       "omitAliases": [
         [
@@ -46,7 +57,7 @@
   },
   "notes": [
     "dictionary.json remains the frozen corpus snapshot used by the exact-output oracle.",
-    "This config omits the colliding testing configured key, patches appsec aliases/topicalRecall, and loads the live curated-plus-generated synonym map from softwareLandCommit.",
+    "This config omits the colliding testing configured key, patches NIST exact institute aliases from softwareLandCommit 7628a85, patches appsec aliases/topicalRecall, and loads the live curated-plus-generated synonym map from db5a070.",
     "Do not reverse generated/Luna maps through this snapshot; directions are authored explicitly.",
     "expectedTop / topN / titlePrefix values are not generated from engine output.",
     "Corpus artifacts and the exact-output dictionary are unchanged."

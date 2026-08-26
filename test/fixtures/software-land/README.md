@@ -29,7 +29,7 @@ They must never become Core defaults.
 | Strict V2 contracts | 98 (`v2-contracts.json`) |
 | B-intent regressions | 60 (`regression-scenarios.json`, compatibility coverage, not Core policy) |
 | Historical inventory | 215 rows (`historical-scenarios.json`); 214 executable relevance contracts |
-| Historical relevance config | `relevance-config.json` + `synonym-map.json` (Software.Land `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6`) |
+| Historical relevance config | `relevance-config.json` + `synonym-map.json` (Software.Land `7628a85166781d4ab42f60646e2f66da5f336eaa` NIST aliases; synonym map still `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6`) |
 | Omitted empty-intent rows | 44 (not mined into V2 intent/regression; still in historical relevance) |
 | Omitted V1-only source rows | 126 (B + A without intent; some re-enter as regressions; still in historical relevance when `expectedTop` exists) |
 | Omitted browser/UI-only | 1 (`zzz-no-hit` no-results copy) |
@@ -47,11 +47,12 @@ are executable Software.Land relevance contracts in
 exact order). Classification C is omitted. That suite is not the exact-output
 oracle and not Core default ranking policy. The relevance engine loads the live curated-plus-generated synonym map from
 `synonym-map.json`, omits the `testing` dictionary key, and patches
-AppSec aliases/`topicalRecall` from `relevance-config.json`. The synonym map
+NIST exact institute aliases plus AppSec aliases/`topicalRecall` from `relevance-config.json`. The synonym map
 matches Software.Land commit `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6`
 (`LIVE_SEARCH_EQUIVALENCE_MAP`: curated `SYNONYM_MAP` plus four generated
 additions with isolated incremental value; curated wins; no auto-reverse). AppSec `topicalRecall` still matches
-Software.Land commit `eac7a90a15d772f0f0626a0fa9481eb9efa55521`.
+Software.Land commit `eac7a90a15d772f0f0626a0fa9481eb9efa55521`. NIST aliases match
+Software.Land commit `7628a85166781d4ab42f60646e2f66da5f336eaa`.
 Corpus artifacts and the exact-output `dictionary.json` snapshot are unchanged. Empty-intent rows
 are not mined into V2 intent/regression cases; they still participate in
 historical relevance when `expectedTop` or `titlePrefix` exist.
@@ -70,7 +71,7 @@ and `tests/search-v2-contracts.js` from the committed scenario SHA.
 - `v2-contracts.json` — strict accepted V2 cases (`kind: contract`)
 - `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy
 - `historical-scenarios.json` — full 215-row inventory; `v1.expectedTop`/`titlePrefix`/`topN` are executable historical relevance contracts
-- `relevance-config.json` — Software.Land 0.5 relevance-engine inputs (omit `testing`, patch AppSec topicalRecall, load synonym map)
+- `relevance-config.json` — Software.Land 0.5 relevance-engine inputs (omit `testing`, patch NIST institute aliases, patch AppSec topicalRecall, load synonym map)
 - `synonym-map.json` — live Software.Land search-equivalence map from `db5a070` (curated `SYNONYM_MAP` plus four pruned generated additions; no reverse materialization)
 - `scenarios.json` — index, counts, and disposition totals
 - `manifest.json` — format, corpus/scenario source commits, package version, document count, scenario provenance, SHA256s
@@ -113,7 +114,7 @@ node scripts/software-land-scenarios.mjs \
 
 Copy `synonym-map.json` from Software.Land live `LIVE_SEARCH_EQUIVALENCE_MAP` at the recorded
 `relevanceSoftwareLandCommit` after generic OSS `normalizeSearchEquivalences()`.
-Patch AppSec dictionary aliases/`topicalRecall` only through `relevance-config.json`;
+Patch AppSec dictionary aliases/`topicalRecall` and NIST exact institute aliases only through `relevance-config.json`;
 do not edit frozen `dictionary.json`. Do not reverse-materialize. Do not generate
 `expectedTop` / `topN` / `titlePrefix` from current engine output.
 
