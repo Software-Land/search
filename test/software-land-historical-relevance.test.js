@@ -135,6 +135,41 @@ describe("Software.Land historical relevance contracts", () => {
     ).toBe(true);
   });
 
+  test("expectedTop requires normalized title identity, not substring", () => {
+    const row = {
+      query: "sharde",
+      index: 0,
+      v1: { expectedTop: ["Sharding"], topN: 5 },
+    };
+    expect(
+      evaluateHistoricalRelevance(row, [
+        "Advanced Sharding Guide",
+        "Hot Shards",
+        "Throughput vs Latency",
+        "CockroachDB vs Postgres",
+        "SQL vs NoSQL",
+      ]).ok
+    ).toBe(false);
+    expect(
+      evaluateHistoricalRelevance(row, [
+        "Sharding",
+        "Hot Shards",
+        "Throughput vs Latency",
+        "CockroachDB vs Postgres",
+        "SQL vs NoSQL",
+      ]).ok
+    ).toBe(true);
+    expect(
+      evaluateHistoricalRelevance(row, [
+        "  SHARDING  ",
+        "Hot Shards",
+        "Throughput vs Latency",
+        "CockroachDB vs Postgres",
+        "SQL vs NoSQL",
+      ]).ok
+    ).toBe(true);
+  });
+
   test("query 12 historical contract is TLS 1.2 Vulnerability #1", () => {
     const row = historical.rows.find((item) => item.query === "12");
     expect(row.historicalRelevance).toBe(true);

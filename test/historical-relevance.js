@@ -1,7 +1,8 @@
 /**
  * Software.Land historical expectedTop / titlePrefix semantics.
  * Mirrors tests/search-e2e-result-helpers.js membership-within-topN.
- * Not Core default ranking policy.
+ * expectedTop is normalized title identity within first min(topN, 10).
+ * titlePrefix remains prefix-specific. Not Core default ranking policy.
  */
 
 export const HISTORICAL_RENDERED_LIMIT = 10;
@@ -26,7 +27,7 @@ export function isHistoricalRelevanceApplicable(row) {
 }
 
 function titleMatches(haystack, needle) {
-  return normaliseHistoricalTitle(haystack).includes(normaliseHistoricalTitle(needle));
+  return normaliseHistoricalTitle(haystack) === normaliseHistoricalTitle(needle);
 }
 
 function classifyMissingTitle(title, allTitles, topN) {
