@@ -31,6 +31,7 @@ function blankFeatures(over = {}) {
     contextualTitlePrefix: false,
     contextualPrefixQuality: 0,
     configuredEquivalenceMatch: false,
+    ordinaryEquivalenceBodyMatch: false,
     morphologyMatch: false,
     typoDistance: 0,
     versionMatch: false,
@@ -264,6 +265,39 @@ describe("ranking equivalence oracle", () => {
       ],
       HYBRID_CONSTRAINTS
     );
+  });
+
+  test("equivalence-backed weak-direct exemption is directional and sparse-safe", () => {
+    const related = hit("related", {
+      relevanceKind: "related",
+      directClass: "none",
+      relationshipStrength: 1,
+    });
+    const weak = hit("weak", {
+      relevanceKind: "direct",
+      directClass: "weak",
+      bodyLexicalMatch: 1,
+      queryCoverage: 0,
+    });
+    const ordinary = hit("ordinary-equivalence", {
+      relevanceKind: "direct",
+      directClass: "weak",
+      bodyLexicalMatch: 1,
+      queryCoverage: 0,
+      ordinaryEquivalenceBodyMatch: true,
+    });
+
+    const firing = compareConstraint(related, weak, HYBRID_CONSTRAINTS);
+    expect(firing.order).toBe(-1);
+    expect(firing.applied.map((row) => row.id)).toContain("related-over-weak-direct");
+
+    const neutral = compareConstraint(related, ordinary, HYBRID_CONSTRAINTS);
+    expect(neutral.order).toBe(0);
+    expect(neutral.applied.map((row) => row.id)).not.toContain("related-over-weak-direct");
+    expect(constraintSignature(weak.features)).not.toBe(constraintSignature(ordinary.features));
+
+    rankBoth([related, ordinary], HYBRID_CONSTRAINTS);
+    rankBoth([ordinary, related], HYBRID_CONSTRAINTS);
   });
 
   test("full-body multi-concept over weak subset stays sparse-equivalent", () => {

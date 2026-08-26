@@ -19,6 +19,7 @@ import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
 import { coverageConcepts, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts } from "../dist/retrieve.js";
 import { compareConstraint } from "../dist/constraints.js";
 import { deriveMorphologyEquivalenceLookup } from "../dist/synonyms.js";
+import { extractFeatures } from "../dist/features.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = path.join(ROOT, "fixtures", "software-land");
@@ -665,6 +666,17 @@ describe("morphology-aware directional search equivalences", () => {
       expect(ids(indexedHits)).toEqual(expect.arrayContaining(["cockroach", "sql", "grpc", "shard"]));
       expect(ids(indexedHits)).not.toContain("unrelated");
     }
+    const proofEngine = await engine({ dict: [], map, docs: shardDocs, retriever: "full-scan" });
+    const proof = proofEngine.searchDetailed("shard", { limit: 20, explain: true });
+    for (const title of ["CockroachDB vs Postgres", "SQL vs NoSQL", "gRPC vs Kafka"]) {
+      const hit = proof.results.find((row) => row.title === title);
+      expect(hit).toBeDefined();
+      expect(hit.features.ordinaryEquivalenceBodyMatch).toBe(true);
+      expect(hit.features.bodyPhraseCount).toBe(0);
+      expect(hit.features.directClass).toBe("weak");
+      expect(hit.score).toBe(0.25);
+      expect(hit.rank).toBeLessThanOrEqual(6);
+    }
     const reverse = analyzeQuery("partitioning", { plugins: plugin });
     expect(reverse.synonymRecall).toEqual([{ source: "partitioning", target: "sharding" }]);
     expect(analyzeQuery("partition", { plugins: plugin }).synonymRecall || []).toEqual([]);
@@ -684,11 +696,72 @@ describe("morphology-aware directional search equivalences", () => {
     expect(cockroach.features.queryCoverage).toBe(0);
     expect(cockroach.features.coverageConceptCount).toBe(1);
     expect(cockroach.features.lexicalConceptCoverage).toBe(1);
+    expect(cockroach.features.ordinaryEquivalenceBodyMatch).toBe(true);
+    expect(cockroach.features.bodyPhraseCount).toBe(0);
     expect(cockroach.features.synonymRecallMatch).toBeFalsy();
     expect(cockroach.features.synonymRecallBodyMatch).toBeFalsy();
     const q = detailed.results[0].explanation.query;
     expect(coverageConcepts(q, q.concepts)).toHaveLength(1);
     expect(searchEquivalenceRecallConcepts(q)).toEqual([]);
+  });
+
+  test("ordinary equivalence body provenance is target-specific and directional", async () => {
+    const docs = [
+      { id: "target-body", title: "Target body", body: "jogging notes" },
+      { id: "source-body", title: "Source body", body: "running notes" },
+      { id: "neither", title: "Neither", body: "walking notes" },
+      { id: "target-title", title: "Jogging title", body: "walking notes" },
+      { id: "both", title: "Jogging title", body: "jogging notes" },
+    ];
+    const opts = { dict: [], map: { run: ["jogging"] }, docs };
+    const { indexed } = await assertIndexedFullScan("run", opts);
+    const query = indexed._prepareQuery("run");
+    const byId = Object.fromEntries(indexed._index.documents.map((doc) => [doc.id, extractFeatures(query, doc)]));
+
+    expect(byId["target-body"].ordinaryEquivalenceBodyMatch).toBe(true);
+    expect(byId["source-body"].ordinaryEquivalenceBodyMatch).toBe(false);
+    expect(byId["neither"].ordinaryEquivalenceBodyMatch).toBe(false);
+    expect(byId["target-title"].ordinaryEquivalenceBodyMatch).toBe(false);
+    expect(byId["both"].ordinaryEquivalenceBodyMatch).toBe(true);
+    expect(byId["both"].bodyPhraseCount).toBe(0);
+
+    const reverse = await engine({ ...opts, retriever: "full-scan" });
+    expect(reverse._prepareQuery("jogging").synonymRecall || []).toEqual([]);
+    const reverseQuery = reverse._prepareQuery("jogging");
+    const reverseTarget = reverse._index.documents.find((doc) => doc.id === "target-body");
+    expect(extractFeatures(reverseQuery, reverseTarget).ordinaryEquivalenceBodyMatch).toBe(false);
+
+    const bidirectional = await engine({
+      dict: [],
+      map: { run: ["jogging"], jogging: ["running"] },
+      docs,
+      retriever: "full-scan",
+    });
+    const explicitReverseQuery = bidirectional._prepareQuery("jogging");
+    const explicitReverseSource = bidirectional._index.documents.find((doc) => doc.id === "source-body");
+    expect(extractFeatures(explicitReverseQuery, explicitReverseSource).ordinaryEquivalenceBodyMatch).toBe(true);
+
+    const ordinary = await engine({
+      dict: [],
+      map: null,
+      docs: [{ id: "ordinary", title: "Ordinary", body: "running notes" }],
+      retriever: "full-scan",
+    });
+    const ordinaryQuery = ordinary._prepareQuery("running");
+    const ordinaryDoc = ordinary._index.documents[0];
+    expect(extractFeatures(ordinaryQuery, ordinaryDoc).ordinaryEquivalenceBodyMatch).toBe(false);
+
+    const extraRecall = await engine({
+      dict: [{ key: "rbac", expansion: ["role", "based", "access", "control"] }],
+      map: { rbac: ["security"] },
+      docs: [{ id: "security", title: "Guide", body: "security notes" }],
+      retriever: "full-scan",
+    });
+    const security = extraRecall
+      .searchDetailed("rbac", { limit: 20, explain: true })
+      .results.find((row) => row.id === "security");
+    expect(security.features.synonymRecallBodyMatch).toBe(true);
+    expect(security.features.ordinaryEquivalenceBodyMatch).toBe(false);
   });
 
   test("lookup map does not grow an authored shard key", () => {

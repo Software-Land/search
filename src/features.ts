@@ -497,6 +497,28 @@ function lexicalCoverageFields(query: AnalyzedQuery, doc: IndexedDocument) {
   };
 }
 
+/**
+ * Candidate-local provenance for an ordinary same-concept search-equivalence
+ * body hit. The source and target must belong to the same non-acronym concept,
+ * and the body check is performed against the target alone so a source-only
+ * body hit cannot activate this flag.
+ */
+function ordinaryEquivalenceBodyMatch(query: AnalyzedQuery, doc: IndexedDocument) {
+  for (const pair of query.synonymRecall || []) {
+    if (!pair.source || !pair.target || pair.source === pair.target) continue;
+    const concept = (query.concepts || []).find(
+      (candidate) =>
+        candidate.kind !== "acronym" &&
+        !isSearchEquivalenceRecallConcept(query, candidate) &&
+        candidate.forms.includes(pair.source) &&
+        candidate.forms.includes(pair.target)
+    );
+    if (!concept) continue;
+    if (conceptMatchesBody({ ...concept, forms: [pair.target] }, doc)) return true;
+  }
+  return false;
+}
+
 function lexicalPhraseQueryTokens(query: AnalyzedQuery) {
   if (Array.isArray(query.lexicalTokens) && query.lexicalTokens.length) return query.lexicalTokens;
   return query.tokens;
@@ -740,6 +762,7 @@ function computeFeatureFields(query: AnalyzedQuery, doc: IndexedDocument) {
     dottedSpanComponentTitleMatch: dottedSpanComponentTitleMatch(query, doc),
     phraseAdjacency: phraseAdjacency(query, doc),
     ...lexicalCoverageFields(query, doc),
+    ordinaryEquivalenceBodyMatch: ordinaryEquivalenceBodyMatch(query, doc),
     titleTokenCount: doc.nonStopTitle.length,
     expansionEvidence: expansionEvidence(query, doc),
     canonicalKeyTitle: canonicalKeyTitle(query, doc),
@@ -795,6 +818,7 @@ export function extractFeatures(
     dottedSpanComponentTitleMatch: timeFeat("dottedSpanComponentTitleMatch", () => dottedSpanComponentTitleMatch(query, doc)),
     phraseAdjacency: timeFeat("phraseAdjacency", () => phraseAdjacency(query, doc)),
     ...timeFeat("lexicalCoverageFields", () => lexicalCoverageFields(query, doc)),
+    ordinaryEquivalenceBodyMatch: timeFeat("ordinaryEquivalenceBodyMatch", () => ordinaryEquivalenceBodyMatch(query, doc)),
     titleTokenCount: doc.nonStopTitle.length,
     expansionEvidence: timeFeat("expansionEvidence", () => expansionEvidence(query, doc)),
     canonicalKeyTitle: timeFeat("canonicalKeyTitle", () => canonicalKeyTitle(query, doc)),
@@ -878,6 +902,7 @@ export const FEATURE_DEFINITIONS = {
   bodyLexicalMatch: "Fraction of typed/configured query concepts evidenced in the body field. Extra search-equivalence recall concepts attached after configured occupancy are excluded from the numerator and denominator. Synonym forms merged into an ordinary term concept still count with that concept.",
   lexicalConceptCoverage: "Fraction of typed/configured coverage concepts with lexical evidence in the title OR the body. Each concept counts once. Not max(queryCoverage, bodyLexicalMatch) and not their sum.",
   coverageConceptCount: "Count of typed/configured coverage concepts (search-equivalence recall concepts excluded). Distinct from queryTokenCount, which includes configured expansion tokens.",
+  ordinaryEquivalenceBodyMatch: "True only when the candidate BODY matches a directed target form from an ordinary same-concept search equivalence. This is provenance, not additional lexical coverage or score.",
   titleTokenCount: "Non-stop title token count; used for tightness, not as a boost constant.",
   expansionEvidence: "Fraction of a configured expansion evidenced in the title.",
   canonicalKeyTitle: "True when the query is exactly a configured key and the title also states most of the expansion.",

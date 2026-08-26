@@ -215,20 +215,38 @@ function hybridDirectOverRelatedConstraint(a: FeaturedHit, b: FeaturedHit) {
 
 /**
  * Related neighbors outrank weak/incidental directs that lack repeated compiled
- * body-phrase evidence. When the weak-direct already has
- * bodyPhraseCount >= REPEATED_BODY_PHRASE_MIN, this constraint stays unordered
- * so ordinary score can prefer either side. It does not promote the weak-direct
- * to moderate.
+ * body-phrase evidence or an ordinary equivalence-backed body match. When the
+ * weak-direct already has either form of evidence, this constraint stays
+ * unordered so ordinary score can prefer either side. Neither exemption
+ * promotes the weak-direct to moderate.
  */
 function hasRepeatedBodyPhraseCount(f: Partial<FeatureVector>) {
   return (f.bodyPhraseCount || 0) >= REPEATED_BODY_PHRASE_MIN;
 }
 
+function hasEquivalenceBodyMatch(f: Partial<FeatureVector>) {
+  return Boolean(f.ordinaryEquivalenceBodyMatch);
+}
+
 function relatedOverWeakDirectConstraint(a: FeaturedHit, b: FeaturedHit) {
   const aRel = a.features.relevanceKind === "related";
   const bRel = b.features.relevanceKind === "related";
-  if (aRel && isWeakDirect(b.features) && !hasRepeatedBodyPhraseCount(b.features)) return -1;
-  if (bRel && isWeakDirect(a.features) && !hasRepeatedBodyPhraseCount(a.features)) return 1;
+  if (
+    aRel &&
+    isWeakDirect(b.features) &&
+    !hasRepeatedBodyPhraseCount(b.features) &&
+    !hasEquivalenceBodyMatch(b.features)
+  ) {
+    return -1;
+  }
+  if (
+    bRel &&
+    isWeakDirect(a.features) &&
+    !hasRepeatedBodyPhraseCount(a.features) &&
+    !hasEquivalenceBodyMatch(a.features)
+  ) {
+    return 1;
+  }
   return 0;
 }
 

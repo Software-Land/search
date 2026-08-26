@@ -410,6 +410,11 @@ export interface FeatureVector {
   bodyLexicalMatch: number;
   lexicalConceptCoverage: number;
   coverageConceptCount: number;
+  /**
+   * Candidate body matches a directed target of an ordinary same-concept
+   * search equivalence. This is provenance, not additional coverage.
+   */
+  ordinaryEquivalenceBodyMatch: boolean;
   titleTokenCount: number;
   expansionEvidence: number;
   canonicalKeyTitle: boolean;

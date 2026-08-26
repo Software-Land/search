@@ -108,6 +108,7 @@ export function constraintSignature(f: Partial<FeatureVector> | undefined) {
     bit(feat.canonicalKeyTitle),
     queryTokenBand(feat.queryTokenCount || 0),
     phraseCountBand(feat.bodyPhraseCount || 0),
+    bit(feat.ordinaryEquivalenceBodyMatch),
     multiConcept ? 1 : 0,
     multiConcept ? fullCoverageBand(feat.bodyLexicalMatch || 0) : 0,
     multiConcept ? fullCoverageBand(feat.lexicalConceptCoverage || 0) : 0,
