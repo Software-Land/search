@@ -114,11 +114,21 @@ function getQueryFeatPrep(query: AnalyzedQuery): QueryFeatPrep {
     phraseKeys,
     primaryPhrase: phraseKeys[0] || "",
     acronym,
-    isConfiguredKey: Boolean(acronym && tokens.length === 1 && tokens[0].normalized === acronym.id),
+    // Occupied configured concepts rank from the canonical expansion, not the
+    // typed key spelling (`ci` must match `continuous integration`).
+    isConfiguredKey: Boolean(
+      acronym &&
+        !hasConfiguredSequenceIntent(query) &&
+        tokens.length === 1 &&
+        tokens[0].normalized === acronym.id
+    ),
     expansion,
     typoTokens: ranking.filter((t) => t.normalized.length >= 5),
     formSet,
-    shortLiteralTok: tokens.length === 1 && tokens[0].normalized.length <= 3 ? tokens[0].normalized : null,
+    shortLiteralTok:
+      hasConfiguredSequenceIntent(query) || tokens.length !== 1 || tokens[0].normalized.length > 3
+        ? null
+        : tokens[0].normalized,
   };
   queryFeatPrep.set(query, prep);
   return prep;

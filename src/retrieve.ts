@@ -288,8 +288,11 @@ export function hasConfiguredSequenceIntent(query: AnalyzedQuery) {
  * Activates only when the final typed token is a non-stop, non-digit stub of
  * length 2 and every other typed token is already in DEFAULT_STOP. Query
  * identity is unchanged; this is candidate evidence only.
+ * Unambiguous configured occupancy already chose a concept; the typed spelling
+ * must not admit extra prefix candidates (`io` must not retrieve IoT).
  */
 export function shortTitleTokenPrefixStub(query: AnalyzedQuery): string | null {
+  if (hasConfiguredSequenceIntent(query)) return null;
   const tokens = query.tokens || [];
   if (!tokens.length) return null;
   const stub = String(tokens[tokens.length - 1]?.normalized || "");

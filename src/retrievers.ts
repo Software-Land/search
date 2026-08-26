@@ -24,6 +24,7 @@ import {
   topicalRecallHint,
   shortTitleTokenPrefixStub,
   isSearchEquivalenceRecallConcept,
+  hasConfiguredSequenceIntent,
 } from "./retrieve.js";
 import { allowPrefixMatch } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
@@ -440,7 +441,7 @@ export function createIndexedLexicalRetriever({
 
     const qToks = query.tokens || [];
     const contextualQuality = new Map<number, number>();
-    if (qToks.length >= 2) {
+    if (!hasConfiguredSequenceIntent(query) && qToks.length >= 2) {
       const first = qToks[0];
       const keys = [...new Set([first?.normalized, first?.lemma].filter(Boolean))];
       const contextualPos = new Set<number>();
@@ -782,7 +783,7 @@ export function createCompiledLexicalRetriever(): Retriever {
     }
 
     const qTokens = query.tokens || [];
-    if (qTokens.length >= 2) {
+    if (!hasConfiguredSequenceIntent(query) && qTokens.length >= 2) {
       const first = qTokens[0];
       const keys = [...new Set([first?.normalized, first?.lemma].filter((value): value is string => Boolean(value)))];
       const positions = new Set<number>();

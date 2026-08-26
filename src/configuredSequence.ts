@@ -13,8 +13,11 @@ export type { ConfiguredPrefixSpan, ConfiguredSpan };
 /**
  * Unique complete-query alignment to trusted configured sequences
  * (key, canonical expansion, aliases). Same-key multi-sequence matches
- * are not ambiguity. Distinct keys fail closed. Typed tokens are never
- * rewritten here; callers project canonical expansion as lexical intent.
+ * are not ambiguity. Distinct keys fail closed, except a unique whole-query
+ * exact key outranks another concept's one-token alias/expansion of that
+ * same typed form. Typed tokens are never rewritten here; callers project
+ * canonical expansion as lexical intent so all unambiguous spellings of one
+ * concept share ranking semantics.
  */
 export interface ConfiguredSequenceIntent {
   key: string;
@@ -62,6 +65,12 @@ function alignsNonLast(tok: QueryToken, want: string): boolean {
     if (allowPrefixMatch(form, want)) return true;
   }
   return false;
+}
+
+function exactTypedToken(tok: QueryToken, want: string): boolean {
+  if (!want || !tok) return false;
+  const typed = String(tok.surfaceNormalized || tok.surface || "").toLowerCase();
+  return typed === want;
 }
 
 function alignsLast(tok: QueryToken, want: string): boolean {
@@ -262,6 +271,14 @@ function sequenceAligns(
     return { ok: true, usedPrefix: false };
   }
   if (seq.kind !== "expansion" && seq.kind !== "alias") return { ok: false, usedPrefix: false };
+  // One-token alias/expansion occupy on exact typed identity only.
+  // Last-token startsWith is reserved for n≥2 sequences with preceding context.
+  if (want.length === 1) {
+    if (tokens.length !== 1 || !exactTypedToken(tokens[0], want[0])) {
+      return { ok: false, usedPrefix: false };
+    }
+    return { ok: true, usedPrefix: false };
+  }
   if (want.length === tokens.length) {
     const positional = positionalSequenceAligns(tokens, want);
     if (positional.ok) return positional;
@@ -476,6 +493,9 @@ function uniqueExactOneTokenAlias(
 
 function configuredKeyPrefixKeys(tok: QueryToken, dict: SearchPlugin): string[] {
   const form = String(tok.normalized || "").toLowerCase();
+  // Incomplete KEY guessing only. Exact configured keys occupy through
+  // `tokenAlignsConfiguredKey` with no length gate. Length 1–2 prefixes of a
+  // longer key are too ambiguous (many keys share `c`, `ap`, `io`).
   if (!form || form.length < 3 || !dict.sequences?.length) return [];
   const keys = new Set<string>();
   for (const seq of dict.sequences) {
@@ -543,6 +563,30 @@ function uniqueLongestFirstExpansionPrefix(
 }
 
 /**
+ * Whole-query unique exact key outranks another concept's one-token alias or
+ * one-token expansion of the same typed form. Two distinct exact keys still
+ * fail closed. n≥2 alias/expansion collisions are not overridden.
+ */
+function uniqueExactKeyOverForeignOneToken(
+  chosen: Array<{ seq: DictionarySequence; usedPrefix: boolean }>
+): string | null {
+  const exactKeys = chosen.filter(
+    (m) => m.seq.kind === "key" && !m.usedPrefix && (m.seq.tokens?.length || 0) === 1 && m.seq.entry?.key
+  );
+  const keySet = new Set(exactKeys.map((m) => m.seq.entry.key));
+  if (keySet.size !== 1) return null;
+  const winner = keySet.values().next().value as string;
+  for (const m of chosen) {
+    if (m.seq.entry.key === winner) continue;
+    const n = m.seq.tokens?.length || 0;
+    if (m.seq.kind === "key") return null;
+    if ((m.seq.kind === "alias" || m.seq.kind === "expansion") && n === 1) continue;
+    return null;
+  }
+  return winner;
+}
+
+/**
  * O(configured sequences × query tokens). Independent of corpus size.
  */
 export function resolveConfiguredSequence(
@@ -562,11 +606,16 @@ export function resolveConfiguredSequence(
     const exact = matches.filter((m) => !m.usedPrefix);
     const chosen = exact.length ? exact : matches;
     const chosenKeys = new Set(chosen.map((m) => m.seq.entry.key));
-    if (chosenKeys.size > 1) return { status: "ambiguous", keys: [...chosenKeys] };
-    const key = chosen[0].seq.entry.key;
-    const entry = dict.byKey?.get(key) || chosen[0].seq.entry;
-    const matchedKinds = [...new Set(chosen.map((m) => String(m.seq.kind || "")))].filter(Boolean);
-    const usedPrefix = chosen.some((m) => m.usedPrefix);
+    let resolved = chosen;
+    if (chosenKeys.size > 1) {
+      const winner = uniqueExactKeyOverForeignOneToken(chosen);
+      if (!winner) return { status: "ambiguous", keys: [...chosenKeys] };
+      resolved = chosen.filter((m) => m.seq.entry.key === winner);
+    }
+    const key = resolved[0].seq.entry.key;
+    const entry = dict.byKey?.get(key) || resolved[0].seq.entry;
+    const matchedKinds = [...new Set(resolved.map((m) => String(m.seq.kind || "")))].filter(Boolean);
+    const usedPrefix = resolved.some((m) => m.usedPrefix);
     return uniqueResolution(entry, matchedKinds, usedPrefix, "full");
   }
   const exactOneTokenAlias = uniqueExactOneTokenAlias(tokens, dict);
@@ -590,13 +639,9 @@ const SPAN_SEQUENCE_KINDS = new Set(["key", "expansion", "alias"]);
  * Typed identity only for expansion/alias windows. Prefix completion and
  * last-token stubs must not create those spans. Configured keys may also
  * occupy from an exact morphology lemma (`apis` → `api`) without rewriting
- * typed surface. `sequenceAligns` keeps prefix behavior for whole-query callers.
+ * typed surface. Whole-query `sequenceAligns` still allows last-token prefixes
+ * on n≥2 sequences; one-token alias/expansion forms are exact-only.
  */
-function exactTypedToken(tok: QueryToken, want: string): boolean {
-  if (!want || !tok) return false;
-  const typed = String(tok.surfaceNormalized || tok.surface || "").toLowerCase();
-  return typed === want;
-}
 
 function sequenceAlignsExactAt(
   tokens: QueryToken[],

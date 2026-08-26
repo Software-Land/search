@@ -82,6 +82,15 @@ The compiled `search-v2-synonyms` `{ terms: [...] }` artifact remains a bidirect
 
 Configured concepts are authored as `{ key, aliases }` only. `aliases[0]` is the canonical lexical sequence (compiled internally as the existing expansion sequence). Later aliases are alternate same-intent forms. Former fields `expansion` / `exp`, `primary`, `standaloneRecall`, and `topicalRecall` are rejected on `dictionary()` entries.
 
+Once a query unambiguously occupies one configured concept, every authored spelling of that concept is the same search intent:
+
+- the key, `aliases[0]`, and later aliases produce identical ranked results (same candidate set, IDs, order, scores, `relevanceKind`, `directClass`, and related rail)
+- typed surface stays on the query for explain/provenance and must not leak into ranking
+- exact configured-key identity outranks another concept's one-token alias or one-token expansion of that same typed form; two distinct exact keys still fail closed
+- one-token aliases and one-token expansions occupy only on exact typed identity
+- multi-token configured forms may still complete an incomplete final token when preceding tokens uniquely identify the concept (`continuous d` → `cd`)
+- incomplete guessing of a configured *key* remains subject to the short-prefix information bound (`form.length < 3`)
+
 ```js
 import {
   SearchEngine,

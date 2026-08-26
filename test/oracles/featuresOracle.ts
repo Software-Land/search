@@ -205,6 +205,7 @@ function versionMatch(query: AnalyzedQuery, doc: IndexedDocument): VersionMatch 
 }
 
 function shortLiteralLeadMatch(query: AnalyzedQuery, doc: IndexedDocument) {
+  if (hasConfiguredSequenceIntent(query)) return false;
   const q = query.tokens.map((t) => t.normalized).join("");
   if (query.tokens.length !== 1) return false;
   const tok = query.tokens[0].normalized;
@@ -266,6 +267,7 @@ function expansionEvidence(query: AnalyzedQuery, doc: IndexedDocument) {
 }
 
 function queryIsConfiguredKey(query: AnalyzedQuery) {
+  if (hasConfiguredSequenceIntent(query)) return false;
   const acr = query.concepts.find((c) => c.kind === "acronym");
   if (!acr) return false;
   if (query.tokens.length !== 1) return false;
