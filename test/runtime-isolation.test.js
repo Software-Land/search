@@ -65,7 +65,7 @@ describe("runtime isolation", () => {
   test("strong direct title still outranks a compiled semantic neighbor", async () => {
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })],
+      plugins: [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
       relationships: {
         format: "search-v2-relationships",
         version: 1,
@@ -90,7 +90,7 @@ describe("runtime isolation", () => {
 
   test("query analysis does not treat relationship targets as synonyms", () => {
     const q = analyzeQuery("tls", {
-      plugins: [morphology(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })],
+      plugins: [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
     });
     expect(q.concepts.some((c) => (c.forms || []).includes("vpn"))).toBe(false);
   });

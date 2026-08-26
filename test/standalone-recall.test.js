@@ -3,15 +3,15 @@ import { analyzeQuery } from "../dist/analyze.js";
 import { retrieveCandidates } from "../dist/retrieve.js";
 import { compileStandaloneRecallLookup, dictionary as dictionaryPlugin } from "../dist/dictionary.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
+import { dictionaryFromLegacy } from "./helpers/authored.js";
 
 const httpDict = [
   {
     key: "http",
-    expansion: ["hypertext", "transfer", "protocol"],
-    standaloneRecall: ["hypertext"],
+    aliases: [["hypertext", "transfer", "protocol"]], standaloneRecall: ["hypertext"],
   },
-  { key: "https", expansion: ["hypertext", "transfer", "protocol", "secure"] },
-  { key: "html", expansion: ["hypertext", "markup", "language"] },
+  { key: "https", aliases: [["hypertext", "transfer", "protocol", "secure"]]},
+  { key: "html", aliases: [["hypertext", "markup", "language"]]},
 ];
 
 const docs = [
@@ -23,7 +23,7 @@ const docs = [
 ];
 
 function plugins(entries = httpDict) {
-  return [morphology(), dictionary({ entries })];
+  return [morphology(), dictionary(dictionaryFromLegacy(entries))];
 }
 
 async function engine(entries = httpDict, extraDocs = docs) {
@@ -41,10 +41,10 @@ async function engine(entries = httpDict, extraDocs = docs) {
 describe("standalone recall lookup", () => {
   test("unique reviewed tokens compile and collisions fail closed", () => {
     const lookup = compileStandaloneRecallLookup([
-      { key: "http", expansion: ["hypertext", "transfer", "protocol"], aliases: [], standaloneRecall: ["hypertext"] },
-      { key: "acid", expansion: ["atomicity", "consistency", "isolation", "durability"], aliases: [], standaloneRecall: ["atomicity"] },
-      { key: "nist", expansion: ["national", "institute"], aliases: [], standaloneRecall: ["institute"] },
-      { key: "gatech", expansion: ["georgia", "institute"], aliases: [], standaloneRecall: ["institute"] },
+      { key: "http", aliases: [["hypertext", "transfer", "protocol"]], standaloneRecall: ["hypertext"] },
+      { key: "acid", aliases: [["atomicity", "consistency", "isolation", "durability"]], standaloneRecall: ["atomicity"] },
+      { key: "nist", aliases: [["national", "institute"]], standaloneRecall: ["institute"] },
+      { key: "gatech", aliases: [["georgia", "institute"]], standaloneRecall: ["institute"] },
     ]);
     expect(lookup.get("hypertext")).toBe("http");
     expect(lookup.get("atomicity")).toBe("acid");
@@ -52,15 +52,13 @@ describe("standalone recall lookup", () => {
   });
 
   test("empty, blank, and multi-token standalone values are rejected", () => {
-    const plugin = dictionaryPlugin({
-      entries: [
-        {
-          key: "http",
-          expansion: ["hypertext", "transfer", "protocol"],
-          standaloneRecall: ["", "  ", "hypertext transfer", "hypertext", "hypertext"],
-        },
-      ],
-    });
+    const plugin = dictionaryPlugin(dictionaryFromLegacy([
+      {
+        key: "http",
+        aliases: [["hypertext", "transfer", "protocol"]],
+        standaloneRecall: ["", "  ", "hypertext transfer", "hypertext", "hypertext"],
+      },
+    ]));
     expect(plugin.entries[0].standaloneRecall).toEqual(["hypertext"]);
     expect(plugin.standaloneRecallByToken.get("hypertext")).toBe("http");
   });
@@ -84,7 +82,7 @@ describe("standalone recall analysis", () => {
   test("legacy primary does not activate standalone recall", () => {
     const q = analyzeQuery("interface", {
       plugins: plugins([
-        { key: "api", expansion: ["application", "programming", "interface"], primary: "interface" },
+        { key: "api", aliases: [["application", "programming", "interface"]] },
       ]),
     });
     expect(q.standaloneRecall ?? null).toBeNull();

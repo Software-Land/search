@@ -134,7 +134,7 @@ describe("contextual MUST_KEEP bound", () => {
   test("exact-title, configured-equivalence, and version remain unbounded must-keep", () => {
     const plugins = [
       morphology(),
-      dictionary({ entries: [{ key: "ml", expansion: ["machine", "learning"] }] }),
+      dictionary({ entries: [{ key: "ml", aliases: [["machine", "learning"]]}] }),
     ];
     const docs = [
       { id: "exact", title: "quantum foam", body: "x" },
@@ -183,11 +183,8 @@ describe("frozen contextual regressions", () => {
   const appsecDict = [
     {
       key: "appsec",
-      expansion: ["application", "security"],
-      aliases: [
-        ["app", "sec"],
-        ["app", "security"],
-      ],
+      aliases: [["application", "security"], ["app", "sec"],
+        ["app", "security"],],
     },
   ];
 

@@ -55,8 +55,8 @@ const e: EnglishPlugin = {
 
 const d: DictionaryPlugin = {
   name: "dictionary",
-  sequences: [{ tokens: ["wifi"], kind: "key", entry: { key: "wifi", expansion: ["wi", "fi"] } }],
-  byKey: new Map([["wifi", { key: "wifi", expansion: ["wi", "fi"] }]]),
+  sequences: [{ tokens: ["wifi"], kind: "key", entry: { key: "wifi", aliases: [["wi", "fi"]]} }],
+  byKey: new Map([["wifi", { key: "wifi", aliases: [["wi", "fi"]]}]]),
   lexicon() {
     return ["wifi", "wi", "fi"];
   },

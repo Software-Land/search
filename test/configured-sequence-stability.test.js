@@ -14,17 +14,13 @@ const schema = { title: { type: "text", role: "title" }, body: { type: "text", r
 const dict = [
   {
     key: "appsec",
-    expansion: ["application", "security"],
-    aliases: [
-      ["app", "sec"],
+    aliases: [["application", "security"], ["app", "sec"],
       ["app", "security"],
-      ["application", "sec"],
-    ],
+      ["application", "sec"],],
   },
   {
     key: "appsvr",
-    expansion: ["application", "server"],
-  },
+    aliases: [["application", "server"]]},
 ];
 
 const docs = [

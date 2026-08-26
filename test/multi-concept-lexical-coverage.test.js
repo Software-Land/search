@@ -234,7 +234,7 @@ describe("lexicalConceptCoverage extractFeatures", () => {
   });
 
   test("configured expansion with queryTokenCount > 1 still has one coverage concept", () => {
-    const tlsDict = [{ key: "tls", expansion: ["transport", "layer", "security"] }];
+    const tlsDict = [{ key: "tls", aliases: [["transport", "layer", "security"]]}];
     const plugins = [morphology(), dictionary({ entries: tlsDict })];
     const index = buildIndex(
       [

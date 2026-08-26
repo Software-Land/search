@@ -109,11 +109,7 @@ void lexicalIndex.corpus.documentCount;
 const normalized = normalizeExternalEquivalences([
   {
     key: "API",
-    expansion: "Application Programming Interface",
-    aliases: [["app", "programming", "interface"]],
-    primary: "interface",
-    standaloneRecall: ["hypertext"],
-    topicalRecall: [["authentication"], ["bearer", "token"]],
+    aliases: [["application", "programming", "interface"], ["app", "programming", "interface"]],
     evidenceDocumentIds: ["doc-1"],
     provenance: "application-generated",
   },
@@ -128,7 +124,7 @@ const relation: "identical" | "compatible" | "ambiguous" | "conflict" = classify
 );
 void relation;
 try {
-  normalizeExternalEquivalences([{ key: "", expansion: ["x"] }]);
+  normalizeExternalEquivalences([{ key: "", aliases: [["x"]]}]);
 } catch (err) {
   if (!(err instanceof ExternalEquivalenceError)) throw err;
 }

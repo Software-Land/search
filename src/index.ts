@@ -8,7 +8,9 @@
 
 import { SearchEngine as searchEngineImpl } from "./SearchEngine.js";
 import { morphology as morphologyImpl } from "./morphology.js";
-import { dictionary as dictionaryImpl } from "./dictionary.js";
+import { dictionary as dictionaryImpl, compileAuthoredRelevance as compileAuthoredRelevanceImpl } from "./dictionary.js";
+import { migrateConfiguredEntry as migrateConfiguredEntryImpl } from "./configuredAuthoring.js";
+import { compileRelationshipMap as compileRelationshipMapImpl } from "./relationshipMap.js";
 import {
   RELATIONSHIP_STRATEGIES as relationshipStrategiesImpl,
   DEFAULT_RELATIONSHIP_STRATEGY as defaultRelationshipStrategyImpl,
@@ -41,9 +43,16 @@ import type {
   ArtifactValidationErrorConstructor,
   ArtifactVersionError as ArtifactVersionErrorType,
   ArtifactVersionErrorConstructor,
+  AuthoredRelationshipEdge,
+  CompiledAuthoredRelevance,
+  CompiledRelationshipMap,
   EquivalenceArtifact,
   EquivalenceEntry,
   IndexStateError as IndexStateErrorType,
+  MigratedConfiguredEntry,
+  RelationshipEndpoint,
+  RelationshipKind,
+  RelationshipMap,
   IndexStateErrorConstructor,
   InvalidConfigurationError as InvalidConfigurationErrorType,
   InvalidConfigurationErrorConstructor,
@@ -68,9 +77,16 @@ export type {
   DictionaryPlugin,
   DirectClass,
   EnglishPlugin,
+  AuthoredRelationshipEdge,
+  CompiledAuthoredRelevance,
+  CompiledRelationshipMap,
   EquivalenceArtifact,
   EquivalenceEntry,
   ExperimentalRetrieveOptions,
+  MigratedConfiguredEntry,
+  RelationshipEndpoint,
+  RelationshipKind,
+  RelationshipMap,
   ExperimentalRetriever,
   IndexResult,
   LexicalIndexArtifact,
@@ -106,7 +122,30 @@ export type SearchEngine = SearchEngineType;
 export const SearchEngine: SearchEngineConstructor = searchEngineImpl as unknown as SearchEngineConstructor;
 
 export const morphology: (options?: MorphologyOptions) => EnglishPlugin = morphologyImpl;
-export const dictionary: (options?: { entries?: EquivalenceEntry[] }) => DictionaryPlugin = dictionaryImpl;
+export const dictionary: (options?: {
+  entries?: EquivalenceEntry[];
+  relationshipMap?: RelationshipMap;
+  documents?: import("./api.js").SearchDocument[];
+}) => DictionaryPlugin = dictionaryImpl;
+export const migrateConfiguredEntry: (raw?: unknown) => MigratedConfiguredEntry = migrateConfiguredEntryImpl as (
+  raw?: unknown
+) => MigratedConfiguredEntry;
+export const compileRelationshipMap: (
+  map?: unknown,
+  options?: { concepts?: Iterable<{ key?: string } | string> | Map<string, unknown> | null; documents?: import("./api.js").SearchDocument[] | null }
+) => CompiledRelationshipMap = compileRelationshipMapImpl as (
+  map?: unknown,
+  options?: { concepts?: Iterable<{ key?: string } | string> | Map<string, unknown> | null; documents?: import("./api.js").SearchDocument[] | null }
+) => CompiledRelationshipMap;
+export const compileAuthoredRelevance: (options?: {
+  entries?: EquivalenceEntry[];
+  relationshipMap?: RelationshipMap;
+  documents?: import("./api.js").SearchDocument[];
+}) => CompiledAuthoredRelevance = compileAuthoredRelevanceImpl as (options?: {
+  entries?: EquivalenceEntry[];
+  relationshipMap?: RelationshipMap;
+  documents?: import("./api.js").SearchDocument[];
+}) => CompiledAuthoredRelevance;
 export const synonyms: (
   input?: SearchEquivalenceMap | SynonymArtifact | { entries?: unknown[]; format?: string; version?: number }
 ) => SynonymPlugin = synonymsImpl as (
@@ -168,6 +207,9 @@ export const PUBLIC_EXPORTS: readonly string[] = Object.freeze([
   "SearchEngine",
   "morphology",
   "dictionary",
+  "migrateConfiguredEntry",
+  "compileRelationshipMap",
+  "compileAuthoredRelevance",
   "synonyms",
   "normalizeSearchEquivalences",
   "MAX_SEARCH_EQUIVALENCE_TARGETS",

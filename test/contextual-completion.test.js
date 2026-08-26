@@ -7,13 +7,13 @@ import { versionHit } from "../dist/retrieve.js";
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 
 const dict = [
-  { key: "ml", expansion: ["machine", "learning"] },
-  { key: "fps", expansion: ["frames", "per", "second"] },
-  { key: "http", expansion: ["hypertext", "transfer", "protocol"] },
-  { key: "https", expansion: ["hypertext", "transfer", "protocol", "secure"] },
-  { key: "appsec", expansion: ["application", "security"], aliases: [["app", "sec"]] },
-  { key: "proto", expansion: ["protocol", "buffer"] },
-  { key: "protobuf", expansion: ["protocol", "buffer"] },
+  { key: "ml", aliases: [["machine", "learning"]]},
+  { key: "fps", aliases: [["frames", "per", "second"]]},
+  { key: "http", aliases: [["hypertext", "transfer", "protocol"]]},
+  { key: "https", aliases: [["hypertext", "transfer", "protocol", "secure"]]},
+  { key: "appsec", aliases: [["application", "security"], ["app", "sec"]] },
+  { key: "proto", aliases: [["protocol", "buffer"]]},
+  { key: "protobuf", aliases: [["protocol", "buffer"]]},
 ];
 
 const docs = [
@@ -100,8 +100,8 @@ describe("contextual expansion completion representation", () => {
       morphology(),
       dictionary({
         entries: [
-          { key: "ml", expansion: ["machine", "learning"] },
-          { key: "mlang", expansion: ["machine", "language"] },
+          { key: "ml", aliases: [["machine", "learning"]]},
+          { key: "mlang", aliases: [["machine", "language"]]},
         ],
       }),
     ];
@@ -217,7 +217,7 @@ describe("indexed and full-scan stay equivalent for contextual completion", () =
 });
 
 describe("version/compact companion does not regain inferred-completion as typed", () => {
-  const tlsDict = [{ key: "tls", expansion: ["transport", "layer", "security"] }];
+  const tlsDict = [{ key: "tls", aliases: [["transport", "layer", "security"]]}];
   const tlsDocs = [
     {
       id: "/tls/",

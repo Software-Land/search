@@ -434,19 +434,27 @@ export function normalizeExternalEquivalences(
       const rec = row as Record<string, unknown>;
       const key = acronymKey(rec.key);
       if (!key) throw new ExternalEquivalenceError("empty key");
-      const expansion = asExpansion(rec.expansion);
+      const aliasesIn = asAliases(rec.aliases);
+      const expansionFromField = asExpansion(rec.expansion);
+      const expansion = expansionFromField.length ? expansionFromField : aliasesIn[0] ? [...aliasesIn[0]] : [];
       if (!expansion.length) {
-        const raw = rec.expansion;
+        const raw = rec.expansion ?? rec.aliases;
         const hadRaw =
-          (typeof raw === "string" && raw.trim()) ||
-          (Array.isArray(raw) && raw.some((item) => String(item || "").trim()));
+          (typeof rec.expansion === "string" && String(rec.expansion).trim()) ||
+          (Array.isArray(rec.expansion) && rec.expansion.some((item) => String(item || "").trim())) ||
+          (Array.isArray(rec.aliases) && rec.aliases.length);
         if (!hadRaw) throw new ExternalEquivalenceError("empty expansion");
         if (hasUnsafeSymbolicSurface(raw) || (Array.isArray(raw) && raw.some((item) => hasUnsafeSymbolicSurface(item)))) {
           throw new ExternalEquivalenceError("unsafe symbolic expansion");
         }
+        if (!expansionFromField.length && Array.isArray(rec.aliases)) {
+          throw new ExternalEquivalenceError("empty expansion");
+        }
         return;
       }
-      const aliases = asAliases(rec.aliases);
+      const aliases = expansionFromField.length
+        ? aliasesIn
+        : aliasesIn.slice(1);
       const primary =
         rec.primary == null || rec.primary === "" ? null : String(rec.primary).toLowerCase().trim() || null;
       const standaloneRecall = Array.isArray(rec.standaloneRecall)

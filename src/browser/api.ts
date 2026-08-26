@@ -19,6 +19,7 @@ interface InitPayload {
   schema?: Schema;
   lexicalIndex?: LexicalIndexArtifact;
   dictionaryEntries?: EquivalenceEntry[];
+  relationshipMap?: import("../api.js").RelationshipMap;
   relationships?: RelationshipArtifact | null;
   relationshipStrategy?: RelationshipStrategy;
   /** Worker-safe retriever name. Function-bearing custom retrievers are not structured-cloneable. */

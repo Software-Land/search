@@ -28,15 +28,13 @@ export interface SearchDocument {
 
 export interface DictionaryEntry {
   key: string;
+  /** Compiled from authored aliases[0]. Sequence kind "expansion". */
   expansion: string[];
+  /** Compiled from authored aliases[1...]. Sequence kind "alias". */
   aliases: string[][];
-  primary?: string | null;
-  /** Reviewed exact standalone tokens that may open secondary configured recall. */
+  /** Compiled from related token → concept edges. Not authored on the concept. */
   standaloneRecall?: string[];
-  /**
-   * Reviewed one-hop topical phrase forms for this configured key.
-   * Recall metadata only; not aliases, expansion, or lexical intent.
-   */
+  /** Compiled from related concept → form edges. Not authored on the concept. */
   topicalRecall?: string[][];
   type?: string;
   provenance?: string | null;

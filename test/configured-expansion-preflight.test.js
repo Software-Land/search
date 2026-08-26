@@ -14,11 +14,11 @@ import { buildIndex } from "../dist/indexDocuments.js";
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 
 const fpsDict = [
-  { key: "fps", expansion: ["frames", "per", "second"] },
-  { key: "appsec", expansion: ["application", "security"], aliases: [["app", "sec"]] },
-  { key: "http", expansion: ["hypertext", "transfer", "protocol"] },
-  { key: "proto", expansion: ["protocol", "buffer"] },
-  { key: "protobuf", expansion: ["protocol", "buffer"] },
+  { key: "fps", aliases: [["frames", "per", "second"]]},
+  { key: "appsec", aliases: [["application", "security"], ["app", "sec"]] },
+  { key: "http", aliases: [["hypertext", "transfer", "protocol"]]},
+  { key: "proto", aliases: [["protocol", "buffer"]]},
+  { key: "protobuf", aliases: [["protocol", "buffer"]]},
 ];
 
 const docs = [
@@ -208,8 +208,8 @@ describe("single-token frames ranking window", () => {
       morphology(),
       dictionary({
         entries: [
-          { key: "ml", expansion: ["machine", "learning"] },
-          { key: "mlang", expansion: ["machine", "language"] },
+          { key: "ml", aliases: [["machine", "learning"]]},
+          { key: "mlang", aliases: [["machine", "language"]]},
         ],
       }),
     ];

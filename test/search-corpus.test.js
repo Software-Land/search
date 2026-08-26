@@ -82,7 +82,7 @@ describe("search-corpus synthetic mining", () => {
     });
     const ioAsIot = statusOf(result, "io", "internet of things");
     expect(ioAsIot.every((c) => c.status === "rejected" || c.initialsMatch === false)).toBe(true);
-    expect(result.equivalences.entries.some((e) => e.key === "io" && e.expansion.includes("things"))).toBe(false);
+    expect(result.equivalences.entries.some((e) => e.key === "io" && (e.aliases?.[0] || []).includes("things"))).toBe(false);
   });
 
   test("related documents are not compiled as synonyms or equivalences", () => {
@@ -92,7 +92,7 @@ describe("search-corpus synthetic mining", () => {
         { id: "vpn", title: "VPN Settings", body: "Virtual private network. TLS is mentioned." },
       ],
     });
-    expect(result.equivalences.entries.some((e) => e.key === "tls" && e.expansion.includes("vpn"))).toBe(false);
+    expect(result.equivalences.entries.some((e) => e.key === "tls" && (e.aliases?.[0] || []).includes("vpn"))).toBe(false);
     expect(result.inspection.synonymCandidates.some((s) => s.terms.includes("tls") && s.terms.includes("vpn"))).toBe(false);
     expect(result.inspection.synonymCandidates.length).toBeLessThan(20);
     const tls = statusOf(result, "tls", "transport layer security");
@@ -161,7 +161,7 @@ describe("search-corpus synthetic mining", () => {
     const overridden = compileCorpus(docs, {
       overrides: {
         reject: [{ key: "fbb" }],
-        add: [{ key: "xyz", expansion: ["x", "y", "z"] }],
+        add: [{ key: "xyz", aliases: [["x", "y", "z"]]}],
       },
     });
     expect(overridden.equivalences.entries.some((e) => e.key === "fbb")).toBe(false);

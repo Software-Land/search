@@ -37,7 +37,7 @@ const graph = {
   },
 };
 
-const plugins = [morphology(), dictionary({ entries: [{ key: "wifi", expansion: ["wi", "fi"] }] })];
+const plugins = [morphology(), dictionary({ entries: [{ key: "wifi", aliases: [["wi", "fi"]]}] })];
 
 async function make(opts = {}) {
   const e = SearchEngine.create({ schema, plugins, relationships: graph, ...opts });
@@ -208,7 +208,7 @@ describe("public API", () => {
     await client.init({
       documents: docs,
       schema,
-      dictionaryEntries: [{ key: "wifi", expansion: ["wi", "fi"] }],
+      dictionaryEntries: [{ key: "wifi", aliases: [["wi", "fi"]]}],
       relationships: graph,
       relationshipStrategy: "hybrid",
       retriever: "indexed",
@@ -280,15 +280,24 @@ describe("public API", () => {
     client.terminate();
   });
 
-  test("equivalence entries preserve primary; explain rows include constraints and token surfaces", async () => {
+  test("equivalence entries are key plus aliases; explain rows include constraints and token surfaces", async () => {
     const parsed = parseEquivalences({
       format: "search-v2-equivalences",
       version: 1,
-      entries: [{ key: "wifi", expansion: ["wi", "fi"], primary: "Wi-Fi" }],
+      entries: [{ key: "wifi", aliases: [["wi", "fi"]] }],
     });
-    expect(parsed.entries[0].primary).toBe("Wi-Fi");
-    expect(parsed.entries[0].standaloneRecall).toEqual([]);
-    expect(parsed.entries[0].topicalRecall).toEqual([]);
+    expect(parsed.entries[0].aliases).toEqual([["wi", "fi"]]);
+    expect(parsed.entries[0].expansion).toBeUndefined();
+    expect(parsed.entries[0].primary).toBeUndefined();
+    expect(parsed.entries[0].standaloneRecall).toBeUndefined();
+    expect(parsed.entries[0].topicalRecall).toBeUndefined();
+    expect(() =>
+      parseEquivalences({
+        format: "search-v2-equivalences",
+        version: 1,
+        entries: [{ key: "wifi", aliases: [["wi", "fi"]], primary: "Wi-Fi" }],
+      })
+    ).toThrow(/primary/);
     const e = await make();
     const row = e.searchDetailed("bluetooth", { explain: true }).results[0];
     expect(Array.isArray(row.constraints)).toBe(true);

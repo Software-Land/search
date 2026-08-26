@@ -3,16 +3,14 @@ import { analyzeQuery } from "../dist/analyze.js";
 import { retrieveCandidates } from "../dist/retrieve.js";
 import { resolveConfiguredSequence, resolveConfiguredSpans } from "../dist/configuredSequence.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
+import { dictionaryFromLegacy } from "./helpers/authored.js";
 
 const dict = [
   {
     key: "appsec",
-    expansion: ["application", "security"],
-    aliases: [
-      ["app", "sec"],
+    aliases: [["application", "security"], ["app", "sec"],
       ["application", "security"],
-      ["security"],
-    ],
+      ["security"],],
     topicalRecall: [
       ["authentication"],
       ["authorization"],
@@ -22,17 +20,16 @@ const dict = [
   },
   {
     key: "oauth",
-    expansion: ["open", "authorization"],
-    topicalRecall: [["openid"], ["redirect"]],
+    aliases: [["open", "authorization"]], topicalRecall: [["openid"], ["redirect"]],
   },
-  { key: "http", expansion: ["hypertext", "transfer", "protocol"], standaloneRecall: ["hypertext"] },
-  { key: "tls", expansion: ["transport", "layer", "security"] },
-  { key: "ml", expansion: ["machine", "learning"] },
-  { key: "fps", expansion: ["frames", "per", "second"] },
-  { key: "ab", expansion: ["alpha", "bravo"] },
-  { key: "bc", expansion: ["bravo", "charlie"] },
-  { key: "graphql", expansion: ["graph", "query", "language"] },
-  { key: "gql", expansion: ["graph", "query", "language"] },
+  { key: "http", aliases: [["hypertext", "transfer", "protocol"]], standaloneRecall: ["hypertext"] },
+  { key: "tls", aliases: [["transport", "layer", "security"]]},
+  { key: "ml", aliases: [["machine", "learning"]]},
+  { key: "fps", aliases: [["frames", "per", "second"]]},
+  { key: "ab", aliases: [["alpha", "bravo"]]},
+  { key: "bc", aliases: [["bravo", "charlie"]]},
+  { key: "graphql", aliases: [["graph", "query", "language"]]},
+  { key: "gql", aliases: [["graph", "query", "language"]]},
 ];
 
 const docs = [
@@ -48,7 +45,7 @@ const docs = [
 ];
 
 function plugins(entries = dict) {
-  return [morphology(), dictionary({ entries })];
+  return [morphology(), dictionary(dictionaryFromLegacy(entries))];
 }
 
 async function engine(retriever) {
@@ -72,7 +69,7 @@ describe("exact configured spans", () => {
     ]);
     const expansion = analyzeQuery("what is application security", { plugins: plugins() });
     const spans = resolveConfiguredSpans(expansion.tokens, plugins()[1]);
-    expect(spans).toEqual([{ key: "appsec", start: 2, end: 4, matchedKinds: ["alias", "expansion"] }]);
+    expect(spans).toEqual([{ key: "appsec", start: 2, end: 4, matchedKinds: ["expansion"] }]);
   });
 
   test("incomplete and prefix tokens do not create spans", () => {
@@ -172,9 +169,14 @@ describe("wrapped span topical activation", () => {
     for (const raw of ["security", "what is security", "application", "app", "sec", "authentication", "authorization"]) {
       const q = analyzeQuery(raw, { plugins: plugins() });
       expect(q.configuredSpans.some((s) => s.key === "appsec")).toBe(false);
-      expect(q.configuredSequenceIntent?.key ?? null).not.toBe("appsec");
-      expect(q.topicalRecall?.key ?? null).not.toBe("appsec");
+      if (raw !== "security") {
+        expect(q.configuredSequenceIntent?.key ?? null).not.toBe("appsec");
+        expect(q.topicalRecall?.key ?? null).not.toBe("appsec");
+      }
     }
+    const exact = analyzeQuery("security", { plugins: plugins() });
+    expect(exact.configuredSequenceIntent?.key).toBe("appsec");
+    expect(exact.configuredSpans).toEqual([]);
   });
 
   test("topical forms do not reverse-activate appsec", () => {

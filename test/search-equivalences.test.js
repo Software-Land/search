@@ -20,6 +20,7 @@ import { coverageConcepts, isSearchEquivalenceRecallConcept, searchEquivalenceRe
 import { compareConstraint } from "../dist/constraints.js";
 import { deriveMorphologyEquivalenceLookup } from "../dist/synonyms.js";
 import { extractFeatures } from "../dist/features.js";
+import { dictionaryFromLegacy } from "./helpers/authored.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = path.join(ROOT, "fixtures", "software-land");
@@ -42,8 +43,8 @@ function ids(hits) {
   return hits.map((hit) => hit.id);
 }
 
-function plugins({ dict = [{ key: "qa", expansion: ["quality", "assurance"] }], map = { qa: ["testing"] }, lemmas } = {}) {
-  const list = [morphology(lemmas ? { lemmas } : {}), dictionary({ entries: dict })];
+function plugins({ dict = [{ key: "qa", aliases: [["quality", "assurance"]]}], map = { qa: ["testing"] }, lemmas } = {}) {
+  const list = [morphology(lemmas ? { lemmas } : {}), dictionary(dictionaryFromLegacy(dict))];
   if (map) list.push(synonyms(map));
   return list;
 }
@@ -189,8 +190,8 @@ describe("directional search equivalences", () => {
 
   test("ambiguous configured keys fail closed and do not pick qa for a synonym", async () => {
     const dict = [
-      { key: "qa", expansion: ["quality", "assurance"] },
-      { key: "testing", expansion: ["quality", "assurance"] },
+      { key: "qa", aliases: [["quality", "assurance"]]},
+      { key: "testing", aliases: [["quality", "assurance"]]},
     ];
     const map = { qa: ["testing"] };
     const q = analyzeQuery("quality assurance", { plugins: plugins({ dict, map }) });
@@ -205,11 +206,10 @@ describe("directional search equivalences", () => {
 
   test("synonym recall does not activate topical or standalone even when those keys exist", async () => {
     const dict = [
-      { key: "qa", expansion: ["quality", "assurance"] },
+      { key: "qa", aliases: [["quality", "assurance"]]},
       {
         key: "testing",
-        expansion: ["test", "practice"],
-        topicalRecall: [["unit"]],
+        aliases: [["test", "practice"]], topicalRecall: [["unit"]],
         standaloneRecall: ["testing"],
       },
     ];
@@ -360,7 +360,7 @@ describe("extra synonym recall vs merged ordinary-term synonyms", () => {
       { id: "sec-body", title: "Garden Notes", body: "application security checklist without the key" },
       { id: "unrelated", title: "Tomatoes", body: "soil and water" },
     ];
-    const dict = [{ key: "rbac", expansion: ["role", "based", "access", "control"] }];
+    const dict = [{ key: "rbac", aliases: [["role", "based", "access", "control"]]}];
     const map = { rbac: ["security", "appsec", "vulnerability"] };
     const { indexed, indexedHits } = await assertIndexedFullScan("rbac", { dict, map, docs: extraDocs });
     expect(ids(indexedHits)).toEqual(expect.arrayContaining(["rbac", "react-auth", "zero-trust", "sec-body"]));
@@ -752,7 +752,7 @@ describe("morphology-aware directional search equivalences", () => {
     expect(extractFeatures(ordinaryQuery, ordinaryDoc).ordinaryEquivalenceBodyMatch).toBe(false);
 
     const extraRecall = await engine({
-      dict: [{ key: "rbac", expansion: ["role", "based", "access", "control"] }],
+      dict: [{ key: "rbac", aliases: [["role", "based", "access", "control"]]}],
       map: { rbac: ["security"] },
       docs: [{ id: "security", title: "Guide", body: "security notes" }],
       retriever: "full-scan",

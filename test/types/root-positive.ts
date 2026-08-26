@@ -17,6 +17,9 @@ import {
   abortError,
   dictionary,
   morphology,
+  migrateConfiguredEntry,
+  compileRelationshipMap,
+  compileAuthoredRelevance,
   isAbortError,
   parseEquivalences,
   parseRelationships,
@@ -40,6 +43,9 @@ import {
   type LexicalIndexArtifact,
   type SearchEquivalenceMap,
   type NormalizedSearchEquivalences,
+  type RelationshipMap,
+  type MigratedConfiguredEntry,
+  type CompiledAuthoredRelevance,
 } from "@software-land/search";
 
 const schema: Schema = {
@@ -60,13 +66,27 @@ const relationships: RelationshipArtifact = {
 };
 
 const entries: EquivalenceEntry[] = [
-  { key: "wifi", expansion: ["wi", "fi"], aliases: [["wi", "fi"]], standaloneRecall: [], topicalRecall: [] },
+  { key: "wifi", aliases: [["wi", "fi"]] },
 ];
 
 const morphologyPlugin: EnglishPlugin = morphology();
 const dictionaryPlugin: DictionaryPlugin = dictionary({ entries });
 void dictionaryPlugin.standaloneRecallByToken;
 void dictionaryPlugin.topicalRecallByKey;
+const migrated: MigratedConfiguredEntry = migrateConfiguredEntry({
+  key: "wifi",
+  expansion: ["wi", "fi"],
+  primary: "fi",
+});
+void migrated.entry.aliases;
+void migrated.discardedPrimary;
+const relationshipMap: RelationshipMap = {
+  qa: [{ to: { form: "testing" }, kind: "equivalent" }],
+};
+void compileRelationshipMap(relationshipMap, { concepts: entries });
+const authored: CompiledAuthoredRelevance = compileAuthoredRelevance({ entries, relationshipMap });
+void authored.synonymMap;
+void authored.dictionary;
 const morphologyWithLemmas: EnglishPlugin = morphology({ lemmas: { widgets: "widget" } });
 void morphologyPlugin.lemma;
 void morphologyPlugin.indexIdentity;

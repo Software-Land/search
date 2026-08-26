@@ -22,7 +22,7 @@ const graph = {
   },
 };
 
-const plugins = [morphology(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })];
+const plugins = [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })];
 
 describe("direct classes", () => {
   test("exact title is strong; body-only is weak; related is none", async () => {

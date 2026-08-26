@@ -371,9 +371,9 @@ describe("query 2 ranking is unchanged", () => {
     { id: "/rest/", title: "REST API vs GraphQL", body: "Version 2 of the API comparison." },
   ];
   const tlsDict = [
-    { key: "tls", expansion: ["transport", "layer", "security"] },
-    { key: "oop", expansion: ["object", "oriented", "programming"] },
-    { key: "api", expansion: ["application", "programming", "interface"] },
+    { key: "tls", aliases: [["transport", "layer", "security"]]},
+    { key: "oop", aliases: [["object", "oriented", "programming"]]},
+    { key: "api", aliases: [["application", "programming", "interface"]]},
   ];
 
   test("query 2 ranks HTTP/2 then 200FPS then TLS, with explanations", async () => {

@@ -7,16 +7,14 @@ import {
   resolveConfiguredSpans,
 } from "../dist/configuredSequence.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
+import { dictionaryFromLegacy } from "./helpers/authored.js";
 
 const dict = [
   {
     key: "appsec",
-    expansion: ["application", "security"],
-    aliases: [
-      ["app", "sec"],
+    aliases: [["application", "security"], ["app", "sec"],
       ["application", "security"],
-      ["security"],
-    ],
+      ["security"],],
     topicalRecall: [
       ["authentication"],
       ["authorization"],
@@ -26,33 +24,30 @@ const dict = [
   },
   {
     key: "api",
-    expansion: ["application", "programming", "interface"],
-    aliases: [["application", "programming", "interface"]],
+    aliases: [["application", "programming", "interface"], ["application", "programming", "interface"]],
   },
-  { key: "spa", expansion: ["single", "page", "application"] },
+  { key: "spa", aliases: [["single", "page", "application"]]},
   {
     key: "oauth",
-    expansion: ["open", "authorization"],
-    topicalRecall: [["openid"], ["redirect"]],
+    aliases: [["open", "authorization"]], topicalRecall: [["openid"], ["redirect"]],
   },
-  { key: "http", expansion: ["hypertext", "transfer", "protocol"], standaloneRecall: ["hypertext"] },
-  { key: "tls", expansion: ["transport", "layer", "security"] },
-  { key: "ml", expansion: ["machine", "learning"] },
-  { key: "fps", expansion: ["frames", "per", "second"] },
-  { key: "ab", expansion: ["alpha", "bravo"] },
-  { key: "bc", expansion: ["bravo", "charlie"] },
-  { key: "graphql", expansion: ["graph", "query", "language"] },
-  { key: "gql", expansion: ["graph", "query", "language"] },
-  { key: "qa", expansion: ["quality", "assurance"] },
-  { key: "testing", expansion: ["quality", "assurance"] },
-  { key: "proto", expansion: ["protocol", "buffer"] },
-  { key: "protobuf", expansion: ["protocol", "buffer"] },
+  { key: "http", aliases: [["hypertext", "transfer", "protocol"]], standaloneRecall: ["hypertext"] },
+  { key: "tls", aliases: [["transport", "layer", "security"]]},
+  { key: "ml", aliases: [["machine", "learning"]]},
+  { key: "fps", aliases: [["frames", "per", "second"]]},
+  { key: "ab", aliases: [["alpha", "bravo"]]},
+  { key: "bc", aliases: [["bravo", "charlie"]]},
+  { key: "graphql", aliases: [["graph", "query", "language"]]},
+  { key: "gql", aliases: [["graph", "query", "language"]]},
+  { key: "qa", aliases: [["quality", "assurance"]]},
+  { key: "testing", aliases: [["quality", "assurance"]]},
+  { key: "proto", aliases: [["protocol", "buffer"]]},
+  { key: "protobuf", aliases: [["protocol", "buffer"]]},
   {
     key: "cicd",
-    expansion: ["continuous", "integration"],
-    aliases: [["ci"], ["cd"], ["ci", "cd"]],
+    aliases: [["continuous", "integration"], ["ci"], ["cd"], ["ci", "cd"]],
   },
-  { key: "devops", expansion: ["development", "operations"], aliases: [["dev"], ["ops"]] },
+  { key: "devops", aliases: [["development", "operations"], ["dev"], ["ops"]] },
 ];
 
 const docs = [
@@ -69,7 +64,7 @@ const docs = [
 ];
 
 function plugins(entries = dict) {
-  return [morphology(), dictionary({ entries })];
+  return [morphology(), dictionary(dictionaryFromLegacy(entries))];
 }
 
 async function engine(retriever) {
@@ -99,7 +94,7 @@ describe("configured prefix span resolver", () => {
     expect(resolveConfiguredSequence(q.tokens, plugins()[1]).status).toBe("none");
     expect(resolveConfiguredSpans(q.tokens, plugins()[1])).toEqual([]);
     expect(resolveConfiguredPrefixSpans(q.tokens, plugins()[1])).toEqual([
-      { key: "appsec", start: 3, end: 5, matchedKinds: ["alias", "expansion"], usedPrefix: true },
+      { key: "appsec", start: 3, end: 5, matchedKinds: ["expansion"], usedPrefix: true },
     ]);
   });
 
@@ -107,7 +102,7 @@ describe("configured prefix span resolver", () => {
     const q = analyzeQuery("what is application s", { plugins: plugins() });
     expect(resolveConfiguredSpans(q.tokens, plugins()[1])).toEqual([]);
     expect(resolveConfiguredPrefixSpans(q.tokens, plugins()[1])).toEqual([
-      { key: "appsec", start: 2, end: 4, matchedKinds: ["alias", "expansion"], usedPrefix: true },
+      { key: "appsec", start: 2, end: 4, matchedKinds: ["expansion"], usedPrefix: true },
     ]);
   });
 
@@ -167,7 +162,7 @@ describe("wrapped configured prefix activation", () => {
     expect(q.configuredSequenceIntent).toBeNull();
     expect(q.configuredSpans).toEqual([]);
     expect(q.configuredPrefixSpans).toEqual([
-      { key: "appsec", start: 3, end: 5, matchedKinds: ["alias", "expansion"], usedPrefix: true },
+      { key: "appsec", start: 3, end: 5, matchedKinds: ["expansion"], usedPrefix: true },
     ]);
     expect(q.topicalRecall ?? null).toBeNull();
     expect(q.standaloneRecall ?? null).toBeNull();
@@ -251,7 +246,7 @@ describe("wrapped configured prefix retrieval", () => {
     const q = e._prepareQuery("what is an applicatio security");
     expect(q.configuredSequenceIntent).toBeNull();
     expect(q.configuredPrefixSpans).toEqual([
-      { key: "appsec", start: 3, end: 5, matchedKinds: ["alias", "expansion"], usedPrefix: true },
+      { key: "appsec", start: 3, end: 5, matchedKinds: ["expansion"], usedPrefix: true },
     ]);
     expect(q.topicalRecall ?? null).toBeNull();
     const hits = retrieveCandidates(q, e._index);
@@ -261,7 +256,7 @@ describe("wrapped configured prefix retrieval", () => {
     expect(detailed.results[0].features.configuredEquivalenceMatch).toBeTruthy();
     expect(detailed.results[0].explanation.query.configuredSequenceIntent).toBeNull();
     expect(detailed.results[0].explanation.query.configuredPrefixSpans).toEqual([
-      { key: "appsec", start: 3, end: 5, matchedKinds: ["alias", "expansion"], usedPrefix: true },
+      { key: "appsec", start: 3, end: 5, matchedKinds: ["expansion"], usedPrefix: true },
     ]);
     expect(detailed.results[0].explanation.query.topicalRecall).toBeNull();
     expect(detailed.results[0].explanation.query.tokens.map((t) => t.surface)).toEqual([

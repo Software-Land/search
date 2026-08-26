@@ -14,21 +14,18 @@ describe("normalizeExternalEquivalences", () => {
         key: "ML",
         expansion: "Machine Learning",
         aliases: [["ml"]],
-        primary: "Learning",
         evidenceDocumentIds: ["b", "a"],
         provenance: "application-generated",
       },
       {
         key: "API",
-        expansion: ["Application", "Programming", "Interface"],
-        aliases: [["app", "programming", "interface"]],
-        primary: "interface",
+        aliases: [["Application", "Programming", "Interface"], ["app", "programming", "interface"]],
       },
     ]);
     expect(result.entries.map((e) => e.key)).toEqual(["api", "ml"]);
     expect(result.entries[0].expansion).toEqual(["application", "programming", "interface"]);
     expect(result.entries[0].aliases).toEqual([["app", "programming", "interface"]]);
-    expect(result.entries[0].primary).toBe("interface");
+    expect(result.entries[0].primary).toBe(null);
     expect(result.entries[0].standaloneRecall).toEqual([]);
     expect(result.entries[1].expansion).toEqual(["machine", "learning"]);
     expect(result.entries[1].evidenceDocumentIds).toEqual(["a", "b"]);
@@ -38,7 +35,7 @@ describe("normalizeExternalEquivalences", () => {
   test("collapses duplicate key+expansion and merges evidence", () => {
     const result = normalizeExternalEquivalences([
       { key: "fps", expansion: "frames per second", evidenceDocumentIds: ["d1"] },
-      { key: "FPS", expansion: ["frames", "per", "second"], evidenceDocumentIds: ["d2"], aliases: [["frame", "rate"]] },
+      { key: "FPS", expansion: "frames per second", evidenceDocumentIds: ["d2"], aliases: [["frame", "rate"]] },
     ]);
     expect(result.entries).toHaveLength(1);
     expect(result.entries[0].key).toBe("fps");
@@ -72,10 +69,10 @@ describe("normalizeExternalEquivalences", () => {
   });
 
   test("rejects empty key and empty expansion", () => {
-    expect(() => normalizeExternalEquivalences([{ key: "", expansion: ["frames", "per", "second"] }])).toThrow(
+    expect(() => normalizeExternalEquivalences([{ key: "", aliases: [["frames", "per", "second"]]}])).toThrow(
       ExternalEquivalenceError
     );
-    expect(() => normalizeExternalEquivalences([{ key: "fps", expansion: [] }])).toThrow(ExternalEquivalenceError);
+    expect(() => normalizeExternalEquivalences([{ key: "fps", aliases: [[]]}])).toThrow(ExternalEquivalenceError);
     expect(() => normalizeExternalEquivalences([{ key: "fps", expansion: "   " }])).toThrow(ExternalEquivalenceError);
   });
 
@@ -104,7 +101,7 @@ describe("normalizeExternalEquivalences", () => {
   test("non-strict mode records rejects and unresolved alternatives without throwing", () => {
     const result = normalizeExternalEquivalences(
       [
-        { key: "", expansion: ["x"] },
+        { key: "", aliases: [["x"]]},
         { key: "cd", expansion: "continuous deployment" },
         { key: "cd", expansion: "continuous delivery" },
       ],
@@ -406,19 +403,18 @@ describe("normalizeExternalEquivalences spelling and abbreviation compatibility"
     expect(result.entries[0].topicalRecall).toEqual([["authentication"], ["bearer", "token"]]);
   });
 
-  test("public input is {key, expansion, aliases, primary}; expansions[] is not a substitute", () => {
+  test("public input is {key, aliases} with aliases[0] canonical; expansions[] is not a substitute", () => {
     expect(() =>
       normalizeExternalEquivalences([{ key: "cd", expansions: [["continuous", "delivery"]] }])
     ).toThrow(ExternalEquivalenceError);
     const ok = normalizeExternalEquivalences([
-      { key: "cd", expansion: "continuous delivery", aliases: [], primary: null },
+      { key: "cd", expansion: "continuous delivery", aliases: [] },
     ]);
     expect(ok.entries).toHaveLength(1);
     expect(ok.entries[0]).toMatchObject({
       key: "cd",
       expansion: ["continuous", "delivery"],
       aliases: [],
-      primary: null,
     });
     expect(ok.entries[0].standaloneRecall).toEqual([]);
     expect(ok.entries[0].expansions).toBeUndefined();

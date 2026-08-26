@@ -68,7 +68,7 @@ describe("indexed unbounded must-keep lanes", () => {
   });
 
   test("configured-equivalence title matches bypass candidateLimit", () => {
-    const plugins = [morphology(), dictionary({ entries: [{ key: "ml", expansion: ["machine", "learning"] }] })];
+    const plugins = [morphology(), dictionary({ entries: [{ key: "ml", aliases: [["machine", "learning"]]}] })];
     const docs = [];
     for (let i = 0; i < 18; i += 1) {
       docs.push({ id: `c${i}`, title: `ML notes ${i}`, body: "x" });

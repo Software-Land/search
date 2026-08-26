@@ -170,7 +170,7 @@ export interface DecisionDoc {
 
 export interface DecisionOverrides {
   accept?: Array<{ key?: unknown; expansion?: unknown; aliases?: unknown; primary?: unknown }>;
-  reject?: Array<{ key?: unknown; expansion?: unknown }>;
+  reject?: Array<{ key?: unknown; expansion?: unknown; aliases?: unknown }>;
   add?: Array<{ key?: unknown; expansion?: unknown; aliases?: unknown; primary?: unknown }>;
 }
 
@@ -264,11 +264,7 @@ export interface EquivalenceArtifact {
   version: 1;
   entries: Array<{
     key: string;
-    expansion: string[];
-    aliases: unknown[];
-    primary?: string | null;
-    standaloneRecall?: string[];
-    topicalRecall?: string[][];
+    aliases: string[][];
     type: string;
     provenance: string;
     confidence: null;

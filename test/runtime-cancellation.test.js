@@ -17,12 +17,11 @@ const schema = {
 };
 
 const dictEntries = [
-  { key: "tls", expansion: ["transport", "layer", "security"] },
-  { key: "http", expansion: ["hypertext", "transfer", "protocol"] },
+  { key: "tls", aliases: [["transport", "layer", "security"]]},
+  { key: "http", aliases: [["hypertext", "transfer", "protocol"]]},
   {
     key: "appsec",
-    expansion: ["application", "security"],
-    aliases: [["app", "sec"]],
+    aliases: [["application", "security"], ["app", "sec"]],
   },
 ];
 

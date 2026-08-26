@@ -3,12 +3,12 @@ import { analyzeQuery } from "../dist/analyze.js";
 import { retrieveCandidates } from "../dist/retrieve.js";
 import { dictionary as dictionaryPlugin, normalizeTopicalRecall } from "../dist/dictionary.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
+import { dictionaryFromLegacy } from "./helpers/authored.js";
 
 const appsecDict = [
   {
     key: "appsec",
-    expansion: ["application", "security"],
-    aliases: [["app", "sec"]],
+    aliases: [["application", "security"], ["app", "sec"]],
     topicalRecall: [
       ["authentication"],
       ["authorization"],
@@ -18,10 +18,9 @@ const appsecDict = [
   },
   {
     key: "oauth",
-    expansion: ["open", "authorization"],
-    topicalRecall: [["openid"], ["redirect"]],
+    aliases: [["open", "authorization"]], topicalRecall: [["openid"], ["redirect"]],
   },
-  { key: "http", expansion: ["hypertext", "transfer", "protocol"], standaloneRecall: ["hypertext"] },
+  { key: "http", aliases: [["hypertext", "transfer", "protocol"]], standaloneRecall: ["hypertext"] },
 ];
 
 const docs = [
@@ -38,7 +37,7 @@ const docs = [
 ];
 
 function plugins(entries = appsecDict) {
-  return [morphology(), dictionary({ entries })];
+  return [morphology(), dictionary(dictionaryFromLegacy(entries))];
 }
 
 async function engine(entries = appsecDict, extraDocs = docs, retriever) {
@@ -69,29 +68,27 @@ describe("topical recall lookup", () => {
       ])
     ).toEqual([["authentication"], ["bearer", "token"]]);
 
-    const plugin = dictionaryPlugin({
-      entries: [
-        {
-          key: "appsec",
-          expansion: ["application", "security"],
-          topicalRecall: [
-            ["authentication"],
-            ["authentication"],
-            ["", "x"],
-            "oauth",
-            ["bearer", "token"],
-          ],
-        },
-      ],
-    });
+    const plugin = dictionaryPlugin(dictionaryFromLegacy([
+      {
+        key: "appsec",
+        aliases: [["application", "security"]],
+        topicalRecall: [
+          ["authentication"],
+          ["authentication"],
+          ["", "x"],
+          "oauth",
+          ["bearer", "token"],
+        ],
+      },
+    ]));
     expect(plugin.entries[0].topicalRecall).toEqual([["authentication"], ["bearer", "token"]]);
     expect(plugin.topicalRecallByKey.get("appsec")).toEqual([["authentication"], ["bearer", "token"]]);
   });
 
   test("non-array topicalRecall fails closed to empty", () => {
-    const plugin = dictionaryPlugin({
-      entries: [{ key: "appsec", expansion: ["application", "security"], topicalRecall: "authentication" }],
-    });
+    const plugin = dictionaryPlugin(dictionaryFromLegacy([
+      { key: "appsec", aliases: [["application", "security"]], topicalRecall: "authentication" },
+    ]));
     expect(plugin.entries[0].topicalRecall).toEqual([]);
     expect(plugin.topicalRecallByKey.has("appsec")).toBe(false);
   });
@@ -101,7 +98,7 @@ describe("topical recall analysis", () => {
   test("configured identity activates topical forms without mutating query representation", () => {
     const withTopical = plugins();
     const withoutTopical = plugins([
-      { key: "appsec", expansion: ["application", "security"], aliases: [["app", "sec"]] },
+      { key: "appsec", aliases: [["application", "security"], ["app", "sec"]] },
     ]);
     for (const raw of ["appsec", "app sec", "application security"]) {
       const q = analyzeQuery(raw, { plugins: withTopical });

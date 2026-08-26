@@ -80,7 +80,13 @@ export function createWorkerRuntime({ SearchEngine, english, dictionary }: Worke
       const plugins: SearchPlugin[] = [];
       if (typeof english === "function") plugins.push(english(payload.englishOptions || {}));
       if (typeof dictionary === "function") {
-        plugins.push(dictionary({ entries: payload.dictionaryEntries || [] }));
+        plugins.push(
+          dictionary({
+            entries: payload.dictionaryEntries || [],
+            relationshipMap: payload.relationshipMap,
+            documents: payload.documents || [],
+          })
+        );
       }
       exactPruningMode =
         payload._exactPruningMode === "exhaustive" ? "exhaustive" : "auto";

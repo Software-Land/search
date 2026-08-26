@@ -11,11 +11,8 @@ describe("exact compound segmentation", () => {
   const appsecDict = [
     {
       key: "appsec",
-      expansion: ["application", "security"],
-      aliases: [
-        ["app", "sec"],
-        ["app", "security"],
-      ],
+      aliases: [["application", "security"], ["app", "sec"],
+        ["app", "security"],],
     },
   ];
 
@@ -266,7 +263,7 @@ describe("final-token prefix completion", () => {
 describe("dictionary token ownership", () => {
   test("explicit key stays one acronym concept", () => {
     const q = analyzeQuery("tls", {
-      plugins: [morphology(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })],
+      plugins: [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
     });
     expect(q.concepts.filter((c) => c.kind === "acronym" && c.id === "tls")).toHaveLength(1);
     expect(q.concepts.some((c) => c.kind === "term" && c.id === "tls")).toBe(false);
@@ -277,7 +274,7 @@ describe("dictionary token ownership", () => {
       plugins: [
         morphology(),
         dictionary({
-          entries: [{ key: "js", expansion: ["javascript"], aliases: [["ecmascript"]] }],
+          entries: [{ key: "js", aliases: [["javascript"], ["ecmascript"]] }],
         }),
       ],
     });
@@ -288,7 +285,7 @@ describe("dictionary token ownership", () => {
   });
 
   test("single-token expansion canonicalizes to the same key concept as the acronym", () => {
-    const plugins = [morphology(), dictionary({ entries: [{ key: "js", expansion: ["javascript"] }] })];
+    const plugins = [morphology(), dictionary({ entries: [{ key: "js", aliases: [["javascript"]]}] })];
     const expansion = analyzeQuery("javascript", { plugins });
     const key = analyzeQuery("js", { plugins });
     expect(expansion.lexicalPhraseKey).toEqual(key.lexicalPhraseKey);
@@ -299,7 +296,7 @@ describe("dictionary token ownership", () => {
   });
 
   test("exact multi-token expansion canonicalizes to the dictionary key", () => {
-    const plugins = [morphology(), dictionary({ entries: [{ key: "ml", expansion: ["machine", "learning"] }] })];
+    const plugins = [morphology(), dictionary({ entries: [{ key: "ml", aliases: [["machine", "learning"]]}] })];
     const expansion = analyzeQuery("machine learning", { plugins });
     const key = analyzeQuery("ml", { plugins });
     expect(expansion.lexicalPhraseKey).toEqual(key.lexicalPhraseKey);
@@ -346,7 +343,7 @@ describe("exact authored query intent precedes typo correction", () => {
     const q = analyzeQuery("abcde", {
       plugins: [
         dictionary({
-          entries: [{ key: "concept", expansion: ["concept"], aliases: [["abcde"]] }],
+          entries: [{ key: "concept", aliases: [["concept"], ["abcde"]] }],
         }),
       ],
       lexicon: ["abcdf"],
@@ -388,7 +385,7 @@ describe("exact authored query intent precedes typo correction", () => {
   test("exact OAuth remains OAuth", () => {
     const q = analyzeQuery("oauth", {
       plugins: [
-        dictionary({ entries: [{ key: "oauth", expansion: ["open", "authorization"] }] }),
+        dictionary({ entries: [{ key: "oauth", aliases: [["open", "authorization"]]}] }),
         synonyms({ oauth: ["saml"] }),
       ],
       lexicon: ["authn", "oauth"],
@@ -424,7 +421,7 @@ describe("exact authored query intent precedes typo correction", () => {
     const engine = SearchEngine.create({
       schema,
       plugins: [
-        dictionary({ entries: [{ key: "oauth", expansion: ["open", "authorization"] }] }),
+        dictionary({ entries: [{ key: "oauth", aliases: [["open", "authorization"]]}] }),
         synonyms({ authn: ["authentication"], authz: ["authorization"] }),
       ],
       retriever: "full-scan",
@@ -450,7 +447,7 @@ describe("exact authored query intent precedes typo correction", () => {
 
 describe("acronym body evidence is contiguous", () => {
   test("machine learning is not full ML-equivalence from a lone learning token", async () => {
-    const dict = [{ key: "ml", expansion: ["machine", "learning"] }];
+    const dict = [{ key: "ml", aliases: [["machine", "learning"]]}];
     const docs = [
       { id: "learning-only", title: "Learning Resources", body: "learning without the rest of the expansion" },
       { id: "phrase", title: "Linear vs Logistic Regression", body: "machine learning appears as a phrase" },
@@ -487,7 +484,7 @@ describe("acronym body evidence is contiguous", () => {
   });
 
   test("a 1-token alias that is one expansion word is not full multi-token equivalence", async () => {
-    const dict = [{ key: "ml", expansion: ["machine", "learning"], aliases: [["learning"]] }];
+    const dict = [{ key: "ml", aliases: [["machine", "learning"], ["learning"]] }];
     const docs = [
       { id: "learning-only", title: "Learning Resources", body: "courses" },
       { id: "phrase", title: "Linear vs Logistic Regression", body: "machine learning appears as a phrase" },
@@ -513,7 +510,7 @@ describe("unknown-token repair", () => {
   const apiPlugins = [
     morphology(),
     dictionary({
-      entries: [{ key: "api", expansion: ["application", "programming", "interface"] }],
+      entries: [{ key: "api", aliases: [["application", "programming", "interface"]]}],
     }),
   ];
 

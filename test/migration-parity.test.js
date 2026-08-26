@@ -43,7 +43,7 @@ async function index(engine, documents) {
 
 describe("0.2.0 migration parity", () => {
   test("configured-equivalence ml forms share ordered ids and stable explain fields", async () => {
-    const mlDict = [{ key: "ml", expansion: ["machine", "learning"] }];
+    const mlDict = [{ key: "ml", aliases: [["machine", "learning"]]}];
     const docs = [
       {
         id: "strong-phrase",
@@ -143,7 +143,7 @@ describe("0.2.0 migration parity", () => {
   });
 
   test("http configured-expansion forms preserve ranked ids", async () => {
-    const httpDict = [{ key: "http", expansion: ["hypertext", "transfer", "protocol"] }];
+    const httpDict = [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]]}];
     const docs = [
       { id: "http", title: "HTTP", body: "status codes and methods" },
       { id: "expansion-title", title: "Hypertext Transfer Protocol", body: "the protocol" },
@@ -176,8 +176,8 @@ describe("0.2.0 migration parity", () => {
     });
 
     const siblingDict = [
-      { key: "http", expansion: ["hypertext", "transfer", "protocol"] },
-      { key: "https", expansion: ["hypertext", "transfer", "protocol", "secure"] },
+      { key: "http", aliases: [["hypertext", "transfer", "protocol"]]},
+      { key: "https", aliases: [["hypertext", "transfer", "protocol", "secure"]]},
     ];
     const siblingDocs = [
       { id: "http-title", title: "HTTP", body: "methods and status codes" },
@@ -199,7 +199,7 @@ describe("0.2.0 migration parity", () => {
     const engine = await index(
       SearchEngine.create({
         schema,
-        plugins: [morphology(), dictionary({ entries: [{ key: "wifi", expansion: ["wi", "fi"] }] })],
+        plugins: [morphology(), dictionary({ entries: [{ key: "wifi", aliases: [["wi", "fi"]]}] })],
       }),
       [
         { id: "wifi", title: "Wi-Fi", body: "Connect to wireless networks." },
@@ -236,11 +236,8 @@ describe("0.2.0 migration parity", () => {
     const appsecDict = [
       {
         key: "appsec",
-        expansion: ["application", "security"],
-        aliases: [
-          ["app", "sec"],
-          ["app", "security"],
-        ],
+        aliases: [["application", "security"], ["app", "sec"],
+          ["app", "security"],],
       },
     ];
     const engine = await index(

@@ -24,7 +24,7 @@ describe("search-corpus durable review", () => {
 
   test("human accept survives extra occurrences", () => {
     const decisions = {
-      equivalences: [{ decision: "accept", key: "api", expansion: ["application", "programming", "interface"] }],
+      equivalences: [{ decision: "accept", key: "api", aliases: [["application", "programming", "interface"]]}],
     };
     const once = compileCorpus(
       {
@@ -52,7 +52,7 @@ describe("search-corpus durable review", () => {
 
   test("accepted candidate with missing evidence becomes orphaned but still compiles if complete", () => {
     const decisions = {
-      equivalences: [{ decision: "accept", key: "xyz", expansion: ["x", "y", "z"], manual: true }],
+      equivalences: [{ decision: "accept", key: "xyz", aliases: [["x", "y", "z"]], manual: true }],
     };
     const result = compileCorpus({ documents: [{ id: "a", title: "Hello", body: "No acronym here." }] }, { decisions });
     const row = result.inspection.candidates.find((c) => c.key === "xyz");
@@ -63,7 +63,7 @@ describe("search-corpus durable review", () => {
 
   test("new ambiguity invalidates a previously accepted expansion", () => {
     const decisions = {
-      equivalences: [{ decision: "accept", key: "abc", expansion: ["alpha", "beta", "compiler"] }],
+      equivalences: [{ decision: "accept", key: "abc", aliases: [["alpha", "beta", "compiler"]]}],
     };
     const one = compileCorpus(
       {
@@ -99,7 +99,7 @@ describe("search-corpus durable review", () => {
   test("rejected candidate with new explicit evidence is flagged, not auto-accepted", () => {
     const decisions = {
       equivalences: [
-        { decision: "reject", key: "cpu", expansion: ["central", "processing", "unit"] },
+        { decision: "reject", key: "cpu", aliases: [["central", "processing", "unit"]]},
       ],
     };
     const result = compileCorpus(cpuDocs, { decisions });
@@ -114,11 +114,11 @@ describe("search-corpus durable review", () => {
       { documents: [{ id: "n", title: "Notes", body: "nothing" }] },
       {
         decisions: {
-          equivalences: [{ decision: "accept", key: "abc", expansion: ["some", "domain", "meaning"], manual: true }],
+          equivalences: [{ decision: "accept", key: "abc", aliases: [["some", "domain", "meaning"]], manual: true }],
         },
       }
     );
-    expect(result.equivalences.entries.some((e) => e.key === "abc" && e.expansion.join(" ") === "some domain meaning")).toBe(true);
+    expect(result.equivalences.entries.some((e) => e.key === "abc" && e.aliases?.[0]?.join(" ") === "some domain meaning")).toBe(true);
   });
 
   test("malformed accept without expansion fails clearly", () => {
@@ -134,8 +134,8 @@ describe("search-corpus durable review", () => {
       compileCorpus(cpuDocs, {
         decisions: {
           equivalences: [
-            { decision: "accept", key: "cpu", expansion: ["central", "processing", "unit"] },
-            { decision: "accept", key: "cpu", expansion: ["other", "expansion", "here"] },
+            { decision: "accept", key: "cpu", aliases: [["central", "processing", "unit"]]},
+            { decision: "accept", key: "cpu", aliases: [["other", "expansion", "here"]]},
           ],
         },
       })
@@ -144,7 +144,7 @@ describe("search-corpus durable review", () => {
 
   test("analyze then compile preserves decisions and is byte-stable", () => {
     const decisions = {
-      equivalences: [{ decision: "accept", key: "cpu", expansion: ["central", "processing", "unit"] }],
+      equivalences: [{ decision: "accept", key: "cpu", aliases: [["central", "processing", "unit"]]}],
     };
     const a = compileCorpus(cpuDocs, { decisions });
     const b = compileCorpus(cpuDocs, { decisions });

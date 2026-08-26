@@ -14,8 +14,8 @@
       "sha256": "e5d27ce5b12a83db8a1d39e11c4eabe37a60a9e3f708b3730480c71b10c65dc2"
     },
     "dictionary.json": {
-      "bytes": 26647,
-      "sha256": "9b613353ffefdf2bf821691d56db145ed39bbc147118caf0a7e3e1367ff20379"
+      "bytes": 22918,
+      "sha256": "d95e206228af498184db68c4e66c9727c88c8591c01649d456f9e3fe010e78bf"
     },
     "lemmas.json": {
       "bytes": 31494,
@@ -46,8 +46,8 @@
       "sha256": "39e9cd6986f74ecd744abe5b499f48982a993f648abca157cee3118aca365cfa"
     },
     "relevance-config.json": {
-      "bytes": 1686,
-      "sha256": "1839a1b6f856c05964f8febb88669b3eb2d7b0e9efb67fba816fb8c9dd8bf671"
+      "bytes": 1415,
+      "sha256": "ace7bb5d09b1f51377d8f02517aee934a5b63c8f2c4dc6448024e3e921474c57"
     },
     "synonym-map.json": {
       "bytes": 6165,
@@ -56,6 +56,10 @@
     "historical-contract-updates.json": {
       "bytes": 13106,
       "sha256": "4daa61d42459fc0e4914328f9037bf41e86496d9c0f510e97117b0c261d5eb95"
+    },
+    "relationship-map.json": {
+      "bytes": 19094,
+      "sha256": "2c580a9eda789a1b3972f716f6ba05e6130ce1eddc2f9592cf707587510666c6"
     }
   },
   "scenarioCount": 215,

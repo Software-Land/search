@@ -1,12 +1,22 @@
 /**
- * Configured equivalence dictionary. Search logic consumes this generically;
- * Host-specific acronyms are data, not engine code.
+ * Configured concept dictionary. Search logic consumes this generically;
+ * host-specific acronyms/concepts are data, not engine code.
  *
- * Entry shape:
- * { key: "tls", expansion: ["transport","layer","security"], aliases: [["..."]], topicalRecall: [["authentication"]] }
+ * Public authoring shape:
+ * { key: "tls", aliases: [["transport","layer","security"], ["transport","layer"]] }
+ *
+ * aliases[0] compiles internally as sequence kind "expansion".
+ * standaloneRecall / topicalRecall are compiled from relationshipMap, not authored here.
  */
 
 import type { DictionaryEntry, DictionarySequence } from "./types.js";
+import { compileAuthoredConcept } from "./configuredAuthoring.js";
+import {
+  applyCompiledRelationships,
+  compileRelationshipMap,
+  type RelationshipDocumentRef,
+} from "./relationshipMap.js";
+import { synonyms as synonymsPlugin } from "./synonyms.js";
 
 export interface DictionaryPlugin {
   name: "dictionary";
@@ -18,12 +28,13 @@ export interface DictionaryPlugin {
   lexicon(): Set<string>;
 }
 
-export function dictionary({ entries = [] }: { entries?: unknown[] } = {}): DictionaryPlugin {
-  const list: DictionaryEntry[] = [];
-  for (const raw of entries) {
-    const entry = normalizeEntry(raw);
-    if (entry) list.push(entry);
-  }
+export interface DictionaryOptions {
+  entries?: unknown[];
+  relationshipMap?: unknown;
+  documents?: RelationshipDocumentRef[];
+}
+
+function dictionaryFromCompiled(list: DictionaryEntry[]): DictionaryPlugin {
   const byKey = new Map<string, DictionaryEntry>();
   const sequences: DictionarySequence[] = [];
 
@@ -61,6 +72,50 @@ export function dictionary({ entries = [] }: { entries?: unknown[] } = {}): Dict
   };
 }
 
+export function dictionary({ entries = [], relationshipMap, documents }: DictionaryOptions = {}): DictionaryPlugin {
+  const list: DictionaryEntry[] = [];
+  for (const raw of entries) {
+    const entry = compileAuthoredConcept(raw);
+    if (entry) list.push(entry);
+  }
+  if (relationshipMap != null) {
+    const compiled = compileRelationshipMap(relationshipMap, { concepts: list, documents: documents || [] });
+    applyCompiledRelationships(list, compiled);
+  }
+  return dictionaryFromCompiled(list);
+}
+
+export interface CompiledAuthoredRelevance {
+  dictionary: DictionaryPlugin;
+  synonymMap: Record<string, string[]>;
+  synonyms: ReturnType<typeof synonymsPlugin>;
+  editorialRelationships: ReturnType<typeof compileRelationshipMap>["editorialRelationships"];
+}
+
+/**
+ * Compile authored concepts + relationshipMap onto existing dictionary and synonym plugins.
+ * Editorial document edges are returned for the caller to merge with the generated semantic artifact.
+ */
+export function compileAuthoredRelevance({
+  entries = [],
+  relationshipMap,
+  documents,
+}: DictionaryOptions = {}): CompiledAuthoredRelevance {
+  const list: DictionaryEntry[] = [];
+  for (const raw of entries) {
+    const entry = compileAuthoredConcept(raw);
+    if (entry) list.push(entry);
+  }
+  const compiled = compileRelationshipMap(relationshipMap, { concepts: list, documents: documents || [] });
+  applyCompiledRelationships(list, compiled);
+  return {
+    dictionary: dictionaryFromCompiled(list),
+    synonymMap: compiled.synonymMap,
+    synonyms: synonymsPlugin(compiled.synonymMap),
+    editorialRelationships: compiled.editorialRelationships,
+  };
+}
+
 function normalizeStandaloneRecallToken(raw: unknown): string | null {
   if (raw == null) return null;
   const token = String(raw).toLowerCase().trim();
@@ -81,10 +136,6 @@ export function normalizeStandaloneRecall(raw: unknown): string[] {
   return out;
 }
 
-/**
- * Unique standalone token → configured key. Collisions fail closed
- * (the token is omitted). Insertion order is not a tie-break.
- */
 function normalizeTopicalToken(raw: unknown): string | null {
   if (raw == null) return null;
   const token = String(raw).toLowerCase().trim();
@@ -156,59 +207,11 @@ export function compileStandaloneRecallLookup(entries: DictionaryEntry[]): Map<s
   return lookup;
 }
 
-function normalizeEntry(raw: unknown): DictionaryEntry | null {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw) || !("key" in raw) || !raw.key) return null;
-  const rec = raw as {
-    key: unknown;
-    expansion?: unknown;
-    aliases?: unknown;
-    primary?: unknown;
-    standaloneRecall?: unknown;
-    topicalRecall?: unknown;
-    type?: unknown;
-    provenance?: unknown;
-    confidence?: unknown;
-  };
-  const key = String(rec.key).toLowerCase();
-  const expansion = Array.isArray(rec.expansion)
-    ? rec.expansion.map((w) => String(w).toLowerCase())
-    : [];
-  const aliases = Array.isArray(rec.aliases)
-    ? rec.aliases
-        .filter((a) => Array.isArray(a) && a.length)
-        .map((a) => (a as unknown[]).map((w) => String(w).toLowerCase()))
-    : [];
-  return {
-    key,
-    expansion,
-    aliases,
-    primary: rec.primary == null ? null : String(rec.primary),
-    standaloneRecall: normalizeStandaloneRecall(rec.standaloneRecall),
-    topicalRecall: normalizeTopicalRecall(rec.topicalRecall),
-    type: rec.type == null ? "equivalence" : String(rec.type),
-    provenance: rec.provenance == null ? null : String(rec.provenance),
-    confidence: rec.confidence == null ? null : Number(rec.confidence),
-  };
-}
-
 export function entriesFromAcronymMap(
-  acronymMap?: Record<
-    string,
-    {
-      exp?: string[];
-      aliases?: string[][];
-      primary?: string | null;
-      standaloneRecall?: string[];
-      topicalRecall?: string[][];
-    }
-  > | null
+  acronymMap?: Record<string, { aliases?: string[][] } | null | undefined> | null
 ) {
   return Object.entries(acronymMap || {}).map(([key, def]) => ({
     key,
-    expansion: Array.isArray(def?.exp) ? def.exp : [],
     aliases: Array.isArray(def?.aliases) ? def.aliases : [],
-    primary: def?.primary ?? null,
-    standaloneRecall: Array.isArray(def?.standaloneRecall) ? def.standaloneRecall : [],
-    topicalRecall: Array.isArray(def?.topicalRecall) ? def.topicalRecall : [],
   }));
 }

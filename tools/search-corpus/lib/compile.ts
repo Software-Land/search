@@ -21,44 +21,6 @@ import type {
   SynonymCandidate,
 } from "../types.js";
 
-function topicalRecallOf(raw: unknown): string[][] {
-  if (!Array.isArray(raw)) return [];
-  const out: string[][] = [];
-  const seen = new Set<string>();
-  for (const item of raw) {
-    if (!Array.isArray(item) || !item.length) continue;
-    const form: string[] = [];
-    let malformed = false;
-    for (const tok of item) {
-      const token = String(tok ?? "").toLowerCase().trim();
-      if (!token || /\s/.test(token)) {
-        malformed = true;
-        break;
-      }
-      form.push(token);
-    }
-    if (malformed || !form.length) continue;
-    const key = form.join("\u001f");
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(form);
-  }
-  return out;
-}
-
-function standaloneRecallOf(raw: unknown): string[] {
-  if (!Array.isArray(raw)) return [];
-  const out: string[] = [];
-  const seen = new Set<string>();
-  for (const item of raw) {
-    const token = String(item ?? "").toLowerCase().trim();
-    if (!token || /\s/.test(token) || seen.has(token)) continue;
-    seen.add(token);
-    out.push(token);
-  }
-  return out;
-}
-
 function reviewerExamples(provenance: EvidenceHit[] | undefined): EvidenceHit[] {
   return (provenance || []).slice(0, 3);
 }
@@ -105,25 +67,35 @@ export function compileEquivalences(candidates: EquivalenceCandidate[]): Equival
     }
     byKey.set(key, c);
   }
-  const entries = stableSort([...byKey.values()], (e) => e.key || "").map((c) => ({
-    key: c.key || "",
-    expansion: c.expansion || [],
-    aliases: c.aliases || [],
-    primary: c.primary ?? null,
-    standaloneRecall: standaloneRecallOf((c as { standaloneRecall?: unknown }).standaloneRecall),
-    topicalRecall: topicalRecallOf((c as { topicalRecall?: unknown }).topicalRecall),
-    type: "equivalence",
-    provenance:
-      c.flags?.includes("verified-enrichment")
-        ? "verified-enrichment"
-        : c.lifecycle === LIFECYCLE.HUMAN_ACCEPTED
-          ? c.override === "add" || c.flags?.includes("orphaned-but-complete")
-            ? "manual-addition"
-            : "human-accepted"
-          : "search-corpus",
-    confidence: null,
-    reasons: c.reasons || [],
-  }));
+  const entries = stableSort([...byKey.values()], (e) => e.key || "").map((c) => {
+    const expansion = Array.isArray(c.expansion) ? c.expansion.map((w) => String(w).toLowerCase()) : [];
+    const extra = Array.isArray(c.aliases)
+      ? (c.aliases as unknown[]).filter((alias): alias is string[] => Array.isArray(alias) && alias.length > 0)
+      : [];
+    const seen = new Set<string>();
+    const aliases: string[][] = [];
+    for (const seq of [...(expansion.length ? [expansion] : []), ...extra]) {
+      const key = seq.join("\u001f");
+      if (!seq.length || seen.has(key)) continue;
+      seen.add(key);
+      aliases.push([...seq]);
+    }
+    return {
+      key: c.key || "",
+      aliases,
+      type: "equivalence",
+      provenance:
+        c.flags?.includes("verified-enrichment")
+          ? "verified-enrichment"
+          : c.lifecycle === LIFECYCLE.HUMAN_ACCEPTED
+            ? c.override === "add" || c.flags?.includes("orphaned-but-complete")
+              ? "manual-addition"
+              : "human-accepted"
+            : "search-corpus",
+      confidence: null,
+      reasons: c.reasons || [],
+    };
+  });
   return {
     format: "search-v2-equivalences",
     version: 1,
@@ -216,14 +188,22 @@ export function compileInspection(lifecycleResult: LifecycleResult, { delta = nu
 export function dictionaryEntriesFromEquivalences(artifact?: unknown): unknown[] {
   const rec = artifact as { entries?: unknown[] } | null | undefined;
   return (rec?.entries || []).map((e) => {
-    const row = e as { key?: unknown; expansion?: unknown; aliases?: unknown; provenance?: unknown; primary?: unknown; standaloneRecall?: unknown; topicalRecall?: unknown };
+    const row = e as { key?: unknown; expansion?: unknown; aliases?: unknown; provenance?: unknown };
+    const expansion = Array.isArray(row.expansion) ? row.expansion.map((w) => String(w).toLowerCase()) : [];
+    const aliases = Array.isArray(row.aliases)
+      ? (row.aliases as unknown[]).filter((alias): alias is string[] => Array.isArray(alias) && alias.length > 0)
+      : [];
+    const seen = new Set<string>();
+    const authored: string[][] = [];
+    for (const seq of [...(expansion.length ? [expansion] : []), ...aliases]) {
+      const key = (seq as string[]).join("\u001f");
+      if (!seq.length || seen.has(key)) continue;
+      seen.add(key);
+      authored.push([...(seq as string[])]);
+    }
     return {
       key: row.key,
-      expansion: row.expansion,
-      aliases: row.aliases || [],
-      primary: row.primary ?? null,
-      standaloneRecall: standaloneRecallOf(row.standaloneRecall),
-      topicalRecall: topicalRecallOf(row.topicalRecall),
+      aliases: authored,
       provenance: row.provenance,
     };
   });

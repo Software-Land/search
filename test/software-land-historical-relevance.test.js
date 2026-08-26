@@ -6,7 +6,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { SearchEngine, morphology, dictionary, synonyms } from "../dist/index.js";
+import { SearchEngine, morphology, dictionary, compileAuthoredRelevance } from "../dist/index.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import {
   evaluateHistoricalRelevance,
@@ -48,7 +48,6 @@ function applyDictionaryPatches(entries, patches) {
     return {
       ...entry,
       aliases,
-      topicalRecall: Array.isArray(patch.topicalRecall) ? patch.topicalRecall.map((form) => [...form]) : entry.topicalRecall,
     };
   });
 }
@@ -72,6 +71,11 @@ const APPSEC_TOPICAL = [
 ];
 
 function createRelevanceEngine() {
+  const relationshipMap = loadJson(relevanceConfig.relationshipMapFile).map;
+  const compiled = compileAuthoredRelevance({
+    entries: dictionaryEntries,
+    relationshipMap,
+  });
   return SearchEngine.create({
     schema: {
       title: { type: "text", role: "title" },
@@ -79,8 +83,8 @@ function createRelevanceEngine() {
     },
     plugins: [
       morphology({ lemmas: loadJson("lemmas.json") }),
-      dictionary({ entries: dictionaryEntries }),
-      synonyms(synonymFixture.map),
+      compiled.dictionary,
+      compiled.synonyms,
     ],
     relationships: loadJson("relationships.json"),
     relationshipStrategy: "hybrid",
@@ -182,21 +186,46 @@ describe("Software.Land historical relevance contracts", () => {
     expect(dictionaryEntries.some((entry) => entry.key === "testing")).toBe(false);
     expect(loadJson("dictionary.json").some((entry) => entry.key === "testing")).toBe(true);
     const frozenAppsec = loadJson("dictionary.json").find((entry) => entry.key === "appsec");
+    expect(frozenAppsec.aliases[0]).toEqual(["application", "security"]);
     expect(frozenAppsec.aliases).toEqual(expect.arrayContaining([["security"]]));
+    expect(frozenAppsec.expansion).toBeUndefined();
+    expect(frozenAppsec.primary).toBeUndefined();
     expect(frozenAppsec.topicalRecall).toBeUndefined();
+    expect(frozenAppsec.standaloneRecall).toBeUndefined();
     const frozenNist = loadJson("dictionary.json").find((entry) => entry.key === "nist");
-    expect(frozenNist.aliases).toEqual([]);
+    expect(frozenNist.aliases).toEqual([["national", "institute", "standards", "technology"]]);
     const nist = dictionaryEntries.find((entry) => entry.key === "nist");
-    expect(nist.aliases).toEqual([["institute"], ["institute", "standards"]]);
+    expect(nist.aliases).toEqual([
+      ["national", "institute", "standards", "technology"],
+      ["institute"],
+      ["institute", "standards"],
+    ]);
     const gatech = dictionaryEntries.find((entry) => entry.key === "gatech");
-    expect(gatech.aliases).toEqual([]);
+    expect(gatech.aliases).toEqual([["georgia", "institute", "of", "technology"]]);
     const appsec = dictionaryEntries.find((entry) => entry.key === "appsec");
     expect(appsec.aliases).toEqual([
+      ["application", "security"],
       ["app", "sec"],
       ["app", "security"],
       ["application", "sec"],
     ]);
-    expect(appsec.topicalRecall).toEqual(APPSEC_TOPICAL);
+    expect(appsec.topicalRecall).toBeUndefined();
+    expect(relevanceConfig.relationshipMapFile).toBe("relationship-map.json");
+    const relationshipMap = loadJson("relationship-map.json").map;
+    expect(relationshipMap.appsec.filter((edge) => edge.kind === "related").map((edge) => edge.to.form)).toEqual([
+      "authentication",
+      "authorization",
+      "rbac",
+      "saml",
+      "oauth",
+      ["bearer", "token"],
+      "vulnerability",
+      ["signed", "cookies"],
+    ]);
+    const compiled = compileAuthoredRelevance({ entries: dictionaryEntries, relationshipMap });
+    expect(compiled.dictionary.topicalRecallByKey.get("appsec")).toEqual(APPSEC_TOPICAL);
+    expect(compiled.synonymMap.appsec).toEqual(["oath"]);
+    expect(compiled.synonymMap.qa).toEqual(["testing"]);
     expect(synonymFixture.softwareLandCommit).toBe("db5a070dbc6ac112dfae403f38fdfd0fffbedbf6");
     expect(synonymFixture.stats).toEqual({ sources: 119, edges: 146, jsonBytes: 3081 });
     expect(synonymFixture.map.qa).toEqual(["testing"]);

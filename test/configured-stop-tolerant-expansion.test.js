@@ -15,14 +15,14 @@ import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 
 const nistFamily = [
-  { key: "nist", expansion: ["national", "institute", "standards", "technology"] },
-  { key: "gatech", expansion: ["georgia", "institute", "of", "technology"] },
-  { key: "api", expansion: ["application", "programming", "interface"] },
-  { key: "vpn", expansion: ["virtual", "private", "network"] },
-  { key: "rbac", expansion: ["role", "based", "access", "control"] },
-  { key: "appsec", expansion: ["application", "security"], aliases: [["app", "sec"]] },
-  { key: "techdebt", expansion: ["tech", "debt"] },
-  { key: "iot", expansion: ["internet", "things"], aliases: [["internet", "of", "things"]] },
+  { key: "nist", aliases: [["national", "institute", "standards", "technology"]]},
+  { key: "gatech", aliases: [["georgia", "institute", "of", "technology"]]},
+  { key: "api", aliases: [["application", "programming", "interface"]]},
+  { key: "vpn", aliases: [["virtual", "private", "network"]]},
+  { key: "rbac", aliases: [["role", "based", "access", "control"]]},
+  { key: "appsec", aliases: [["application", "security"], ["app", "sec"]] },
+  { key: "techdebt", aliases: [["tech", "debt"]]},
+  { key: "iot", aliases: [["internet", "things"], ["internet", "of", "things"]] },
 ];
 
 function plugins(entries = nistFamily) {
@@ -93,8 +93,8 @@ describe("stop-tolerant configured expansion alignment", () => {
 
   test("exact full alignment beats a last-token prefix of a different key", () => {
     const dict = [
-      { key: "ab", expansion: ["alpha", "beta"] },
-      { key: "ax", expansion: ["alpha", "betamax"] },
+      { key: "ab", aliases: [["alpha", "beta"]]},
+      { key: "ax", aliases: [["alpha", "betamax"]]},
     ];
     const q = analyze("alpha beta", dict);
     expect(q.configuredSequenceIntent?.key).toBe("ab");
@@ -107,8 +107,8 @@ describe("stop-tolerant configured expansion alignment", () => {
 
   test("ambiguous same-coverage suffixes fail closed", () => {
     const dict = [
-      { key: "nist", expansion: ["national", "institute", "standards", "technology"] },
-      { key: "wist", expansion: ["western", "institute", "standards", "technology"] },
+      { key: "nist", aliases: [["national", "institute", "standards", "technology"]]},
+      { key: "wist", aliases: [["western", "institute", "standards", "technology"]]},
     ];
     const q = analyze("institute of standards and technology", dict);
     expect(q.configuredSequenceIntent).toBeNull();
@@ -210,11 +210,10 @@ describe("explicit exact 1-token configured aliases", () => {
   const nistAliases = [
     {
       key: "nist",
-      expansion: ["national", "institute", "standards", "technology"],
-      aliases: [["institute"], ["institute", "standards"]],
+      aliases: [["national", "institute", "standards", "technology"], ["institute"], ["institute", "standards"]],
     },
-    { key: "gatech", expansion: ["georgia", "institute", "of", "technology"] },
-    { key: "appsec", expansion: ["application", "security"], aliases: [["app", "sec"]] },
+    { key: "gatech", aliases: [["georgia", "institute", "of", "technology"]]},
+    { key: "appsec", aliases: [["application", "security"], ["app", "sec"]] },
   ];
 
   test("a unique exact 1-token expansion-word alias occupies whole-query intent", () => {
@@ -253,8 +252,8 @@ describe("explicit exact 1-token configured aliases", () => {
 
   test("colliding 1-token aliases fail closed", () => {
     const dict = [
-      { key: "nist", expansion: ["national", "institute"], aliases: [["institute"]] },
-      { key: "gatech", expansion: ["georgia", "institute"], aliases: [["institute"]] },
+      { key: "nist", aliases: [["national", "institute"], ["institute"]] },
+      { key: "gatech", aliases: [["georgia", "institute"], ["institute"]] },
     ];
     const q = analyze("institute", dict);
     expect(q.configuredSequenceIntent).toBeNull();

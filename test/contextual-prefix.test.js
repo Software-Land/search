@@ -24,11 +24,8 @@ const docs = [
 const appsecDict = [
   {
     key: "appsec",
-    expansion: ["application", "security"],
-    aliases: [
-      ["app", "sec"],
-      ["app", "security"],
-    ],
+    aliases: [["application", "security"], ["app", "sec"],
+      ["app", "security"],],
   },
 ];
 

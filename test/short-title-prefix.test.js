@@ -10,21 +10,20 @@ import {
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
 import { allowPrefixMatch, DEFAULT_STOP } from "../dist/text.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
+import { dictionaryFromLegacy } from "./helpers/authored.js";
 
 const dict = [
   {
     key: "appsec",
-    expansion: ["application", "security"],
-    aliases: [["app", "sec"]],
+    aliases: [["application", "security"], ["app", "sec"]],
     topicalRecall: [["authentication"], ["authorization"]],
   },
   {
     key: "api",
-    expansion: ["application", "programming", "interface"],
-    aliases: [["application", "programming", "interface"]],
+    aliases: [["application", "programming", "interface"], ["application", "programming", "interface"]],
   },
-  { key: "http", expansion: ["hypertext", "transfer", "protocol"], standaloneRecall: ["hypertext"] },
-  { key: "ml", expansion: ["machine", "learning"] },
+  { key: "http", aliases: [["hypertext", "transfer", "protocol"]], standaloneRecall: ["hypertext"] },
+  { key: "ml", aliases: [["machine", "learning"]]},
 ];
 
 const docs = [
@@ -44,7 +43,7 @@ const docs = [
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 
 function plugins(entries = dict) {
-  return [morphology(), dictionary({ entries })];
+  return [morphology(), dictionary(dictionaryFromLegacy(entries))];
 }
 
 async function engine(retriever) {

@@ -180,8 +180,7 @@ describe("search-corpus embedded acronyms", () => {
             {
               decision: "accept",
               key: "api",
-              expansion: ["application", "programming", "interface"],
-              aliases: [["app", "iface"]],
+              aliases: [["application", "programming", "interface"], ["app", "iface"]],
               primary: "api",
               manual: true,
             },
@@ -191,10 +190,16 @@ describe("search-corpus embedded acronyms", () => {
     );
     const entry = result.equivalences.entries.find((e) => e.key === "api");
     expect(entry).toBeTruthy();
-    expect(entry.aliases).toEqual([["app", "iface"]]);
-    expect(entry.primary).toBe("api");
+    expect(entry.aliases).toEqual([
+      ["application", "programming", "interface"],
+      ["app", "iface"],
+    ]);
+    expect(entry.primary).toBeUndefined();
     const dict = result.dictionaryEntries.find((e) => e.key === "api");
-    expect(dict.aliases).toEqual([["app", "iface"]]);
-    expect(dict.primary).toBe("api");
+    expect(dict.aliases).toEqual([
+      ["application", "programming", "interface"],
+      ["app", "iface"],
+    ]);
+    expect(dict.primary).toBeUndefined();
   });
 });

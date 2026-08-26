@@ -30,9 +30,9 @@ function engine(docs, dictEntries = []) {
 }
 
 const tlsDict = [
-  { key: "tls", expansion: ["transport", "layer", "security"] },
-  { key: "oop", expansion: ["object", "oriented", "programming"] },
-  { key: "api", expansion: ["application", "programming", "interface"] },
+  { key: "tls", aliases: [["transport", "layer", "security"]]},
+  { key: "oop", aliases: [["object", "oriented", "programming"]]},
+  { key: "api", aliases: [["application", "programming", "interface"]]},
 ];
 
 function legacyTokenize(text) {
@@ -137,7 +137,7 @@ describe("query analysis", () => {
   });
 
   test("exact expansion canonicalizes to the key and does not treat one expansion word as the key", () => {
-    const gpuDict = [{ key: "gpu", expansion: ["graphics", "processing", "unit"] }];
+    const gpuDict = [{ key: "gpu", aliases: [["graphics", "processing", "unit"]]}];
     const plugins = [morphology(), dictionary({ entries: gpuDict })];
     const full = analyzeQuery("graphics processing unit", { plugins });
     const keyQ = analyzeQuery("gpu", { plugins });
@@ -179,7 +179,7 @@ describe("query analysis", () => {
   });
 
   test("http and its exact expansion share one canonical query, candidates, and ranking", async () => {
-    const httpDict = [{ key: "http", expansion: ["hypertext", "transfer", "protocol"] }];
+    const httpDict = [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]]}];
     const plugins = [morphology(), dictionary({ entries: httpDict })];
     const key = analyzeQuery("http", { plugins });
     const expansion = analyzeQuery("hypertext transfer protocol", { plugins });
@@ -208,9 +208,9 @@ describe("query analysis", () => {
 
   test("a unique expansion left-prefix is partial-expansion, not the key and not a longer sibling", () => {
     const httpDict = [
-      { key: "http", expansion: ["hypertext", "transfer", "protocol"] },
-      { key: "https", expansion: ["hypertext", "transfer", "protocol", "secure"] },
-      { key: "html", expansion: ["hypertext", "markup", "language"] },
+      { key: "http", aliases: [["hypertext", "transfer", "protocol"]]},
+      { key: "https", aliases: [["hypertext", "transfer", "protocol", "secure"]]},
+      { key: "html", aliases: [["hypertext", "markup", "language"]]},
     ];
     const plugins = [morphology(), dictionary({ entries: httpDict })];
     const prefix = analyzeQuery("hypertext transfer", { plugins });
@@ -236,8 +236,8 @@ describe("query analysis", () => {
 
   test("completing a unique expansion prefix stays HTTP-like and does not collapse until exact", async () => {
     const httpDict = [
-      { key: "http", expansion: ["hypertext", "transfer", "protocol"] },
-      { key: "https", expansion: ["hypertext", "transfer", "protocol", "secure"] },
+      { key: "http", aliases: [["hypertext", "transfer", "protocol"]]},
+      { key: "https", aliases: [["hypertext", "transfer", "protocol", "secure"]]},
     ];
     const plugins = [morphology(), dictionary({ entries: httpDict })];
     const docs = [
@@ -289,17 +289,17 @@ describe("query analysis", () => {
       morphology(),
       dictionary({
         entries: [
-          { key: "sla", expansion: ["service", "level", "agreement"] },
-          { key: "slo", expansion: ["service", "level", "objective"] },
-          { key: "sli", expansion: ["service", "level", "indicator"] },
-          { key: "vpn", expansion: ["virtual", "private", "network"] },
-          { key: "vpc", expansion: ["virtual", "private", "cloud"] },
-          { key: "graphql", expansion: ["graph", "query", "language"] },
-          { key: "gql", expansion: ["graph", "query", "language"] },
-          { key: "url", expansion: ["uniform", "resource", "locator"] },
-          { key: "uri", expansion: ["uniform", "resource", "identifier"] },
-          { key: "ecs", expansion: ["elastic", "container", "service"] },
-          { key: "ecr", expansion: ["elastic", "container", "registry"] },
+          { key: "sla", aliases: [["service", "level", "agreement"]]},
+          { key: "slo", aliases: [["service", "level", "objective"]]},
+          { key: "sli", aliases: [["service", "level", "indicator"]]},
+          { key: "vpn", aliases: [["virtual", "private", "network"]]},
+          { key: "vpc", aliases: [["virtual", "private", "cloud"]]},
+          { key: "graphql", aliases: [["graph", "query", "language"]]},
+          { key: "gql", aliases: [["graph", "query", "language"]]},
+          { key: "url", aliases: [["uniform", "resource", "locator"]]},
+          { key: "uri", aliases: [["uniform", "resource", "identifier"]]},
+          { key: "ecs", aliases: [["elastic", "container", "service"]]},
+          { key: "ecr", aliases: [["elastic", "container", "registry"]]},
         ],
       }),
     ];
@@ -314,12 +314,12 @@ describe("query analysis", () => {
       morphology(),
       dictionary({
         entries: [
-          { key: "http", expansion: ["hypertext", "transfer", "protocol"] },
-          { key: "https", expansion: ["hypertext", "transfer", "protocol", "secure"] },
-          { key: "api", expansion: ["application", "programming", "interface"] },
-          { key: "oop", expansion: ["object", "oriented", "programming"] },
-          { key: "tls", expansion: ["transport", "layer", "security"] },
-          { key: "dfs", expansion: ["depth", "first", "search"] },
+          { key: "http", aliases: [["hypertext", "transfer", "protocol"]]},
+          { key: "https", aliases: [["hypertext", "transfer", "protocol", "secure"]]},
+          { key: "api", aliases: [["application", "programming", "interface"]]},
+          { key: "oop", aliases: [["object", "oriented", "programming"]]},
+          { key: "tls", aliases: [["transport", "layer", "security"]]},
+          { key: "dfs", aliases: [["depth", "first", "search"]]},
         ],
       }),
     ];
@@ -352,13 +352,13 @@ describe("query analysis", () => {
       morphology(),
       dictionary({
         entries: [
-          { key: "graphql", expansion: ["graph", "query", "language"] },
-          { key: "gql", expansion: ["graph", "query", "language"] },
-          { key: "jwt", expansion: ["json", "web", "token"] },
-          { key: "webrtc", expansion: ["web", "real", "time", "communication"] },
-          { key: "reactjs", expansion: ["react", "js"] },
-          { key: "rsc", expansion: ["react", "server", "components"] },
-          { key: "tls", expansion: ["transport", "layer", "security"] },
+          { key: "graphql", aliases: [["graph", "query", "language"]]},
+          { key: "gql", aliases: [["graph", "query", "language"]]},
+          { key: "jwt", aliases: [["json", "web", "token"]]},
+          { key: "webrtc", aliases: [["web", "real", "time", "communication"]]},
+          { key: "reactjs", aliases: [["react", "js"]]},
+          { key: "rsc", aliases: [["react", "server", "components"]]},
+          { key: "tls", aliases: [["transport", "layer", "security"]]},
         ],
       }),
     ];
@@ -388,8 +388,8 @@ describe("query analysis", () => {
 
   test("ambiguous configured-key prefixes are order-independent and stay unattached", () => {
     const forward = [
-      { key: "reactjs", expansion: ["react", "js"] },
-      { key: "reactnative", expansion: ["react", "native"] },
+      { key: "reactjs", aliases: [["react", "js"]]},
+      { key: "reactnative", aliases: [["react", "native"]]},
     ];
     const reverse = [...forward].reverse();
     for (const entries of [forward, reverse]) {
@@ -409,8 +409,8 @@ describe("query analysis", () => {
 
   test("shared exact expansions do not collapse when more than one key owns them", () => {
     const forward = [
-      { key: "graphql", expansion: ["graph", "query", "language"] },
-      { key: "gql", expansion: ["graph", "query", "language"] },
+      { key: "graphql", aliases: [["graph", "query", "language"]]},
+      { key: "gql", aliases: [["graph", "query", "language"]]},
     ];
     const reverse = [...forward].reverse();
     for (const entries of [forward, reverse]) {
@@ -422,8 +422,8 @@ describe("query analysis", () => {
       expect(analyzeQuery("gql", { plugins }).tokens.map((t) => t.normalized)).toEqual(["gql"]);
     }
     const withPrimaryHint = [
-      { key: "graphql", expansion: ["graph", "query", "language"], primary: "graph" },
-      { key: "gql", expansion: ["graph", "query", "language"], primary: "graphql" },
+      { key: "graphql", aliases: [["graph", "query", "language"]] },
+      { key: "gql", aliases: [["graph", "query", "language"]] },
     ];
     for (const entries of [withPrimaryHint, [...withPrimaryHint].reverse()]) {
       const q = analyzeQuery("graph query language", {
@@ -435,7 +435,7 @@ describe("query analysis", () => {
   });
 
   test("unique learn* prefixes share canonical tokens, candidates, and ranked IDs", async () => {
-    const mlDict = [{ key: "ml", expansion: ["machine", "learning"] }];
+    const mlDict = [{ key: "ml", aliases: [["machine", "learning"]]}];
     const plugins = [morphology(), dictionary({ entries: mlDict })];
     const lexicon = ["machine", "learn", "learning", "learnings", "application", "security"];
     const incomplete = ["machine learn", "machine learni", "machine learnin"];
@@ -490,7 +490,7 @@ describe("query analysis", () => {
   });
 
   test("exact expansion collapse keeps pre-collapse lexical phrase evidence", async () => {
-    const mlDict = [{ key: "ml", expansion: ["machine", "learning"] }];
+    const mlDict = [{ key: "ml", aliases: [["machine", "learning"]]}];
     const plugins = [morphology(), dictionary({ entries: mlDict })];
     const lexicon = ["machine", "learn", "learning", "learnings"];
     const docs = [
@@ -543,7 +543,7 @@ describe("query analysis", () => {
   });
 
   test("unique configured-equivalence forms share canonical intent and ranked IDs", async () => {
-    const mlDict = [{ key: "ml", expansion: ["machine", "learning"] }];
+    const mlDict = [{ key: "ml", aliases: [["machine", "learning"]]}];
     const plugins = [morphology(), dictionary({ entries: mlDict })];
     const lexicon = ["machine", "learn", "learning", "learnings", "notes"];
     const forms = ["ml", "machine learning", "machine learn"];

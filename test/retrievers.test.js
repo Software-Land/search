@@ -20,7 +20,7 @@ const docs = [
 ];
 
 async function engines() {
-  const plugins = [morphology(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })];
+  const plugins = [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })];
   const full = SearchEngine.create({ schema, plugins });
   const indexed = SearchEngine.create({
     schema,

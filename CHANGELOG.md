@@ -26,9 +26,18 @@
 
 ## 0.5.0
 
+### Breaking
+
+- Configured concepts are authored as `{ key, aliases }` only. `aliases[0]` is the canonical lexical sequence and is compiled internally as the existing expansion sequence kind. Alternate same-intent forms are `aliases[1…]`. The public authoring schema no longer has `exp` / `expansion`, `primary`, `standaloneRecall`, or `topicalRecall`.
+- Explicit application-owned relevance is authored in directional `relationshipMap` with kinds `equivalent` and `related`, and typed endpoints `{ form } | { concept } | { document }`. Edges do not auto-reverse and must not carry numeric weights. `equivalent` compiles onto existing `synonyms()` one-hop semantics. `related` token→concept compiles onto existing standalone-recall semantics. `related` concept→form compiles onto existing topical-recall semantics. `related` document→document compiles onto existing editorial relationship artifact semantics (`type: editorial`, provenance `manual`, strength 1).
+- Generated MiniLM / semantic document relationships remain a separate generated pipeline. They are not authored in `relationshipMap`. Generated-edge rejection/adjudication remains a separate follow-up; this release does not add an unused rejection framework.
+- One-shot `migrateConfiguredEntry(old)` converts `{ key, exp|expansion, aliases, primary, standaloneRecall, topicalRecall }` into `{ key, aliases }` plus extracted standalone/topical relationship descriptors. `primary` is discarded and is not mapped to any relationship. Runtime `dictionary()` / `SearchEngine` do not call the helper.
+- Public helpers `compileRelationshipMap()` and `compileAuthoredRelevance()` compile the new authoring onto the existing dictionary, synonym, and editorial machinery. Explain provenance may still say `standaloneRecall` / `topicalRecall` because those remain compiled runtime/explain names, not authoring fields.
+- `@software-land/search/corpus` `normalizeExternalEquivalences` application rows should be `{ key, aliases }` with `aliases[0]` canonical. Compiled corpus dictionary entries emitted for `dictionary()` are `{ key, aliases }`. Miner-internal expansion comparison is unchanged.
+
 ### Added
 
-- `@software-land/search/corpus` exports `normalizeExternalEquivalences` and `ExternalEquivalenceError` for application-generated `{ key, expansion, aliases, primary }` rows. The compiler does not call a model and does not accept a multi-sense `expansions: []` public schema.
+- `@software-land/search/corpus` exports `normalizeExternalEquivalences` and `ExternalEquivalenceError` for application-generated `{ key, aliases }` rows (`aliases[0]` is canonical). The compiler does not call a model and does not accept a multi-sense `expansions: []` public schema. Use `migrateConfiguredEntry()` for a one-shot conversion from `{ key, expansion, aliases, primary }`.
 - Safe symbolic / compact-key normalization: separator punctuation between alphanumeric groups folds (`CI/CD` → `cicd`, `TCP/IP` → `tcpip`). Significant symbols are not silently collapsed (`A*`, `C++`, `C#`, `O(1)`). Spoken expansions such as `C++` → `c plus plus` and `C#` → `c sharp` are kept; unsupported symbolic structures reject rather than collapsing to `c` / `on`.
 - `classifyExpansionRelation` treats British/American suffix spelling (`acknowledgement`/`acknowledgment`, `colour`/`color`, `optimisation`/`optimization`) and conservative short-form abbreviations of an aligned longer token (`tech`/`technical`) as compatible. Distinct meanings (`authentication`/`authorization`, CI/CD delivery vs deployment) stay unresolved.
 - Contextual lexical completion (Model B) from trusted configured expansions. Typed identity stays typed; canonical lexical intent is separate. Explain/query diagnostics may add `contextualCompletion`, `lexicalTokens`, and `lexicalPhraseKey` without changing `search()` result semantics.

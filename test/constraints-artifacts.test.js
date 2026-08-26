@@ -143,7 +143,7 @@ describe("compiled artifacts", () => {
     const eq = parseEquivalences({
       format: "search-v2-equivalences",
       version: 1,
-      entries: [{ key: "tls", expansion: ["transport", "layer", "security"], type: "equivalence", provenance: "manual" }],
+      entries: [{ key: "tls", aliases: [["transport", "layer", "security"]], type: "equivalence", provenance: "manual" }],
     });
     const syn = parseSynonyms({
       format: "search-v2-synonyms",
@@ -183,7 +183,7 @@ describe("precomputed relationships", () => {
   test("direct result stays first; related enter with provenance; unrelated stay out", async () => {
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })],
+      plugins: [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
       relationships: graph,
     });
     await engine.index(docs);
@@ -207,7 +207,7 @@ describe("precomputed relationships", () => {
   test("omitting the graph does not add related documents", async () => {
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })],
+      plugins: [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
     });
     await engine.index(docs);
     const titles = engine.search("tls", { limit: 10 }).map((r) => r.title);
@@ -217,7 +217,7 @@ describe("precomputed relationships", () => {
 
   test("relationships are not query equivalences", async () => {
     const q = analyzeQuery("tls", {
-      plugins: [morphology(), dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] })],
+      plugins: [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
     });
     expect(q.concepts.some((c) => c.forms.includes("vpn"))).toBe(false);
   });
@@ -230,8 +230,8 @@ describe("general lexical search", () => {
         morphology(),
         dictionary({
           entries: [
-            { key: "cd", expansion: ["continuous", "deployment"] },
-            { key: "cicd", expansion: ["continuous", "integration", "continuous", "deployment"] },
+            { key: "cd", aliases: [["continuous", "deployment"]]},
+            { key: "cicd", aliases: [["continuous", "integration", "continuous", "deployment"]]},
           ],
         }),
       ],
@@ -246,7 +246,7 @@ describe("general lexical search", () => {
       plugins: [
         morphology(),
         dictionary({
-          entries: [{ key: "api", expansion: ["application", "programming", "interface"] }],
+          entries: [{ key: "api", aliases: [["application", "programming", "interface"]]}],
         }),
       ],
     });
@@ -257,7 +257,7 @@ describe("general lexical search", () => {
 
   test("single-letter still does not prefix a dictionary key", () => {
     const q = analyzeQuery("a", {
-      plugins: [morphology(), dictionary({ entries: [{ key: "api", expansion: ["application", "programming", "interface"] }] })],
+      plugins: [morphology(), dictionary({ entries: [{ key: "api", aliases: [["application", "programming", "interface"]]}] })],
     });
     expect(q.concepts.some((c) => c.kind === "acronym")).toBe(false);
   });
@@ -265,7 +265,7 @@ describe("general lexical search", () => {
   test("configured-key query prefers a title that states the expansion", async () => {
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries: [{ key: "oop", expansion: ["object", "oriented", "programming"] }] })],
+      plugins: [morphology(), dictionary({ entries: [{ key: "oop", aliases: [["object", "oriented", "programming"]]}] })],
     });
     await engine.index([
       { id: "/oop-vs/", title: "OOP vs Functional", body: "Comparing OOP and functional programming." },

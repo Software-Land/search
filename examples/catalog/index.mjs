@@ -24,8 +24,8 @@ const engine = SearchEngine.create({
     morphology(),
     dictionary({
       entries: [
-        { key: "wifi", expansion: ["wi", "fi"], aliases: [["wi", "fi"]] },
-        { key: "api", expansion: ["application", "programming", "interface"] },
+        { key: "wifi", aliases: [["wi", "fi"]] },
+        { key: "api", aliases: [["application", "programming", "interface"]]},
       ],
     }),
   ],

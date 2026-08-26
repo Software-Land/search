@@ -11,36 +11,33 @@ import {
   resolveConfiguredSpans,
   tokenAlignsConfiguredKey,
 } from "../dist/configuredSequence.js";
+import { dictionaryFromLegacy } from "./helpers/authored.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 
 const apiAppsecDict = [
   {
     key: "api",
-    expansion: ["application", "programming", "interface"],
-    aliases: [["app", "programming", "interface"]],
+    aliases: [["application", "programming", "interface"], ["app", "programming", "interface"]],
   },
   {
     key: "appsec",
-    expansion: ["application", "security"],
-    aliases: [
-      ["app", "sec"],
+    aliases: [["application", "security"], ["app", "sec"],
       ["app", "security"],
-      ["application", "sec"],
-    ],
+      ["application", "sec"],],
     topicalRecall: [["authentication"], ["authorization"]],
   },
 ];
 
 const sameLengthDict = [
-  { key: "appsec", expansion: ["application", "security"], topicalRecall: [["authentication"]] },
-  { key: "appsvr", expansion: ["application", "server"] },
+  { key: "appsec", aliases: [["application", "security"]], topicalRecall: [["authentication"]] },
+  { key: "appsvr", aliases: [["application", "server"]]},
 ];
 
-const widgetDict = [{ key: "widget", expansion: ["user", "interface", "control"] }];
+const widgetDict = [{ key: "widget", aliases: [["user", "interface", "control"]]}];
 
 function plugins(entries) {
-  return [morphology(), dictionary({ entries })];
+  return [morphology(), dictionary(dictionaryFromLegacy(entries))];
 }
 
 function acronymIds(q) {
@@ -78,8 +75,8 @@ describe("canonical lemma occupies exact configured key", () => {
 
   test("https-like keys stay on the typed key rather than a trailing-s lemma", () => {
     const dict = [
-      { key: "http", expansion: ["hypertext", "transfer", "protocol"] },
-      { key: "https", expansion: ["hypertext", "transfer", "protocol", "secure"] },
+      { key: "http", aliases: [["hypertext", "transfer", "protocol"]]},
+      { key: "https", aliases: [["hypertext", "transfer", "protocol", "secure"]]},
     ];
     const q = analyzeQuery("https", { plugins: plugins(dict) });
     expect(q.tokens[0].surface).toBe("https");
@@ -90,8 +87,8 @@ describe("canonical lemma occupies exact configured key", () => {
 
   test("lemma does not occupy a different key inside another exact expansion", () => {
     const dict = [
-      { key: "rbac", expansion: ["role", "based", "access", "control"] },
-      { key: "base", expansion: ["base", "case"] },
+      { key: "rbac", aliases: [["role", "based", "access", "control"]]},
+      { key: "base", aliases: [["base", "case"]]},
     ];
     const q = analyzeQuery("role based access control", { plugins: plugins(dict) });
     expect(q.configuredSequenceIntent?.key).toBe("rbac");
@@ -127,8 +124,8 @@ describe("first-token configured prefix disambiguation", () => {
 
   test("an exact first expansion word does not steal a different first-token prefix", () => {
     const dict = [
-      { key: "oauth", expansion: ["open", "authorization"] },
-      { key: "oidc", expansion: ["openid", "connect"] },
+      { key: "oauth", aliases: [["open", "authorization"]]},
+      { key: "oidc", aliases: [["openid", "connect"]]},
     ];
     const q = analyzeQuery("open", { plugins: plugins(dict) });
     expect(q.configuredSequenceIntent).toBeNull();
@@ -205,7 +202,7 @@ describe("partial expansion projects configured sequence intent", () => {
 
 describe("unknown-token repair stays isolated from configured prefixes", () => {
   const lexicon = ["application", "programming", "interface", "security"];
-  const apiPlugins = plugins([{ key: "api", expansion: ["application", "programming", "interface"] }]);
+  const apiPlugins = plugins([{ key: "api", aliases: [["application", "programming", "interface"]]}]);
 
   test("glued API queries still occupy API", () => {
     for (const raw of ["applicationprogramming interface", "application programminginterface"]) {

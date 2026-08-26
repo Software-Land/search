@@ -29,6 +29,14 @@ function asExpansion(raw: unknown): string[] {
   return [];
 }
 
+function expansionFromAuthored(item: { expansion?: unknown; aliases?: unknown } | null | undefined): string[] {
+  const fromExp = asExpansion(item?.expansion);
+  if (fromExp.length) return fromExp;
+  const aliases = Array.isArray(item?.aliases) ? item.aliases : [];
+  if (aliases.length) return asExpansion(aliases[0]);
+  return [];
+}
+
 function asTerms(raw: unknown): string[] {
   if (Array.isArray(raw)) return normalizeTerms(raw);
   if (typeof raw === "string") return normalizeTerms(raw.split(/[\s,]+/));
@@ -73,7 +81,7 @@ export function overridesToDecisions(overrides: DecisionOverrides): DecisionDoc 
   const equivalences: EquivalenceDecision[] = [];
   for (const rej of overrides.reject || []) {
     const key = acronymKey(rej.key);
-    const expansion = asExpansion(rej.expansion);
+    const expansion = expansionFromAuthored(rej);
     equivalences.push({
       id: equivalenceId(key, expansion),
       type: "equivalence",
@@ -87,7 +95,7 @@ export function overridesToDecisions(overrides: DecisionOverrides): DecisionDoc 
   }
   for (const acc of [...(overrides.accept || []), ...(overrides.add || [])]) {
     const key = acronymKey(acc.key);
-    const expansion = asExpansion(acc.expansion);
+    const expansion = expansionFromAuthored(acc);
     equivalences.push({
       id: equivalenceId(key, expansion),
       type: "equivalence",
@@ -124,7 +132,7 @@ function normalizeEquivalenceList(raw: unknown): EquivalenceDecision[] {
 
 function normalizeEquivalenceItem(item: Record<string, unknown>): EquivalenceDecision {
   const key = acronymKey(typeof item.key === "string" ? item.key : "");
-  const expansion = asExpansion(item.expansion);
+  const expansion = expansionFromAuthored(item);
   const id = typeof item.id === "string" && item.id ? item.id : equivalenceId(key, expansion);
   return {
     id,

@@ -78,8 +78,9 @@ export interface EnglishPlugin extends SearchPlugin {
 }
 
 /**
- * Configured-equivalence plugin shape. `dictionary()` returns `DictionaryPlugin`.
- * Core does not read a plugin `entries` array.
+ * Configured-concept plugin shape. `dictionary()` returns `DictionaryPlugin`.
+ * Core does not read a plugin `entries` array. Authored entries are `{ key, aliases }`.
+ * `standaloneRecallByToken` / `topicalRecallByKey` are compiled from relationshipMap.
  */
 export interface DictionaryPlugin extends SearchPlugin {
   name: "dictionary";
@@ -330,16 +331,47 @@ export interface SearchEngineConstructor {
 
 export interface EquivalenceEntry {
   key: string;
-  expansion?: string[];
+  /** aliases[0] is the canonical lexical sequence; remaining aliases are same-intent forms. */
   aliases?: string[][];
-  primary?: string | null;
-  /** Reviewed exact standalone tokens that may open secondary configured recall. */
-  standaloneRecall?: string[];
-  /** Reviewed one-hop topical phrase forms. Not aliases or lexical intent. */
-  topicalRecall?: string[][];
   type?: string;
   provenance?: string | null;
   confidence?: number | null;
+}
+
+export type RelationshipKind = "equivalent" | "related";
+
+export type RelationshipEndpoint =
+  | { form: string | string[] }
+  | { concept: string }
+  | { document: string };
+
+export interface AuthoredRelationshipEdge {
+  to: RelationshipEndpoint;
+  kind: RelationshipKind;
+}
+
+export type RelationshipMap = Record<string, AuthoredRelationshipEdge[]>;
+
+export interface MigratedConfiguredEntry {
+  entry: EquivalenceEntry;
+  discardedPrimary: string | null;
+  standaloneRelationships: Array<{ sourceToken: string; concept: string }>;
+  topicalRelationships: Array<{ concept: string; form: string[] }>;
+}
+
+export interface CompiledRelationshipMap {
+  synonymMap: SearchEquivalenceMap;
+  editorialRelationships: Record<
+    string,
+    Array<{ target: string; type: "editorial"; strength: 1; provenance: "manual" }>
+  >;
+}
+
+export interface CompiledAuthoredRelevance {
+  dictionary: DictionaryPlugin;
+  synonymMap: SearchEquivalenceMap;
+  synonyms: SynonymPlugin;
+  editorialRelationships: CompiledRelationshipMap["editorialRelationships"];
 }
 
 export interface EquivalenceArtifact {

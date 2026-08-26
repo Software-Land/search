@@ -5,6 +5,19 @@ function pairId(key: unknown, expansion: unknown): string {
   return `${acronymKey(key)}::${phraseKey(Array.isArray(expansion) ? expansion.map((t) => String(t)) : expansionTokens(expansion))}`;
 }
 
+function expansionFromAuthored(item: { expansion?: unknown; aliases?: unknown } | null | undefined): string[] {
+  if (Array.isArray(item?.expansion) && item.expansion.length) {
+    return item.expansion.map((t) => String(t).toLowerCase()).filter(Boolean);
+  }
+  if (typeof item?.expansion === "string" && item.expansion.trim()) return expansionTokens(item.expansion);
+  const aliases = Array.isArray(item?.aliases) ? item.aliases : [];
+  if (aliases.length && Array.isArray(aliases[0])) {
+    return aliases[0].map((t) => String(t).toLowerCase()).filter(Boolean);
+  }
+  if (typeof aliases[0] === "string") return expansionTokens(aliases[0]);
+  return [];
+}
+
 export function loadOverrides(raw: unknown): {
   accept: Array<{ key?: unknown; expansion?: unknown; aliases?: unknown }>;
   reject: Array<{ key?: unknown; expansion?: unknown }>;
@@ -57,7 +70,7 @@ export function applyOverrides(candidates: EquivalenceCandidate[], overrides: un
 
   for (const acc of cfg.accept) {
     const key = acronymKey(acc.key);
-    const expansion = Array.isArray(acc.expansion) ? (acc.expansion as string[]) : expansionTokens(acc.expansion || "");
+    const expansion = expansionFromAuthored(acc);
     const id = pairId(key, expansion);
     const existing = byId.get(id);
     const others = [...byId.values()].filter((c) => c.key === key && pairId(c.key, c.expansion) !== id && c.status === "accepted");
@@ -101,7 +114,7 @@ export function applyOverrides(candidates: EquivalenceCandidate[], overrides: un
 
   for (const add of cfg.add) {
     const key = acronymKey(add.key);
-    const expansion = Array.isArray(add.expansion) ? (add.expansion as string[]) : expansionTokens(add.expansion || "");
+    const expansion = expansionFromAuthored(add);
     const id = pairId(key, expansion);
     const aliases = Array.isArray(add.aliases) ? add.aliases : [];
     byId.set(id, {
