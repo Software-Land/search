@@ -68,7 +68,7 @@ import { SearchEngine, morphology, dictionary, synonyms } from "@software-land/s
 SearchEngine.create({
   plugins: [
     morphology(),
-    dictionary({ entries: [{ key: "qa", expansion: ["quality", "assurance"] }] }),
+    dictionary({ entries: [{ key: "qa", aliases: [["quality", "assurance"]] }] }),
     synonyms({ qa: ["testing"] }),
   ],
 });
@@ -77,3 +77,42 @@ SearchEngine.create({
 `normalizeSearchEquivalences(map)` validates that input (empty source/targets, source==target, unsafe symbols, max 8 targets/source). Applications merge curated and generated rows before calling it; Core does not rank those sources.
 
 The compiled `search-v2-synonyms` `{ terms: [...] }` artifact remains a bidirectional compatibility path via `synonyms({ format, entries })` / `parseSynonyms()`. Do not pass a directional object map to `parseSynonyms()`.
+
+## Configured concepts and relationshipMap
+
+Configured concepts are authored as `{ key, aliases }` only. `aliases[0]` is the canonical lexical sequence (compiled internally as the existing expansion sequence). Later aliases are alternate same-intent forms. Former fields `expansion` / `exp`, `primary`, `standaloneRecall`, and `topicalRecall` are rejected on `dictionary()` entries.
+
+```js
+import {
+  SearchEngine,
+  morphology,
+  compileAuthoredRelevance,
+} from "@software-land/search";
+
+const authored = compileAuthoredRelevance({
+  entries: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
+  relationshipMap: {
+    hypertext: [{ to: { concept: "http" }, kind: "related" }],
+    qa: [{ to: { form: "testing" }, kind: "equivalent" }],
+  },
+});
+
+SearchEngine.create({
+  plugins: [morphology(), authored.dictionary, authored.synonyms],
+});
+```
+
+`relationshipMap` is directional. Kinds are `equivalent` and `related`. Endpoints are `{ form }`, `{ concept }`, or `{ document }`. Edges do not auto-reverse and must not carry numeric weights.
+
+| Authored edge | Compiles onto |
+| --- | --- |
+| `equivalent` → form or concept | existing `synonyms()` one-hop recall |
+| `related` 1-token → `{ concept }` | existing standalone-recall |
+| `related` concept → `{ form }` | existing topical-recall |
+| `related` document → `{ document }` | existing editorial relationship artifact (`type: editorial`, provenance `manual`, strength 1) |
+
+`dictionary({ entries, relationshipMap, documents })` applies related standalone/topical onto the dictionary plugin. Use `compileAuthoredRelevance()` when you also need the compiled synonym plugin and editorial document edges. Generated MiniLM relationships stay in the separate semantic artifact; they are not authored here.
+
+`migrateConfiguredEntry(old)` is a one-shot conversion from `{ key, exp|expansion, aliases, primary, standaloneRecall, topicalRecall }`. Runtime `dictionary()` / `SearchEngine` do not call it. `primary` is discarded and is not mapped to any relationship.
+
+Explain output may still name compiled `standaloneRecall` / `topicalRecall` provenance. Those are runtime/explain names, not authoring fields.

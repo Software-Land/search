@@ -11,6 +11,12 @@ search-relationships   tools/search-relationships
 
 Distribution: **one npm package** (`@software-land/search`) with subpath exports `.`, `./browser`, `./corpus`, `./relationships`, `./semantic`, and `./lexical`. Runtime and browser execute from emitted `dist/` JavaScript; root and browser public types are generated into `dist/*.d.ts`. Corpus, relationships, lexical, and Python semantic tooling remain source-shipped under `tools/`. Search Core and the browser Worker do not import `./semantic`, `./corpus`, `./relationships`, or `./lexical`. Application-owned model generation may supply external equivalence rows; the corpus compiler consumes them. The package does not own model execution.
 
+Application relevance authoring is two primitives plus a separate generated graph. See [concepts.md](concepts.md):
+
+- **Concept map** (`dictionary({ entries: [{ key, aliases }] })`): which query forms mean the same configured concept. `aliases[0]` is canonical.
+- **Relationship map** (`relationshipMap`): which other forms, concepts, or documents are explicitly `equivalent` or `related`. Directional. No auto-reverse. No authored numeric weight.
+- **Semantic graph**: relationships the model inferred. Not authored in `relationshipMap`. Generated-edge rejection stays a separate follow-up.
+
 ## Environments
 
 Tested: **Node 18+** (Jest/Node) and **in-process / loopback Worker semantics**. A real browser Worker uses the same protocol. Not promised: Deno, Bun, React Native, Android, Electron.

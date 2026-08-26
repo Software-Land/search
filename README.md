@@ -40,7 +40,7 @@ const engine = SearchEngine.create({
   plugins: [
     morphology(),
     dictionary({
-      entries: [{ key: "wifi", expansion: ["wi", "fi"], aliases: [["wi", "fi"]] }],
+      entries: [{ key: "wifi", aliases: [["wi", "fi"]] }],
     }),
   ],
 });
@@ -84,7 +84,7 @@ const engine = SearchEngine.create({
   plugins: [
     morphology(),
     dictionary({
-      entries: [{ key: "qa", expansion: ["quality", "assurance"] }],
+      entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
     }),
     synonyms({
       qa: ["testing"],
@@ -135,7 +135,7 @@ const { equivalences, synonyms, dictionaryEntries } = compileCorpus({
 });
 
 const generated = normalizeExternalEquivalences([
-  { key: "cpu", expansion: "central processing unit", aliases: [], primary: null },
+  { key: "cpu", aliases: [["central", "processing", "unit"]] },
 ]);
 ```
 

@@ -14,16 +14,19 @@ query
 
 Exact indexed retrieval enumerates every legitimate posting match. After relationship expansion it retains a sufficient per-signature prefix for the final ranker; `candidateLimit` is not a retrieval bound on this path. Builtin ranking is sparse in the constraint-signature count B; worst case remains Θ(C²) when B = C.
 
-## Equivalence ≠ synonym ≠ relatedness
+## Equivalence ≠ relatedness ≠ generated evidence
 
-| | Lives where | Affects |
+| | Lives where | Means |
 | --- | --- | --- |
-| Equivalence (`tls` ↔ transport layer security) | dictionary / equivalences artifact | query interpretation |
-| Search equivalence / near-synonym | `synonyms({ qa: ["testing"] })` or compiled synonyms artifact | candidate recall; extra configured-occupancy targets are `synonym-recall` evidence, not typed coverage |
-| Morphology (site lemma table) | `morphology({ lemmas })` / Worker `englishOptions` | query and document analysis |
-| Related documents (Bluetooth → Connected devices) | relationships artifact | expansion after strong primaries |
+| Concept map (`dictionary({ entries: [{ key, aliases }] })`) | what query forms mean the **same thing** | `aliases[0]` is the canonical lexical sequence (compiled internally as expansion). Later aliases are alternate same-intent forms. |
+| Relationship map (`relationshipMap`) | what other forms/concepts/documents are explicitly **related** | kinds `equivalent` (existing synonym recall) and `related` (standalone / topical / editorial). Directional. No auto-reverse. No authored numeric weight. |
+| Semantic graph (generated MiniLM artifact) | what relationships the **model inferred** | separate generated pipeline with embedding provenance. Not authored in `relationshipMap`. |
+
+`equivalent` is not `related`. Generated is not authored.
 
 Core does not invent aliases. `wifi` will not match `Wi-Fi` unless you compile that decision. Lemma generators stay in the site build; Core consumes an optional `Record<string, string>` and will not import spaCy, lemminflect, or a site lemmatizer.
+
+Former authoring fields `expansion`, `primary`, `standaloneRecall`, and `topicalRecall` are not part of the public configured-concept schema. Explain output may still name compiled standalone/topical provenance. Use `migrateConfiguredEntry()` for a one-shot conversion from 0.4 / early-0.5 rows.
 
 ## What is frozen
 

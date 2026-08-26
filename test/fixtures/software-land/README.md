@@ -30,7 +30,7 @@ They must never become Core defaults.
 | B-intent regressions | 60 (`regression-scenarios.json`, compatibility coverage, not Core policy) |
 | Historical inventory | 215 rows (`historical-scenarios.json`); 213 executable relevance contracts |
 | Historical contract updates | `historical-contract-updates.json` (Software.Land `3ad49e867f82db06aa06cd1c7f38dca8faecf246`) |
-| Historical relevance config | `relevance-config.json` + `synonym-map.json` (Software.Land `7628a85166781d4ab42f60646e2f66da5f336eaa` NIST aliases; synonym map still `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6`) |
+| Historical relevance config | `relevance-config.json` + `relationship-map.json` (authored equivalent + AppSec related; synonym-map.json remains the db5a070 provenance snapshot) |
 | Omitted empty-intent rows | 43 (not mined into V2 intent/regression; still in historical relevance) |
 | Omitted V1-only source rows | 126 (B + A without intent; some re-enter as regressions; still in historical relevance when `expectedTop` exists) |
 | Omitted browser/UI-only | 1 (`zzz-no-hit` no-results copy) |
@@ -46,9 +46,8 @@ B-class independent intent as Software.Land compatibility coverage; they are
 are executable Software.Land relevance contracts in
 `test/software-land-historical-relevance.test.js` (membership within topN, not
 exact order). Classification C is omitted. That suite is not the exact-output
-oracle and not Core default ranking policy. The relevance engine loads the live curated-plus-generated synonym map from
-`synonym-map.json`, omits the `testing` dictionary key, and patches
-NIST exact institute aliases plus AppSec aliases/`topicalRecall` from `relevance-config.json`. The synonym map
+oracle and not Core default ranking policy. The relevance engine loads authored `relationship-map.json` (`equivalent` edges from the live curated-plus-generated map plus AppSec `related` forms), omits the `testing` dictionary key, and patches
+NIST exact institute aliases plus AppSec aliases from `relevance-config.json`. Frozen `dictionary.json` is `{ key, aliases }` with `aliases[0]` the former expansion. The live search-equivalence snapshot
 matches Software.Land commit `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6`
 (`LIVE_SEARCH_EQUIVALENCE_MAP`: curated `SYNONYM_MAP` plus four generated
 additions with isolated incremental value; curated wins; no auto-reverse). AppSec `topicalRecall` still matches
@@ -67,16 +66,17 @@ and `tests/search-v2-contracts.js` from the committed scenario SHA.
 ## Files
 
 - `documents.json` — `id`, `title`, normalized search `body` (live V2 indexed shape)
-- `dictionary.json` — merged Software.Land acronym map + compiled equivalences as `dictionary({ entries })`
+- `dictionary.json` — merged Software.Land acronym map + compiled equivalences as `dictionary({ entries })` authored `{ key, aliases }` (`aliases[0]` canonical)
 - `lemmas.json` — site lemma table as `morphology({ lemmas })`
-- `relationships.json` — runtime relationship graph, including TLS ↔ VPN editorial edges
+- `relationships.json` — runtime relationship graph, including TLS ↔ VPN editorial edges (generated + domain editorial; not relationshipMap)
 - `lexical-frequency.json` — production lexical-frequency artifact
 - `v2-contracts.json` — strict accepted V2 cases (`kind: contract`)
 - `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy
 - `historical-scenarios.json` — full 215-row inventory; `v1.expectedTop`/`titlePrefix`/`topN` are executable historical relevance contracts
 - `historical-contract-updates.json` — old V1 vs accepted V2/product `expectedTop` for rows superseded by explicit product decisions
-- `relevance-config.json` — Software.Land 0.5 relevance-engine inputs (omit `testing`, patch NIST institute aliases, patch AppSec topicalRecall, load synonym map)
-- `synonym-map.json` — live Software.Land search-equivalence map from `db5a070` (curated `SYNONYM_MAP` plus four pruned generated additions; no reverse materialization)
+- `relevance-config.json` — Software.Land 0.5 relevance-engine inputs (omit `testing`, patch NIST institute aliases, load relationshipMap)
+- `relationship-map.json` — authored directional `equivalent` / `related` edges for the historical engine
+- `synonym-map.json` — provenance snapshot of the live Software.Land search-equivalence map from `db5a070` (curated `SYNONYM_MAP` plus four pruned generated additions; no reverse materialization)
 - `scenarios.json` — index, counts, and disposition totals
 - `manifest.json` — format, corpus/scenario source commits, package version, document count, scenario provenance, SHA256s
 
