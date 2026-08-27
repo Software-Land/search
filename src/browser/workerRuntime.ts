@@ -120,7 +120,6 @@ export function createWorkerRuntime({
         plugins.push(
           dictionary({
             entries: payload.dictionaryEntries || [],
-            documents,
           })
         );
       }

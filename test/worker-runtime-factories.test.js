@@ -57,12 +57,12 @@ async function searchOnce(runtime, initPayload, query, options = {}) {
 describe("createWorkerRuntime factory compatibility", () => {
   test("legacy dictionary factory is invoked when relationshipMap is absent", async () => {
     let calls = 0;
+    const dictionaryEntries = [{ key: "zephyr", aliases: [["customhost", "token"]] }];
     const customDictionary = (opts) => {
       calls += 1;
-      expect(opts.relationshipMap).toBeUndefined();
-      return dictionary({
-        entries: [{ key: "zephyr", aliases: [["customhost", "token"]] }],
-      });
+      expect(Object.keys(opts).sort()).toEqual(["entries"]);
+      expect(opts.entries).toEqual(dictionaryEntries);
+      return dictionary({ entries: opts.entries });
     };
     const runtime = createWorkerRuntime({
       SearchEngine,
@@ -74,13 +74,41 @@ describe("createWorkerRuntime factory compatibility", () => {
       {
         documents: [{ id: "zephyr", title: "Zephyr Target", body: "zephyr only body text" }],
         schema,
-        dictionaryEntries: [],
+        dictionaryEntries,
         retriever: "full-scan",
       },
       "customhost token"
     );
     expect(calls).toBe(1);
     expect(result.results.map((hit) => hit.id)).toEqual(["zephyr"]);
+  });
+
+  test("packaged Worker compiler path does not use the legacy dictionary factory", async () => {
+    let compileCalls = 0;
+    const runtime = createWorkerRuntime({
+      SearchEngine,
+      english: morphology,
+      compileAuthoredRelevance: (opts) => {
+        compileCalls += 1;
+        expect(Object.keys(opts).sort()).toEqual(["documents", "entries", "relationshipMap"]);
+        expect(opts.entries).toEqual(authoredEntries);
+        expect(opts.relationshipMap).toBeUndefined();
+        expect(opts.documents).toEqual(authoredDocuments);
+        return compileAuthoredRelevance(opts);
+      },
+    });
+    const result = await searchOnce(
+      runtime,
+      {
+        documents: authoredDocuments,
+        schema,
+        dictionaryEntries: authoredEntries,
+        retriever: "full-scan",
+      },
+      "qa"
+    );
+    expect(compileCalls).toBe(1);
+    expect(result.results.map((hit) => hit.id)).toEqual(["qa-guide"]);
   });
 
   test("custom compileAuthoredRelevance compiles relationshipMap once for all four edge types", async () => {
