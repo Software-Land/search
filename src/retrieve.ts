@@ -68,8 +68,8 @@ function expansionSequence(concept: QueryConcept) {
  * Multi-token expansions require the expansion as a contiguous phrase.
  * Title fields may also accept a complete token set (short titles).
  * Body fields require a contiguous normalized expansion phrase — dispersed
- * body tokens are not full configured-equivalence evidence.
- * A single expansion word is never full multi-token equivalence evidence,
+ * body tokens are not full configured-concept evidence.
+ * A single expansion word is never full multi-token configured-concept evidence,
  * including a 1-token alias that is just one of the expansion words.
  */
 function isSingleExpansionWordAlias(seq: string[], expansion: string[]) {
@@ -575,7 +575,7 @@ function scanDocument(
     }
     const kind = conceptMatchesTitle(concept, doc);
     if (concept.kind === "acronym") {
-      if (kind) add(doc, "configured-equivalence");
+      if (kind) add(doc, "configured-concept");
       continue;
     }
     if (kind === "exact") add(doc, "title-token");

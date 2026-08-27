@@ -25,7 +25,7 @@ const regressions = load("regression-scenarios.json");
 const RESULT_LIMIT = documents.length;
 const RELATED_LIMIT = documents.length;
 
-const UNBOUNDED = new Set(["exact-title", "configured-equivalence", "version"]);
+const UNBOUNDED = new Set(["exact-title", "configured-concept", "version"]);
 const CONTEXTUAL = "contextual-title-prefix";
 
 function createEngine(retriever, extra = {}) {
@@ -77,7 +77,7 @@ function classifyHit(sources) {
   const src = sources || [];
   if (src.some((s) => UNBOUNDED.has(s))) {
     if (src.includes("exact-title")) return "exact-title";
-    if (src.includes("configured-equivalence")) return "configured-equivalence";
+    if (src.includes("configured-concept")) return "configured-concept";
     if (src.includes("version")) return "version";
   }
   if (src.includes(CONTEXTUAL)) return "contextual-prefix";
@@ -94,7 +94,7 @@ function classifyMismatch({ missing, extra, missingSources, extraSources }) {
   if (missing.length && miss.has("body-lexical")) return "body posting";
   if (missing.length && miss.has("morphology")) return "morphology path";
   if (missing.length && miss.has("version")) return "version / dotted-span path";
-  if (missing.length && miss.has("configured-equivalence")) return "synonym / equivalence path";
+  if (missing.length && miss.has("configured-concept")) return "synonym / equivalence path";
   if (missing.length && miss.has(CONTEXTUAL)) return "contextual prefix";
   if (missing.length && (miss.has("typo-correction") || extraSources.length === 0)) return "typo path / missing retrieval provenance";
   if (!missing.length && extra.length) {
@@ -154,7 +154,7 @@ async function main() {
   const mustKeep = {
     ordinary: [],
     "exact-title": [],
-    "configured-equivalence": [],
+    "configured-concept": [],
     version: [],
     "contextual-prefix": [],
     "relationship-added": [],
@@ -195,7 +195,7 @@ async function main() {
       .filter((h) => extraTitles.includes(h.title))
       .map((h) => h.retrievalSources || []);
 
-    const counts = { ordinary: 0, "exact-title": 0, "configured-equivalence": 0, version: 0, "contextual-prefix": 0 };
+    const counts = { ordinary: 0, "exact-title": 0, "configured-concept": 0, version: 0, "contextual-prefix": 0 };
     for (const hit of retrieveHits) {
       const lane = classifyHit(hit.retrievalSources);
       if (lane !== "relationship-added") counts[lane] = (counts[lane] || 0) + 1;

@@ -156,7 +156,7 @@ describe("topical recall retrieval and ranking", () => {
     const direct = hits.find((h) => h.document.id === "direct");
     expect(phrase.retrievalSources).toContain("topical-recall");
     expect(authn.retrievalSources).toContain("topical-recall");
-    expect(direct.retrievalSources).toContain("configured-equivalence");
+    expect(direct.retrievalSources).toContain("configured-concept");
 
     const detailed = e.searchDetailed("app sec", { limit: 10, explain: true });
     expect(detailed.results[0].id).toBe("direct");

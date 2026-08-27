@@ -542,7 +542,7 @@ describe("query analysis", () => {
     }
   });
 
-  test("unique configured-equivalence forms share canonical intent and ranked IDs", async () => {
+  test("unique configured-concept forms share canonical intent and ranked IDs", async () => {
     const mlDict = [{ key: "ml", aliases: [["machine", "learning"]]}];
     const plugins = [morphology(), dictionary({ entries: mlDict })];
     const lexicon = ["machine", "learn", "learning", "learnings", "notes"];
@@ -953,7 +953,7 @@ describe("dotted span digit provenance ranking", () => {
   });
 });
 
-describe("configured equivalence and explanations", () => {
+describe("configured concept and explanations", () => {
   test("expansion query retrieves the acronym title and explains sources", async () => {
     const e = await engine(
       [

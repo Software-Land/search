@@ -3,9 +3,9 @@ export { loadCorpus } from "./lib/loadCorpus.js";
 export { spellingLexiconPlugin } from "./lib/vocabulary.js";
 export { parseConfiguredConcepts, CONFIGURED_CONCEPT_FORMAT } from "./lib/compile.js";
 export {
-  normalizeExternalEquivalences,
+  normalizeExternalConfiguredConcepts,
   classifyExpansionRelation,
-  ExternalEquivalenceError,
+  ExternalConfiguredConceptError,
 } from "./lib/externalEquivalences.js";
 export { loadDecisions, validateDecisions, DecisionError } from "./lib/decisions.js";
 export { equivalenceId, synonymId } from "./lib/ids.js";

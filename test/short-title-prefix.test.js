@@ -136,7 +136,7 @@ describe("short title-token prefix admission", () => {
     const appsec = detailed.results.find((row) => row.id === "appsec");
     expect(appsec.retrievalSources).toContain("title-token-prefix");
     expect(appsec.retrievalSources).not.toContain("topical-recall");
-    expect(appsec.retrievalSources).not.toContain("configured-equivalence");
+    expect(appsec.retrievalSources).not.toContain("configured-concept");
     expect(appsec.retrievalSources.some((source) => source === "indexed-lexical" || source === "body-lexical")).toBe(
       false
     );

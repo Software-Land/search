@@ -55,7 +55,7 @@ const UNSUPPORTED_TOKEN_SOURCES = new Set([
   "repeat-collapse",
   "final-token-prefix",
   "contextual-completion",
-  "configured-equivalence",
+  "configured-concept",
   "expansion",
 ]);
 

@@ -122,7 +122,7 @@ describe("standalone recall retrieval and ranking", () => {
     const request = hyperHits.find((h) => h.document.id === "http-body");
     expect(tls.retrievalSources).toEqual(expect.arrayContaining(["body-lexical"]));
     expect(request.retrievalSources).toContain("standalone-recall");
-    expect(request.retrievalSources).not.toContain("configured-equivalence");
+    expect(request.retrievalSources).not.toContain("configured-concept");
     expect(hyperHits.some((h) => h.document.id === "unrelated")).toBe(false);
     expect(hyperHits.some((h) => h.document.id === "html-only")).toBe(false);
 

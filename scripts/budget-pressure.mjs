@@ -33,7 +33,7 @@ import { isAllDigitToken } from "../dist/versionForms.js";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FIXTURE = path.join(ROOT, "test", "fixtures", "software-land");
-const UNBOUNDED = new Set(["exact-title", "configured-equivalence", "version"]);
+const UNBOUNDED = new Set(["exact-title", "configured-concept", "version"]);
 const CONTEXTUAL = "contextual-title-prefix";
 const TITLE_PREFIX = "title-prefix";
 const PREFIX_CAP = 800;
@@ -916,7 +916,7 @@ const MIXED_QUERIES = [
   { cls: "prefix", q: "virt" },
   { cls: "typo", q: "blutooth" },
   { cls: "morphology", q: "searching" },
-  { cls: "configured-equivalence", q: "tls" },
+  { cls: "configured-concept", q: "tls" },
   { cls: "version", q: "1.2" },
   { cls: "dotted-span", q: "tls 1.2" },
   { cls: "short-literal", q: "io" },

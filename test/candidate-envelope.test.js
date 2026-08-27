@@ -1,7 +1,7 @@
 /**
  * Indexed candidate assembly envelope.
  *
- * Ordinary hits are budgeted by candidateLimit. Exact-title, configured-equivalence,
+ * Ordinary hits are budgeted by candidateLimit. Exact-title, configured-concept,
  * and version bypass that budget without a cap. Contextual title-prefix and
  * full-query title-prefix are capped must-keeps. Relationship expansion happens
  * after retrieval and can add one-hop neighbors.
@@ -68,14 +68,14 @@ describe("indexed unbounded must-keep lanes", () => {
     expect(exact).toHaveLength(18);
   });
 
-  test("configured-equivalence title matches bypass candidateLimit", () => {
+  test("configured-concept title matches bypass candidateLimit", () => {
     const plugins = [morphology(), dictionary({ entries: [{ key: "ml", aliases: [["machine", "learning"]]}] })];
     const docs = [];
     for (let i = 0; i < 18; i += 1) {
       docs.push({ id: `c${i}`, title: `ML notes ${i}`, body: "x" });
     }
     const { hits } = indexedRetrieve(docs, "ml", { plugins, candidateLimit: 2, prefixCap: 1 });
-    const kept = hits.filter((h) => h.retrievalSources.includes("configured-equivalence"));
+    const kept = hits.filter((h) => h.retrievalSources.includes("configured-concept"));
     expect(kept).toHaveLength(18);
   });
 

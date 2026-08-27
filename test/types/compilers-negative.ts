@@ -23,6 +23,14 @@ import { parseEquivalences } from "@software-land/search/corpus";
 // @ts-expect-error EquivalenceArtifact is not a public corpus export
 import type { EquivalenceArtifact } from "@software-land/search/corpus";
 
+// @ts-expect-error normalizeExternalEquivalences is not a public corpus export
+import { normalizeExternalEquivalences } from "@software-land/search/corpus";
+
+// @ts-expect-error ExternalEquivalenceError is not a public corpus export
+import { ExternalEquivalenceError } from "@software-land/search/corpus";
+
 void configuredConceptsFromEquivalences;
 void parseEquivalences;
 void (null as unknown as EquivalenceArtifact);
+void normalizeExternalEquivalences;
+void ExternalEquivalenceError;

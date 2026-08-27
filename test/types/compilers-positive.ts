@@ -7,9 +7,9 @@ import {
   parseConfiguredConcepts,
   CONFIGURED_CONCEPT_FORMAT,
   loadCorpus,
-  normalizeExternalEquivalences,
+  normalizeExternalConfiguredConcepts,
   classifyExpansionRelation,
-  ExternalEquivalenceError,
+  ExternalConfiguredConceptError,
   type AnalyzeResult,
   type CompileOptions,
   type ConfiguredConceptArtifact,
@@ -120,7 +120,7 @@ void LEXICAL_INDEX_FORMAT;
 void lexicalIndexVersion;
 void lexicalIndex.corpus.documentCount;
 
-const normalized = normalizeExternalEquivalences([
+const normalized = normalizeExternalConfiguredConcepts([
   {
     key: "API",
     aliases: [["application", "programming", "interface"], ["app", "programming", "interface"]],
@@ -138,7 +138,7 @@ const relation: "identical" | "compatible" | "ambiguous" | "conflict" = classify
 );
 void relation;
 try {
-  normalizeExternalEquivalences([{ key: "", aliases: [["x"]]}]);
+  normalizeExternalConfiguredConcepts([{ key: "", aliases: [["x"]]}]);
 } catch (err) {
-  if (!(err instanceof ExternalEquivalenceError)) throw err;
+  if (!(err instanceof ExternalConfiguredConceptError)) throw err;
 }

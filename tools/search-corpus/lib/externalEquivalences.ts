@@ -1,16 +1,16 @@
 import { acronymKey, expansionTokens, hasUnsafeSymbolicSurface, OPTIONAL_INITIAL_WORDS, phraseKey, stableSort } from "./text.js";
 import { isInflectionPair } from "./synonyms.js";
 
-export class ExternalEquivalenceError extends Error {
+export class ExternalConfiguredConceptError extends Error {
   details: string[];
   constructor(message: string, details: string[] = []) {
     super(message);
-    this.name = "ExternalEquivalenceError";
+    this.name = "ExternalConfiguredConceptError";
     this.details = details;
   }
 }
 
-export type ExternalEquivalenceRow = {
+export type ExternalConfiguredConceptRow = {
   key: string;
   expansion: string[];
   aliases: string[][];
@@ -25,7 +25,7 @@ export type ExternalEquivalenceRow = {
 
 export type ExpansionRelation = "identical" | "compatible" | "ambiguous" | "conflict";
 
-export type EquivalenceReconciliation = {
+export type ConfiguredConceptReconciliation = {
   key: string;
   kind: ExpansionRelation;
   eligible: boolean;
@@ -35,7 +35,7 @@ export type EquivalenceReconciliation = {
   evidenceDocumentIds: string[];
 };
 
-export type UnresolvedEquivalence = {
+export type UnresolvedConfiguredConcept = {
   key: string;
   kind: "ambiguous" | "conflict";
   expansions: string[][];
@@ -43,14 +43,14 @@ export type UnresolvedEquivalence = {
   eligible: false;
 };
 
-export type NormalizeExternalEquivalencesResult = {
-  format: "search-corpus-external-equivalences";
+export type NormalizeExternalConfiguredConceptsResult = {
+  format: "search-corpus-external-configured-concepts";
   version: 1;
-  entries: ExternalEquivalenceRow[];
+  entries: ExternalConfiguredConceptRow[];
   rejected: Array<{ index: number; reason: string }>;
   conflicts: Array<{ key: string; expansions: string[][] }>;
-  unresolved: UnresolvedEquivalence[];
-  reconciliations: EquivalenceReconciliation[];
+  unresolved: UnresolvedConfiguredConcept[];
+  reconciliations: ConfiguredConceptReconciliation[];
 };
 
 function asExpansion(raw: unknown): string[] {
@@ -78,7 +78,7 @@ function asExpansion(raw: unknown): string[] {
 
 function asAliases(raw: unknown): string[][] {
   if (raw == null) return [];
-  if (!Array.isArray(raw)) throw new ExternalEquivalenceError("aliases must be an array");
+  if (!Array.isArray(raw)) throw new ExternalConfiguredConceptError("aliases must be an array");
   return raw
     .map((alias) => asExpansion(alias))
     .filter((tokens) => tokens.length);
@@ -86,17 +86,17 @@ function asAliases(raw: unknown): string[][] {
 
 function asEvidenceIds(raw: unknown): string[] {
   if (raw == null) return [];
-  if (!Array.isArray(raw)) throw new ExternalEquivalenceError("evidenceDocumentIds must be an array");
+  if (!Array.isArray(raw)) throw new ExternalConfiguredConceptError("evidenceDocumentIds must be an array");
   return [...new Set(raw.map((id) => String(id || "").trim()).filter(Boolean))].sort();
 }
 
 function asAlternatives(raw: unknown): Array<{ expansion: string[]; note?: string }> {
   if (raw == null) return [];
-  if (!Array.isArray(raw)) throw new ExternalEquivalenceError("alternatives must be an array");
+  if (!Array.isArray(raw)) throw new ExternalConfiguredConceptError("alternatives must be an array");
   return raw
     .map((alt) => {
       if (!alt || typeof alt !== "object" || Array.isArray(alt)) {
-        throw new ExternalEquivalenceError("each alternative must be an object");
+        throw new ExternalConfiguredConceptError("each alternative must be an object");
       }
       const rec = alt as Record<string, unknown>;
       const expansion = asExpansion(rec.expansion);
@@ -304,7 +304,7 @@ function mergeTopicalRecall(into: string[][], extra: string[][]): string[][] {
   return topicalRecallOf([...into, ...extra]);
 }
 
-function cloneRow(row: ExternalEquivalenceRow): ExternalEquivalenceRow {
+function cloneRow(row: ExternalConfiguredConceptRow): ExternalConfiguredConceptRow {
   return {
     ...row,
     expansion: [...row.expansion],
@@ -319,7 +319,7 @@ function cloneRow(row: ExternalEquivalenceRow): ExternalEquivalenceRow {
   };
 }
 
-function mergeRows(into: ExternalEquivalenceRow, extra: ExternalEquivalenceRow): void {
+function mergeRows(into: ExternalConfiguredConceptRow, extra: ExternalConfiguredConceptRow): void {
   into.evidenceDocumentIds = [...new Set([...into.evidenceDocumentIds, ...extra.evidenceDocumentIds])].sort();
   into.aliases = mergeAliases(into.aliases, extra.aliases);
   into.alternatives = mergeAlternatives(into.alternatives, extra.alternatives);
@@ -330,7 +330,7 @@ function mergeRows(into: ExternalEquivalenceRow, extra: ExternalEquivalenceRow):
   into.ambiguous = into.ambiguous || extra.ambiguous;
 }
 
-function pickCanonical(rows: ExternalEquivalenceRow[]): ExternalEquivalenceRow {
+function pickCanonical(rows: ExternalConfiguredConceptRow[]): ExternalConfiguredConceptRow {
   return stableSort(rows, (row) => {
     const hasKey = row.expansion.map((t) => t.toLowerCase()).includes(row.key) ? "1" : "0";
     const len = String(row.expansion.length).padStart(3, "0");
@@ -338,7 +338,7 @@ function pickCanonical(rows: ExternalEquivalenceRow[]): ExternalEquivalenceRow {
   })[0];
 }
 
-function clusterCompatible(key: string, rows: ExternalEquivalenceRow[]): ExternalEquivalenceRow[][] {
+function clusterCompatible(key: string, rows: ExternalConfiguredConceptRow[]): ExternalConfiguredConceptRow[][] {
   const parent = rows.map((_, i) => i);
   const find = (i: number): number => {
     while (parent[i] !== i) {
@@ -358,7 +358,7 @@ function clusterCompatible(key: string, rows: ExternalEquivalenceRow[]): Externa
       if (relation === "identical" || relation === "compatible") union(i, j);
     }
   }
-  const groups = new Map<number, ExternalEquivalenceRow[]>();
+  const groups = new Map<number, ExternalConfiguredConceptRow[]>();
   rows.forEach((row, i) => {
     const root = find(i);
     const list = groups.get(root) || [];
@@ -368,7 +368,7 @@ function clusterCompatible(key: string, rows: ExternalEquivalenceRow[]): Externa
   return [...groups.values()].map((group) => stableSort(group, (row) => phraseKey(row.expansion)));
 }
 
-function crossClusterKind(key: string, clusters: ExternalEquivalenceRow[][]): "ambiguous" | "conflict" {
+function crossClusterKind(key: string, clusters: ExternalConfiguredConceptRow[][]): "ambiguous" | "conflict" {
   let sawAmbiguous = false;
   for (let i = 0; i < clusters.length; i += 1) {
     for (let j = i + 1; j < clusters.length; j += 1) {
@@ -383,20 +383,20 @@ function crossClusterKind(key: string, clusters: ExternalEquivalenceRow[][]): "a
   return sawAmbiguous ? "ambiguous" : "conflict";
 }
 
-function expansionsOf(rows: ExternalEquivalenceRow[]): string[][] {
+function expansionsOf(rows: ExternalConfiguredConceptRow[]): string[][] {
   return stableSort(
     rows.map((row) => [...row.expansion]),
     (tokens) => phraseKey(tokens)
   );
 }
 
-function evidenceOf(rows: ExternalEquivalenceRow[]): string[] {
+function evidenceOf(rows: ExternalConfiguredConceptRow[]): string[] {
   return [...new Set(rows.flatMap((row) => row.evidenceDocumentIds))].sort();
 }
 
-function emptyResult(): NormalizeExternalEquivalencesResult {
+function emptyResult(): NormalizeExternalConfiguredConceptsResult {
   return {
-    format: "search-corpus-external-equivalences",
+    format: "search-corpus-external-configured-concepts",
     version: 1,
     entries: [],
     rejected: [],
@@ -407,33 +407,33 @@ function emptyResult(): NormalizeExternalEquivalencesResult {
 }
 
 /**
- * Validate and normalize externally supplied acronym/equivalence rows.
+ * Validate and normalize externally supplied configured-concept rows.
  * Does not call a model. Applications generate rows; this consumer
  * normalizes keys/expansions, rejects empties, collapses identical and
  * trivially compatible duplicates, and records material ambiguity or
  * genuine conflict as unresolved inspection evidence instead of deleting
  * the key.
  */
-export function normalizeExternalEquivalences(
+export function normalizeExternalConfiguredConcepts(
   rows: unknown,
   { strict = true }: { strict?: boolean } = {}
-): NormalizeExternalEquivalencesResult {
+): NormalizeExternalConfiguredConceptsResult {
   if (rows == null) return emptyResult();
   if (!Array.isArray(rows)) {
-    throw new ExternalEquivalenceError("external equivalences must be an array");
+    throw new ExternalConfiguredConceptError("external configured concepts must be an array");
   }
 
   const rejected: Array<{ index: number; reason: string }> = [];
-  const parsed: ExternalEquivalenceRow[] = [];
+  const parsed: ExternalConfiguredConceptRow[] = [];
 
   rows.forEach((row, index) => {
     try {
       if (!row || typeof row !== "object" || Array.isArray(row)) {
-        throw new ExternalEquivalenceError("row must be an object");
+        throw new ExternalConfiguredConceptError("row must be an object");
       }
       const rec = row as Record<string, unknown>;
       const key = acronymKey(rec.key);
-      if (!key) throw new ExternalEquivalenceError("empty key");
+      if (!key) throw new ExternalConfiguredConceptError("empty key");
       const aliasesIn = asAliases(rec.aliases);
       const expansionFromField = asExpansion(rec.expansion);
       const expansion = expansionFromField.length ? expansionFromField : aliasesIn[0] ? [...aliasesIn[0]] : [];
@@ -443,12 +443,12 @@ export function normalizeExternalEquivalences(
           (typeof rec.expansion === "string" && String(rec.expansion).trim()) ||
           (Array.isArray(rec.expansion) && rec.expansion.some((item) => String(item || "").trim())) ||
           (Array.isArray(rec.aliases) && rec.aliases.length);
-        if (!hadRaw) throw new ExternalEquivalenceError("empty expansion");
+        if (!hadRaw) throw new ExternalConfiguredConceptError("empty expansion");
         if (hasUnsafeSymbolicSurface(raw) || (Array.isArray(raw) && raw.some((item) => hasUnsafeSymbolicSurface(item)))) {
-          throw new ExternalEquivalenceError("unsafe symbolic expansion");
+          throw new ExternalConfiguredConceptError("unsafe symbolic expansion");
         }
         if (!expansionFromField.length && Array.isArray(rec.aliases)) {
-          throw new ExternalEquivalenceError("empty expansion");
+          throw new ExternalConfiguredConceptError("empty expansion");
         }
         return;
       }
@@ -467,7 +467,7 @@ export function normalizeExternalEquivalences(
       const topicalRecall = topicalRecallOf(rec.topicalRecall);
       const evidenceDocumentIds = asEvidenceIds(rec.evidenceDocumentIds);
       if (rec.ambiguous != null && typeof rec.ambiguous !== "boolean") {
-        throw new ExternalEquivalenceError("ambiguous must be boolean");
+        throw new ExternalConfiguredConceptError("ambiguous must be boolean");
       }
       parsed.push({
         key,
@@ -487,27 +487,27 @@ export function normalizeExternalEquivalences(
   });
 
   if (strict && rejected.length) {
-    throw new ExternalEquivalenceError(
-      "malformed external equivalence rows",
+    throw new ExternalConfiguredConceptError(
+      "malformed external configured-concept rows",
       rejected.map((r) => `[${r.index}] ${r.reason}`)
     );
   }
 
-  const byKey = new Map<string, ExternalEquivalenceRow[]>();
+  const byKey = new Map<string, ExternalConfiguredConceptRow[]>();
   for (const row of parsed) {
     const list = byKey.get(row.key) || [];
     list.push(row);
     byKey.set(row.key, list);
   }
 
-  const entries: ExternalEquivalenceRow[] = [];
+  const entries: ExternalConfiguredConceptRow[] = [];
   const conflicts: Array<{ key: string; expansions: string[][] }> = [];
-  const unresolved: UnresolvedEquivalence[] = [];
-  const reconciliations: EquivalenceReconciliation[] = [];
+  const unresolved: UnresolvedConfiguredConcept[] = [];
+  const reconciliations: ConfiguredConceptReconciliation[] = [];
 
   for (const key of [...byKey.keys()].sort()) {
     const group = byKey.get(key) || [];
-    const byPhrase = new Map<string, ExternalEquivalenceRow>();
+    const byPhrase = new Map<string, ExternalConfiguredConceptRow>();
     for (const row of group) {
       const pk = phraseKey(row.expansion);
       const existing = byPhrase.get(pk);
@@ -578,7 +578,7 @@ export function normalizeExternalEquivalences(
   }
 
   return {
-    format: "search-corpus-external-equivalences",
+    format: "search-corpus-external-configured-concepts",
     version: 1,
     entries: stableSort(entries, (e) => e.key),
     rejected,

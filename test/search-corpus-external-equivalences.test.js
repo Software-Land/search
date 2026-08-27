@@ -1,15 +1,15 @@
 import {
   compileCorpus,
   LIFECYCLE,
-  normalizeExternalEquivalences,
+  normalizeExternalConfiguredConcepts,
   classifyExpansionRelation,
-  ExternalEquivalenceError,
+  ExternalConfiguredConceptError,
 } from "../tools/search-corpus/index.js";
 import { acronymKey, expansionTokens } from "../tools/search-corpus/lib/text.js";
 
-describe("normalizeExternalEquivalences", () => {
+describe("normalizeExternalConfiguredConcepts", () => {
   test("normalizes key/expansion, aliases, primary, and sorts deterministically", () => {
-    const result = normalizeExternalEquivalences([
+    const result = normalizeExternalConfiguredConcepts([
       {
         key: "ML",
         expansion: "Machine Learning",
@@ -23,6 +23,7 @@ describe("normalizeExternalEquivalences", () => {
       },
     ]);
     expect(result.entries.map((e) => e.key)).toEqual(["api", "ml"]);
+    expect(result.format).toBe("search-corpus-external-configured-concepts");
     expect(result.entries[0].expansion).toEqual(["application", "programming", "interface"]);
     expect(result.entries[0].aliases).toEqual([["app", "programming", "interface"]]);
     expect(result.entries[0].primary).toBe(null);
@@ -33,7 +34,7 @@ describe("normalizeExternalEquivalences", () => {
   });
 
   test("collapses duplicate key+expansion and merges evidence", () => {
-    const result = normalizeExternalEquivalences([
+    const result = normalizeExternalConfiguredConcepts([
       { key: "fps", expansion: "frames per second", evidenceDocumentIds: ["d1"] },
       { key: "FPS", expansion: "frames per second", evidenceDocumentIds: ["d2"], aliases: [["frame", "rate"]] },
     ]);
@@ -44,7 +45,7 @@ describe("normalizeExternalEquivalences", () => {
   });
 
   test("skips empty alias entries instead of rejecting the row", () => {
-    const result = normalizeExternalEquivalences([
+    const result = normalizeExternalConfiguredConcepts([
       { key: "fps", expansion: "frames per second", aliases: [[], [""], ["frame", "rate"]] },
     ]);
     expect(result.entries).toHaveLength(1);
@@ -52,7 +53,7 @@ describe("normalizeExternalEquivalences", () => {
   });
 
   test("skips expansions that tokenize to only function words", () => {
-    const result = normalizeExternalEquivalences([
+    const result = normalizeExternalConfiguredConcepts([
       { key: "fps", expansion: "frames per second" },
       { key: "i.e.", expansion: "that is" },
     ]);
@@ -62,22 +63,22 @@ describe("normalizeExternalEquivalences", () => {
   });
 
   test("preserves leading not in Not Only SQL", () => {
-    const result = normalizeExternalEquivalences([{ key: "NoSQL", expansion: "Not Only SQL" }]);
+    const result = normalizeExternalConfiguredConcepts([{ key: "NoSQL", expansion: "Not Only SQL" }]);
     expect(result.entries).toHaveLength(1);
     expect(result.entries[0].key).toBe("nosql");
     expect(result.entries[0].expansion).toEqual(["not", "only", "sql"]);
   });
 
   test("rejects empty key and empty expansion", () => {
-    expect(() => normalizeExternalEquivalences([{ key: "", aliases: [["frames", "per", "second"]]}])).toThrow(
-      ExternalEquivalenceError
+    expect(() => normalizeExternalConfiguredConcepts([{ key: "", aliases: [["frames", "per", "second"]]}])).toThrow(
+      ExternalConfiguredConceptError
     );
-    expect(() => normalizeExternalEquivalences([{ key: "fps", aliases: [[]]}])).toThrow(ExternalEquivalenceError);
-    expect(() => normalizeExternalEquivalences([{ key: "fps", expansion: "   " }])).toThrow(ExternalEquivalenceError);
+    expect(() => normalizeExternalConfiguredConcepts([{ key: "fps", aliases: [[]]}])).toThrow(ExternalConfiguredConceptError);
+    expect(() => normalizeExternalConfiguredConcepts([{ key: "fps", expansion: "   " }])).toThrow(ExternalConfiguredConceptError);
   });
 
   test("records legitimate same-key alternatives as unresolved ambiguity instead of deleting the key", () => {
-    const result = normalizeExternalEquivalences([
+    const result = normalizeExternalConfiguredConcepts([
       { key: "cd", expansion: "continuous deployment", evidenceDocumentIds: ["a"] },
       { key: "cd", expansion: "continuous delivery", evidenceDocumentIds: ["b"] },
     ]);
@@ -99,7 +100,7 @@ describe("normalizeExternalEquivalences", () => {
   });
 
   test("non-strict mode records rejects and unresolved alternatives without throwing", () => {
-    const result = normalizeExternalEquivalences(
+    const result = normalizeExternalConfiguredConcepts(
       [
         { key: "", aliases: [["x"]]},
         { key: "cd", expansion: "continuous deployment" },
@@ -114,7 +115,7 @@ describe("normalizeExternalEquivalences", () => {
   });
 
   test("collapses trivially compatible variants into one canonical expansion plus alias", () => {
-    const result = normalizeExternalEquivalences([
+    const result = normalizeExternalConfiguredConcepts([
       { key: "grpc", expansion: "grpc remote procedure calls", evidenceDocumentIds: ["a"] },
       { key: "grpc", expansion: "google remote procedure call", evidenceDocumentIds: ["b"] },
     ]);
@@ -130,7 +131,7 @@ describe("normalizeExternalEquivalences", () => {
   });
 
   test("collapses punctuation and function-word compatible variants", () => {
-    const result = normalizeExternalEquivalences([
+    const result = normalizeExternalConfiguredConcepts([
       { key: "iot", expansion: "internet of things", evidenceDocumentIds: ["a"] },
       { key: "iot", expansion: "internet things", evidenceDocumentIds: ["b"] },
     ]);
@@ -140,7 +141,7 @@ describe("normalizeExternalEquivalences", () => {
   });
 
   test("collapses plural/singular compatible variants", () => {
-    const result = normalizeExternalEquivalences([
+    const result = normalizeExternalConfiguredConcepts([
       { key: "api", expansion: "application programming interface" },
       { key: "api", expansion: "application programming interfaces" },
     ]);
@@ -150,7 +151,7 @@ describe("normalizeExternalEquivalences", () => {
   });
 
   test("keeps CI/CD delivery vs deployment as ambiguity, not an auto-unioned alias", () => {
-    const result = normalizeExternalEquivalences([
+    const result = normalizeExternalConfiguredConcepts([
       {
         key: "cicd",
         expansion: "continuous integration and continuous delivery",
@@ -173,7 +174,7 @@ describe("normalizeExternalEquivalences", () => {
   });
 
   test("records genuinely conflicting meanings as unresolved conflict, not an entry", () => {
-    const result = normalizeExternalEquivalences([
+    const result = normalizeExternalConfiguredConcepts([
       { key: "ts", expansion: "typescript", evidenceDocumentIds: ["a"] },
       { key: "ts", expansion: "timestamp", evidenceDocumentIds: ["b"] },
     ]);
@@ -183,7 +184,7 @@ describe("normalizeExternalEquivalences", () => {
   });
 
   test("single-expansion rows marked ambiguous stay inspectable and not runtime-eligible", () => {
-    const result = normalizeExternalEquivalences([
+    const result = normalizeExternalConfiguredConcepts([
       {
         key: "rag",
         expansion: "retrieval augmented generation",
@@ -240,9 +241,9 @@ describe("classifyExpansionRelation", () => {
   });
 });
 
-describe("normalizeExternalEquivalences spelling and abbreviation compatibility", () => {
+describe("normalizeExternalConfiguredConcepts spelling and abbreviation compatibility", () => {
   test("collapses acknowledgement/acknowledgment into one eligible ack entry plus alias", () => {
-    const result = normalizeExternalEquivalences([
+    const result = normalizeExternalConfiguredConcepts([
       { key: "ack", expansion: "acknowledgement", evidenceDocumentIds: ["cf"] },
       { key: "ack", expansion: "acknowledgment", evidenceDocumentIds: ["r"] },
     ]);
@@ -267,7 +268,7 @@ describe("normalizeExternalEquivalences spelling and abbreviation compatibility"
     expect(acronymKey("i.e.")).toBe("ie");
     expect(acronymKey("APIs")).toBe("api");
 
-    const result = normalizeExternalEquivalences(
+    const result = normalizeExternalConfiguredConcepts(
       [
         { key: "A*", expansion: "a star search" },
         { key: "C++", expansion: "c plus plus" },
@@ -299,7 +300,7 @@ describe("normalizeExternalEquivalences spelling and abbreviation compatibility"
     expect(expansionTokens("O(n²)")).toEqual([]);
     expect(expansionTokens("too long; didn't read")).toEqual(["too", "long", "didnt", "read"]);
 
-    const spoken = normalizeExternalEquivalences(
+    const spoken = normalizeExternalConfiguredConcepts(
       [
         { key: "cpp", expansion: "C++" },
         { key: "csharp", expansion: "C#" },
@@ -324,7 +325,7 @@ describe("normalizeExternalEquivalences spelling and abbreviation compatibility"
     expect(acronymKey("O(1)")).toBe("");
     expect(acronymKey("on")).toBe("on");
 
-    const result = normalizeExternalEquivalences(
+    const result = normalizeExternalConfiguredConcepts(
       [
         { key: "O(n)", expansion: "linear time" },
         { key: "O(n^2)", expansion: "quadratic time" },
@@ -341,7 +342,7 @@ describe("normalizeExternalEquivalences spelling and abbreviation compatibility"
   });
 
   test("unsafe symbolic expansions are rejected rather than stripped", () => {
-    const result = normalizeExternalEquivalences(
+    const result = normalizeExternalConfiguredConcepts(
       [
         { key: "onotation", expansion: "O(n)" },
         { key: "onotation2", expansion: "O(n^2)" },
@@ -358,7 +359,7 @@ describe("normalizeExternalEquivalences spelling and abbreviation compatibility"
   });
 
   test("collapses tech debt / technical debt into one eligible entry plus alias", () => {
-    const result = normalizeExternalEquivalences([
+    const result = normalizeExternalConfiguredConcepts([
       { key: "techdebt", expansion: "tech debt", evidenceDocumentIds: ["a"] },
       { key: "techdebt", expansion: "technical debt", evidenceDocumentIds: ["b"] },
     ]);
@@ -371,7 +372,7 @@ describe("normalizeExternalEquivalences spelling and abbreviation compatibility"
   });
 
   test("standaloneRecall round-trips unique tokens and rejects malformed values", () => {
-    const result = normalizeExternalEquivalences([
+    const result = normalizeExternalConfiguredConcepts([
       {
         key: "http",
         expansion: "hypertext transfer protocol",
@@ -384,7 +385,7 @@ describe("normalizeExternalEquivalences spelling and abbreviation compatibility"
   });
 
   test("topicalRecall round-trips tokenized phrases and rejects malformed values", () => {
-    const result = normalizeExternalEquivalences([
+    const result = normalizeExternalConfiguredConcepts([
       {
         key: "appsec",
         expansion: "application security",
@@ -405,9 +406,9 @@ describe("normalizeExternalEquivalences spelling and abbreviation compatibility"
 
   test("public input is {key, aliases} with aliases[0] canonical; expansions[] is not a substitute", () => {
     expect(() =>
-      normalizeExternalEquivalences([{ key: "cd", expansions: [["continuous", "delivery"]] }])
-    ).toThrow(ExternalEquivalenceError);
-    const ok = normalizeExternalEquivalences([
+      normalizeExternalConfiguredConcepts([{ key: "cd", expansions: [["continuous", "delivery"]] }])
+    ).toThrow(ExternalConfiguredConceptError);
+    const ok = normalizeExternalConfiguredConcepts([
       { key: "cd", expansion: "continuous delivery", aliases: [] },
     ]);
     expect(ok.entries).toHaveLength(1);

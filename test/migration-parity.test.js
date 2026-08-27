@@ -43,7 +43,7 @@ async function index(engine, documents) {
 }
 
 describe("0.2.0 migration parity", () => {
-  test("configured-equivalence ml forms share ordered ids and stable explain fields", async () => {
+  test("configured-concept ml forms share ordered ids and stable explain fields", async () => {
     const mlDict = [{ key: "ml", aliases: [["machine", "learning"]]}];
     const docs = [
       {

@@ -124,7 +124,7 @@ function dottedSpanComponentOverWeakDirectConstraint(a: FeaturedHit, b: Featured
 /**
  * Aligned title-sequence + final-token completion outranks candidates whose
  * competing direct evidence is only weak or incidental (letter/body overlap).
- * It does not outrank exact title, configured equivalence, full coverage, or
+ * It does not outrank exact title, configured concept, full coverage, or
  * other strong/moderate non-contextual evidence.
  * Among two contextual hits, tighter contextualPrefixQuality wins.
  */

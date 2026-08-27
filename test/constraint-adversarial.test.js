@@ -114,7 +114,7 @@ describe("adversarial constraint pairs", () => {
     );
   });
 
-  test("configured equivalence is not blindly demoted by contextual prefix", () => {
+  test("configured concept is not blindly demoted by contextual prefix", () => {
     const cmp = compareConstraint(configuredKey, contextualTight, DEFAULT_CONSTRAINTS);
     expect(cmp.applied.some((r) => r.id === "contextual-title-prefix-over-unaligned" && r.result === "B>A")).toBe(
       false

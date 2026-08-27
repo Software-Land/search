@@ -36,7 +36,7 @@ export declare function compileCorpus(input?: unknown, opts?: import("./types.js
 export declare function loadCorpus(input?: unknown): import("./types.js").LoadedCorpus;
 export declare function spellingLexiconPlugin(options?: unknown): unknown;
 export declare function parseConfiguredConcepts(obj?: unknown): import("./types.js").ConfiguredConceptArtifact;
-export declare class ExternalEquivalenceError extends Error {
+export declare class ExternalConfiguredConceptError extends Error {
   details: string[];
 }
 export declare function classifyExpansionRelation(
@@ -44,11 +44,11 @@ export declare function classifyExpansionRelation(
   left?: unknown,
   right?: unknown
 ): "identical" | "compatible" | "ambiguous" | "conflict";
-export declare function normalizeExternalEquivalences(
+export declare function normalizeExternalConfiguredConcepts(
   rows?: unknown,
   opts?: { strict?: boolean }
 ): {
-  format: "search-corpus-external-equivalences";
+  format: "search-corpus-external-configured-concepts";
   version: 1;
   entries: Array<{
     key: string;

@@ -40,7 +40,7 @@ describe("replaceable retrieval", () => {
     expect(e.search("bluetooth")[0].title).toBe("Bluetooth");
   });
 
-  test("indexed retrieval preserves exact title, literals, and configured equivalence", async () => {
+  test("indexed retrieval preserves exact title, literals, and configured concept", async () => {
     const { indexed } = await engines();
     expect(indexed.search("bluetooth")[0].title).toBe("Bluetooth");
     expect(indexed.search("NFC")[0].title).toBe("NFC");

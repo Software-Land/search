@@ -41,7 +41,7 @@ export interface DictionaryEntry {
   confidence?: number | null;
 }
 
-/** Exact one-token recall bridge. Not configured equivalence or lexical intent. */
+/** Exact one-token recall bridge. Not configured concept or lexical intent. */
 export interface StandaloneRecall {
   key: string;
   sourceToken: string;

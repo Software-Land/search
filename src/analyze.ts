@@ -575,7 +575,7 @@ function lemmatizedExpansionTokens(expansion: string[], plugins: SearchPlugin[])
     if (!w || isAllDigitToken(w)) continue;
     const lemma = pluginLemma(plugins, w);
     const canonical = pluginCanonicalLemma(plugins, w);
-    const sources = ["configured-equivalence", "expansion"];
+    const sources = ["configured-concept", "expansion"];
     let normalized = w;
     if (canonical && canonical !== w) {
       normalized = canonical;

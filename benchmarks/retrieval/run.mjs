@@ -28,7 +28,7 @@ const QUERIES = [
   { cls: "prefix", q: "virt" },
   { cls: "typo", q: "blutooth" },
   { cls: "morphology", q: "searching" },
-  { cls: "configured-equivalence", q: "tls" },
+  { cls: "configured-concept", q: "tls" },
   { cls: "version", q: "1.2" },
   { cls: "dotted-span", q: "tls 1.2" },
   { cls: "relationship", q: "vpn" },

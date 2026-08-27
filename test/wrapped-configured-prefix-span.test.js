@@ -241,7 +241,7 @@ describe("wrapped configured prefix activation", () => {
 });
 
 describe("wrapped configured prefix retrieval", () => {
-  test("configured equivalence ranks the canonical document first without topical recall", async () => {
+  test("configured concept ranks the canonical document first without topical recall", async () => {
     const e = await engine();
     const q = e._prepareQuery("what is an applicatio security");
     expect(q.configuredSequenceIntent).toBeNull();

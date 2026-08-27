@@ -106,6 +106,14 @@ describe("public API", () => {
       { id: "load", title: "Load Testing", body: "performance load testing notes" },
     ]);
     expect(ids(engine.search("qa", { limit: 5 }))).toEqual(expect.arrayContaining(["qa-guide", "load"]));
+    const explained = engine.searchDetailed("qa", { limit: 5, explain: true });
+    const identity = explained.results.find((row) => row.id === "qa-guide");
+    const recalled = explained.results.find((row) => row.id === "load");
+    expect(identity.retrievalSources).toContain("configured-concept");
+    expect(identity.retrievalSources).not.toContain("configured-equivalence");
+    expect(recalled.retrievalSources).toContain("synonym-recall");
+    expect(recalled.relevanceKind).toBe("direct");
+    expect(identity.directClass).toBeTruthy();
   });
 
   test("internal dictionary() does not compile relationshipMap as a complete authoring path", () => {

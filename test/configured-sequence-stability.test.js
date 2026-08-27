@@ -133,7 +133,7 @@ describe("configured sequence alignment and result stability", () => {
     for (const raw of PREFIX_UNIQUE_QUERIES) {
       const q = analyze(raw);
       expect(q.tokens.map((t) => t.surface)).toEqual(typedSurfaces(raw));
-      expect(q.tokens.some((t) => t.sources?.includes("configured-equivalence"))).toBe(false);
+      expect(q.tokens.some((t) => t.sources?.includes("configured-concept"))).toBe(false);
       expect(acronymIds(q)).toEqual(["appsec"]);
     }
   });

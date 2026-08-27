@@ -312,7 +312,7 @@ describe("dictionary token ownership", () => {
 });
 
 describe("exact authored query intent precedes typo correction", () => {
-  test("an exact configured equivalence source beats a competing typo candidate", () => {
+  test("an exact configured concept source beats a competing typo candidate", () => {
     const q = analyzeQuery("abcde", {
       plugins: [synonyms({ abcde: ["conceptx"] })],
       lexicon: ["abcdf"],

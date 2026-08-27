@@ -57,12 +57,12 @@ interface IndexedHit {
   retrievalScore: number;
 }
 
-// Exact-title, configured-equivalence, and version bypass the BM25 budget
+// Exact-title, configured-concept, and version bypass the BM25 budget
 // without a cap. Contextual title-prefix and full-query title-prefix are
 // capped must-keeps: overflow stays eligible for the ordinary candidateLimit
 // pool. Title-prefix keeps short-literal / query-"2" winners from losing to
 // high-TF body floods.
-const UNBOUNDED_MUST_KEEP = new Set<string>(["exact-title", "configured-equivalence", "version"]);
+const UNBOUNDED_MUST_KEEP = new Set<string>(["exact-title", "configured-concept", "version"]);
 const CONTEXTUAL_MUST_KEEP_SOURCE = "contextual-title-prefix";
 const TITLE_PREFIX_KEEP_SOURCE = "title-prefix";
 const K1 = 1.2;
@@ -70,7 +70,7 @@ const B = 0.75;
 const TITLE_BOOST = 4;
 
 function postingTitleSource(kind: QueryFormKind) {
-  if (kind === "acronym-key" || kind === "acronym-form") return "configured-equivalence";
+  if (kind === "acronym-key" || kind === "acronym-form") return "configured-concept";
   if (kind === "standalone-recall") return "standalone-recall";
   if (kind === "topical-recall") return "topical-recall";
   if (kind === "synonym-recall") return "synonym-recall";

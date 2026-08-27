@@ -315,6 +315,18 @@ try {
   if (corpusDts.includes("parseEquivalences") || corpusDts.includes("EquivalenceArtifact")) {
     throw new Error("packed corpus dts must not export EquivalenceArtifact/parseEquivalences");
   }
+  if (!corpusDts.includes("normalizeExternalConfiguredConcepts")) {
+    throw new Error("packed corpus dts missing normalizeExternalConfiguredConcepts");
+  }
+  if (!corpusDts.includes("ExternalConfiguredConceptError")) {
+    throw new Error("packed corpus dts missing ExternalConfiguredConceptError");
+  }
+  if (corpusDts.includes("normalizeExternalEquivalences")) {
+    throw new Error("packed corpus dts must not export normalizeExternalEquivalences");
+  }
+  if (corpusDts.includes("ExternalEquivalenceError")) {
+    throw new Error("packed corpus dts must not export ExternalEquivalenceError");
+  }
   const rootDts = readFileSync(path.join(packedRoot, "dist/index.d.ts"), "utf8");
   if (!/\bmergeRelationships\b/.test(rootDts)) throw new Error("packed root dts missing mergeRelationships");
   if (/\bmergeEditorialRelationships\b/.test(rootDts)) {
@@ -369,7 +381,7 @@ try {
     path.join(consumer, "probe.mjs"),
     `import { SearchEngine, morphology, compileAuthoredRelevance, mergeRelationships } from "@software-land/search";
 import { createSearchClient, searchWorkerUrl } from "@software-land/search/browser";
-import { compileCorpus, normalizeExternalEquivalences, classifyExpansionRelation, parseConfiguredConcepts } from "@software-land/search/corpus";
+import { compileCorpus, normalizeExternalConfiguredConcepts, classifyExpansionRelation, parseConfiguredConcepts } from "@software-land/search/corpus";
 import { compileRelationships } from "@software-land/search/relationships";
 import { compileSemantic } from "@software-land/search/semantic";
 import { compileLexicalFrequency } from "@software-land/search/lexical";
@@ -380,7 +392,7 @@ if (typeof compileAuthoredRelevance !== "function") throw new Error("root compil
 if (typeof mergeRelationships !== "function") throw new Error("root mergeRelationships missing");
 if (typeof createSearchClient !== "function") throw new Error("browser createSearchClient missing");
 if (typeof compileCorpus !== "function") throw new Error("corpus compileCorpus missing");
-if (typeof normalizeExternalEquivalences !== "function") throw new Error("corpus normalizeExternalEquivalences missing");
+if (typeof normalizeExternalConfiguredConcepts !== "function") throw new Error("corpus normalizeExternalConfiguredConcepts missing");
 if (typeof classifyExpansionRelation !== "function") throw new Error("corpus classifyExpansionRelation missing");
 if (typeof parseConfiguredConcepts !== "function") throw new Error("corpus parseConfiguredConcepts missing");
 if (typeof compileRelationships !== "function") throw new Error("relationships compileRelationships missing");
@@ -388,6 +400,7 @@ if (typeof compileSemantic !== "function") throw new Error("semantic compileSema
 if (typeof compileLexicalFrequency !== "function") throw new Error("lexical compileLexicalFrequency missing");
 
 import * as packedRoot from "@software-land/search";
+import * as packedCorpus from "@software-land/search/corpus";
 if ("synonyms" in packedRoot) throw new Error("root synonyms() must not remain a public export");
 if ("dictionary" in packedRoot) throw new Error("root dictionary() must not remain a public export");
 if ("parseSynonyms" in packedRoot) throw new Error("root parseSynonyms must not remain a public export");
@@ -404,6 +417,20 @@ if (packedRoot.ARTIFACT_FORMATS && "equivalences" in packedRoot.ARTIFACT_FORMATS
   throw new Error("ARTIFACT_FORMATS must not list equivalences");
 }
 if (packedRoot.PUBLIC_EXPORTS.includes("mergeEditorialRelationships")) throw new Error("PUBLIC_EXPORTS must not list mergeEditorialRelationships");
+if ("normalizeExternalEquivalences" in packedCorpus) throw new Error("corpus normalizeExternalEquivalences must not remain a public export");
+if ("ExternalEquivalenceError" in packedCorpus) throw new Error("corpus ExternalEquivalenceError must not remain a public export");
+if (typeof packedCorpus.ExternalConfiguredConceptError !== "function") {
+  throw new Error("corpus ExternalConfiguredConceptError missing");
+}
+const generatedConcepts = normalizeExternalConfiguredConcepts([
+  { key: "cpu", aliases: [["central", "processing", "unit"]] },
+]);
+if (generatedConcepts.format !== "search-corpus-external-configured-concepts") {
+  throw new Error("normalizeExternalConfiguredConcepts format mismatch");
+}
+if (!generatedConcepts.entries.some((row) => row.key === "cpu")) {
+  throw new Error("normalizeExternalConfiguredConcepts must keep generated configured concepts");
+}
 try {
   await import("@software-land/search/synonyms");
   throw new Error("synonyms must not be a package export subpath");
@@ -448,6 +475,18 @@ await engine.index([
 const ids = engine.search("qa", { limit: 5 }).map((hit) => hit.id);
 if (!ids.includes("qa-guide") || !ids.includes("load")) {
   throw new Error("compileAuthoredRelevance engine search failed");
+}
+const explained = engine.searchDetailed("qa", { limit: 5, explain: true });
+const identityHit = explained.results.find((hit) => hit.id === "qa-guide");
+const recallHit = explained.results.find((hit) => hit.id === "load");
+if (!identityHit?.retrievalSources?.includes("configured-concept")) {
+  throw new Error("configured concept identity must emit configured-concept provenance");
+}
+if (identityHit.retrievalSources.includes("configured-equivalence")) {
+  throw new Error("configured-equivalence must not remain public provenance");
+}
+if (!recallHit?.retrievalSources?.includes("synonym-recall")) {
+  throw new Error("relationshipMap equivalent recall must remain synonym-recall");
 }
 if (mergeRelationships(null, authored.documentRelationships) !== null) {
   throw new Error("null authored.documentRelationships must merge to null");

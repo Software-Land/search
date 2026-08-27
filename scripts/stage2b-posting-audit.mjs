@@ -114,7 +114,7 @@ const mixedQueries = [
   ["high-df", "the"],
   ["prefix", "virt"],
   ["morphology", "searching"],
-  ["configured-equivalence", "tls"],
+  ["configured-concept", "tls"],
   ["short-literal", "io"],
   ["machine-l", "machine l"],
 ];

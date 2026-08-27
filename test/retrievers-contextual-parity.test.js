@@ -132,7 +132,7 @@ describe("contextual MUST_KEEP bound", () => {
     expect(winner.retrievalSources).toContain("title-prefix");
   });
 
-  test("exact-title, configured-equivalence, and version remain unbounded must-keep", () => {
+  test("exact-title, configured-concept, and version remain unbounded must-keep", () => {
     const plugins = [
       morphology(),
       dictionary({ entries: [{ key: "ml", aliases: [["machine", "learning"]]}] }),
@@ -155,7 +155,7 @@ describe("contextual MUST_KEEP bound", () => {
     const cfgHits = indexed.retrieve(analyzeQuery("ml", { plugins }), index);
     const cfg = cfgHits.find((h) => h.document.id === "cfg");
     expect(cfg).toBeTruthy();
-    expect(cfg.retrievalSources).toContain("configured-equivalence");
+    expect(cfg.retrievalSources).toContain("configured-concept");
 
     const verHits = indexed.retrieve(analyzeQuery("tls 1.2", { plugins }), index);
     const ver = verHits.find((h) => h.document.id === "ver");
