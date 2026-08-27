@@ -67,6 +67,7 @@
   "historicalRelevanceApplicable": 214,
   "relevanceSoftwareLandCommit": "db5a070dbc6ac112dfae403f38fdfd0fffbedbf6",
   "historicalContractSoftwareLandCommit": "3ad49e867f82db06aa06cd1c7f38dca8faecf246",
+  "dictionaryAcronymMapSoftwareLandCommit": "df852eb4136dc5fb5b23cbf0bc22d45170e71423",
   "omittedV1OnlyCount": 125,
   "omittedBrowserUiOnlyCount": 1,
   "sourceScenarioFiles": [

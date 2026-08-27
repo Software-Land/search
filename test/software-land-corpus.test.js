@@ -3,6 +3,7 @@
  * Fixture data is not default package policy.
  * Regression cases are compatibility coverage, not Core ranking policy.
  */
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -193,6 +194,9 @@ describe("software-land corpus fixture", () => {
     expect(manifest.scenarioSourceCommit).toBe("3ad49e867f82db06aa06cd1c7f38dca8faecf246");
     expect(manifest.softwareLandCommit).toBeUndefined();
     expect(manifest.relevanceSoftwareLandCommit).toBe("db5a070dbc6ac112dfae403f38fdfd0fffbedbf6");
+    expect(manifest.dictionaryAcronymMapSoftwareLandCommit).toBe(
+      "df852eb4136dc5fb5b23cbf0bc22d45170e71423"
+    );
     expect(manifest.historicalRelevanceApplicable).toBe(214);
     expect(manifest.searchPackageVersion).toBe("0.3.1");
     expect(manifest.documentCount).toBe(122);
@@ -228,6 +232,17 @@ describe("software-land corpus fixture", () => {
     expect(readme).toContain("3ad49e867f82db06aa06cd1c7f38dca8faecf246");
     expect(readme).toContain("eac7a90a15d772f0f0626a0fa9481eb9efa55521");
     expect(readme).toContain("db5a070dbc6ac112dfae403f38fdfd0fffbedbf6");
+    expect(readme).toContain("df852eb4136dc5fb5b23cbf0bc22d45170e71423");
+    expect(readme).toContain("dictionaryAcronymMapSoftwareLandCommit");
+    expect(readme).not.toMatch(/df852eb \/ HEAD/);
+  });
+
+  test("dictionary.json bytes match the recorded manifest hash", () => {
+    const rec = manifest.files["dictionary.json"];
+    const buf = readFileSync(path.join(FIXTURE, "dictionary.json"));
+    expect(buf.byteLength).toBe(rec.bytes);
+    expect(createHash("sha256").update(buf).digest("hex")).toBe(rec.sha256);
+    expect(rec.sha256).toBe("d0a4e72b54d7431233d5ebc7c9608c88922ddbeeabc52bfdb0a6015fef2f85f5");
   });
 
   test("historical inventory keeps intent-mining dispositions and marks relevance applicability", () => {
