@@ -63,8 +63,6 @@ const authoredIdentity: CompiledAuthoredRelevance = compileAuthoredRelevance({ c
 const identityPlugin: SearchPlugin | undefined = authoredIdentity.plugins[0];
 if (!identityPlugin) throw new Error("compileAuthoredRelevance must include configured-identity plugins");
 void identityPlugin.lexicon?.();
-void identityPlugin.sequences;
-void identityPlugin.byKey;
 const migrated: MigratedConfiguredEntry = migrateConfiguredEntry({
   key: "wifi",
   expansion: ["wi", "fi"],

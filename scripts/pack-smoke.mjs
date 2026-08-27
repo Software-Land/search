@@ -280,6 +280,9 @@ try {
   if (/\bexpand\b/.test(pluginBlock)) {
     throw new Error("packed SearchPlugin must not expose expand");
   }
+  if (/\bsequences\b/.test(pluginBlock) || /\bbyKey\b/.test(pluginBlock)) {
+    throw new Error("packed SearchPlugin must not expose compiled configured-identity internals");
+  }
   if (/\bstandaloneRecallByToken\b/.test(pluginBlock) || /\btopicalRecallByKey\b/.test(pluginBlock)) {
     throw new Error("packed SearchPlugin must not expose compiled related-recall maps");
   }

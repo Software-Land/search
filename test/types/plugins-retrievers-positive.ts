@@ -38,8 +38,13 @@ SearchEngine.create({
 });
 
 const p: SearchPlugin = {
+  name: "custom-morphology",
+  indexIdentity: "custom-morphology-v1",
   lemma(token: string) {
     return token;
+  },
+  canonicalLemma() {
+    return null;
   },
 };
 
@@ -54,9 +59,8 @@ const e: EnglishPlugin = {
 };
 
 const d: SearchPlugin = {
-  name: "configured-identity",
-  sequences: [{ tokens: ["wifi"], kind: "key", entry: { key: "wifi", aliases: [["wi", "fi"]]} }],
-  byKey: new Map([["wifi", { key: "wifi", aliases: [["wi", "fi"]]}]]),
+  name: "custom-lexicon",
+  indexIdentity: "custom-lexicon-v1",
   lexicon() {
     return ["wifi", "wi", "fi"];
   },

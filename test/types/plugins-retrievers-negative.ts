@@ -41,24 +41,14 @@ const badExpand: SearchPlugin = {
   },
 };
 
-const badSequenceTokens: SearchPlugin = {
-  sequences: [
-    // @ts-expect-error sequences[].tokens is required once sequences is present
-    {
-      kind: "key",
-      entry: { key: "wifi" },
-    },
-  ],
+const badSequences: SearchPlugin = {
+  // @ts-expect-error sequences is not a public SearchPlugin hook
+  sequences: [{ tokens: ["wifi"], kind: "key", entry: { key: "wifi" } }],
 };
 
-const badSequenceEntry: SearchPlugin = {
-  sequences: [
-    // @ts-expect-error sequences[].entry is required once sequences is present
-    {
-      tokens: ["wifi"],
-      kind: "key",
-    },
-  ],
+const badByKey: SearchPlugin = {
+  // @ts-expect-error byKey is not a public SearchPlugin field
+  byKey: new Map([["wifi", { key: "wifi" }]]),
 };
 
 // @ts-expect-error ExperimentalRetriever requires retrieve
@@ -100,8 +90,8 @@ void badLemma;
 void badCanonical;
 void badLexicon;
 void badExpand;
-void badSequenceTokens;
-void badSequenceEntry;
+void badSequences;
+void badByKey;
 void missingRetrieve;
 void badRetrieveReturn;
 void badRetrieveAsync;

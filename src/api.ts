@@ -53,7 +53,9 @@ export interface AdaptiveOptions {
  * unrecognized entries.
  *
  * Hooks are duck-typed at runtime. Provide only the hooks you implement.
- * If `sequences` is present, Core reads `tokens` and `entry.key` on each item.
+ * Custom plugins may supply `lemma`, `canonicalLemma`, and `lexicon`.
+ * Configured identity is not a custom-plugin field set; author
+ * `configuredConcepts` and compile with `compileAuthoredRelevance()`.
  */
 export interface SearchPlugin {
   name?: string;
@@ -62,12 +64,6 @@ export interface SearchPlugin {
   lemma?(token: string): string;
   canonicalLemma?(token: string): string | null;
   lexicon?(): Iterable<string>;
-  sequences?: ReadonlyArray<{
-    tokens: readonly string[];
-    kind?: string;
-    entry: ConfiguredConcept;
-  }>;
-  byKey?: ReadonlyMap<string, ConfiguredConcept>;
 }
 
 /**

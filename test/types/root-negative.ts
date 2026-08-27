@@ -158,6 +158,26 @@ SearchEngine.create({
   plugins: [
     {
       name: "custom",
+      // @ts-expect-error sequences is not a public SearchPlugin hook
+      sequences: [{ tokens: ["wifi"], kind: "key", entry: { key: "wifi" } }],
+    },
+  ],
+});
+
+SearchEngine.create({
+  plugins: [
+    {
+      name: "custom",
+      // @ts-expect-error byKey is not a public SearchPlugin field
+      byKey: new Map([["wifi", { key: "wifi" }]]),
+    },
+  ],
+});
+
+SearchEngine.create({
+  plugins: [
+    {
+      name: "custom",
       // @ts-expect-error standaloneRecallByToken is not a public SearchPlugin field
       standaloneRecallByToken: new Map(),
     },
@@ -173,6 +193,20 @@ SearchEngine.create({
     },
   ],
 });
+
+const excessSequences: import("@software-land/search").SearchPlugin = {
+  name: "custom",
+  // @ts-expect-error sequences is not a public SearchPlugin hook
+  sequences: [{ tokens: ["wifi"], kind: "key", entry: { key: "wifi" } }],
+};
+void excessSequences;
+
+const excessByKey: import("@software-land/search").SearchPlugin = {
+  name: "custom",
+  // @ts-expect-error byKey is not a public SearchPlugin field
+  byKey: new Map([["wifi", { key: "wifi" }]]),
+};
+void excessByKey;
 
 const excessStandalone: import("@software-land/search").SearchPlugin = {
   name: "custom",
