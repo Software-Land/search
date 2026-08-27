@@ -2,8 +2,6 @@
 
 ## Unreleased
 
-## 0.5.0
-
 ### Breaking
 
 - Configured concepts are authored as `{ key, aliases }` plus optional identity metadata (`type`, `provenance`, `confidence`). `aliases[0]` is the canonical lexical sequence and is compiled internally as the existing expansion sequence kind. Alternate same-intent forms are `aliases[1…]`. The public authoring schema no longer has `exp` / `expansion` or `primary`. Standalone and topical recall are not dictionary-entry fields. `migrateConfiguredEntry()` emits `{ key, aliases }` only.
