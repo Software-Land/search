@@ -159,15 +159,16 @@ node tools/search-corpus/build.mjs compile --input corpus.json --output dir --de
 ```
 
 ```js
-import { compileCorpus, normalizeExternalConfiguredConcepts } from "@software-land/search/corpus";
+import { compileCorpus, reconcileExternalConfiguredConcepts } from "@software-land/search/corpus";
 
 const { configuredConcepts, relationshipMap } = compileCorpus({
   documents: [{ id: "a", title: "Central Processing Unit (CPU)", body: "The CPU fetches instructions." }],
 });
 
-const generated = normalizeExternalConfiguredConcepts([
+const generated = reconcileExternalConfiguredConcepts([
   { key: "cpu", aliases: [["central", "processing", "unit"]] },
 ]);
+void generated.configuredConcepts;
 ```
 
 ## Lexical compilers

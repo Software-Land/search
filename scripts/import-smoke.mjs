@@ -44,10 +44,15 @@ if (typeof corpus.compileCorpus !== "function") throw new Error("corpus compileC
 if (typeof relationships.compileRelationships !== "function") throw new Error("relationships compileRelationships missing");
 if (typeof semantic.compileSemantic !== "function") throw new Error("semantic compileSemantic missing");
 if (typeof lexical.compileLexicalFrequency !== "function") throw new Error("lexical compileLexicalFrequency missing");
-if (typeof corpus.classifyExpansionRelation !== "function") throw new Error("corpus classifyExpansionRelation missing");
 if (typeof corpus.parseConfiguredConcepts !== "function") throw new Error("corpus parseConfiguredConcepts missing");
-if (typeof corpus.normalizeExternalConfiguredConcepts !== "function") {
-  throw new Error("corpus normalizeExternalConfiguredConcepts missing");
+if (typeof corpus.reconcileExternalConfiguredConcepts !== "function") {
+  throw new Error("corpus reconcileExternalConfiguredConcepts missing");
+}
+if ("normalizeExternalConfiguredConcepts" in corpus) {
+  throw new Error("corpus normalizeExternalConfiguredConcepts must not remain a public export");
+}
+if ("classifyExpansionRelation" in corpus) {
+  throw new Error("corpus classifyExpansionRelation must not remain a public export");
 }
 if ("normalizeExternalEquivalences" in corpus) {
   throw new Error("corpus normalizeExternalEquivalences must not remain a public export");

@@ -7,8 +7,7 @@ import {
   parseConfiguredConcepts,
   CONFIGURED_CONCEPT_FORMAT,
   loadCorpus,
-  normalizeExternalConfiguredConcepts,
-  classifyExpansionRelation,
+  reconcileExternalConfiguredConcepts,
   ExternalConfiguredConceptError,
   type AnalyzeResult,
   type CompileOptions,
@@ -120,7 +119,7 @@ void LEXICAL_INDEX_FORMAT;
 void lexicalIndexVersion;
 void lexicalIndex.corpus.documentCount;
 
-const normalized = normalizeExternalConfiguredConcepts([
+const reconciled = reconcileExternalConfiguredConcepts([
   {
     key: "API",
     aliases: [["application", "programming", "interface"], ["app", "programming", "interface"]],
@@ -128,17 +127,12 @@ const normalized = normalizeExternalConfiguredConcepts([
     provenance: "application-generated",
   },
 ]);
-void normalized.entries[0].key;
-void normalized.unresolved;
-void normalized.reconciliations;
-const relation: "identical" | "compatible" | "ambiguous" | "conflict" = classifyExpansionRelation(
-  "grpc",
-  "grpc remote procedure calls",
-  "google remote procedure call"
-);
-void relation;
+void reconciled.configuredConcepts[0].key;
+void reconciled.configuredConcepts[0].aliases;
+void reconciled.unresolved;
+void reconciled.reconciliations;
 try {
-  normalizeExternalConfiguredConcepts([{ key: "", aliases: [["x"]]}]);
+  reconcileExternalConfiguredConcepts([{ key: "", aliases: [["x"]]}]);
 } catch (err) {
   if (!(err instanceof ExternalConfiguredConceptError)) throw err;
 }

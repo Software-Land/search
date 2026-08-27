@@ -1,15 +1,32 @@
 import {
   compileCorpus,
   LIFECYCLE,
-  normalizeExternalConfiguredConcepts,
-  classifyExpansionRelation,
+  reconcileExternalConfiguredConcepts,
   ExternalConfiguredConceptError,
 } from "../tools/search-corpus/index.js";
+import { classifyExpansionRelation } from "../tools/search-corpus/lib/externalEquivalences.js";
 import { acronymKey, expansionTokens } from "../tools/search-corpus/lib/text.js";
+import { compileAuthoredRelevance } from "../dist/index.js";
 
-describe("normalizeExternalConfiguredConcepts", () => {
-  test("normalizes key/expansion, aliases, primary, and sorts deterministically", () => {
-    const result = normalizeExternalConfiguredConcepts([
+function extraAliases(concept) {
+  return (concept.aliases || []).slice(1);
+}
+
+function forbiddenConceptFields(row) {
+  return [
+    "expansion",
+    "primary",
+    "standaloneRecall",
+    "topicalRecall",
+    "evidenceDocumentIds",
+    "ambiguous",
+    "alternatives",
+  ].filter((key) => Object.prototype.hasOwnProperty.call(row, key));
+}
+
+describe("reconcileExternalConfiguredConcepts", () => {
+  test("canonicalizes keys, candidate expansions, and aliases deterministically", () => {
+    const result = reconcileExternalConfiguredConcepts([
       {
         key: "ML",
         expansion: "Machine Learning",
@@ -22,67 +39,68 @@ describe("normalizeExternalConfiguredConcepts", () => {
         aliases: [["Application", "Programming", "Interface"], ["app", "programming", "interface"]],
       },
     ]);
-    expect(result.entries.map((e) => e.key)).toEqual(["api", "ml"]);
-    expect(result.format).toBe("search-corpus-external-configured-concepts");
-    expect(result.entries[0].expansion).toEqual(["application", "programming", "interface"]);
-    expect(result.entries[0].aliases).toEqual([["app", "programming", "interface"]]);
-    expect(result.entries[0].primary).toBe(null);
-    expect(result.entries[0].standaloneRecall).toEqual([]);
-    expect(result.entries[1].expansion).toEqual(["machine", "learning"]);
-    expect(result.entries[1].evidenceDocumentIds).toEqual(["a", "b"]);
-    expect(result.entries[1].provenance).toBe("application-generated");
+    expect(result.configuredConcepts.map((e) => e.key)).toEqual(["api", "ml"]);
+    expect(result.format).toBe("search-corpus-external-configured-concept-reconciliation");
+    expect(result.configuredConcepts[0].aliases[0]).toEqual(["application", "programming", "interface"]);
+    expect(extraAliases(result.configuredConcepts[0])).toEqual([["app", "programming", "interface"]]);
+    expect(forbiddenConceptFields(result.configuredConcepts[0])).toEqual([]);
+    expect(result.configuredConcepts[1].aliases[0]).toEqual(["machine", "learning"]);
+    expect(result.reconciliations.find((row) => row.key === "ml").evidenceDocumentIds).toEqual(["a", "b"]);
+    expect(result.configuredConcepts[1].provenance).toBe("application-generated");
+    expect(result).not.toHaveProperty("entries");
+    expect(result.configuredConcepts[1].provenance).toBe("application-generated");
   });
 
   test("collapses duplicate key+expansion and merges evidence", () => {
-    const result = normalizeExternalConfiguredConcepts([
+    const result = reconcileExternalConfiguredConcepts([
       { key: "fps", expansion: "frames per second", evidenceDocumentIds: ["d1"] },
       { key: "FPS", expansion: "frames per second", evidenceDocumentIds: ["d2"], aliases: [["frame", "rate"]] },
     ]);
-    expect(result.entries).toHaveLength(1);
-    expect(result.entries[0].key).toBe("fps");
-    expect(result.entries[0].evidenceDocumentIds).toEqual(["d1", "d2"]);
-    expect(result.entries[0].aliases).toEqual([["frame", "rate"]]);
+    expect(result.configuredConcepts).toHaveLength(1);
+    expect(result.configuredConcepts[0].key).toBe("fps");
+    expect(result.reconciliations[0].evidenceDocumentIds).toEqual(["d1", "d2"]);
+    expect(extraAliases(result.configuredConcepts[0])).toEqual([["frame", "rate"]]);
   });
 
   test("skips empty alias entries instead of rejecting the row", () => {
-    const result = normalizeExternalConfiguredConcepts([
+    const result = reconcileExternalConfiguredConcepts([
       { key: "fps", expansion: "frames per second", aliases: [[], [""], ["frame", "rate"]] },
     ]);
-    expect(result.entries).toHaveLength(1);
-    expect(result.entries[0].aliases).toEqual([["frame", "rate"]]);
+    expect(result.configuredConcepts).toHaveLength(1);
+    expect(result.configuredConcepts[0].aliases).toEqual([["frames", "per", "second"], ["frame", "rate"]]);
   });
 
   test("skips expansions that tokenize to only function words", () => {
-    const result = normalizeExternalConfiguredConcepts([
+    const result = reconcileExternalConfiguredConcepts([
       { key: "fps", expansion: "frames per second" },
       { key: "i.e.", expansion: "that is" },
     ]);
-    expect(result.entries.map((e) => e.key)).toEqual(["fps", "ie"]);
-    expect(result.entries.find((e) => e.key === "ie").expansion).toEqual(["that", "is"]);
+    expect(result.configuredConcepts.map((e) => e.key)).toEqual(["fps", "ie"]);
+    expect(result.configuredConcepts.find((e) => e.key === "ie").aliases[0]).toEqual(["that", "is"]);
     expect(result.rejected).toEqual([]);
   });
 
   test("preserves leading not in Not Only SQL", () => {
-    const result = normalizeExternalConfiguredConcepts([{ key: "NoSQL", expansion: "Not Only SQL" }]);
-    expect(result.entries).toHaveLength(1);
-    expect(result.entries[0].key).toBe("nosql");
-    expect(result.entries[0].expansion).toEqual(["not", "only", "sql"]);
+    const result = reconcileExternalConfiguredConcepts([{ key: "NoSQL", expansion: "Not Only SQL" }]);
+    expect(result.configuredConcepts).toHaveLength(1);
+    expect(result.configuredConcepts[0].key).toBe("nosql");
+    expect(result.configuredConcepts[0].aliases[0]).toEqual(["not", "only", "sql"]);
   });
 
   test("rejects empty key and empty expansion", () => {
-    expect(() => normalizeExternalConfiguredConcepts([{ key: "", aliases: [["frames", "per", "second"]]}])).toThrow(
+    expect(() => reconcileExternalConfiguredConcepts([{ key: "", aliases: [["frames", "per", "second"]]}])).toThrow(
       ExternalConfiguredConceptError
     );
-    expect(() => normalizeExternalConfiguredConcepts([{ key: "fps", aliases: [[]]}])).toThrow(ExternalConfiguredConceptError);
-    expect(() => normalizeExternalConfiguredConcepts([{ key: "fps", expansion: "   " }])).toThrow(ExternalConfiguredConceptError);
+    expect(() => reconcileExternalConfiguredConcepts([{ key: "fps", aliases: [[]]}])).toThrow(ExternalConfiguredConceptError);
+    expect(() => reconcileExternalConfiguredConcepts([{ key: "fps", expansion: "   " }])).toThrow(ExternalConfiguredConceptError);
   });
 
   test("records legitimate same-key alternatives as unresolved ambiguity instead of deleting the key", () => {
-    const result = normalizeExternalConfiguredConcepts([
+    const result = reconcileExternalConfiguredConcepts([
       { key: "cd", expansion: "continuous deployment", evidenceDocumentIds: ["a"] },
       { key: "cd", expansion: "continuous delivery", evidenceDocumentIds: ["b"] },
     ]);
-    expect(result.entries).toHaveLength(0);
+    expect(result.configuredConcepts).toHaveLength(0);
     expect(result.conflicts).toHaveLength(1);
     expect(result.unresolved).toEqual([
       {
@@ -100,7 +118,7 @@ describe("normalizeExternalConfiguredConcepts", () => {
   });
 
   test("non-strict mode records rejects and unresolved alternatives without throwing", () => {
-    const result = normalizeExternalConfiguredConcepts(
+    const result = reconcileExternalConfiguredConcepts(
       [
         { key: "", aliases: [["x"]]},
         { key: "cd", expansion: "continuous deployment" },
@@ -111,47 +129,47 @@ describe("normalizeExternalConfiguredConcepts", () => {
     expect(result.rejected).toHaveLength(1);
     expect(result.conflicts).toHaveLength(1);
     expect(result.unresolved.map((row) => row.key)).toEqual(["cd"]);
-    expect(result.entries).toHaveLength(0);
+    expect(result.configuredConcepts).toHaveLength(0);
   });
 
   test("collapses trivially compatible variants into one canonical expansion plus alias", () => {
-    const result = normalizeExternalConfiguredConcepts([
+    const result = reconcileExternalConfiguredConcepts([
       { key: "grpc", expansion: "grpc remote procedure calls", evidenceDocumentIds: ["a"] },
       { key: "grpc", expansion: "google remote procedure call", evidenceDocumentIds: ["b"] },
     ]);
-    expect(result.entries).toHaveLength(1);
+    expect(result.configuredConcepts).toHaveLength(1);
     expect(result.unresolved).toHaveLength(0);
     expect(result.conflicts).toHaveLength(0);
-    const row = result.entries[0];
+    const row = result.configuredConcepts[0];
     expect(row.key).toBe("grpc");
-    expect(row.expansion).toEqual(["google", "remote", "procedure", "call"]);
-    expect(row.aliases).toEqual([["grpc", "remote", "procedure", "calls"]]);
-    expect(row.evidenceDocumentIds).toEqual(["a", "b"]);
+    expect(row.aliases[0]).toEqual(["google", "remote", "procedure", "call"]);
+    expect(extraAliases(row)).toEqual([["grpc", "remote", "procedure", "calls"]]);
+    expect(result.reconciliations[0].evidenceDocumentIds).toEqual(["a", "b"]);
     expect(result.reconciliations[0]).toMatchObject({ key: "grpc", kind: "compatible", eligible: true });
   });
 
   test("collapses punctuation and function-word compatible variants", () => {
-    const result = normalizeExternalConfiguredConcepts([
+    const result = reconcileExternalConfiguredConcepts([
       { key: "iot", expansion: "internet of things", evidenceDocumentIds: ["a"] },
       { key: "iot", expansion: "internet things", evidenceDocumentIds: ["b"] },
     ]);
-    expect(result.entries).toHaveLength(1);
-    expect(result.entries[0].expansion).toEqual(["internet", "things"]);
-    expect(result.entries[0].aliases).toEqual([["internet", "of", "things"]]);
+    expect(result.configuredConcepts).toHaveLength(1);
+    expect(result.configuredConcepts[0].aliases[0]).toEqual(["internet", "things"]);
+    expect(extraAliases(result.configuredConcepts[0])).toEqual([["internet", "of", "things"]]);
   });
 
   test("collapses plural/singular compatible variants", () => {
-    const result = normalizeExternalConfiguredConcepts([
+    const result = reconcileExternalConfiguredConcepts([
       { key: "api", expansion: "application programming interface" },
       { key: "api", expansion: "application programming interfaces" },
     ]);
-    expect(result.entries).toHaveLength(1);
+    expect(result.configuredConcepts).toHaveLength(1);
     expect(result.unresolved).toHaveLength(0);
-    expect(result.entries[0].aliases.length).toBe(1);
+    expect(extraAliases(result.configuredConcepts[0]).length).toBe(1);
   });
 
   test("keeps CI/CD delivery vs deployment as ambiguity, not an auto-unioned alias", () => {
-    const result = normalizeExternalConfiguredConcepts([
+    const result = reconcileExternalConfiguredConcepts([
       {
         key: "cicd",
         expansion: "continuous integration and continuous delivery",
@@ -163,7 +181,7 @@ describe("normalizeExternalConfiguredConcepts", () => {
         evidenceDocumentIds: ["doc-b"],
       },
     ]);
-    expect(result.entries.find((row) => row.key === "cicd")).toBeUndefined();
+    expect(result.configuredConcepts.find((row) => row.key === "cicd")).toBeUndefined();
     expect(result.unresolved).toHaveLength(1);
     expect(result.unresolved[0].kind).toBe("ambiguous");
     expect(result.unresolved[0].expansions).toEqual([
@@ -174,17 +192,17 @@ describe("normalizeExternalConfiguredConcepts", () => {
   });
 
   test("records genuinely conflicting meanings as unresolved conflict, not an entry", () => {
-    const result = normalizeExternalConfiguredConcepts([
+    const result = reconcileExternalConfiguredConcepts([
       { key: "ts", expansion: "typescript", evidenceDocumentIds: ["a"] },
       { key: "ts", expansion: "timestamp", evidenceDocumentIds: ["b"] },
     ]);
-    expect(result.entries).toHaveLength(0);
+    expect(result.configuredConcepts).toHaveLength(0);
     expect(result.unresolved[0]).toMatchObject({ key: "ts", kind: "conflict", eligible: false });
     expect(result.conflicts).toHaveLength(1);
   });
 
   test("single-expansion rows marked ambiguous stay inspectable and not runtime-eligible", () => {
-    const result = normalizeExternalConfiguredConcepts([
+    const result = reconcileExternalConfiguredConcepts([
       {
         key: "rag",
         expansion: "retrieval augmented generation",
@@ -192,7 +210,7 @@ describe("normalizeExternalConfiguredConcepts", () => {
         alternatives: [{ expansion: "red amber green" }],
       },
     ]);
-    expect(result.entries).toHaveLength(0);
+    expect(result.configuredConcepts).toHaveLength(0);
     expect(result.unresolved[0]).toMatchObject({ key: "rag", kind: "ambiguous", eligible: false });
   });
 });
@@ -241,20 +259,20 @@ describe("classifyExpansionRelation", () => {
   });
 });
 
-describe("normalizeExternalConfiguredConcepts spelling and abbreviation compatibility", () => {
+describe("reconcileExternalConfiguredConcepts spelling and abbreviation compatibility", () => {
   test("collapses acknowledgement/acknowledgment into one eligible ack entry plus alias", () => {
-    const result = normalizeExternalConfiguredConcepts([
+    const result = reconcileExternalConfiguredConcepts([
       { key: "ack", expansion: "acknowledgement", evidenceDocumentIds: ["cf"] },
       { key: "ack", expansion: "acknowledgment", evidenceDocumentIds: ["r"] },
     ]);
-    expect(result.entries).toHaveLength(1);
+    expect(result.configuredConcepts).toHaveLength(1);
     expect(result.unresolved).toHaveLength(0);
     expect(result.conflicts).toHaveLength(0);
-    const row = result.entries[0];
+    const row = result.configuredConcepts[0];
     expect(row.key).toBe("ack");
-    expect(row.expansion).toEqual(["acknowledgement"]);
-    expect(row.aliases).toEqual([["acknowledgment"]]);
-    expect(row.evidenceDocumentIds).toEqual(["cf", "r"]);
+    expect(row.aliases[0]).toEqual(["acknowledgement"]);
+    expect(extraAliases(row)).toEqual([["acknowledgment"]]);
+    expect(result.reconciliations[0].evidenceDocumentIds).toEqual(["cf", "r"]);
     expect(result.reconciliations[0]).toMatchObject({ key: "ack", kind: "compatible", eligible: true });
   });
 
@@ -268,7 +286,7 @@ describe("normalizeExternalConfiguredConcepts spelling and abbreviation compatib
     expect(acronymKey("i.e.")).toBe("ie");
     expect(acronymKey("APIs")).toBe("api");
 
-    const result = normalizeExternalConfiguredConcepts(
+    const result = reconcileExternalConfiguredConcepts(
       [
         { key: "A*", expansion: "a star search" },
         { key: "C++", expansion: "c plus plus" },
@@ -279,10 +297,10 @@ describe("normalizeExternalConfiguredConcepts spelling and abbreviation compatib
       ],
       { strict: false }
     );
-    expect(result.entries.map((row) => row.key).sort()).toEqual(["cicd", "tcpip"]);
-    expect(result.entries.find((row) => row.key === "a")).toBeUndefined();
-    expect(result.entries.find((row) => row.key === "c")).toBeUndefined();
-    expect(result.entries.find((row) => row.key === "o1")).toBeUndefined();
+    expect(result.configuredConcepts.map((row) => row.key).sort()).toEqual(["cicd", "tcpip"]);
+    expect(result.configuredConcepts.find((row) => row.key === "a")).toBeUndefined();
+    expect(result.configuredConcepts.find((row) => row.key === "c")).toBeUndefined();
+    expect(result.configuredConcepts.find((row) => row.key === "o1")).toBeUndefined();
     expect(result.rejected).toHaveLength(4);
     expect(result.rejected.every((row) => row.reason === "empty key")).toBe(true);
   });
@@ -300,7 +318,7 @@ describe("normalizeExternalConfiguredConcepts spelling and abbreviation compatib
     expect(expansionTokens("O(n²)")).toEqual([]);
     expect(expansionTokens("too long; didn't read")).toEqual(["too", "long", "didnt", "read"]);
 
-    const spoken = normalizeExternalConfiguredConcepts(
+    const spoken = reconcileExternalConfiguredConcepts(
       [
         { key: "cpp", expansion: "C++" },
         { key: "csharp", expansion: "C#" },
@@ -310,11 +328,11 @@ describe("normalizeExternalConfiguredConcepts spelling and abbreviation compatib
       ],
       { strict: false }
     );
-    expect(spoken.entries.find((row) => row.key === "cpp").expansion).toEqual(["c", "plus", "plus"]);
-    expect(spoken.entries.find((row) => row.key === "cpp").aliases).toEqual([]);
-    expect(spoken.entries.find((row) => row.key === "csharp").expansion).toEqual(["c", "sharp"]);
-    expect(spoken.entries.find((row) => row.key === "fsharp").expansion).toEqual(["f", "sharp"]);
-    expect(spoken.entries.find((row) => row.key === "astar").expansion).toEqual(["a", "star"]);
+    expect(spoken.configuredConcepts.find((row) => row.key === "cpp").aliases[0]).toEqual(["c", "plus", "plus"]);
+    expect(extraAliases(spoken.configuredConcepts.find((row) => row.key === "cpp"))).toEqual([]);
+    expect(spoken.configuredConcepts.find((row) => row.key === "csharp").aliases[0]).toEqual(["c", "sharp"]);
+    expect(spoken.configuredConcepts.find((row) => row.key === "fsharp").aliases[0]).toEqual(["f", "sharp"]);
+    expect(spoken.configuredConcepts.find((row) => row.key === "astar").aliases[0]).toEqual(["a", "star"]);
     expect(spoken.rejected).toEqual([]);
   });
 
@@ -325,7 +343,7 @@ describe("normalizeExternalConfiguredConcepts spelling and abbreviation compatib
     expect(acronymKey("O(1)")).toBe("");
     expect(acronymKey("on")).toBe("on");
 
-    const result = normalizeExternalConfiguredConcepts(
+    const result = reconcileExternalConfiguredConcepts(
       [
         { key: "O(n)", expansion: "linear time" },
         { key: "O(n^2)", expansion: "quadratic time" },
@@ -334,15 +352,15 @@ describe("normalizeExternalConfiguredConcepts spelling and abbreviation compatib
       ],
       { strict: false }
     );
-    expect(result.entries.map((row) => row.key).sort()).toEqual(["cpp"]);
-    expect(result.entries.find((row) => row.key === "on")).toBeUndefined();
-    expect(result.entries.find((row) => row.key === "o1")).toBeUndefined();
-    expect(result.entries.find((row) => row.key === "cpp").expansion).toEqual(["c", "plus", "plus"]);
+    expect(result.configuredConcepts.map((row) => row.key).sort()).toEqual(["cpp"]);
+    expect(result.configuredConcepts.find((row) => row.key === "on")).toBeUndefined();
+    expect(result.configuredConcepts.find((row) => row.key === "o1")).toBeUndefined();
+    expect(result.configuredConcepts.find((row) => row.key === "cpp").aliases[0]).toEqual(["c", "plus", "plus"]);
     expect(result.rejected.filter((row) => row.reason === "empty key")).toHaveLength(3);
   });
 
   test("unsafe symbolic expansions are rejected rather than stripped", () => {
-    const result = normalizeExternalConfiguredConcepts(
+    const result = reconcileExternalConfiguredConcepts(
       [
         { key: "onotation", expansion: "O(n)" },
         { key: "onotation2", expansion: "O(n^2)" },
@@ -350,8 +368,8 @@ describe("normalizeExternalConfiguredConcepts spelling and abbreviation compatib
       ],
       { strict: false }
     );
-    expect(result.entries.map((row) => row.key)).toEqual(["tldr"]);
-    expect(result.entries[0].expansion).toEqual(["too", "long", "didnt", "read"]);
+    expect(result.configuredConcepts.map((row) => row.key)).toEqual(["tldr"]);
+    expect(result.configuredConcepts[0].aliases[0]).toEqual(["too", "long", "didnt", "read"]);
     expect(result.rejected.map((row) => row.reason)).toEqual([
       "unsafe symbolic expansion",
       "unsafe symbolic expansion",
@@ -359,66 +377,83 @@ describe("normalizeExternalConfiguredConcepts spelling and abbreviation compatib
   });
 
   test("collapses tech debt / technical debt into one eligible entry plus alias", () => {
-    const result = normalizeExternalConfiguredConcepts([
+    const result = reconcileExternalConfiguredConcepts([
       { key: "techdebt", expansion: "tech debt", evidenceDocumentIds: ["a"] },
       { key: "techdebt", expansion: "technical debt", evidenceDocumentIds: ["b"] },
     ]);
-    expect(result.entries).toHaveLength(1);
+    expect(result.configuredConcepts).toHaveLength(1);
     expect(result.unresolved).toHaveLength(0);
-    const row = result.entries[0];
-    expect(row.expansion).toEqual(["tech", "debt"]);
-    expect(row.aliases).toEqual([["technical", "debt"]]);
+    const row = result.configuredConcepts[0];
+    expect(row.aliases[0]).toEqual(["tech", "debt"]);
+    expect(extraAliases(row)).toEqual([["technical", "debt"]]);
     expect(result.reconciliations[0]).toMatchObject({ key: "techdebt", kind: "compatible", eligible: true });
   });
 
-  test("standaloneRecall round-trips unique tokens and rejects malformed values", () => {
-    const result = normalizeExternalConfiguredConcepts([
-      {
-        key: "http",
-        expansion: "hypertext transfer protocol",
-        standaloneRecall: ["Hypertext", "hypertext", "", "hypertext transfer"],
-      },
-    ]);
-    expect(result.entries).toHaveLength(1);
-    expect(result.entries[0].standaloneRecall).toEqual(["hypertext"]);
-    expect(result.entries[0].topicalRecall).toEqual([]);
-  });
-
-  test("topicalRecall round-trips tokenized phrases and rejects malformed values", () => {
-    const result = normalizeExternalConfiguredConcepts([
-      {
-        key: "appsec",
-        expansion: "application security",
-        topicalRecall: [
-          ["Authentication"],
-          ["authentication"],
-          ["bearer", "token"],
-          ["bearer token"],
-          "oauth",
-          [],
-          ["  "],
-        ],
-      },
-    ]);
-    expect(result.entries).toHaveLength(1);
-    expect(result.entries[0].topicalRecall).toEqual([["authentication"], ["bearer", "token"]]);
-  });
-
-  test("public input is {key, aliases} with aliases[0] canonical; expansions[] is not a substitute", () => {
+  test("rejects standaloneRecall as a wrong-layer candidate field", () => {
     expect(() =>
-      normalizeExternalConfiguredConcepts([{ key: "cd", expansions: [["continuous", "delivery"]] }])
+      reconcileExternalConfiguredConcepts([
+        {
+          key: "http",
+          expansion: "hypertext transfer protocol",
+          standaloneRecall: ["hypertext"],
+        },
+      ])
+    ).toThrow(/standaloneRecall/);
+  });
+
+  test("rejects topicalRecall as a wrong-layer candidate field", () => {
+    expect(() =>
+      reconcileExternalConfiguredConcepts([
+        {
+          key: "appsec",
+          expansion: "application security",
+          topicalRecall: [["authentication"]],
+        },
+      ])
+    ).toThrow(/topicalRecall/);
+  });
+
+  test("rejects primary as a stale candidate field", () => {
+    expect(() =>
+      reconcileExternalConfiguredConcepts([
+        { key: "ml", expansion: "machine learning", primary: "learning" },
+      ])
+    ).toThrow(/primary/);
+  });
+
+  test("candidate expansion projects to aliases[0] and feeds compileAuthoredRelevance", () => {
+    expect(() =>
+      reconcileExternalConfiguredConcepts([{ key: "cd", expansions: [["continuous", "delivery"]] }])
     ).toThrow(ExternalConfiguredConceptError);
-    const ok = normalizeExternalConfiguredConcepts([
+    const ok = reconcileExternalConfiguredConcepts([
       { key: "cd", expansion: "continuous delivery", aliases: [] },
     ]);
-    expect(ok.entries).toHaveLength(1);
-    expect(ok.entries[0]).toMatchObject({
+    expect(ok.configuredConcepts).toHaveLength(1);
+    expect(ok.configuredConcepts[0]).toEqual({
       key: "cd",
-      expansion: ["continuous", "delivery"],
-      aliases: [],
+      aliases: [["continuous", "delivery"]],
+      provenance: "external",
     });
-    expect(ok.entries[0].standaloneRecall).toEqual([]);
-    expect(ok.entries[0].expansions).toBeUndefined();
+    expect(forbiddenConceptFields(ok.configuredConcepts[0])).toEqual([]);
+    expect(ok.configuredConcepts[0].expansions).toBeUndefined();
+    const authored = compileAuthoredRelevance({
+      configuredConcepts: ok.configuredConcepts,
+    });
+    expect(authored.plugins.length).toBe(2);
+  });
+
+  test("related recall remains authored on relationshipMap, not candidate rows", () => {
+    const reconciled = reconcileExternalConfiguredConcepts([
+      { key: "http", aliases: [["hypertext", "transfer", "protocol"]] },
+    ]);
+    const authored = compileAuthoredRelevance({
+      configuredConcepts: reconciled.configuredConcepts,
+      relationshipMap: {
+        hypertext: [{ kind: "related", to: { concept: "http" } }],
+      },
+    });
+    const dictionaryPlugin = authored.plugins.find((plugin) => plugin.name === "dictionary");
+    expect(dictionaryPlugin.standaloneRecallByToken.get("hypertext")).toBe("http");
   });
 });
 

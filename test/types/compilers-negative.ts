@@ -29,8 +29,16 @@ import { normalizeExternalEquivalences } from "@software-land/search/corpus";
 // @ts-expect-error ExternalEquivalenceError is not a public corpus export
 import { ExternalEquivalenceError } from "@software-land/search/corpus";
 
+// @ts-expect-error normalizeExternalConfiguredConcepts is not a public corpus export
+import { normalizeExternalConfiguredConcepts } from "@software-land/search/corpus";
+
+// @ts-expect-error classifyExpansionRelation is not a public corpus export
+import { classifyExpansionRelation } from "@software-land/search/corpus";
+
 void configuredConceptsFromEquivalences;
 void parseEquivalences;
 void (null as unknown as EquivalenceArtifact);
 void normalizeExternalEquivalences;
 void ExternalEquivalenceError;
+void normalizeExternalConfiguredConcepts;
+void classifyExpansionRelation;

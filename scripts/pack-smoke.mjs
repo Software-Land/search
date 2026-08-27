@@ -280,6 +280,9 @@ try {
   if (/\bexpand\b/.test(pluginBlock)) {
     throw new Error("packed SearchPlugin must not expose expand");
   }
+  if (/\bstandaloneRecallByToken\b/.test(pluginBlock) || /\btopicalRecallByKey\b/.test(pluginBlock)) {
+    throw new Error("packed SearchPlugin must not expose compiled related-recall maps");
+  }
   if (apiDts.includes("synonymRecall")) {
     throw new Error("packed public types must not expose synonymRecall");
   }
@@ -330,8 +333,14 @@ try {
   if (corpusDts.includes("parseEquivalences") || corpusDts.includes("EquivalenceArtifact")) {
     throw new Error("packed corpus dts must not export EquivalenceArtifact/parseEquivalences");
   }
-  if (!corpusDts.includes("normalizeExternalConfiguredConcepts")) {
-    throw new Error("packed corpus dts missing normalizeExternalConfiguredConcepts");
+  if (!corpusDts.includes("reconcileExternalConfiguredConcepts")) {
+    throw new Error("packed corpus dts missing reconcileExternalConfiguredConcepts");
+  }
+  if (corpusDts.includes("normalizeExternalConfiguredConcepts")) {
+    throw new Error("packed corpus dts must not export normalizeExternalConfiguredConcepts");
+  }
+  if (corpusDts.includes("classifyExpansionRelation")) {
+    throw new Error("packed corpus dts must not export classifyExpansionRelation");
   }
   if (!corpusDts.includes("ExternalConfiguredConceptError")) {
     throw new Error("packed corpus dts missing ExternalConfiguredConceptError");
@@ -396,7 +405,7 @@ try {
     path.join(consumer, "probe.mjs"),
     `import { SearchEngine, morphology, compileAuthoredRelevance, mergeRelationships } from "@software-land/search";
 import { createSearchClient, searchWorkerUrl } from "@software-land/search/browser";
-import { compileCorpus, normalizeExternalConfiguredConcepts, classifyExpansionRelation, parseConfiguredConcepts } from "@software-land/search/corpus";
+import { compileCorpus, reconcileExternalConfiguredConcepts, parseConfiguredConcepts } from "@software-land/search/corpus";
 import { compileRelationships } from "@software-land/search/relationships";
 import { compileSemantic } from "@software-land/search/semantic";
 import { compileLexicalFrequency } from "@software-land/search/lexical";
@@ -407,8 +416,7 @@ if (typeof compileAuthoredRelevance !== "function") throw new Error("root compil
 if (typeof mergeRelationships !== "function") throw new Error("root mergeRelationships missing");
 if (typeof createSearchClient !== "function") throw new Error("browser createSearchClient missing");
 if (typeof compileCorpus !== "function") throw new Error("corpus compileCorpus missing");
-if (typeof normalizeExternalConfiguredConcepts !== "function") throw new Error("corpus normalizeExternalConfiguredConcepts missing");
-if (typeof classifyExpansionRelation !== "function") throw new Error("corpus classifyExpansionRelation missing");
+if (typeof reconcileExternalConfiguredConcepts !== "function") throw new Error("corpus reconcileExternalConfiguredConcepts missing");
 if (typeof parseConfiguredConcepts !== "function") throw new Error("corpus parseConfiguredConcepts missing");
 if (typeof compileRelationships !== "function") throw new Error("relationships compileRelationships missing");
 if (typeof compileSemantic !== "function") throw new Error("semantic compileSemantic missing");
@@ -433,19 +441,25 @@ if (packedRoot.ARTIFACT_FORMATS && "equivalences" in packedRoot.ARTIFACT_FORMATS
 }
 if (packedRoot.PUBLIC_EXPORTS.includes("mergeEditorialRelationships")) throw new Error("PUBLIC_EXPORTS must not list mergeEditorialRelationships");
 if ("normalizeExternalEquivalences" in packedCorpus) throw new Error("corpus normalizeExternalEquivalences must not remain a public export");
+if ("normalizeExternalConfiguredConcepts" in packedCorpus) throw new Error("corpus normalizeExternalConfiguredConcepts must not remain a public export");
+if ("classifyExpansionRelation" in packedCorpus) throw new Error("corpus classifyExpansionRelation must not remain a public export");
 if ("ExternalEquivalenceError" in packedCorpus) throw new Error("corpus ExternalEquivalenceError must not remain a public export");
 if (typeof packedCorpus.ExternalConfiguredConceptError !== "function") {
   throw new Error("corpus ExternalConfiguredConceptError missing");
 }
-const generatedConcepts = normalizeExternalConfiguredConcepts([
+const generatedConcepts = reconcileExternalConfiguredConcepts([
   { key: "cpu", aliases: [["central", "processing", "unit"]] },
 ]);
-if (generatedConcepts.format !== "search-corpus-external-configured-concepts") {
-  throw new Error("normalizeExternalConfiguredConcepts format mismatch");
+if (generatedConcepts.format !== "search-corpus-external-configured-concept-reconciliation") {
+  throw new Error("reconcileExternalConfiguredConcepts format mismatch");
 }
-if (!generatedConcepts.entries.some((row) => row.key === "cpu")) {
-  throw new Error("normalizeExternalConfiguredConcepts must keep generated configured concepts");
+if (!generatedConcepts.configuredConcepts.some((row) => row.key === "cpu")) {
+  throw new Error("reconcileExternalConfiguredConcepts must keep generated configured concepts");
 }
+if (generatedConcepts.configuredConcepts.some((row) => "expansion" in row || "entries" in generatedConcepts)) {
+  throw new Error("reconcileExternalConfiguredConcepts must project ConfiguredConcept[] not candidate entries");
+}
+compileAuthoredRelevance({ configuredConcepts: generatedConcepts.configuredConcepts });
 try {
   await import("@software-land/search/synonyms");
   throw new Error("synonyms must not be a package export subpath");

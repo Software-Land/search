@@ -10,17 +10,27 @@ export class ExternalConfiguredConceptError extends Error {
   }
 }
 
+const STALE_CANDIDATE_FIELDS = ["primary", "standaloneRecall", "topicalRecall"] as const;
+const STALE_CANDIDATE_REASON =
+  "is not a configured-concept candidate field; use migrateConfiguredEntry() for 0.4 rows and relationshipMap kind: \"related\" for related recall";
+
+export const EXTERNAL_CONFIGURED_CONCEPT_RECONCILIATION_FORMAT =
+  "search-corpus-external-configured-concept-reconciliation" as const;
+
 export type ExternalConfiguredConceptRow = {
   key: string;
   expansion: string[];
   aliases: string[][];
-  primary: string | null;
-  standaloneRecall: string[];
-  topicalRecall: string[][];
   evidenceDocumentIds: string[];
   ambiguous: boolean;
   alternatives: Array<{ expansion: string[]; note?: string }>;
   provenance: string;
+};
+
+export type ReconciledConfiguredConcept = {
+  key: string;
+  aliases: string[][];
+  provenance?: string | null;
 };
 
 export type ExpansionRelation = "identical" | "compatible" | "ambiguous" | "conflict";
@@ -43,10 +53,10 @@ export type UnresolvedConfiguredConcept = {
   eligible: false;
 };
 
-export type NormalizeExternalConfiguredConceptsResult = {
-  format: "search-corpus-external-configured-concepts";
+export type ReconcileExternalConfiguredConceptsResult = {
+  format: typeof EXTERNAL_CONFIGURED_CONCEPT_RECONCILIATION_FORMAT;
   version: 1;
-  entries: ExternalConfiguredConceptRow[];
+  configuredConcepts: ReconciledConfiguredConcept[];
   rejected: Array<{ index: number; reason: string }>;
   conflicts: Array<{ key: string; expansions: string[][] }>;
   unresolved: UnresolvedConfiguredConcept[];
@@ -275,42 +285,11 @@ export function classifyExpansionRelation(
   return "conflict";
 }
 
-function topicalRecallOf(raw: unknown): string[][] {
-  if (!Array.isArray(raw)) return [];
-  const out: string[][] = [];
-  const seen = new Set<string>();
-  for (const item of raw) {
-    if (!Array.isArray(item) || !item.length) continue;
-    const form: string[] = [];
-    let malformed = false;
-    for (const tok of item) {
-      const token = String(tok ?? "").toLowerCase().trim();
-      if (!token || /\s/.test(token)) {
-        malformed = true;
-        break;
-      }
-      form.push(token);
-    }
-    if (malformed || !form.length) continue;
-    const key = form.join("\u001f");
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(form);
-  }
-  return out;
-}
-
-function mergeTopicalRecall(into: string[][], extra: string[][]): string[][] {
-  return topicalRecallOf([...into, ...extra]);
-}
-
 function cloneRow(row: ExternalConfiguredConceptRow): ExternalConfiguredConceptRow {
   return {
     ...row,
     expansion: [...row.expansion],
     aliases: row.aliases.map((a) => [...a]),
-    standaloneRecall: [...(row.standaloneRecall || [])],
-    topicalRecall: (row.topicalRecall || []).map((form) => [...form]),
     evidenceDocumentIds: [...row.evidenceDocumentIds],
     alternatives: row.alternatives.map((alt) => ({
       expansion: [...alt.expansion],
@@ -323,11 +302,14 @@ function mergeRows(into: ExternalConfiguredConceptRow, extra: ExternalConfigured
   into.evidenceDocumentIds = [...new Set([...into.evidenceDocumentIds, ...extra.evidenceDocumentIds])].sort();
   into.aliases = mergeAliases(into.aliases, extra.aliases);
   into.alternatives = mergeAlternatives(into.alternatives, extra.alternatives);
-  if (into.primary == null && extra.primary) into.primary = extra.primary;
-  else if (into.primary && extra.primary && into.primary !== extra.primary) into.primary = null;
-  into.standaloneRecall = [...new Set([...(into.standaloneRecall || []), ...(extra.standaloneRecall || [])])];
-  into.topicalRecall = mergeTopicalRecall(into.topicalRecall || [], extra.topicalRecall || []);
   into.ambiguous = into.ambiguous || extra.ambiguous;
+}
+
+function projectConfiguredConcept(row: ExternalConfiguredConceptRow): ReconciledConfiguredConcept {
+  const aliases = [[...row.expansion], ...row.aliases.map((alias) => [...alias])];
+  const concept: ReconciledConfiguredConcept = { key: row.key, aliases };
+  if (row.provenance != null && row.provenance !== "") concept.provenance = row.provenance;
+  return concept;
 }
 
 function pickCanonical(rows: ExternalConfiguredConceptRow[]): ExternalConfiguredConceptRow {
@@ -394,11 +376,11 @@ function evidenceOf(rows: ExternalConfiguredConceptRow[]): string[] {
   return [...new Set(rows.flatMap((row) => row.evidenceDocumentIds))].sort();
 }
 
-function emptyResult(): NormalizeExternalConfiguredConceptsResult {
+function emptyResult(): ReconcileExternalConfiguredConceptsResult {
   return {
-    format: "search-corpus-external-configured-concepts",
+    format: EXTERNAL_CONFIGURED_CONCEPT_RECONCILIATION_FORMAT,
     version: 1,
-    entries: [],
+    configuredConcepts: [],
     rejected: [],
     conflicts: [],
     unresolved: [],
@@ -407,17 +389,16 @@ function emptyResult(): NormalizeExternalConfiguredConceptsResult {
 }
 
 /**
- * Validate and normalize externally supplied configured-concept rows.
- * Does not call a model. Applications generate rows; this consumer
- * normalizes keys/expansions, rejects empties, collapses identical and
- * trivially compatible duplicates, and records material ambiguity or
- * genuine conflict as unresolved inspection evidence instead of deleting
- * the key.
+ * Reconcile untrusted/generated configured-concept candidate rows.
+ * Does not call a model. Canonicalizes keys/forms, clusters compatible
+ * duplicates, rejects malformed rows, and records ambiguity or conflict
+ * as unresolved inspection evidence instead of deleting the key.
+ * Successful identities project to ConfiguredConcept (`aliases[0]` canonical).
  */
-export function normalizeExternalConfiguredConcepts(
+export function reconcileExternalConfiguredConcepts(
   rows: unknown,
   { strict = true }: { strict?: boolean } = {}
-): NormalizeExternalConfiguredConceptsResult {
+): ReconcileExternalConfiguredConceptsResult {
   if (rows == null) return emptyResult();
   if (!Array.isArray(rows)) {
     throw new ExternalConfiguredConceptError("external configured concepts must be an array");
@@ -432,6 +413,11 @@ export function normalizeExternalConfiguredConcepts(
         throw new ExternalConfiguredConceptError("row must be an object");
       }
       const rec = row as Record<string, unknown>;
+      for (const field of STALE_CANDIDATE_FIELDS) {
+        if (field in rec) {
+          throw new ExternalConfiguredConceptError(`${field} ${STALE_CANDIDATE_REASON}`);
+        }
+      }
       const key = acronymKey(rec.key);
       if (!key) throw new ExternalConfiguredConceptError("empty key");
       const aliasesIn = asAliases(rec.aliases);
@@ -455,16 +441,6 @@ export function normalizeExternalConfiguredConcepts(
       const aliases = expansionFromField.length
         ? aliasesIn
         : aliasesIn.slice(1);
-      const primary =
-        rec.primary == null || rec.primary === "" ? null : String(rec.primary).toLowerCase().trim() || null;
-      const standaloneRecall = Array.isArray(rec.standaloneRecall)
-        ? [...new Set(
-            rec.standaloneRecall
-              .map((token) => String(token || "").toLowerCase().trim())
-              .filter((token) => token && !/\s/.test(token))
-          )]
-        : [];
-      const topicalRecall = topicalRecallOf(rec.topicalRecall);
       const evidenceDocumentIds = asEvidenceIds(rec.evidenceDocumentIds);
       if (rec.ambiguous != null && typeof rec.ambiguous !== "boolean") {
         throw new ExternalConfiguredConceptError("ambiguous must be boolean");
@@ -473,9 +449,6 @@ export function normalizeExternalConfiguredConcepts(
         key,
         expansion,
         aliases,
-        primary,
-        standaloneRecall,
-        topicalRecall,
         evidenceDocumentIds,
         ambiguous: rec.ambiguous === true,
         alternatives: asAlternatives(rec.alternatives),
@@ -488,7 +461,7 @@ export function normalizeExternalConfiguredConcepts(
 
   if (strict && rejected.length) {
     throw new ExternalConfiguredConceptError(
-      "malformed external configured-concept rows",
+      `malformed external configured-concept rows: ${rejected.map((r) => `[${r.index}] ${r.reason}`).join("; ")}`,
       rejected.map((r) => `[${r.index}] ${r.reason}`)
     );
   }
@@ -500,7 +473,7 @@ export function normalizeExternalConfiguredConcepts(
     byKey.set(row.key, list);
   }
 
-  const entries: ExternalConfiguredConceptRow[] = [];
+  const configuredConcepts: ReconciledConfiguredConcept[] = [];
   const conflicts: Array<{ key: string; expansions: string[][] }> = [];
   const unresolved: UnresolvedConfiguredConcept[] = [];
   const reconciliations: ConfiguredConceptReconciliation[] = [];
@@ -555,7 +528,7 @@ export function normalizeExternalConfiguredConcepts(
         continue;
       }
       canonical.ambiguous = false;
-      entries.push(canonical);
+      configuredConcepts.push(projectConfiguredConcept(canonical));
       continue;
     }
 
@@ -578,9 +551,9 @@ export function normalizeExternalConfiguredConcepts(
   }
 
   return {
-    format: "search-corpus-external-configured-concepts",
+    format: EXTERNAL_CONFIGURED_CONCEPT_RECONCILIATION_FORMAT,
     version: 1,
-    entries: stableSort(entries, (e) => e.key),
+    configuredConcepts: stableSort(configuredConcepts, (e) => e.key),
     rejected,
     conflicts,
     unresolved: stableSort(unresolved, (u) => u.key),

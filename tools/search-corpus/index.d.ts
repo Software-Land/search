@@ -39,25 +39,16 @@ export declare function parseConfiguredConcepts(obj?: unknown): import("./types.
 export declare class ExternalConfiguredConceptError extends Error {
   details: string[];
 }
-export declare function classifyExpansionRelation(
-  key?: unknown,
-  left?: unknown,
-  right?: unknown
-): "identical" | "compatible" | "ambiguous" | "conflict";
-export declare function normalizeExternalConfiguredConcepts(
+export declare function reconcileExternalConfiguredConcepts(
   rows?: unknown,
   opts?: { strict?: boolean }
 ): {
-  format: "search-corpus-external-configured-concepts";
+  format: "search-corpus-external-configured-concept-reconciliation";
   version: 1;
-  entries: Array<{
+  configuredConcepts: Array<{
     key: string;
-    expansion: string[];
     aliases: string[][];
-    evidenceDocumentIds: string[];
-    ambiguous: boolean;
-    alternatives: Array<{ expansion: string[]; note?: string }>;
-    provenance: string;
+    provenance?: string | null;
   }>;
   rejected: Array<{ index: number; reason: string }>;
   conflicts: Array<{ key: string; expansions: string[][] }>;
