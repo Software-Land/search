@@ -1871,5 +1871,143 @@
         "technology"
       ]
     ]
+  },
+  {
+    "key": "fps",
+    "aliases": [
+      [
+        "frames",
+        "per",
+        "second"
+      ]
+    ]
+  },
+  {
+    "key": "webgl",
+    "aliases": [
+      [
+        "web",
+        "graphics",
+        "library"
+      ]
+    ]
+  },
+  {
+    "key": "webgpu",
+    "aliases": [
+      [
+        "web",
+        "gpu"
+      ],
+      [
+        "web",
+        "graphics",
+        "processing",
+        "unit"
+      ]
+    ]
+  },
+  {
+    "key": "glsl",
+    "aliases": [
+      [
+        "opengl",
+        "shading",
+        "language"
+      ]
+    ]
+  },
+  {
+    "key": "wgsl",
+    "aliases": [
+      [
+        "webgpu",
+        "shading",
+        "language"
+      ]
+    ]
+  },
+  {
+    "key": "opengl",
+    "aliases": [
+      [
+        "open",
+        "graphics",
+        "library"
+      ]
+    ]
+  },
+  {
+    "key": "opengles",
+    "aliases": [
+      [
+        "opengl",
+        "embedded",
+        "systems"
+      ],
+      [
+        "open",
+        "graphics",
+        "library",
+        "embedded",
+        "systems"
+      ]
+    ]
+  },
+  {
+    "key": "mdn",
+    "aliases": [
+      [
+        "mozilla",
+        "developer",
+        "network"
+      ],
+      [
+        "mdn",
+        "web",
+        "docs"
+      ]
+    ]
+  },
+  {
+    "key": "hz",
+    "aliases": [
+      [
+        "hertz"
+      ]
+    ]
+  },
+  {
+    "key": "raf",
+    "aliases": [
+      [
+        "request",
+        "animation",
+        "frame"
+      ],
+      [
+        "requestanimationframe"
+      ]
+    ]
+  },
+  {
+    "key": "dpr",
+    "aliases": [
+      [
+        "device",
+        "pixel",
+        "ratio"
+      ]
+    ]
+  },
+  {
+    "key": "vrr",
+    "aliases": [
+      [
+        "variable",
+        "refresh",
+        "rate"
+      ]
+    ]
   }
 ]

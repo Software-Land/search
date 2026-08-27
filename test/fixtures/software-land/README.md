@@ -25,6 +25,7 @@ They must never become Core defaults.
 | Scenario source commit | `3ad49e867f82db06aa06cd1c7f38dca8faecf246` |
 | `@software-land/search` | `0.3.1` |
 | Documents | 122 |
+| Dictionary entries | 192 (`dff24cf` snapshot 180 including `testing`, plus 12 later `acronymMap.js` graphics/FPS concepts from Software.Land `df852eb`) |
 | Source scenarios | `tests/search-scenarios.js` (215 rows) + `tests/search-v2-contracts.js` (16) |
 | Strict V2 contracts | 99 (`v2-contracts.json`) |
 | B-intent regressions | 60 (`regression-scenarios.json`, compatibility coverage, not Core policy) |
@@ -56,7 +57,12 @@ Software.Land commit `eac7a90a15d772f0f0626a0fa9481eb9efa55521`. NIST aliases ma
 Software.Land commit `7628a85166781d4ab42f60646e2f66da5f336eaa`.
 Product-approved historical `expectedTop` contracts match Software.Land
 `3ad49e867f82db06aa06cd1c7f38dca8faecf246` (`historical-contract-updates.json`).
-Corpus artifacts and the exact-output `dictionary.json` snapshot are unchanged. Empty-intent rows
+Corpus document/lemma/relationship/lexical-frequency artifacts remain the
+`dff24cf` snapshot. `dictionary.json` additionally merges the later committed
+Software.Land `acronymMap.js` graphics/FPS cluster (`fps`, `webgl`, `webgpu`,
+`glsl`, `wgsl`, `opengl`, `opengles`, `mdn`, `hz`, `raf`, `dpr`, `vrr` from
+`df852eb` / HEAD) without deleting the frozen `testing` key used by the
+exact-output oracle. Empty-intent rows
 are not mined into V2 intent/regression cases; they still participate in
 historical relevance when `expectedTop` or `titlePrefix` exist.
 
@@ -67,7 +73,7 @@ and `tests/search-v2-contracts.js` from the committed scenario SHA.
 ## Files
 
 - `documents.json` — `id`, `title`, normalized search `body` (live V2 indexed shape)
-- `dictionary.json` — merged Software.Land acronym map + compiled equivalences as `dictionary({ entries })` authored `{ key, aliases }` (`aliases[0]` canonical)
+- `dictionary.json` — merged Software.Land acronym map + compiled equivalences as `dictionary({ entries })` authored `{ key, aliases }` (`aliases[0]` canonical). The `dff24cf` snapshot is retained, then missing later `acronymMap.js` keys are merged (currently the `df852eb` graphics/FPS cluster). `testing` remains for the exact-output oracle and is omitted only by `relevance-config.json`.
 - `lemmas.json` — site lemma table as `morphology({ lemmas })`
 - `relationships.json` — runtime relationship graph, including TLS ↔ VPN editorial edges (generated + domain editorial; not relationshipMap)
 - `lexical-frequency.json` — production lexical-frequency artifact
@@ -95,6 +101,9 @@ after `search:artifacts:compile`:
 
 1. Export live V2 documents (`id` / `title` / `normalizeSearchBody(body)`).
 2. Transform `acronymMap.js` + compiled equivalences into `dictionary.json`.
+   Merge later committed `acronymMap.js` keys that the frozen snapshot lacks;
+   do not delete oracle-load-bearing keys such as `testing`.
+   Do not hand-edit a single concept such as `fps` in isolation.
 3. Copy `site-lemmas.json` lemmas, `software-land-relationships.json`, and
    `lexical-frequency.json`.
 

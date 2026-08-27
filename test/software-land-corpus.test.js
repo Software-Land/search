@@ -196,6 +196,7 @@ describe("software-land corpus fixture", () => {
     expect(manifest.historicalRelevanceApplicable).toBe(214);
     expect(manifest.searchPackageVersion).toBe("0.3.1");
     expect(manifest.documentCount).toBe(122);
+    expect(manifest.dictionaryEntryCount).toBe(192);
     expect(documents).toHaveLength(122);
     expect(manifest.description).toMatch(/not default package policy/i);
     expect(manifest.scenarioCount).toBe(215);

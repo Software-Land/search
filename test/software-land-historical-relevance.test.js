@@ -184,6 +184,8 @@ describe("Software.Land historical relevance contracts", () => {
     expect(omitKeys.has("testing")).toBe(true);
     expect(dictionaryEntries.some((entry) => entry.key === "testing")).toBe(false);
     expect(loadSoftwareLandJson("dictionary.json").some((entry) => entry.key === "testing")).toBe(true);
+    expect(loadSoftwareLandJson("dictionary.json").some((entry) => entry.key === "fps")).toBe(true);
+    expect(dictionaryEntries.find((entry) => entry.key === "fps")?.aliases).toEqual([["frames", "per", "second"]]);
     const frozenAppsec = loadSoftwareLandJson("dictionary.json").find((entry) => entry.key === "appsec");
     expect(frozenAppsec.aliases[0]).toEqual(["application", "security"]);
     expect(frozenAppsec.aliases).toEqual(expect.arrayContaining([["security"]]));

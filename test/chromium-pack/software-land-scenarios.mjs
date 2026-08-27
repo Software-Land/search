@@ -72,11 +72,8 @@ const ADJUDICATED = {
     "gRPC vs Kafka",
   ],
   "frames per": {
-    primary: "Rate Limiting Algorithms",
+    primary: "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
     directClass: "moderate",
-    adjudicatedPrimary: "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
-    adjudicatedDirectClass: "moderate",
-    note: "Frozen dictionary.json has no fps configured concept (corpus mining leaves fps review-pending). Node product stack and packed Worker agree on Rate Limiting Algorithms / moderate. The 200FPS occupancy is Software.Land live-dictionary behavior, not this fixture snapshot.",
   },
 };
 
@@ -262,12 +259,12 @@ async function main() {
     const framesExpected = ADJUDICATED["frames per"];
     if (frames?.titles?.[0] !== framesExpected.primary) {
       throw new Error(
-        `frames per primary mismatch vs Node/fixture product stack: expected ${JSON.stringify(framesExpected.primary)}, got ${JSON.stringify(frames?.titles?.[0])}\n${framesExpected.note}`
+        `frames per primary mismatch: expected ${JSON.stringify(framesExpected.primary)}, got ${JSON.stringify(frames?.titles?.[0])}`
       );
     }
     if (frames?.directClass?.[0] !== framesExpected.directClass) {
       throw new Error(
-        `frames per directClass mismatch vs Node/fixture product stack: expected ${framesExpected.directClass}, got ${JSON.stringify(frames?.directClass?.[0])}`
+        `frames per directClass mismatch: expected ${framesExpected.directClass}, got ${JSON.stringify(frames?.directClass?.[0])}`
       );
     }
 
@@ -337,11 +334,6 @@ async function main() {
         framesPer: {
           primary: frames?.titles?.[0] || null,
           directClass: frames?.directClass?.[0] || null,
-          matchesNodeFixture: true,
-          adjudicatedPrimary: framesExpected.adjudicatedPrimary,
-          adjudicatedDirectClass: framesExpected.adjudicatedDirectClass,
-          matchesAdjudicatedLiveDictionary: frames?.titles?.[0] === framesExpected.adjudicatedPrimary,
-          note: framesExpected.note,
         },
       },
     };
