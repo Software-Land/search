@@ -1,4 +1,4 @@
-import { SearchEngine, morphology, dictionary } from "../dist/index.js";
+import { SearchEngine, morphology } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { retrieveCandidates, unboundTypedTokens } from "../dist/retrieve.js";
 import {
@@ -64,7 +64,7 @@ const docs = [
 ];
 
 function plugins(entries = dict) {
-  return [morphology(), dictionary(dictionaryFromLegacy(entries))];
+  return [morphology(), dictionaryFromLegacy(entries)];
 }
 
 async function engine(retriever) {

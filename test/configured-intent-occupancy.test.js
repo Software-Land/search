@@ -37,7 +37,7 @@ const sameLengthDict = [
 const widgetDict = [{ key: "widget", aliases: [["user", "interface", "control"]]}];
 
 function plugins(entries) {
-  return [morphology(), dictionary(dictionaryFromLegacy(entries))];
+  return [morphology(), dictionaryFromLegacy(entries)];
 }
 
 function acronymIds(q) {

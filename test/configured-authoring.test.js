@@ -6,13 +6,13 @@ import {
   SearchEngine,
   morphology,
   dictionary,
-  synonyms,
   migrateConfiguredEntry,
   compileRelationshipMap,
   compileAuthoredRelevance,
   InvalidConfigurationError,
   parseEquivalences,
 } from "../dist/index.js";
+import { synonyms as synonymsPrimitive } from "../dist/synonyms.js";
 
 const schema = {
   title: { type: "text", role: "title" },
@@ -120,17 +120,58 @@ describe("relationshipMap compile", () => {
     expect(compiled.synonyms.expand("qa").map((row) => row.form)).toEqual(["testing"]);
   });
 
+  test("equivalent relationshipMap matches internal synonym primitive one-hop", async () => {
+    const docs = [
+      { id: "qa-guide", title: "Quality Assurance Guide", body: "process quality assurance handbook" },
+      { id: "load", title: "Load Testing", body: "performance load testing notes" },
+      { id: "unrelated", title: "Gardening Tips", body: "tomatoes and soil" },
+    ];
+    const entries = [{ key: "qa", aliases: [["quality", "assurance"]] }];
+    const authored = compileAuthoredRelevance({
+      entries,
+      relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
+    });
+    const viaAuthored = SearchEngine.create({
+      schema,
+      plugins: [morphology(), authored.dictionary, authored.synonyms],
+      retriever: "full-scan",
+      relationshipStrategy: "none",
+    });
+    const viaPrimitive = SearchEngine.create({
+      schema,
+      plugins: [morphology(), dictionary({ entries }), synonymsPrimitive({ qa: ["testing"] })],
+      retriever: "full-scan",
+      relationshipStrategy: "none",
+    });
+    await viaAuthored.index(docs);
+    await viaPrimitive.index(docs);
+    const authoredHits = viaAuthored.search("qa", { limit: 10 }).map((hit) => ({
+      id: hit.id,
+      score: hit.score,
+      relevanceKind: hit.relevanceKind,
+      directClass: hit.directClass,
+    }));
+    const primitiveHits = viaPrimitive.search("qa", { limit: 10 }).map((hit) => ({
+      id: hit.id,
+      score: hit.score,
+      relevanceKind: hit.relevanceKind,
+      directClass: hit.directClass,
+    }));
+    expect(authoredHits).toEqual(primitiveHits);
+    expect(authored.synonyms.expand("qa")).toEqual(synonymsPrimitive({ qa: ["testing"] }).expand("qa"));
+  });
+
   test("H. related token -> concept compiles to existing standalone behavior", () => {
-    const plugin = dictionary({
+    const plugin = compileAuthoredRelevance({
       entries: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
       relationshipMap: { hypertext: [{ to: { concept: "http" }, kind: "related" }] },
-    });
+    }).dictionary;
     expect(plugin.standaloneRecallByToken.get("hypertext")).toBe("http");
     expect(plugin.byKey.get("http").standaloneRecall).toEqual(["hypertext"]);
   });
 
   test("I. related concept -> form compiles to existing topical behavior", () => {
-    const plugin = dictionary({
+    const plugin = compileAuthoredRelevance({
       entries: [{ key: "appsec", aliases: [["application", "security"]] }],
       relationshipMap: {
         appsec: [
@@ -138,7 +179,7 @@ describe("relationshipMap compile", () => {
           { to: { form: ["bearer", "token"] }, kind: "related" },
         ],
       },
-    });
+    }).dictionary;
     expect(plugin.topicalRecallByKey.get("appsec")).toEqual([["authentication"], ["bearer", "token"]]);
   });
 

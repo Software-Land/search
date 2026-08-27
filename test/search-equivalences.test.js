@@ -9,7 +9,6 @@ import {
   SearchEngine,
   morphology,
   dictionary,
-  synonyms,
   normalizeSearchEquivalences,
   MAX_SEARCH_EQUIVALENCE_TARGETS,
   InvalidConfigurationError,
@@ -18,7 +17,7 @@ import { analyzeQuery } from "../dist/analyze.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
 import { coverageConcepts, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts } from "../dist/retrieve.js";
 import { compareConstraint } from "../dist/constraints.js";
-import { deriveMorphologyEquivalenceLookup } from "../dist/synonyms.js";
+import { synonyms, deriveMorphologyEquivalenceLookup } from "../dist/synonyms.js";
 import { extractFeatures } from "../dist/features.js";
 import { dictionaryFromLegacy } from "./helpers/authored.js";
 
@@ -44,7 +43,7 @@ function ids(hits) {
 }
 
 function plugins({ dict = [{ key: "qa", aliases: [["quality", "assurance"]]}], map = { qa: ["testing"] }, lemmas } = {}) {
-  const list = [morphology(lemmas ? { lemmas } : {}), dictionary(dictionaryFromLegacy(dict))];
+  const list = [morphology(lemmas ? { lemmas } : {}), dictionaryFromLegacy(dict)];
   if (map) list.push(synonyms(map));
   return list;
 }

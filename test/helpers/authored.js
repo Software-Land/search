@@ -2,6 +2,8 @@
  * Test-only split of leftover recall fields onto relationshipMap.
  * Production authoring uses relationshipMap directly.
  */
+import { compileAuthoredRelevance } from "../../dist/index.js";
+
 export function splitAuthored(entries = []) {
   const authored = [];
   const relationshipMap = {};
@@ -44,9 +46,9 @@ export function splitAuthored(entries = []) {
 
 export function dictionaryFromLegacy(entries, extra = {}) {
   const split = splitAuthored(entries);
-  return {
+  return compileAuthoredRelevance({
     entries: split.entries,
     relationshipMap: extra.relationshipMap || split.relationshipMap,
     documents: extra.documents,
-  };
+  }).dictionary;
 }

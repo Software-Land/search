@@ -92,13 +92,21 @@ export interface DictionaryPlugin extends SearchPlugin {
   lexicon(): Iterable<string>;
 }
 
-/** Opt-in near-synonym plugin shape. Detected when `name === "synonyms"`. */
+/**
+ * Structural plugin shape for one-hop recall. Detected when `name === "synonyms"`
+ * and `expand` is present. Applications author `equivalent` edges on
+ * `relationshipMap` and receive this plugin from `compileAuthoredRelevance()`.
+ * Custom plugins may also implement `SearchPlugin.expand`.
+ */
 export interface SynonymPlugin extends SearchPlugin {
   name: "synonyms";
   expand(token: string): Array<{ form: string }>;
 }
 
-/** Directional search-equivalence map. Keys and values are source/target phrases. */
+/**
+ * Directional one-hop recall map used by enrichment/tooling helpers such as
+ * `normalizeSearchEquivalences()`. Not a root application-authoring constructor.
+ */
 export type SearchEquivalenceMap = Record<string, string[]>;
 
 export interface SearchEquivalencePair {

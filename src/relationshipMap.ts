@@ -1,7 +1,7 @@
 /**
  * Authored directional relationshipMap.
  *
- * equivalent  → existing synonyms() one-hop search-equivalence semantics
+ * equivalent  → existing one-hop search-equivalence recall semantics
  * related     → existing standalone-recall, topical-recall, or editorial document edges
  *
  * Generated MiniLM / semantic edges are not authored here.

@@ -1,7 +1,7 @@
-import { SearchEngine, morphology, dictionary } from "../dist/index.js";
+import { SearchEngine, morphology } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { retrieveCandidates } from "../dist/retrieve.js";
-import { compileStandaloneRecallLookup, dictionary as dictionaryPlugin } from "../dist/dictionary.js";
+import { compileStandaloneRecallLookup } from "../dist/dictionary.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
 import { dictionaryFromLegacy } from "./helpers/authored.js";
 
@@ -23,7 +23,7 @@ const docs = [
 ];
 
 function plugins(entries = httpDict) {
-  return [morphology(), dictionary(dictionaryFromLegacy(entries))];
+  return [morphology(), dictionaryFromLegacy(entries)];
 }
 
 async function engine(entries = httpDict, extraDocs = docs) {
@@ -52,13 +52,13 @@ describe("standalone recall lookup", () => {
   });
 
   test("empty, blank, and multi-token standalone values are rejected", () => {
-    const plugin = dictionaryPlugin(dictionaryFromLegacy([
+    const plugin = dictionaryFromLegacy([
       {
         key: "http",
         aliases: [["hypertext", "transfer", "protocol"]],
         standaloneRecall: ["", "  ", "hypertext transfer", "hypertext", "hypertext"],
       },
-    ]));
+    ]);
     expect(plugin.entries[0].standaloneRecall).toEqual(["hypertext"]);
     expect(plugin.standaloneRecallByToken.get("hypertext")).toBe("http");
   });

@@ -27,7 +27,6 @@ import {
 } from "./artifacts.js";
 import { abortError as abortErrorImpl, isAbortError as isAbortErrorImpl } from "./cancel.js";
 import {
-  synonyms as synonymsImpl,
   normalizeSearchEquivalences as normalizeSearchEquivalencesImpl,
   MAX_SEARCH_EQUIVALENCE_TARGETS as maxSearchEquivalenceTargetsImpl,
 } from "./synonyms.js";
@@ -64,11 +63,9 @@ import type {
   SearchEngine as SearchEngineType,
   SearchEngineConstructor,
   SynonymArtifact,
-  SynonymPlugin,
   EnglishPlugin,
   MorphologyOptions,
   DictionaryPlugin,
-  SearchEquivalenceMap,
   NormalizedSearchEquivalences,
 } from "./api.js";
 
@@ -122,11 +119,7 @@ export type SearchEngine = SearchEngineType;
 export const SearchEngine: SearchEngineConstructor = searchEngineImpl as unknown as SearchEngineConstructor;
 
 export const morphology: (options?: MorphologyOptions) => EnglishPlugin = morphologyImpl;
-export const dictionary: (options?: {
-  entries?: EquivalenceEntry[];
-  relationshipMap?: RelationshipMap;
-  documents?: import("./api.js").SearchDocument[];
-}) => DictionaryPlugin = dictionaryImpl;
+export const dictionary: (options?: { entries?: EquivalenceEntry[] }) => DictionaryPlugin = dictionaryImpl;
 export const migrateConfiguredEntry: (raw?: unknown) => MigratedConfiguredEntry = migrateConfiguredEntryImpl as (
   raw?: unknown
 ) => MigratedConfiguredEntry;
@@ -146,11 +139,6 @@ export const compileAuthoredRelevance: (options?: {
   relationshipMap?: RelationshipMap;
   documents?: import("./api.js").SearchDocument[];
 }) => CompiledAuthoredRelevance;
-export const synonyms: (
-  input?: SearchEquivalenceMap | SynonymArtifact | { entries?: unknown[]; format?: string; version?: number }
-) => SynonymPlugin = synonymsImpl as (
-  input?: SearchEquivalenceMap | SynonymArtifact | { entries?: unknown[]; format?: string; version?: number }
-) => SynonymPlugin;
 export const normalizeSearchEquivalences: (input?: unknown) => NormalizedSearchEquivalences =
   normalizeSearchEquivalencesImpl as (input?: unknown) => NormalizedSearchEquivalences;
 export const MAX_SEARCH_EQUIVALENCE_TARGETS: 8 = maxSearchEquivalenceTargetsImpl as 8;
@@ -210,7 +198,6 @@ export const PUBLIC_EXPORTS: readonly string[] = Object.freeze([
   "migrateConfiguredEntry",
   "compileRelationshipMap",
   "compileAuthoredRelevance",
-  "synonyms",
   "normalizeSearchEquivalences",
   "MAX_SEARCH_EQUIVALENCE_TARGETS",
   "RELATIONSHIP_STRATEGIES",

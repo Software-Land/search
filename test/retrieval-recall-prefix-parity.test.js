@@ -6,9 +6,10 @@ import {
   SearchEngine,
   morphology,
   dictionary,
-  synonyms,
+  compileAuthoredRelevance,
   DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD,
 } from "../dist/index.js";
+import { synonyms } from "../dist/synonyms.js";
 import { createIndexedLexicalRetriever } from "../dist/retrievers.js";
 import { retrievalFormKindAllowsPrefix } from "../dist/retrieve.js";
 
@@ -186,10 +187,10 @@ describe("synonym-recall prefix information bound", () => {
 describe("topical-recall remains exact-only", () => {
   const plugins = [
     morphology(),
-    dictionary({
+    compileAuthoredRelevance({
       entries: [{ key: "appsec", aliases: [["application", "security"]] }],
       relationshipMap: { appsec: [{ to: { form: ["authentication"] }, kind: "related" }] },
-    }),
+    }).dictionary,
   ];
   const docs = [
     { id: "direct", title: "Application Security", body: "overview" },

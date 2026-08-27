@@ -43,7 +43,7 @@ const docs = [
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 
 function plugins(entries = dict) {
-  return [morphology(), dictionary(dictionaryFromLegacy(entries))];
+  return [morphology(), dictionaryFromLegacy(entries)];
 }
 
 async function engine(retriever) {

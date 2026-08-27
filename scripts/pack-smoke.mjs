@@ -272,7 +272,7 @@ try {
 
   writeFileSync(
     path.join(consumer, "probe.mjs"),
-    `import { SearchEngine, morphology, synonyms, normalizeSearchEquivalences } from "@software-land/search";
+    `import { SearchEngine, morphology, compileAuthoredRelevance, parseSynonyms, normalizeSearchEquivalences } from "@software-land/search";
 import { createSearchClient, searchWorkerUrl } from "@software-land/search/browser";
 import { compileCorpus, normalizeExternalEquivalences, classifyExpansionRelation } from "@software-land/search/corpus";
 import { compileRelationships } from "@software-land/search/relationships";
@@ -281,7 +281,8 @@ import { compileLexicalFrequency } from "@software-land/search/lexical";
 
 if (typeof SearchEngine.create !== "function") throw new Error("root SearchEngine missing");
 if (typeof morphology !== "function") throw new Error("root morphology missing");
-if (typeof synonyms !== "function") throw new Error("root synonyms missing");
+if (typeof compileAuthoredRelevance !== "function") throw new Error("root compileAuthoredRelevance missing");
+if (typeof parseSynonyms !== "function") throw new Error("root parseSynonyms missing");
 if (typeof normalizeSearchEquivalences !== "function") throw new Error("root normalizeSearchEquivalences missing");
 if (typeof createSearchClient !== "function") throw new Error("browser createSearchClient missing");
 if (typeof compileCorpus !== "function") throw new Error("corpus compileCorpus missing");
@@ -290,6 +291,46 @@ if (typeof classifyExpansionRelation !== "function") throw new Error("corpus cla
 if (typeof compileRelationships !== "function") throw new Error("relationships compileRelationships missing");
 if (typeof compileSemantic !== "function") throw new Error("semantic compileSemantic missing");
 if (typeof compileLexicalFrequency !== "function") throw new Error("lexical compileLexicalFrequency missing");
+
+import * as packedRoot from "@software-land/search";
+if ("synonyms" in packedRoot) throw new Error("root synonyms() must not remain a public export");
+if (packedRoot.PUBLIC_EXPORTS.includes("synonyms")) throw new Error("PUBLIC_EXPORTS must not list synonyms");
+try {
+  await import("@software-land/search/synonyms");
+  throw new Error("synonyms must not be a package export subpath");
+} catch (err) {
+  if (String(err?.message || err).includes("must not be a package export subpath")) throw err;
+}
+
+const artifact = parseSynonyms({
+  format: "search-v2-synonyms",
+  version: 1,
+  entries: [{ terms: ["auth", "authentication"] }],
+});
+if (artifact.format !== "search-v2-synonyms" || artifact.entries[0].terms[1] !== "authentication") {
+  throw new Error("0.4 search-v2-synonyms artifact must still parse");
+}
+
+const authored = compileAuthoredRelevance({
+  entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
+  relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
+});
+if (authored.synonyms.expand("qa")[0]?.form !== "testing") {
+  throw new Error("compileAuthoredRelevance must produce one-hop recall");
+}
+
+const engine = SearchEngine.create({
+  schema: { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } },
+  plugins: [morphology(), authored.dictionary, authored.synonyms],
+});
+await engine.index([
+  { id: "qa-guide", title: "Quality Assurance Guide", body: "process quality assurance handbook" },
+  { id: "load", title: "Load Testing", body: "performance load testing notes" },
+]);
+const ids = engine.search("qa", { limit: 5 }).map((hit) => hit.id);
+if (!ids.includes("qa-guide") || !ids.includes("load")) {
+  throw new Error("compileAuthoredRelevance engine search failed");
+}
 
 const workerUrl = String(searchWorkerUrl());
 if (!workerUrl.endsWith("searchWorker.js")) throw new Error(\`worker URL must end in searchWorker.js: \${workerUrl}\`);

@@ -12,11 +12,11 @@ import {
   abortError,
   dictionary,
   morphology,
-  synonyms,
   isAbortError,
   parseEquivalences,
   parseRelationships,
   parseSynonyms,
+  compileAuthoredRelevance,
   type EquivalenceEntry,
   type EnglishPlugin,
   type DictionaryPlugin,
@@ -91,7 +91,7 @@ const isAbortErrorFn: (err: unknown) => boolean = isAbortError;
 
 void typeof morphology;
 void typeof dictionary;
-void typeof synonyms;
+void typeof compileAuthoredRelevance;
 void typeof parseEquivalences;
 void typeof abortError;
 void typeof SearchEngine;
@@ -104,8 +104,11 @@ void abortErrorFn("Aborted");
 void isAbortErrorFn(new Error("no"));
 void morphology({ lemmas: { widgets: "widget" } });
 void dictionary({ entries: [{ key: "wifi" }] });
-void synonyms({ qa: ["testing"] });
-const synonymPlugin: SynonymPlugin = synonyms({ "quality assurance": ["testing"] });
+const authored = compileAuthoredRelevance({
+  entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
+  relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
+});
+const synonymPlugin: SynonymPlugin = authored.synonyms;
 void synonymPlugin.expand;
 void parseEquivalences();
 void parseSynonyms();

@@ -2,7 +2,8 @@
  * Significant-symbol spoken retrieval. Synthetic only.
  * Reuses the existing + / # / * operator map; does not add synonyms.
  */
-import { SearchEngine, morphology, synonyms } from "../dist/index.js";
+import { SearchEngine, morphology } from "../dist/index.js";
+import { synonyms } from "../dist/synonyms.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { extractFeatures } from "../dist/features.js";
 import { coverageConcepts, conceptMatchesTitle } from "../dist/retrieve.js";

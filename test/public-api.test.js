@@ -3,6 +3,7 @@ import {
   SearchEngine,
   morphology,
   dictionary,
+  compileAuthoredRelevance,
   PUBLIC_EXPORTS,
   RETRIEVER_NAMES,
   InvalidConfigurationError,
@@ -13,6 +14,7 @@ import {
   isAbortError,
   parseRelationships,
   parseEquivalences,
+  parseSynonyms,
 } from "../dist/index.js";
 import { createSearchClient, createWorkerRuntime, createLoopbackTransport } from "../dist/browser/index.js";
 
@@ -53,6 +55,54 @@ describe("public API", () => {
   test("public export list is frozen", async () => {
     expect(Object.keys(publicApi).filter((k) => k !== "__esModule").sort()).toEqual([...PUBLIC_EXPORTS].sort());
     expect(RETRIEVER_NAMES).toEqual(["full-scan", "indexed", "adaptive"]);
+  });
+
+  test("root does not export a synonyms() authoring constructor", () => {
+    expect(publicApi).not.toHaveProperty("synonyms");
+    expect(PUBLIC_EXPORTS).not.toContain("synonyms");
+  });
+
+  test("compileAuthoredRelevance is the public authored-relevance compiler", async () => {
+    const authored = compileAuthoredRelevance({
+      entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
+      relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
+    });
+    expect(authored.synonyms.expand("qa").map((row) => row.form)).toEqual(["testing"]);
+    const engine = SearchEngine.create({
+      schema,
+      plugins: [morphology(), authored.dictionary, authored.synonyms],
+      retriever: "full-scan",
+      relationshipStrategy: "none",
+    });
+    await engine.index([
+      { id: "qa-guide", title: "Quality Assurance Guide", body: "process quality assurance handbook" },
+      { id: "load", title: "Load Testing", body: "performance load testing notes" },
+    ]);
+    expect(ids(engine.search("qa", { limit: 5 }))).toEqual(expect.arrayContaining(["qa-guide", "load"]));
+  });
+
+  test("dictionary() does not compile relationshipMap as a complete authoring path", () => {
+    const plugin = dictionary({
+      entries: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
+      relationshipMap: { hypertext: [{ to: { concept: "http" }, kind: "related" }] },
+    });
+    expect(plugin.standaloneRecallByToken.get("hypertext")).toBeUndefined();
+    const authored = compileAuthoredRelevance({
+      entries: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
+      relationshipMap: { hypertext: [{ to: { concept: "http" }, kind: "related" }] },
+    });
+    expect(authored.dictionary.standaloneRecallByToken.get("hypertext")).toBe("http");
+  });
+
+  test("parseSynonyms still accepts a 0.4 search-v2-synonyms artifact", () => {
+    const artifact = parseSynonyms({
+      format: "search-v2-synonyms",
+      version: 1,
+      entries: [{ terms: ["auth", "authentication"] }],
+    });
+    expect(artifact.format).toBe("search-v2-synonyms");
+    expect(artifact.version).toBe(1);
+    expect(artifact.entries[0].terms).toEqual(["auth", "authentication"]);
   });
 
   test("malformed create() options throw InvalidConfigurationError", () => {

@@ -24,7 +24,6 @@ import {
   parseEquivalences,
   parseRelationships,
   parseSynonyms,
-  synonyms,
   normalizeSearchEquivalences,
   MAX_SEARCH_EQUIVALENCE_TARGETS,
   type EquivalenceArtifact,
@@ -90,6 +89,7 @@ void compiledPublic.editorialRelationships;
 const authored: CompiledAuthoredRelevance = compileAuthoredRelevance({ entries, relationshipMap });
 void authored.synonymMap;
 void authored.dictionary;
+void authored.synonyms.expand;
 const morphologyWithLemmas: EnglishPlugin = morphology({ lemmas: { widgets: "widget" } });
 void morphologyPlugin.lemma;
 void morphologyPlugin.indexIdentity;
@@ -173,13 +173,12 @@ const directionalMap: SearchEquivalenceMap = {
   "quality assurance": ["testing"],
   docker: ["container", "containers"],
 };
-const directionalPlugin: SynonymPlugin = synonyms(directionalMap);
-const phrasePlugin: SynonymPlugin = synonyms({ "quality assurance": ["testing"] });
+const directionalPlugin: SynonymPlugin = authored.synonyms;
 const normalizedEquivalences: NormalizedSearchEquivalences = normalizeSearchEquivalences(directionalMap);
 const targetBound: 8 = MAX_SEARCH_EQUIVALENCE_TARGETS;
 void synonymsArtifact.entries;
 void directionalPlugin.expand;
-void phrasePlugin.name;
+void authored.synonyms.name;
 void normalizedEquivalences.entries;
 void targetBound;
 const parsedGraph: RelationshipArtifact = parseRelationships(relationships);

@@ -29,7 +29,7 @@ export interface DictionaryPlugin {
   lexicon(): Set<string>;
 }
 
-export interface DictionaryOptions {
+export interface AuthoredRelevanceOptions {
   entries?: unknown[];
   relationshipMap?: unknown;
   documents?: RelationshipDocumentRef[];
@@ -73,15 +73,11 @@ function dictionaryFromCompiled(list: DictionaryEntry[]): DictionaryPlugin {
   };
 }
 
-export function dictionary({ entries = [], relationshipMap, documents }: DictionaryOptions = {}): DictionaryPlugin {
+export function dictionary({ entries = [] }: { entries?: unknown[] } = {}): DictionaryPlugin {
   const list: DictionaryEntry[] = [];
   for (const raw of entries) {
     const entry = compileAuthoredConcept(raw);
     if (entry) list.push(entry);
-  }
-  if (relationshipMap != null) {
-    const compiled = compileRelationshipMapInternal(relationshipMap, { concepts: list, documents: documents || [] });
-    applyCompiledRelationships(list, compiled);
   }
   return dictionaryFromCompiled(list);
 }
@@ -94,14 +90,15 @@ export interface CompiledAuthoredRelevance {
 }
 
 /**
- * Compile authored concepts + relationshipMap onto existing dictionary and synonym plugins.
- * Editorial document edges are returned for the caller to merge with the generated semantic artifact.
+ * Compile authored concepts + relationshipMap onto the dictionary plugin and
+ * the low-level one-hop recall plugin (`synonyms` field). Editorial document
+ * edges are returned for the caller to merge with the generated semantic artifact.
  */
 export function compileAuthoredRelevance({
   entries = [],
   relationshipMap,
   documents,
-}: DictionaryOptions = {}): CompiledAuthoredRelevance {
+}: AuthoredRelevanceOptions = {}): CompiledAuthoredRelevance {
   const list: DictionaryEntry[] = [];
   for (const raw of entries) {
     const entry = compileAuthoredConcept(raw);

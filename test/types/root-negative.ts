@@ -1,4 +1,4 @@
-import { SearchEngine, morphology, compileRelationshipMap } from "@software-land/search";
+import { SearchEngine, morphology, dictionary, compileRelationshipMap } from "@software-land/search";
 
 // @ts-expect-error FeatureVector is not a public export
 import type { FeatureVector } from "@software-land/search";
@@ -23,6 +23,9 @@ import type { MorphologyPlugin } from "@software-land/search";
 
 // @ts-expect-error english is not a public root export
 import { english } from "@software-land/search";
+
+// @ts-expect-error synonyms is not a public root export
+import { synonyms } from "@software-land/search";
 
 const engine = SearchEngine.create();
 
@@ -54,6 +57,9 @@ compiledPublic.standaloneRecallByKey;
 // @ts-expect-error topicalRecallByKey is not a public compileRelationshipMap field
 compiledPublic.topicalRecallByKey;
 
+// @ts-expect-error relationshipMap is not a public dictionary() option
+dictionary({ entries: [], relationshipMap: {} });
+
 // @ts-expect-error mergeEditorialRelationships is not a public export
 import { mergeEditorialRelationships } from "@software-land/search";
 
@@ -65,6 +71,7 @@ void morphologyPlugin;
 void lang;
 void createEnglishPlugin;
 void english;
+void synonyms;
 void compiledPublic;
 void mergeEditorialRelationships;
 void (null as unknown as CompiledRelationshipInternals);
