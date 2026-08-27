@@ -100,7 +100,7 @@ function analyze(raw) {
 }
 
 function acronymIds(q) {
-  return q.concepts.filter((c) => c.kind === "acronym").map((c) => c.id);
+  return q.concepts.filter((c) => c.kind === "configured-concept").map((c) => c.id);
 }
 
 function typedSurfaces(raw) {
@@ -183,7 +183,7 @@ describe("configured sequence alignment and result stability", () => {
   test("configured sequence intent fail-closes Stage 3A", () => {
     const q = analyze("app sec");
     expect(q.configuredSequenceIntent.key).toBe("appsec");
-    expect(stage3AUnsupportedReason(q)).toBe("acronym");
+    expect(stage3AUnsupportedReason(q)).toBe("configured-concept");
   });
 
   test("full-scan and indexed retrievers stay equivalent on the contract queries", async () => {

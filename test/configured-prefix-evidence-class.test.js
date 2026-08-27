@@ -40,7 +40,7 @@ describe("configured expansion prefix evidence class", () => {
 
   test("1/3 of a three-token expansion does not occupy or grant moderate configured evidence", () => {
     const q = analyzeQuery("alpha", { plugins });
-    expect(q.concepts.some((c) => c.kind === "acronym")).toBe(false);
+    expect(q.concepts.some((c) => c.kind === "configured-concept")).toBe(false);
     const only = hit(engine, "alpha", "alpha-only");
     expect(only).toBeTruthy();
     expect(only.directClass).not.toBe("moderate");
@@ -50,7 +50,7 @@ describe("configured expansion prefix evidence class", () => {
 
   test("2/3 exact left prefix uniquely occupies xyz and is moderate on prefix-title and body evidence", () => {
     const q = analyzeQuery("alpha beta", { plugins });
-    const xyz = q.concepts.find((c) => c.kind === "acronym" && c.id === "xyz");
+    const xyz = q.concepts.find((c) => c.kind === "configured-concept" && c.id === "xyz");
     expect(xyz).toMatchObject({
       provenance: "partial-expansion",
       matchedExpansionTokens: 2,
@@ -83,8 +83,10 @@ describe("configured expansion prefix evidence class", () => {
 
   test("3/3 exact expansion keeps existing stronger title-expansion classification", () => {
     const q = analyzeQuery("alpha beta gamma", { plugins });
-    const xyz = q.concepts.find((c) => c.kind === "acronym" && c.id === "xyz");
+    const xyz = q.concepts.find((c) => c.kind === "configured-concept" && c.id === "xyz");
     expect(xyz.expansionCoverage).toBe(1);
+    expect(xyz.kind).toBe("configured-concept");
+    expect(q.concepts.every((c) => c.kind !== "acronym")).toBe(true);
     const full = hit(engine, "alpha beta gamma", "xyz-full");
     expect(full).toBeTruthy();
     expect(full.features.configuredConceptMatch).toBe("expansion");

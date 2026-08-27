@@ -136,7 +136,9 @@ describe("directional search equivalences", () => {
     expect(q.equivalentRecall).toEqual([{ source: "qa", target: "testing" }]);
     expect(q.topicalRecall).toBeFalsy();
     expect(q.standaloneRecall).toBeFalsy();
-    expect(q.concepts.some((c) => c.kind === "acronym" && c.id === "qa")).toBe(true);
+    expect(q.concepts.some((c) => c.kind === "configured-concept" && c.id === "qa")).toBe(true);
+    expect(q.concepts.every((c) => c.kind !== "acronym")).toBe(true);
+    expect(q.concepts.some((c) => c.kind === "term" && c.forms.includes("testing"))).toBe(true);
     expect(q.concepts.some((c) => c.provenance === "synonym" && c.forms.includes("testing"))).toBe(true);
     expect(ids(indexedHits)).toEqual(expect.arrayContaining(["load", "software"]));
     expect(stage3AUnsupportedReason(q)).not.toBeNull();
@@ -212,7 +214,7 @@ describe("directional search equivalences", () => {
     const q = analyzeQuery("quality assurance", { plugins: plugins({ dict, map }) });
     expect(q.configuredSequenceIntent).toBeNull();
     expect(q.equivalentRecall || []).toEqual([]);
-    expect(q.concepts.some((c) => c.kind === "acronym")).toBe(false);
+    expect(q.concepts.some((c) => c.kind === "configured-concept")).toBe(false);
     const { indexedHits } = await assertIndexedFullScan("quality assurance", { dict, map });
     expect(ids(indexedHits)).not.toContain("load");
     expect(ids(indexedHits)).not.toContain("software");
@@ -421,7 +423,7 @@ describe("extra synonym recall vs merged ordinary-term synonyms", () => {
     expect(ids(indexedHits)).toEqual(expect.arrayContaining(["rbac", "react-auth", "zero-trust", "sec-body"]));
 
     const q = analyzeQuery("rbac", { plugins: plugins({ dict, map }) });
-    expect(q.concepts.filter((c) => c.kind === "acronym" && c.id === "rbac")).toHaveLength(1);
+    expect(q.concepts.filter((c) => c.kind === "configured-concept" && c.id === "rbac")).toHaveLength(1);
     const extras = searchEquivalenceRecallConcepts(q);
     expect(extras.map((c) => c.id).sort()).toEqual(["appsec", "security", "vulnerability"]);
     expect(extras.every((c) => c.provenance === "synonym")).toBe(true);

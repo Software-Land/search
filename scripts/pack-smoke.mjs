@@ -460,7 +460,10 @@ try {
 }
 
 const authored = compileAuthoredRelevance({
-  configuredConcepts: [{ key: "qa", aliases: [["quality", "assurance"]] }],
+  configuredConcepts: [
+    { key: "qa", aliases: [["quality", "assurance"]] },
+    { key: "techdebt", aliases: [["tech", "debt"]] },
+  ],
   relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
 });
 const publicKeys = Object.keys(authored).sort();
@@ -486,6 +489,7 @@ const engine = SearchEngine.create({
 await engine.index([
   { id: "qa-guide", title: "Quality Assurance Guide", body: "process quality assurance handbook" },
   { id: "load", title: "Load Testing", body: "performance load testing notes" },
+  { id: "debt", title: "Tech Debt Notes", body: "compound interest on shortcuts" },
 ]);
 const ids = engine.search("qa", { limit: 5 }).map((hit) => hit.id);
 if (!ids.includes("qa-guide") || !ids.includes("load")) {
@@ -526,6 +530,25 @@ if (identityHit.features?.configuredConceptMatch !== "expansion") {
 }
 if (recallHit.features?.configuredConceptMatch !== false) {
   throw new Error("equivalent-recall hits must keep configuredConceptMatch false");
+}
+const occupied = identityHit.explanation?.query?.concepts?.find((concept) => concept.id === "qa");
+if (occupied?.kind !== "configured-concept") {
+  throw new Error("occupied configured identity must explain kind configured-concept");
+}
+if (identityHit.explanation?.query?.concepts?.some((concept) => concept.kind === "acronym")) {
+  throw new Error("query.concepts must not use historical kind acronym");
+}
+if (recallHit.explanation?.query?.concepts?.some((concept) => concept.kind === "acronym")) {
+  throw new Error("query.concepts must not use historical kind acronym");
+}
+const debtExplained = engine.searchDetailed("tech debt", { limit: 5, explain: true });
+const debtHit = debtExplained.results.find((hit) => hit.id === "debt");
+const debtConcept = debtHit?.explanation?.query?.concepts?.find((concept) => concept.id === "techdebt");
+if (debtConcept?.kind !== "configured-concept") {
+  throw new Error("non-acronym configured identity must explain kind configured-concept");
+}
+if (debtHit?.explanation?.query?.concepts?.some((concept) => concept.kind === "acronym")) {
+  throw new Error("query.concepts must not use historical kind acronym");
 }
 if (recallHit.explanation?.query?.concepts?.some((concept) => concept.provenance === "synonym")) {
   throw new Error("explain concepts must not serialize provenance synonym");

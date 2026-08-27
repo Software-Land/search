@@ -75,7 +75,7 @@ export function stage3AUnsupportedReason(query: AnalyzedQuery): string | null {
   if (query.contextualCompletion?.completedToken) return "contextual-completion";
   if ((query.topicalRecall?.forms || []).length) return "topical-recall";
   const concepts = query.concepts || [];
-  if (concepts.some((concept) => concept.kind === "acronym")) return "acronym";
+  if (concepts.some((concept) => concept.kind === "configured-concept")) return "configured-concept";
   const terms = concepts.filter((concept) => concept.kind === "term");
   if (terms.length < 2) return "term-concept-count";
   for (const concept of terms) {

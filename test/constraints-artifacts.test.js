@@ -260,7 +260,7 @@ describe("general lexical search", () => {
     const q = analyzeQuery("a", {
       plugins: [morphology(), dictionary({ entries: [{ key: "api", aliases: [["application", "programming", "interface"]]}] })],
     });
-    expect(q.concepts.some((c) => c.kind === "acronym")).toBe(false);
+    expect(q.concepts.some((c) => c.kind === "configured-concept")).toBe(false);
   });
 
   test("configured-key query prefers a title that states the expansion", async () => {

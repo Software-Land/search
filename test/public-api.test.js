@@ -121,6 +121,9 @@ describe("public API", () => {
     expect(identity.features).not.toHaveProperty("configuredEquivalenceMatch");
     expect(recalled.features.configuredConceptMatch).toBe(false);
     expect(recalled.features).not.toHaveProperty("configuredEquivalenceMatch");
+    expect(identity.explanation.query.concepts.some((concept) => concept.kind === "configured-concept" && concept.id === "qa")).toBe(true);
+    expect(identity.explanation.query.concepts.every((concept) => concept.kind !== "acronym")).toBe(true);
+    expect(recalled.explanation.query.concepts.every((concept) => concept.kind !== "acronym")).toBe(true);
     expect(recalled.explanation.query.concepts.some((concept) => concept.provenance === "equivalent-recall")).toBe(true);
     expect(recalled.explanation.query.concepts.every((concept) => concept.provenance !== "synonym")).toBe(true);
     expect(recalled.relevanceKind).toBe("direct");

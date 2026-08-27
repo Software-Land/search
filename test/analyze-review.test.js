@@ -267,7 +267,7 @@ describe("dictionary token ownership", () => {
     const q = analyzeQuery("tls", {
       plugins: [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
     });
-    expect(q.concepts.filter((c) => c.kind === "acronym" && c.id === "tls")).toHaveLength(1);
+    expect(q.concepts.filter((c) => c.kind === "configured-concept" && c.id === "tls")).toHaveLength(1);
     expect(q.concepts.some((c) => c.kind === "term" && c.id === "tls")).toBe(false);
   });
 
@@ -280,7 +280,7 @@ describe("dictionary token ownership", () => {
         }),
       ],
     });
-    expect(q.concepts.some((c) => c.kind === "acronym" && c.id === "js" && c.provenance === "alias")).toBe(true);
+    expect(q.concepts.some((c) => c.kind === "configured-concept" && c.id === "js" && c.provenance === "alias")).toBe(true);
     expect(q.concepts.some((c) => c.kind === "term" && (c.id === "ecmascript" || c.forms.includes("ecmascript")))).toBe(
       false
     );
@@ -292,7 +292,7 @@ describe("dictionary token ownership", () => {
     const key = analyzeQuery("js", { plugins });
     expect(expansion.lexicalPhraseKey).toEqual(key.lexicalPhraseKey);
     expect(key.tokens.map((t) => t.normalized)).toEqual(["js"]);
-    expect(expansion.concepts.filter((c) => c.kind === "acronym").map((c) => c.id)).toEqual(["js"]);
+    expect(expansion.concepts.filter((c) => c.kind === "configured-concept").map((c) => c.id)).toEqual(["js"]);
     expect(expansion.concepts.some((c) => c.kind === "term")).toBe(false);
     expect(key.concepts.some((c) => c.kind === "term")).toBe(false);
   });
@@ -304,9 +304,9 @@ describe("dictionary token ownership", () => {
     expect(expansion.lexicalPhraseKey).toEqual(key.lexicalPhraseKey);
     expect(expansion.lexicalPhraseTokens).toEqual(["machine", "learn"]);
     expect(key.tokens.map((t) => t.normalized)).toEqual(["ml"]);
-    expect(expansion.concepts.find((c) => c.kind === "acronym")?.id).toBe("ml");
-    expect(expansion.concepts.find((c) => c.kind === "acronym")?.provenance).toBe("expansion");
-    expect(key.concepts.find((c) => c.kind === "acronym")?.provenance).toBe("key");
+    expect(expansion.concepts.find((c) => c.kind === "configured-concept")?.id).toBe("ml");
+    expect(expansion.concepts.find((c) => c.kind === "configured-concept")?.provenance).toBe("expansion");
+    expect(key.concepts.find((c) => c.kind === "configured-concept")?.provenance).toBe("key");
     expect(expansion.concepts.some((c) => c.kind === "term")).toBe(false);
   });
 });
@@ -475,7 +475,7 @@ describe("acronym body evidence is contiguous", () => {
 
     const index = buildIndex(docs, schema, [morphology(), dictionary({ entries: dict })]);
     const q = analyzeQuery("machine learning", { plugins: [morphology(), dictionary({ entries: dict })] });
-    const acr = q.concepts.find((c) => c.kind === "acronym");
+    const acr = q.concepts.find((c) => c.kind === "configured-concept");
     const learningDoc = index.documents.find((d) => d.id === "learning-only");
     const dispersed = index.documents.find((d) => d.id === "dispersed");
     const phrase = index.documents.find((d) => d.id === "phrase");

@@ -260,7 +260,7 @@ describe("query analysis repair", () => {
     expect(q.alternatives.some((a) => a.source === "compound-spell-segmentation")).toBe(true);
     expect(q.alternatives.some((a) => a.tokens[0] === "application" && a.tokens[1] === "security")).toBe(true);
     expect(q.tokens.map((t) => t.normalized)).toEqual(["application", "security"]);
-    expect(q.concepts.some((c) => c.id === "appsec" && c.kind === "acronym")).toBe(true);
+    expect(q.concepts.some((c) => c.id === "appsec" && c.kind === "configured-concept")).toBe(true);
     expect(q.concepts.some((c) => c.kind === "term")).toBe(false);
   });
 
@@ -270,7 +270,7 @@ describe("query analysis repair", () => {
     expect(q.alternatives.some((a) => a.source === "leet-decode")).toBe(true);
     expect(q.alternatives.some((a) => a.source === "typo-correction")).toBe(true);
     expect(q.tokens.map((t) => t.normalized)).toEqual(["application", "security"]);
-    expect(q.concepts.some((c) => c.id === "appsec" && c.kind === "acronym")).toBe(true);
+    expect(q.concepts.some((c) => c.id === "appsec" && c.kind === "configured-concept")).toBe(true);
   });
 
   test("short literals are not treated as spelling errors", () => {

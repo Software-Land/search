@@ -160,9 +160,9 @@ function queryForms(query: AnalyzedQuery) {
       }
       continue;
     }
-    add(c.id, c.kind === "acronym" ? "acronym-key" : "concept");
+    add(c.id, c.kind === "configured-concept" ? "acronym-key" : "concept");
     for (const f of c.forms || []) {
-      const kind = c.kind === "acronym" ? "acronym-form" : "concept";
+      const kind = c.kind === "configured-concept" ? "acronym-form" : "concept";
       add(f, kind);
       const parts = String(f).split(/\s+/).filter(Boolean);
       if (parts.length >= 2) {

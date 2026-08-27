@@ -42,7 +42,7 @@ function plugins(entries) {
 }
 
 function acronymIds(q) {
-  return q.concepts.filter((c) => c.kind === "acronym").map((c) => c.id);
+  return q.concepts.filter((c) => c.kind === "configured-concept").map((c) => c.id);
 }
 
 describe("canonical lemma occupies exact configured key", () => {

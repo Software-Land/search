@@ -73,7 +73,8 @@ describe("standalone recall analysis", () => {
     expect(q.lexicalPhraseKey).toBe("hypertext");
     expect(q.configuredSequenceIntent).toBeNull();
     expect(q.contextualCompletion).toBeNull();
-    expect(q.concepts.some((c) => c.kind === "acronym")).toBe(false);
+    expect(q.concepts.some((c) => c.kind === "configured-concept")).toBe(false);
+    expect(q.concepts.every((c) => c.kind !== "acronym")).toBe(true);
     expect(q.concepts.some((c) => c.kind === "term" && c.forms.includes("hypertext"))).toBe(true);
     expect(q.standaloneRecall).toMatchObject({ key: "http", sourceToken: "hypertext" });
     expect(stage3AUnsupportedReason(q)).toBe("token-count");
@@ -87,7 +88,7 @@ describe("standalone recall analysis", () => {
     });
     expect(q.standaloneRecall ?? null).toBeNull();
     expect(q.configuredSequenceIntent).toBeNull();
-    expect(q.concepts.some((c) => c.kind === "acronym")).toBe(false);
+    expect(q.concepts.some((c) => c.kind === "configured-concept")).toBe(false);
   });
 
   test("prefixes and follow-on tokens do not inherit standalone recall", () => {
@@ -101,7 +102,7 @@ describe("standalone recall analysis", () => {
     const q = analyzeQuery("http", { plugins: plugins() });
     expect(q.configuredSequenceIntent?.key).toBe("http");
     expect(q.standaloneRecall ?? null).toBeNull();
-    expect(q.concepts.some((c) => c.kind === "acronym" && c.id === "http")).toBe(true);
+    expect(q.concepts.some((c) => c.kind === "configured-concept" && c.id === "http")).toBe(true);
   });
 });
 
@@ -134,7 +135,8 @@ describe("standalone recall retrieval and ranking", () => {
       key: "http",
       sourceToken: "hypertext",
     });
-    expect(detailed.results[0].explanation.query.concepts.some((c) => c.kind === "acronym")).toBe(false);
+    expect(detailed.results[0].explanation.query.concepts.some((c) => c.kind === "configured-concept")).toBe(false);
+    expect(detailed.results[0].explanation.query.concepts.every((c) => c.kind !== "acronym")).toBe(true);
     const recallOnly = detailed.results.find((row) => row.id === "http-body");
     expect(recallOnly.retrievalSources).toContain("standalone-recall");
     expect(recallOnly.features.directClass).toBe("none");

@@ -85,7 +85,7 @@ function surfaces(q) {
 }
 
 function acronyms(q) {
-  return q.concepts.filter((c) => c.kind === "acronym").map((c) => c.id);
+  return q.concepts.filter((c) => c.kind === "configured-concept").map((c) => c.id);
 }
 
 describe("configured prefix span resolver", () => {
@@ -174,11 +174,11 @@ describe("wrapped configured prefix activation", () => {
     expect(acronyms(q)).toEqual(["appsec"]);
     expect(q.concepts.filter((c) => c.kind === "term").map((c) => c.id)).toEqual([]);
     const appsec = q.concepts.find((c) => c.id === "appsec");
-    expect(appsec.kind).toBe("acronym");
+    expect(appsec.kind).toBe("configured-concept");
     expect(appsec.provenance).toBe("partial-expansion");
     expect(unboundTypedTokens(q).map((t) => t.surface)).toEqual(["what", "is", "an", "applicatio", "security"]);
     expect(q.lexicalPhraseKey).toBe(baseline.lexicalPhraseKey);
-    expect(stage3AUnsupportedReason(q)).toBe("acronym");
+    expect(stage3AUnsupportedReason(q)).toBe("configured-concept");
   });
 
   test("prefix spans do not trigger topical recall", () => {

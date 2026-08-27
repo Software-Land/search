@@ -35,7 +35,7 @@ function analyze(raw, entries) {
 }
 
 function acronymIds(q) {
-  return q.concepts.filter((c) => c.kind === "acronym").map((c) => c.id);
+  return q.concepts.filter((c) => c.kind === "configured-concept").map((c) => c.id);
 }
 
 describe("stop-tolerant configured expansion alignment", () => {
@@ -204,6 +204,14 @@ describe("stop-tolerant configured expansion alignment", () => {
     expect(q.configuredSequenceIntent?.key).toBe("nist");
     expect(acronymIds(q)).toEqual(["nist"]);
     expect(acronymIds(q)).not.toContain("techdebt");
+  });
+
+  test("compound configured identity occupies as configured-concept, not acronym", () => {
+    const q = analyze("tech debt");
+    expect(q.configuredSequenceIntent?.key).toBe("techdebt");
+    expect(acronymIds(q)).toEqual(["techdebt"]);
+    expect(q.concepts.find((c) => c.id === "techdebt")?.kind).toBe("configured-concept");
+    expect(q.concepts.every((c) => c.kind !== "acronym")).toBe(true);
   });
 });
 

@@ -84,7 +84,7 @@ function resolveStandaloneRecall(
 ): StandaloneRecall | null {
   if (!dict || tokens.length !== 1) return null;
   if (configuredSequenceIntent?.key) return null;
-  if (concepts.some((c) => c.kind === "acronym")) return null;
+  if (concepts.some((c) => c.kind === "configured-concept")) return null;
   if (prefixCompletion) return null;
   const tok = tokens[0];
   if (tok.completedToken) return null;
@@ -154,13 +154,13 @@ function attachConfiguredPrefixSpanConcept(
   if (spans.length !== 1) return [];
   const span = spans[0];
   if (uniqueStopRemainderSpanKey(tokens, [span]) !== span.key) return [];
-  if (concepts.some((c) => c.kind === "acronym" && c.id !== span.key)) return [];
+  if (concepts.some((c) => c.kind === "configured-concept" && c.id !== span.key)) return [];
   const entry = dict.byKey?.get(span.key);
   if (!entry?.key) return [];
   const tokenCount = span.end - span.start;
   const concept = {
     id: entry.key,
-    kind: "acronym",
+    kind: "configured-concept",
     forms: formsForEntry(entry),
     expansion: [...(entry.expansion || [])],
     aliases: (entry.aliases || []).map((a) => [...a]),
@@ -169,7 +169,7 @@ function attachConfiguredPrefixSpanConcept(
     expansionTokenCount: (entry.expansion || []).length,
     expansionCoverage: Number((tokenCount / Math.max((entry.expansion || []).length, 1)).toFixed(4)),
   };
-  const existing = concepts.find((c) => c.kind === "acronym" && c.id === span.key);
+  const existing = concepts.find((c) => c.kind === "configured-concept" && c.id === span.key);
   if (existing) Object.assign(existing, concept);
   else concepts.push(concept);
   for (let i = span.start; i < span.end; i++) covered.add(i);
@@ -601,7 +601,7 @@ function attachConfiguredSequenceConcept(
   if (resolution.status === "ambiguous") {
     const drop = new Set(resolution.keys);
     for (let i = concepts.length - 1; i >= 0; i--) {
-      if (concepts[i].kind === "acronym" && drop.has(concepts[i].id)) concepts.splice(i, 1);
+      if (concepts[i].kind === "configured-concept" && drop.has(concepts[i].id)) concepts.splice(i, 1);
     }
     covered.clear();
     return null;
@@ -609,13 +609,13 @@ function attachConfiguredSequenceConcept(
   if (resolution.status !== "unique") return null;
   const { intent, entry, usedPrefix } = resolution;
   for (let i = concepts.length - 1; i >= 0; i--) {
-    if (concepts[i].kind === "acronym" && concepts[i].id !== intent.key) concepts.splice(i, 1);
+    if (concepts[i].kind === "configured-concept" && concepts[i].id !== intent.key) concepts.splice(i, 1);
   }
-  const exists = concepts.some((c) => c.kind === "acronym" && c.id === intent.key);
+  const exists = concepts.some((c) => c.kind === "configured-concept" && c.id === intent.key);
   if (!exists) {
     concepts.push({
       id: entry.key,
-      kind: "acronym",
+      kind: "configured-concept",
       forms: formsForEntry(entry),
       expansion: [...(entry.expansion || [])],
       aliases: (entry.aliases || []).map((a) => [...a]),
@@ -1185,7 +1185,7 @@ export function analyzeQuery(
     const forms = formsForEntry(hit.entry);
     concepts.push({
       id: hit.entry.key,
-      kind: "acronym",
+      kind: "configured-concept",
       forms,
       expansion: [...hit.entry.expansion],
       aliases: hit.entry.aliases.map((a) => [...a]),

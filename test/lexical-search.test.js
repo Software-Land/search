@@ -143,7 +143,7 @@ describe("query analysis", () => {
     const keyQ = analyzeQuery("gpu", { plugins });
     expect(full.lexicalPhraseKey).toEqual(keyQ.lexicalPhraseKey);
     expect(keyQ.tokens.map((t) => t.normalized)).toEqual(["gpu"]);
-    expect(full.concepts.some((c) => c.id === "gpu" && c.kind === "acronym")).toBe(true);
+    expect(full.concepts.some((c) => c.id === "gpu" && c.kind === "configured-concept")).toBe(true);
     expect(analyzeQuery("graphics", { plugins }).concepts.some((c) => c.id === "gpu")).toBe(false);
 
     const docs = [
@@ -218,7 +218,7 @@ describe("query analysis", () => {
     const plugins = [morphology(), dictionary({ entries: httpDict })];
     const prefix = analyzeQuery("hypertext transfer", { plugins });
     expect(prefix.tokens.map((t) => t.normalized)).toEqual(["hypertext", "transfer"]);
-    const http = prefix.concepts.filter((c) => c.kind === "acronym");
+    const http = prefix.concepts.filter((c) => c.kind === "configured-concept");
     expect(http).toHaveLength(1);
     expect(http[0]).toMatchObject({
       id: "http",
@@ -231,10 +231,10 @@ describe("query analysis", () => {
     expect(prefix.concepts.some((c) => c.kind === "term")).toBe(false);
 
     const lone = analyzeQuery("hypertext", { plugins });
-    expect(lone.concepts.some((c) => c.kind === "acronym")).toBe(false);
+    expect(lone.concepts.some((c) => c.kind === "configured-concept")).toBe(false);
     expect(lone.concepts.some((c) => c.kind === "term" && c.forms.includes("hypertext"))).toBe(true);
 
-    expect(analyzeQuery("transfer", { plugins }).concepts.some((c) => c.kind === "acronym")).toBe(false);
+    expect(analyzeQuery("transfer", { plugins }).concepts.some((c) => c.kind === "configured-concept")).toBe(false);
   });
 
   test("completing a unique expansion prefix stays HTTP-like and does not collapse until exact", async () => {
@@ -257,7 +257,7 @@ describe("query analysis", () => {
       "hypertext transfer protocol",
     ].map((raw) => {
       const q = analyzeQuery(raw, { plugins });
-      const acr = q.concepts.find((c) => c.kind === "acronym");
+      const acr = q.concepts.find((c) => c.kind === "configured-concept");
       return {
         raw,
         tokens: q.tokens.map((t) => t.normalized),
@@ -308,7 +308,7 @@ describe("query analysis", () => {
     ];
     for (const raw of ["service level", "virtual private", "graph query", "uniform resource", "elastic container"]) {
       const q = analyzeQuery(raw, { plugins });
-      expect(q.concepts.some((c) => c.kind === "acronym")).toBe(false);
+      expect(q.concepts.some((c) => c.kind === "configured-concept")).toBe(false);
     }
   });
 
@@ -335,7 +335,7 @@ describe("query analysis", () => {
     ];
     for (const [raw, key] of expected) {
       const q = analyzeQuery(raw, { plugins });
-      const acr = q.concepts.filter((c) => c.kind === "acronym");
+      const acr = q.concepts.filter((c) => c.kind === "configured-concept");
       expect(acr).toHaveLength(1);
       expect(acr[0].id).toBe(key);
       expect(acr[0].provenance).toBe("partial-expansion");
@@ -344,10 +344,10 @@ describe("query analysis", () => {
       expect(acr[0].expansionCoverage).toBe(0.6667);
       expect(q.tokens).toHaveLength(2);
     }
-    expect(analyzeQuery("hypertext", { plugins }).concepts.some((c) => c.kind === "acronym")).toBe(false);
+    expect(analyzeQuery("hypertext", { plugins }).concepts.some((c) => c.kind === "configured-concept")).toBe(false);
     const full = analyzeQuery("hypertext transfer protocol", { plugins });
     expect(full.tokens.map((t) => t.normalized)).toEqual(["hypertext", "transfer", "protocol"]);
-    expect(full.concepts.find((c) => c.kind === "acronym")?.provenance).toBe("expansion");
+    expect(full.concepts.find((c) => c.kind === "configured-concept")?.provenance).toBe("expansion");
   });
 
   test("incomplete key prefixes match only the final active token", () => {
@@ -367,23 +367,23 @@ describe("query analysis", () => {
     ];
     expect(analyzeQuery("graph query", { plugins }).concepts.some((c) => c.id === "graphql")).toBe(false);
     expect(analyzeQuery("web development", { plugins }).concepts.some((c) => c.id === "webrtc")).toBe(false);
-    const authGraphq = analyzeQuery("auth graphq", { plugins }).concepts.filter((c) => c.kind === "acronym");
+    const authGraphq = analyzeQuery("auth graphq", { plugins }).concepts.filter((c) => c.kind === "configured-concept");
     expect(authGraphq.some((c) => c.id === "graphql")).toBe(true);
-    const whatIsGraphq = analyzeQuery("what is graphq", { plugins }).concepts.filter((c) => c.kind === "acronym");
+    const whatIsGraphq = analyzeQuery("what is graphq", { plugins }).concepts.filter((c) => c.kind === "configured-concept");
     expect(whatIsGraphq.some((c) => c.id === "graphql")).toBe(true);
-    const standalone = analyzeQuery("graphq", { plugins }).concepts.filter((c) => c.kind === "acronym");
+    const standalone = analyzeQuery("graphq", { plugins }).concepts.filter((c) => c.kind === "configured-concept");
     expect(standalone).toHaveLength(1);
     expect(standalone[0].id).toBe("graphql");
-    const exactMiddle = analyzeQuery("use graphql today", { plugins }).concepts.filter((c) => c.kind === "acronym");
+    const exactMiddle = analyzeQuery("use graphql today", { plugins }).concepts.filter((c) => c.kind === "configured-concept");
     expect(exactMiddle.some((c) => c.id === "graphql" && c.provenance === "key")).toBe(true);
-    const exactFirst = analyzeQuery("tls handshake", { plugins }).concepts.filter((c) => c.kind === "acronym");
+    const exactFirst = analyzeQuery("tls handshake", { plugins }).concepts.filter((c) => c.kind === "configured-concept");
     expect(exactFirst.some((c) => c.id === "tls" && c.provenance === "key")).toBe(true);
-    const jwt = analyzeQuery("json web", { plugins }).concepts.filter((c) => c.kind === "acronym");
+    const jwt = analyzeQuery("json web", { plugins }).concepts.filter((c) => c.kind === "configured-concept");
     expect(jwt).toHaveLength(1);
     expect(jwt[0].id).toBe("jwt");
     expect(jwt[0].provenance).toBe("partial-expansion");
     expect(analyzeQuery("react", { plugins }).concepts.some((c) => c.id === "reactjs")).toBe(true);
-    const rsc = analyzeQuery("react server", { plugins }).concepts.filter((c) => c.kind === "acronym");
+    const rsc = analyzeQuery("react server", { plugins }).concepts.filter((c) => c.kind === "configured-concept");
     expect(rsc).toHaveLength(1);
     expect(rsc[0].id).toBe("rsc");
     expect(rsc[0].provenance).toBe("partial-expansion");
@@ -397,15 +397,15 @@ describe("query analysis", () => {
     const reverse = [...forward].reverse();
     for (const entries of [forward, reverse]) {
       const plugins = [morphology(), dictionary({ entries })];
-      expect(analyzeQuery("react", { plugins }).concepts.some((c) => c.kind === "acronym")).toBe(false);
-      const exact = analyzeQuery("reactjs", { plugins }).concepts.filter((c) => c.kind === "acronym");
+      expect(analyzeQuery("react", { plugins }).concepts.some((c) => c.kind === "configured-concept")).toBe(false);
+      const exact = analyzeQuery("reactjs", { plugins }).concepts.filter((c) => c.kind === "configured-concept");
       expect(exact).toHaveLength(1);
       expect(exact[0].id).toBe("reactjs");
       expect(exact[0].provenance).toBe("key");
     }
     const unique = analyzeQuery("react", {
       plugins: [morphology(), dictionary({ entries: [forward[0]] })],
-    }).concepts.filter((c) => c.kind === "acronym");
+    }).concepts.filter((c) => c.kind === "configured-concept");
     expect(unique).toHaveLength(1);
     expect(unique[0].id).toBe("reactjs");
   });
@@ -420,7 +420,7 @@ describe("query analysis", () => {
       const plugins = [morphology(), dictionary({ entries })];
       const q = analyzeQuery("graph query language", { plugins });
       expect(q.tokens.map((t) => t.normalized)).toEqual(["graph", "query", "language"]);
-      expect(q.concepts.some((c) => c.kind === "acronym")).toBe(false);
+      expect(q.concepts.some((c) => c.kind === "configured-concept")).toBe(false);
       expect(analyzeQuery("graphql", { plugins }).tokens.map((t) => t.normalized)).toEqual(["graphql"]);
       expect(analyzeQuery("gql", { plugins }).tokens.map((t) => t.normalized)).toEqual(["gql"]);
     }
@@ -433,7 +433,7 @@ describe("query analysis", () => {
         plugins: [morphology(), dictionary({ entries })],
       });
       expect(q.tokens.map((t) => t.normalized)).toEqual(["graph", "query", "language"]);
-      expect(q.concepts.some((c) => c.kind === "acronym")).toBe(false);
+      expect(q.concepts.some((c) => c.kind === "configured-concept")).toBe(false);
     }
   });
 
@@ -465,8 +465,8 @@ describe("query analysis", () => {
     expect(full.lexicalPhraseKey).toEqual(key.lexicalPhraseKey);
     expect(key.tokens.map((t) => t.normalized)).toEqual(["ml"]);
     expect(full.lexicalPhraseTokens).toEqual(["machine", "learn"]);
-    expect(full.concepts.find((c) => c.kind === "acronym")?.provenance).toBe("expansion");
-    expect(key.concepts.find((c) => c.kind === "acronym")?.provenance).toBe("key");
+    expect(full.concepts.find((c) => c.kind === "configured-concept")?.provenance).toBe("expansion");
+    expect(key.concepts.find((c) => c.kind === "configured-concept")?.provenance).toBe("key");
 
     const docs = [
       {
@@ -508,7 +508,7 @@ describe("query analysis", () => {
     const e = await engine(docs, mlDict);
     const full = analyzeQuery("machine learning", { plugins, lexicon, prefixLexicon: lexicon });
     expect(full.tokens.map((t) => t.normalized)).toEqual(["machine", "learn"]);
-    expect(full.concepts.find((c) => c.kind === "acronym")).toMatchObject({
+    expect(full.concepts.find((c) => c.kind === "configured-concept")).toMatchObject({
       id: "ml",
       provenance: "expansion",
     });
@@ -554,15 +554,15 @@ describe("query analysis", () => {
       forms.map((raw) => [raw, analyzeQuery(raw, { plugins, lexicon, prefixLexicon: lexicon })])
     );
 
-    expect(analyzed.ml.concepts.find((c) => c.kind === "acronym")).toMatchObject({
+    expect(analyzed.ml.concepts.find((c) => c.kind === "configured-concept")).toMatchObject({
       id: "ml",
       provenance: "key",
     });
-    expect(analyzed["machine learning"].concepts.find((c) => c.kind === "acronym")).toMatchObject({
+    expect(analyzed["machine learning"].concepts.find((c) => c.kind === "configured-concept")).toMatchObject({
       id: "ml",
       provenance: "expansion",
     });
-    expect(analyzed["machine learn"].concepts.find((c) => c.kind === "acronym")).toMatchObject({
+    expect(analyzed["machine learn"].concepts.find((c) => c.kind === "configured-concept")).toMatchObject({
       id: "ml",
       provenance: "partial-expansion",
     });
@@ -623,7 +623,7 @@ describe("query analysis", () => {
     const q = analyzeQuery("a", {
       plugins: [morphology(), dictionary({ entries: tlsDict })],
     });
-    expect(q.concepts.some((c) => c.kind === "acronym")).toBe(false);
+    expect(q.concepts.some((c) => c.kind === "configured-concept")).toBe(false);
   });
 });
 

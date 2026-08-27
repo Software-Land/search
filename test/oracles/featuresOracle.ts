@@ -149,7 +149,7 @@ function titleCoverage(query: AnalyzedQuery, doc: IndexedDocument) {
       if (spanComponent) return false;
       if (allowPrefixMatch(qt.normalized, tok) || isNearCompletePrefix(qt.normalized, tok)) return true;
       return query.concepts.some(
-        (c) => c.kind !== "acronym" && !isBoundTrailingTermConcept(query, c) && c.forms.includes(tok)
+        (c) => c.kind !== "configured-concept" && !isBoundTrailingTermConcept(query, c) && c.forms.includes(tok)
       );
     });
     if (ok) hit += 1;
@@ -158,7 +158,7 @@ function titleCoverage(query: AnalyzedQuery, doc: IndexedDocument) {
 }
 
 function configuredConceptMatch(query: AnalyzedQuery, doc: IndexedDocument): ConfiguredConceptMatch {
-  const acr = query.concepts.find((c) => c.kind === "acronym");
+  const acr = query.concepts.find((c) => c.kind === "configured-concept");
   if (!acr) return false;
   if (doc.titleTokenSet.has(acr.id) || doc.titleLemmaSet.has(acr.id)) return "key-in-title";
   if (conceptMatchesTitle(acr, doc)) return "expansion";
@@ -255,7 +255,7 @@ function phraseAdjacency(query: AnalyzedQuery, doc: IndexedDocument) {
 }
 
 function expansionEvidence(query: AnalyzedQuery, doc: IndexedDocument) {
-  const acr = query.concepts.find((c) => c.kind === "acronym");
+  const acr = query.concepts.find((c) => c.kind === "configured-concept");
   if (!acr) return 0;
   const expansion =
     Array.isArray(acr.expansion) && acr.expansion.length
@@ -267,7 +267,7 @@ function expansionEvidence(query: AnalyzedQuery, doc: IndexedDocument) {
 }
 
 function occupiedPartialExpansion(query: AnalyzedQuery) {
-  const acr = query.concepts.find((c) => c.kind === "acronym");
+  const acr = query.concepts.find((c) => c.kind === "configured-concept");
   if (!acr) return null;
   if ((acr.matchedExpansionTokens || 0) < 2) return null;
   const coverage = acr.expansionCoverage;
@@ -277,7 +277,7 @@ function occupiedPartialExpansion(query: AnalyzedQuery) {
 }
 
 function configuredExpansionCoverage(query: AnalyzedQuery) {
-  const acr = query.concepts.find((c) => c.kind === "acronym");
+  const acr = query.concepts.find((c) => c.kind === "configured-concept");
   if (!acr) return 0;
   const coverage = acr.expansionCoverage;
   return typeof coverage === "number" && Number.isFinite(coverage) ? coverage : 0;
@@ -313,7 +313,7 @@ function configuredExpansionBodyMatch(query: AnalyzedQuery, doc: IndexedDocument
 
 function queryIsConfiguredKey(query: AnalyzedQuery) {
   if (hasConfiguredSequenceIntent(query)) return false;
-  const acr = query.concepts.find((c) => c.kind === "acronym");
+  const acr = query.concepts.find((c) => c.kind === "configured-concept");
   if (!acr) return false;
   if (query.tokens.length !== 1) return false;
   return query.tokens[0].normalized === acr.id;
@@ -321,7 +321,7 @@ function queryIsConfiguredKey(query: AnalyzedQuery) {
 
 function canonicalKeyTitle(query: AnalyzedQuery, doc: IndexedDocument) {
   if (!queryIsConfiguredKey(query)) return false;
-  const acr = query.concepts.find((c) => c.kind === "acronym");
+  const acr = query.concepts.find((c) => c.kind === "configured-concept");
   if (!acr) return false;
   const keyInTitle = doc.titleTokenSet.has(acr.id) || doc.titleLemmaSet.has(acr.id);
   if (!keyInTitle) return false;

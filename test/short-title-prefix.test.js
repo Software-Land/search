@@ -73,7 +73,7 @@ function queryIdentity(q) {
     contextualCompletion: q.contextualCompletion ?? null,
     topicalRecall: q.topicalRecall ?? null,
     standaloneRecall: q.standaloneRecall ?? null,
-    acronyms: (q.concepts || []).filter((c) => c.kind === "acronym").map((c) => c.id),
+    acronyms: (q.concepts || []).filter((c) => c.kind === "configured-concept").map((c) => c.id),
   };
 }
 

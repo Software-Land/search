@@ -45,10 +45,10 @@ Stage 2A stores only contiguous block boundaries. It does not claim TF/score bou
 | `exactTitleTokenMatch` | independent title tokens | body-only provenance excludes canonical title token evidence | signature bit; +1.6 | otherwise evaluate |
 | `typedSurfaceTitleMatch` | typed surface vs independent title tokens/prefixes | require unrepaired single-token surface equal to canonical token; body-only provenance excludes the match | signature bit only | otherwise evaluate |
 | `titleCoverage` | title tokens/components vs query forms | body-only provenance excludes exact/prefix/lemma title concepts for the supported query | signature band; +1.2× | otherwise evaluate |
-| `queryCoverage` | query concepts evidenced in title/version | supported candidate has one non-number/non-acronym concept and no title/version provenance | signature band; +2.4× | otherwise evaluate |
+| `queryCoverage` | query concepts evidenced in title/version | supported candidate has one non-number/non-configured-concept concept and no title/version provenance | signature band; +2.4× | otherwise evaluate |
 | `titlePrefixQuality` | query/title prefix coverage and title tightness | body-only provenance excludes supported canonical prefix; short lead is checked separately | signature band; +1.8× | otherwise evaluate |
 | contextual prefix fields | aligned multi-token title prefix | supported path requires one query token | signature bit/scalar | multi-token queries evaluate |
-| configured concept | acronym key/expansion in title | supported path rejects acronym concepts | signature band; +1.5× | configured queries evaluate |
+| configured concept | configured key/expansion in title | supported path rejects configured-concept occupancy | signature band; +1.5× | configured queries evaluate |
 | `morphologyMatch` | query lemma in title without surface | body-only provenance would report title morphology | score +0.4; may affect class | otherwise evaluate |
 | `typoDistance` | title token edit/repeat evidence | unrepaired tokens use a cheap exact title-token distance probe; any possible nonzero value forces evaluation | score up to +0.7; may affect class | otherwise exact zero |
 | `versionMatch` | compact/dotted forms and companion coverage | supported path rejects number/dotted queries; body-only provenance excludes version title evidence | signature band; up to +2.2 | version queries evaluate |
@@ -70,7 +70,7 @@ Stage 2A bounds a retrieved candidate only when all of these are proven:
 - exact compiled indexed retriever and a valid pruning extension
 - builtin ranking and non-diagnostic result path
 - `retrievalScoreWeight === 0`
-- one unrepaired, non-number, non-acronym query token; longer tokens must have no exact title-token typo evidence
+- one unrepaired, non-number, non-configured-concept query token; longer tokens must have no exact title-token typo evidence
 - no dotted/version or inferred prefix-completion state
 - exact rechecked provenance is only `body-lexical`
 - the first title token cannot produce `shortLiteralLeadMatch`

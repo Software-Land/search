@@ -67,7 +67,7 @@ function analyze(raw) {
 }
 
 function conceptIds(q) {
-  return q.concepts.filter((c) => c.kind === "acronym").map((c) => c.id);
+  return q.concepts.filter((c) => c.kind === "configured-concept").map((c) => c.id);
 }
 
 describe("morphology-derived lemma prefix", () => {
@@ -162,12 +162,12 @@ describe("single-token frames ranking window", () => {
     expect(q.tokens.map((t) => t.surface)).toEqual(["frames"]);
     expect(q.contextualCompletion).toBeNull();
     expect(q.tokens.length).toBe(1);
-    expect(q.concepts.some((c) => c.kind === "acronym" && c.id === "fps")).toBe(false);
+    expect(q.concepts.some((c) => c.kind === "configured-concept" && c.id === "fps")).toBe(false);
   });
 
   test("frames per already attaches fps as a unique 2/3 expansion prefix", () => {
     const q = analyze("frames per");
-    const fps = q.concepts.find((c) => c.kind === "acronym" && c.id === "fps");
+    const fps = q.concepts.find((c) => c.kind === "configured-concept" && c.id === "fps");
     expect(fps).toBeTruthy();
     expect(fps.provenance).toBe("partial-expansion");
     expect(fps.matchedExpansionTokens).toBe(2);
@@ -217,7 +217,7 @@ describe("single-token frames ranking window", () => {
     ];
     const q = analyzeQuery("machine", { plugins: ambiguousPlugins });
     expect(q.contextualCompletion).toBeNull();
-    expect(q.concepts.some((c) => c.kind === "acronym")).toBe(false);
+    expect(q.concepts.some((c) => c.kind === "configured-concept")).toBe(false);
     expect(conceptIds(q)).toEqual([]);
   });
 

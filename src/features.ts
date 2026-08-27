@@ -90,7 +90,7 @@ function getQueryFeatPrep(query: AnalyzedQuery): QueryFeatPrep {
   const lexicalSource = Array.isArray(query.lexicalTokens) && query.lexicalTokens.length ? query.lexicalTokens : tokens;
   const lexicalNonStop = lexicalSource.filter((t) => !DEFAULT_STOP.has(t.normalized) || lexicalSource.length <= 2);
   const lexicalUse = lexicalNonStop.length ? lexicalNonStop : lexicalSource;
-  const acronym = query.concepts.find((c) => c.kind === "acronym") || null;
+  const acronym = query.concepts.find((c) => c.kind === "configured-concept") || null;
   const expansion =
     acronym == null
       ? []
@@ -99,7 +99,7 @@ function getQueryFeatPrep(query: AnalyzedQuery): QueryFeatPrep {
         : (acronym.forms || []).filter((f) => f !== acronym.id && !/^\d+$/.test(f));
   const formSet = new Set<string>();
   for (const c of query.concepts) {
-    if (c.kind === "acronym") continue;
+    if (c.kind === "configured-concept") continue;
     if (isBoundTrailingTermConcept(query, c)) continue;
     if (isSearchEquivalenceRecallConcept(query, c)) continue;
     for (const form of c.forms || []) formSet.add(form);
@@ -575,7 +575,7 @@ function ordinaryEquivalenceBodyMatch(query: AnalyzedQuery, doc: IndexedDocument
     if (!pair.source || !pair.target || pair.source === pair.target) continue;
     const concept = (query.concepts || []).find(
       (candidate) =>
-        candidate.kind !== "acronym" &&
+        candidate.kind !== "configured-concept" &&
         !isSearchEquivalenceRecallConcept(query, candidate) &&
         candidate.forms.includes(pair.source) &&
         candidate.forms.includes(pair.target)

@@ -165,7 +165,7 @@ function conceptPhraseMatchesBody(concept: QueryConcept, doc: IndexedDocument): 
 }
 
 function conceptMatchesTitle(concept: QueryConcept, doc: IndexedDocument): ConceptTitleMatch | null {
-  if (concept.kind === "acronym") {
+  if (concept.kind === "configured-concept") {
     if (doc.titleTokenSet.has(concept.id) || doc.titleLemmaSet.has(concept.id)) return "key";
     if (
       acronymFieldEvidence(
@@ -212,7 +212,7 @@ function conceptMatchesTitle(concept: QueryConcept, doc: IndexedDocument): Conce
 }
 
 function conceptMatchesBody(concept: QueryConcept, doc: IndexedDocument) {
-  if (concept.kind === "acronym") {
+  if (concept.kind === "configured-concept") {
     return acronymFieldEvidence(
       concept,
       doc.bodyTokens,
@@ -326,7 +326,7 @@ export function standaloneRecallConcept(query: AnalyzedQuery | null | undefined)
   if (!hint) return null;
   return {
     id: hint.key,
-    kind: "acronym",
+    kind: "configured-concept",
     forms: Array.isArray(hint.forms) && hint.forms.length ? hint.forms : [hint.key, ...(hint.expansion || [])],
     expansion: [...(hint.expansion || [])],
     aliases: (hint.aliases || []).map((alias) => [...alias]),
@@ -347,7 +347,7 @@ export function documentMatchesStandaloneRecall(query: AnalyzedQuery, doc: Index
  * Extra concepts have id === an equivalentRecall target and are not a recall source.
  */
 export function isSearchEquivalenceRecallConcept(query: AnalyzedQuery | null | undefined, concept: QueryConcept | null | undefined) {
-  if (!query || !concept || concept.kind === "acronym") return false;
+  if (!query || !concept || concept.kind === "configured-concept") return false;
   if (concept.provenance !== "synonym") return false;
   const pairs = query.equivalentRecall;
   if (!pairs?.length) return false;
@@ -448,7 +448,7 @@ export function isBoundTrailingTypedToken(query: AnalyzedQuery, token: QueryToke
 }
 
 export function isBoundTrailingTermConcept(query: AnalyzedQuery, concept: QueryConcept) {
-  if (!concept || concept.kind === "acronym") return false;
+  if (!concept || concept.kind === "configured-concept") return false;
   const tokens = query.tokens || [];
   if (!tokens.length || !shouldConsumeBoundTrailingToken(query)) return false;
   const last = tokens[tokens.length - 1];
@@ -574,7 +574,7 @@ function scanDocument(
       continue;
     }
     const kind = conceptMatchesTitle(concept, doc);
-    if (concept.kind === "acronym") {
+    if (concept.kind === "configured-concept") {
       if (kind) add(doc, "configured-concept");
       continue;
     }
