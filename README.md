@@ -16,7 +16,7 @@ Pairwise ranking used to be Θ(C²) in the candidate set C. Builtin ranking now 
 
 Optional **offline compilers** (not required to search; not imported by the runtime):
 
-- `search-corpus` — lexical equivalences and synonyms from a portable `{id,title,body}` corpus
+- `search-corpus` — configured concepts and equivalent `relationshipMap` edges from a portable `{id,title,body}` corpus
 - `search-lexical` — lexical-frequency n-gram counts and the exact positional lexical index
 - `search-relationships` — editorial / semantic relationship graphs
 - Python `tools/search-semantic` — optional relatedness builder, shipped in the npm package and launched via `@software-land/search/semantic`
@@ -118,8 +118,6 @@ Search data is four distinct layers:
 `authored.documentRelationships` is the editorial document→document artifact, or `null` when none were authored. Combine it with a generated semantic artifact using `mergeRelationships(semantic, authored.documentRelationships)`.
 
 Complete authored relevance — equivalent recall, related standalone/topical forms, and editorial document edges — uses `compileAuthoredRelevance()`.
-
-`compileRelationshipMap()` is a lower-level/partial compiler for tooling. Prefer `compileAuthoredRelevance()` for application initialization.
 
 ## Browser Worker
 
@@ -256,7 +254,7 @@ Default embedding model (when requested): `sentence-transformers/all-MiniLM-L6-v
 
 ```text
 corpus JSON
-  → search-corpus          → equivalences.json + relationship-map.json
+  → search-corpus          → configured-concepts.json + relationship-map.json
   → search-lexical         → search-v2-lexical-frequency v1
                            → search-v2-lexical-index v1
   → search-semantic (opt.) → relationships (semantic)
@@ -280,9 +278,9 @@ npm test
 
 A repository checkout requires `npm run build` before executing the runtime, Jest tests, or `examples/catalog`. Python is outside `tsc`. Typecheck configs are not in the npm tarball; consumers use the shipped `dist` declarations for `.` and `./browser`.
 
-`SearchEngine.create({ plugins })` accepts `SearchPlugin[]`. `compileAuthoredRelevance()` produces the configured-identity plugin (`name: "dictionary"`) plus compiled equivalent-recall plugin (`name: "synonyms"`). `morphology()` returns `EnglishPlugin`. Custom retrievers type as `ExperimentalRetriever`. Runtime still duck-types plugin objects and custom `retrieve` functions.
+`SearchEngine.create({ plugins })` accepts `SearchPlugin[]`. `compileAuthoredRelevance()` returns the ordered `SearchPlugin[]` needed for configured identity and authored relevance. `morphology()` returns `EnglishPlugin`. Custom retrievers type as `ExperimentalRetriever`. Runtime still duck-types plugin objects and custom `retrieve` functions.
 
-Authoring interfaces (`SearchPlugin`, `EnglishPlugin`, `DictionaryPlugin`, `SynonymPlugin`, `LexiconPlugin`, `ExperimentalRetriever`) do not publish query-analysis or index internals. Custom retrievers remain experimental; `query` and `index` arguments are intentionally `unknown`. `morphology().lemma` typechecks. There is no public `english()` root export.
+Authoring interfaces (`SearchPlugin`, `EnglishPlugin`, `LexiconPlugin`, `ExperimentalRetriever`) do not publish query-analysis or index internals. Custom retrievers remain experimental; `query` and `index` arguments are intentionally `unknown`. `morphology().lemma` typechecks. There is no public `english()` root export.
 
 ```ts
 import { SearchEngine, type SearchPlugin, type ExperimentalRetriever } from "@software-land/search";
@@ -304,7 +302,7 @@ v0. The runtime facade, result shape, artifact `format`+`version`, `relationship
 
 Supported imports: `@software-land/search`, `@software-land/search/browser`, `@software-land/search/corpus`, `@software-land/search/lexical`, `@software-land/search/relationships`, `@software-land/search/semantic`. The last four are build-time compilers/helpers. Root and `./browser` do not import them.
 
-Root exports: `SearchEngine`, `morphology`, `compileAuthoredRelevance`, `compileRelationshipMap`, `migrateConfiguredEntry`, `mergeRelationships`, strategy/retriever constants, artifact parsers (`parseEquivalences`, `parseRelationships`), enrichment/tooling helpers (`normalizeSearchEquivalences`), abort helpers, public error classes. Equivalent recall is authored as directional `relationshipMap` `equivalent` edges. `searchWorkerUrl()` is exported only from `./browser`.
+Root exports: `SearchEngine`, `morphology`, `compileAuthoredRelevance`, `migrateConfiguredEntry`, `mergeRelationships`, strategy/retriever constants, `parseRelationships`, abort helpers, public error classes, and types including `ConfiguredConcept`, `RelationshipMap`, `RelationshipArtifact`, `LexicalIndexArtifact`, `SearchPlugin`, and `EnglishPlugin`. Equivalent recall is authored as directional `relationshipMap` `equivalent` edges. Configured-concept corpus artifacts (`ConfiguredConceptArtifact`, `parseConfiguredConcepts`) live on `@software-land/search/corpus`. `searchWorkerUrl()` is exported only from `./browser`.
 
 ## Docs
 

@@ -4,7 +4,7 @@ The search runtime splits **query understanding**, **candidate retrieval**, **ra
 
 ```text
 query
-  → analysis (tokens, lemmas, configured equivalences, typo alternatives)
+  → analysis (tokens, lemmas, configured concepts, typo alternatives)
   → retriever (indexed default; full-scan | adaptive explicit)
   → relationship expansion
   → named features + constraints

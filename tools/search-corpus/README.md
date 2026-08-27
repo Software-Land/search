@@ -8,12 +8,12 @@ corpus JSON
   → generated candidates + stable IDs
   → durable review-decisions.json   ← source-controlled; never overwritten
   → compile
-  → equivalences.json + relationship-map.json (trusted equivalent edges only)
+  → configured-concepts.json + relationship-map.json (trusted equivalent edges only)
 ```
 
 Generated evidence is disposable. Reviewed decisions are durable. Runtime receives only trusted compiled truth.
 
-This is **not** `search-semantic`. Equivalence (configured identity) ≠ equivalent recall (`relationshipMap` `equivalent`) ≠ relatedness.
+This is **not** `search-semantic`. Configured identity (`configuredConcepts`) ≠ equivalent recall (`relationshipMap` `kind: "equivalent"`) ≠ relatedness.
 
 Search Core must never import this package.
 

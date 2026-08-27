@@ -6,15 +6,13 @@ Artifact format/version identifiers are independent of the npm package version. 
 
 | format | version | required | role |
 | --- | --- | --- | --- |
-| `search-v2-equivalences` | 1 | `entries[]` with `key` | query interpretation (configured-concept rows `{ key, aliases }`) |
+| `search-v2-configured-concepts` | 1 | `entries[]` with `key` | corpus/tooling configured identity (`ConfiguredConcept` rows `{ key, aliases }`) |
 | `search-v2-relationships` | 1 | `relationships` map of source id → edges | related expansion |
 | `search-v2-corpus-stats` | 1 | `stats` object | optional diagnostics |
 | `search-v2-lexical-frequency` | 1 | n-gram policy and per-document maps | build-time artifact attached to documents |
 | `search-v2-lexical-index` | 1 | compatibility/corpus/integrity headers plus opaque positional data | exact compiled retrieval |
 
-Equivalent recall is not a separate versioned artifact. Author directional `equivalent` edges on `relationshipMap` and compile them with `compileAuthoredRelevance()`. The corpus compiler writes generated equivalent edges as `relationship-map.json`, mergeable into an application-owned `relationshipMap`. There is no `search-v2-synonyms` format and no `parseSynonyms()`.
-
-`normalizeSearchEquivalences()` is an enrichment/tooling helper for merging directional one-hop rows; it is not a new artifact format and not a runtime authoring constructor.
+Equivalent recall is not a separate versioned artifact. Author directional `equivalent` edges on `relationshipMap` and compile them with `compileAuthoredRelevance()`. The corpus compiler writes generated equivalent edges as `relationship-map.json`, mergeable into an application-owned `relationshipMap`. There is no `search-v2-synonyms` format and no `parseSynonyms()`. The configured-concept artifact is corpus/tooling output (`@software-land/search/corpus`); applications normally pass `ConfiguredConcept[]` into `compileAuthoredRelevance({ configuredConcepts })`.
 
 Unknown fields on a version-1 artifact are ignored (additive). A new integer version is an incompatible schema/semantic change; this runtime will not guess.
 
@@ -32,4 +30,4 @@ After successful `index()`, `SearchEngine` retains only the compact runtime stat
 
 See [compact-runtime.md](compact-runtime.md) for the Stage-2C packed document view. No lexical-index version bump is required for that runtime change.
 
-Pass parsed equivalences into `compileAuthoredRelevance({ configuredConcepts })` (or corpus `configuredConceptsFromEquivalences`), generated or authored `relationshipMap` equivalent/related edges into `compileAuthoredRelevance({ relationshipMap })`, parsed relationship graphs into `SearchEngine.create({ documentRelationships })`, and parsed lexical indexes into `SearchEngine.create({ lexicalIndex })`. The `search-v2-relationships` artifact still stores its graph under the inner `relationships` map; that is the persisted artifact payload, not the SearchEngine option name.
+Pass parsed configured concepts into `compileAuthoredRelevance({ configuredConcepts })`, generated or authored `relationshipMap` equivalent/related edges into `compileAuthoredRelevance({ relationshipMap })`, parsed relationship graphs into `SearchEngine.create({ documentRelationships })`, and parsed lexical indexes into `SearchEngine.create({ lexicalIndex })`. The `search-v2-relationships` artifact still stores its graph under the inner `relationships` map; that is the persisted artifact payload, not the SearchEngine option name.

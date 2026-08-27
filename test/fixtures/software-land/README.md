@@ -142,8 +142,8 @@ node scripts/software-land-scenarios.mjs \
 ```
 
 Copy `synonym-map.json` from Software.Land live `LIVE_SEARCH_EQUIVALENCE_MAP` at the recorded
-`relevanceSoftwareLandCommit` (`db5a070`, the search-equivalence snapshot) after generic OSS
-`normalizeSearchEquivalences()`. Do not repoint that field at NIST patches, relationshipMap
+`relevanceSoftwareLandCommit` (`db5a070`, the search-equivalence snapshot) after the same
+directional one-hop normalization used at that snapshot. Do not repoint that field at NIST patches, relationshipMap
 edits, historical-contract commits, or HEAD.
 Patch AppSec dictionary aliases/`topicalRecall` and NIST exact institute aliases only through `relevance-config.json`;
 do not edit frozen `dictionary.json`. Do not reverse-materialize. Do not generate
