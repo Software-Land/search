@@ -109,6 +109,103 @@ describe("canonical alias compiler", () => {
       ["internet", "of", "things"],
     ]);
   });
+
+  test("migrateConfiguredEntry preserves type, provenance, and confidence", () => {
+    const migrated = migrateConfiguredEntry({
+      key: "api",
+      expansion: ["application", "programming", "interface"],
+      type: "acronym",
+      provenance: "manual",
+      confidence: 0.9,
+    });
+    expect(migrated.entry).toEqual({
+      key: "api",
+      aliases: [["application", "programming", "interface"]],
+      type: "acronym",
+      provenance: "manual",
+      confidence: 0.9,
+    });
+    expect(migrated.entry).not.toHaveProperty("primary");
+    expect(migrated.entry).not.toHaveProperty("expansion");
+    expect(migrated.entry).not.toHaveProperty("standaloneRecall");
+    expect(migrated.entry).not.toHaveProperty("topicalRecall");
+    expect(migrated.discardedPrimary).toBe(null);
+  });
+
+  test("migrateConfiguredEntry preserves explicit null provenance and confidence and omits absent type", () => {
+    const migrated = migrateConfiguredEntry({
+      key: "http",
+      expansion: ["hypertext", "transfer", "protocol"],
+      provenance: null,
+      confidence: null,
+    });
+    expect(migrated.entry).toEqual({
+      key: "http",
+      aliases: [["hypertext", "transfer", "protocol"]],
+      provenance: null,
+      confidence: null,
+    });
+    expect(migrated.entry).not.toHaveProperty("type");
+  });
+
+  test("migrateConfiguredEntry leaves omitted identity metadata omitted", () => {
+    const migrated = migrateConfiguredEntry({
+      key: "tls",
+      aliases: [["transport", "layer", "security"]],
+    });
+    expect(migrated.entry).toEqual({
+      key: "tls",
+      aliases: [["transport", "layer", "security"]],
+    });
+    expect(migrated.entry).not.toHaveProperty("type");
+    expect(migrated.entry).not.toHaveProperty("provenance");
+    expect(migrated.entry).not.toHaveProperty("confidence");
+  });
+
+  test("migrateConfiguredEntry discards primary and extracts recall into descriptors", () => {
+    const migrated = migrateConfiguredEntry({
+      key: "http",
+      expansion: ["hypertext", "transfer", "protocol"],
+      primary: "protocol",
+      type: "acronym",
+      provenance: "manual",
+      confidence: 1,
+      standaloneRecall: ["hypertext"],
+      topicalRecall: [["authentication"]],
+    });
+    expect(migrated.entry).toEqual({
+      key: "http",
+      aliases: [["hypertext", "transfer", "protocol"]],
+      type: "acronym",
+      provenance: "manual",
+      confidence: 1,
+    });
+    expect(migrated.entry).not.toHaveProperty("primary");
+    expect(migrated.entry).not.toHaveProperty("standaloneRecall");
+    expect(migrated.entry).not.toHaveProperty("topicalRecall");
+    expect(migrated.discardedPrimary).toBe("protocol");
+    expect(migrated.standaloneRelationships).toEqual([{ sourceToken: "hypertext", concept: "http" }]);
+    expect(migrated.topicalRelationships).toEqual([{ concept: "http", form: ["authentication"] }]);
+  });
+
+  test("migrated.entry compiles directly through compileAuthoredRelevance", () => {
+    const migrated = migrateConfiguredEntry({
+      key: "api",
+      expansion: ["application", "programming", "interface"],
+      type: "acronym",
+      provenance: "manual",
+      confidence: 0.9,
+    });
+    const authored = compileAuthoredRelevance({ configuredConcepts: [migrated.entry] });
+    expect(authored.plugins.length).toBeGreaterThan(0);
+    const plugin = pluginByName(authored, "dictionary");
+    const compiled = plugin.byKey.get("api");
+    expect(compiled.key).toBe("api");
+    expect(compiled.expansion).toEqual(["application", "programming", "interface"]);
+    expect(compiled.type).toBe("acronym");
+    expect(compiled.provenance).toBe("manual");
+    expect(compiled.confidence).toBe(0.9);
+  });
 });
 
 describe("relationshipMap compile", () => {

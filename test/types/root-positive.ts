@@ -70,6 +70,18 @@ const migrated: MigratedConfiguredEntry = migrateConfiguredEntry({
 });
 void migrated.entry.aliases;
 void migrated.discardedPrimary;
+const migratedWithMeta: MigratedConfiguredEntry = migrateConfiguredEntry({
+  key: "api",
+  expansion: ["application", "programming", "interface"],
+  type: "acronym",
+  provenance: "manual",
+  confidence: 0.9,
+});
+const migratedConcept: ConfiguredConcept = migratedWithMeta.entry;
+void migratedConcept.type;
+void migratedConcept.provenance;
+void migratedConcept.confidence;
+void compileAuthoredRelevance({ configuredConcepts: [migratedWithMeta.entry] });
 const relationshipMap: RelationshipMap = {
   qa: [{ to: { form: "testing" }, kind: "equivalent" }],
 };

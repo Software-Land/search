@@ -60,7 +60,7 @@ Type contracts `SearchPlugin`, `EnglishPlugin`, and `LexiconPlugin` describe the
 
 ## Configured concepts and relationshipMap
 
-Configured concepts are authored as `{ key, aliases }` plus optional identity metadata (`type`, `provenance`, `confidence`). `aliases[0]` is the canonical lexical sequence (compiled internally as the existing expansion sequence). Later aliases are alternate same-intent forms. Former fields `expansion` / `exp`, `primary`, `standaloneRecall`, and `topicalRecall` are rejected on `configuredConcepts` rows. Those metadata fields are not ranking weights; `migrateConfiguredEntry()` emits `{ key, aliases }` only.
+Configured concepts are authored as `{ key, aliases }` plus optional identity metadata (`type`, `provenance`, `confidence`). `aliases[0]` is the canonical lexical sequence (compiled internally as the existing expansion sequence). Later aliases are alternate same-intent forms. Former fields `expansion` / `exp`, `primary`, `standaloneRecall`, and `topicalRecall` are rejected on `configuredConcepts` rows. Those metadata fields are not ranking weights. `migrateConfiguredEntry()` emits a `ConfiguredConcept` (`{ key, aliases, type?, provenance?, confidence? }`); `primary` is discarded, and standalone/topical recall are extracted into relationship descriptors.
 
 Once a query unambiguously occupies one configured concept, every authored spelling of that concept is the same search intent:
 
@@ -112,6 +112,6 @@ Complete authored relevance — equivalent recall, related standalone/topical fo
 
 Directional equivalent recall is authored as `relationshipMap` `equivalent` edges and compiled by `compileAuthoredRelevance()`. Trusted corpus-mined groups compile to a bidirectional equivalent clique on `relationshipMap`.
 
-`migrateConfiguredEntry(old)` is a one-shot conversion from `{ key, exp|expansion, aliases, primary, standaloneRecall, topicalRecall }`. Runtime `compileAuthoredRelevance()` / `SearchEngine` do not call it. `primary` is discarded and is not mapped to any relationship.
+`migrateConfiguredEntry(old)` is a one-shot conversion from `{ key, exp|expansion, aliases, primary, type, provenance, confidence, standaloneRecall, topicalRecall }` into a `ConfiguredConcept` (`{ key, aliases, type?, provenance?, confidence? }`) plus extracted standalone/topical relationship descriptors. Runtime `compileAuthoredRelevance()` / `SearchEngine` do not call it. Identity metadata is preserved when supplied. `primary` is discarded and is not mapped to any relationship.
 
 Explain output may still name compiled `standaloneRecall` / `topicalRecall` provenance. Equivalent recall is named `equivalent-recall` / `equivalentRecall`. Those are runtime/explain names, not authoring fields.

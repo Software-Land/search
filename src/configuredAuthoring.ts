@@ -21,6 +21,9 @@ const REMOVED_AUTHORED_FIELDS = [
 export interface AuthoredConceptEntry {
   key: string;
   aliases: string[][];
+  type?: string;
+  provenance?: string | null;
+  confidence?: number | null;
 }
 
 export interface LegacyConfiguredEntry {
@@ -93,9 +96,10 @@ function dedupeSequences(sequences: string[][]): string[][] {
 }
 
 /**
- * One-shot helper for 0.4 / early-0.5 `{ key, exp|expansion, aliases, primary, standaloneRecall, topicalRecall }`.
+ * One-shot helper for 0.4 / early-0.5 `{ key, exp|expansion, aliases, primary, type, provenance, confidence, standaloneRecall, topicalRecall }`.
  * Runtime search does not call this. aliases[0] is the former canonical expansion,
  * preserving existing alias order. Exact duplicate sequences are dropped, not reordered.
+ * Identity metadata `type` / `provenance` / `confidence` is preserved when supplied.
  * `primary` is discarded and is not mapped to any relationship.
  */
 export function migrateConfiguredEntry(raw: unknown): MigratedConfiguredEntry {
@@ -141,8 +145,16 @@ export function migrateConfiguredEntry(raw: unknown): MigratedConfiguredEntry {
       topicalRelationships.push({ concept: key, form });
     }
   }
+  const entry: AuthoredConceptEntry = { key, aliases };
+  if (rec.type != null) entry.type = String(rec.type);
+  if ("provenance" in rec) {
+    entry.provenance = rec.provenance == null ? null : String(rec.provenance);
+  }
+  if ("confidence" in rec) {
+    entry.confidence = rec.confidence == null ? null : Number(rec.confidence);
+  }
   return {
-    entry: { key, aliases },
+    entry,
     discardedPrimary,
     standaloneRelationships,
     topicalRelationships,
