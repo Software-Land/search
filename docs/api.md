@@ -114,7 +114,7 @@ Complete authored relevance — equivalent recall, related standalone/topical fo
 
 `normalizeSearchEquivalences(map)` is an enrichment/tooling helper. It validates directional one-hop rows (empty source/targets, source==target, unsafe symbols, max 8 targets/source). Applications merge curated and generated rows before compiling them into `relationshipMap`; Core does not rank those sources. It is not a runtime authoring constructor.
 
-The compiled `search-v2-synonyms` `{ terms: [...] }` artifact is a **legacy / corpus-miner** bidirectional format. `parseSynonyms()` reads that versioned envelope. It is not the 0.5 application-authoring API. Directional equivalent recall is authored as `relationshipMap` `equivalent` edges and compiled by `compileAuthoredRelevance()`. Do not pass a directional object map to `parseSynonyms()`.
+Directional equivalent recall is authored as `relationshipMap` `equivalent` edges and compiled by `compileAuthoredRelevance()`. There is no `parseSynonyms()` and no `search-v2-synonyms` artifact. Trusted corpus-mined groups compile to a bidirectional equivalent clique on `relationshipMap`.
 
 `migrateConfiguredEntry(old)` is a one-shot conversion from `{ key, exp|expansion, aliases, primary, standaloneRecall, topicalRecall }`. Runtime `compileAuthoredRelevance()` / `SearchEngine` do not call it. `primary` is discarded and is not mapped to any relationship.
 

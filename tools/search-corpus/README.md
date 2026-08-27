@@ -8,12 +8,12 @@ corpus JSON
   → generated candidates + stable IDs
   → durable review-decisions.json   ← source-controlled; never overwritten
   → compile
-  → equivalences.json + synonyms.json (trusted only)
+  → equivalences.json + relationship-map.json (trusted equivalent edges only)
 ```
 
 Generated evidence is disposable. Reviewed decisions are durable. Runtime receives only trusted compiled truth.
 
-This is **not** `search-semantic`. Equivalence ≠ synonym ≠ relatedness.
+This is **not** `search-semantic`. Equivalence (configured identity) ≠ equivalent recall (`relationshipMap` `equivalent`) ≠ relatedness.
 
 Search Core must never import this package.
 
@@ -115,7 +115,7 @@ Automatic acceptance requires explicit definition + exact initials + repeated/ti
 
 ## Synonyms
 
-Candidates only (`alias` / `synonym` / `surface-variant`). Nothing auto-compiles. Inflections Core already handles are not proposed. Relatedness (TLS/VPN, authentication/authorization) is blocked.
+Review candidates only (`alias` / `synonym` / `surface-variant`). Nothing auto-compiles. Inflections Core already handles are not proposed. Relatedness (TLS/VPN, authentication/authorization) is blocked. Accepted groups compile to a bidirectional `relationshipMap` equivalent clique (`a→b`, `b→a`, and every other ordered pair). Review still stores group-oriented `decisions.synonyms`; runtime consumes `relationship-map.json`, not a synonym artifact.
 
 ## Future extensions
 

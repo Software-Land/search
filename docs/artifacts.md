@@ -7,13 +7,12 @@ Artifact format/version identifiers are independent of the npm package version. 
 | format | version | required | role |
 | --- | --- | --- | --- |
 | `search-v2-equivalences` | 1 | `entries[]` with `key` | query interpretation (configured-concept rows `{ key, aliases }`) |
-| `search-v2-synonyms` | 1 | `entries[]` with `terms` (length ≥ 2) | **legacy compatibility / corpus-miner output** — bidirectional `{ terms }` groups |
 | `search-v2-relationships` | 1 | `relationships` map of source id → edges | related expansion |
 | `search-v2-corpus-stats` | 1 | `stats` object | optional diagnostics |
 | `search-v2-lexical-frequency` | 1 | n-gram policy and per-document maps | build-time artifact attached to documents |
 | `search-v2-lexical-index` | 1 | compatibility/corpus/integrity headers plus opaque positional data | exact compiled retrieval |
 
-`search-v2-synonyms` is a versioned persisted format, not a current application-authoring primitive. Ordinary 0.5 applications author directional `equivalent` edges on `relationshipMap` and compile them with `compileAuthoredRelevance()`. The corpus compiler may still emit `synonyms.json` as miner/review output. `parseSynonyms()` reads existing and newly mined `search-v2-synonyms` envelopes. Compiled `{ terms }` groups stay symmetric; they are not silently reinterpreted as directional. Do not pass a directional object map to `parseSynonyms()`.
+Equivalent recall is not a separate versioned artifact. Author directional `equivalent` edges on `relationshipMap` and compile them with `compileAuthoredRelevance()`. The corpus compiler writes generated equivalent edges as `relationship-map.json`, mergeable into an application-owned `relationshipMap`. There is no `search-v2-synonyms` format and no `parseSynonyms()`.
 
 `normalizeSearchEquivalences()` is an enrichment/tooling helper for merging directional one-hop rows; it is not a new artifact format and not a runtime authoring constructor.
 
@@ -33,4 +32,4 @@ After successful `index()`, `SearchEngine` retains only the compact runtime stat
 
 See [compact-runtime.md](compact-runtime.md) for the Stage-2C packed document view. No lexical-index version bump is required for that runtime change.
 
-Pass parsed equivalences into `compileAuthoredRelevance({ configuredConcepts })` (or corpus `configuredConceptsFromEquivalences`), parsed relationship graphs into `SearchEngine.create({ documentRelationships })`, and parsed lexical indexes into `SearchEngine.create({ lexicalIndex })`. `parseSynonyms()` is the compatibility reader for `search-v2-synonyms`; it is not the path that installs 0.5 equivalent recall. The `search-v2-relationships` artifact still stores its graph under the inner `relationships` map; that is the persisted artifact payload, not the SearchEngine option name.
+Pass parsed equivalences into `compileAuthoredRelevance({ configuredConcepts })` (or corpus `configuredConceptsFromEquivalences`), generated or authored `relationshipMap` equivalent/related edges into `compileAuthoredRelevance({ relationshipMap })`, parsed relationship graphs into `SearchEngine.create({ documentRelationships })`, and parsed lexical indexes into `SearchEngine.create({ lexicalIndex })`. The `search-v2-relationships` artifact still stores its graph under the inner `relationships` map; that is the persisted artifact payload, not the SearchEngine option name.

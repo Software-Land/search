@@ -11,7 +11,7 @@ Lexical / domain compiler + durable review workflow.
 ```text
 corpus JSON → analyze → inspection + pending queue
                          durable decisions.json  (source-controlled)
-                         compile → equivalences.json + synonyms.json
+                         compile → equivalences.json + relationship-map.json
 ```
 
 Generated candidates are **not** runtime truth. Only trusted decisions (`AUTO_ACCEPTED` / human accept / explicit manual) enter artifacts, per current compiler semantics. Directional one-hop recall is authored as `equivalent` edges on `relationshipMap` and compiled with `compileAuthoredRelevance()`. `normalizeSearchEquivalences()` is an enrichment/tooling helper for merging curated and generated rows before that compile; it is not a runtime authoring constructor.

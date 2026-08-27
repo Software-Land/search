@@ -163,7 +163,7 @@ node tools/search-corpus/build.mjs compile --input corpus.json --output dir --de
 ```js
 import { compileCorpus, normalizeExternalEquivalences } from "@software-land/search/corpus";
 
-const { equivalences, synonyms, configuredConcepts } = compileCorpus({
+const { equivalences, relationshipMap, configuredConcepts } = compileCorpus({
   documents: [{ id: "a", title: "Central Processing Unit (CPU)", body: "The CPU fetches instructions." }],
 });
 
@@ -256,7 +256,7 @@ Default embedding model (when requested): `sentence-transformers/all-MiniLM-L6-v
 
 ```text
 corpus JSON
-  → search-corpus          → equivalences.json + synonyms.json
+  → search-corpus          → equivalences.json + relationship-map.json
   → search-lexical         → search-v2-lexical-frequency v1
                            → search-v2-lexical-index v1
   → search-semantic (opt.) → relationships (semantic)
@@ -304,7 +304,7 @@ v0. The runtime facade, result shape, artifact `format`+`version`, `relationship
 
 Supported imports: `@software-land/search`, `@software-land/search/browser`, `@software-land/search/corpus`, `@software-land/search/lexical`, `@software-land/search/relationships`, `@software-land/search/semantic`. The last four are build-time compilers/helpers. Root and `./browser` do not import them.
 
-Root exports: `SearchEngine`, `morphology`, `compileAuthoredRelevance`, `compileRelationshipMap`, `migrateConfiguredEntry`, `mergeRelationships`, strategy/retriever constants, artifact parsers (`parseEquivalences`, `parseSynonyms`, `parseRelationships`), enrichment/tooling helpers (`normalizeSearchEquivalences`), abort helpers, public error classes. `parseSynonyms()` reads the versioned `search-v2-synonyms` artifact; it is not an application-authoring constructor. `searchWorkerUrl()` is exported only from `./browser`.
+Root exports: `SearchEngine`, `morphology`, `compileAuthoredRelevance`, `compileRelationshipMap`, `migrateConfiguredEntry`, `mergeRelationships`, strategy/retriever constants, artifact parsers (`parseEquivalences`, `parseRelationships`), enrichment/tooling helpers (`normalizeSearchEquivalences`), abort helpers, public error classes. Equivalent recall is authored as directional `relationshipMap` `equivalent` edges. `searchWorkerUrl()` is exported only from `./browser`.
 
 ## Docs
 
