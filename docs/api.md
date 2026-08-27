@@ -110,7 +110,7 @@ SearchEngine.create({
 
 Complete authored relevance — equivalent recall, related standalone/topical forms, and editorial document edges — is `compileAuthoredRelevance({ configuredConcepts, relationshipMap, documents })`. Pass `...authored.plugins` and `authored.documentRelationships` to `SearchEngine.create`. Browser `SearchClient.init({ configuredConcepts, relationshipMap, documentRelationships })` uses that same full authored-relevance meaning. Generated MiniLM relationships stay in the separate semantic artifact; merge them with authored editorial edges via `mergeRelationships(semantic, authored.documentRelationships)`.
 
-Directional equivalent recall is authored as `relationshipMap` `equivalent` edges and compiled by `compileAuthoredRelevance()`. There is no `parseSynonyms()` and no `search-v2-synonyms` artifact. Trusted corpus-mined groups compile to a bidirectional equivalent clique on `relationshipMap`.
+Directional equivalent recall is authored as `relationshipMap` `equivalent` edges and compiled by `compileAuthoredRelevance()`. Trusted corpus-mined groups compile to a bidirectional equivalent clique on `relationshipMap`.
 
 `migrateConfiguredEntry(old)` is a one-shot conversion from `{ key, exp|expansion, aliases, primary, standaloneRecall, topicalRecall }`. Runtime `compileAuthoredRelevance()` / `SearchEngine` do not call it. `primary` is discarded and is not mapped to any relationship.
 
