@@ -11,8 +11,9 @@ production-derived ranking in this OSS repo without importing Gatsby, UI, V1,
 or the Software.Land E2E runner.
 
 Lemmas and dictionary/equivalence entries here are **fixture arguments only**.
-They must be passed into `morphology({ lemmas })` and `dictionary({ entries })`.
-There is no public root `english()` helper; Worker initialization passes the same
+They must be passed into `morphology({ lemmas })` and
+`compileAuthoredRelevance({ configuredConcepts })`.
+There is no public root `english()` or `dictionary()` helper; Worker initialization passes the same
 lemma map through `englishOptions`.
 They must never become Core defaults.
 
@@ -76,7 +77,7 @@ and `tests/search-v2-contracts.js` from the committed scenario SHA.
 ## Files
 
 - `documents.json` — `id`, `title`, normalized search `body` (live V2 indexed shape)
-- `dictionary.json` — merged Software.Land acronym map + compiled equivalences as `dictionary({ entries })` authored `{ key, aliases }` (`aliases[0]` canonical). The `dff24cf` snapshot is retained, then missing later `acronymMap.js` keys are merged from `dictionaryAcronymMapSoftwareLandCommit` (`df852eb4136dc5fb5b23cbf0bc22d45170e71423`). `testing` remains for the exact-output oracle and is omitted only by `relevance-config.json`.
+- `dictionary.json` — merged Software.Land acronym map + compiled equivalences as `configuredConcepts` authored `{ key, aliases }` (`aliases[0]` canonical). The `dff24cf` snapshot is retained, then missing later `acronymMap.js` keys are merged from `dictionaryAcronymMapSoftwareLandCommit` (`df852eb4136dc5fb5b23cbf0bc22d45170e71423`). `testing` remains for the exact-output oracle and is omitted only by `relevance-config.json`.
 - `lemmas.json` — site lemma table as `morphology({ lemmas })`
 - `relationships.json` — runtime relationship graph, including TLS ↔ VPN editorial edges (generated + domain editorial; not relationshipMap)
 - `lexical-frequency.json` — production lexical-frequency artifact

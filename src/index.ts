@@ -8,7 +8,7 @@
 
 import { SearchEngine as searchEngineImpl } from "./SearchEngine.js";
 import { morphology as morphologyImpl } from "./morphology.js";
-import { dictionary as dictionaryImpl, compileAuthoredRelevance as compileAuthoredRelevanceImpl } from "./dictionary.js";
+import { compileAuthoredRelevance as compileAuthoredRelevanceImpl } from "./dictionary.js";
 import { migrateConfiguredEntry as migrateConfiguredEntryImpl } from "./configuredAuthoring.js";
 import { compileRelationshipMap as compileRelationshipMapImpl, mergeRelationships as mergeRelationshipsImpl } from "./relationshipMap.js";
 import {
@@ -65,7 +65,6 @@ import type {
   SynonymArtifact,
   EnglishPlugin,
   MorphologyOptions,
-  DictionaryPlugin,
   NormalizedSearchEquivalences,
 } from "./api.js";
 
@@ -119,7 +118,6 @@ export type SearchEngine = SearchEngineType;
 export const SearchEngine: SearchEngineConstructor = searchEngineImpl as unknown as SearchEngineConstructor;
 
 export const morphology: (options?: MorphologyOptions) => EnglishPlugin = morphologyImpl;
-export const dictionary: (options?: { entries?: EquivalenceEntry[] }) => DictionaryPlugin = dictionaryImpl;
 export const migrateConfiguredEntry: (raw?: unknown) => MigratedConfiguredEntry = migrateConfiguredEntryImpl as (
   raw?: unknown
 ) => MigratedConfiguredEntry;
@@ -196,7 +194,6 @@ export const IndexStateError: IndexStateErrorConstructor =
 export const PUBLIC_EXPORTS: readonly string[] = Object.freeze([
   "SearchEngine",
   "morphology",
-  "dictionary",
   "migrateConfiguredEntry",
   "compileRelationshipMap",
   "compileAuthoredRelevance",

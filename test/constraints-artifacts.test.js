@@ -1,11 +1,11 @@
 import {
   SearchEngine,
   morphology,
-  dictionary,
   parseRelationships,
   parseEquivalences,
   parseSynonyms,
 } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { synonyms } from "../dist/synonyms.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { compareConstraint, detectConstraintCycles, DEFAULT_CONSTRAINTS } from "../dist/constraints.js";

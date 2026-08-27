@@ -2,7 +2,8 @@
  * Exact configured-key precedence, one-token alias exact-only occupancy,
  * short-key vs prefix-guessing, and same-concept result equivalence.
  */
-import { SearchEngine, morphology, dictionary } from "../dist/index.js";
+import { SearchEngine, morphology } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { resolveConfiguredSequence } from "../dist/configuredSequence.js";
 

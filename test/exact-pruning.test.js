@@ -2,9 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import {
-  SearchEngine,
-} from "../dist/index.js";
+import { SearchEngine, morphology } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { extractFeatures } from "../dist/features.js";
 import {
   compileLexicalIndex,
@@ -24,7 +23,6 @@ import {
   createSearchClient,
   createWorkerRuntime,
 } from "../dist/browser/index.js";
-import { dictionary, morphology } from "../dist/index.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 
 const schema = {

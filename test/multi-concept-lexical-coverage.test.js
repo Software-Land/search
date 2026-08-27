@@ -11,7 +11,8 @@ import { FULL_QUERY_COVERAGE } from "../dist/evidencePolicy.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { extractFeatures } from "../dist/features.js";
 import { buildIndex } from "../dist/indexDocuments.js";
-import { morphology, dictionary } from "../dist/index.js";
+import { morphology } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 
 function hit(id, over = {}) {
   return {

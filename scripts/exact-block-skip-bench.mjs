@@ -9,7 +9,8 @@
  * comparable across machines; compare counters from this process.
  */
 import { parseArgs } from "node:util";
-import { SearchEngine, morphology, dictionary } from "../dist/index.js";
+import { SearchEngine, morphology } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { compileLexicalIndex } from "../dist/lexicalIndex.js";
 import { EXACT_PRUNING_V2_EXTENSION } from "../dist/lexicalIndex.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";

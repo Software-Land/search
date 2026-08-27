@@ -1,4 +1,5 @@
-import { morphology, SearchEngine, dictionary, isAbortError } from "../dist/index.js";
+import { morphology, SearchEngine, isAbortError } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { retrieveCandidates } from "../dist/retrieve.js";
 import { rankCandidates } from "../dist/rank.js";

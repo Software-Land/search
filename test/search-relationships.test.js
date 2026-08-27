@@ -11,7 +11,8 @@ import {
 import { normalizePath } from "../tools/search-relationships/lib/ids.js";
 import { RelationshipError as ImplementationRelationshipError } from "../tools/search-relationships/lib/domain.js";
 import { filterRelationships as filterRelationshipsImpl } from "../tools/search-relationships/lib/compile.js";
-import { morphology, SearchEngine, dictionary } from "../dist/index.js";
+import { morphology, SearchEngine } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { analyzeQuery } from "../dist/analyze.js";
 
 import { fileURLToPath } from "node:url";

@@ -30,7 +30,11 @@ npm install @software-land/search
 ```
 
 ```js
-import { SearchEngine, morphology, dictionary } from "@software-land/search";
+import { SearchEngine, morphology, compileAuthoredRelevance } from "@software-land/search";
+
+const authored = compileAuthoredRelevance({
+  configuredConcepts: [{ key: "wifi", aliases: [["wi", "fi"]] }],
+});
 
 const engine = SearchEngine.create({
   schema: {
@@ -39,9 +43,7 @@ const engine = SearchEngine.create({
   },
   plugins: [
     morphology(),
-    dictionary({
-      entries: [{ key: "wifi", aliases: [["wi", "fi"]] }],
-    }),
+    ...authored.plugins,
   ],
 });
 
@@ -109,7 +111,7 @@ Search data is four distinct layers:
 | `relationshipMap` | authored form/concept/document relevance |
 | `documentRelationships` | compiled document-to-document graph |
 
-`dictionary({ entries })` remains the identity-only plugin factory; `entries` there is that plugin's `{ key, aliases }` list, not the corpus lexicon.
+`configuredConcepts` is the authored identity list `{ key, aliases }`. It is not the corpus lexicon; term postings live in `lexicalIndex`.
 
 `authored.plugins` is the compiler-owned plugin list: configured identity (including related standalone/topical recall) then compiled equivalent one-hop recall. Ordinary applications do not assemble those pieces by name. `equivalent` edges do not auto-reverse: `qa → testing` does not imply `testing → qa`. Phrase sources match as exact contiguous normalized phrases.
 
@@ -278,7 +280,7 @@ npm test
 
 A repository checkout requires `npm run build` before executing the runtime, Jest tests, or `examples/catalog`. Python is outside `tsc`. Typecheck configs are not in the npm tarball; consumers use the shipped `dist` declarations for `.` and `./browser`.
 
-`SearchEngine.create({ plugins })` accepts `SearchPlugin[]`. `dictionary()` returns `DictionaryPlugin`. `morphology()` returns `EnglishPlugin`. Custom retrievers type as `ExperimentalRetriever`. Runtime still duck-types plugin objects and custom `retrieve` functions.
+`SearchEngine.create({ plugins })` accepts `SearchPlugin[]`. `compileAuthoredRelevance()` produces the configured-identity plugin (`name: "dictionary"`) plus compiled equivalent-recall plugin (`name: "synonyms"`). `morphology()` returns `EnglishPlugin`. Custom retrievers type as `ExperimentalRetriever`. Runtime still duck-types plugin objects and custom `retrieve` functions.
 
 Authoring interfaces (`SearchPlugin`, `EnglishPlugin`, `DictionaryPlugin`, `SynonymPlugin`, `LexiconPlugin`, `ExperimentalRetriever`) do not publish query-analysis or index internals. Custom retrievers remain experimental; `query` and `index` arguments are intentionally `unknown`. `morphology().lemma` typechecks. There is no public `english()` root export.
 
@@ -302,7 +304,7 @@ v0. The runtime facade, result shape, artifact `format`+`version`, `relationship
 
 Supported imports: `@software-land/search`, `@software-land/search/browser`, `@software-land/search/corpus`, `@software-land/search/lexical`, `@software-land/search/relationships`, `@software-land/search/semantic`. The last four are build-time compilers/helpers. Root and `./browser` do not import them.
 
-Root exports: `SearchEngine`, `morphology`, `dictionary`, `compileAuthoredRelevance`, `compileRelationshipMap`, `migrateConfiguredEntry`, `mergeRelationships`, strategy/retriever constants, artifact parsers (`parseEquivalences`, `parseSynonyms`, `parseRelationships`), enrichment/tooling helpers (`normalizeSearchEquivalences`), abort helpers, public error classes. `searchWorkerUrl()` is exported only from `./browser`.
+Root exports: `SearchEngine`, `morphology`, `compileAuthoredRelevance`, `compileRelationshipMap`, `migrateConfiguredEntry`, `mergeRelationships`, strategy/retriever constants, artifact parsers (`parseEquivalences`, `parseSynonyms`, `parseRelationships`), enrichment/tooling helpers (`normalizeSearchEquivalences`), abort helpers, public error classes. `parseSynonyms()` reads the versioned `search-v2-synonyms` artifact; it is not an application-authoring constructor. `searchWorkerUrl()` is exported only from `./browser`.
 
 ## Docs
 

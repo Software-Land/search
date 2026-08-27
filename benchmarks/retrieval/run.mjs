@@ -14,7 +14,8 @@
 
 import { performance } from "node:perf_hooks";
 import { parseArgs } from "node:util";
-import { SearchEngine, morphology, dictionary } from "../../dist/index.js";
+import { SearchEngine, morphology } from "../../dist/index.js";
+import { dictionary } from "../../dist/dictionary.js";
 import { generateArticle, generateSettings } from "../memory/lib/generate.mjs";
 const SCHEMA = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 const SEED = 0x51e07e11;

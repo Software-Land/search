@@ -1,4 +1,5 @@
-import { morphology, SearchEngine, dictionary } from "../dist/index.js";
+import { morphology, SearchEngine } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { extractFeatures } from "../dist/features.js";
 import { matchContextualTitlePrefix } from "../dist/retrieve.js";

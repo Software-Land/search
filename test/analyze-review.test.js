@@ -1,5 +1,6 @@
 import { analyzeQuery } from "../dist/analyze.js";
-import { morphology, dictionary, SearchEngine } from "../dist/index.js";
+import { morphology, SearchEngine } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { synonyms } from "../dist/synonyms.js";
 import { extractFeatures } from "../dist/features.js";
 import { compoundSpellSegment, MAX_COMPOUND_REPAIR_TOKEN_LENGTH } from "../dist/analyzeRepair.js";

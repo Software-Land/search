@@ -8,11 +8,11 @@ import { fileURLToPath } from "node:url";
 import {
   SearchEngine,
   morphology,
-  dictionary,
   normalizeSearchEquivalences,
   MAX_SEARCH_EQUIVALENCE_TARGETS,
   InvalidConfigurationError,
 } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
 import { coverageConcepts, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts } from "../dist/retrieve.js";

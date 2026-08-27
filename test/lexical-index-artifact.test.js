@@ -4,9 +4,9 @@ import { fileURLToPath } from "node:url";
 
 import {
   SearchEngine,
-  dictionary,
   morphology,
 } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { extractFeatures } from "../dist/features.js";
 import {
   compileLexicalIndex,

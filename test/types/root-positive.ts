@@ -15,7 +15,6 @@ import {
   RETRIEVER_NAMES,
   SearchEngine,
   abortError,
-  dictionary,
   morphology,
   migrateConfiguredEntry,
   compileRelationshipMap,
@@ -71,7 +70,9 @@ const entries: EquivalenceEntry[] = [
 ];
 
 const morphologyPlugin: EnglishPlugin = morphology();
-const dictionaryPlugin: DictionaryPlugin = dictionary({ entries });
+const authoredIdentity: CompiledAuthoredRelevance = compileAuthoredRelevance({ configuredConcepts: entries });
+const dictionaryPlugin = authoredIdentity.plugins.find((plugin): plugin is DictionaryPlugin => plugin.name === "dictionary");
+if (!dictionaryPlugin) throw new Error("compileAuthoredRelevance must include the dictionary plugin");
 void dictionaryPlugin.standaloneRecallByToken;
 void dictionaryPlugin.topicalRecallByKey;
 const migrated: MigratedConfiguredEntry = migrateConfiguredEntry({

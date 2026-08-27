@@ -4,7 +4,8 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { SearchEngine, morphology, dictionary } from "../dist/index.js";
+import { SearchEngine, morphology } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { extractFeatures } from "../dist/features.js";
 import { extractFeaturesOracle } from "../build/test/oracles/featuresOracle.js";

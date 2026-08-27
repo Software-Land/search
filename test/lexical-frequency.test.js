@@ -1,5 +1,6 @@
 import { compileLexicalFrequency, attachLexicalFrequency, saturatingFrequency, resolveLexicalPolicy } from "../tools/search-lexical/index.js";
-import { morphology, SearchEngine, dictionary } from "../dist/index.js";
+import { morphology, SearchEngine } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { extractFeatures, saturatingFrequency as runtimeSaturatingFrequency } from "../dist/features.js";
 import { saturatingFrequency as sharedSaturatingFrequency } from "../dist/saturatingFrequency.js";

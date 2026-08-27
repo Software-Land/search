@@ -1,8 +1,8 @@
 import {
   SearchEngine,
   morphology,
-  dictionary,
 } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { extractFeatures, FEATURE_DEFINITIONS } from "../dist/features.js";
 import { compareConstraint, constraintCatalog } from "../dist/constraints.js";

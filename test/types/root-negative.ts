@@ -1,4 +1,4 @@
-import { SearchEngine, morphology, dictionary, compileRelationshipMap, compileAuthoredRelevance } from "@software-land/search";
+import { SearchEngine, morphology, compileRelationshipMap, compileAuthoredRelevance } from "@software-land/search";
 
 // @ts-expect-error FeatureVector is not a public export
 import type { FeatureVector } from "@software-land/search";
@@ -23,6 +23,9 @@ import type { MorphologyPlugin } from "@software-land/search";
 
 // @ts-expect-error english is not a public root export
 import { english } from "@software-land/search";
+
+// @ts-expect-error dictionary is not a public root export
+import { dictionary } from "@software-land/search";
 
 // @ts-expect-error synonyms is not a public root export
 import { synonyms } from "@software-land/search";
@@ -60,9 +63,6 @@ compiledPublic.standaloneRecallByKey;
 // @ts-expect-error topicalRecallByKey is not a public compileRelationshipMap field
 compiledPublic.topicalRecallByKey;
 
-// @ts-expect-error relationshipMap is not a public dictionary() option
-dictionary({ entries: [], relationshipMap: {} });
-
 // @ts-expect-error CompiledRelationshipInternals is not a public export
 import type { CompiledRelationshipInternals } from "@software-land/search";
 
@@ -71,6 +71,7 @@ void morphologyPlugin;
 void lang;
 void createEnglishPlugin;
 void english;
+void dictionary;
 void synonyms;
 void mergeEditorialRelationships;
 void compiledPublic;

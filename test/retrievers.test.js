@@ -1,8 +1,8 @@
 import {
   SearchEngine,
   morphology,
-  dictionary,
 } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { createIndexedLexicalRetriever } from "../dist/retrievers.js";
 import { retrieveCandidates } from "../dist/retrieve.js";
 import { analyzeQuery } from "../dist/analyze.js";

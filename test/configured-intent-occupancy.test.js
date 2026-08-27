@@ -3,7 +3,8 @@
  * keys, unique n≥2 expansion prefixes become whole-query intent, and
  * ambiguous first-expansion prefixes disambiguate by unique longest expansion.
  */
-import { SearchEngine, morphology, dictionary } from "../dist/index.js";
+import { SearchEngine, morphology } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import {
   resolveConfiguredPrefixSpans,

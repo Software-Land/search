@@ -5,7 +5,8 @@
  *   node --expose-gc scripts/phrase-profile.mjs --n 5000
  */
 import { parseArgs } from "node:util";
-import { SearchEngine, morphology, dictionary } from "../dist/index.js";
+import { SearchEngine, morphology } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { compileLexicalIndex } from "../dist/lexicalIndex.js";
 import { startFeatureProfile, lastFeatureProfile, stopFeatureProfile } from "../dist/features.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";

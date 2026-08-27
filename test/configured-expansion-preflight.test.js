@@ -5,7 +5,8 @@
  * `frames` must enter the result window through those generic rules, without
  * one-token fps expansion-prefix recall or contextual completion.
  */
-import { SearchEngine, morphology, dictionary } from "../dist/index.js";
+import { SearchEngine, morphology } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { extractFeatures } from "../dist/features.js";
 import { conceptMatchesTitle } from "../dist/retrieve.js";

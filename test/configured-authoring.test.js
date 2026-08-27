@@ -5,13 +5,13 @@
 import {
   SearchEngine,
   morphology,
-  dictionary,
   migrateConfiguredEntry,
   compileRelationshipMap,
   compileAuthoredRelevance,
   InvalidConfigurationError,
   parseEquivalences,
 } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { synonyms as synonymsPrimitive } from "../dist/synonyms.js";
 import { pluginByName } from "./helpers/authored.js";
 

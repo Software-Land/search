@@ -2,7 +2,8 @@
  * createWorkerRuntime factory compatibility.
  * Packed searchWorker.js uses compileAuthoredRelevance, not this legacy dictionary path.
  */
-import { SearchEngine, morphology, dictionary, compileAuthoredRelevance } from "../dist/index.js";
+import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { createSearchClient, createWorkerRuntime, createLoopbackTransport } from "../dist/browser/index.js";
 
 const schema = {

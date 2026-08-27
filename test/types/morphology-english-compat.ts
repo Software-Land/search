@@ -1,10 +1,10 @@
 /**
  * morphology() returns EnglishPlugin.
- * dictionary() returns DictionaryPlugin.
- * Root english() is removed.
+ * compileAuthoredRelevance() produces DictionaryPlugin as authored.plugins identity.
+ * Root english() is removed. Root dictionary() is removed.
  */
 import {
-  dictionary,
+  compileAuthoredRelevance,
   morphology,
   type DictionaryPlugin,
   type EnglishPlugin,
@@ -18,7 +18,6 @@ const options: MorphologyOptions = {};
 const withLemmas: MorphologyOptions = { lemmas: { widgets: "widget" } };
 
 const morphologyFn: (options?: MorphologyOptions) => EnglishPlugin = morphology;
-const dictionaryFn: (options?: { entries?: { key: string }[] }) => DictionaryPlugin = dictionary;
 
 const plugin: EnglishPlugin = morphology();
 void plugin.name;
@@ -31,12 +30,14 @@ void plugin.lemmaTableKeys;
 const withMap: EnglishPlugin = morphology({ lemmas: { widgets: "widget" } });
 void withMap.lemma("widgets");
 
-const dict: DictionaryPlugin = dictionary();
+const dict = compileAuthoredRelevance({ configuredConcepts: [{ key: "wifi" }] }).plugins.find(
+  (plugin): plugin is DictionaryPlugin => plugin.name === "dictionary"
+);
+if (!dict) throw new Error("compileAuthoredRelevance must include the dictionary plugin");
 void dict.name;
 void dict.lexicon;
 
 void options;
 void withLemmas;
 void morphologyFn;
-void dictionaryFn;
 void english;

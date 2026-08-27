@@ -3,8 +3,8 @@
  */
 import {
   SearchEngine,
-  dictionary,
   morphology,
+  compileAuthoredRelevance,
   type DictionaryPlugin,
   type EnglishPlugin,
   type ExperimentalRetrieveOptions,
@@ -21,10 +21,15 @@ const jsShaped = {
   extra: true,
 };
 SearchEngine.create({ plugins: [jsShaped] });
-SearchEngine.create({ plugins: [morphology(), dictionary()] });
+SearchEngine.create({
+  plugins: [morphology(), ...compileAuthoredRelevance({ configuredConcepts: [{ key: "wifi" }] }).plugins],
+});
 const fromMorphology: EnglishPlugin = morphology();
 void fromMorphology.lemma;
-const fromDictionary: DictionaryPlugin = dictionary({ entries: [{ key: "wifi" }] });
+const fromDictionary = compileAuthoredRelevance({ configuredConcepts: [{ key: "wifi" }] }).plugins.find(
+  (plugin): plugin is DictionaryPlugin => plugin.name === "dictionary"
+);
+if (!fromDictionary) throw new Error("compileAuthoredRelevance must include the dictionary plugin");
 void fromDictionary.lexicon;
 
 SearchEngine.create({

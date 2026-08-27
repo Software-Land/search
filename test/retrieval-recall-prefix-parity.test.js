@@ -5,10 +5,10 @@
 import {
   SearchEngine,
   morphology,
-  dictionary,
   compileAuthoredRelevance,
   DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD,
 } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { synonyms } from "../dist/synonyms.js";
 import { createIndexedLexicalRetriever } from "../dist/retrievers.js";
 import { retrievalFormKindAllowsPrefix } from "../dist/retrieve.js";

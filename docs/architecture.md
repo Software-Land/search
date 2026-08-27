@@ -13,10 +13,10 @@ Distribution: **one npm package** (`@software-land/search`) with subpath exports
 
 Application relevance authoring is two primitives plus a separate generated graph. See [concepts.md](concepts.md):
 
-- **Configured concepts** (`configuredConcepts`, also `dictionary({ entries: [{ key, aliases }] })`): which query forms mean the same configured concept. `aliases[0]` is canonical. This is not the corpus lexicon; term postings live in `lexicalIndex`.
+- **Configured concepts** (`configuredConcepts`): which query forms mean the same configured concept. `aliases[0]` is canonical. This is not the corpus lexicon; term postings live in `lexicalIndex`.
 - **Relationship map** (`relationshipMap`): which other forms, concepts, or documents are explicitly `equivalent` or `related`. Directional. No auto-reverse. No authored numeric weight.
-- **Document relationships** (`documentRelationships`): compiled document-to-document `RelationshipArtifact` consumed by `SearchEngine.create`. Distinct from `relationshipMap`.
-- **Semantic graph**: relationships the model inferred. Not authored in `relationshipMap`. Generated-edge rejection stays a separate follow-up.
+- **Document relationships** (`documentRelationships`): compiled document-to-document `RelationshipArtifact` consumed by `SearchEngine.create`. Distinct from `relationshipMap`. Authored editorial edges come from `compileAuthoredRelevance()`.
+- **Semantic graph**: generated document-to-document neighbors the model inferred. Not authored in `relationshipMap`. Merge onto `documentRelationships` with `mergeRelationships()`. Generated-edge rejection stays a separate follow-up.
 
 ## Environments
 
@@ -30,7 +30,7 @@ Architecture was validated against an Android Settings–style catalog. There is
 
 ## Public vs experimental
 
-Public: `SearchEngine` facade, result fields above, artifact v1 envelopes, strategy names, retriever names, `AbortError`. `SearchEngine.create({ plugins })` is `SearchPlugin[]`. `dictionary()` returns `DictionaryPlugin`. `morphology()` returns `EnglishPlugin`. Custom retrievers type as `ExperimentalRetriever`. Runtime still duck-types plugin objects and custom `retrieve` functions. These authoring contracts do not publish query-analysis or index internals; custom retriever `query` and `index` arguments stay `unknown`. There is no public `english()` root export.
+Public: `SearchEngine` facade, result fields above, artifact v1 envelopes, strategy names, retriever names, `AbortError`. `SearchEngine.create({ plugins })` is `SearchPlugin[]`. `compileAuthoredRelevance()` produces `DictionaryPlugin` and `SynonymPlugin` as implementation plugins inside `authored.plugins`. `morphology()` returns `EnglishPlugin`. Custom retrievers type as `ExperimentalRetriever`. Runtime still duck-types plugin objects and custom `retrieve` functions. These authoring contracts do not publish query-analysis or index internals; custom retriever `query` and `index` arguments stay `unknown`. There is no public `english()` or `dictionary()` root export.
 
 Experimental / internal: custom Retriever objects, `retrievalScore` ranking weight, analyzed query objects, feature extraction, constraints module, `meta`, `lastSearchMeta`, `sourcePolicy`, BM25 constants, and lexical-index payload/posting internals. The opaque `search-v2-lexical-index` v1 envelope and compiler are public; its internal tuples and ordinals are not.
 

@@ -2,7 +2,8 @@
  * Generic 1/3 vs 2/3 vs 3/3 configured-expansion evidence class.
  * Independent of Software.Land / FPS.
  */
-import { SearchEngine, morphology, dictionary } from "../dist/index.js";
+import { SearchEngine, morphology } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { analyzeQuery } from "../dist/analyze.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };

@@ -3,7 +3,7 @@
  * Run: npm run example
  * (requires npm run build so dist/ exists)
  */
-import { SearchEngine, morphology, dictionary } from "../../dist/index.js";
+import { SearchEngine, morphology, compileAuthoredRelevance } from "../../dist/index.js";
 
 const schema = {
   title: { type: "text", role: "title" },
@@ -18,16 +18,18 @@ const documents = [
   { id: "vpn", title: "VPN", body: "Virtual private network." },
 ];
 
+const authored = compileAuthoredRelevance({
+  configuredConcepts: [
+    { key: "wifi", aliases: [["wi", "fi"]] },
+    { key: "api", aliases: [["application", "programming", "interface"]] },
+  ],
+});
+
 const engine = SearchEngine.create({
   schema,
   plugins: [
     morphology(),
-    dictionary({
-      entries: [
-        { key: "wifi", aliases: [["wi", "fi"]] },
-        { key: "api", aliases: [["application", "programming", "interface"]]},
-      ],
-    }),
+    ...authored.plugins,
   ],
   retriever: "adaptive",
   adaptive: { documentThreshold: 1500 },

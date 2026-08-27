@@ -9,7 +9,8 @@
  * These tests stop at retrieve() / candidateCount. They do not send thousands of
  * candidates through pairwise ranking.
  */
-import { morphology, SearchEngine, dictionary } from "../dist/index.js";
+import { morphology, SearchEngine } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 import { retrieveCandidates } from "../dist/retrieve.js";

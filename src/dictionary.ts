@@ -1,8 +1,9 @@
 /**
- * Configured concept dictionary. Search logic consumes this generically;
- * host-specific acronyms/concepts are data, not engine code.
+ * Internal configured-concept plugin compiler.
+ * Public applications author `configuredConcepts` and call `compileAuthoredRelevance()`.
+ * `dictionary()` is not a root export.
  *
- * Public authoring shape:
+ * Authored shape:
  * { key: "tls", aliases: [["transport","layer","security"], ["transport","layer"]] }
  *
  * aliases[0] compiles internally as sequence kind "expansion".

@@ -221,7 +221,7 @@ function projectCompiledRelationshipMap(compiled: CompiledRelationshipInternals)
 }
 
 /**
- * Full compiler used by dictionary() / compileAuthoredRelevance().
+ * Full compiler used by compileAuthoredRelevance().
  * Not a public export.
  */
 export function compileRelationshipMapInternal(

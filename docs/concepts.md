@@ -20,14 +20,14 @@ Search data is four distinct layers:
 
 | Name | Meaning |
 | --- | --- |
-| Configured concepts (`configuredConcepts`) | authored identities `{ key, aliases }`. Also compiled by `dictionary({ entries })`. Not the corpus vocabulary. |
+| Configured concepts (`configuredConcepts`) | authored identities `{ key, aliases }`. Not the corpus vocabulary. |
 | Lexical index (`lexicalIndex`) | corpus lexical term/posting index |
 | Relationship map (`relationshipMap`) | authored form/concept/document relevance (`equivalent` / `related`) |
 | Document relationships (`documentRelationships`) | compiled document-to-document `RelationshipArtifact` |
 
 | | Lives where | Means |
 | --- | --- | --- |
-| Concept map (`dictionary({ entries: [{ key, aliases }] })`) | what query forms mean the **same thing** | `aliases[0]` is the canonical lexical sequence (compiled internally as expansion). Later aliases are alternate same-intent forms. Unambiguous key/alias spellings share ranked results. |
+| Concept map (`configuredConcepts`: `{ key, aliases }`) | what query forms mean the **same thing** | `aliases[0]` is the canonical lexical sequence (compiled internally as expansion). Later aliases are alternate same-intent forms. Unambiguous key/alias spellings share ranked results. Compile with `compileAuthoredRelevance()`. |
 | Relationship map (`relationshipMap`) | what other forms/concepts/documents are explicitly **related** | kinds `equivalent` (one-hop recall) and `related` (standalone / topical / editorial). Directional. No auto-reverse. No authored numeric weight. Compile with `compileAuthoredRelevance()`. |
 | Semantic graph (generated MiniLM artifact) | what relationships the **model inferred** | separate generated pipeline with embedding provenance. Not authored in `relationshipMap`. |
 

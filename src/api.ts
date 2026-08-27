@@ -78,7 +78,8 @@ export interface EnglishPlugin extends SearchPlugin {
 }
 
 /**
- * Configured-concept plugin shape. `dictionary()` returns `DictionaryPlugin`.
+ * Configured-concept plugin shape produced by `compileAuthoredRelevance()`.
+ * Plugin `name` is `"dictionary"` (runtime/explain identifier, not a public factory).
  * Core does not read a plugin `entries` array. Authored entries are `{ key, aliases }`
  * plus optional identity metadata (`type`, `provenance`, `confidence`).
  * `standaloneRecallByToken` / `topicalRecallByKey` are compiled from relationshipMap.
@@ -400,6 +401,7 @@ export interface EquivalenceArtifact {
 }
 
 export interface SynonymArtifact {
+  /** Legacy/versioned bidirectional corpus-miner artifact. Not 0.5 application authoring. */
   format: "search-v2-synonyms";
   version: 1;
   entries: Array<{ terms: string[]; type?: string; provenance?: string | null; confidence?: number | null }>;

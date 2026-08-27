@@ -1,8 +1,8 @@
 import * as publicApi from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import {
   SearchEngine,
   morphology,
-  dictionary,
   compileAuthoredRelevance,
   PUBLIC_EXPORTS,
   RETRIEVER_NAMES,
@@ -40,7 +40,12 @@ const graph = {
   },
 };
 
-const plugins = [morphology(), dictionary({ entries: [{ key: "wifi", aliases: [["wi", "fi"]]}] })];
+const plugins = [
+  morphology(),
+  ...compileAuthoredRelevance({
+    configuredConcepts: [{ key: "wifi", aliases: [["wi", "fi"]] }],
+  }).plugins,
+];
 
 async function make(opts = {}) {
   const e = SearchEngine.create({ schema, plugins, documentRelationships: graph, ...opts });
@@ -61,6 +66,11 @@ describe("public API", () => {
   test("root does not export a synonyms() authoring constructor", () => {
     expect(publicApi).not.toHaveProperty("synonyms");
     expect(PUBLIC_EXPORTS).not.toContain("synonyms");
+  });
+
+  test("root does not export a dictionary() factory", () => {
+    expect(publicApi).not.toHaveProperty("dictionary");
+    expect(PUBLIC_EXPORTS).not.toContain("dictionary");
   });
 
   test("root does not export mergeEditorialRelationships", () => {
@@ -100,7 +110,7 @@ describe("public API", () => {
     expect(ids(engine.search("qa", { limit: 5 }))).toEqual(expect.arrayContaining(["qa-guide", "load"]));
   });
 
-  test("dictionary() does not compile relationshipMap as a complete authoring path", () => {
+  test("internal dictionary() does not compile relationshipMap as a complete authoring path", () => {
     const plugin = dictionary({
       entries: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
       relationshipMap: { hypertext: [{ to: { concept: "http" }, kind: "related" }] },
@@ -121,6 +131,12 @@ describe("public API", () => {
     expect(artifact.format).toBe("search-v2-synonyms");
     expect(artifact.version).toBe(1);
     expect(artifact.entries[0].terms).toEqual(["auth", "authentication"]);
+  });
+
+  test("parseSynonyms is a legacy artifact parser, not an authoring constructor", () => {
+    expect(typeof parseSynonyms).toBe("function");
+    expect(PUBLIC_EXPORTS).toContain("parseSynonyms");
+    expect(publicApi).not.toHaveProperty("synonyms");
   });
 
   test("malformed create() options throw InvalidConfigurationError", () => {

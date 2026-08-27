@@ -9,7 +9,8 @@
  * ownership estimates, not exact V8 accounts. Not a CI gate.
  */
 import { parseArgs } from "node:util";
-import { SearchEngine, morphology, dictionary } from "../dist/index.js";
+import { SearchEngine, morphology } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { compileLexicalIndex, loadLexicalIndex } from "../dist/lexicalIndex.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";

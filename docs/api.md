@@ -54,13 +54,13 @@ Same documents, configuration, artifacts, and query produce the same ordering, e
 
 ## Plugins (opt-in types)
 
-`SearchEngine.create({ plugins })` accepts `SearchPlugin[]`. `morphology()` returns `EnglishPlugin`. `dictionary()` returns `DictionaryPlugin`. Custom retrievers type as `ExperimentalRetriever`. Permissive duck-typed plugin objects remain valid at runtime.
+`SearchEngine.create({ plugins })` accepts `SearchPlugin[]`. `morphology()` returns `EnglishPlugin`. `compileAuthoredRelevance()` produces the configured-identity plugin (`DictionaryPlugin`, `name: "dictionary"`) and compiled equivalent-recall plugin (`SynonymPlugin`, `name: "synonyms"`) on `authored.plugins`. There is no public `dictionary()` factory. Custom retrievers type as `ExperimentalRetriever`. Permissive duck-typed plugin objects remain valid at runtime.
 
 Type contracts `SearchPlugin`, `EnglishPlugin`, `DictionaryPlugin`, `SynonymPlugin`, and `LexiconPlugin` describe the duck-typed hooks Core actually reads (`lemma`, `canonicalLemma`, `lexicon`, `sequences` / `entry`, `byKey`, `expand`). They do not make analysis or ranking internals public, and they do not change runtime dispatch. `english()` is not a public root export. Custom plugins may implement `SearchPlugin.expand`; `SynonymPlugin` is that structural shape. Applications do not separately author a root `synonyms()` constructor.
 
 ## Configured concepts and relationshipMap
 
-Configured concepts are authored as `{ key, aliases }` plus optional identity metadata (`type`, `provenance`, `confidence`). `aliases[0]` is the canonical lexical sequence (compiled internally as the existing expansion sequence). Later aliases are alternate same-intent forms. Former fields `expansion` / `exp`, `primary`, `standaloneRecall`, and `topicalRecall` are rejected on `dictionary()` entries. Those metadata fields are not ranking weights; `migrateConfiguredEntry()` emits `{ key, aliases }` only.
+Configured concepts are authored as `{ key, aliases }` plus optional identity metadata (`type`, `provenance`, `confidence`). `aliases[0]` is the canonical lexical sequence (compiled internally as the existing expansion sequence). Later aliases are alternate same-intent forms. Former fields `expansion` / `exp`, `primary`, `standaloneRecall`, and `topicalRecall` are rejected on `configuredConcepts` rows. Those metadata fields are not ranking weights; `migrateConfiguredEntry()` emits `{ key, aliases }` only.
 
 Once a query unambiguously occupies one configured concept, every authored spelling of that concept is the same search intent:
 
@@ -108,14 +108,14 @@ SearchEngine.create({
 | `related` concept → `{ form }` | existing topical-recall |
 | `related` document → `{ document }` | existing editorial relationship artifact (`type: editorial`, provenance `manual`, strength 1) |
 
-`dictionary({ entries })` compiles configured-concept identity only. Complete authored relevance — equivalent recall, related standalone/topical forms, and editorial document edges — is `compileAuthoredRelevance({ configuredConcepts, relationshipMap, documents })`. Pass `...authored.plugins` and `authored.documentRelationships` to `SearchEngine.create`. Browser `SearchClient.init({ configuredConcepts, relationshipMap, documentRelationships })` uses that same full authored-relevance meaning. Generated MiniLM relationships stay in the separate semantic artifact; merge them with authored editorial edges via `mergeRelationships(semantic, authored.documentRelationships)`.
+Complete authored relevance — equivalent recall, related standalone/topical forms, and editorial document edges — is `compileAuthoredRelevance({ configuredConcepts, relationshipMap, documents })`. Pass `...authored.plugins` and `authored.documentRelationships` to `SearchEngine.create`. Browser `SearchClient.init({ configuredConcepts, relationshipMap, documentRelationships })` uses that same full authored-relevance meaning. Generated MiniLM relationships stay in the separate semantic artifact; merge them with authored editorial edges via `mergeRelationships(semantic, authored.documentRelationships)`.
 
-`compileRelationshipMap()` is a lower-level/partial compiler for tooling. It does not install dictionary related-recall or produce a ready plugin set. Prefer `compileAuthoredRelevance()` for application initialization.
+`compileRelationshipMap()` is a lower-level/partial compiler for tooling. It does not install related-recall onto configured identity or produce a ready plugin set. Prefer `compileAuthoredRelevance()` for application initialization.
 
 `normalizeSearchEquivalences(map)` is an enrichment/tooling helper. It validates directional one-hop rows (empty source/targets, source==target, unsafe symbols, max 8 targets/source). Applications merge curated and generated rows before compiling them into `relationshipMap`; Core does not rank those sources. It is not a runtime authoring constructor.
 
-The compiled `search-v2-synonyms` `{ terms: [...] }` artifact remains a bidirectional compatibility path via `parseSynonyms()`. Do not pass a directional object map to `parseSynonyms()`.
+The compiled `search-v2-synonyms` `{ terms: [...] }` artifact is a **legacy / corpus-miner** bidirectional format. `parseSynonyms()` reads that versioned envelope. It is not the 0.5 application-authoring API. Directional equivalent recall is authored as `relationshipMap` `equivalent` edges and compiled by `compileAuthoredRelevance()`. Do not pass a directional object map to `parseSynonyms()`.
 
-`migrateConfiguredEntry(old)` is a one-shot conversion from `{ key, exp|expansion, aliases, primary, standaloneRecall, topicalRecall }`. Runtime `dictionary()` / `SearchEngine` do not call it. `primary` is discarded and is not mapped to any relationship.
+`migrateConfiguredEntry(old)` is a one-shot conversion from `{ key, exp|expansion, aliases, primary, standaloneRecall, topicalRecall }`. Runtime `compileAuthoredRelevance()` / `SearchEngine` do not call it. `primary` is discarded and is not mapped to any relationship.
 
 Explain output may still name compiled `standaloneRecall` / `topicalRecall` provenance. Those are runtime/explain names, not authoring fields.

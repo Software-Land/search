@@ -9,7 +9,8 @@
  * across machines or days; compare modes from this process.
  */
 import { parseArgs } from "node:util";
-import { SearchEngine, morphology, dictionary } from "../dist/index.js";
+import { SearchEngine, morphology } from "../dist/index.js";
+import { dictionary } from "../dist/dictionary.js";
 import { compileLexicalIndex, parseLexicalIndex, loadLexicalIndex } from "../dist/lexicalIndex.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";
 

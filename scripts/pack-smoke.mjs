@@ -298,6 +298,9 @@ try {
   if (/\bmergeEditorialRelationships\b/.test(rootDts)) {
     throw new Error("packed root dts must not export mergeEditorialRelationships");
   }
+  if (/\bexport declare const dictionary\b/.test(rootDts)) {
+    throw new Error("packed root dts must not export dictionary()");
+  }
   if (browserApiDts.includes("ExperimentalRetriever")) {
     throw new Error("packed browser InitPayload must not accept ExperimentalRetriever");
   }
@@ -339,12 +342,19 @@ if (typeof compileLexicalFrequency !== "function") throw new Error("lexical comp
 
 import * as packedRoot from "@software-land/search";
 if ("synonyms" in packedRoot) throw new Error("root synonyms() must not remain a public export");
-if ("mergeEditorialRelationships" in packedRoot) throw new Error("root mergeEditorialRelationships must not remain a public export");
+if ("dictionary" in packedRoot) throw new Error("root dictionary() must not remain a public export");
 if (packedRoot.PUBLIC_EXPORTS.includes("synonyms")) throw new Error("PUBLIC_EXPORTS must not list synonyms");
+if (packedRoot.PUBLIC_EXPORTS.includes("dictionary")) throw new Error("PUBLIC_EXPORTS must not list dictionary");
 if (packedRoot.PUBLIC_EXPORTS.includes("mergeEditorialRelationships")) throw new Error("PUBLIC_EXPORTS must not list mergeEditorialRelationships");
 try {
   await import("@software-land/search/synonyms");
   throw new Error("synonyms must not be a package export subpath");
+} catch (err) {
+  if (String(err?.message || err).includes("must not be a package export subpath")) throw err;
+}
+try {
+  await import("@software-land/search/dictionary");
+  throw new Error("dictionary must not be a package export subpath");
 } catch (err) {
   if (String(err?.message || err).includes("must not be a package export subpath")) throw err;
 }
