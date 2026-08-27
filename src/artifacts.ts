@@ -117,7 +117,10 @@ export function parseEquivalences(obj?: unknown) {
 }
 
 /**
- * Synonym / near-equivalence artifact. Affects query interpretation.
+ * Legacy/versioned bidirectional synonym artifact (`search-v2-synonyms`).
+ * Parses corpus-miner output and previously generated artifacts.
+ * Not the 0.5 application-authoring API; directional equivalent recall is
+ * authored as `relationshipMap` `equivalent` edges.
  * Distinct from document relationships.
  * { format, version, entries: [{ terms, type, provenance, confidence }] }
  */

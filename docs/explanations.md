@@ -24,7 +24,7 @@ Not exposed: postings lists, BM25 internals, engine class instances.
 
 **Exact / direct:** query `Bluetooth` → `retrievalSources` includes `exact-title`, `directClass: "strong"`.
 
-**Configured equivalence:** query `tls` with a dictionary entry → `configured-equivalence`.
+**Configured equivalence:** query `tls` with a configured concept → `configured-equivalence`.
 
 **Typo / prefix:** query `blutooth` or `bluet` → analysis alternatives / prefix sources; still ranked by Core, not by edit-distance as a score.
 
