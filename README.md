@@ -159,13 +159,13 @@ node tools/search-corpus/build.mjs compile --input corpus.json --output dir --de
 ```
 
 ```js
-import { compileCorpus, normalizeExternalEquivalences } from "@software-land/search/corpus";
+import { compileCorpus, normalizeExternalConfiguredConcepts } from "@software-land/search/corpus";
 
-const { equivalences, relationshipMap, configuredConcepts } = compileCorpus({
+const { configuredConcepts, relationshipMap } = compileCorpus({
   documents: [{ id: "a", title: "Central Processing Unit (CPU)", body: "The CPU fetches instructions." }],
 });
 
-const generated = normalizeExternalEquivalences([
+const generated = normalizeExternalConfiguredConcepts([
   { key: "cpu", aliases: [["central", "processing", "unit"]] },
 ]);
 ```

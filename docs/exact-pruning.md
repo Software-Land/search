@@ -48,7 +48,7 @@ Stage 2A stores only contiguous block boundaries. It does not claim TF/score bou
 | `queryCoverage` | query concepts evidenced in title/version | supported candidate has one non-number/non-acronym concept and no title/version provenance | signature band; +2.4× | otherwise evaluate |
 | `titlePrefixQuality` | query/title prefix coverage and title tightness | body-only provenance excludes supported canonical prefix; short lead is checked separately | signature band; +1.8× | otherwise evaluate |
 | contextual prefix fields | aligned multi-token title prefix | supported path requires one query token | signature bit/scalar | multi-token queries evaluate |
-| configured equivalence | acronym key/expansion in title | supported path rejects acronym concepts | signature band; +1.5× | configured queries evaluate |
+| configured concept | acronym key/expansion in title | supported path rejects acronym concepts | signature band; +1.5× | configured queries evaluate |
 | `morphologyMatch` | query lemma in title without surface | body-only provenance would report title morphology | score +0.4; may affect class | otherwise evaluate |
 | `typoDistance` | title token edit/repeat evidence | unrepaired tokens use a cheap exact title-token distance probe; any possible nonzero value forces evaluation | score up to +0.7; may affect class | otherwise exact zero |
 | `versionMatch` | compact/dotted forms and companion coverage | supported path rejects number/dotted queries; body-only provenance excludes version title evidence | signature band; up to +2.2 | version queries evaluate |
@@ -107,7 +107,7 @@ Because document ordinals are sorted by id, late equal-score blocks normally fai
 
 ## Multi-term and prefix strategy
 
-Stage 2A does not prune multi-term, prefix-completed, contextual-prefix, morphology-sensitive, typo-sensitive, configured-equivalence, version, or dotted queries. Those cases can combine evidence from several posting lists and create coverage, adjacency, or previously unseen stronger signatures. They remain exhaustive.
+Stage 2A does not prune multi-term, prefix-completed, contextual-prefix, morphology-sensitive, typo-sensitive, configured-concept, version, or dotted queries. Those cases can combine evidence from several posting lists and create coverage, adjacency, or previously unseen stronger signatures. They remain exhaustive.
 
 This fail-closed rule also means there is no term-range cap or approximate prefix truncation. Exact prefix expansion remains unchanged.
 

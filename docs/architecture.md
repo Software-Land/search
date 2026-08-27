@@ -9,7 +9,7 @@ search-semantic        tools/search-semantic    optional Python relatedness buil
 search-relationships   tools/search-relationships
 ```
 
-Distribution: **one npm package** (`@software-land/search`) with subpath exports `.`, `./browser`, `./corpus`, `./relationships`, `./semantic`, and `./lexical`. Runtime and browser execute from emitted `dist/` JavaScript; root and browser public types are generated into `dist/*.d.ts`. Corpus, relationships, lexical, and Python semantic tooling remain source-shipped under `tools/`. Search Core and the browser Worker do not import `./semantic`, `./corpus`, `./relationships`, or `./lexical`. Application-owned model generation may supply external equivalence rows; the corpus compiler consumes them. The package does not own model execution.
+Distribution: **one npm package** (`@software-land/search`) with subpath exports `.`, `./browser`, `./corpus`, `./relationships`, `./semantic`, and `./lexical`. Runtime and browser execute from emitted `dist/` JavaScript; root and browser public types are generated into `dist/*.d.ts`. Corpus, relationships, lexical, and Python semantic tooling remain source-shipped under `tools/`. Search Core and the browser Worker do not import `./semantic`, `./corpus`, `./relationships`, or `./lexical`. Application-owned model generation may supply externally generated configured-concept rows; the corpus compiler consumes them. The package does not own model execution.
 
 Application relevance authoring is two primitives plus a separate generated graph. See [concepts.md](concepts.md):
 

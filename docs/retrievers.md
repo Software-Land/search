@@ -82,7 +82,7 @@ The rejected alternatives are:
 
 ## Exact matching and feature reconstruction
 
-The compiled retriever performs exact surface, title/body, prefix, morphology, typo-alternative, configured-equivalence, version, dotted-span, and phrase-evidence behavior over the compiled statistics. It enumerates every legitimate matching document. v1 performs no WAND, MaxScore, posting-block skipping, posting early termination, or prefix truncation.
+The compiled retriever performs exact surface, title/body, prefix, morphology, typo-alternative, configured-concept, version, dotted-span, and phrase-evidence behavior over the compiled statistics. It enumerates every legitimate matching document. v1 performs no WAND, MaxScore, posting-block skipping, posting early termination, or prefix truncation.
 
 For exact indexed retrieval, `searchDetailed().meta.rawDocumentScans` is `0` with or without a supplied artifact. Query-time feature work reads indexed statistics rather than rescanning raw title/body strings. The supplied artifact hydrates those statistics without raw lexical analysis; the fallback constructs them from raw documents during each `index()`.
 
