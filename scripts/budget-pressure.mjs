@@ -236,7 +236,7 @@ function signatureArchetype(hit) {
   if (f.exactTitleTokenMatch) evidence.push("title-token");
   if (f.contextualTitlePrefix) evidence.push("contextual-prefix");
   if (f.shortLiteralLeadMatch) evidence.push("short-literal");
-  if (f.configuredEquivalenceMatch) evidence.push(`equiv:${f.configuredEquivalenceMatch}`);
+  if (f.configuredConceptMatch) evidence.push(`equiv:${f.configuredConceptMatch}`);
   if (f.versionMatch) evidence.push(`version:${f.versionMatch}`);
   if (f.dottedSpanComponentTitleMatch) evidence.push("dotted-component");
   if (f.canonicalKeyTitle) evidence.push("canonical-key");

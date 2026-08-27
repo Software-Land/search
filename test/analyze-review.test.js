@@ -469,8 +469,8 @@ describe("acronym body evidence is contiguous", () => {
     const phraseHit = results.find((r) => r.id === "phrase");
     expect(phraseHit).toBeTruthy();
     if (learningOnly) {
-      expect(learningOnly.features.configuredEquivalenceMatch).not.toBe("expansion");
-      expect(learningOnly.features.configuredEquivalenceMatch).not.toBe("key-in-title");
+      expect(learningOnly.features.configuredConceptMatch).not.toBe("expansion");
+      expect(learningOnly.features.configuredConceptMatch).not.toBe("key-in-title");
     }
 
     const index = buildIndex(docs, schema, [morphology(), dictionary({ entries: dict })]);
@@ -501,8 +501,8 @@ describe("acronym body evidence is contiguous", () => {
     const phraseHit = results.find((r) => r.id === "phrase");
     expect(phraseHit).toBeTruthy();
     if (learningOnly) {
-      expect(learningOnly.features.configuredEquivalenceMatch).not.toBe("expansion");
-      expect(learningOnly.features.configuredEquivalenceMatch).not.toBe("key-in-title");
+      expect(learningOnly.features.configuredConceptMatch).not.toBe("expansion");
+      expect(learningOnly.features.configuredConceptMatch).not.toBe("key-in-title");
     }
   });
 });

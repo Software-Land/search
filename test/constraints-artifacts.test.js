@@ -23,7 +23,7 @@ function blankFeatures(over = {}) {
     titleCoverage: 0,
     queryCoverage: 0,
     titlePrefixQuality: 0,
-    configuredEquivalenceMatch: false,
+    configuredConceptMatch: false,
     morphologyMatch: false,
     typoDistance: 0,
     versionMatch: false,
@@ -278,7 +278,7 @@ describe("general lexical search", () => {
     ]);
     const results = engine.search("oop", { limit: 5, explain: true });
     expect(results[0].title).toBe("What is OOP (Object-Oriented Programming)?");
-    expect(results[0].features.configuredEquivalenceMatch).toBe("key-in-title");
+    expect(results[0].features.configuredConceptMatch).toBe("key-in-title");
     expect(results[0].features.expansionEvidence).toBeGreaterThan(
       results.find((r) => r.id === "/oop-vs/").features.expansionEvidence
     );

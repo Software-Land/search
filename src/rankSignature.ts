@@ -101,7 +101,7 @@ export function constraintSignature(f: Partial<FeatureVector> | undefined) {
     titleCoverageBand(feat.titleCoverage || 0),
     prefixQualityBand(feat.titlePrefixQuality || 0),
     bit(contextual),
-    equivBand(feat.configuredEquivalenceMatch),
+    equivBand(feat.configuredConceptMatch),
     versionBand(feat.versionMatch),
     bit(feat.shortLiteralLeadMatch),
     bit(feat.dottedSpanComponentTitleMatch),

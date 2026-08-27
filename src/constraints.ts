@@ -72,7 +72,7 @@ function coverageConstraint(a: FeaturedHit, b: FeaturedHit) {
  */
 function surfaceOverLemmaConstraint(a: FeaturedHit, b: FeaturedHit) {
   if ((a.features.queryTokenCount || 0) !== 1) return 0;
-  if (a.features.configuredEquivalenceMatch || b.features.configuredEquivalenceMatch) return 0;
+  if (a.features.configuredConceptMatch || b.features.configuredConceptMatch) return 0;
   const aSurf = Boolean(a.features.typedSurfaceTitleMatch);
   const bSurf = Boolean(b.features.typedSurfaceTitleMatch);
   if (aSurf === bSurf) return 0;
@@ -131,7 +131,7 @@ function dottedSpanComponentOverWeakDirectConstraint(a: FeaturedHit, b: Featured
 function isWeakIncidentalCompetitor(f: Partial<FeatureVector>) {
   if (f.contextualTitlePrefix) return false;
   if (f.exactTitleMatch) return false;
-  if (f.configuredEquivalenceMatch === "key-in-title" || f.canonicalKeyTitle) return false;
+  if (f.configuredConceptMatch === "key-in-title" || f.canonicalKeyTitle) return false;
   if (f.versionMatch === "dotted" || f.versionMatch === "compact-dotted") return false;
   if ((f.queryCoverage || 0) >= FULL_QUERY_COVERAGE) return false;
   if (f.directClass === "strong" || f.directClass === "moderate") return false;
@@ -174,13 +174,13 @@ function directOverRelatedConstraint(a: FeaturedHit, b: FeaturedHit) {
   const aStrong =
     aDirect &&
     (a.features.exactTitleMatch ||
-      a.features.configuredEquivalenceMatch === "key-in-title" ||
+      a.features.configuredConceptMatch === "key-in-title" ||
       a.features.canonicalKeyTitle ||
       (a.features.queryCoverage || 0) >= FULL_QUERY_COVERAGE);
   const bStrong =
     bDirect &&
     (b.features.exactTitleMatch ||
-      b.features.configuredEquivalenceMatch === "key-in-title" ||
+      b.features.configuredConceptMatch === "key-in-title" ||
       b.features.canonicalKeyTitle ||
       (b.features.queryCoverage || 0) >= FULL_QUERY_COVERAGE);
   if (aDirect && !bDirect && (aStrong || (a.features.queryCoverage || 0) > 0 || a.features.exactTitleTokenMatch)) {
@@ -264,7 +264,7 @@ function hasRepeatedPhraseEvidence(f: Partial<FeatureVector>) {
 function hasConfiguredExpansionEvidence(f: Partial<FeatureVector>) {
   return (
     (f.queryTokenCount || 0) >= 2 &&
-    (f.configuredEquivalenceMatch === "expansion" || f.configuredEquivalenceMatch === "key-in-title")
+    (f.configuredConceptMatch === "expansion" || f.configuredConceptMatch === "key-in-title")
   );
 }
 
@@ -276,8 +276,8 @@ function isIncidentalTitleToken(f: Partial<FeatureVector>) {
     lowCoverage &&
     (f.bodyPhraseCount || 0) === 0 &&
     !f.exactTitleMatch &&
-    f.configuredEquivalenceMatch !== "key-in-title" &&
-    f.configuredEquivalenceMatch !== "expansion" &&
+    f.configuredConceptMatch !== "key-in-title" &&
+    f.configuredConceptMatch !== "expansion" &&
     !f.contextualTitlePrefix
   );
 }
@@ -294,7 +294,7 @@ function isIncidentalTitleToken(f: Partial<FeatureVector>) {
  */
 function isWeakIncidentalPhraseCompetitor(f: Partial<FeatureVector>) {
   if (hasRepeatedPhraseEvidence(f) || hasConfiguredExpansionEvidence(f)) return false;
-  if (f.exactTitleMatch || f.canonicalKeyTitle || f.configuredEquivalenceMatch === "key-in-title") return false;
+  if (f.exactTitleMatch || f.canonicalKeyTitle || f.configuredConceptMatch === "key-in-title") return false;
   if ((f.queryCoverage || 0) >= FULL_QUERY_COVERAGE) return false;
   if (f.directClass === "strong") return false;
   if (f.contextualTitlePrefix) return false;
@@ -371,7 +371,7 @@ function standaloneRecallBand(f: Partial<FeatureVector>) {
     (f.titleCoverage || 0) > 0 ||
     (f.titlePrefixQuality || 0) > 0 ||
     f.contextualTitlePrefix ||
-    f.configuredEquivalenceMatch ||
+    f.configuredConceptMatch ||
     f.canonicalKeyTitle ||
     f.morphologyMatch ||
     (f.typoDistance || 0) > 0 ||
@@ -409,7 +409,7 @@ function topicalRecallBand(f: Partial<FeatureVector>) {
     (f.titleCoverage || 0) > 0 ||
     (f.titlePrefixQuality || 0) > 0 ||
     f.contextualTitlePrefix ||
-    f.configuredEquivalenceMatch ||
+    f.configuredConceptMatch ||
     f.canonicalKeyTitle ||
     f.morphologyMatch ||
     (f.typoDistance || 0) > 0 ||
@@ -469,7 +469,7 @@ function synonymRecallBand(f: Partial<FeatureVector>) {
     (f.titleCoverage || 0) > 0 ||
     (f.titlePrefixQuality || 0) > 0 ||
     f.contextualTitlePrefix ||
-    f.configuredEquivalenceMatch ||
+    f.configuredConceptMatch ||
     f.canonicalKeyTitle ||
     f.morphologyMatch ||
     (f.typoDistance || 0) > 0 ||

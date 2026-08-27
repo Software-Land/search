@@ -32,7 +32,7 @@ function stableSurface(row) {
     title: row.title,
     matchingPhraseKey: row.features?.matchingPhraseKey ?? null,
     normalizedQueryPhrase: row.features?.normalizedQueryPhrase ?? null,
-    configuredEquivalenceMatch: row.features?.configuredEquivalenceMatch ?? false,
+    configuredConceptMatch: row.features?.configuredConceptMatch ?? false,
     typedSurfaceTitleMatch: row.features?.typedSurfaceTitleMatch ?? false,
   };
 }
@@ -76,7 +76,7 @@ describe("0.2.0 migration parity", () => {
       title: "ML Notes",
       matchingPhraseKey: null,
       normalizedQueryPhrase: "machine learn",
-      configuredEquivalenceMatch: "key-in-title",
+      configuredConceptMatch: "key-in-title",
       typedSurfaceTitleMatch: false,
     });
     expect(stableSurface(ml[1])).toEqual({
@@ -84,7 +84,7 @@ describe("0.2.0 migration parity", () => {
       title: "Phrase Heavy Guide",
       matchingPhraseKey: "machine learn",
       normalizedQueryPhrase: "machine learn",
-      configuredEquivalenceMatch: false,
+      configuredConceptMatch: false,
       typedSurfaceTitleMatch: false,
     });
   });
@@ -164,12 +164,12 @@ describe("0.2.0 migration parity", () => {
     const exact = engine.searchDetailed("http", { explain: true }).results;
     expect(stableSurface(exact[0])).toMatchObject({
       id: "expansion-title",
-      configuredEquivalenceMatch: "expansion",
+      configuredConceptMatch: "expansion",
       normalizedQueryPhrase: "hypertext transfer protocol",
     });
     expect(stableSurface(exact[1])).toMatchObject({
       id: "http",
-      configuredEquivalenceMatch: "key-in-title",
+      configuredConceptMatch: "key-in-title",
       normalizedQueryPhrase: "hypertext transfer protocol",
     });
 
@@ -209,7 +209,7 @@ describe("0.2.0 migration parity", () => {
     expect(stableSurface(rows[0])).toMatchObject({
       id: "wifi",
       title: "Wi-Fi",
-      configuredEquivalenceMatch: "expansion",
+      configuredConceptMatch: "expansion",
       normalizedQueryPhrase: "wi fi",
     });
   });

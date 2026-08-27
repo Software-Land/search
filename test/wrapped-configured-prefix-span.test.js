@@ -253,7 +253,7 @@ describe("wrapped configured prefix retrieval", () => {
     expect(hits.every((h) => !(h.retrievalSources || []).includes("topical-recall"))).toBe(true);
     const detailed = e.searchDetailed("what is an applicatio security", { limit: 10, explain: true });
     expect(detailed.results[0].id).toBe("direct");
-    expect(detailed.results[0].features.configuredEquivalenceMatch).toBeTruthy();
+    expect(detailed.results[0].features.configuredConceptMatch).toBeTruthy();
     expect(detailed.results[0].explanation.query.configuredSequenceIntent).toBeNull();
     expect(detailed.results[0].explanation.query.configuredPrefixSpans).toEqual([
       { key: "appsec", start: 3, end: 5, matchedKinds: ["expansion"], usedPrefix: true },

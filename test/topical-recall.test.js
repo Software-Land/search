@@ -170,7 +170,7 @@ describe("topical recall retrieval and ranking", () => {
     expect(topicalOnly.length).toBeGreaterThan(0);
     expect(topicalOnly.every((row) => row.retrievalSources.includes("topical-recall"))).toBe(true);
     expect(topicalOnly.every((row) => row.features.topicalRecallMatch)).toBe(true);
-    expect(detailed.results[0].features.configuredEquivalenceMatch).toBeTruthy();
+    expect(detailed.results[0].features.configuredConceptMatch).toBeTruthy();
   });
 
   test("does not recursively activate another concept's topical map", async () => {

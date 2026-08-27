@@ -73,7 +73,7 @@ export function scoreFeatures(f: Partial<FeatureVector>) {
     (f.queryCoverage || 0) * 2.4 +
     (f.titleCoverage || 0) * 1.2 +
     (f.titlePrefixQuality || 0) * 1.8 +
-    equivNum(f.configuredEquivalenceMatch) * 1.5 +
+    equivNum(f.configuredConceptMatch) * 1.5 +
     boolNum(f.canonicalKeyTitle) * 1.3 +
     (f.expansionEvidence || 0) * 0.8 +
     boolNum(f.morphologyMatch) * 0.4 +

@@ -518,6 +518,15 @@ if (recallHit.features?.synonymRecallMatch != null) {
 if (!recallHit.features?.equivalentRecallMatch) {
   throw new Error("equivalentRecallMatch must be present on equivalent-recall hits");
 }
+if (identityHit.features?.configuredEquivalenceMatch != null || recallHit.features?.configuredEquivalenceMatch != null) {
+  throw new Error("configuredEquivalenceMatch must not remain public explain output");
+}
+if (identityHit.features?.configuredConceptMatch !== "expansion") {
+  throw new Error("configuredConceptMatch must remain expansion on configured title identity");
+}
+if (recallHit.features?.configuredConceptMatch !== false) {
+  throw new Error("equivalent-recall hits must keep configuredConceptMatch false");
+}
 if (recallHit.explanation?.query?.concepts?.some((concept) => concept.provenance === "synonym")) {
   throw new Error("explain concepts must not serialize provenance synonym");
 }

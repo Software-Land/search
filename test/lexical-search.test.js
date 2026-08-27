@@ -156,25 +156,28 @@ describe("query analysis", () => {
       const phrase = e.search("graphics processing unit", { limit: 5, explain: true });
       const expansionHit = phrase.find((r) => r.id === "expansion-page");
       expect(expansionHit).toBeTruthy();
-      expect(expansionHit.features.configuredEquivalenceMatch).toBe("expansion");
+      expect(expansionHit.features.configuredConceptMatch).toBe("expansion");
+      expect(expansionHit.features).not.toHaveProperty("configuredEquivalenceMatch");
 
       const graphics = e.search("graphics", { limit: 5, explain: true });
       const gHit = graphics.find((r) => r.id === "graphics-only");
       expect(gHit).toBeTruthy();
-      expect(gHit.features.configuredEquivalenceMatch).not.toBe("expansion");
-      expect(gHit.features.configuredEquivalenceMatch).not.toBe("key-in-title");
+      expect(gHit.features.configuredConceptMatch).not.toBe("expansion");
+      expect(gHit.features.configuredConceptMatch).not.toBe("key-in-title");
+      expect(gHit.features).not.toHaveProperty("configuredEquivalenceMatch");
 
       const processing = e.search("processing", { limit: 5, explain: true });
       const pHit = processing.find((r) => r.id === "processing-only");
       expect(pHit).toBeTruthy();
-      expect(pHit.features.configuredEquivalenceMatch).not.toBe("expansion");
+      expect(pHit.features.configuredConceptMatch).not.toBe("expansion");
 
       const key = e.search("gpu", { limit: 5, explain: true });
       const expansionQuery = e.search("graphics processing unit", { limit: 5, explain: true });
       expect(key.map((r) => r.id)).toEqual(expansionQuery.map((r) => r.id));
       const gpuPage = key.find((r) => r.id === "gpu-page");
       expect(gpuPage).toBeTruthy();
-      expect(gpuPage.features.configuredEquivalenceMatch).toBe("key-in-title");
+      expect(gpuPage.features.configuredConceptMatch).toBe("key-in-title");
+      expect(gpuPage.features).not.toHaveProperty("configuredEquivalenceMatch");
     });
   });
 
@@ -984,7 +987,7 @@ describe("constraints vs score", () => {
         titleCoverage: 1,
         titlePrefixQuality: 1,
         exactTitleTokenMatch: true,
-        configuredEquivalenceMatch: false,
+        configuredConceptMatch: false,
         morphologyMatch: false,
         typoDistance: 0,
         versionMatch: false,
@@ -1002,7 +1005,7 @@ describe("constraints vs score", () => {
         titleCoverage: 0.2,
         titlePrefixQuality: 0.2,
         exactTitleTokenMatch: true,
-        configuredEquivalenceMatch: false,
+        configuredConceptMatch: false,
         morphologyMatch: false,
         typoDistance: 0,
         versionMatch: false,
@@ -1062,7 +1065,7 @@ describe("features ranking and explanations", () => {
       titleCoverage: 0,
       queryCoverage: 0,
       titlePrefixQuality: 0,
-      configuredEquivalenceMatch: false,
+      configuredConceptMatch: false,
       morphologyMatch: false,
       typoDistance: 0,
       versionMatch: false,

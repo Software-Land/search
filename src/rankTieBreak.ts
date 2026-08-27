@@ -18,7 +18,7 @@ export function isWeakSingleTokenBodyPack(f: Partial<FeatureVector> | undefined)
   if (f.directClass !== "weak" && f.directClass !== "none") return false;
   if (f.exactTitleMatch || f.exactTitleTokenMatch || f.typedSurfaceTitleMatch) return false;
   if ((f.queryCoverage || 0) > 0 || (f.titleCoverage || 0) > 0 || (f.titlePrefixQuality || 0) > 0) return false;
-  if (f.configuredEquivalenceMatch || f.canonicalKeyTitle || f.contextualTitlePrefix) return false;
+  if (f.configuredConceptMatch || f.canonicalKeyTitle || f.contextualTitlePrefix) return false;
   if (f.morphologyMatch || (f.typoDistance || 0) > 0) return false;
   if (f.shortLiteralLeadMatch || f.dottedSpanComponentTitleMatch || f.versionMatch) return false;
   return (f.bodyLexicalMatch || 0) > 0;

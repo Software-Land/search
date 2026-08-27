@@ -68,7 +68,8 @@ describe("configured expansion prefix evidence class", () => {
     const body = hit(engine, "alpha beta", "xyz-body");
     expect(body).toBeTruthy();
     expect(body.directClass).toBe("moderate");
-    expect(body.features.configuredEquivalenceMatch).toBe(false);
+    expect(body.features.configuredConceptMatch).toBe(false);
+    expect(body.features).not.toHaveProperty("configuredEquivalenceMatch");
     expect(body.features.configuredExpansionCoverage).toBe(0.6667);
     expect(body.features.configuredExpansionBodyMatch).toBe(true);
     expect(body.features.bodyLexicalMatch).toBeGreaterThan(0);
@@ -86,11 +87,13 @@ describe("configured expansion prefix evidence class", () => {
     expect(xyz.expansionCoverage).toBe(1);
     const full = hit(engine, "alpha beta gamma", "xyz-full");
     expect(full).toBeTruthy();
-    expect(full.features.configuredEquivalenceMatch).toBe("expansion");
+    expect(full.features.configuredConceptMatch).toBe("expansion");
+    expect(full.features).not.toHaveProperty("configuredEquivalenceMatch");
     expect(["moderate", "strong"]).toContain(full.directClass);
     expect(full.directClass).not.toBe("weak");
     const key = hit(engine, "xyz", "xyz-key");
-    expect(key.features.configuredEquivalenceMatch).toBe("key-in-title");
+    expect(key.features.configuredConceptMatch).toBe("key-in-title");
+    expect(key.features).not.toHaveProperty("configuredEquivalenceMatch");
     expect(key.directClass).toBe("strong");
   });
 });

@@ -46,7 +46,7 @@ export function isStrongPrimary(hit: FeaturedHit | null | undefined) {
   const f: Partial<FeatureVector> = hit?.features || {};
   if (f.directClass === "strong") return true;
   if (f.exactTitleMatch) return true;
-  if (f.configuredEquivalenceMatch === "key-in-title") return true;
+  if (f.configuredConceptMatch === "key-in-title") return true;
   if ((f.queryCoverage || 0) >= 0.999 && (f.titlePrefixQuality || 0) >= 0.4) return true;
   if (f.versionMatch === "compact-dotted" || f.versionMatch === "dotted") return true;
   if (f.canonicalKeyTitle) return true;

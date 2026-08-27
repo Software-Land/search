@@ -110,7 +110,7 @@ describe("compiled phrase vs incidental title token", () => {
         exactTitleTokenMatch: false,
         queryCoverage: 0,
         exactTitleMatch: false,
-        configuredEquivalenceMatch: false,
+        configuredConceptMatch: false,
       },
     };
     const b = {
@@ -121,7 +121,7 @@ describe("compiled phrase vs incidental title token", () => {
         exactTitleTokenMatch: true,
         queryCoverage: 0.33,
         exactTitleMatch: false,
-        configuredEquivalenceMatch: false,
+        configuredConceptMatch: false,
       },
     };
     expect(compareConstraint(a, b, HYBRID_CONSTRAINTS).order).toBe(-1);

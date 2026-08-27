@@ -16,7 +16,7 @@ function hit(id, over = {}) {
       titlePrefixQuality: 0,
       contextualTitlePrefix: false,
       contextualPrefixQuality: 0,
-      configuredEquivalenceMatch: false,
+      configuredConceptMatch: false,
       morphologyMatch: false,
       typedSurfaceTitleMatch: false,
       typoDistance: 0,
@@ -62,7 +62,7 @@ const contextualLoose = hit("contextual-loose", {
 });
 
 const configuredKey = hit("configured-key", {
-  configuredEquivalenceMatch: "key-in-title",
+  configuredConceptMatch: "key-in-title",
   canonicalKeyTitle: true,
   queryCoverage: 1,
   directClass: "strong",

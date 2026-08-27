@@ -17,7 +17,7 @@ function blankFeatures(over = {}) {
     titleCoverage: 0,
     queryCoverage: 0,
     titlePrefixQuality: 0,
-    configuredEquivalenceMatch: false,
+    configuredConceptMatch: false,
     morphologyMatch: false,
     typoDistance: 0,
     versionMatch: false,

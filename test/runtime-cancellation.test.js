@@ -189,7 +189,7 @@ describe("core cancellation", () => {
         bodyLexicalMatch: 1,
         relevanceKind: "direct",
         directClass: "weak",
-        configuredEquivalenceMatch: false,
+        configuredConceptMatch: false,
         canonicalKeyTitle: false,
         morphologyMatch: false,
         typoDistance: 0,

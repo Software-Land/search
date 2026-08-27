@@ -30,7 +30,7 @@ import type {
 
 export { saturatingFrequency };
 
-type ConfiguredEquivalenceMatch = false | "key-in-title" | "expansion";
+type ConfiguredConceptMatch = false | "key-in-title" | "expansion";
 type VersionMatch = false | "dotted" | "compact-dotted" | "compact-weak" | "dotted-weak";
 
 function queryNonStop(query: AnalyzedQuery) {
@@ -157,7 +157,7 @@ function titleCoverage(query: AnalyzedQuery, doc: IndexedDocument) {
   return Number((hit / doc.nonStopTitle.length).toFixed(4));
 }
 
-function configuredEquivalenceMatch(query: AnalyzedQuery, doc: IndexedDocument): ConfiguredEquivalenceMatch {
+function configuredConceptMatch(query: AnalyzedQuery, doc: IndexedDocument): ConfiguredConceptMatch {
   const acr = query.concepts.find((c) => c.kind === "acronym");
   if (!acr) return false;
   if (doc.titleTokenSet.has(acr.id) || doc.titleLemmaSet.has(acr.id)) return "key-in-title";
@@ -331,7 +331,7 @@ function canonicalKeyTitle(query: AnalyzedQuery, doc: IndexedDocument) {
 function hasDirectTitleEvidence(f: Partial<FeatureVector>) {
   if (f.exactTitleMatch || f.exactTitleTokenMatch) return true;
   if ((f.queryCoverage || 0) > 0) return true;
-  if (f.configuredEquivalenceMatch) return true;
+  if (f.configuredConceptMatch) return true;
   if (f.morphologyMatch) return true;
   if (f.versionMatch) return true;
   if (f.dottedSpanComponentTitleMatch) return true;
@@ -466,7 +466,7 @@ export function extractFeaturesOracle(
     queryCoverage: queryCoverage(query, doc),
     titlePrefixQuality: titlePrefixQuality(query, doc),
     ...contextualFeatureFields(contextual),
-    configuredEquivalenceMatch: configuredEquivalenceMatch(query, doc),
+    configuredConceptMatch: configuredConceptMatch(query, doc),
     morphologyMatch: morphologyMatch(query, doc),
     typoDistance: typoDistance(query, doc),
     versionMatch: versionMatch(query, doc),
@@ -507,7 +507,7 @@ export function extractFeaturesOracle(
 export function classifyDirectOracle(f: Partial<FeatureVector>): DirectClass {
   if (
     f.exactTitleMatch ||
-    f.configuredEquivalenceMatch === "key-in-title" ||
+    f.configuredConceptMatch === "key-in-title" ||
     f.canonicalKeyTitle ||
     ((f.queryCoverage || 0) >= FULL_QUERY_COVERAGE &&
       (f.titlePrefixQuality || 0) >= STRONG_WITH_FULL_COVERAGE_TITLE_PREFIX_QUALITY) ||
@@ -519,7 +519,7 @@ export function classifyDirectOracle(f: Partial<FeatureVector>): DirectClass {
   if (
     (f.queryCoverage || 0) >= TWO_THIRDS_QUERY_COVERAGE ||
     (f.titlePrefixQuality || 0) >= MODERATE_TITLE_PREFIX_QUALITY ||
-    f.configuredEquivalenceMatch === "expansion" ||
+    f.configuredConceptMatch === "expansion" ||
     (f.expansionEvidence || 0) >= TWO_THIRDS_QUERY_COVERAGE ||
     f.configuredExpansionBodyMatch ||
     f.phraseAdjacency === 1 ||
@@ -538,7 +538,7 @@ export function classifyDirectOracle(f: Partial<FeatureVector>): DirectClass {
     (f.bodyLexicalMatch || 0) > 0 ||
     (f.queryCoverage || 0) > 0 ||
     (f.titlePrefixQuality || 0) > 0 ||
-    f.configuredEquivalenceMatch
+    f.configuredConceptMatch
   ) {
     return "weak";
   }
@@ -559,7 +559,7 @@ export const FEATURE_DEFINITIONS = {
   unmatchedTitleTokensAfter: "Count of title tokens after the aligned final-token completion (0 when the title ends at the completed token).",
   titleSequenceTightness: "1 / (1 + unmatchedTitleTokensAfter). Prefer titles that complete the query and end there.",
   contextualPrefixQuality: "completeness * titleSequenceTightness, where completeness is finalPrefix.length / completedTitleToken.length.",
-  configuredEquivalenceMatch: "Dictionary hit: key-in-title | expansion | false.",
+  configuredConceptMatch: "Configured-concept title match: key-in-title | expansion | false.",
   morphologyMatch: "Query lemma matches a title token/lemma while surface may differ. A trailing stub bound by unique contextual expansion completion is excluded.",
   typoDistance: "0–2 style evidence: 0 none, 1 repeat-collapse or edit-distance 2, 2 edit-distance 1.",
   versionMatch: "false | compact-weak | compact-dotted | dotted | dotted-weak.",

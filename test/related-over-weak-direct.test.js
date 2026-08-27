@@ -19,7 +19,7 @@ function hit(id, over = {}) {
       titlePrefixQuality: 0,
       contextualTitlePrefix: false,
       contextualPrefixQuality: 0,
-      configuredEquivalenceMatch: false,
+      configuredConceptMatch: false,
       morphologyMatch: false,
       typoDistance: 0,
       versionMatch: false,

@@ -439,7 +439,7 @@ describe("extra synonym recall vs merged ordinary-term synonyms", () => {
     expect(byId["zero-trust"].retrievalSources).not.toContain("title-token");
     expect(byId["zero-trust"].features.queryCoverage).toBe(0);
     expect(byId["zero-trust"].features.bodyLexicalMatch).toBe(0);
-    expect(byId["zero-trust"].features.configuredEquivalenceMatch).toBe(false);
+    expect(byId["zero-trust"].features.configuredConceptMatch).toBe(false);
     expect(byId["zero-trust"].features.exactTitleTokenMatch).toBe(false);
     expect(byId["zero-trust"].features.equivalentRecallMatch).toBe(true);
     expect(byId["zero-trust"].features.equivalentRecallTitleMatch).toBe(true);
@@ -484,9 +484,11 @@ describe("extra synonym recall vs merged ordinary-term synonyms", () => {
     const eng = await engine({ docs: extraDocs });
     const detailed = eng.searchDetailed("qa", { limit: 20, explain: true });
     const byId = Object.fromEntries(detailed.results.map((row) => [row.id, row]));
-    expect(byId["qa-title"].features.configuredEquivalenceMatch).toBe("key-in-title");
+    expect(byId["qa-title"].features.configuredConceptMatch).toBe("key-in-title");
+    expect(byId["qa-title"].features).not.toHaveProperty("configuredEquivalenceMatch");
     expect(byId["testing-title"].features.queryCoverage).toBe(0);
-    expect(byId["testing-title"].features.configuredEquivalenceMatch).toBe(false);
+    expect(byId["testing-title"].features.configuredConceptMatch).toBe(false);
+    expect(byId["testing-title"].features).not.toHaveProperty("configuredEquivalenceMatch");
     expect(byId["testing-title"].retrievalSources).toContain("equivalent-recall");
     expect(byId["testing-title"].features.equivalentRecallTitleMatch).toBe(true);
     expect(byId["testing-body"].retrievalSources).toContain("equivalent-recall");
@@ -726,6 +728,7 @@ describe("morphology-aware directional search equivalences", () => {
       const hit = proof.results.find((row) => row.title === title);
       expect(hit).toBeDefined();
       expect(hit.features.ordinaryEquivalenceBodyMatch).toBe(true);
+      expect(hit.features).not.toHaveProperty("configuredEquivalenceMatch");
       expect(hit.features.bodyPhraseCount).toBe(0);
       expect(hit.features.directClass).toBe("weak");
       expect(hit.score).toBe(0.25);

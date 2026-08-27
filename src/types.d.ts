@@ -398,7 +398,7 @@ export interface FeatureVector {
   unmatchedTitleTokensAfter: number;
   titleSequenceTightness: number;
   contextualPrefixQuality: number;
-  configuredEquivalenceMatch: false | "key-in-title" | "expansion";
+  configuredConceptMatch: false | "key-in-title" | "expansion";
   morphologyMatch: boolean;
   typoDistance: number;
   versionMatch: false | string;

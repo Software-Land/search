@@ -117,6 +117,10 @@ describe("public API", () => {
     expect(recalled.explanation.query).not.toHaveProperty("synonymRecall");
     expect(recalled.features.equivalentRecallMatch).toBe(true);
     expect(recalled.features).not.toHaveProperty("synonymRecallMatch");
+    expect(identity.features.configuredConceptMatch).toBe("expansion");
+    expect(identity.features).not.toHaveProperty("configuredEquivalenceMatch");
+    expect(recalled.features.configuredConceptMatch).toBe(false);
+    expect(recalled.features).not.toHaveProperty("configuredEquivalenceMatch");
     expect(recalled.explanation.query.concepts.some((concept) => concept.provenance === "equivalent-recall")).toBe(true);
     expect(recalled.explanation.query.concepts.every((concept) => concept.provenance !== "synonym")).toBe(true);
     expect(recalled.relevanceKind).toBe("direct");
