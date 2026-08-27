@@ -12,7 +12,15 @@ const client = createSearchClient({
   onError({ generation, query, error }) {},
 });
 
-await client.init({ documents, schema, dictionaryEntries, relationshipMap, relationships, retriever: "adaptive" });
+await client.init({
+  documents,
+  schema,
+  configuredConcepts,
+  relationshipMap,
+  documentRelationships,
+  lexicalIndex,
+  retriever: "adaptive",
+});
 client.setQuery("bluetooth");
 client.setQuery("");   // cancel, drop pending, clear
 client.dispose();
@@ -33,7 +41,7 @@ Plain `postMessage`. Protocol v1 messages: `init`, `search`, `cancel`, `dispose`
 
 `init` accepts the same optional `lexicalIndex` as `SearchEngine.create`. Omission builds the exact fallback index during initialization; an invalid supplied artifact replies with `error`. When compiling with custom lemmas, pass the same map to Worker `englishOptions` so its deterministic analyzer identity matches. After `ready`, the Worker has released its envelope reference and retained compact runtime state, so the page may release its own artifact reference.
 
-`relationshipMap` on `SearchClient.init` is the same authored relevance primitive as in-process `compileAuthoredRelevance()`: equivalent, standalone related, topical related, and editorial document edges all survive Worker initialization. Base `relationships` remain; authored document→document edges are additional.
+`relationshipMap` on `SearchClient.init` is the same authored relevance primitive as in-process `compileAuthoredRelevance()`: equivalent, standalone related, topical related, and editorial document edges all survive Worker initialization. Base `documentRelationships` remain; authored document→document edges are additional.
 
 Worker searches use the normal exact representative path, including fail-closed Stage-2A feature-block pruning when its proof applies, and forward result/related rows plus a high-level timing/count meta subset (`totalMs`, `retrieveMs`, `featureMs`, `selectionMs`, `rankMs`, `candidateCount`, `matchCount`, `relatedCount`, `relationshipStrategy`). Stage-2 posting/block/pruning counters stay on `searchDetailed()` / `lastSearchMeta` and an internal Worker diagnostics switch; they are not part of the public Worker protocol. `explain: true` still preserves each returned row's explanation, exact successor, and constraint metadata.
 

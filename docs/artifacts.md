@@ -31,4 +31,4 @@ After successful `index()`, `SearchEngine` retains only the compact runtime stat
 
 See [compact-runtime.md](compact-runtime.md) for the Stage-2C packed document view. No lexical-index version bump is required for that runtime change.
 
-Pass parsed objects into `dictionary({ entries })`, `SearchEngine.create({ relationships })`, or `SearchEngine.create({ lexicalIndex })` as appropriate.
+Pass parsed objects into `dictionary({ entries })`, `SearchEngine.create({ documentRelationships })`, or `SearchEngine.create({ lexicalIndex })` as appropriate. The `search-v2-relationships` artifact still stores its graph under the inner `relationships` map; that is the persisted artifact payload, not the SearchEngine option name.

@@ -79,7 +79,7 @@ import {
 } from "@software-land/search";
 
 const authored = compileAuthoredRelevance({
-  entries: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
+  configuredConcepts: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
   relationshipMap: {
     hypertext: [{ to: { concept: "http" }, kind: "related" }],
     qa: [{ to: { form: "testing" }, kind: "equivalent" }],
@@ -88,7 +88,7 @@ const authored = compileAuthoredRelevance({
 
 SearchEngine.create({
   plugins: [morphology(), ...authored.plugins],
-  relationships: authored.relationships,
+  documentRelationships: authored.documentRelationships,
 });
 ```
 
@@ -97,7 +97,7 @@ SearchEngine.create({
 `CompiledAuthoredRelevance` has two supported fields:
 
 - `plugins` — the correctly ordered authored relevance plugins for `SearchEngine.create({ plugins: [morphology(), ...authored.plugins] })`
-- `relationships` — compiled authored document→document edges as a `search-v2-relationships` artifact, or `null`
+- `documentRelationships` — compiled authored document→document edges as a `search-v2-relationships` artifact, or `null`
 
 `relationshipMap` is directional. Kinds are `equivalent` and `related`. Endpoints are `{ form }`, `{ concept }`, or `{ document }`. Edges do not auto-reverse and must not carry numeric weights. Equivalent edges do not rewrite typed tokens.
 
@@ -108,7 +108,7 @@ SearchEngine.create({
 | `related` concept → `{ form }` | existing topical-recall |
 | `related` document → `{ document }` | existing editorial relationship artifact (`type: editorial`, provenance `manual`, strength 1) |
 
-`dictionary({ entries })` compiles configured-concept identity only. Complete authored relevance — equivalent recall, related standalone/topical forms, and editorial document edges — is `compileAuthoredRelevance({ entries, relationshipMap, documents })`. Pass `...authored.plugins` and `authored.relationships` to `SearchEngine.create`. Browser `SearchClient.init({ relationshipMap })` uses that same full authored-relevance meaning. Generated MiniLM relationships stay in the separate semantic artifact; merge them with authored editorial edges via `mergeRelationships(semantic, authored.relationships)`.
+`dictionary({ entries })` compiles configured-concept identity only. Complete authored relevance — equivalent recall, related standalone/topical forms, and editorial document edges — is `compileAuthoredRelevance({ configuredConcepts, relationshipMap, documents })`. Pass `...authored.plugins` and `authored.documentRelationships` to `SearchEngine.create`. Browser `SearchClient.init({ configuredConcepts, relationshipMap, documentRelationships })` uses that same full authored-relevance meaning. Generated MiniLM relationships stay in the separate semantic artifact; merge them with authored editorial edges via `mergeRelationships(semantic, authored.documentRelationships)`.
 
 `compileRelationshipMap()` is a lower-level/partial compiler for tooling. It does not install dictionary related-recall or produce a ready plugin set. Prefer `compileAuthoredRelevance()` for application initialization.
 

@@ -30,7 +30,7 @@ Authored `relationshipMap` document→document edges compile onto `editorial` / 
 const engine = SearchEngine.create({
   plugins: [morphology()],
   relationshipStrategy: "separate",
-  relationships: {
+  documentRelationships: {
     format: "search-v2-relationships",
     version: 1,
     relationships: {

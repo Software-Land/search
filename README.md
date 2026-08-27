@@ -76,12 +76,15 @@ Applications author configured concepts and a directional `relationshipMap`, the
 ```js
 import { SearchEngine, morphology, compileAuthoredRelevance } from "@software-land/search";
 
+const configuredConcepts = [{ key: "qa", aliases: [["quality", "assurance"]] }];
+const relationshipMap = {
+  qa: [{ to: { form: "testing" }, kind: "equivalent" }],
+  docker: [{ to: { form: "container" }, kind: "equivalent" }],
+};
+
 const authored = compileAuthoredRelevance({
-  entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
-  relationshipMap: {
-    qa: [{ to: { form: "testing" }, kind: "equivalent" }],
-    docker: [{ to: { form: "container" }, kind: "equivalent" }],
-  },
+  configuredConcepts,
+  relationshipMap,
 });
 
 const engine = SearchEngine.create({
@@ -93,15 +96,26 @@ const engine = SearchEngine.create({
     morphology(),
     ...authored.plugins,
   ],
-  relationships: authored.relationships,
+  documentRelationships: authored.documentRelationships,
 });
 ```
 
+Search data is four distinct layers:
+
+| Name | Meaning |
+| --- | --- |
+| `configuredConcepts` | authored identities `{ key, aliases }` |
+| `lexicalIndex` | corpus lexical term/posting index |
+| `relationshipMap` | authored form/concept/document relevance |
+| `documentRelationships` | compiled document-to-document graph |
+
+`dictionary({ entries })` remains the identity-only plugin factory; `entries` there is that plugin's `{ key, aliases }` list, not the corpus lexicon.
+
 `authored.plugins` is the compiler-owned plugin list: configured identity (including related standalone/topical recall) then compiled equivalent one-hop recall. Ordinary applications do not assemble those pieces by name. `equivalent` edges do not auto-reverse: `qa → testing` does not imply `testing → qa`. Phrase sources match as exact contiguous normalized phrases.
 
-`authored.relationships` is the editorial document→document artifact, or `null` when none were authored. Combine it with a generated semantic artifact using `mergeRelationships(semantic, authored.relationships)`.
+`authored.documentRelationships` is the editorial document→document artifact, or `null` when none were authored. Combine it with a generated semantic artifact using `mergeRelationships(semantic, authored.documentRelationships)`.
 
-`dictionary({ entries })` compiles concept identity only. Complete authored relevance — equivalent recall, related standalone/topical forms, and editorial document edges — uses `compileAuthoredRelevance()`.
+Complete authored relevance — equivalent recall, related standalone/topical forms, and editorial document edges — uses `compileAuthoredRelevance()`.
 
 `compileRelationshipMap()` is a lower-level/partial compiler for tooling. Prefer `compileAuthoredRelevance()` for application initialization.
 
@@ -117,7 +131,15 @@ const client = createSearchClient({
   onResult({ query, result }) { /* render */ },
 });
 
-await client.init({ documents, schema, dictionaryEntries, relationshipMap, relationships, retriever: "indexed", lexicalIndex });
+await client.init({
+  documents,
+  schema,
+  configuredConcepts,
+  relationshipMap,
+  documentRelationships,
+  lexicalIndex,
+  retriever: "indexed",
+});
 client.setQuery("bluetooth");
 client.dispose();
 ```
@@ -139,7 +161,7 @@ node tools/search-corpus/build.mjs compile --input corpus.json --output dir --de
 ```js
 import { compileCorpus, normalizeExternalEquivalences } from "@software-land/search/corpus";
 
-const { equivalences, synonyms, dictionaryEntries } = compileCorpus({
+const { equivalences, synonyms, configuredConcepts } = compileCorpus({
   documents: [{ id: "a", title: "Central Processing Unit (CPU)", body: "The CPU fetches instructions." }],
 });
 
@@ -237,7 +259,7 @@ corpus JSON
                            → search-v2-lexical-index v1
   → search-semantic (opt.) → relationships (semantic)
   → search-relationships   → search-v2-relationships v1
-  → SearchEngine.create({ lexicalIndex, dictionary entries, relationships })
+  → SearchEngine.create({ lexicalIndex, documentRelationships, plugins from configuredConcepts })
 ```
 
 Runtime parsers validate each artifact's `format` + `version`; lexical indexes additionally fail closed on integrity, analyzer, schema, or corpus mismatch.

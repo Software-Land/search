@@ -16,13 +16,22 @@ Exact indexed retrieval enumerates every legitimate posting match. After relatio
 
 ## Equivalence ≠ relatedness ≠ generated evidence
 
+Search data is four distinct layers:
+
+| Name | Meaning |
+| --- | --- |
+| Configured concepts (`configuredConcepts`) | authored identities `{ key, aliases }`. Also compiled by `dictionary({ entries })`. Not the corpus vocabulary. |
+| Lexical index (`lexicalIndex`) | corpus lexical term/posting index |
+| Relationship map (`relationshipMap`) | authored form/concept/document relevance (`equivalent` / `related`) |
+| Document relationships (`documentRelationships`) | compiled document-to-document `RelationshipArtifact` |
+
 | | Lives where | Means |
 | --- | --- | --- |
 | Concept map (`dictionary({ entries: [{ key, aliases }] })`) | what query forms mean the **same thing** | `aliases[0]` is the canonical lexical sequence (compiled internally as expansion). Later aliases are alternate same-intent forms. Unambiguous key/alias spellings share ranked results. |
 | Relationship map (`relationshipMap`) | what other forms/concepts/documents are explicitly **related** | kinds `equivalent` (one-hop recall) and `related` (standalone / topical / editorial). Directional. No auto-reverse. No authored numeric weight. Compile with `compileAuthoredRelevance()`. |
 | Semantic graph (generated MiniLM artifact) | what relationships the **model inferred** | separate generated pipeline with embedding provenance. Not authored in `relationshipMap`. |
 
-`equivalent` is not `related`. Generated is not authored. Browser `SearchClient.init({ relationshipMap })` uses this same primitive.
+`equivalent` is not `related`. Generated is not authored. Browser `SearchClient.init({ configuredConcepts, relationshipMap, documentRelationships })` uses these same primitives.
 
 ### Configured occupancy and ranking
 
