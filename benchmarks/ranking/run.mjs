@@ -169,7 +169,7 @@ async function measureSoftwareLand() {
       morphology({ lemmas: load("lemmas.json") }),
       dictionary({ entries: load("dictionary.json") }),
     ],
-    relationships: load("relationships.json"),
+    documentRelationships: load("relationships.json"),
     relationshipStrategy: "hybrid",
     retriever: "full-scan",
   });

@@ -131,11 +131,11 @@ export const compileRelationshipMap: (
   options?: { concepts?: Iterable<{ key?: string } | string> | Map<string, unknown> | null; documents?: import("./api.js").SearchDocument[] | null }
 ) => CompiledRelationshipMap;
 export const compileAuthoredRelevance: (options?: {
-  entries?: EquivalenceEntry[];
+  configuredConcepts?: EquivalenceEntry[];
   relationshipMap?: RelationshipMap;
   documents?: import("./api.js").SearchDocument[];
 }) => CompiledAuthoredRelevance = compileAuthoredRelevanceImpl as (options?: {
-  entries?: EquivalenceEntry[];
+  configuredConcepts?: EquivalenceEntry[];
   relationshipMap?: RelationshipMap;
   documents?: import("./api.js").SearchDocument[];
 }) => CompiledAuthoredRelevance;

@@ -8,7 +8,7 @@ import {
   compileSynonyms,
   compileInspection,
   compileManifest,
-  dictionaryEntriesFromEquivalences,
+  configuredConceptsFromEquivalences,
 } from "./compile.js";
 import { buildVocabulary, spellingTerms } from "./vocabulary.js";
 import { mineSynonymCandidates } from "./synonyms.js";
@@ -118,7 +118,7 @@ export function compileAnalysis(analysis: AnalyzeResult) {
     spellingTerms: spelling,
     manifest,
     compileWarnings: equivalences.compileWarnings || [],
-    dictionaryEntries: dictionaryEntriesFromEquivalences(equivalences),
+    configuredConcepts: configuredConceptsFromEquivalences(equivalences),
   };
 }
 
@@ -138,7 +138,7 @@ export function compileCorpus(input?: unknown, { overrides = null, decisions = n
     inspection: analysis.inspection,
     manifest: compiled.manifest,
     timings: analysis.timings,
-    dictionaryEntries: compiled.dictionaryEntries,
+    configuredConcepts: compiled.configuredConcepts,
     compileWarnings: compiled.compileWarnings,
     corpusHash: analysis.corpusHash,
     decisionsHash: analysis.decisionsHash,

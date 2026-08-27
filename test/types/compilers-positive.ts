@@ -4,6 +4,7 @@ import {
   analyzeCorpus,
   compileAnalysis,
   compileCorpus,
+  configuredConceptsFromEquivalences,
   loadCorpus,
   normalizeExternalEquivalences,
   classifyExpansionRelation,
@@ -45,6 +46,7 @@ import {
 const documents: CorpusDocument[] = [{ id: "a", title: "CPU", body: "central" }];
 const compileOpts: CompileOptions = {};
 const corpus: Record<string, unknown> = compileCorpus({ documents }, compileOpts);
+void configuredConceptsFromEquivalences(corpus.equivalences);
 const analysis: AnalyzeResult = analyzeCorpus({ documents });
 const compiledFromAnalysis: Record<string, unknown> = compileAnalysis(analysis);
 const loaded = loadCorpus({ documents });

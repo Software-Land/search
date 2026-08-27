@@ -18,9 +18,9 @@ interface InitPayload {
   documents?: SearchDocument[];
   schema?: Schema;
   lexicalIndex?: LexicalIndexArtifact;
-  dictionaryEntries?: EquivalenceEntry[];
+  configuredConcepts?: EquivalenceEntry[];
   relationshipMap?: import("../api.js").RelationshipMap;
-  relationships?: RelationshipArtifact | null;
+  documentRelationships?: RelationshipArtifact | null;
   relationshipStrategy?: RelationshipStrategy;
   /** Worker-safe retriever name. Function-bearing custom retrievers are not structured-cloneable. */
   retriever?: RetrieverName | "indexed-lexical";

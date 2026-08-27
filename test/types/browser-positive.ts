@@ -35,9 +35,11 @@ void client.init({
   documents: [],
   retriever: "indexed",
   englishOptions: { lemmas: {} },
+  configuredConcepts: [{ key: "qa", aliases: [["quality", "assurance"]] }],
   relationshipMap: {
     qa: [{ to: { form: "testing" }, kind: "equivalent" }],
   },
+  documentRelationships: null,
 });
 void client.init({ documents: [], retriever: "full-scan" });
 void client.init({ documents: [], retriever: "adaptive" });

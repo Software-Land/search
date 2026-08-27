@@ -20,6 +20,12 @@ void client.init({
   englishOptions: { lemmas: {} },
 });
 
+// @ts-expect-error dictionaryEntries is not a public Worker init field
+void client.init({ dictionaryEntries: [] });
+
+// @ts-expect-error relationships is not a public Worker init field
+void client.init({ relationships: null });
+
 // @ts-expect-error internal pruning switch is not a public init field
 void client.init({ _exactPruningMode: "exhaustive" });
 

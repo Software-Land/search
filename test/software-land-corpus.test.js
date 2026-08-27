@@ -46,7 +46,7 @@ function createEngine({
       morphology(useLemmas ? { lemmas } : {}),
       dictionary({ entries: useDictionary ? dictionaryEntries : [] }),
     ],
-    relationships: useRelationships ? relationships : undefined,
+    documentRelationships: useRelationships ? relationships : undefined,
     relationshipStrategy: useRelationships ? "hybrid" : undefined,
     retriever,
   });

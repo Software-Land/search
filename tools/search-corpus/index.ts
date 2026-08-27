@@ -1,7 +1,7 @@
 export { compileCorpus, analyzeCorpus, compileAnalysis, COMPILER_VERSION } from "./lib/pipeline.js";
 export { loadCorpus } from "./lib/loadCorpus.js";
 export { spellingLexiconPlugin } from "./lib/vocabulary.js";
-export { dictionaryEntriesFromEquivalences } from "./lib/compile.js";
+export { configuredConceptsFromEquivalences } from "./lib/compile.js";
 export {
   normalizeExternalEquivalences,
   classifyExpansionRelation,

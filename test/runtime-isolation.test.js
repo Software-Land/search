@@ -66,7 +66,7 @@ describe("runtime isolation", () => {
     const engine = SearchEngine.create({
       schema,
       plugins: [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
-      relationships: {
+      documentRelationships: {
         format: "search-v2-relationships",
         version: 1,
         relationships: {

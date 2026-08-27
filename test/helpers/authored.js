@@ -51,8 +51,7 @@ export function pluginByName(authored, name) {
 export function dictionaryFromLegacy(entries, extra = {}) {
   const split = splitAuthored(entries);
   return pluginByName(
-    compileAuthoredRelevance({
-      entries: split.entries,
+    compileAuthoredRelevance({ configuredConcepts: split.entries,
       relationshipMap: extra.relationshipMap || split.relationshipMap,
       documents: extra.documents,
     }),

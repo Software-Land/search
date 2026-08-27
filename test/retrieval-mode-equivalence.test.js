@@ -43,7 +43,7 @@ function createEngine(retriever) {
       morphology({ lemmas: loadJson("lemmas.json") }),
       dictionary({ entries: loadJson("dictionary.json") }),
     ],
-    relationships: loadJson("relationships.json"),
+    documentRelationships: loadJson("relationships.json"),
     relationshipStrategy: "hybrid",
     retriever,
   });

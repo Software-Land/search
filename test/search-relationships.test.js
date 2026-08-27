@@ -164,7 +164,7 @@ describe("search-relationships compilation", () => {
     const engine = SearchEngine.create({
       schema,
       plugins: [morphology(), dictionary({ entries: [] })],
-      relationships: compiled.runtime,
+      documentRelationships: compiled.runtime,
     });
     await engine.index(bluetoothDocs.documents);
     const detailed = engine.searchDetailed("bluetooth", { limit: 10, relatedLimit: 5, explain: true });
@@ -226,7 +226,7 @@ describe("search-relationships compilation", () => {
     });
     const edges = compiled.runtime.relationships.bluetooth;
     expect(edges.filter((e) => e.target === "wifi").map((e) => e.type).sort()).toEqual(["editorial", "semantic"]);
-    const engine = SearchEngine.create({ schema, plugins: [morphology()], relationships: compiled.runtime });
+    const engine = SearchEngine.create({ schema, plugins: [morphology()], documentRelationships: compiled.runtime });
     await engine.index(bluetoothDocs.documents);
     const detailed = engine.searchDetailed("bluetooth", { limit: 10, relatedLimit: 8, explain: true });
     const relatedWifi = detailed.related.filter((r) => r.title === "Wi-Fi");
@@ -300,7 +300,7 @@ describe("search-relationships compilation", () => {
     const engine = SearchEngine.create({
       schema,
       plugins: [morphology(), dictionary({ entries: [] })],
-      relationships: compiled.runtime,
+      documentRelationships: compiled.runtime,
     });
     const tls = analyzeQuery("tls", { plugins: engine.plugins });
     expect(tls.tokens.map((t) => t.normalized)).toEqual(["tls"]);

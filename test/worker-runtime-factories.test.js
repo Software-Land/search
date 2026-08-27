@@ -74,7 +74,7 @@ describe("createWorkerRuntime factory compatibility", () => {
       {
         documents: [{ id: "zephyr", title: "Zephyr Target", body: "zephyr only body text" }],
         schema,
-        dictionaryEntries,
+        configuredConcepts: dictionaryEntries,
         retriever: "full-scan",
       },
       "customhost token"
@@ -90,8 +90,8 @@ describe("createWorkerRuntime factory compatibility", () => {
       english: morphology,
       compileAuthoredRelevance: (opts) => {
         compileCalls += 1;
-        expect(Object.keys(opts).sort()).toEqual(["documents", "entries", "relationshipMap"]);
-        expect(opts.entries).toEqual(authoredEntries);
+        expect(Object.keys(opts).sort()).toEqual(["configuredConcepts", "documents", "relationshipMap"]);
+        expect(opts.configuredConcepts).toEqual(authoredEntries);
         expect(opts.relationshipMap).toBeUndefined();
         expect(opts.documents).toEqual(authoredDocuments);
         return compileAuthoredRelevance(opts);
@@ -102,7 +102,7 @@ describe("createWorkerRuntime factory compatibility", () => {
       {
         documents: authoredDocuments,
         schema,
-        dictionaryEntries: authoredEntries,
+        configuredConcepts: authoredEntries,
         retriever: "full-scan",
       },
       "qa"
@@ -137,9 +137,9 @@ describe("createWorkerRuntime factory compatibility", () => {
     await client.init({
       documents: authoredDocuments,
       schema,
-      dictionaryEntries: authoredEntries,
+      configuredConcepts: authoredEntries,
       relationshipMap: mixedMap,
-      relationships: {
+      documentRelationships: {
         format: "search-v2-relationships",
         version: 1,
         relationships: {
@@ -190,7 +190,7 @@ describe("createWorkerRuntime factory compatibility", () => {
       client.init({
         documents: authoredDocuments,
         schema,
-        dictionaryEntries: authoredEntries,
+        configuredConcepts: authoredEntries,
         relationshipMap: mixedMap,
       })
     ).rejects.toThrow(/cannot compile relationshipMap/);

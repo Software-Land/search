@@ -245,6 +245,12 @@ try {
   if (!/relationshipMap\?: import\("\.\.\/api\.js"\)\.RelationshipMap;/.test(browserApiDts) && !/relationshipMap\?: RelationshipMap;/.test(browserApiDts)) {
     throw new Error("packed SearchClient.init must type relationshipMap");
   }
+  if (!browserApiDts.includes("configuredConcepts?:") || !browserApiDts.includes("documentRelationships?:")) {
+    throw new Error("packed SearchClient.init must type configuredConcepts and documentRelationships");
+  }
+  if (browserApiDts.includes("dictionaryEntries?:") || /(?<!document)relationships\?:/.test(browserApiDts)) {
+    throw new Error("packed SearchClient.init must not type dictionaryEntries or top-level relationships");
+  }
   if (!browserApiDts.includes("init(payload: InitPayload)") && !browserApiDts.includes("init(payload: InitPayload):")) {
     throw new Error("packed SearchClient.init is missing InitPayload typing");
   }
@@ -264,8 +270,28 @@ try {
       throw new Error(`packed CompiledAuthoredRelevance must not expose ${leaked.slice(0, -1)}`);
     }
   }
-  if (!authoredBlock[0].includes("plugins:") || !authoredBlock[0].includes("relationships:")) {
-    throw new Error("packed CompiledAuthoredRelevance must expose plugins and relationships");
+  if (!authoredBlock[0].includes("plugins:") || !authoredBlock[0].includes("documentRelationships:")) {
+    throw new Error("packed CompiledAuthoredRelevance must expose plugins and documentRelationships");
+  }
+  if (/\brelationships\?:/.test(authoredBlock[0])) {
+    throw new Error("packed CompiledAuthoredRelevance must not expose relationships as a public field");
+  }
+  const createBlock = readFileSync(path.join(packedRoot, "dist/api.d.ts"), "utf8").match(
+    /export interface SearchEngineOptions \{[\s\S]*?\n\}/
+  );
+  if (!createBlock) throw new Error("packed api.d.ts missing SearchEngineOptions");
+  if (!createBlock[0].includes("documentRelationships?:")) {
+    throw new Error("packed SearchEngineOptions must type documentRelationships");
+  }
+  if (/\n  relationships\?:/.test(createBlock[0])) {
+    throw new Error("packed SearchEngineOptions must not type relationships");
+  }
+  const corpusDts = readFileSync(path.join(packedRoot, "tools/search-corpus/index.d.ts"), "utf8");
+  if (!corpusDts.includes("configuredConceptsFromEquivalences")) {
+    throw new Error("packed corpus dts missing configuredConceptsFromEquivalences");
+  }
+  if (corpusDts.includes("dictionaryEntriesFromEquivalences")) {
+    throw new Error("packed corpus dts must not export dictionaryEntriesFromEquivalences");
   }
   const rootDts = readFileSync(path.join(packedRoot, "dist/index.d.ts"), "utf8");
   if (!/\bmergeRelationships\b/.test(rootDts)) throw new Error("packed root dts missing mergeRelationships");
@@ -291,7 +317,7 @@ try {
     path.join(consumer, "probe.mjs"),
     `import { SearchEngine, morphology, compileAuthoredRelevance, mergeRelationships, parseSynonyms, normalizeSearchEquivalences } from "@software-land/search";
 import { createSearchClient, searchWorkerUrl } from "@software-land/search/browser";
-import { compileCorpus, normalizeExternalEquivalences, classifyExpansionRelation } from "@software-land/search/corpus";
+import { compileCorpus, normalizeExternalEquivalences, classifyExpansionRelation, configuredConceptsFromEquivalences } from "@software-land/search/corpus";
 import { compileRelationships } from "@software-land/search/relationships";
 import { compileSemantic } from "@software-land/search/semantic";
 import { compileLexicalFrequency } from "@software-land/search/lexical";
@@ -306,6 +332,7 @@ if (typeof createSearchClient !== "function") throw new Error("browser createSea
 if (typeof compileCorpus !== "function") throw new Error("corpus compileCorpus missing");
 if (typeof normalizeExternalEquivalences !== "function") throw new Error("corpus normalizeExternalEquivalences missing");
 if (typeof classifyExpansionRelation !== "function") throw new Error("corpus classifyExpansionRelation missing");
+if (typeof configuredConceptsFromEquivalences !== "function") throw new Error("corpus configuredConceptsFromEquivalences missing");
 if (typeof compileRelationships !== "function") throw new Error("relationships compileRelationships missing");
 if (typeof compileSemantic !== "function") throw new Error("semantic compileSemantic missing");
 if (typeof compileLexicalFrequency !== "function") throw new Error("lexical compileLexicalFrequency missing");
@@ -332,14 +359,14 @@ if (artifact.format !== "search-v2-synonyms" || artifact.entries[0].terms[1] !==
 }
 
 const authored = compileAuthoredRelevance({
-  entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
+  configuredConcepts: [{ key: "qa", aliases: [["quality", "assurance"]] }],
   relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
 });
 const publicKeys = Object.keys(authored).sort();
-if (publicKeys.join(",") !== "plugins,relationships") {
-  throw new Error(\`compileAuthoredRelevance public keys must be plugins,relationships; got \${publicKeys.join(",")}\`);
+if (publicKeys.join(",") !== "documentRelationships,plugins") {
+  throw new Error(\`compileAuthoredRelevance public keys must be documentRelationships,plugins; got \${publicKeys.join(",")}\`);
 }
-for (const leaked of ["dictionary", "synonyms", "synonymMap", "editorialRelationships"]) {
+for (const leaked of ["dictionary", "synonyms", "synonymMap", "editorialRelationships", "relationships", "entries"]) {
   if (leaked in authored) throw new Error(\`compileAuthoredRelevance must not expose \${leaked}\`);
 }
 const synonymsPlugin = authored.plugins.find((plugin) => plugin.name === "synonyms");
@@ -353,7 +380,7 @@ if (authored.plugins.length !== 2 || authored.plugins.map((plugin) => plugin.nam
 const engine = SearchEngine.create({
   schema: { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } },
   plugins: [morphology(), ...authored.plugins],
-  relationships: authored.relationships,
+  documentRelationships: authored.documentRelationships,
 });
 await engine.index([
   { id: "qa-guide", title: "Quality Assurance Guide", body: "process quality assurance handbook" },
@@ -363,8 +390,30 @@ const ids = engine.search("qa", { limit: 5 }).map((hit) => hit.id);
 if (!ids.includes("qa-guide") || !ids.includes("load")) {
   throw new Error("compileAuthoredRelevance engine search failed");
 }
-if (mergeRelationships(null, authored.relationships) !== null) {
-  throw new Error("null authored.relationships must merge to null");
+if (mergeRelationships(null, authored.documentRelationships) !== null) {
+  throw new Error("null authored.documentRelationships must merge to null");
+}
+
+try {
+  SearchEngine.create({
+    relationships: { format: "search-v2-relationships", version: 1, relationships: {} },
+  });
+  throw new Error("old SearchEngine.create relationships option must be rejected");
+} catch (err) {
+  if (String(err?.message || err).includes("must be rejected")) throw err;
+}
+
+const compiledCorpus = compileCorpus({
+  documents: [{ id: "a", title: "Central Processing Unit (CPU)", body: "The CPU fetches instructions." }],
+});
+if (!Array.isArray(compiledCorpus.configuredConcepts)) {
+  throw new Error("compileCorpus must return configuredConcepts");
+}
+if ("dictionaryEntries" in compiledCorpus) {
+  throw new Error("compileCorpus must not return dictionaryEntries");
+}
+if (!Array.isArray(configuredConceptsFromEquivalences(compiledCorpus.equivalences))) {
+  throw new Error("configuredConceptsFromEquivalences must return concept rows");
 }
 
 const workerUrl = String(searchWorkerUrl());

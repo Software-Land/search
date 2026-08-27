@@ -84,7 +84,7 @@ describe("search-v2-lexical-index v1", () => {
     const rawEngine = SearchEngine.create({
       schema,
       plugins,
-      relationships: load("relationships.json"),
+      documentRelationships: load("relationships.json"),
       retriever: "full-scan",
     });
     await rawEngine.index(documents);
@@ -106,7 +106,7 @@ describe("search-v2-lexical-index v1", () => {
     const options = {
       schema,
       plugins,
-      relationships: load("relationships.json"),
+      documentRelationships: load("relationships.json"),
       relationshipStrategy: "hybrid",
       retriever: "full-scan",
     };

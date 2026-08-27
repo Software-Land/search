@@ -108,7 +108,7 @@ export function createWorkerRuntime({
       if (hasCustomCompiler || hasRelationshipMap || !hasLegacyDictionary) {
         const compile = hasCustomCompiler ? compileAuthoredRelevance : defaultCompileAuthoredRelevance;
         authored = compile({
-          entries: payload.dictionaryEntries || [],
+          configuredConcepts: payload.configuredConcepts || [],
           relationshipMap: payload.relationshipMap,
           documents,
         });
@@ -116,7 +116,7 @@ export function createWorkerRuntime({
       } else {
         plugins.push(
           dictionary({
-            entries: payload.dictionaryEntries || [],
+            entries: payload.configuredConcepts || [],
           })
         );
       }
@@ -124,7 +124,10 @@ export function createWorkerRuntime({
         schema: payload.schema,
         plugins,
         lexicalIndex: payload.lexicalIndex,
-        relationships: mergeRelationships(payload.relationships || null, authored?.relationships ?? null),
+        documentRelationships: mergeRelationships(
+          payload.documentRelationships || null,
+          authored?.documentRelationships ?? null
+        ),
         relationshipStrategy: payload.relationshipStrategy,
         retriever: payload.retriever,
         candidateLimit: payload.candidateLimit ?? undefined,
@@ -133,7 +136,7 @@ export function createWorkerRuntime({
       const indexed = await engine.index(documents);
       payload.lexicalIndex = undefined;
       payload.documents = undefined;
-      payload.relationships = undefined;
+      payload.documentRelationships = undefined;
       reply({
         type: MSG.READY,
         requestId: message.requestId,

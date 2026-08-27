@@ -552,7 +552,7 @@ function createEngine(retriever, docs, extra = {}) {
   const engine = SearchEngine.create({
     schema: SCHEMA,
     plugins: extra.plugins || [morphology({ lemmas: extra.lemmas || {} }), dictionary({ entries: extra.dictionary || [] })],
-    relationships: extra.relationships || null,
+    documentRelationships: extra.relationships || null,
     relationshipStrategy: extra.relationshipStrategy || "hybrid",
     retriever,
     candidateLimit: extra.candidateLimit ?? 200,
@@ -1642,7 +1642,7 @@ async function measureActualStage1(docs, extra, queries) {
   const options = {
     schema: SCHEMA,
     plugins,
-    relationships: extra.relationships || null,
+    documentRelationships: extra.relationships || null,
     relationshipStrategy: extra.relationshipStrategy || "hybrid",
   };
   let rawJson = JSON.stringify(docs);

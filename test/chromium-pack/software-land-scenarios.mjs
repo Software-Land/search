@@ -191,9 +191,9 @@ async function main() {
       JSON.stringify({
         documents,
         schema: inputs.schema,
-        dictionaryEntries: inputs.dictionaryEntries,
+        configuredConcepts: inputs.dictionaryEntries,
         relationshipMap: inputs.relationshipMap,
-        relationships: inputs.relationships,
+        documentRelationships: inputs.relationships,
         relationshipStrategy: "hybrid",
         englishOptions: { lemmas: inputs.lemmas },
       })

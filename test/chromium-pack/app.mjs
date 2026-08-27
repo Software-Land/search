@@ -53,7 +53,7 @@ try {
       title: { type: "text", role: "title" },
       body: { type: "text", role: "body" },
     },
-    dictionaryEntries: [],
+    configuredConcepts: [],
   });
   await client.waitReady();
   window.__booted = true;

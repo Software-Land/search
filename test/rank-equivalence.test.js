@@ -508,7 +508,7 @@ describe("ranking equivalence on Software.Land featured hits", () => {
         body: { type: "text", role: "body" },
       },
       plugins: [morphology({ lemmas }), dictionary({ entries: dictionaryEntries })],
-      relationships,
+      documentRelationships: relationships,
       relationshipStrategy: "hybrid",
       retriever: "full-scan",
     });

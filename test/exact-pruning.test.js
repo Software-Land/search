@@ -86,7 +86,8 @@ function deterministicCorpus(n) {
 }
 
 async function compiledEngine(documents, options = {}) {
-  const lexicalIndex = options.lexicalIndex || compileLexicalIndex(documents, {
+  const { relationships, lexicalIndex: suppliedIndex, ...rest } = options;
+  const lexicalIndex = suppliedIndex || compileLexicalIndex(documents, {
     schema,
   });
   const engine = SearchEngine.create({
@@ -94,7 +95,8 @@ async function compiledEngine(documents, options = {}) {
     lexicalIndex,
     retriever: "indexed",
     relationshipStrategy: "none",
-    ...options,
+    documentRelationships: relationships,
+    ...rest,
   });
   await engine.index(documents);
   return engine;

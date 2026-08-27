@@ -618,7 +618,7 @@ export interface SearchEngineOptions {
   schema?: Schema;
   plugins?: Array<SearchPlugin | null | undefined>;
   lexicalIndex?: LexicalIndexArtifact | null;
-  relationships?: RelationshipArtifact | RelationshipGraphApi | null;
+  documentRelationships?: RelationshipArtifact | RelationshipGraphApi | null;
   relationshipStrategy?: RelationshipStrategy | string;
   retriever?: RetrieverName | "indexed-lexical" | Retriever | IndexedLexicalOptions | AdaptiveRetrieverOptions | null;
   candidateLimit?: number | null;

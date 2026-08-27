@@ -168,7 +168,7 @@ async function runMode(mode, n) {
     documents,
     schema: { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } },
     lexicalIndex,
-    dictionaryEntries: [],
+    configuredConcepts: [],
     retriever,
     candidateLimit: 200,
     relationshipStrategy: "none",

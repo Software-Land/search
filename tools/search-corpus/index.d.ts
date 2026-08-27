@@ -34,7 +34,7 @@ export declare function compileAnalysis(analysis: import("./types.js").AnalyzeRe
 export declare function compileCorpus(input?: unknown, opts?: import("./types.js").CompileOptions): Record<string, unknown>;
 export declare function loadCorpus(input?: unknown): import("./types.js").LoadedCorpus;
 export declare function spellingLexiconPlugin(options?: unknown): unknown;
-export declare function dictionaryEntriesFromEquivalences(equivalences?: unknown): unknown[];
+export declare function configuredConceptsFromEquivalences(equivalences?: unknown): unknown[];
 export declare class ExternalEquivalenceError extends Error {
   details: string[];
 }

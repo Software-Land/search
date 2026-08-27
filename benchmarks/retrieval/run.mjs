@@ -76,7 +76,7 @@ async function createEngine(retriever, docs, extra = {}) {
   const engine = SearchEngine.create({
     schema: SCHEMA,
     plugins: [morphology({ lemmas: LEMMAS }), dictionary({ entries: DICTIONARY })],
-    relationships: RELATIONSHIPS,
+    documentRelationships: RELATIONSHIPS,
     relationshipStrategy: "hybrid",
     retriever,
     candidateLimit: 200,

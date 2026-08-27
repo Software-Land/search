@@ -39,8 +39,7 @@ const APPSEC_TOPICAL = [
 ];
 
 function createRelevanceEngine() {
-  const compiled = compileAuthoredRelevance({
-    entries: dictionaryEntries,
+  const compiled = compileAuthoredRelevance({ configuredConcepts: dictionaryEntries,
     relationshipMap,
   });
   return SearchEngine.create({
@@ -49,7 +48,7 @@ function createRelevanceEngine() {
       morphology({ lemmas }),
       ...compiled.plugins,
     ],
-    relationships,
+    documentRelationships: relationships,
     relationshipStrategy: "hybrid",
     retriever: "full-scan",
   });
@@ -221,7 +220,7 @@ describe("Software.Land historical relevance contracts", () => {
       "vulnerability",
       ["signed", "cookies"],
     ]);
-    const compiled = compileAuthoredRelevance({ entries: dictionaryEntries, relationshipMap });
+    const compiled = compileAuthoredRelevance({ configuredConcepts: dictionaryEntries, relationshipMap });
     const dictionaryPlugin = compiled.plugins.find((plugin) => plugin.name === "dictionary");
     expect(dictionaryPlugin.topicalRecallByKey.get("appsec")).toEqual(APPSEC_TOPICAL);
     const map = compileRelationshipMap(relationshipMap, { concepts: dictionaryEntries });

@@ -60,7 +60,7 @@ try {
       title: { type: "text", role: "title" },
       body: { type: "text", role: "body" },
     },
-    dictionaryEntries: [
+    configuredConcepts: [
       { key: "qa", aliases: [["quality", "assurance"]] },
       { key: "http", aliases: [["hypertext", "transfer", "protocol"]] },
       { key: "appsec", aliases: [["application", "security"]] },
@@ -71,7 +71,7 @@ try {
       appsec: [{ kind: "related", to: { form: "authentication" } }],
       "doc-a": [{ kind: "related", to: { document: "doc-b" } }],
     },
-    relationships: {
+    documentRelationships: {
       format: "search-v2-relationships",
       version: 1,
       relationships: {

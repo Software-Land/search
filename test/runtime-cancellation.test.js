@@ -88,7 +88,7 @@ function sleep(ms, signal) {
 
 describe("relationship API", () => {
   async function engine() {
-    const e = SearchEngine.create({ schema, plugins, relationships: graph });
+    const e = SearchEngine.create({ schema, plugins, documentRelationships: graph });
     await e.index(relDocs);
     return e;
   }
@@ -475,8 +475,8 @@ describe("worker adapter", () => {
     await client.init({
       documents: relDocs,
       schema,
-      dictionaryEntries: dictEntries,
-      relationships: graph,
+      configuredConcepts: dictEntries,
+      documentRelationships: graph,
     });
     expect(runtime.initialized).toBe(true);
     client.setQuery("t");
@@ -500,7 +500,7 @@ describe("worker adapter", () => {
         published.push(result.results[0]?.title);
       },
     });
-    await client.init({ documents: relDocs, schema, dictionaryEntries: dictEntries });
+    await client.init({ documents: relDocs, schema, configuredConcepts: dictEntries });
     client.setQuery("tls");
     client.terminate();
     await sleep(40);

@@ -32,7 +32,7 @@ const engine = SearchEngine.create({
   retriever: "adaptive",
   adaptive: { documentThreshold: 1500 },
   relationshipStrategy: "separate",
-  relationships: {
+  documentRelationships: {
     format: "search-v2-relationships",
     version: 1,
     relationships: {

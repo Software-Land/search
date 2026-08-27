@@ -113,8 +113,7 @@ describe("canonical alias compiler", () => {
 
 describe("relationshipMap compile", () => {
   test("G. equivalent compiles to existing synonym behavior", () => {
-    const compiled = compileAuthoredRelevance({
-      entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
+    const compiled = compileAuthoredRelevance({ configuredConcepts: [{ key: "qa", aliases: [["quality", "assurance"]] }],
       relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
     });
     expect(compileRelationshipMap({ qa: [{ to: { form: "testing" }, kind: "equivalent" }] }).synonymMap).toEqual({
@@ -130,8 +129,7 @@ describe("relationshipMap compile", () => {
       { id: "unrelated", title: "Gardening Tips", body: "tomatoes and soil" },
     ];
     const entries = [{ key: "qa", aliases: [["quality", "assurance"]] }];
-    const authored = compileAuthoredRelevance({
-      entries,
+    const authored = compileAuthoredRelevance({ configuredConcepts: entries,
       relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
     });
     const viaAuthored = SearchEngine.create({
@@ -165,8 +163,7 @@ describe("relationshipMap compile", () => {
   });
 
   test("H. related token -> concept compiles to existing standalone behavior", () => {
-    const compiled = compileAuthoredRelevance({
-      entries: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
+    const compiled = compileAuthoredRelevance({ configuredConcepts: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
       relationshipMap: { hypertext: [{ to: { concept: "http" }, kind: "related" }] },
     });
     const plugin = pluginByName(compiled, "dictionary");
@@ -175,8 +172,7 @@ describe("relationshipMap compile", () => {
   });
 
   test("I. related concept -> form compiles to existing topical behavior", () => {
-    const compiled = compileAuthoredRelevance({
-      entries: [{ key: "appsec", aliases: [["application", "security"]] }],
+    const compiled = compileAuthoredRelevance({ configuredConcepts: [{ key: "appsec", aliases: [["application", "security"]] }],
       relationshipMap: {
         appsec: [
           { to: { form: "authentication" }, kind: "related" },
@@ -197,12 +193,11 @@ describe("relationshipMap compile", () => {
       tls: [{ target: "vpn", type: "editorial", strength: 1, provenance: "manual" }],
     });
     expect(compiled.editorialRelationships.vpn).toBeUndefined();
-    const authored = compileAuthoredRelevance({
-      entries: [],
+    const authored = compileAuthoredRelevance({ configuredConcepts: [],
       relationshipMap: { tls: [{ to: { document: "vpn" }, kind: "related" }] },
       documents: [{ id: "tls", title: "TLS 1.2 Vulnerability" }, { id: "vpn", title: "What is VPN?" }],
     });
-    expect(authored.relationships.relationships.tls).toEqual([
+    expect(authored.documentRelationships.relationships.tls).toEqual([
       { target: "vpn", type: "editorial", strength: 1, provenance: "manual" },
     ]);
   });
@@ -281,14 +276,13 @@ describe("authored compile preserves runtime identity", () => {
   });
 
   test("N. generated semantic provenance remains distinct from authored related", async () => {
-    const compiled = compileAuthoredRelevance({
-      entries: [{ key: "tls", aliases: [["transport", "layer", "security"]] }],
+    const compiled = compileAuthoredRelevance({ configuredConcepts: [{ key: "tls", aliases: [["transport", "layer", "security"]] }],
       relationshipMap: {},
     });
     const engine = SearchEngine.create({
       schema,
       plugins: [morphology(), ...compiled.plugins],
-      relationships: {
+      documentRelationships: {
         format: "search-v2-relationships",
         version: 1,
         relationships: {
@@ -304,7 +298,7 @@ describe("authored compile preserves runtime identity", () => {
     const related = engine.searchDetailed("tls", { limit: 5, relatedLimit: 5 }).related;
     expect(related[0].relationship.provenance).toBe("embedding");
     expect(related[0].relationship.type).toBe("semantic");
-    expect(compiled.relationships).toBeNull();
+    expect(compiled.documentRelationships).toBeNull();
   });
 });
 

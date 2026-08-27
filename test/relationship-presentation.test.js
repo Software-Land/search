@@ -26,7 +26,7 @@ const plugins = [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["
 
 describe("direct classes", () => {
   test("exact title is strong; body-only is weak; related is none", async () => {
-    const engine = SearchEngine.create({ schema, plugins, relationships: graph });
+    const engine = SearchEngine.create({ schema, plugins, documentRelationships: graph });
     await engine.index(docs);
     const { results, related } = engine.searchDetailed("TLS Configuration", { limit: 10, explain: true });
     expect(results[0].directClass).toBe("strong");
@@ -58,7 +58,7 @@ describe("direct classes", () => {
 
 describe("relationship presentation", () => {
   async function engine() {
-    const e = SearchEngine.create({ schema, plugins, relationships: graph });
+    const e = SearchEngine.create({ schema, plugins, documentRelationships: graph });
     await e.index(docs);
     return e;
   }

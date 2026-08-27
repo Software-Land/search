@@ -31,7 +31,7 @@ async function reversedPrimaryEngine(opts = {}) {
   const engine = SearchEngine.create({
     schema,
     plugins,
-    relationships: reversedPrimaryGraph,
+    documentRelationships: reversedPrimaryGraph,
     relationshipStrategy: "separate",
     ...opts,
   });

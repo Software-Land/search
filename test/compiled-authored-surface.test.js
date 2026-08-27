@@ -1,8 +1,8 @@
 /**
  * Canonical compileAuthoredRelevance aggregate surface:
  *   plugins: [morphology(), ...authored.plugins]
- *   relationships: authored.relationships
- * Public result keys are only plugins and relationships.
+ *   documentRelationships: authored.documentRelationships
+ * Public result keys are only plugins and documentRelationships.
  */
 import {
   SearchEngine,
@@ -74,7 +74,7 @@ async function engineFrom(plugins, relationships, retriever) {
   const engine = SearchEngine.create({
     schema,
     plugins,
-    relationships,
+    documentRelationships: relationships,
     retriever,
     relationshipStrategy: "hybrid",
   });
@@ -87,15 +87,16 @@ function pluginByName(authored, name) {
 }
 
 describe("compileAuthoredRelevance aggregate surface", () => {
-  const authored = compileAuthoredRelevance({ entries, relationshipMap, documents });
+  const authored = compileAuthoredRelevance({ configuredConcepts: entries, relationshipMap, documents });
   const map = compileRelationshipMap(relationshipMap, { concepts: entries, documents });
 
-  test("public result keys are only plugins and relationships", () => {
-    expect(Object.keys(authored).sort()).toEqual(["plugins", "relationships"]);
+  test("public result keys are only plugins and documentRelationships", () => {
+    expect(Object.keys(authored).sort()).toEqual(["documentRelationships", "plugins"]);
     expect(authored).not.toHaveProperty("dictionary");
     expect(authored).not.toHaveProperty("synonyms");
     expect(authored).not.toHaveProperty("synonymMap");
     expect(authored).not.toHaveProperty("editorialRelationships");
+    expect(authored).not.toHaveProperty("relationships");
   });
 
   test("plugins are compiler-owned and ordered", () => {
@@ -107,36 +108,34 @@ describe("compileAuthoredRelevance aggregate surface", () => {
   });
 
   test("empty equivalent map still includes the compiled recall plugin", () => {
-    const relatedOnly = compileAuthoredRelevance({
-      entries: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
+    const relatedOnly = compileAuthoredRelevance({ configuredConcepts: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
       relationshipMap: { hypertext: [{ kind: "related", to: { concept: "http" } }] },
     });
     expect(relatedOnly.plugins.map((plugin) => plugin.name)).toEqual(["dictionary", "synonyms"]);
     expect(pluginByName(relatedOnly, "synonyms").expand("hypertext")).toEqual([]);
-    expect(relatedOnly.relationships).toBeNull();
+    expect(relatedOnly.documentRelationships).toBeNull();
   });
 
-  test("relationships is the editorial artifact or null", () => {
-    expect(authored.relationships).toEqual(
+  test("documentRelationships is the editorial artifact or null", () => {
+    expect(authored.documentRelationships).toEqual(
       mergeRelationships(null, {
         format: "search-v2-relationships",
         version: 1,
         relationships: map.editorialRelationships,
       })
     );
-    expect(authored.relationships.format).toBe("search-v2-relationships");
-    expect(authored.relationships.relationships["doc-a"]).toEqual([
+    expect(authored.documentRelationships.format).toBe("search-v2-relationships");
+    expect(authored.documentRelationships.relationships["doc-a"]).toEqual([
       { target: "doc-b", type: "editorial", strength: 1, provenance: "manual" },
     ]);
-    const none = compileAuthoredRelevance({
-      entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
+    const none = compileAuthoredRelevance({ configuredConcepts: [{ key: "qa", aliases: [["quality", "assurance"]] }],
     });
-    expect(none.relationships).toBeNull();
+    expect(none.documentRelationships).toBeNull();
   });
 
   test("mergeRelationships composes semantic and authored artifacts", () => {
     const original = JSON.parse(JSON.stringify(semantic));
-    const merged = mergeRelationships(semantic, authored.relationships);
+    const merged = mergeRelationships(semantic, authored.documentRelationships);
     expect(semantic).toEqual(original);
     expect(merged.relationships["doc-a"]).toEqual([
       { target: "qa-guide", type: "semantic", strength: 0.7, provenance: "generated" },
@@ -149,12 +148,12 @@ describe("compileAuthoredRelevance aggregate surface", () => {
     async (retriever) => {
       const explicit = await engineFrom(
         [morphology(), authored.plugins[0], synonymsPrimitive(map.synonymMap)],
-        mergeRelationships(null, authored.relationships),
+        mergeRelationships(null, authored.documentRelationships),
         retriever
       );
       const aggregate = await engineFrom(
         [morphology(), ...authored.plugins],
-        authored.relationships,
+        authored.documentRelationships,
         retriever
       );
       const queries = ["qa", "testing", "hypertext", "application security", "krypton"];
@@ -165,12 +164,11 @@ describe("compileAuthoredRelevance aggregate surface", () => {
   );
 
   test("empty synonyms plugin does not change related-only occupancy", async () => {
-    const relatedOnly = compileAuthoredRelevance({
-      entries: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
+    const relatedOnly = compileAuthoredRelevance({ configuredConcepts: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
       relationshipMap: { hypertext: [{ kind: "related", to: { concept: "http" } }] },
     });
     const without = await engineFrom([morphology(), relatedOnly.plugins[0]], null, "full-scan");
-    const withPlugin = await engineFrom([morphology(), ...relatedOnly.plugins], relatedOnly.relationships, "full-scan");
+    const withPlugin = await engineFrom([morphology(), ...relatedOnly.plugins], relatedOnly.documentRelationships, "full-scan");
     expect(snapshot(withPlugin, "hypertext", "full-scan")).toEqual(snapshot(without, "hypertext", "full-scan"));
   });
 });

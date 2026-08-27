@@ -52,14 +52,14 @@ describe("compact compiled lexical runtime", () => {
     fat = SearchEngine.create({
       schema,
       plugins,
-      relationships,
+      documentRelationships: relationships,
       relationshipStrategy: "hybrid",
       retriever: "full-scan",
     });
     compact = SearchEngine.create({
       schema,
       plugins,
-      relationships,
+      documentRelationships: relationships,
       relationshipStrategy: "hybrid",
       retriever: "indexed",
       lexicalIndex: artifact,
@@ -67,7 +67,7 @@ describe("compact compiled lexical runtime", () => {
     fallback = SearchEngine.create({
       schema,
       plugins,
-      relationships,
+      documentRelationships: relationships,
       relationshipStrategy: "hybrid",
       retriever: "indexed",
     });

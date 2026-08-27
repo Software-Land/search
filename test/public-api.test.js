@@ -43,7 +43,7 @@ const graph = {
 const plugins = [morphology(), dictionary({ entries: [{ key: "wifi", aliases: [["wi", "fi"]]}] })];
 
 async function make(opts = {}) {
-  const e = SearchEngine.create({ schema, plugins, relationships: graph, ...opts });
+  const e = SearchEngine.create({ schema, plugins, documentRelationships: graph, ...opts });
   await e.index(docs);
   return e;
 }
@@ -69,12 +69,11 @@ describe("public API", () => {
   });
 
   test("mergeRelationships composes public relationship artifacts", () => {
-    const authored = compileAuthoredRelevance({
-      entries: [],
+    const authored = compileAuthoredRelevance({ configuredConcepts: [],
       relationshipMap: { bluetooth: [{ to: { document: "nfc" }, kind: "related" }] },
       documents: docs,
     });
-    const merged = publicApi.mergeRelationships(graph, authored.relationships);
+    const merged = publicApi.mergeRelationships(graph, authored.documentRelationships);
     expect(merged.relationships.bluetooth).toEqual([
       { target: "connected-devices", type: "editorial", strength: 1, provenance: "manual" },
       { target: "nfc", type: "editorial", strength: 1, provenance: "manual" },
@@ -82,13 +81,12 @@ describe("public API", () => {
   });
 
   test("compileAuthoredRelevance is the public authored-relevance compiler", async () => {
-    const authored = compileAuthoredRelevance({
-      entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
+    const authored = compileAuthoredRelevance({ configuredConcepts: [{ key: "qa", aliases: [["quality", "assurance"]] }],
       relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
     });
     expect(pluginByName(authored, "synonyms").expand("qa").map((row) => row.form)).toEqual(["testing"]);
     expect(authored.plugins.map((plugin) => plugin.name)).toEqual(["dictionary", "synonyms"]);
-    expect(Object.keys(authored).sort()).toEqual(["plugins", "relationships"]);
+    expect(Object.keys(authored).sort()).toEqual(["documentRelationships", "plugins"]);
     const engine = SearchEngine.create({
       schema,
       plugins: [morphology(), ...authored.plugins],
@@ -108,8 +106,7 @@ describe("public API", () => {
       relationshipMap: { hypertext: [{ to: { concept: "http" }, kind: "related" }] },
     });
     expect(plugin.standaloneRecallByToken.get("hypertext")).toBeUndefined();
-    const authored = compileAuthoredRelevance({
-      entries: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
+    const authored = compileAuthoredRelevance({ configuredConcepts: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
       relationshipMap: { hypertext: [{ to: { concept: "http" }, kind: "related" }] },
     });
     expect(pluginByName(authored, "dictionary").standaloneRecallByToken.get("hypertext")).toBe("http");
@@ -131,6 +128,7 @@ describe("public API", () => {
     expect(() => SearchEngine.create({ relationshipStrategy: "best" })).toThrow(InvalidConfigurationError);
     expect(() => SearchEngine.create({ candidateLimit: 0 })).toThrow(InvalidConfigurationError);
     expect(() => SearchEngine.create({ mystery: true })).toThrow(InvalidConfigurationError);
+    expect(() => SearchEngine.create({ relationships: graph })).toThrow(InvalidConfigurationError);
     expect(() => SearchEngine.create({ schema: { title: { type: "text", role: "heading" } } })).toThrow(
       InvalidConfigurationError
     );
@@ -247,7 +245,7 @@ describe("public API", () => {
         payloads.push(result);
       },
     });
-    await client.init({ documents: docs, schema, dictionaryEntries: [], retriever: "indexed", candidateLimit: 50 });
+    await client.init({ documents: docs, schema, configuredConcepts: [], retriever: "indexed", candidateLimit: 50 });
     client.setQuery("n");
     client.setQuery("nfc");
     await new Promise((r) => setTimeout(r, 40));
@@ -279,8 +277,8 @@ describe("public API", () => {
     await client.init({
       documents: docs,
       schema,
-      dictionaryEntries: [{ key: "wifi", aliases: [["wi", "fi"]]}],
-      relationships: graph,
+      configuredConcepts: [{ key: "wifi", aliases: [["wi", "fi"]]}],
+      documentRelationships: graph,
       relationshipStrategy: "hybrid",
       retriever: "indexed",
     });
@@ -322,7 +320,7 @@ describe("public API", () => {
     await client.init({
       documents: docs,
       schema,
-      dictionaryEntries: [],
+      configuredConcepts: [],
       retriever: "indexed",
       _includeRetrievalDiagnostics: true,
     });

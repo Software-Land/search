@@ -250,7 +250,7 @@ describe("short title-token prefix on Software.Land fixture", () => {
     const opts = {
       schema,
       plugins: fixturePlugins,
-      relationships: load("relationships.json"),
+      documentRelationships: load("relationships.json"),
       relationshipStrategy: "hybrid",
     };
     full = SearchEngine.create({ ...opts, retriever: "full-scan" });

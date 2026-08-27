@@ -166,7 +166,7 @@ export interface SearchEngineOptions {
   plugins?: SearchPlugin[];
   /** Optional search-v2-lexical-index v1 artifact compiled for these documents. */
   lexicalIndex?: LexicalIndexArtifact;
-  relationships?: RelationshipArtifact | null;
+  documentRelationships?: RelationshipArtifact | null;
   relationshipStrategy?: RelationshipStrategy;
   retriever?: RetrieverName | "indexed-lexical" | ExperimentalRetriever;
   /** Compatibility/experimental-retriever budget; exact indexed retrieval does not truncate to it. */
@@ -387,10 +387,10 @@ export interface CompiledAuthoredRelevance {
   plugins: SearchPlugin[];
   /**
    * Authored document→document edges as a `search-v2-relationships` artifact,
-   * or `null` when none were authored. Pass as `SearchEngine.create({ relationships })`.
-   * Combine with a generated semantic artifact via `mergeRelationships(semantic, authored.relationships)`.
+   * or `null` when none were authored. Pass as `SearchEngine.create({ documentRelationships })`.
+   * Combine with a generated semantic artifact via `mergeRelationships(semantic, authored.documentRelationships)`.
    */
-  relationships: RelationshipArtifact | null;
+  documentRelationships: RelationshipArtifact | null;
 }
 
 export interface EquivalenceArtifact {

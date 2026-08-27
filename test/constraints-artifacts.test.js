@@ -184,7 +184,7 @@ describe("precomputed relationships", () => {
     const engine = SearchEngine.create({
       schema,
       plugins: [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
-      relationships: graph,
+      documentRelationships: graph,
     });
     await engine.index(docs);
     const results = engine.search("tls", { limit: 10, explain: true });

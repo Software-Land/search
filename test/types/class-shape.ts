@@ -103,13 +103,12 @@ void abortErrorFn("Aborted");
 void isAbortErrorFn(new Error("no"));
 void morphology({ lemmas: { widgets: "widget" } });
 void dictionary({ entries: [{ key: "wifi" }] });
-const authored = compileAuthoredRelevance({
-  entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
+const authored = compileAuthoredRelevance({ configuredConcepts: [{ key: "qa", aliases: [["quality", "assurance"]] }],
   relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
 });
 void authored.plugins.find((plugin) => plugin.name === "synonyms")?.expand;
 void authored.plugins[0];
-void authored.relationships;
+void authored.documentRelationships;
 void parseEquivalences();
 void parseSynonyms();
 void parseRelationships();

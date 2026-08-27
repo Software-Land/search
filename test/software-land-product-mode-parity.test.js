@@ -158,8 +158,7 @@ describe("Software.Land product retrieval-mode parity", () => {
   ];
 
   beforeAll(async () => {
-    compiled = compileAuthoredRelevance({
-      entries: dictionaryEntries,
+    compiled = compileAuthoredRelevance({ configuredConcepts: dictionaryEntries,
       relationshipMap: loadJson(relevanceConfig.relationshipMapFile).map,
     });
     const plugins = [
@@ -178,7 +177,7 @@ describe("Software.Land product retrieval-mode parity", () => {
       engines[name] = SearchEngine.create({
         schema,
         plugins,
-        relationships: rel,
+        documentRelationships: rel,
         relationshipStrategy: "hybrid",
         retriever,
       });

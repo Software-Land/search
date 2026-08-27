@@ -187,8 +187,7 @@ describe("synonym-recall prefix information bound", () => {
 describe("topical-recall remains exact-only", () => {
   const plugins = [
     morphology(),
-    compileAuthoredRelevance({
-      entries: [{ key: "appsec", aliases: [["application", "security"]] }],
+    compileAuthoredRelevance({ configuredConcepts: [{ key: "appsec", aliases: [["application", "security"]] }],
       relationshipMap: { appsec: [{ to: { form: ["authentication"] }, kind: "related" }] },
     }).plugins.find((plugin) => plugin.name === "dictionary"),
   ];

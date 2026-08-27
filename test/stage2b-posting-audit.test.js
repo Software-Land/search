@@ -42,7 +42,7 @@ async function compiledEngine(documents, extra = {}) {
     plugins,
     retriever: "indexed",
     relationshipStrategy: extra.relationshipStrategy ?? "none",
-    relationships: extra.relationships || null,
+    documentRelationships: extra.relationships || null,
     retrievalScoreWeight: extra.retrievalScoreWeight,
     lexicalIndex,
   });

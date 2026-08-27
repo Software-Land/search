@@ -51,7 +51,7 @@ async function pair(docs, extra = {}) {
   const common = {
     schema,
     plugins,
-    relationships: extra.relationships || null,
+    documentRelationships: extra.relationships || null,
     relationshipStrategy: extra.relationshipStrategy || "none",
   };
   const full = SearchEngine.create({ ...common, retriever: "full-scan" });

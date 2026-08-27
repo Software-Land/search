@@ -77,8 +77,13 @@ void compiledPublic;
 void (null as unknown as CompiledRelationshipInternals);
 
 const authored = compileAuthoredRelevance({
-  entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
+  configuredConcepts: [{ key: "qa", aliases: [["quality", "assurance"]] }],
   relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
+});
+
+compileAuthoredRelevance({
+  // @ts-expect-error entries is not a public compileAuthoredRelevance option
+  entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
 });
 
 // @ts-expect-error dictionary is not a public CompiledAuthoredRelevance field
@@ -92,3 +97,15 @@ authored.synonymMap;
 
 // @ts-expect-error editorialRelationships is not a public CompiledAuthoredRelevance field
 authored.editorialRelationships;
+
+// @ts-expect-error relationships is not a public CompiledAuthoredRelevance field
+authored.relationships;
+
+SearchEngine.create({
+  // @ts-expect-error relationships is not a public SearchEngine.create option
+  relationships: {
+    format: "search-v2-relationships",
+    version: 1,
+    relationships: {},
+  },
+});

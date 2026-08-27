@@ -320,7 +320,7 @@ describe("search-equivalence regression controls without synonyms", () => {
     const documents = loadJson("documents.json");
     const common = {
       schema,
-      relationships: loadJson("relationships.json"),
+      documentRelationships: loadJson("relationships.json"),
       relationshipStrategy: "hybrid",
       retriever: "full-scan",
     };

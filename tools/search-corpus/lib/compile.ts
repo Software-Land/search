@@ -185,7 +185,7 @@ export function compileInspection(lifecycleResult: LifecycleResult, { delta = nu
   };
 }
 
-export function dictionaryEntriesFromEquivalences(artifact?: unknown): unknown[] {
+export function configuredConceptsFromEquivalences(artifact?: unknown): unknown[] {
   const rec = artifact as { entries?: unknown[] } | null | undefined;
   return (rec?.entries || []).map((e) => {
     const row = e as { key?: unknown; expansion?: unknown; aliases?: unknown; provenance?: unknown };

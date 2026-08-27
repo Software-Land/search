@@ -290,7 +290,7 @@ describe("0.2.0 migration parity", () => {
     await client.init({
       documents: docs,
       schema,
-      dictionaryEntries: [],
+      configuredConcepts: [],
       retriever: "indexed",
       candidateLimit: 50,
     });

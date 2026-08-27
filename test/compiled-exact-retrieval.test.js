@@ -107,7 +107,7 @@ async function engines(documents, {
 } = {}) {
   const english = morphology({ lemmas });
   const plugins = [english, dictionary({ entries })];
-  const common = { schema, plugins, relationships, relationshipStrategy };
+  const common = { schema, plugins, documentRelationships: relationships, relationshipStrategy };
   const full = SearchEngine.create({ ...common, retriever: "full-scan" });
   const lexicalIndex = precompiled
     ? compileLexicalIndex(documents, {
@@ -224,9 +224,9 @@ async function searchWorker(
     await client.init({
       documents,
       schema,
-      dictionaryEntries: [],
+      configuredConcepts: [],
       retriever: "indexed",
-      relationships,
+      documentRelationships: relationships,
       relationshipStrategy,
       lexicalIndex,
       _includeRetrievalDiagnostics: true,
@@ -252,7 +252,7 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
     const fallback = SearchEngine.create({
       schema,
       plugins: full.plugins,
-      relationships,
+      documentRelationships: relationships,
       relationshipStrategy: "hybrid",
       retriever: "indexed",
       candidateLimit: 1,
@@ -364,7 +364,7 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
     const inProcess = SearchEngine.create({
       schema,
       plugins,
-      relationships,
+      documentRelationships: relationships,
       retriever: "indexed",
       relationshipStrategy: "separate",
       candidateLimit: 1,

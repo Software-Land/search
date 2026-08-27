@@ -45,7 +45,7 @@ describe("Software.Land 215-query result oracle", () => {
         morphology({ lemmas: loadJson("lemmas.json") }),
         dictionary({ entries: loadJson("dictionary.json") }),
       ],
-      relationships: loadJson("relationships.json"),
+      documentRelationships: loadJson("relationships.json"),
       relationshipStrategy: "hybrid",
       retriever: "full-scan",
     });

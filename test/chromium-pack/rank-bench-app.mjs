@@ -71,7 +71,7 @@ async function runWorkload(name, documents) {
       title: { type: "text", role: "title" },
       body: { type: "text", role: "body" },
     },
-    dictionaryEntries: [],
+    configuredConcepts: [],
     retriever: "full-scan",
     relationshipStrategy: "none",
   });

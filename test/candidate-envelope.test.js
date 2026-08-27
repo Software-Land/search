@@ -166,7 +166,7 @@ describe("relationship expansion after retrieval", () => {
       retriever: "indexed",
       candidateLimit: 1,
       relationshipStrategy: "hybrid",
-      relationships: {
+      documentRelationships: {
         format: "search-v2-relationships",
         version: 1,
         relationships: { primary: edges },

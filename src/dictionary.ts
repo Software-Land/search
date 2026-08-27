@@ -31,7 +31,7 @@ export interface DictionaryPlugin {
 }
 
 export interface AuthoredRelevanceOptions {
-  entries?: unknown[];
+  configuredConcepts?: unknown[];
   relationshipMap?: unknown;
   documents?: RelationshipDocumentRef[];
 }
@@ -85,21 +85,21 @@ export function dictionary({ entries = [] }: { entries?: unknown[] } = {}): Dict
 
 export interface CompiledAuthoredRelevance {
   plugins: [DictionaryPlugin, ReturnType<typeof synonymsPlugin>];
-  relationships: RelationshipArtifact | null;
+  documentRelationships: RelationshipArtifact | null;
 }
 
 /**
  * Compile authored concepts + relationshipMap into SearchEngine inputs:
- * `plugins` (identity + equivalent recall) and `relationships` (editorial
- * document edges, or null).
+ * `plugins` (identity + equivalent recall) and `documentRelationships`
+ * (editorial document edges, or null).
  */
 export function compileAuthoredRelevance({
-  entries = [],
+  configuredConcepts = [],
   relationshipMap,
   documents,
 }: AuthoredRelevanceOptions = {}): CompiledAuthoredRelevance {
   const list: DictionaryEntry[] = [];
-  for (const raw of entries) {
+  for (const raw of configuredConcepts) {
     const entry = compileAuthoredConcept(raw);
     if (entry) list.push(entry);
   }
@@ -109,7 +109,7 @@ export function compileAuthoredRelevance({
   const synonyms = synonymsPlugin(compiled.synonymMap);
   return {
     plugins: [dictionaryPlugin, synonyms],
-    relationships: mergeRelationships(null, {
+    documentRelationships: mergeRelationships(null, {
       format: ARTIFACT_FORMATS.relationships,
       version: ARTIFACT_VERSION,
       relationships: compiled.editorialRelationships,

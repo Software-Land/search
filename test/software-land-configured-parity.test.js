@@ -72,8 +72,7 @@ describe("Software.Land configured-concept result parity", () => {
   let plugins;
 
   beforeAll(async () => {
-    const compiled = compileAuthoredRelevance({
-      entries: dictionaryEntries,
+    const compiled = compileAuthoredRelevance({ configuredConcepts: dictionaryEntries,
       relationshipMap: loadJson(relevanceConfig.relationshipMapFile).map,
     });
     plugins = [
@@ -88,7 +87,7 @@ describe("Software.Land configured-concept result parity", () => {
       engines[retriever] = SearchEngine.create({
         schema,
         plugins,
-        relationships: rel,
+        documentRelationships: rel,
         relationshipStrategy: "hybrid",
         retriever,
       });

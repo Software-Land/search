@@ -76,8 +76,7 @@ async function inProcessSearch({
   query,
   options = {},
 }) {
-  const authored = compileAuthoredRelevance({
-    entries,
+  const authored = compileAuthoredRelevance({ configuredConcepts: entries,
     relationshipMap,
     documents,
   });
@@ -85,7 +84,7 @@ async function inProcessSearch({
   const engine = SearchEngine.create({
     schema,
     plugins,
-    relationships: mergeRelationships(baseRelationships, authored.relationships),
+    documentRelationships: mergeRelationships(baseRelationships, authored.documentRelationships),
     relationshipStrategy,
     retriever,
   });
@@ -132,9 +131,9 @@ async function workerSearch({
   await client.init({
     documents,
     schema,
-    dictionaryEntries: entries,
+    configuredConcepts: entries,
     relationshipMap,
-    relationships: baseRelationships,
+    documentRelationships: baseRelationships,
     relationshipStrategy,
     retriever,
   });
@@ -168,13 +167,12 @@ describe("relationshipMap public compile projection", () => {
 
 describe("editorial merge", () => {
   test("keeps generated semantic edges and appends distinct editorial edges", () => {
-    const authored = compileAuthoredRelevance({
-      entries: [],
+    const authored = compileAuthoredRelevance({ configuredConcepts: [],
       relationshipMap: { "doc-a": [{ kind: "related", to: { document: "doc-b" } }] },
       documents,
     });
     const original = JSON.parse(JSON.stringify(baseRelationships));
-    const merged = mergeRelationships(baseRelationships, authored.relationships);
+    const merged = mergeRelationships(baseRelationships, authored.documentRelationships);
     expect(baseRelationships).toEqual(original);
     expect(merged.relationships["doc-a"]).toEqual([
       { target: "qa-guide", type: "semantic", strength: 0.7, provenance: "generated" },
@@ -308,9 +306,9 @@ describe("relationshipMap browser parity with in-process authored relevance", ()
     await client.init({
       documents,
       schema,
-      dictionaryEntries: entries,
+      configuredConcepts: entries,
       relationshipMap: mixedMap,
-      relationships: baseRelationships,
+      documentRelationships: baseRelationships,
       relationshipStrategy: "hybrid",
       retriever: "full-scan",
     });
@@ -344,12 +342,12 @@ describe("relationshipMap browser parity with in-process authored relevance", ()
       client.init({
         documents,
         schema,
-        dictionaryEntries: entries,
+        configuredConcepts: entries,
         relationshipMap,
       })
     ).rejects.toThrow(pattern);
     expect(() =>
-      compileAuthoredRelevance({ entries, relationshipMap, documents })
+      compileAuthoredRelevance({ configuredConcepts: entries, relationshipMap, documents })
     ).toThrow(InvalidConfigurationError);
     client.terminate();
   });

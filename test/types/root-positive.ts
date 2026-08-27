@@ -87,10 +87,10 @@ const relationshipMap: RelationshipMap = {
 const compiledPublic: CompiledRelationshipMap = compileRelationshipMap(relationshipMap, { concepts: entries });
 void compiledPublic.synonymMap;
 void compiledPublic.editorialRelationships;
-const authored: CompiledAuthoredRelevance = compileAuthoredRelevance({ entries, relationshipMap });
+const authored: CompiledAuthoredRelevance = compileAuthoredRelevance({ configuredConcepts: entries, relationshipMap });
 void authored.plugins;
-void authored.relationships;
-void mergeRelationships(null, authored.relationships);
+void authored.documentRelationships;
+void mergeRelationships(null, authored.documentRelationships);
 const morphologyWithLemmas: EnglishPlugin = morphology({ lemmas: { widgets: "widget" } });
 void morphologyPlugin.lemma;
 void morphologyPlugin.indexIdentity;
@@ -112,7 +112,7 @@ const options: SearchEngineOptions = {
   schema,
   plugins: [morphologyPlugin, dictionaryPlugin, morphologyWithLemmas],
   lexicalIndex,
-  relationships,
+  documentRelationships: relationships,
   relationshipStrategy: "hybrid",
   retriever: "indexed",
   candidateLimit: DEFAULT_CANDIDATE_LIMIT,
