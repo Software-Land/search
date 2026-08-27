@@ -190,7 +190,7 @@ describe("topical-recall remains exact-only", () => {
     compileAuthoredRelevance({
       entries: [{ key: "appsec", aliases: [["application", "security"]] }],
       relationshipMap: { appsec: [{ to: { form: ["authentication"] }, kind: "related" }] },
-    }).dictionary,
+    }).plugins.find((plugin) => plugin.name === "dictionary"),
   ];
   const docs = [
     { id: "direct", title: "Application Security", body: "overview" },

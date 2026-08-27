@@ -1,4 +1,4 @@
-import { SearchEngine, morphology, dictionary, compileRelationshipMap } from "@software-land/search";
+import { SearchEngine, morphology, dictionary, compileRelationshipMap, compileAuthoredRelevance } from "@software-land/search";
 
 // @ts-expect-error FeatureVector is not a public export
 import type { FeatureVector } from "@software-land/search";
@@ -26,6 +26,9 @@ import { english } from "@software-land/search";
 
 // @ts-expect-error synonyms is not a public root export
 import { synonyms } from "@software-land/search";
+
+// @ts-expect-error mergeEditorialRelationships is not a public root export
+import { mergeEditorialRelationships } from "@software-land/search";
 
 const engine = SearchEngine.create();
 
@@ -69,5 +72,23 @@ void lang;
 void createEnglishPlugin;
 void english;
 void synonyms;
+void mergeEditorialRelationships;
 void compiledPublic;
 void (null as unknown as CompiledRelationshipInternals);
+
+const authored = compileAuthoredRelevance({
+  entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
+  relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
+});
+
+// @ts-expect-error dictionary is not a public CompiledAuthoredRelevance field
+authored.dictionary;
+
+// @ts-expect-error synonyms is not a public CompiledAuthoredRelevance field
+authored.synonyms;
+
+// @ts-expect-error synonymMap is not a public CompiledAuthoredRelevance field
+authored.synonymMap;
+
+// @ts-expect-error editorialRelationships is not a public CompiledAuthoredRelevance field
+authored.editorialRelationships;

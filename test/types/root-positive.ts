@@ -20,7 +20,7 @@ import {
   migrateConfiguredEntry,
   compileRelationshipMap,
   compileAuthoredRelevance,
-  mergeEditorialRelationships,
+  mergeRelationships,
   isAbortError,
   parseEquivalences,
   parseRelationships,
@@ -88,12 +88,9 @@ const compiledPublic: CompiledRelationshipMap = compileRelationshipMap(relations
 void compiledPublic.synonymMap;
 void compiledPublic.editorialRelationships;
 const authored: CompiledAuthoredRelevance = compileAuthoredRelevance({ entries, relationshipMap });
-void authored.synonymMap;
-void authored.dictionary;
-void authored.synonyms.expand;
 void authored.plugins;
 void authored.relationships;
-void mergeEditorialRelationships(null, authored.editorialRelationships);
+void mergeRelationships(null, authored.relationships);
 const morphologyWithLemmas: EnglishPlugin = morphology({ lemmas: { widgets: "widget" } });
 void morphologyPlugin.lemma;
 void morphologyPlugin.indexIdentity;
@@ -177,12 +174,15 @@ const directionalMap: SearchEquivalenceMap = {
   "quality assurance": ["testing"],
   docker: ["container", "containers"],
 };
-const directionalPlugin: SynonymPlugin = authored.synonyms;
+const directionalPlugin: SynonymPlugin = {
+  name: "synonyms",
+  expand: (token: string) => (token === "qa" ? [{ form: "testing" }] : []),
+};
 const normalizedEquivalences: NormalizedSearchEquivalences = normalizeSearchEquivalences(directionalMap);
 const targetBound: 8 = MAX_SEARCH_EQUIVALENCE_TARGETS;
 void synonymsArtifact.entries;
 void directionalPlugin.expand;
-void authored.synonyms.name;
+void authored.plugins.find((plugin) => plugin.name === "synonyms")?.expand;
 void normalizedEquivalences.entries;
 void targetBound;
 const parsedGraph: RelationshipArtifact = parseRelationships(relationships);

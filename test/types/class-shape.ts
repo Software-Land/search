@@ -21,7 +21,6 @@ import {
   type EnglishPlugin,
   type DictionaryPlugin,
   type MorphologyOptions,
-  type SynonymPlugin,
 } from "@software-land/search";
 
 class DerivedEngine extends SearchEngine {}
@@ -108,8 +107,7 @@ const authored = compileAuthoredRelevance({
   entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
   relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
 });
-const synonymPlugin: SynonymPlugin = authored.synonyms;
-void synonymPlugin.expand;
+void authored.plugins.find((plugin) => plugin.name === "synonyms")?.expand;
 void authored.plugins[0];
 void authored.relationships;
 void parseEquivalences();

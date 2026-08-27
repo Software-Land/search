@@ -7,7 +7,7 @@ import { MSG } from "./protocol.js";
 import { isAbortError } from "../cancel.js";
 import { InvalidConfigurationError } from "../errors.js";
 import { compileAuthoredRelevance as defaultCompileAuthoredRelevance } from "../dictionary.js";
-import { mergeEditorialRelationships } from "../relationshipMap.js";
+import { mergeRelationships } from "../relationshipMap.js";
 import type { SearchEngine } from "../SearchEngine.js";
 import type { SearchEngineOptions, SearchOptions } from "../types.js";
 import type {
@@ -120,14 +120,11 @@ export function createWorkerRuntime({
           })
         );
       }
-      const hasEditorial = Object.keys(authored?.editorialRelationships || {}).length > 0;
       engine = SearchEngine.create({
         schema: payload.schema,
         plugins,
         lexicalIndex: payload.lexicalIndex,
-        relationships: hasEditorial
-          ? mergeEditorialRelationships(payload.relationships || null, authored!.editorialRelationships)
-          : payload.relationships || null,
+        relationships: mergeRelationships(payload.relationships || null, authored?.relationships ?? null),
         relationshipStrategy: payload.relationshipStrategy,
         retriever: payload.retriever,
         candidateLimit: payload.candidateLimit ?? undefined,

@@ -255,6 +255,23 @@ try {
   if (compiledBlock[0].includes("standaloneRecallByKey") || compiledBlock[0].includes("topicalRecallByKey")) {
     throw new Error("packed CompiledRelationshipMap must not expose internal recall maps");
   }
+  const authoredBlock = readFileSync(path.join(packedRoot, "dist/api.d.ts"), "utf8").match(
+    /export interface CompiledAuthoredRelevance \{[\s\S]*?\n\}/
+  );
+  if (!authoredBlock) throw new Error("packed api.d.ts missing CompiledAuthoredRelevance");
+  for (const leaked of ["dictionary:", "synonyms:", "synonymMap:", "editorialRelationships:"]) {
+    if (authoredBlock[0].includes(leaked)) {
+      throw new Error(`packed CompiledAuthoredRelevance must not expose ${leaked.slice(0, -1)}`);
+    }
+  }
+  if (!authoredBlock[0].includes("plugins:") || !authoredBlock[0].includes("relationships:")) {
+    throw new Error("packed CompiledAuthoredRelevance must expose plugins and relationships");
+  }
+  const rootDts = readFileSync(path.join(packedRoot, "dist/index.d.ts"), "utf8");
+  if (!/\bmergeRelationships\b/.test(rootDts)) throw new Error("packed root dts missing mergeRelationships");
+  if (/\bmergeEditorialRelationships\b/.test(rootDts)) {
+    throw new Error("packed root dts must not export mergeEditorialRelationships");
+  }
   if (browserApiDts.includes("ExperimentalRetriever")) {
     throw new Error("packed browser InitPayload must not accept ExperimentalRetriever");
   }
@@ -272,7 +289,7 @@ try {
 
   writeFileSync(
     path.join(consumer, "probe.mjs"),
-    `import { SearchEngine, morphology, compileAuthoredRelevance, mergeEditorialRelationships, parseSynonyms, normalizeSearchEquivalences } from "@software-land/search";
+    `import { SearchEngine, morphology, compileAuthoredRelevance, mergeRelationships, parseSynonyms, normalizeSearchEquivalences } from "@software-land/search";
 import { createSearchClient, searchWorkerUrl } from "@software-land/search/browser";
 import { compileCorpus, normalizeExternalEquivalences, classifyExpansionRelation } from "@software-land/search/corpus";
 import { compileRelationships } from "@software-land/search/relationships";
@@ -282,7 +299,7 @@ import { compileLexicalFrequency } from "@software-land/search/lexical";
 if (typeof SearchEngine.create !== "function") throw new Error("root SearchEngine missing");
 if (typeof morphology !== "function") throw new Error("root morphology missing");
 if (typeof compileAuthoredRelevance !== "function") throw new Error("root compileAuthoredRelevance missing");
-if (typeof mergeEditorialRelationships !== "function") throw new Error("root mergeEditorialRelationships missing");
+if (typeof mergeRelationships !== "function") throw new Error("root mergeRelationships missing");
 if (typeof parseSynonyms !== "function") throw new Error("root parseSynonyms missing");
 if (typeof normalizeSearchEquivalences !== "function") throw new Error("root normalizeSearchEquivalences missing");
 if (typeof createSearchClient !== "function") throw new Error("browser createSearchClient missing");
@@ -295,7 +312,9 @@ if (typeof compileLexicalFrequency !== "function") throw new Error("lexical comp
 
 import * as packedRoot from "@software-land/search";
 if ("synonyms" in packedRoot) throw new Error("root synonyms() must not remain a public export");
+if ("mergeEditorialRelationships" in packedRoot) throw new Error("root mergeEditorialRelationships must not remain a public export");
 if (packedRoot.PUBLIC_EXPORTS.includes("synonyms")) throw new Error("PUBLIC_EXPORTS must not list synonyms");
+if (packedRoot.PUBLIC_EXPORTS.includes("mergeEditorialRelationships")) throw new Error("PUBLIC_EXPORTS must not list mergeEditorialRelationships");
 try {
   await import("@software-land/search/synonyms");
   throw new Error("synonyms must not be a package export subpath");
@@ -316,10 +335,18 @@ const authored = compileAuthoredRelevance({
   entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
   relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
 });
-if (authored.synonyms.expand("qa")[0]?.form !== "testing") {
+const publicKeys = Object.keys(authored).sort();
+if (publicKeys.join(",") !== "plugins,relationships") {
+  throw new Error(\`compileAuthoredRelevance public keys must be plugins,relationships; got \${publicKeys.join(",")}\`);
+}
+for (const leaked of ["dictionary", "synonyms", "synonymMap", "editorialRelationships"]) {
+  if (leaked in authored) throw new Error(\`compileAuthoredRelevance must not expose \${leaked}\`);
+}
+const synonymsPlugin = authored.plugins.find((plugin) => plugin.name === "synonyms");
+if (synonymsPlugin?.expand("qa")[0]?.form !== "testing") {
   throw new Error("compileAuthoredRelevance must produce one-hop recall");
 }
-if (authored.plugins.length !== 2 || authored.plugins[0] !== authored.dictionary || authored.plugins[1] !== authored.synonyms) {
+if (authored.plugins.length !== 2 || authored.plugins.map((plugin) => plugin.name).join(",") !== "dictionary,synonyms") {
   throw new Error("compileAuthoredRelevance.plugins must be the compiler-owned plugin list");
 }
 
@@ -335,6 +362,9 @@ await engine.index([
 const ids = engine.search("qa", { limit: 5 }).map((hit) => hit.id);
 if (!ids.includes("qa-guide") || !ids.includes("load")) {
   throw new Error("compileAuthoredRelevance engine search failed");
+}
+if (mergeRelationships(null, authored.relationships) !== null) {
+  throw new Error("null authored.relationships must merge to null");
 }
 
 const workerUrl = String(searchWorkerUrl());

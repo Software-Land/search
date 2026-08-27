@@ -351,16 +351,15 @@ function sameTypedEdge(left: RelationshipEdge, right: RelationshipEdge): boolean
 }
 
 /**
- * Merge authored editorial document edges onto a base relationship artifact.
- * Does not mutate caller objects. Same source/target/type keeps the first edge.
- * Semantic and editorial pairs remain distinct.
+ * Compile authored editorial edges onto a base artifact. Not a root export;
+ * public composition uses mergeRelationships() on RelationshipArtifact values.
  */
-export function mergeEditorialRelationships(
+function mergeEditorialRelationships(
   base: unknown,
-  editorial?: CompiledRelationshipMap["editorialRelationships"] | null
+  extra?: Record<string, RelationshipEdge[]> | null
 ): RelationshipArtifact | null {
-  const editorialEntries = Object.entries(editorial || {}).filter(([, edges]) => Array.isArray(edges) && edges.length);
-  if (!editorialEntries.length) {
+  const extraEntries = Object.entries(extra || {}).filter(([, edges]) => Array.isArray(edges) && edges.length);
+  if (!extraEntries.length) {
     return base == null ? null : parseRelationships(base);
   }
   const parsed =
@@ -371,7 +370,7 @@ export function mergeEditorialRelationships(
   for (const [source, edges] of Object.entries(parsed.relationships || {})) {
     relationships[source] = (edges || []).map(cloneRelationshipEdge);
   }
-  for (const [source, edges] of editorialEntries) {
+  for (const [source, edges] of extraEntries) {
     const list = ownedList(relationships, source);
     for (const edge of edges) {
       if (list.some((existing) => sameTypedEdge(existing, edge))) continue;
@@ -383,6 +382,19 @@ export function mergeEditorialRelationships(
     version: ARTIFACT_VERSION,
     relationships,
   };
+}
+
+/**
+ * Merge two `search-v2-relationships` artifacts without mutating callers.
+ * Same source/target/type keeps the first edge. Distinct types remain distinct.
+ * Either argument may be null/omitted.
+ */
+export function mergeRelationships(base: unknown = null, extra: unknown = null): RelationshipArtifact | null {
+  if (extra == null) {
+    return base == null ? null : parseRelationships(base);
+  }
+  const extraParsed = parseRelationships(extra);
+  return mergeEditorialRelationships(base, extraParsed.relationships);
 }
 
 export function applyCompiledRelationships(

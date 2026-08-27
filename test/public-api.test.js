@@ -17,6 +17,7 @@ import {
   parseSynonyms,
 } from "../dist/index.js";
 import { createSearchClient, createWorkerRuntime, createLoopbackTransport } from "../dist/browser/index.js";
+import { pluginByName } from "./helpers/authored.js";
 
 const schema = {
   title: { type: "text", role: "title" },
@@ -62,14 +63,32 @@ describe("public API", () => {
     expect(PUBLIC_EXPORTS).not.toContain("synonyms");
   });
 
+  test("root does not export mergeEditorialRelationships", () => {
+    expect(publicApi).not.toHaveProperty("mergeEditorialRelationships");
+    expect(PUBLIC_EXPORTS).not.toContain("mergeEditorialRelationships");
+  });
+
+  test("mergeRelationships composes public relationship artifacts", () => {
+    const authored = compileAuthoredRelevance({
+      entries: [],
+      relationshipMap: { bluetooth: [{ to: { document: "nfc" }, kind: "related" }] },
+      documents: docs,
+    });
+    const merged = publicApi.mergeRelationships(graph, authored.relationships);
+    expect(merged.relationships.bluetooth).toEqual([
+      { target: "connected-devices", type: "editorial", strength: 1, provenance: "manual" },
+      { target: "nfc", type: "editorial", strength: 1, provenance: "manual" },
+    ]);
+  });
+
   test("compileAuthoredRelevance is the public authored-relevance compiler", async () => {
     const authored = compileAuthoredRelevance({
       entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
       relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
     });
-    expect(authored.synonyms.expand("qa").map((row) => row.form)).toEqual(["testing"]);
-    expect(authored.plugins).toEqual([authored.dictionary, authored.synonyms]);
+    expect(pluginByName(authored, "synonyms").expand("qa").map((row) => row.form)).toEqual(["testing"]);
     expect(authored.plugins.map((plugin) => plugin.name)).toEqual(["dictionary", "synonyms"]);
+    expect(Object.keys(authored).sort()).toEqual(["plugins", "relationships"]);
     const engine = SearchEngine.create({
       schema,
       plugins: [morphology(), ...authored.plugins],
@@ -93,7 +112,7 @@ describe("public API", () => {
       entries: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
       relationshipMap: { hypertext: [{ to: { concept: "http" }, kind: "related" }] },
     });
-    expect(authored.dictionary.standaloneRecallByToken.get("hypertext")).toBe("http");
+    expect(pluginByName(authored, "dictionary").standaloneRecallByToken.get("hypertext")).toBe("http");
   });
 
   test("parseSynonyms still accepts a 0.4 search-v2-synonyms artifact", () => {

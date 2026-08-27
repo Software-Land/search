@@ -9,13 +9,13 @@
  * standaloneRecall / topicalRecall are compiled from relationshipMap, not authored here.
  */
 
-import type { DictionaryEntry, DictionarySequence } from "./types.js";
+import type { DictionaryEntry, DictionarySequence, RelationshipArtifact } from "./types.js";
 import { compileAuthoredConcept } from "./configuredAuthoring.js";
+import { ARTIFACT_FORMATS, ARTIFACT_VERSION } from "./artifacts.js";
 import {
   applyCompiledRelationships,
   compileRelationshipMapInternal,
-  mergeEditorialRelationships,
-  type CompiledRelationshipMap,
+  mergeRelationships,
   type RelationshipDocumentRef,
 } from "./relationshipMap.js";
 import { synonyms as synonymsPlugin } from "./synonyms.js";
@@ -85,18 +85,13 @@ export function dictionary({ entries = [] }: { entries?: unknown[] } = {}): Dict
 
 export interface CompiledAuthoredRelevance {
   plugins: [DictionaryPlugin, ReturnType<typeof synonymsPlugin>];
-  relationships: ReturnType<typeof mergeEditorialRelationships>;
-  dictionary: DictionaryPlugin;
-  synonymMap: Record<string, string[]>;
-  synonyms: ReturnType<typeof synonymsPlugin>;
-  editorialRelationships: CompiledRelationshipMap["editorialRelationships"];
+  relationships: RelationshipArtifact | null;
 }
 
 /**
- * Compile authored concepts + relationshipMap. Canonical SearchEngine inputs are
+ * Compile authored concepts + relationshipMap into SearchEngine inputs:
  * `plugins` (identity + equivalent recall) and `relationships` (editorial
- * document edges). `dictionary` / `synonyms` / `synonymMap` /
- * `editorialRelationships` remain for low-level inspection and compatibility.
+ * document edges, or null).
  */
 export function compileAuthoredRelevance({
   entries = [],
@@ -114,11 +109,11 @@ export function compileAuthoredRelevance({
   const synonyms = synonymsPlugin(compiled.synonymMap);
   return {
     plugins: [dictionaryPlugin, synonyms],
-    relationships: mergeEditorialRelationships(null, compiled.editorialRelationships),
-    dictionary: dictionaryPlugin,
-    synonymMap: compiled.synonymMap,
-    synonyms,
-    editorialRelationships: compiled.editorialRelationships,
+    relationships: mergeRelationships(null, {
+      format: ARTIFACT_FORMATS.relationships,
+      version: ARTIFACT_VERSION,
+      relationships: compiled.editorialRelationships,
+    }),
   };
 }
 

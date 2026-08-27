@@ -2,14 +2,16 @@
  * Canonical compileAuthoredRelevance aggregate surface:
  *   plugins: [morphology(), ...authored.plugins]
  *   relationships: authored.relationships
- * must match the low-level dictionary + synonyms + editorial decomposition.
+ * Public result keys are only plugins and relationships.
  */
 import {
   SearchEngine,
   morphology,
   compileAuthoredRelevance,
-  mergeEditorialRelationships,
+  compileRelationshipMap,
+  mergeRelationships,
 } from "../dist/index.js";
+import { synonyms as synonymsPrimitive } from "../dist/synonyms.js";
 
 const schema = {
   title: { type: "text", role: "title" },
@@ -37,6 +39,14 @@ const documents = [
   { id: "doc-a", title: "Krypton Primary", body: "krypton only body text" },
   { id: "doc-b", title: "Xenon Neighbor", body: "xenon only body text" },
 ];
+
+const semantic = {
+  format: "search-v2-relationships",
+  version: 1,
+  relationships: {
+    "doc-a": [{ target: "qa-guide", type: "semantic", strength: 0.7, provenance: "generated" }],
+  },
+};
 
 function snapshot(engine, query, retriever) {
   const detailed = engine.searchDetailed(query, { limit: 10, relatedLimit: 8, explain: true });
@@ -72,17 +82,28 @@ async function engineFrom(plugins, relationships, retriever) {
   return engine;
 }
 
+function pluginByName(authored, name) {
+  return authored.plugins.find((plugin) => plugin.name === name);
+}
+
 describe("compileAuthoredRelevance aggregate surface", () => {
   const authored = compileAuthoredRelevance({ entries, relationshipMap, documents });
+  const map = compileRelationshipMap(relationshipMap, { concepts: entries, documents });
 
-  test("plugins are compiler-owned, ordered, and alias the low-level fields", () => {
+  test("public result keys are only plugins and relationships", () => {
+    expect(Object.keys(authored).sort()).toEqual(["plugins", "relationships"]);
+    expect(authored).not.toHaveProperty("dictionary");
+    expect(authored).not.toHaveProperty("synonyms");
+    expect(authored).not.toHaveProperty("synonymMap");
+    expect(authored).not.toHaveProperty("editorialRelationships");
+  });
+
+  test("plugins are compiler-owned and ordered", () => {
     expect(authored.plugins).toHaveLength(2);
-    expect(authored.plugins[0]).toBe(authored.dictionary);
-    expect(authored.plugins[1]).toBe(authored.synonyms);
     expect(authored.plugins.map((plugin) => plugin.name)).toEqual(["dictionary", "synonyms"]);
-    expect(authored.dictionary.standaloneRecallByToken.get("hypertext")).toBe("http");
-    expect(authored.dictionary.topicalRecallByKey.get("appsec")).toEqual([["authentication"]]);
-    expect(authored.synonyms.expand("qa").map((row) => row.form)).toEqual(["testing"]);
+    expect(pluginByName(authored, "dictionary").standaloneRecallByToken.get("hypertext")).toBe("http");
+    expect(pluginByName(authored, "dictionary").topicalRecallByKey.get("appsec")).toEqual([["authentication"]]);
+    expect(pluginByName(authored, "synonyms").expand("qa").map((row) => row.form)).toEqual(["testing"]);
   });
 
   test("empty equivalent map still includes the compiled recall plugin", () => {
@@ -90,14 +111,18 @@ describe("compileAuthoredRelevance aggregate surface", () => {
       entries: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
       relationshipMap: { hypertext: [{ kind: "related", to: { concept: "http" } }] },
     });
-    expect(relatedOnly.synonymMap).toEqual({});
-    expect(relatedOnly.plugins).toEqual([relatedOnly.dictionary, relatedOnly.synonyms]);
-    expect(relatedOnly.synonyms.expand("hypertext")).toEqual([]);
+    expect(relatedOnly.plugins.map((plugin) => plugin.name)).toEqual(["dictionary", "synonyms"]);
+    expect(pluginByName(relatedOnly, "synonyms").expand("hypertext")).toEqual([]);
+    expect(relatedOnly.relationships).toBeNull();
   });
 
   test("relationships is the editorial artifact or null", () => {
     expect(authored.relationships).toEqual(
-      mergeEditorialRelationships(null, authored.editorialRelationships)
+      mergeRelationships(null, {
+        format: "search-v2-relationships",
+        version: 1,
+        relationships: map.editorialRelationships,
+      })
     );
     expect(authored.relationships.format).toBe("search-v2-relationships");
     expect(authored.relationships.relationships["doc-a"]).toEqual([
@@ -109,12 +134,22 @@ describe("compileAuthoredRelevance aggregate surface", () => {
     expect(none.relationships).toBeNull();
   });
 
+  test("mergeRelationships composes semantic and authored artifacts", () => {
+    const original = JSON.parse(JSON.stringify(semantic));
+    const merged = mergeRelationships(semantic, authored.relationships);
+    expect(semantic).toEqual(original);
+    expect(merged.relationships["doc-a"]).toEqual([
+      { target: "qa-guide", type: "semantic", strength: 0.7, provenance: "generated" },
+      { target: "doc-b", type: "editorial", strength: 1, provenance: "manual" },
+    ]);
+  });
+
   test.each(["full-scan", "indexed"])(
-    "%s aggregate path matches explicit dictionary + synonyms + editorial merge",
+    "%s aggregate path matches compileRelationshipMap + equivalent primitive",
     async (retriever) => {
       const explicit = await engineFrom(
-        [morphology(), authored.dictionary, authored.synonyms],
-        mergeEditorialRelationships(null, authored.editorialRelationships),
+        [morphology(), authored.plugins[0], synonymsPrimitive(map.synonymMap)],
+        mergeRelationships(null, authored.relationships),
         retriever
       );
       const aggregate = await engineFrom(
@@ -134,7 +169,7 @@ describe("compileAuthoredRelevance aggregate surface", () => {
       entries: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
       relationshipMap: { hypertext: [{ kind: "related", to: { concept: "http" } }] },
     });
-    const without = await engineFrom([morphology(), relatedOnly.dictionary], null, "full-scan");
+    const without = await engineFrom([morphology(), relatedOnly.plugins[0]], null, "full-scan");
     const withPlugin = await engineFrom([morphology(), ...relatedOnly.plugins], relatedOnly.relationships, "full-scan");
     expect(snapshot(withPlugin, "hypertext", "full-scan")).toEqual(snapshot(without, "hypertext", "full-scan"));
   });

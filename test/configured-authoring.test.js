@@ -13,6 +13,7 @@ import {
   parseEquivalences,
 } from "../dist/index.js";
 import { synonyms as synonymsPrimitive } from "../dist/synonyms.js";
+import { pluginByName } from "./helpers/authored.js";
 
 const schema = {
   title: { type: "text", role: "title" },
@@ -116,8 +117,10 @@ describe("relationshipMap compile", () => {
       entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
       relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
     });
-    expect(compiled.synonymMap).toEqual({ qa: ["testing"] });
-    expect(compiled.synonyms.expand("qa").map((row) => row.form)).toEqual(["testing"]);
+    expect(compileRelationshipMap({ qa: [{ to: { form: "testing" }, kind: "equivalent" }] }).synonymMap).toEqual({
+      qa: ["testing"],
+    });
+    expect(pluginByName(compiled, "synonyms").expand("qa").map((row) => row.form)).toEqual(["testing"]);
   });
 
   test("equivalent relationshipMap matches internal synonym primitive one-hop", async () => {
@@ -133,7 +136,7 @@ describe("relationshipMap compile", () => {
     });
     const viaAuthored = SearchEngine.create({
       schema,
-      plugins: [morphology(), authored.dictionary, authored.synonyms],
+      plugins: [morphology(), ...authored.plugins],
       retriever: "full-scan",
       relationshipStrategy: "none",
     });
@@ -158,20 +161,21 @@ describe("relationshipMap compile", () => {
       directClass: hit.directClass,
     }));
     expect(authoredHits).toEqual(primitiveHits);
-    expect(authored.synonyms.expand("qa")).toEqual(synonymsPrimitive({ qa: ["testing"] }).expand("qa"));
+    expect(pluginByName(authored, "synonyms").expand("qa")).toEqual(synonymsPrimitive({ qa: ["testing"] }).expand("qa"));
   });
 
   test("H. related token -> concept compiles to existing standalone behavior", () => {
-    const plugin = compileAuthoredRelevance({
+    const compiled = compileAuthoredRelevance({
       entries: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
       relationshipMap: { hypertext: [{ to: { concept: "http" }, kind: "related" }] },
-    }).dictionary;
+    });
+    const plugin = pluginByName(compiled, "dictionary");
     expect(plugin.standaloneRecallByToken.get("hypertext")).toBe("http");
     expect(plugin.byKey.get("http").standaloneRecall).toEqual(["hypertext"]);
   });
 
   test("I. related concept -> form compiles to existing topical behavior", () => {
-    const plugin = compileAuthoredRelevance({
+    const compiled = compileAuthoredRelevance({
       entries: [{ key: "appsec", aliases: [["application", "security"]] }],
       relationshipMap: {
         appsec: [
@@ -179,7 +183,8 @@ describe("relationshipMap compile", () => {
           { to: { form: ["bearer", "token"] }, kind: "related" },
         ],
       },
-    }).dictionary;
+    });
+    const plugin = pluginByName(compiled, "dictionary");
     expect(plugin.topicalRecallByKey.get("appsec")).toEqual([["authentication"], ["bearer", "token"]]);
   });
 
@@ -192,6 +197,14 @@ describe("relationshipMap compile", () => {
       tls: [{ target: "vpn", type: "editorial", strength: 1, provenance: "manual" }],
     });
     expect(compiled.editorialRelationships.vpn).toBeUndefined();
+    const authored = compileAuthoredRelevance({
+      entries: [],
+      relationshipMap: { tls: [{ to: { document: "vpn" }, kind: "related" }] },
+      documents: [{ id: "tls", title: "TLS 1.2 Vulnerability" }, { id: "vpn", title: "What is VPN?" }],
+    });
+    expect(authored.relationships.relationships.tls).toEqual([
+      { target: "vpn", type: "editorial", strength: 1, provenance: "manual" },
+    ]);
   });
 
   test("K. relationships remain directional unless reverse authored", () => {
@@ -274,7 +287,7 @@ describe("authored compile preserves runtime identity", () => {
     });
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), compiled.dictionary],
+      plugins: [morphology(), ...compiled.plugins],
       relationships: {
         format: "search-v2-relationships",
         version: 1,
@@ -291,7 +304,7 @@ describe("authored compile preserves runtime identity", () => {
     const related = engine.searchDetailed("tls", { limit: 5, relatedLimit: 5 }).related;
     expect(related[0].relationship.provenance).toBe("embedding");
     expect(related[0].relationship.type).toBe("semantic");
-    expect(compiled.editorialRelationships).toEqual({});
+    expect(compiled.relationships).toBeNull();
   });
 });
 

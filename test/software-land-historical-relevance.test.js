@@ -3,7 +3,7 @@
  * Fixture-only. Not Core default ranking policy.
  * Separate from query-result-oracle.json exact-output identity.
  */
-import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
+import { SearchEngine, morphology, compileAuthoredRelevance, compileRelationshipMap } from "../dist/index.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import {
   evaluateHistoricalRelevance,
@@ -47,8 +47,7 @@ function createRelevanceEngine() {
     schema,
     plugins: [
       morphology({ lemmas }),
-      compiled.dictionary,
-      compiled.synonyms,
+      ...compiled.plugins,
     ],
     relationships,
     relationshipStrategy: "hybrid",
@@ -223,9 +222,11 @@ describe("Software.Land historical relevance contracts", () => {
       ["signed", "cookies"],
     ]);
     const compiled = compileAuthoredRelevance({ entries: dictionaryEntries, relationshipMap });
-    expect(compiled.dictionary.topicalRecallByKey.get("appsec")).toEqual(APPSEC_TOPICAL);
-    expect(compiled.synonymMap.appsec).toEqual(["oath"]);
-    expect(compiled.synonymMap.qa).toEqual(["testing"]);
+    const dictionaryPlugin = compiled.plugins.find((plugin) => plugin.name === "dictionary");
+    expect(dictionaryPlugin.topicalRecallByKey.get("appsec")).toEqual(APPSEC_TOPICAL);
+    const map = compileRelationshipMap(relationshipMap, { concepts: dictionaryEntries });
+    expect(map.synonymMap.appsec).toEqual(["oath"]);
+    expect(map.synonymMap.qa).toEqual(["testing"]);
     expect(synonymFixture.softwareLandCommit).toBe("db5a070dbc6ac112dfae403f38fdfd0fffbedbf6");
     expect(synonymFixture.stats).toEqual({ sources: 119, edges: 146, jsonBytes: 3081 });
     expect(synonymFixture.map.qa).toEqual(["testing"]);

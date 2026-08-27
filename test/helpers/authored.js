@@ -44,11 +44,18 @@ export function splitAuthored(entries = []) {
   };
 }
 
+export function pluginByName(authored, name) {
+  return authored.plugins.find((plugin) => plugin.name === name);
+}
+
 export function dictionaryFromLegacy(entries, extra = {}) {
   const split = splitAuthored(entries);
-  return compileAuthoredRelevance({
-    entries: split.entries,
-    relationshipMap: extra.relationshipMap || split.relationshipMap,
-    documents: extra.documents,
-  }).dictionary;
+  return pluginByName(
+    compileAuthoredRelevance({
+      entries: split.entries,
+      relationshipMap: extra.relationshipMap || split.relationshipMap,
+      documents: extra.documents,
+    }),
+    "dictionary"
+  );
 }

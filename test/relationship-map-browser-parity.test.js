@@ -7,9 +7,9 @@ import {
   morphology,
   compileAuthoredRelevance,
   compileRelationshipMap,
+  mergeRelationships,
   InvalidConfigurationError,
 } from "../dist/index.js";
-import { mergeEditorialRelationships } from "../dist/relationshipMap.js";
 import { createSearchClient, createWorkerRuntime, createLoopbackTransport } from "../dist/browser/index.js";
 
 const schema = {
@@ -81,12 +81,11 @@ async function inProcessSearch({
     relationshipMap,
     documents,
   });
-  const plugins = [morphology(), authored.dictionary];
-  if (Object.keys(authored.synonymMap || {}).length) plugins.push(authored.synonyms);
+  const plugins = [morphology(), ...authored.plugins];
   const engine = SearchEngine.create({
     schema,
     plugins,
-    relationships: mergeEditorialRelationships(baseRelationships, authored.editorialRelationships),
+    relationships: mergeRelationships(baseRelationships, authored.relationships),
     relationshipStrategy,
     retriever,
   });
@@ -175,7 +174,7 @@ describe("editorial merge", () => {
       documents,
     });
     const original = JSON.parse(JSON.stringify(baseRelationships));
-    const merged = mergeEditorialRelationships(baseRelationships, authored.editorialRelationships);
+    const merged = mergeRelationships(baseRelationships, authored.relationships);
     expect(baseRelationships).toEqual(original);
     expect(merged.relationships["doc-a"]).toEqual([
       { target: "qa-guide", type: "semantic", strength: 0.7, provenance: "generated" },
@@ -184,7 +183,7 @@ describe("editorial merge", () => {
   });
 
   test("same source/target/type keeps the first edge", () => {
-    const merged = mergeEditorialRelationships(
+    const merged = mergeRelationships(
       {
         format: "search-v2-relationships",
         version: 1,
@@ -193,14 +192,18 @@ describe("editorial merge", () => {
         },
       },
       {
-        "doc-a": [{ target: "doc-b", type: "editorial", strength: 1, provenance: "manual" }],
+        format: "search-v2-relationships",
+        version: 1,
+        relationships: {
+          "doc-a": [{ target: "doc-b", type: "editorial", strength: 1, provenance: "manual" }],
+        },
       }
     );
     expect(merged.relationships["doc-a"]).toHaveLength(1);
   });
 
   test("semantic and editorial edges for the same pair stay distinct", () => {
-    const merged = mergeEditorialRelationships(
+    const merged = mergeRelationships(
       {
         format: "search-v2-relationships",
         version: 1,
@@ -209,7 +212,11 @@ describe("editorial merge", () => {
         },
       },
       {
-        "doc-a": [{ target: "doc-b", type: "editorial", strength: 1, provenance: "manual" }],
+        format: "search-v2-relationships",
+        version: 1,
+        relationships: {
+          "doc-a": [{ target: "doc-b", type: "editorial", strength: 1, provenance: "manual" }],
+        },
       }
     );
     expect(merged.relationships["doc-a"]).toEqual([

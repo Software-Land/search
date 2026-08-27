@@ -78,8 +78,7 @@ describe("Software.Land configured-concept result parity", () => {
     });
     plugins = [
       morphology({ lemmas: loadJson("lemmas.json") }),
-      compiled.dictionary,
-      compiled.synonyms,
+      ...compiled.plugins,
     ];
     const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
     const docs = attachLexicalFrequency(loadJson("documents.json"), loadJson("lexical-frequency.json"));

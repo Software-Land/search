@@ -386,16 +386,11 @@ export interface CompiledAuthoredRelevance {
    */
   plugins: SearchPlugin[];
   /**
-   * Editorial document→document edges as a `search-v2-relationships` artifact,
-   * or `null` when none were authored. Pass as `relationships` when that is the
-   * only document graph. Merge with a generated semantic artifact via
-   * `mergeEditorialRelationships(semantic, authored.editorialRelationships)`.
+   * Authored document→document edges as a `search-v2-relationships` artifact,
+   * or `null` when none were authored. Pass as `SearchEngine.create({ relationships })`.
+   * Combine with a generated semantic artifact via `mergeRelationships(semantic, authored.relationships)`.
    */
   relationships: RelationshipArtifact | null;
-  dictionary: DictionaryPlugin;
-  synonymMap: SearchEquivalenceMap;
-  synonyms: SynonymPlugin;
-  editorialRelationships: CompiledRelationshipMap["editorialRelationships"];
 }
 
 export interface EquivalenceArtifact {

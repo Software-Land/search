@@ -164,8 +164,7 @@ describe("Software.Land product retrieval-mode parity", () => {
     });
     const plugins = [
       morphology({ lemmas: loadJson("lemmas.json") }),
-      compiled.dictionary,
-      compiled.synonyms,
+      ...compiled.plugins,
     ];
     const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
     const docs = attachLexicalFrequency(documents, loadJson("lexical-frequency.json"));
@@ -228,7 +227,7 @@ describe("Software.Land product retrieval-mode parity", () => {
   });
 
   test("every authored configured form matches across retrieval modes", () => {
-    const queries = occupyingForms(compiled.dictionary);
+    const queries = occupyingForms(compiled.plugins.find((plugin) => plugin.name === "dictionary"));
     expect(queries.length).toBeGreaterThan(300);
     expect(compareQueries(queries, 10)).toEqual([]);
     expect(compareQueries(queries, documents.length)).toEqual([]);
