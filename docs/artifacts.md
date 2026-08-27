@@ -9,7 +9,7 @@ Artifact format/version identifiers are independent of the npm package version. 
 | `search-v2-equivalences` | 1 | `entries[]` with `key` | query interpretation |
 | `search-v2-synonyms` | 1 | `entries[]` with `terms` (length ≥ 2) | bidirectional compiled near-equivalence groups |
 
-Directional runtime maps use `synonyms({ source: ["target"] })` / `normalizeSearchEquivalences()` and are not a new artifact format. Compiled `{ terms }` groups stay symmetric; they are not silently reinterpreted as directional.
+Directional one-hop recall is authored as `equivalent` edges on `relationshipMap` and compiled with `compileAuthoredRelevance()`. `normalizeSearchEquivalences()` is an enrichment/tooling helper for merging those rows; it is not a new artifact format and not a runtime authoring constructor. Compiled `{ terms }` groups stay symmetric; they are not silently reinterpreted as directional.
 | `search-v2-relationships` | 1 | `relationships` map of source id → edges | related expansion |
 | `search-v2-corpus-stats` | 1 | `stats` object | optional diagnostics |
 | `search-v2-lexical-frequency` | 1 | n-gram policy and per-document maps | build-time artifact attached to documents |

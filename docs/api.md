@@ -56,27 +56,7 @@ Same documents, configuration, artifacts, and query produce the same ordering, e
 
 `SearchEngine.create({ plugins })` accepts `SearchPlugin[]`. `morphology()` returns `EnglishPlugin`. `dictionary()` returns `DictionaryPlugin`. Custom retrievers type as `ExperimentalRetriever`. Permissive duck-typed plugin objects remain valid at runtime.
 
-Type contracts `SearchPlugin`, `EnglishPlugin`, `DictionaryPlugin`, `SynonymPlugin`, and `LexiconPlugin` describe the duck-typed hooks Core actually reads (`lemma`, `canonicalLemma`, `lexicon`, `sequences` / `entry`, `byKey`, `expand`). They do not make analysis or ranking internals public, and they do not change runtime dispatch. `english()` is not a public root export.
-
-## Search equivalences
-
-`synonyms({ qa: ["testing"], docker: ["container", "containers"] })` is a directional, one-hop recall map. It does not rewrite typed tokens and does not auto-reverse. Phrase sources and targets are exact contiguous normalized phrases.
-
-```js
-import { SearchEngine, morphology, dictionary, synonyms } from "@software-land/search";
-
-SearchEngine.create({
-  plugins: [
-    morphology(),
-    dictionary({ entries: [{ key: "qa", aliases: [["quality", "assurance"]] }] }),
-    synonyms({ qa: ["testing"] }),
-  ],
-});
-```
-
-`normalizeSearchEquivalences(map)` validates that input (empty source/targets, source==target, unsafe symbols, max 8 targets/source). Applications merge curated and generated rows before calling it; Core does not rank those sources.
-
-The compiled `search-v2-synonyms` `{ terms: [...] }` artifact remains a bidirectional compatibility path via `synonyms({ format, entries })` / `parseSynonyms()`. Do not pass a directional object map to `parseSynonyms()`.
+Type contracts `SearchPlugin`, `EnglishPlugin`, `DictionaryPlugin`, `SynonymPlugin`, and `LexiconPlugin` describe the duck-typed hooks Core actually reads (`lemma`, `canonicalLemma`, `lexicon`, `sequences` / `entry`, `byKey`, `expand`). They do not make analysis or ranking internals public, and they do not change runtime dispatch. `english()` is not a public root export. Custom plugins may implement `SearchPlugin.expand`; `SynonymPlugin` is that structural shape. Applications do not separately author a root `synonyms()` constructor.
 
 ## Configured concepts and relationshipMap
 
@@ -111,16 +91,24 @@ SearchEngine.create({
 });
 ```
 
-`relationshipMap` is directional. Kinds are `equivalent` and `related`. Endpoints are `{ form }`, `{ concept }`, or `{ document }`. Edges do not auto-reverse and must not carry numeric weights.
+`authored.synonyms` is the compiled low-level one-hop recall plugin produced by the compiler. Applications author `equivalent` edges; they do not separately construct that plugin.
+
+`relationshipMap` is directional. Kinds are `equivalent` and `related`. Endpoints are `{ form }`, `{ concept }`, or `{ document }`. Edges do not auto-reverse and must not carry numeric weights. Equivalent edges do not rewrite typed tokens.
 
 | Authored edge | Compiles onto |
 | --- | --- |
-| `equivalent` → form or concept | existing `synonyms()` one-hop recall |
+| `equivalent` → form or concept | existing one-hop recall machinery |
 | `related` 1-token → `{ concept }` | existing standalone-recall |
 | `related` concept → `{ form }` | existing topical-recall |
 | `related` document → `{ document }` | existing editorial relationship artifact (`type: editorial`, provenance `manual`, strength 1) |
 
-`dictionary({ entries, relationshipMap, documents })` applies related standalone/topical onto the dictionary plugin. Use `compileAuthoredRelevance()` when you also need the compiled synonym plugin and editorial document edges. Browser `SearchClient.init({ relationshipMap })` uses that same full authored-relevance meaning. Generated MiniLM relationships stay in the separate semantic artifact; they are not authored here.
+`dictionary({ entries })` compiles configured-concept identity only. Complete authored relevance — equivalent recall, related standalone/topical forms, and editorial document edges — is `compileAuthoredRelevance({ entries, relationshipMap, documents })`. Browser `SearchClient.init({ relationshipMap })` uses that same full authored-relevance meaning. Generated MiniLM relationships stay in the separate semantic artifact; they are not authored here.
+
+`compileRelationshipMap()` is a lower-level/partial compiler for tooling. It does not install dictionary related-recall or produce a ready plugin set. Prefer `compileAuthoredRelevance()` for application initialization.
+
+`normalizeSearchEquivalences(map)` is an enrichment/tooling helper. It validates directional one-hop rows (empty source/targets, source==target, unsafe symbols, max 8 targets/source). Applications merge curated and generated rows before compiling them into `relationshipMap`; Core does not rank those sources. It is not a runtime authoring constructor.
+
+The compiled `search-v2-synonyms` `{ terms: [...] }` artifact remains a bidirectional compatibility path via `parseSynonyms()`. Do not pass a directional object map to `parseSynonyms()`.
 
 `migrateConfiguredEntry(old)` is a one-shot conversion from `{ key, exp|expansion, aliases, primary, standaloneRecall, topicalRecall }`. Runtime `dictionary()` / `SearchEngine` do not call it. `primary` is discarded and is not mapped to any relationship.
 

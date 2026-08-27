@@ -14,7 +14,7 @@ corpus JSON → analyze → inspection + pending queue
                          compile → equivalences.json + synonyms.json
 ```
 
-Generated candidates are **not** runtime truth. Only trusted decisions (`AUTO_ACCEPTED` / human accept / explicit manual) enter artifacts, per current compiler semantics. Directional search-equivalence maps (`synonyms({ qa: ["testing"] })`) are a runtime plugin input, not a corpus-mined artifact; applications merge curated/generated rows before passing them to Core.
+Generated candidates are **not** runtime truth. Only trusted decisions (`AUTO_ACCEPTED` / human accept / explicit manual) enter artifacts, per current compiler semantics. Directional one-hop recall is authored as `equivalent` edges on `relationshipMap` and compiled with `compileAuthoredRelevance()`. `normalizeSearchEquivalences()` is an enrichment/tooling helper for merging curated and generated rows before that compile; it is not a runtime authoring constructor.
 
 ```bash
 node tools/search-corpus/build.mjs analyze --input corpus.json --output dir

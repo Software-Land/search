@@ -69,12 +69,20 @@ morphology({ lemmas: { intercepting: "interceptor", recursive: "recursion", foob
 
 Keep lemma generators, caches, and models in the site build. This package consumes a `Record<string, string>`, not the generator itself. Those Python/model dependencies do not enter Search Core or the browser/runtime package dependency graph.
 
-## Search equivalences
+## Authored relevance
 
-Directional, one-hop recall. Not query rewrite, not relatedness, not automatic reverse maps.
+Applications author configured concepts and a directional `relationshipMap`, then compile them once:
 
 ```js
-import { SearchEngine, morphology, dictionary, synonyms } from "@software-land/search";
+import { SearchEngine, morphology, compileAuthoredRelevance } from "@software-land/search";
+
+const authored = compileAuthoredRelevance({
+  entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
+  relationshipMap: {
+    qa: [{ to: { form: "testing" }, kind: "equivalent" }],
+    docker: [{ to: { form: "container" }, kind: "equivalent" }],
+  },
+});
 
 const engine = SearchEngine.create({
   schema: {
@@ -83,18 +91,17 @@ const engine = SearchEngine.create({
   },
   plugins: [
     morphology(),
-    dictionary({
-      entries: [{ key: "qa", aliases: [["quality", "assurance"]] }],
-    }),
-    synonyms({
-      qa: ["testing"],
-      docker: ["container", "containers"],
-    }),
+    authored.dictionary,
+    authored.synonyms,
   ],
 });
 ```
 
-`qa -> testing` does not imply `testing -> qa`. Phrase sources such as `"quality assurance": ["testing"]` match as exact contiguous normalized phrases. Legacy compiled `{ terms: ["auth", "authentication"] }` groups remain bidirectional.
+`equivalent` edges compile onto the package's existing one-hop recall machinery. `authored.synonyms` is that compiled plugin, not a second application-authoring constructor. Edges do not auto-reverse: `qa → testing` does not imply `testing → qa`. Phrase sources match as exact contiguous normalized phrases.
+
+`dictionary({ entries })` compiles concept identity only. Complete authored relevance — equivalent recall, related standalone/topical forms, and editorial document edges — uses `compileAuthoredRelevance()`.
+
+`compileRelationshipMap()` is a lower-level/partial compiler for tooling. Prefer `compileAuthoredRelevance()` for application initialization.
 
 ## Browser Worker
 
@@ -271,7 +278,7 @@ v0. The runtime facade, result shape, artifact `format`+`version`, `relationship
 
 Supported imports: `@software-land/search`, `@software-land/search/browser`, `@software-land/search/corpus`, `@software-land/search/lexical`, `@software-land/search/relationships`, `@software-land/search/semantic`. The last four are build-time compilers/helpers. Root and `./browser` do not import them.
 
-Root exports: `SearchEngine`, `morphology`, `dictionary`, strategy/retriever constants, artifact parsers, abort helpers, public error classes. `searchWorkerUrl()` is exported only from `./browser`.
+Root exports: `SearchEngine`, `morphology`, `dictionary`, `compileAuthoredRelevance`, `compileRelationshipMap`, `migrateConfiguredEntry`, strategy/retriever constants, artifact parsers (`parseEquivalences`, `parseSynonyms`, `parseRelationships`), enrichment/tooling helpers (`normalizeSearchEquivalences`), abort helpers, public error classes. `searchWorkerUrl()` is exported only from `./browser`.
 
 ## Docs
 
