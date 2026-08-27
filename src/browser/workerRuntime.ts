@@ -112,10 +112,7 @@ export function createWorkerRuntime({
           relationshipMap: payload.relationshipMap,
           documents,
         });
-        plugins.push(authored.dictionary);
-        if (Object.keys(authored.synonymMap || {}).length) {
-          plugins.push(authored.synonyms);
-        }
+        plugins.push(...authored.plugins);
       } else {
         plugins.push(
           dictionary({

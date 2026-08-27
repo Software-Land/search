@@ -110,6 +110,8 @@ const authored = compileAuthoredRelevance({
 });
 const synonymPlugin: SynonymPlugin = authored.synonyms;
 void synonymPlugin.expand;
+void authored.plugins[0];
+void authored.relationships;
 void parseEquivalences();
 void parseSynonyms();
 void parseRelationships();

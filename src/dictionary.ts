@@ -14,6 +14,7 @@ import { compileAuthoredConcept } from "./configuredAuthoring.js";
 import {
   applyCompiledRelationships,
   compileRelationshipMapInternal,
+  mergeEditorialRelationships,
   type CompiledRelationshipMap,
   type RelationshipDocumentRef,
 } from "./relationshipMap.js";
@@ -83,6 +84,8 @@ export function dictionary({ entries = [] }: { entries?: unknown[] } = {}): Dict
 }
 
 export interface CompiledAuthoredRelevance {
+  plugins: [DictionaryPlugin, ReturnType<typeof synonymsPlugin>];
+  relationships: ReturnType<typeof mergeEditorialRelationships>;
   dictionary: DictionaryPlugin;
   synonymMap: Record<string, string[]>;
   synonyms: ReturnType<typeof synonymsPlugin>;
@@ -90,9 +93,10 @@ export interface CompiledAuthoredRelevance {
 }
 
 /**
- * Compile authored concepts + relationshipMap onto the dictionary plugin and
- * the low-level one-hop recall plugin (`synonyms` field). Editorial document
- * edges are returned for the caller to merge with the generated semantic artifact.
+ * Compile authored concepts + relationshipMap. Canonical SearchEngine inputs are
+ * `plugins` (identity + equivalent recall) and `relationships` (editorial
+ * document edges). `dictionary` / `synonyms` / `synonymMap` /
+ * `editorialRelationships` remain for low-level inspection and compatibility.
  */
 export function compileAuthoredRelevance({
   entries = [],
@@ -106,10 +110,14 @@ export function compileAuthoredRelevance({
   }
   const compiled = compileRelationshipMapInternal(relationshipMap, { concepts: list, documents: documents || [] });
   applyCompiledRelationships(list, compiled);
+  const dictionaryPlugin = dictionaryFromCompiled(list);
+  const synonyms = synonymsPlugin(compiled.synonymMap);
   return {
-    dictionary: dictionaryFromCompiled(list),
+    plugins: [dictionaryPlugin, synonyms],
+    relationships: mergeEditorialRelationships(null, compiled.editorialRelationships),
+    dictionary: dictionaryPlugin,
     synonymMap: compiled.synonymMap,
-    synonyms: synonymsPlugin(compiled.synonymMap),
+    synonyms,
     editorialRelationships: compiled.editorialRelationships,
   };
 }

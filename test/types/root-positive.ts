@@ -20,6 +20,7 @@ import {
   migrateConfiguredEntry,
   compileRelationshipMap,
   compileAuthoredRelevance,
+  mergeEditorialRelationships,
   isAbortError,
   parseEquivalences,
   parseRelationships,
@@ -90,6 +91,9 @@ const authored: CompiledAuthoredRelevance = compileAuthoredRelevance({ entries, 
 void authored.synonymMap;
 void authored.dictionary;
 void authored.synonyms.expand;
+void authored.plugins;
+void authored.relationships;
+void mergeEditorialRelationships(null, authored.editorialRelationships);
 const morphologyWithLemmas: EnglishPlugin = morphology({ lemmas: { widgets: "widget" } });
 void morphologyPlugin.lemma;
 void morphologyPlugin.indexIdentity;

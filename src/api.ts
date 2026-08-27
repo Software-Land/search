@@ -95,8 +95,8 @@ export interface DictionaryPlugin extends SearchPlugin {
 /**
  * Structural plugin shape for one-hop recall. Detected when `name === "synonyms"`
  * and `expand` is present. Applications author `equivalent` edges on
- * `relationshipMap` and receive this plugin from `compileAuthoredRelevance()`.
- * Custom plugins may also implement `SearchPlugin.expand`.
+ * `relationshipMap`; `compileAuthoredRelevance()` includes this plugin in
+ * `authored.plugins`. Custom plugins may also implement `SearchPlugin.expand`.
  */
 export interface SynonymPlugin extends SearchPlugin {
   name: "synonyms";
@@ -378,6 +378,20 @@ export interface CompiledRelationshipMap {
 }
 
 export interface CompiledAuthoredRelevance {
+  /**
+   * Canonical SearchEngine plugin list for authored relevance: configured
+   * identity (including compiled standalone/topical related recall) then
+   * compiled equivalent one-hop recall. Pass as `plugins: [morphology(), ...authored.plugins]`.
+   * Order is owned by the compiler.
+   */
+  plugins: SearchPlugin[];
+  /**
+   * Editorial document→document edges as a `search-v2-relationships` artifact,
+   * or `null` when none were authored. Pass as `relationships` when that is the
+   * only document graph. Merge with a generated semantic artifact via
+   * `mergeEditorialRelationships(semantic, authored.editorialRelationships)`.
+   */
+  relationships: RelationshipArtifact | null;
   dictionary: DictionaryPlugin;
   synonymMap: SearchEquivalenceMap;
   synonyms: SynonymPlugin;

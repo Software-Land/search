@@ -60,9 +60,6 @@ compiledPublic.topicalRecallByKey;
 // @ts-expect-error relationshipMap is not a public dictionary() option
 dictionary({ entries: [], relationshipMap: {} });
 
-// @ts-expect-error mergeEditorialRelationships is not a public export
-import { mergeEditorialRelationships } from "@software-land/search";
-
 // @ts-expect-error CompiledRelationshipInternals is not a public export
 import type { CompiledRelationshipInternals } from "@software-land/search";
 
@@ -73,5 +70,4 @@ void createEnglishPlugin;
 void english;
 void synonyms;
 void compiledPublic;
-void mergeEditorialRelationships;
 void (null as unknown as CompiledRelationshipInternals);

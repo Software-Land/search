@@ -10,7 +10,7 @@ import { SearchEngine as searchEngineImpl } from "./SearchEngine.js";
 import { morphology as morphologyImpl } from "./morphology.js";
 import { dictionary as dictionaryImpl, compileAuthoredRelevance as compileAuthoredRelevanceImpl } from "./dictionary.js";
 import { migrateConfiguredEntry as migrateConfiguredEntryImpl } from "./configuredAuthoring.js";
-import { compileRelationshipMap as compileRelationshipMapImpl } from "./relationshipMap.js";
+import { compileRelationshipMap as compileRelationshipMapImpl, mergeEditorialRelationships as mergeEditorialRelationshipsImpl } from "./relationshipMap.js";
 import {
   RELATIONSHIP_STRATEGIES as relationshipStrategiesImpl,
   DEFAULT_RELATIONSHIP_STRATEGY as defaultRelationshipStrategyImpl,
@@ -139,6 +139,13 @@ export const compileAuthoredRelevance: (options?: {
   relationshipMap?: RelationshipMap;
   documents?: import("./api.js").SearchDocument[];
 }) => CompiledAuthoredRelevance;
+export const mergeEditorialRelationships: (
+  base?: unknown,
+  editorial?: CompiledAuthoredRelevance["editorialRelationships"] | null
+) => RelationshipArtifact | null = mergeEditorialRelationshipsImpl as (
+  base?: unknown,
+  editorial?: CompiledAuthoredRelevance["editorialRelationships"] | null
+) => RelationshipArtifact | null;
 export const normalizeSearchEquivalences: (input?: unknown) => NormalizedSearchEquivalences =
   normalizeSearchEquivalencesImpl as (input?: unknown) => NormalizedSearchEquivalences;
 export const MAX_SEARCH_EQUIVALENCE_TARGETS: 8 = maxSearchEquivalenceTargetsImpl as 8;
@@ -198,6 +205,7 @@ export const PUBLIC_EXPORTS: readonly string[] = Object.freeze([
   "migrateConfiguredEntry",
   "compileRelationshipMap",
   "compileAuthoredRelevance",
+  "mergeEditorialRelationships",
   "normalizeSearchEquivalences",
   "MAX_SEARCH_EQUIVALENCE_TARGETS",
   "RELATIONSHIP_STRATEGIES",

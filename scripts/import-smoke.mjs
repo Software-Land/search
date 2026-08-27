@@ -49,6 +49,7 @@ if (typeof corpus.classifyExpansionRelation !== "function") throw new Error("cor
 if (typeof runtime.normalizeSearchEquivalences !== "function") throw new Error("root normalizeSearchEquivalences missing");
 if ("synonyms" in runtime) throw new Error("root synonyms() must not remain a public export");
 if (typeof runtime.compileAuthoredRelevance !== "function") throw new Error("root compileAuthoredRelevance missing");
+if (typeof runtime.mergeEditorialRelationships !== "function") throw new Error("root mergeEditorialRelationships missing");
 if (typeof runtime.parseSynonyms !== "function") throw new Error("root parseSynonyms missing");
 if ("compileSemantic" in runtime) throw new Error("runtime must not export compileSemantic");
 if ("compileLexicalFrequency" in runtime) throw new Error("runtime must not export compileLexicalFrequency");

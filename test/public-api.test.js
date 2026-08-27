@@ -68,9 +68,11 @@ describe("public API", () => {
       relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
     });
     expect(authored.synonyms.expand("qa").map((row) => row.form)).toEqual(["testing"]);
+    expect(authored.plugins).toEqual([authored.dictionary, authored.synonyms]);
+    expect(authored.plugins.map((plugin) => plugin.name)).toEqual(["dictionary", "synonyms"]);
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), authored.dictionary, authored.synonyms],
+      plugins: [morphology(), ...authored.plugins],
       retriever: "full-scan",
       relationshipStrategy: "none",
     });

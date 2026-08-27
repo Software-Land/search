@@ -272,7 +272,7 @@ try {
 
   writeFileSync(
     path.join(consumer, "probe.mjs"),
-    `import { SearchEngine, morphology, compileAuthoredRelevance, parseSynonyms, normalizeSearchEquivalences } from "@software-land/search";
+    `import { SearchEngine, morphology, compileAuthoredRelevance, mergeEditorialRelationships, parseSynonyms, normalizeSearchEquivalences } from "@software-land/search";
 import { createSearchClient, searchWorkerUrl } from "@software-land/search/browser";
 import { compileCorpus, normalizeExternalEquivalences, classifyExpansionRelation } from "@software-land/search/corpus";
 import { compileRelationships } from "@software-land/search/relationships";
@@ -282,6 +282,7 @@ import { compileLexicalFrequency } from "@software-land/search/lexical";
 if (typeof SearchEngine.create !== "function") throw new Error("root SearchEngine missing");
 if (typeof morphology !== "function") throw new Error("root morphology missing");
 if (typeof compileAuthoredRelevance !== "function") throw new Error("root compileAuthoredRelevance missing");
+if (typeof mergeEditorialRelationships !== "function") throw new Error("root mergeEditorialRelationships missing");
 if (typeof parseSynonyms !== "function") throw new Error("root parseSynonyms missing");
 if (typeof normalizeSearchEquivalences !== "function") throw new Error("root normalizeSearchEquivalences missing");
 if (typeof createSearchClient !== "function") throw new Error("browser createSearchClient missing");
@@ -318,10 +319,14 @@ const authored = compileAuthoredRelevance({
 if (authored.synonyms.expand("qa")[0]?.form !== "testing") {
   throw new Error("compileAuthoredRelevance must produce one-hop recall");
 }
+if (authored.plugins.length !== 2 || authored.plugins[0] !== authored.dictionary || authored.plugins[1] !== authored.synonyms) {
+  throw new Error("compileAuthoredRelevance.plugins must be the compiler-owned plugin list");
+}
 
 const engine = SearchEngine.create({
   schema: { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } },
-  plugins: [morphology(), authored.dictionary, authored.synonyms],
+  plugins: [morphology(), ...authored.plugins],
+  relationships: authored.relationships,
 });
 await engine.index([
   { id: "qa-guide", title: "Quality Assurance Guide", body: "process quality assurance handbook" },
