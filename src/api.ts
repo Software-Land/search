@@ -68,10 +68,6 @@ export interface SearchPlugin {
     entry: ConfiguredConcept;
   }>;
   byKey?: ReadonlyMap<string, ConfiguredConcept>;
-  /** Unique reviewed standalone token → configured key. Collisions are omitted. */
-  standaloneRecallByToken?: ReadonlyMap<string, string>;
-  /** Configured key → reviewed topical phrase forms. */
-  topicalRecallByKey?: ReadonlyMap<string, string[][]>;
 }
 
 /**

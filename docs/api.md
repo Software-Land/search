@@ -56,7 +56,7 @@ Same documents, configuration, artifacts, and query produce the same ordering, e
 
 `SearchEngine.create({ plugins })` accepts `SearchPlugin[]`. `compileAuthoredRelevance()` returns the ordered `SearchPlugin[]` needed for configured identity and authored relevance. `morphology()` returns `EnglishPlugin`. There is no public `dictionary()` factory. Custom retrievers type as `ExperimentalRetriever`. Permissive duck-typed plugin objects remain valid at runtime.
 
-Type contracts `SearchPlugin`, `EnglishPlugin`, and `LexiconPlugin` describe the duck-typed hooks Core actually reads (`lemma`, `canonicalLemma`, `lexicon`, `sequences` / `entry`, `byKey`). They do not make analysis or ranking internals public, and they do not change runtime dispatch. `english()` is not a public root export. Equivalent relevance is not a custom-plugin contract; author `relationshipMap` `kind: "equivalent"` and compile with `compileAuthoredRelevance()`.
+Type contracts `SearchPlugin`, `EnglishPlugin`, and `LexiconPlugin` describe the duck-typed hooks Core actually reads (`lemma`, `canonicalLemma`, `lexicon`, `sequences` / `entry`, `byKey`). They do not make analysis or ranking internals public, and they do not change runtime dispatch. Compiled related-recall tables are not public `SearchPlugin` fields; author `relationshipMap` `kind: "related"` and compile with `compileAuthoredRelevance()`. `english()` is not a public root export. Equivalent relevance is not a custom-plugin contract; author `relationshipMap` `kind: "equivalent"` and compile with `compileAuthoredRelevance()`.
 
 ## Configured concepts and relationshipMap
 

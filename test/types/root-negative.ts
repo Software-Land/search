@@ -153,3 +153,37 @@ SearchEngine.create({
     relationships: {},
   },
 });
+
+SearchEngine.create({
+  plugins: [
+    {
+      name: "custom",
+      // @ts-expect-error standaloneRecallByToken is not a public SearchPlugin field
+      standaloneRecallByToken: new Map(),
+    },
+  ],
+});
+
+SearchEngine.create({
+  plugins: [
+    {
+      name: "custom",
+      // @ts-expect-error topicalRecallByKey is not a public SearchPlugin field
+      topicalRecallByKey: new Map(),
+    },
+  ],
+});
+
+const excessStandalone: import("@software-land/search").SearchPlugin = {
+  name: "custom",
+  // @ts-expect-error standaloneRecallByToken is not a public SearchPlugin field
+  standaloneRecallByToken: new Map(),
+};
+void excessStandalone;
+
+const excessTopical: import("@software-land/search").SearchPlugin = {
+  name: "custom",
+  // @ts-expect-error topicalRecallByKey is not a public SearchPlugin field
+  topicalRecallByKey: new Map(),
+};
+void excessTopical;
