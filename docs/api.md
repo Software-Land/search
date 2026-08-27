@@ -56,11 +56,7 @@ Same documents, configuration, artifacts, and query produce the same ordering, e
 
 `SearchEngine.create({ plugins })` accepts `SearchPlugin[]`. `compileAuthoredRelevance()` returns the ordered `SearchPlugin[]` needed for configured identity and authored relevance. `morphology()` returns `EnglishPlugin`. There is no public `dictionary()` factory. Custom retrievers type as `ExperimentalRetriever`. Permissive duck-typed plugin objects remain valid at runtime.
 
-Type contracts `SearchPlugin`, `EnglishPlugin`, and `LexiconPlugin` describe the duck-typed hooks Core actually reads (`lemma`, `canonicalLemma`, `lexicon`, `sequences` / `entry`, `byKey`, `expand`). They do not make analysis or ranking internals public, and they do not change runtime dispatch. `english()` is not a public root export.
-
-### Advanced: custom `expand` plugins
-
-Custom plugins may implement `SearchPlugin.expand`. Runtime equivalent-recall dispatch also requires `name: "synonyms"`. Applications do not author a second synonym artifact and there is no public `SynonymPlugin` type.
+Type contracts `SearchPlugin`, `EnglishPlugin`, and `LexiconPlugin` describe the duck-typed hooks Core actually reads (`lemma`, `canonicalLemma`, `lexicon`, `sequences` / `entry`, `byKey`). They do not make analysis or ranking internals public, and they do not change runtime dispatch. `english()` is not a public root export. Equivalent relevance is not a custom-plugin contract; author `relationshipMap` `kind: "equivalent"` and compile with `compileAuthoredRelevance()`.
 
 ## Configured concepts and relationshipMap
 
@@ -118,4 +114,4 @@ Directional equivalent recall is authored as `relationshipMap` `equivalent` edge
 
 `migrateConfiguredEntry(old)` is a one-shot conversion from `{ key, exp|expansion, aliases, primary, standaloneRecall, topicalRecall }`. Runtime `compileAuthoredRelevance()` / `SearchEngine` do not call it. `primary` is discarded and is not mapped to any relationship.
 
-Explain output may still name compiled `standaloneRecall` / `topicalRecall` provenance. Those are runtime/explain names, not authoring fields.
+Explain output may still name compiled `standaloneRecall` / `topicalRecall` provenance. Equivalent recall is named `equivalent-recall` / `equivalentRecall`. Those are runtime/explain names, not authoring fields.

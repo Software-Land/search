@@ -11,7 +11,7 @@ results[0].relationship; // on related hits
 
 Stable concepts:
 
-- `retrievalSources` — why the document entered the candidate set (`exact-title`, `title-token`, `configured-concept`, `morphology`, `version`, `body-lexical`, `synonym-recall`, `relationship`, …)
+- `retrievalSources` — why the document entered the candidate set (`exact-title`, `title-token`, `configured-concept`, `morphology`, `version`, `body-lexical`, `equivalent-recall`, `relationship`, …)
 - named `features` and `directClass` / `relevanceKind`
 - `relationship`: `{ type, sourceId, sourceTitle, provenance, strength, rank }`
 - constraint diagnostics when present (`constraintsVsNext`, `constraintMeta`)
@@ -25,6 +25,8 @@ Not exposed: postings lists, BM25 internals, engine class instances.
 **Exact / direct:** query `Bluetooth` → `retrievalSources` includes `exact-title`, `directClass: "strong"`.
 
 **Configured concept:** query `tls` with a configured concept → `configured-concept`.
+
+**Equivalent recall:** query `qa` with `relationshipMap` `kind: "equivalent"` → `equivalent-recall`.
 
 **Typo / prefix:** query `blutooth` or `bluet` → analysis alternatives / prefix sources; still ranked by Core, not by edit-distance as a score.
 
