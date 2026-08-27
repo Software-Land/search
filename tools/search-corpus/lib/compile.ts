@@ -17,7 +17,7 @@ import type {
   InspectionDoc,
   LifecycleResult,
   ReviewerRow,
-  SynonymArtifact,
+  GeneratedRelationshipMap,
   SynonymCandidate,
 } from "../types.js";
 
@@ -104,22 +104,36 @@ export function compileEquivalences(candidates: EquivalenceCandidate[]): Equival
   };
 }
 
-export function compileSynonyms(candidates: SynonymCandidate[]): SynonymArtifact {
+/**
+ * Trusted human-accepted synonym groups compile to a directional
+ * relationshipMap clique. A group { terms: ["a","b","c"] } becomes every
+ * ordered equivalent pair so historical symmetric reachability is preserved.
+ * Review metadata (relation/provenance/confidence) stays on inspection /
+ * decisions, not on runtime edges.
+ */
+export function compileEquivalentRelationshipMap(candidates: SynonymCandidate[]): GeneratedRelationshipMap {
   const accepted = trustedSynonyms(candidates);
-  const entries = stableSort(accepted, (e) => (e.terms || []).join(":")).map((c) => ({
-    terms: c.terms || [],
-    type: c.relation || "synonym",
-    provenance:
-      c.override === "manual" || c.flags?.includes("orphaned-but-complete")
-        ? "manual-addition"
-        : "human-accepted",
-    confidence: null,
-  }));
-  return {
-    format: "search-v2-synonyms",
-    version: 1,
-    entries,
-  };
+  const bySource = new Map<string, Set<string>>();
+  for (const c of accepted) {
+    const terms = [
+      ...new Set((c.terms || []).map((t) => String(t).toLowerCase().trim()).filter(Boolean)),
+    ];
+    if (terms.length < 2) continue;
+    for (const source of terms) {
+      if (!bySource.has(source)) bySource.set(source, new Set());
+      for (const target of terms) {
+        if (source !== target) bySource.get(source)!.add(target);
+      }
+    }
+  }
+  const map: GeneratedRelationshipMap = {};
+  for (const source of [...bySource.keys()].sort()) {
+    map[source] = [...bySource.get(source)!].sort().map((target) => ({
+      to: { form: target },
+      kind: "equivalent",
+    }));
+  }
+  return map;
 }
 
 export function compileInspection(lifecycleResult: LifecycleResult, { delta = null }: { delta?: InspectionDelta | null } = {}): InspectionDoc {
@@ -214,14 +228,14 @@ export function compileManifest({
   decisionsHash,
   inspection,
   equivalences,
-  synonyms,
+  relationshipMap,
   timings,
 }: {
   corpusHash?: string | null;
   decisionsHash?: string | null;
   inspection?: InspectionDoc;
   equivalences?: unknown;
-  synonyms?: unknown;
+  relationshipMap?: unknown;
   timings?: unknown;
 }) {
   return {
@@ -233,7 +247,7 @@ export function compileManifest({
     counts: inspection?.counts || {},
     artifactHashes: {
       equivalences: hashJson(equivalences),
-      synonyms: hashJson(synonyms),
+      relationshipMap: hashJson(relationshipMap),
     },
     timings: timings || null,
   };

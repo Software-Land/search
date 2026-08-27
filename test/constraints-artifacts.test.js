@@ -3,10 +3,9 @@ import {
   morphology,
   parseRelationships,
   parseEquivalences,
-  parseSynonyms,
+  compileAuthoredRelevance,
 } from "../dist/index.js";
 import { dictionary } from "../dist/dictionary.js";
-import { synonyms } from "../dist/synonyms.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { compareConstraint, detectConstraintCycles, DEFAULT_CONSTRAINTS } from "../dist/constraints.js";
 import { RelationshipGraph } from "../dist/relationships.js";
@@ -139,19 +138,21 @@ describe("compiled artifacts", () => {
     expect(g.neighbors("tls-config")[0].target).toBe("vpn");
   });
 
-  test("equivalence and synonym artifacts stay distinct", () => {
+  test("equivalence artifacts stay distinct from equivalent relationshipMap recall", () => {
     const eq = parseEquivalences({
       format: "search-v2-equivalences",
       version: 1,
       entries: [{ key: "tls", aliases: [["transport", "layer", "security"]], type: "equivalence", provenance: "manual" }],
     });
-    const syn = parseSynonyms({
-      format: "search-v2-synonyms",
-      version: 1,
-      entries: [{ terms: ["auth", "authentication"], type: "near-equivalence", provenance: "manual", confidence: 1 }],
+    const authored = compileAuthoredRelevance({
+      relationshipMap: {
+        auth: [{ to: { form: "authentication" }, kind: "equivalent" }],
+        authentication: [{ to: { form: "auth" }, kind: "equivalent" }],
+      },
     });
     expect(eq.entries[0].type).toBe("equivalence");
-    expect(syn.entries[0].terms).toContain("auth");
+    expect(eq.entries[0].key).toBe("tls");
+    expect(authored.plugins.some((plugin) => plugin.name === "synonyms")).toBe(true);
   });
 
   test("engine works with zero artifacts", async () => {
@@ -283,15 +284,16 @@ describe("general lexical search", () => {
     );
   });
 
-  test("synonyms participate in query interpretation only", () => {
+  test("equivalent relationshipMap recall participates in query interpretation only", () => {
     const q = analyzeQuery("auth", {
       plugins: [
         morphology(),
-        synonyms({
-          format: "search-v2-synonyms",
-          version: 1,
-          entries: [{ terms: ["auth", "authentication"], type: "near-equivalence", provenance: "manual" }],
-        }),
+        ...compileAuthoredRelevance({
+          relationshipMap: {
+            auth: [{ to: { form: "authentication" }, kind: "equivalent" }],
+            authentication: [{ to: { form: "auth" }, kind: "equivalent" }],
+          },
+        }).plugins,
       ],
     });
     const term = q.concepts.find((c) => c.forms.includes("auth") || c.id === "auth");

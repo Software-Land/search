@@ -14,7 +14,6 @@ import {
   isAbortError,
   parseEquivalences,
   parseRelationships,
-  parseSynonyms,
   compileAuthoredRelevance,
   type EnglishPlugin,
   type DictionaryPlugin,
@@ -80,7 +79,6 @@ void new IndexStateErrorConstructor("aliased");
 
 const morphologyFn: (options?: MorphologyOptions) => EnglishPlugin = morphology;
 const parseEquivalencesFn: (obj?: unknown) => unknown = parseEquivalences;
-const parseSynonymsFn: (obj?: unknown) => unknown = parseSynonyms;
 const parseRelationshipsFn: (obj?: unknown) => unknown = parseRelationships;
 const abortErrorFn: (message?: string) => Error = abortError;
 const isAbortErrorFn: (err: unknown) => boolean = isAbortError;
@@ -92,7 +90,6 @@ void typeof abortError;
 void typeof SearchEngine;
 void morphologyFn();
 void parseEquivalencesFn();
-void parseSynonymsFn();
 void parseRelationshipsFn();
 void abortErrorFn("Aborted");
 void isAbortErrorFn(new Error("no"));
@@ -105,7 +102,6 @@ void authored.plugins.find((plugin) => plugin.name === "synonyms")?.expand;
 void authored.plugins[0];
 void authored.documentRelationships;
 void parseEquivalences();
-void parseSynonyms();
 void parseRelationships();
 void abortError();
 void isAbortError(abortError());

@@ -23,7 +23,6 @@ import {
   isAbortError,
   parseEquivalences,
   parseRelationships,
-  parseSynonyms,
   normalizeSearchEquivalences,
   MAX_SEARCH_EQUIVALENCE_TARGETS,
   type EquivalenceArtifact,
@@ -35,7 +34,6 @@ import {
   type SearchEngineOptions,
   type SearchOptions,
   type SearchResult,
-  type SynonymArtifact,
   type SynonymPlugin,
   type EnglishPlugin,
   type DictionaryPlugin,
@@ -165,11 +163,6 @@ const equivalences: EquivalenceArtifact = parseEquivalences({
   version: 1,
   entries,
 });
-const synonymsArtifact: SynonymArtifact = parseSynonyms({
-  format: "search-v2-synonyms",
-  version: 1,
-  entries: [{ terms: ["auth", "authentication"] }],
-});
 const directionalMap: SearchEquivalenceMap = {
   qa: ["testing"],
   "quality assurance": ["testing"],
@@ -181,7 +174,6 @@ const directionalPlugin: SynonymPlugin = {
 };
 const normalizedEquivalences: NormalizedSearchEquivalences = normalizeSearchEquivalences(directionalMap);
 const targetBound: 8 = MAX_SEARCH_EQUIVALENCE_TARGETS;
-void synonymsArtifact.entries;
 void directionalPlugin.expand;
 void authored.plugins.find((plugin) => plugin.name === "synonyms")?.expand;
 void normalizedEquivalences.entries;

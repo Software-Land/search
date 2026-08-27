@@ -12,6 +12,7 @@ import {
   type AnalyzeResult,
   type CompileOptions,
   type CorpusDocument,
+  type GeneratedRelationshipMap,
 } from "@software-land/search/corpus";
 import {
   COMPILER_VERSION as REL_COMPILER_VERSION,
@@ -47,6 +48,8 @@ const documents: CorpusDocument[] = [{ id: "a", title: "CPU", body: "central" }]
 const compileOpts: CompileOptions = {};
 const corpus: Record<string, unknown> = compileCorpus({ documents }, compileOpts);
 void configuredConceptsFromEquivalences(corpus.equivalences);
+const generatedEquivalence: GeneratedRelationshipMap = (corpus.relationshipMap || {}) as GeneratedRelationshipMap;
+void generatedEquivalence;
 const analysis: AnalyzeResult = analyzeCorpus({ documents });
 const compiledFromAnalysis: Record<string, unknown> = compileAnalysis(analysis);
 const loaded = loadCorpus({ documents });

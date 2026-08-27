@@ -5,7 +5,7 @@ import { loadDecisions, emptyDecisions } from "./decisions.js";
 import { applyLifecycle, LIFECYCLE } from "./lifecycle.js";
 import {
   compileEquivalences,
-  compileSynonyms,
+  compileEquivalentRelationshipMap,
   compileInspection,
   compileManifest,
   configuredConceptsFromEquivalences,
@@ -100,7 +100,7 @@ export function analyzeCorpus(input?: unknown, { decisions = null, overrides = n
  */
 export function compileAnalysis(analysis: AnalyzeResult) {
   const equivalences = compileEquivalences(analysis.life.equivalences);
-  const synonyms = compileSynonyms(analysis.life.synonyms);
+  const relationshipMap = compileEquivalentRelationshipMap(analysis.life.synonyms);
   const vocabulary = buildVocabulary(analysis.documentRecords, { acceptedEquivalences: equivalences.entries });
   const spelling = spellingTerms(vocabulary);
   const manifest = compileManifest({
@@ -108,12 +108,12 @@ export function compileAnalysis(analysis: AnalyzeResult) {
     decisionsHash: analysis.decisionsHash,
     inspection: analysis.inspection,
     equivalences: { format: equivalences.format, version: equivalences.version, entries: equivalences.entries },
-    synonyms,
+    relationshipMap,
     timings: analysis.timings,
   });
   return {
     equivalences: { format: equivalences.format, version: equivalences.version, entries: equivalences.entries },
-    synonyms,
+    relationshipMap,
     vocabulary,
     spellingTerms: spelling,
     manifest,
@@ -132,7 +132,7 @@ export function compileCorpus(input?: unknown, { overrides = null, decisions = n
   return {
     documents: analysis.documents,
     equivalences: compiled.equivalences,
-    synonyms: compiled.synonyms,
+    relationshipMap: compiled.relationshipMap,
     vocabulary: compiled.vocabulary,
     spellingTerms: compiled.spellingTerms,
     inspection: analysis.inspection,

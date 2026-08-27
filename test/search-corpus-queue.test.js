@@ -137,7 +137,7 @@ describe("search-corpus review queue", () => {
     const pairs = result.inspection.synonymCandidates.map((s) => (s.terms || []).join("::"));
     expect(pairs.some((p) => p.includes("authentication") && p.includes("authorization"))).toBe(false);
     expect(pairs.some((p) => p.includes("tls") && p.includes("vpn"))).toBe(false);
-    expect(result.synonyms.entries.length).toBe(0);
+    expect(result.relationshipMap).toEqual({});
   });
 
   test("auth / authentication is an alias review candidate", () => {
@@ -156,7 +156,7 @@ describe("search-corpus review queue", () => {
     expect(hit.lifecycle).toBe(LIFECYCLE.REVIEW_PENDING);
     expect(hit.reviewBand).not.toBe("HIGH");
     expect(["MEDIUM", "LOW"]).toContain(hit.reviewBand);
-    expect(result.synonyms.entries.length).toBe(0);
+    expect(result.relationshipMap).toEqual({});
   });
 
   test("family grouping hides redundant expansions of an already accepted key", () => {

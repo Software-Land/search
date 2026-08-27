@@ -1,4 +1,4 @@
-import { SearchEngine, morphology, compileRelationshipMap, compileAuthoredRelevance } from "@software-land/search";
+import { SearchEngine, morphology, compileRelationshipMap, compileAuthoredRelevance, ARTIFACT_FORMATS } from "@software-land/search";
 
 // @ts-expect-error FeatureVector is not a public export
 import type { FeatureVector } from "@software-land/search";
@@ -29,6 +29,12 @@ import { dictionary } from "@software-land/search";
 
 // @ts-expect-error synonyms is not a public root export
 import { synonyms } from "@software-land/search";
+
+// @ts-expect-error parseSynonyms is not a public root export
+import { parseSynonyms } from "@software-land/search";
+
+// @ts-expect-error SynonymArtifact is not a public export
+import type { SynonymArtifact } from "@software-land/search";
 
 // @ts-expect-error mergeEditorialRelationships is not a public root export
 import { mergeEditorialRelationships } from "@software-land/search";
@@ -73,6 +79,8 @@ void createEnglishPlugin;
 void english;
 void dictionary;
 void synonyms;
+void parseSynonyms;
+void (null as unknown as SynonymArtifact);
 void mergeEditorialRelationships;
 void compiledPublic;
 void (null as unknown as CompiledRelationshipInternals);
@@ -101,6 +109,9 @@ authored.editorialRelationships;
 
 // @ts-expect-error relationships is not a public CompiledAuthoredRelevance field
 authored.relationships;
+
+// @ts-expect-error synonyms is not a supported artifact format
+ARTIFACT_FORMATS.synonyms;
 
 SearchEngine.create({
   // @ts-expect-error relationships is not a public SearchEngine.create option

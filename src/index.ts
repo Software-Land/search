@@ -20,7 +20,6 @@ import {
 } from "./config.js";
 import {
   parseEquivalences as parseEquivalencesImpl,
-  parseSynonyms as parseSynonymsImpl,
   parseRelationships as parseRelationshipsImpl,
   ARTIFACT_FORMATS as artifactFormatsImpl,
   ARTIFACT_VERSION as artifactVersionImpl,
@@ -62,7 +61,6 @@ import type {
   RetrieverName,
   SearchEngine as SearchEngineType,
   SearchEngineConstructor,
-  SynonymArtifact,
   EnglishPlugin,
   MorphologyOptions,
   NormalizedSearchEquivalences,
@@ -104,7 +102,6 @@ export type {
   SearchOptions,
   SearchPlugin,
   SearchResult,
-  SynonymArtifact,
   SynonymPlugin,
   TextRole,
   SearchEquivalenceMap,
@@ -153,19 +150,16 @@ export const DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD: 1500 = defaultAdaptiveDocument
 export const parseEquivalences: (obj?: unknown) => EquivalenceArtifact = parseEquivalencesImpl as (
   obj?: unknown
 ) => EquivalenceArtifact;
-export const parseSynonyms: (obj?: unknown) => SynonymArtifact = parseSynonymsImpl as (obj?: unknown) => SynonymArtifact;
 export const parseRelationships: (obj?: unknown) => RelationshipArtifact = parseRelationshipsImpl as (
   obj?: unknown
 ) => RelationshipArtifact;
 export const ARTIFACT_FORMATS: {
   equivalences: "search-v2-equivalences";
-  synonyms: "search-v2-synonyms";
   relationships: "search-v2-relationships";
   corpusStats: "search-v2-corpus-stats";
   lexicalIndex: "search-v2-lexical-index";
 } = artifactFormatsImpl as {
   equivalences: "search-v2-equivalences";
-  synonyms: "search-v2-synonyms";
   relationships: "search-v2-relationships";
   corpusStats: "search-v2-corpus-stats";
   lexicalIndex: "search-v2-lexical-index";
@@ -206,7 +200,6 @@ export const PUBLIC_EXPORTS: readonly string[] = Object.freeze([
   "DEFAULT_CANDIDATE_LIMIT",
   "DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD",
   "parseEquivalences",
-  "parseSynonyms",
   "parseRelationships",
   "ARTIFACT_FORMATS",
   "ARTIFACT_VERSION",

@@ -273,16 +273,10 @@ export interface EquivalenceArtifact {
   compileWarnings: Array<{ key: string; reason: string; ids: unknown[] }>;
 }
 
-export interface SynonymArtifact {
-  format: "search-v2-synonyms";
-  version: 1;
-  entries: Array<{
-    terms: string[];
-    type: string;
-    provenance: string;
-    confidence: null;
-  }>;
-}
+export type GeneratedRelationshipMap = Record<
+  string,
+  Array<{ to: { form: string }; kind: "equivalent" }>
+>;
 
 export interface VocabularyTerm {
   term: string;

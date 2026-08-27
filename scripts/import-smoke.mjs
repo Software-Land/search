@@ -49,10 +49,13 @@ if (typeof corpus.classifyExpansionRelation !== "function") throw new Error("cor
 if (typeof runtime.normalizeSearchEquivalences !== "function") throw new Error("root normalizeSearchEquivalences missing");
 if ("synonyms" in runtime) throw new Error("root synonyms() must not remain a public export");
 if ("dictionary" in runtime) throw new Error("root dictionary() must not remain a public export");
+if ("parseSynonyms" in runtime) throw new Error("root parseSynonyms must not remain a public export");
 if (typeof runtime.compileAuthoredRelevance !== "function") throw new Error("root compileAuthoredRelevance missing");
 if (typeof runtime.mergeRelationships !== "function") throw new Error("root mergeRelationships missing");
 if ("mergeEditorialRelationships" in runtime) throw new Error("root mergeEditorialRelationships must not remain a public export");
-if (typeof runtime.parseSynonyms !== "function") throw new Error("root parseSynonyms missing");
+if (runtime.ARTIFACT_FORMATS && "synonyms" in runtime.ARTIFACT_FORMATS) {
+  throw new Error("ARTIFACT_FORMATS must not list synonyms");
+}
 if ("compileSemantic" in runtime) throw new Error("runtime must not export compileSemantic");
 if ("compileLexicalFrequency" in runtime) throw new Error("runtime must not export compileLexicalFrequency");
 

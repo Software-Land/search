@@ -95,6 +95,7 @@ describe("search-corpus synthetic mining", () => {
     });
     expect(result.equivalences.entries.some((e) => e.key === "tls" && (e.aliases?.[0] || []).includes("vpn"))).toBe(false);
     expect(result.inspection.synonymCandidates.some((s) => s.terms.includes("tls") && s.terms.includes("vpn"))).toBe(false);
+    expect(result.relationshipMap).toEqual({});
     expect(result.inspection.synonymCandidates.length).toBeLessThan(20);
     const tls = statusOf(result, "tls", "transport layer security");
     expect(tls.some((c) => c.status === "review")).toBe(true);

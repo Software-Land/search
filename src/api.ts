@@ -400,13 +400,6 @@ export interface EquivalenceArtifact {
   entries: EquivalenceEntry[];
 }
 
-export interface SynonymArtifact {
-  /** Legacy/versioned bidirectional corpus-miner artifact. Not 0.5 application authoring. */
-  format: "search-v2-synonyms";
-  version: 1;
-  entries: Array<{ terms: string[]; type?: string; provenance?: string | null; confidence?: number | null }>;
-}
-
 export interface RelationshipEdge {
   target: string;
   type?: string;

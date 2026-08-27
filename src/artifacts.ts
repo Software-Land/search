@@ -12,7 +12,6 @@ const FORBIDDEN_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 
 export const ARTIFACT_FORMATS = {
   equivalences: "search-v2-equivalences",
-  synonyms: "search-v2-synonyms",
   relationships: "search-v2-relationships",
   corpusStats: "search-v2-corpus-stats",
   lexicalIndex: "search-v2-lexical-index",
@@ -112,35 +111,6 @@ export function parseEquivalences(obj?: unknown) {
           provenance: row.provenance || null,
           confidence: row.confidence == null ? null : Number(row.confidence),
         };
-      }),
-  };
-}
-
-/**
- * Legacy/versioned bidirectional synonym artifact (`search-v2-synonyms`).
- * Parses corpus-miner output and previously generated artifacts.
- * Not the 0.5 application-authoring API; directional equivalent recall is
- * authored as `relationshipMap` `equivalent` edges.
- * Distinct from document relationships.
- * { format, version, entries: [{ terms, type, provenance, confidence }] }
- */
-export function parseSynonyms(obj?: unknown) {
-  if (obj == null) return { format: ARTIFACT_FORMATS.synonyms, version: 1, entries: [] };
-  const art = assertArtifact(obj, ARTIFACT_FORMATS.synonyms);
-  const entries = Array.isArray(art.entries) ? art.entries : [];
-  return {
-    format: ARTIFACT_FORMATS.synonyms,
-    version: art.version,
-    entries: entries
-      .filter((e) => e && typeof e === "object" && Array.isArray((e as { terms?: unknown }).terms) && (e as { terms: unknown[] }).terms.length >= 2)
-      .map((e) => {
-        const row = e as { terms: unknown[]; type?: unknown; provenance?: unknown; confidence?: unknown };
-        return {
-        terms: row.terms.map((t) => String(t).toLowerCase()),
-        type: row.type || "near-equivalence",
-        provenance: row.provenance || null,
-        confidence: row.confidence == null ? null : Number(row.confidence),
-      };
       }),
   };
 }

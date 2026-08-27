@@ -1,4 +1,6 @@
 import { compileCorpus, analyzeCorpus, LIFECYCLE, equivalenceId, synonymId, hashJson } from "../tools/search-corpus/index.js";
+import { compileAuthoredRelevance, morphology } from "../dist/index.js";
+import { analyzeQuery } from "../dist/analyze.js";
 
 const cpuDocs = {
   documents: [
@@ -149,8 +151,9 @@ describe("search-corpus durable review", () => {
     const a = compileCorpus(cpuDocs, { decisions });
     const b = compileCorpus(cpuDocs, { decisions });
     expect(JSON.stringify(a.equivalences)).toBe(JSON.stringify(b.equivalences));
-    expect(JSON.stringify(a.synonyms)).toBe(JSON.stringify(b.synonyms));
+    expect(JSON.stringify(a.relationshipMap)).toBe(JSON.stringify(b.relationshipMap));
     expect(a.manifest.artifactHashes.equivalences).toBe(b.manifest.artifactHashes.equivalences);
+    expect(a.manifest.artifactHashes.relationshipMap).toBe(b.manifest.artifactHashes.relationshipMap);
     expect(hashJson(a.equivalences)).toBe(hashJson(b.equivalences));
     const analyzed = analyzeCorpus(cpuDocs, { decisions });
     expect(analyzed.inspection.candidates.find((c) => c.key === "cpu").id).toBe(
@@ -178,10 +181,10 @@ describe("search-corpus synonym candidates", () => {
       expect(pairs.some((p) => p.includes(x) && p.includes(y))).toBe(false);
     }
     expect(pairs.some((p) => p.includes("auth") && p.includes("authorization"))).toBe(false);
-    expect(result.synonyms.entries.length).toBe(0);
+    expect(result.relationshipMap).toEqual({});
   });
 
-  test("human-accepted synonym compiles to search-v2-synonyms and is symmetric", () => {
+  test("human-accepted synonym compiles to a bidirectional equivalent relationshipMap", () => {
     const result = compileCorpus(
       {
         documents: [
@@ -195,9 +198,51 @@ describe("search-corpus synonym candidates", () => {
         },
       }
     );
-    expect(result.synonyms.entries.some((e) => e.terms.includes("auth") && e.terms.includes("authentication"))).toBe(true);
+    expect(result.relationshipMap.auth).toEqual([{ to: { form: "authentication" }, kind: "equivalent" }]);
+    expect(result.relationshipMap.authentication).toEqual([{ to: { form: "auth" }, kind: "equivalent" }]);
+    expect(result).not.toHaveProperty("synonyms");
     expect(synonymId(["authentication", "auth"])).toBe(synonymId(["auth", "authentication"]));
     expect(result.inspection.synonymCandidates.find((s) => s.terms.includes("auth")).lifecycle).toBe(LIFECYCLE.HUMAN_ACCEPTED);
+  });
+
+  test("accepted multi-term groups compile to a full equivalent clique", () => {
+    const result = compileCorpus(
+      { documents: [{ id: "a", title: "Notes", body: "alpha beta gamma" }] },
+      {
+        decisions: {
+          synonyms: [{ decision: "accept", terms: ["alpha", "beta", "gamma"], relation: "synonym", manual: true }],
+        },
+      }
+    );
+    expect(Object.keys(result.relationshipMap).sort()).toEqual(["alpha", "beta", "gamma"]);
+    expect(result.relationshipMap.alpha.map((e) => e.to.form).sort()).toEqual(["beta", "gamma"]);
+    expect(result.relationshipMap.beta.map((e) => e.to.form).sort()).toEqual(["alpha", "gamma"]);
+    expect(result.relationshipMap.gamma.map((e) => e.to.form).sort()).toEqual(["alpha", "beta"]);
+    expect(result.relationshipMap.alpha.every((e) => e.kind === "equivalent")).toBe(true);
+  });
+
+  test("generated equivalent clique preserves old symmetric group reachability", () => {
+    const result = compileCorpus(
+      { documents: [{ id: "a", title: "Notes", body: "alpha beta gamma" }] },
+      {
+        decisions: {
+          synonyms: [{ decision: "accept", terms: ["alpha", "beta", "gamma"], relation: "synonym", manual: true }],
+        },
+      }
+    );
+    const authored = compileAuthoredRelevance({ relationshipMap: result.relationshipMap });
+    const plugin = [morphology(), ...authored.plugins];
+    const reachability = [
+      ["alpha", ["beta", "gamma"]],
+      ["beta", ["alpha", "gamma"]],
+      ["gamma", ["alpha", "beta"]],
+    ];
+    for (const [query, others] of reachability) {
+      const analyzed = analyzeQuery(query, { plugins: plugin });
+      for (const other of others) {
+        expect(analyzed.concepts.some((c) => c.forms.includes(other))).toBe(true);
+      }
+    }
   });
 
   test("alias candidates stay review until accepted", () => {
@@ -211,6 +256,6 @@ describe("search-corpus synonym candidates", () => {
     const hit = result.inspection.synonymCandidates.find((s) => s.terms.includes("auth") && s.terms.includes("authentication"));
     expect(hit).toBeTruthy();
     expect(hit.lifecycle).toBe(LIFECYCLE.REVIEW_PENDING);
-    expect(result.synonyms.entries.length).toBe(0);
+    expect(result.relationshipMap).toEqual({});
   });
 });

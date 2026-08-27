@@ -14,7 +14,6 @@ import {
   isAbortError,
   parseRelationships,
   parseEquivalences,
-  parseSynonyms,
 } from "../dist/index.js";
 import { createSearchClient, createWorkerRuntime, createLoopbackTransport } from "../dist/browser/index.js";
 import { pluginByName } from "./helpers/authored.js";
@@ -122,21 +121,10 @@ describe("public API", () => {
     expect(pluginByName(authored, "dictionary").standaloneRecallByToken.get("hypertext")).toBe("http");
   });
 
-  test("parseSynonyms still accepts a 0.4 search-v2-synonyms artifact", () => {
-    const artifact = parseSynonyms({
-      format: "search-v2-synonyms",
-      version: 1,
-      entries: [{ terms: ["auth", "authentication"] }],
-    });
-    expect(artifact.format).toBe("search-v2-synonyms");
-    expect(artifact.version).toBe(1);
-    expect(artifact.entries[0].terms).toEqual(["auth", "authentication"]);
-  });
-
-  test("parseSynonyms is a legacy artifact parser, not an authoring constructor", () => {
-    expect(typeof parseSynonyms).toBe("function");
-    expect(PUBLIC_EXPORTS).toContain("parseSynonyms");
-    expect(publicApi).not.toHaveProperty("synonyms");
+  test("root does not export parseSynonyms or a synonym artifact parser", () => {
+    expect(publicApi).not.toHaveProperty("parseSynonyms");
+    expect(PUBLIC_EXPORTS).not.toContain("parseSynonyms");
+    expect(publicApi.ARTIFACT_FORMATS).not.toHaveProperty("synonyms");
   });
 
   test("malformed create() options throw InvalidConfigurationError", () => {

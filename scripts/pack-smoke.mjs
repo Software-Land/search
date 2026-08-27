@@ -301,6 +301,15 @@ try {
   if (/\bexport declare const dictionary\b/.test(rootDts)) {
     throw new Error("packed root dts must not export dictionary()");
   }
+  if (/\bparseSynonyms\b/.test(rootDts)) {
+    throw new Error("packed root dts must not export parseSynonyms");
+  }
+  if (/\bSynonymArtifact\b/.test(rootDts)) {
+    throw new Error("packed root dts must not export SynonymArtifact");
+  }
+  if (/\bARTIFACT_FORMATS[\s\S]*synonyms:/.test(rootDts)) {
+    throw new Error("packed ARTIFACT_FORMATS must not list synonyms");
+  }
   if (browserApiDts.includes("ExperimentalRetriever")) {
     throw new Error("packed browser InitPayload must not accept ExperimentalRetriever");
   }
@@ -318,7 +327,7 @@ try {
 
   writeFileSync(
     path.join(consumer, "probe.mjs"),
-    `import { SearchEngine, morphology, compileAuthoredRelevance, mergeRelationships, parseSynonyms, normalizeSearchEquivalences } from "@software-land/search";
+    `import { SearchEngine, morphology, compileAuthoredRelevance, mergeRelationships, normalizeSearchEquivalences } from "@software-land/search";
 import { createSearchClient, searchWorkerUrl } from "@software-land/search/browser";
 import { compileCorpus, normalizeExternalEquivalences, classifyExpansionRelation, configuredConceptsFromEquivalences } from "@software-land/search/corpus";
 import { compileRelationships } from "@software-land/search/relationships";
@@ -329,7 +338,6 @@ if (typeof SearchEngine.create !== "function") throw new Error("root SearchEngin
 if (typeof morphology !== "function") throw new Error("root morphology missing");
 if (typeof compileAuthoredRelevance !== "function") throw new Error("root compileAuthoredRelevance missing");
 if (typeof mergeRelationships !== "function") throw new Error("root mergeRelationships missing");
-if (typeof parseSynonyms !== "function") throw new Error("root parseSynonyms missing");
 if (typeof normalizeSearchEquivalences !== "function") throw new Error("root normalizeSearchEquivalences missing");
 if (typeof createSearchClient !== "function") throw new Error("browser createSearchClient missing");
 if (typeof compileCorpus !== "function") throw new Error("corpus compileCorpus missing");
@@ -343,8 +351,13 @@ if (typeof compileLexicalFrequency !== "function") throw new Error("lexical comp
 import * as packedRoot from "@software-land/search";
 if ("synonyms" in packedRoot) throw new Error("root synonyms() must not remain a public export");
 if ("dictionary" in packedRoot) throw new Error("root dictionary() must not remain a public export");
+if ("parseSynonyms" in packedRoot) throw new Error("root parseSynonyms must not remain a public export");
 if (packedRoot.PUBLIC_EXPORTS.includes("synonyms")) throw new Error("PUBLIC_EXPORTS must not list synonyms");
 if (packedRoot.PUBLIC_EXPORTS.includes("dictionary")) throw new Error("PUBLIC_EXPORTS must not list dictionary");
+if (packedRoot.PUBLIC_EXPORTS.includes("parseSynonyms")) throw new Error("PUBLIC_EXPORTS must not list parseSynonyms");
+if (packedRoot.ARTIFACT_FORMATS && "synonyms" in packedRoot.ARTIFACT_FORMATS) {
+  throw new Error("ARTIFACT_FORMATS must not list synonyms");
+}
 if (packedRoot.PUBLIC_EXPORTS.includes("mergeEditorialRelationships")) throw new Error("PUBLIC_EXPORTS must not list mergeEditorialRelationships");
 try {
   await import("@software-land/search/synonyms");
@@ -357,15 +370,6 @@ try {
   throw new Error("dictionary must not be a package export subpath");
 } catch (err) {
   if (String(err?.message || err).includes("must not be a package export subpath")) throw err;
-}
-
-const artifact = parseSynonyms({
-  format: "search-v2-synonyms",
-  version: 1,
-  entries: [{ terms: ["auth", "authentication"] }],
-});
-if (artifact.format !== "search-v2-synonyms" || artifact.entries[0].terms[1] !== "authentication") {
-  throw new Error("0.4 search-v2-synonyms artifact must still parse");
 }
 
 const authored = compileAuthoredRelevance({
@@ -421,6 +425,25 @@ if (!Array.isArray(compiledCorpus.configuredConcepts)) {
 }
 if ("dictionaryEntries" in compiledCorpus) {
   throw new Error("compileCorpus must not return dictionaryEntries");
+}
+if ("synonyms" in compiledCorpus) {
+  throw new Error("compileCorpus must not return synonyms");
+}
+if (!compiledCorpus.relationshipMap || typeof compiledCorpus.relationshipMap !== "object") {
+  throw new Error("compileCorpus must return relationshipMap");
+}
+const acceptedEquivalence = compileCorpus(
+  { documents: [{ id: "a", title: "Auth notes", body: "auth and authentication appear often." }] },
+  { decisions: { synonyms: [{ decision: "accept", terms: ["auth", "authentication"], relation: "alias" }] } }
+);
+if (acceptedEquivalence.relationshipMap.auth?.[0]?.to?.form !== "authentication") {
+  throw new Error("compileCorpus must emit equivalent relationshipMap edges");
+}
+if (acceptedEquivalence.relationshipMap.authentication?.[0]?.to?.form !== "auth") {
+  throw new Error("compileCorpus equivalent clique must be bidirectional");
+}
+if ("synonyms" in acceptedEquivalence) {
+  throw new Error("compileCorpus must not return synonyms");
 }
 if (!Array.isArray(configuredConceptsFromEquivalences(compiledCorpus.equivalences))) {
   throw new Error("configuredConceptsFromEquivalences must return concept rows");

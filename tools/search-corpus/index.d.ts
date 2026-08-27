@@ -8,9 +8,9 @@ export {
   CorpusDocument,
   CorpusInput,
   EquivalenceArtifact,
+  GeneratedRelationshipMap,
   InspectionDoc,
   LoadedCorpus,
-  SynonymArtifact,
   VocabularyArtifact,
 } from "./types.js";
 

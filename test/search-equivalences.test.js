@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import {
   SearchEngine,
   morphology,
+  compileAuthoredRelevance,
   normalizeSearchEquivalences,
   MAX_SEARCH_EQUIVALENCE_TARGETS,
   InvalidConfigurationError,
@@ -242,13 +243,12 @@ describe("directional search equivalences", () => {
     expect(analyzeQuery("tes", { plugins: plugin }).synonymRecall || []).toEqual([]);
   });
 
-  test("legacy compiled { terms } groups stay bidirectional", () => {
+  test("bidirectional equivalent clique preserves old group reachability", () => {
     const plugin = [
       morphology(),
       synonyms({
-        format: "search-v2-synonyms",
-        version: 1,
-        entries: [{ terms: ["auth", "authentication"], type: "near-equivalence" }],
+        auth: ["authentication"],
+        authentication: ["auth"],
       }),
     ];
     const auth = analyzeQuery("auth", { plugins: plugin });
@@ -256,6 +256,47 @@ describe("directional search equivalences", () => {
     expect(auth.concepts.some((c) => c.forms.includes("authentication"))).toBe(true);
     expect(authentication.concepts.some((c) => c.forms.includes("auth"))).toBe(true);
     expect(auth.concepts.find((c) => c.forms.includes("auth")).provenance).toBe("synonym");
+  });
+
+  test("synonyms() rejects search-v2-synonyms artifacts", () => {
+    expect(() =>
+      synonyms({
+        format: "search-v2-synonyms",
+        version: 1,
+        entries: [{ terms: ["auth", "authentication"] }],
+      })
+    ).toThrow(InvalidConfigurationError);
+  });
+
+  test("authored equivalent clique preserves three-term group reachability", () => {
+    const authored = compileAuthoredRelevance({
+      relationshipMap: {
+        alpha: [
+          { to: { form: "beta" }, kind: "equivalent" },
+          { to: { form: "gamma" }, kind: "equivalent" },
+        ],
+        beta: [
+          { to: { form: "alpha" }, kind: "equivalent" },
+          { to: { form: "gamma" }, kind: "equivalent" },
+        ],
+        gamma: [
+          { to: { form: "alpha" }, kind: "equivalent" },
+          { to: { form: "beta" }, kind: "equivalent" },
+        ],
+      },
+    });
+    const plugin = [morphology(), ...authored.plugins];
+    const reachability = {
+      alpha: ["beta", "gamma"],
+      beta: ["alpha", "gamma"],
+      gamma: ["alpha", "beta"],
+    };
+    for (const [query, others] of Object.entries(reachability)) {
+      const analyzed = analyzeQuery(query, { plugins: plugin });
+      for (const other of others) {
+        expect(analyzed.concepts.some((c) => c.forms.includes(other))).toBe(true);
+      }
+    }
   });
 
   test("empty synonyms plugin does not change results", async () => {
@@ -548,13 +589,12 @@ describe("morphology-aware directional search equivalences", () => {
     expect(reverse.concepts[0].forms).not.toContain("run");
   });
 
-  test("legacy symmetric equivalence groups also derive from canonical keys", () => {
+  test("bidirectional equivalent groups also derive from canonical keys", () => {
     const plugin = [
       morphology({ lemmas: { running: "run" } }),
       synonyms({
-        format: "search-v2-synonyms",
-        version: 1,
-        entries: [{ terms: ["running", "jogging"], type: "near-equivalence" }],
+        running: ["jogging"],
+        jogging: ["running"],
       }),
     ];
     const run = analyzeQuery("run", { plugins: plugin });

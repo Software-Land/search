@@ -1,11 +1,8 @@
 /**
- * Search equivalences (synonym recall). Query interpretation only.
+ * Search equivalences (equivalent recall). Query interpretation only.
  *
- * Two public input shapes:
- * - Directional object map: Record<string, string[]>. New default.
- *   `qa -> testing` does not imply `testing -> qa`. One hop only.
- * - Legacy compiled artifact: { format, entries: [{ terms }] }. Symmetric
- *   within each terms group. Not reinterpreted as directional.
+ * Directional object map: Record<string, string[]>.
+ * `qa -> testing` does not imply `testing -> qa`. One hop only.
  *
  * Does not imply document relatedness (TLS ↛ VPN).
  *
@@ -15,7 +12,6 @@
  * lookup stays authoritative. Multi-token morphology folding is out of scope.
  */
 
-import { parseSynonyms } from "./artifacts.js";
 import { InvalidConfigurationError } from "./errors.js";
 import {
   tokenize,
@@ -24,7 +20,12 @@ import {
   FOLDABLE_EXPANSION_PUNCTUATION,
 } from "./text.js";
 
-type SynonymEntry = ReturnType<typeof parseSynonyms>["entries"][number];
+type SynonymEntry = {
+  terms?: string[];
+  type?: string;
+  provenance?: unknown;
+  confidence?: number | null;
+};
 
 interface SynonymLookupHit {
   others: string[];
@@ -359,60 +360,25 @@ export function bindMorphologyDerivedEquivalences<T extends CanonicalLemmaPlugin
   return next;
 }
 
-function symmetricPlugin(input: Record<string, unknown>): SynonymsPlugin {
-  const parsed = parseSynonyms(
-    input.format ? input : { format: "search-v2-synonyms", version: 1, entries: input.entries || [] }
-  );
-  const lookup = new Map<string, SynonymLookupHit[]>();
-  for (const entry of parsed.entries) {
-    for (const term of entry.terms) {
-      const others = entry.terms.filter((t) => t !== term);
-      if (!lookup.has(term)) lookup.set(term, []);
-      lookup.get(term)!.push({ others, entry });
-    }
-  }
-  return {
-    name: "synonyms",
-    format: parsed.format,
-    version: parsed.version,
-    directionality: "symmetric",
-    lookup,
-    expand(token) {
-      const hits = (lookup.get(String(token || "").toLowerCase()) || []) as SynonymLookupHit[];
-      const forms: SynonymForm[] = [];
-      const seen = new Set<string>();
-      for (const hit of hits) {
-        for (const o of hit.others) {
-          if (seen.has(o)) continue;
-          seen.add(o);
-          forms.push({
-            form: o,
-            type: String(hit.entry.type || "near-equivalence"),
-            provenance: hit.entry.provenance || "synonym",
-            confidence: hit.entry.confidence,
-          });
-        }
-      }
-      return forms;
-    },
-  };
-}
-
 /**
- * Provider-agnostic search-equivalence / synonym plugin.
- *
- * `synonyms({ qa: ["testing"] })` is directional.
- * `synonyms({ format, entries: [{ terms }] })` stays bidirectional.
+ * Internal directional equivalent-recall plugin factory.
+ * `synonyms({ qa: ["testing"] })` is directional one-hop recall.
+ * Bidirectional `{ terms }` artifacts are not accepted.
  */
 export function synonyms(
   input: SearchEquivalenceMap | Record<string, unknown> = {}
 ): SynonymsPlugin {
   if (input == null || typeof input !== "object" || Array.isArray(input)) {
-    throw new InvalidConfigurationError("synonyms() expects a plain object map or a synonyms artifact", {
+    throw new InvalidConfigurationError("synonyms() expects a directional object map", {
       field: "synonyms",
-      expected: "Record<string, string[]> | { format, entries }",
+      expected: "Record<string, string[]>",
     });
   }
-  if (isLegacySynonymInput(input)) return symmetricPlugin(input);
+  if (isLegacySynonymInput(input)) {
+    throw new InvalidConfigurationError(
+      "search-v2-synonyms artifacts are not supported; author directional relationshipMap equivalent edges",
+      { field: "synonyms", expected: "Record<string, string[]>" }
+    );
+  }
   return directionalPlugin(normalizeSearchEquivalences(input));
 }
