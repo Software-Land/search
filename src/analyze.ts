@@ -227,7 +227,7 @@ function attachSearchEquivalenceRecall(
     configuredPrefixSpans?: Array<{ key: string }>;
     lexicalPhraseKey?: string;
     concepts: QueryConcept[];
-    synonymRecall?: Array<{ source: string; target: string }>;
+    equivalentRecall?: Array<{ source: string; target: string }>;
   },
   analyzedTokens: QueryToken[],
   covered: Set<number>,
@@ -271,7 +271,7 @@ function attachSearchEquivalenceRecall(
     });
     existingForms.add(pair.target);
   }
-  query.synonymRecall = pairs;
+  query.equivalentRecall = pairs;
 }
 
 function lexiconFrom(plugins: SearchPlugin[], extra: Iterable<string> | Set<string> | null | undefined) {

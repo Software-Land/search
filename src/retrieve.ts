@@ -344,12 +344,12 @@ export function documentMatchesStandaloneRecall(query: AnalyzedQuery, doc: Index
  * Extra search-equivalence concepts attached after configured/phrase occupancy.
  * Distinct from ordinary term concepts whose synonym forms were merged into the
  * typed token (provenance may also be "synonym" on that merged concept).
- * Extra concepts have id === a synonymRecall target and are not a recall source.
+ * Extra concepts have id === an equivalentRecall target and are not a recall source.
  */
 export function isSearchEquivalenceRecallConcept(query: AnalyzedQuery | null | undefined, concept: QueryConcept | null | undefined) {
   if (!query || !concept || concept.kind === "acronym") return false;
   if (concept.provenance !== "synonym") return false;
-  const pairs = query.synonymRecall;
+  const pairs = query.equivalentRecall;
   if (!pairs?.length) return false;
   const id = concept.id;
   if (!id) return false;
@@ -570,7 +570,7 @@ function scanDocument(
   for (const concept of query.concepts) {
     if (isBoundTrailingTermConcept(query, concept)) continue;
     if (isSearchEquivalenceRecallConcept(query, concept)) {
-      if (conceptMatchesTitle(concept, doc)) add(doc, "synonym-recall");
+      if (conceptMatchesTitle(concept, doc)) add(doc, "equivalent-recall");
       continue;
     }
     const kind = conceptMatchesTitle(concept, doc);
@@ -589,7 +589,7 @@ function scanDocument(
   for (const concept of query.concepts) {
     if (isBoundTrailingTermConcept(query, concept)) continue;
     if (isSearchEquivalenceRecallConcept(query, concept)) {
-      if (conceptMatchesBody(concept, doc)) add(doc, "synonym-recall");
+      if (conceptMatchesBody(concept, doc)) add(doc, "equivalent-recall");
       continue;
     }
     if (conceptMatchesBody(concept, doc)) add(doc, "body-lexical");

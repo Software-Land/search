@@ -571,7 +571,7 @@ function lexicalCoverageFields(query: AnalyzedQuery, doc: IndexedDocument) {
  * body hit cannot activate this flag.
  */
 function ordinaryEquivalenceBodyMatch(query: AnalyzedQuery, doc: IndexedDocument) {
-  for (const pair of query.synonymRecall || []) {
+  for (const pair of query.equivalentRecall || []) {
     if (!pair.source || !pair.target || pair.source === pair.target) continue;
     const concept = (query.concepts || []).find(
       (candidate) =>
@@ -761,11 +761,11 @@ function withSynonymRecallFields(
   const score = match ? titleCount * 2 + bodyCount * 0.3 + formCount * 0.3 : 0;
   return {
     ...fields,
-    synonymRecallMatch: match,
-    synonymRecallFormCount: formCount,
-    synonymRecallTitleMatch: titleCount > 0,
-    synonymRecallBodyMatch: bodyCount > 0,
-    synonymRecallScore: Number(score.toFixed(4)),
+    equivalentRecallMatch: match,
+    equivalentRecallFormCount: formCount,
+    equivalentRecallTitleMatch: titleCount > 0,
+    equivalentRecallBodyMatch: bodyCount > 0,
+    equivalentRecallScore: Number(score.toFixed(4)),
   };
 }
 

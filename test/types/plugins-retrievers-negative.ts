@@ -35,8 +35,10 @@ const badLexicon: SearchPlugin = {
 };
 
 const badExpand: SearchPlugin = {
-  // @ts-expect-error expand must be a function when provided
-  expand: true,
+  // @ts-expect-error expand is not a public SearchPlugin hook
+  expand(token: string) {
+    return [{ form: token }];
+  },
 };
 
 const badSequenceTokens: SearchPlugin = {

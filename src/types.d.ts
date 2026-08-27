@@ -271,10 +271,10 @@ export interface AnalyzedQuery {
   topicalRecall?: TopicalRecall | null;
   /**
    * One-hop search-equivalence recall pairs admitted from accepted query
-   * semantics. Absent or empty when no synonym plugin fires. Does not rewrite
+   * semantics. Absent or empty when no equivalent-recall plugin fires. Does not rewrite
    * tokens, lexical intent, or configured identity.
    */
-  synonymRecall?: SearchEquivalenceRecall[];
+  equivalentRecall?: SearchEquivalenceRecall[];
   /**
    * Canonical lexical-intent stream for compiled phrase lookup. May include
    * unique configured-sequence projection or contextual expansion completion.
@@ -438,11 +438,11 @@ export interface FeatureVector {
   topicalRecallTitleMatch?: boolean;
   topicalRecallPhraseMatch?: boolean;
   topicalRecallScore?: number;
-  synonymRecallMatch?: boolean;
-  synonymRecallFormCount?: number;
-  synonymRecallTitleMatch?: boolean;
-  synonymRecallBodyMatch?: boolean;
-  synonymRecallScore?: number;
+  equivalentRecallMatch?: boolean;
+  equivalentRecallFormCount?: number;
+  equivalentRecallTitleMatch?: boolean;
+  equivalentRecallBodyMatch?: boolean;
+  equivalentRecallScore?: number;
   relationshipStrength: number;
   relationshipType: string | null;
   relationshipSourceId: string | null;

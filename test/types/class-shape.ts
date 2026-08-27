@@ -94,7 +94,6 @@ const authored = compileAuthoredRelevance({ configuredConcepts: [{ key: "qa", al
   relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
 });
 void authored.plugins.find((plugin): plugin is SearchPlugin => typeof plugin.lexicon === "function")?.lexicon;
-void authored.plugins.find((plugin) => plugin.name === "synonyms")?.expand;
 void authored.plugins[0];
 void authored.documentRelationships;
 void parseRelationships();

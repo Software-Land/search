@@ -166,7 +166,7 @@ describe("createWorkerRuntime factory compatibility", () => {
     expect(compiles).toBe(1);
     const [qa, hypertext, appsec, editorial] = published;
     expect(qa.results.map((hit) => hit.id)).toEqual(["qa-guide", "testing"]);
-    expect(qa.results.some((hit) => (hit.retrievalSources || []).includes("synonym-recall"))).toBe(true);
+    expect(qa.results.some((hit) => (hit.retrievalSources || []).includes("equivalent-recall"))).toBe(true);
     expect(hypertext.results.map((hit) => hit.id)).toEqual(["http-doc"]);
     expect(appsec.results.map((hit) => hit.id)).toEqual(["authn"]);
     expect(editorial.results.map((hit) => hit.id)).toEqual(["doc-a"]);

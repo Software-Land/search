@@ -271,6 +271,21 @@ try {
       throw new Error(`packed api.d.ts must not export ${leaked}`);
     }
   }
+  const pluginBlockStart = apiDts.indexOf("export interface SearchPlugin");
+  const pluginBlockEnd = apiDts.indexOf("export interface", pluginBlockStart + "export interface SearchPlugin".length);
+  const pluginBlock = apiDts.slice(pluginBlockStart, pluginBlockEnd === -1 ? undefined : pluginBlockEnd);
+  if (!pluginBlock.startsWith("export interface SearchPlugin")) {
+    throw new Error("packed api.d.ts missing SearchPlugin");
+  }
+  if (/\bexpand\b/.test(pluginBlock)) {
+    throw new Error("packed SearchPlugin must not expose expand");
+  }
+  if (apiDts.includes("synonymRecall")) {
+    throw new Error("packed public types must not expose synonymRecall");
+  }
+  if (!apiDts.includes("equivalentRecall?:")) {
+    throw new Error("packed SearchExplanation must type equivalentRecall");
+  }
   const authoredBlock = apiDts.match(
     /export interface CompiledAuthoredRelevance \{[\s\S]*?\n\}/
   );
@@ -485,8 +500,26 @@ if (!identityHit?.retrievalSources?.includes("configured-concept")) {
 if (identityHit.retrievalSources.includes("configured-equivalence")) {
   throw new Error("configured-equivalence must not remain public provenance");
 }
-if (!recallHit?.retrievalSources?.includes("synonym-recall")) {
-  throw new Error("relationshipMap equivalent recall must remain synonym-recall");
+if (!recallHit?.retrievalSources?.includes("equivalent-recall")) {
+  throw new Error("relationshipMap equivalent recall must emit equivalent-recall");
+}
+if (recallHit.retrievalSources.includes("synonym-recall")) {
+  throw new Error("synonym-recall must not remain public provenance");
+}
+if (!recallHit.explanation?.query?.equivalentRecall?.some((pair) => pair.source === "qa" && pair.target === "testing")) {
+  throw new Error("explain query.equivalentRecall missing equivalent pair");
+}
+if (recallHit.explanation?.query?.synonymRecall) {
+  throw new Error("query.synonymRecall must not remain public explain output");
+}
+if (recallHit.features?.synonymRecallMatch != null) {
+  throw new Error("synonymRecall* features must not remain public explain output");
+}
+if (!recallHit.features?.equivalentRecallMatch) {
+  throw new Error("equivalentRecallMatch must be present on equivalent-recall hits");
+}
+if (recallHit.explanation?.query?.concepts?.some((concept) => concept.provenance === "synonym")) {
+  throw new Error("explain concepts must not serialize provenance synonym");
 }
 if (mergeRelationships(null, authored.documentRelationships) !== null) {
   throw new Error("null authored.documentRelationships must merge to null");

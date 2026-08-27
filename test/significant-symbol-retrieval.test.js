@@ -119,7 +119,7 @@ describe("query tokenize vs spoken projection", () => {
     const terms = q.concepts.filter((c) => c.kind === "term");
     expect(terms).toHaveLength(1);
     expect(terms[0].forms).toEqual(expect.arrayContaining(["a*", "astar", "a star"]));
-    expect(q.synonymRecall).toEqual([{ source: "a*", target: "astar" }]);
+    expect(q.equivalentRecall).toEqual([{ source: "a*", target: "astar" }]);
     expect(q.alternatives.some((alt) => alt.source === "significant-symbol")).toBe(true);
     expect(coverageConcepts(q, q.concepts)).toHaveLength(1);
   });
@@ -171,7 +171,7 @@ describe("spoken form reaches retrieval", () => {
     const starFeat = extractFeatures(q, starOnly);
     expect(astarFeat.queryCoverage).toBe(1);
     expect(astarFeat.queryTokenCount).toBe(1);
-    expect(astarFeat.synonymRecallFormCount || 0).toBe(0);
+    expect(astarFeat.equivalentRecallFormCount || 0).toBe(0);
     expect(starFeat.queryCoverage).toBe(0);
     expect(conceptMatchesTitle(q.concepts[0], astar)).toBe("exact");
     expect(conceptMatchesTitle(q.concepts[0], starOnly)).toBeNull();

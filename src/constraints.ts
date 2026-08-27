@@ -482,18 +482,18 @@ function synonymRecallBand(f: Partial<FeatureVector>) {
   ) {
     return 2;
   }
-  if (f.synonymRecallMatch) return 1;
+  if (f.equivalentRecallMatch) return 1;
   return 0;
 }
 
 /**
- * Literal/configured/direct evidence outranks extra synonym-recall-only hits,
- * which outrank true none. No-ops when neither candidate has synonym recall.
+ * Literal/configured/direct evidence outranks extra equivalent-recall-only hits,
+ * which outrank true none. No-ops when neither candidate has equivalent recall.
  * Extra search-equivalence concepts are not typed query coverage; this band
  * uses the remaining identity features after those concepts are excluded.
  */
 function synonymRecallBandConstraint(a: FeaturedHit, b: FeaturedHit) {
-  if (!a.features.synonymRecallMatch && !b.features.synonymRecallMatch) return 0;
+  if (!a.features.equivalentRecallMatch && !b.features.equivalentRecallMatch) return 0;
   const aBand = synonymRecallBand(a.features);
   const bBand = synonymRecallBand(b.features);
   if (aBand === bBand) return 0;
@@ -501,18 +501,18 @@ function synonymRecallBandConstraint(a: FeaturedHit, b: FeaturedHit) {
 }
 
 function synonymRecallOnly(f: Partial<FeatureVector>) {
-  return Boolean(f.synonymRecallMatch) && synonymRecallBand(f) === 1;
+  return Boolean(f.equivalentRecallMatch) && synonymRecallBand(f) === 1;
 }
 
 function synonymQualityBand(f: Partial<FeatureVector>) {
-  if (f.synonymRecallTitleMatch) return 2;
-  if (f.synonymRecallBodyMatch) return 1;
+  if (f.equivalentRecallTitleMatch) return 2;
+  if (f.equivalentRecallBodyMatch) return 1;
   return 0;
 }
 
 /**
- * Inside the synonym-recall-only band, title matches outrank body-only.
- * No-ops unless both hits are synonym-recall-only.
+ * Inside the equivalent-recall-only band, title matches outrank body-only.
+ * No-ops unless both hits are equivalent-recall-only.
  */
 function synonymRecallQualityConstraint(a: FeaturedHit, b: FeaturedHit) {
   if (!synonymRecallOnly(a.features) || !synonymRecallOnly(b.features)) return 0;
@@ -528,8 +528,8 @@ export const DEFAULT_CONSTRAINTS: ConstraintDef[] = [
   { id: "literal-over-standalone-recall", invariant: "H8", class: "strong", fn: standaloneRecallBandConstraint },
   { id: "literal-over-topical-recall", invariant: "H8", class: "strong", fn: topicalRecallBandConstraint },
   { id: "topical-title-over-topical-body", invariant: "H8", class: "strong", fn: topicalRecallQualityConstraint },
-  { id: "literal-over-synonym-recall", invariant: "H8", class: "strong", fn: synonymRecallBandConstraint },
-  { id: "synonym-title-over-synonym-body", invariant: "H8", class: "strong", fn: synonymRecallQualityConstraint },
+  { id: "literal-over-equivalent-recall", invariant: "H8", class: "strong", fn: synonymRecallBandConstraint },
+  { id: "equivalent-title-over-equivalent-body", invariant: "H8", class: "strong", fn: synonymRecallQualityConstraint },
   { id: "canonical-key-expansion-over-key-only", invariant: "H2", class: "strong", fn: canonicalKeyConstraint },
   { id: "repeated-phrase-over-weak-direct", invariant: "H8", class: "strong", fn: repeatedPhraseOverWeakDirectConstraint },
   { id: "contextual-title-prefix-over-unaligned", invariant: "H8", class: "absolute", fn: contextualTitlePrefixConstraint },
@@ -549,8 +549,8 @@ export const HYBRID_CONSTRAINTS: ConstraintDef[] = [
   { id: "literal-over-standalone-recall", invariant: "H8", class: "strong", fn: standaloneRecallBandConstraint },
   { id: "literal-over-topical-recall", invariant: "H8", class: "strong", fn: topicalRecallBandConstraint },
   { id: "topical-title-over-topical-body", invariant: "H8", class: "strong", fn: topicalRecallQualityConstraint },
-  { id: "literal-over-synonym-recall", invariant: "H8", class: "strong", fn: synonymRecallBandConstraint },
-  { id: "synonym-title-over-synonym-body", invariant: "H8", class: "strong", fn: synonymRecallQualityConstraint },
+  { id: "literal-over-equivalent-recall", invariant: "H8", class: "strong", fn: synonymRecallBandConstraint },
+  { id: "equivalent-title-over-equivalent-body", invariant: "H8", class: "strong", fn: synonymRecallQualityConstraint },
   { id: "canonical-key-expansion-over-key-only", invariant: "H2", class: "strong", fn: canonicalKeyConstraint },
   { id: "repeated-phrase-over-weak-direct", invariant: "H8", class: "strong", fn: repeatedPhraseOverWeakDirectConstraint },
   { id: "full-body-multi-concept-over-weak-subset", invariant: "H8", class: "strong", fn: fullBodyMultiConceptOverWeakSubsetConstraint },

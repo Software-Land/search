@@ -213,7 +213,11 @@ function serializeHit(c: RankedHit, query: AnalyzedQuery, explain?: boolean): Se
         raw: query.raw,
         originalSurface: query.originalSurface,
         tokens: query.tokens,
-        concepts: query.concepts,
+        concepts: (query.concepts || []).map((concept) =>
+          concept && concept.provenance === "synonym"
+            ? { ...concept, provenance: "equivalent-recall" }
+            : concept
+        ),
         alternatives: query.alternatives || [],
         prefixCompletion: query.prefixCompletion ?? null,
         contextualCompletion: query.contextualCompletion ?? null,
@@ -237,8 +241,8 @@ function serializeHit(c: RankedHit, query: AnalyzedQuery, explain?: boolean): Se
         topicalRecall: query.topicalRecall
           ? { key: query.topicalRecall.key, forms: query.topicalRecall.forms.map((form) => [...form]) }
           : null,
-        synonymRecall: query.synonymRecall?.length
-          ? query.synonymRecall.map((pair) => ({ source: pair.source, target: pair.target }))
+        equivalentRecall: query.equivalentRecall?.length
+          ? query.equivalentRecall.map((pair) => ({ source: pair.source, target: pair.target }))
           : undefined,
         lexicalTokens: query.lexicalTokens,
         lexicalPhraseKey: query.lexicalPhraseKey,

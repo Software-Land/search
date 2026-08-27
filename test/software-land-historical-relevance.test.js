@@ -155,7 +155,7 @@ describe("Software.Land historical relevance contracts", () => {
     const q = detailed.results[0]?.explanation?.query;
     expect(detailed.results[0]?.title).toBe("App Sec");
     expect(q?.configuredSequenceIntent?.key).toBe("appsec");
-    expect(q?.synonymRecall).toEqual([{ source: "appsec", target: "oath" }]);
+    expect(q?.equivalentRecall).toEqual([{ source: "appsec", target: "oath" }]);
     expect(q?.topicalRecall).toEqual({ key: "appsec", forms: APPSEC_TOPICAL });
   });
 

@@ -72,7 +72,6 @@ export interface SearchPlugin {
   standaloneRecallByToken?: ReadonlyMap<string, string>;
   /** Configured key → reviewed topical phrase forms. */
   topicalRecallByKey?: ReadonlyMap<string, string[][]>;
-  expand?(token: string): Array<{ form: string }>;
 }
 
 /**
@@ -245,7 +244,7 @@ export interface SearchExplanation {
       key: string;
       forms: string[][];
     } | null;
-    synonymRecall?: Array<{ source: string; target: string }>;
+    equivalentRecall?: Array<{ source: string; target: string }>;
     lexicalTokens?: unknown[];
     lexicalPhraseKey?: string;
     normalizedQueryPhrase?: string;

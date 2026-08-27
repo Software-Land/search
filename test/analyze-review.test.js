@@ -439,7 +439,7 @@ describe("exact authored query intent precedes typo correction", () => {
     ]) {
       const prepared = engine._prepareQuery(query);
       expect(prepared.concepts.some((c) => c.id === "oauth")).toBe(false);
-      expect(prepared.synonymRecall).toContainEqual({ source: query, target: expected });
+      expect(prepared.equivalentRecall).toContainEqual({ source: query, target: expected });
       expect(engine.search(query, { limit: 1 })[0].title).toBe(
         expected[0].toUpperCase() + expected.slice(1)
       );

@@ -227,7 +227,7 @@ describe("editorial merge", () => {
 describe("relationshipMap browser parity with in-process authored relevance", () => {
   test("equivalent form, standalone, topical, and editorial survive one Worker init", async () => {
     const queries = [
-      { query: "qa", expectIds: ["qa-guide", "testing"], expectSources: "synonym-recall" },
+      { query: "qa", expectIds: ["qa-guide", "testing"], expectSources: "equivalent-recall" },
       { query: "hypertext", expectIds: ["http-doc"], expectSources: "standalone-recall" },
       { query: "appsec", expectIds: ["authn"], expectSources: "topical-recall" },
       {

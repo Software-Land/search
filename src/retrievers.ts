@@ -47,7 +47,7 @@ import type {
   SearchIndex,
 } from "./types.js";
 
-type QueryFormKind = "token" | "lemma" | "acronym-key" | "concept" | "acronym-form" | "standalone-recall" | "topical-recall" | "synonym-recall";
+type QueryFormKind = "token" | "lemma" | "acronym-key" | "concept" | "acronym-form" | "standalone-recall" | "topical-recall" | "equivalent-recall";
 type QueryForm = { form: string; kind: QueryFormKind };
 type AdaptiveActive = "full-scan" | "indexed-lexical";
 
@@ -73,14 +73,14 @@ function postingTitleSource(kind: QueryFormKind) {
   if (kind === "acronym-key" || kind === "acronym-form") return "configured-concept";
   if (kind === "standalone-recall") return "standalone-recall";
   if (kind === "topical-recall") return "topical-recall";
-  if (kind === "synonym-recall") return "synonym-recall";
+  if (kind === "equivalent-recall") return "equivalent-recall";
   return "title-token";
 }
 
 function postingBodySource(kind: QueryFormKind) {
   if (kind === "standalone-recall") return "standalone-recall";
   if (kind === "topical-recall") return "topical-recall";
-  if (kind === "synonym-recall") return "synonym-recall";
+  if (kind === "equivalent-recall") return "equivalent-recall";
   return "body-lexical";
 }
 
@@ -150,12 +150,12 @@ function queryForms(query: AnalyzedQuery) {
   for (const c of query.concepts || []) {
     if (isBoundTrailingTermConcept(query, c)) continue;
     if (isSearchEquivalenceRecallConcept(query, c)) {
-      add(c.id, "synonym-recall");
+      add(c.id, "equivalent-recall");
       for (const f of c.forms || []) {
-        add(f, "synonym-recall");
+        add(f, "equivalent-recall");
         const parts = String(f).split(/\s+/).filter(Boolean);
         if (parts.length >= 2) {
-          for (const part of parts) add(part, "synonym-recall");
+          for (const part of parts) add(part, "equivalent-recall");
         }
       }
       continue;

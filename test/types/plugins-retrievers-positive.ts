@@ -62,13 +62,6 @@ const d: SearchPlugin = {
   },
 };
 
-const s: SearchPlugin = {
-  expand(token: string) {
-    return [{ form: token }];
-  },
-};
-void s.expand;
-
 const l: LexiconPlugin = {
   name: "corpus-spelling-lexicon",
   lexicon() {
@@ -99,9 +92,9 @@ const rFull: ExperimentalRetriever = {
   },
 };
 
-SearchEngine.create({ plugins: [p, e, d, s, l] });
+SearchEngine.create({ plugins: [p, e, d, l] });
 SearchEngine.create({ retriever: r });
 SearchEngine.create({ retriever: rFull });
 
-const plugins: SearchPlugin[] = [p, e, d, s, l];
+const plugins: SearchPlugin[] = [p, e, d, l];
 SearchEngine.create({ plugins });

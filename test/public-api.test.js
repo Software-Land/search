@@ -111,9 +111,17 @@ describe("public API", () => {
     const recalled = explained.results.find((row) => row.id === "load");
     expect(identity.retrievalSources).toContain("configured-concept");
     expect(identity.retrievalSources).not.toContain("configured-equivalence");
-    expect(recalled.retrievalSources).toContain("synonym-recall");
+    expect(recalled.retrievalSources).toContain("equivalent-recall");
+    expect(recalled.retrievalSources).not.toContain("synonym-recall");
+    expect(recalled.explanation.query.equivalentRecall).toEqual([{ source: "qa", target: "testing" }]);
+    expect(recalled.explanation.query).not.toHaveProperty("synonymRecall");
+    expect(recalled.features.equivalentRecallMatch).toBe(true);
+    expect(recalled.features).not.toHaveProperty("synonymRecallMatch");
+    expect(recalled.explanation.query.concepts.some((concept) => concept.provenance === "equivalent-recall")).toBe(true);
+    expect(recalled.explanation.query.concepts.every((concept) => concept.provenance !== "synonym")).toBe(true);
     expect(recalled.relevanceKind).toBe("direct");
     expect(identity.directClass).toBeTruthy();
+    expect(ids(engine.search("qa", { limit: 5 }))).toEqual(ids(explained.results));
   });
 
   test("internal dictionary() does not compile relationshipMap as a complete authoring path", () => {

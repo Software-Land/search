@@ -147,12 +147,6 @@ async function indexAndSearch(engine: SearchEngine): Promise<SearchResult[]> {
 void created;
 void indexAndSearch;
 
-const directionalPlugin: SearchPlugin = {
-  name: "synonyms",
-  expand: (token: string) => (token === "qa" ? [{ form: "testing" }] : []),
-};
-void directionalPlugin.expand;
-void authored.plugins.find((plugin) => plugin.name === "synonyms")?.expand;
 const parsedGraph: RelationshipArtifact = parseRelationships(relationships);
 void parsedGraph.relationships;
 void ARTIFACT_FORMATS.relationships;

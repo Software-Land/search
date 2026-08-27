@@ -133,7 +133,7 @@ describe("directional search equivalences", () => {
     expect(q.tokens.map((t) => t.surfaceNormalized)).toEqual(["qa"]);
     expect(q.configuredSequenceIntent.key).toBe("qa");
     expect(q.lexicalPhraseKey).toBe("quality assurance");
-    expect(q.synonymRecall).toEqual([{ source: "qa", target: "testing" }]);
+    expect(q.equivalentRecall).toEqual([{ source: "qa", target: "testing" }]);
     expect(q.topicalRecall).toBeFalsy();
     expect(q.standaloneRecall).toBeFalsy();
     expect(q.concepts.some((c) => c.kind === "acronym" && c.id === "qa")).toBe(true);
@@ -143,7 +143,8 @@ describe("directional search equivalences", () => {
 
     const eng = await engine({ retriever: "indexed" });
     const explained = eng.searchDetailed("qa", { limit: 50, explain: true }).results[0];
-    expect(explained.explanation.query.synonymRecall).toEqual([{ source: "qa", target: "testing" }]);
+    expect(explained.explanation.query.equivalentRecall).toEqual([{ source: "qa", target: "testing" }]);
+    expect(explained.explanation.query).not.toHaveProperty("synonymRecall");
     expect(explained.explanation.query.raw).toBe("qa");
   });
 
@@ -153,7 +154,7 @@ describe("directional search equivalences", () => {
     const q = analyzeQuery("quality assurance", { plugins: plugins({ dict: [], map }) });
     expect(q.tokens.map((t) => t.normalized)).toEqual(["quality", "assurance"]);
     expect(q.configuredSequenceIntent).toBeNull();
-    expect(q.synonymRecall).toEqual([{ source: "quality assurance", target: "testing" }]);
+    expect(q.equivalentRecall).toEqual([{ source: "quality assurance", target: "testing" }]);
     expect(ids(indexedHits)).toEqual(expect.arrayContaining(["load", "software"]));
     expect(stage3AUnsupportedReason(q)).toBe("concept-provenance");
   });
@@ -162,7 +163,7 @@ describe("directional search equivalences", () => {
     const forward = await assertIndexedFullScan("testing", { dict: [], map: { qa: ["testing"] } });
     expect(ids(forward.indexedHits)).not.toContain("qa-guide");
     const q = analyzeQuery("testing", { plugins: plugins({ dict: [], map: { qa: ["testing"] } }) });
-    expect(q.synonymRecall || []).toEqual([]);
+    expect(q.equivalentRecall || []).toEqual([]);
 
     const reverse = await assertIndexedFullScan("testing", {
       dict: [],
@@ -177,8 +178,8 @@ describe("directional search equivalences", () => {
     expect(ids(indexedHits)).toEqual(expect.arrayContaining(["load", "software"]));
     expect(ids(indexedHits)).not.toContain("verify");
     const q = analyzeQuery("qa", { plugins: plugins({ map }) });
-    expect(q.synonymRecall).toEqual([{ source: "qa", target: "testing" }]);
-    expect(q.synonymRecall.some((p) => p.target === "verification")).toBe(false);
+    expect(q.equivalentRecall).toEqual([{ source: "qa", target: "testing" }]);
+    expect(q.equivalentRecall.some((p) => p.target === "verification")).toBe(false);
   });
 
   test("uncovered token source admits the target", async () => {
@@ -210,7 +211,7 @@ describe("directional search equivalences", () => {
     const map = { qa: ["testing"] };
     const q = analyzeQuery("quality assurance", { plugins: plugins({ dict, map }) });
     expect(q.configuredSequenceIntent).toBeNull();
-    expect(q.synonymRecall || []).toEqual([]);
+    expect(q.equivalentRecall || []).toEqual([]);
     expect(q.concepts.some((c) => c.kind === "acronym")).toBe(false);
     const { indexedHits } = await assertIndexedFullScan("quality assurance", { dict, map });
     expect(ids(indexedHits)).not.toContain("load");
@@ -229,7 +230,7 @@ describe("directional search equivalences", () => {
     ];
     const q = analyzeQuery("qa", { plugins: plugins({ dict, map: { qa: ["testing"] } }) });
     expect(q.configuredSequenceIntent.key).toBe("qa");
-    expect(q.synonymRecall).toEqual([{ source: "qa", target: "testing" }]);
+    expect(q.equivalentRecall).toEqual([{ source: "qa", target: "testing" }]);
     expect(q.topicalRecall).toBeFalsy();
     expect(q.standaloneRecall).toBeFalsy();
   });
@@ -237,9 +238,9 @@ describe("directional search equivalences", () => {
   test("does not prefix-match synonym sources from typed stubs", () => {
     const map = { security: ["safety"], quality: ["testing"], testing: ["verification"] };
     const plugin = plugins({ dict: [], map });
-    expect(analyzeQuery("secu", { plugins: plugin }).synonymRecall || []).toEqual([]);
-    expect(analyzeQuery("qual", { plugins: plugin }).synonymRecall || []).toEqual([]);
-    expect(analyzeQuery("tes", { plugins: plugin }).synonymRecall || []).toEqual([]);
+    expect(analyzeQuery("secu", { plugins: plugin }).equivalentRecall || []).toEqual([]);
+    expect(analyzeQuery("qual", { plugins: plugin }).equivalentRecall || []).toEqual([]);
+    expect(analyzeQuery("tes", { plugins: plugin }).equivalentRecall || []).toEqual([]);
   });
 
   test("bidirectional equivalent clique preserves old group reachability", () => {
@@ -328,9 +329,9 @@ describe("search-equivalence morphology / symbols", () => {
     expect(cases.test.tokens[0].lemma).toBe("test");
     expect(cases.tests.tokens[0].lemma).toBe("test");
     expect(cases.testing.tokens[0].lemma).toBe("test");
-    expect(cases.test.synonymRecall).toEqual([{ source: "test", target: "probe" }]);
-    expect(cases.tests.synonymRecall).toEqual([{ source: "test", target: "probe" }]);
-    expect(cases.testing.synonymRecall).toEqual([{ source: "test", target: "probe" }]);
+    expect(cases.test.equivalentRecall).toEqual([{ source: "test", target: "probe" }]);
+    expect(cases.tests.equivalentRecall).toEqual([{ source: "test", target: "probe" }]);
+    expect(cases.testing.equivalentRecall).toEqual([{ source: "test", target: "probe" }]);
     expect(cases.testing.concepts.filter((c) => c.provenance === "synonym").length).toBeLessThanOrEqual(1);
     const { indexedHits } = await assertIndexedFullScan("tests", { dict: [], map, docs: extra });
     expect(ids(indexedHits)).toEqual(expect.arrayContaining(["probe"]));
@@ -432,25 +433,25 @@ describe("extra synonym recall vs merged ordinary-term synonyms", () => {
     expect(byId["react-auth"].features.bodyLexicalMatch).toBe(1);
     expect(byId["react-auth"].features.queryCoverage).toBe(0);
     expect(byId["react-auth"].retrievalSources).toContain("body-lexical");
-    expect(byId["react-auth"].retrievalSources).not.toContain("synonym-recall");
+    expect(byId["react-auth"].retrievalSources).not.toContain("equivalent-recall");
 
-    expect(byId["zero-trust"].retrievalSources).toContain("synonym-recall");
+    expect(byId["zero-trust"].retrievalSources).toContain("equivalent-recall");
     expect(byId["zero-trust"].retrievalSources).not.toContain("title-token");
     expect(byId["zero-trust"].features.queryCoverage).toBe(0);
     expect(byId["zero-trust"].features.bodyLexicalMatch).toBe(0);
     expect(byId["zero-trust"].features.configuredEquivalenceMatch).toBe(false);
     expect(byId["zero-trust"].features.exactTitleTokenMatch).toBe(false);
-    expect(byId["zero-trust"].features.synonymRecallMatch).toBe(true);
-    expect(byId["zero-trust"].features.synonymRecallTitleMatch).toBe(true);
-    expect(byId["zero-trust"].features.synonymRecallBodyMatch).toBe(false);
+    expect(byId["zero-trust"].features.equivalentRecallMatch).toBe(true);
+    expect(byId["zero-trust"].features.equivalentRecallTitleMatch).toBe(true);
+    expect(byId["zero-trust"].features.equivalentRecallBodyMatch).toBe(false);
 
-    expect(byId["sec-body"].retrievalSources).toContain("synonym-recall");
+    expect(byId["sec-body"].retrievalSources).toContain("equivalent-recall");
     expect(byId["sec-body"].retrievalSources).not.toContain("body-lexical");
     expect(byId["sec-body"].features.queryCoverage).toBe(0);
     expect(byId["sec-body"].features.bodyLexicalMatch).toBe(0);
-    expect(byId["sec-body"].features.synonymRecallMatch).toBe(true);
-    expect(byId["sec-body"].features.synonymRecallTitleMatch).toBe(false);
-    expect(byId["sec-body"].features.synonymRecallBodyMatch).toBe(true);
+    expect(byId["sec-body"].features.equivalentRecallMatch).toBe(true);
+    expect(byId["sec-body"].features.equivalentRecallTitleMatch).toBe(false);
+    expect(byId["sec-body"].features.equivalentRecallBodyMatch).toBe(true);
 
     expect(ids(detailed.results).indexOf("react-auth")).toBeLessThan(ids(detailed.results).indexOf("zero-trust"));
     expect(ids(detailed.results).indexOf("zero-trust")).toBeLessThan(ids(detailed.results).indexOf("sec-body"));
@@ -460,14 +461,14 @@ describe("extra synonym recall vs merged ordinary-term synonyms", () => {
       { document: { id: "sec-body" }, features: byId["sec-body"].features, retrievalSources: byId["sec-body"].retrievalSources }
     );
     expect(titleVsBody.order).toBe(-1);
-    expect(titleVsBody.applied.some((row) => row.id === "synonym-title-over-synonym-body")).toBe(true);
+    expect(titleVsBody.applied.some((row) => row.id === "equivalent-title-over-equivalent-body")).toBe(true);
 
     const identityVsSynonym = compareConstraint(
       { document: { id: "react-auth" }, features: byId["react-auth"].features, retrievalSources: byId["react-auth"].retrievalSources },
       { document: { id: "zero-trust" }, features: byId["zero-trust"].features, retrievalSources: byId["zero-trust"].retrievalSources }
     );
     expect(identityVsSynonym.order).toBe(-1);
-    expect(identityVsSynonym.applied.some((row) => row.id === "literal-over-synonym-recall")).toBe(true);
+    expect(identityVsSynonym.applied.some((row) => row.id === "literal-over-equivalent-recall")).toBe(true);
   });
 
   test("qa extra testing recall stays retrievable and is not typed coverage", async () => {
@@ -486,10 +487,10 @@ describe("extra synonym recall vs merged ordinary-term synonyms", () => {
     expect(byId["qa-title"].features.configuredEquivalenceMatch).toBe("key-in-title");
     expect(byId["testing-title"].features.queryCoverage).toBe(0);
     expect(byId["testing-title"].features.configuredEquivalenceMatch).toBe(false);
-    expect(byId["testing-title"].retrievalSources).toContain("synonym-recall");
-    expect(byId["testing-title"].features.synonymRecallTitleMatch).toBe(true);
-    expect(byId["testing-body"].retrievalSources).toContain("synonym-recall");
-    expect(byId["testing-body"].features.synonymRecallBodyMatch).toBe(true);
+    expect(byId["testing-title"].retrievalSources).toContain("equivalent-recall");
+    expect(byId["testing-title"].features.equivalentRecallTitleMatch).toBe(true);
+    expect(byId["testing-body"].retrievalSources).toContain("equivalent-recall");
+    expect(byId["testing-body"].features.equivalentRecallBodyMatch).toBe(true);
     expect(stage3AUnsupportedReason(q)).not.toBeNull();
   });
 
@@ -521,9 +522,9 @@ describe("extra synonym recall vs merged ordinary-term synonyms", () => {
     const authEng = await engine(pluginOpts);
     const vuln = authEng.searchDetailed("authentication", { limit: 20, explain: true }).results.find((row) => row.id === "vuln");
     expect(vuln.retrievalSources).toContain("title-token");
-    expect(vuln.retrievalSources).not.toContain("synonym-recall");
+    expect(vuln.retrievalSources).not.toContain("equivalent-recall");
     expect(vuln.features.queryCoverage).toBeGreaterThan(0);
-    expect(vuln.features.synonymRecallMatch).toBeFalsy();
+    expect(vuln.features.equivalentRecallMatch).toBeFalsy();
   });
 });
 
@@ -551,7 +552,7 @@ describe("morphology-aware directional search equivalences", () => {
     expect(q.concepts).toHaveLength(1);
     expect(q.concepts[0].forms).toEqual(expect.arrayContaining(["run", "jogging"]));
     expect(searchEquivalenceRecallConcepts(q)).toEqual([]);
-    expect(q.synonymRecall).toEqual([{ source: "run", target: "jogging" }]);
+    expect(q.equivalentRecall).toEqual([{ source: "run", target: "jogging" }]);
     const { indexedHits } = await assertIndexedFullScan("run", {
       dict: [],
       map,
@@ -571,7 +572,7 @@ describe("morphology-aware directional search equivalences", () => {
     const q = analyzeQuery("run", { plugins: plugin });
     expect(q.concepts[0].forms).toEqual(expect.arrayContaining(["run", "sprinting"]));
     expect(q.concepts[0].forms).not.toContain("jogging");
-    expect(q.synonymRecall).toEqual([{ source: "run", target: "sprinting" }]);
+    expect(q.equivalentRecall).toEqual([{ source: "run", target: "sprinting" }]);
   });
 
   test("derived canonical lookup keeps authored directionality", () => {
@@ -582,8 +583,8 @@ describe("morphology-aware directional search equivalences", () => {
     });
     const forward = analyzeQuery("run", { plugins: plugin });
     const reverse = analyzeQuery("jogging", { plugins: plugin });
-    expect(forward.synonymRecall).toEqual([{ source: "run", target: "jogging" }]);
-    expect(reverse.synonymRecall || []).toEqual([]);
+    expect(forward.equivalentRecall).toEqual([{ source: "run", target: "jogging" }]);
+    expect(reverse.equivalentRecall || []).toEqual([]);
     expect(reverse.concepts[0].forms).not.toContain("running");
     expect(reverse.concepts[0].forms).not.toContain("run");
   });
@@ -616,7 +617,7 @@ describe("morphology-aware directional search equivalences", () => {
       dict: [],
       map: { running: ["jogging"], ran: ["jogging"] },
     });
-    expect(analyzeQuery("run", { plugins: plugin }).synonymRecall).toEqual([{ source: "run", target: "jogging" }]);
+    expect(analyzeQuery("run", { plugins: plugin }).equivalentRecall).toEqual([{ source: "run", target: "jogging" }]);
   });
 
   test("incompatible target sets for one lemma fail closed", () => {
@@ -633,7 +634,7 @@ describe("morphology-aware directional search equivalences", () => {
       dict: [],
       map: { running: ["jogging"], ran: ["walking"] },
     });
-    expect(analyzeQuery("run", { plugins: plugin }).synonymRecall || []).toEqual([]);
+    expect(analyzeQuery("run", { plugins: plugin }).equivalentRecall || []).toEqual([]);
     expect(analyzeQuery("run", { plugins: plugin }).concepts[0].forms).not.toContain("jogging");
     expect(analyzeQuery("run", { plugins: plugin }).concepts[0].forms).not.toContain("walking");
   });
@@ -649,12 +650,12 @@ describe("morphology-aware directional search equivalences", () => {
     expect(morph.lemma("partitioning")).toBe("partition");
     const partition = analyzeQuery("partition", { plugins: plugin });
     const partit = analyzeQuery("partit", { plugins: plugin });
-    expect(partition.synonymRecall || []).toEqual([]);
-    expect(partit.synonymRecall || []).toEqual([]);
+    expect(partition.equivalentRecall || []).toEqual([]);
+    expect(partit.equivalentRecall || []).toEqual([]);
     expect(partition.concepts[0].forms).not.toContain("sharding");
     const exact = analyzeQuery("partitioning", { plugins: plugin });
     expect(exact.tokens[0].normalized).toBe("partitioning");
-    expect(exact.synonymRecall).toEqual([{ source: "partitioning", target: "sharding" }]);
+    expect(exact.equivalentRecall).toEqual([{ source: "partitioning", target: "sharding" }]);
   });
 
   test("query surface is preserved when a derived target activates", () => {
@@ -688,12 +689,12 @@ describe("morphology-aware directional search equivalences", () => {
     const { indexed } = await assertIndexedFullScan("run", { dict: [], map, lemmas, docs: jogDocs });
     const jog = indexed.searchDetailed("run", { limit: 20, explain: true }).results.find((row) => row.id === "jog");
     expect(jog.retrievalSources).toContain("body-lexical");
-    expect(jog.retrievalSources).not.toContain("synonym-recall");
+    expect(jog.retrievalSources).not.toContain("equivalent-recall");
     expect(jog.features.bodyLexicalMatch).toBe(1);
     expect(jog.features.queryCoverage).toBe(0);
     expect(jog.features.coverageConceptCount).toBe(1);
     expect(jog.features.lexicalConceptCoverage).toBe(1);
-    expect(jog.features.synonymRecallMatch).toBeFalsy();
+    expect(jog.features.equivalentRecallMatch).toBeFalsy();
   });
 
   test("shard family reaches partitioning without an authored shard key", async () => {
@@ -712,7 +713,7 @@ describe("morphology-aware directional search equivalences", () => {
       const q = analyzeQuery(query, { plugins: plugin });
       expect(q.tokens[0].surface).toBe(query);
       expect(q.tokens[0].normalized).toBe("shard");
-      expect(q.synonymRecall).toEqual([{ source: "shard", target: "partitioning" }]);
+      expect(q.equivalentRecall).toEqual([{ source: "shard", target: "partitioning" }]);
       expect(q.concepts[0].forms).toContain("partitioning");
       expect(searchEquivalenceRecallConcepts(q)).toEqual([]);
       const { indexedHits } = await assertIndexedFullScan(query, { dict: [], map, docs: shardDocs });
@@ -731,8 +732,8 @@ describe("morphology-aware directional search equivalences", () => {
       expect(hit.rank).toBeLessThanOrEqual(6);
     }
     const reverse = analyzeQuery("partitioning", { plugins: plugin });
-    expect(reverse.synonymRecall).toEqual([{ source: "partitioning", target: "sharding" }]);
-    expect(analyzeQuery("partition", { plugins: plugin }).synonymRecall || []).toEqual([]);
+    expect(reverse.equivalentRecall).toEqual([{ source: "partitioning", target: "sharding" }]);
+    expect(analyzeQuery("partition", { plugins: plugin }).equivalentRecall || []).toEqual([]);
   });
 
   test("derived partitioning evidence is not double-counted as extra recall", async () => {
@@ -751,8 +752,8 @@ describe("morphology-aware directional search equivalences", () => {
     expect(cockroach.features.lexicalConceptCoverage).toBe(1);
     expect(cockroach.features.ordinaryEquivalenceBodyMatch).toBe(true);
     expect(cockroach.features.bodyPhraseCount).toBe(0);
-    expect(cockroach.features.synonymRecallMatch).toBeFalsy();
-    expect(cockroach.features.synonymRecallBodyMatch).toBeFalsy();
+    expect(cockroach.features.equivalentRecallMatch).toBeFalsy();
+    expect(cockroach.features.equivalentRecallBodyMatch).toBeFalsy();
     const q = detailed.results[0].explanation.query;
     expect(coverageConcepts(q, q.concepts)).toHaveLength(1);
     expect(searchEquivalenceRecallConcepts(q)).toEqual([]);
@@ -779,7 +780,7 @@ describe("morphology-aware directional search equivalences", () => {
     expect(byId["both"].bodyPhraseCount).toBe(0);
 
     const reverse = await engine({ ...opts, retriever: "full-scan" });
-    expect(reverse._prepareQuery("jogging").synonymRecall || []).toEqual([]);
+    expect(reverse._prepareQuery("jogging").equivalentRecall || []).toEqual([]);
     const reverseQuery = reverse._prepareQuery("jogging");
     const reverseTarget = reverse._index.documents.find((doc) => doc.id === "target-body");
     expect(extractFeatures(reverseQuery, reverseTarget).ordinaryEquivalenceBodyMatch).toBe(false);
@@ -813,7 +814,7 @@ describe("morphology-aware directional search equivalences", () => {
     const security = extraRecall
       .searchDetailed("rbac", { limit: 20, explain: true })
       .results.find((row) => row.id === "security");
-    expect(security.features.synonymRecallBodyMatch).toBe(true);
+    expect(security.features.equivalentRecallBodyMatch).toBe(true);
     expect(security.features.ordinaryEquivalenceBodyMatch).toBe(false);
   });
 

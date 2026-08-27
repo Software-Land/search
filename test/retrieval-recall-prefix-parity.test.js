@@ -84,8 +84,8 @@ const ciPlugins = [
 ];
 
 describe("retrieval form prefix policy", () => {
-  test("synonym-recall and ordinary kinds admit prefix; topical-recall does not", () => {
-    expect(retrievalFormKindAllowsPrefix("synonym-recall")).toBe(true);
+  test("equivalent-recall and ordinary kinds admit prefix; topical-recall does not", () => {
+    expect(retrievalFormKindAllowsPrefix("equivalent-recall")).toBe(true);
     expect(retrievalFormKindAllowsPrefix("standalone-recall")).toBe(true);
     expect(retrievalFormKindAllowsPrefix("concept")).toBe(true);
     expect(retrievalFormKindAllowsPrefix("token")).toBe(true);
@@ -93,7 +93,7 @@ describe("retrieval form prefix policy", () => {
   });
 });
 
-describe("synonym-recall prefix posting completeness", () => {
+describe("equivalent-recall prefix posting completeness", () => {
   const docs = [
     { id: "ci-canonical", title: "Continuous Integration", body: "pipeline notes" },
     { id: "syn-body-prefix", title: "Vendor Class", body: "devopsschool curriculum notes" },
@@ -116,8 +116,8 @@ describe("synonym-recall prefix posting completeness", () => {
       const views = expectModeParity(engines, query);
       expect(views.full.ids).toEqual(expect.arrayContaining(["ci-canonical", "syn-body-prefix", "syn-title-prefix"]));
       expect(views.full.ids).not.toContain("unrelated");
-      expect(views.full.sources["syn-body-prefix"]).toEqual(["synonym-recall"]);
-      expect(views.full.sources["syn-title-prefix"]).toEqual(["synonym-recall"]);
+      expect(views.full.sources["syn-body-prefix"]).toEqual(["equivalent-recall"]);
+      expect(views.full.sources["syn-title-prefix"]).toEqual(["equivalent-recall"]);
     }
     expect(publicHits(engines.full, "ci")).toEqual(publicHits(engines.full, "continuous integration"));
     expect(publicHits(engines.compiled, "ci")).toEqual(publicHits(engines.compiled, "continuous integration"));
@@ -129,7 +129,7 @@ describe("synonym-recall prefix posting completeness", () => {
   });
 });
 
-describe("synonym-recall prefix information bound", () => {
+describe("equivalent-recall prefix information bound", () => {
   test("1-character and 2-character recall forms do not gain prefix fanout", async () => {
     const docs = [
       { id: "short-1", title: "Notes", body: "developer handbook" },
