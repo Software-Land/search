@@ -45,7 +45,7 @@ Properties:
 - results stay identical to exhaustive compiled `search()` on the supported path
 - no approximate top-K
 - missing, single-block-only, or malformed v2 metadata fails closed to exhaustive retrieval
-- `searchDetailed()` and unsupported query classes (prefix, repaired, acronym, numeric, custom constraints, nonzero `retrievalScoreWeight`) fail closed
+- `searchDetailed()` and unsupported query classes (prefix, repaired, configured-concept occupancy, numeric, custom constraints, nonzero `retrievalScoreWeight`) fail closed
 - skipped 1-of-k body postings are genuinely not decoded or materialized
 
 Prefix expansion, classic WAND/BMW, and approximate top-K remain out of scope for Stage 3A. See [exact-pruning.md](exact-pruning.md).

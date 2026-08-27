@@ -58,7 +58,7 @@ Stage 2A stores only contiguous block boundaries. It does not claim TF/score bou
 | `bodyLexicalMatch` | query concepts vs body tokens/lemmas/prefixes | exact `1` for one concept with sole `body-lexical` provenance | score exactly +0.25 | exact bound |
 | body phrase count/frequency | attached `lexicalFrequency` | exact lookup of the sole canonical phrase key, or zero after stop stripping | signature phrase-count band; no score term | exact envelope |
 | `titleTokenCount` | non-stop title count | irrelevant in the supported non-exactish signature | conditional signature scalar; no score | no bound needed |
-| expansion/canonical key | configured expansion title evidence | supported path rejects acronym/configured-key concepts | signature bit / up to +2.1 | otherwise evaluate |
+| expansion/canonical key | configured expansion title evidence | supported path rejects configured-concept occupancy | signature bit / up to +2.1 | otherwise evaluate |
 | `retrievalScore` | normalized retriever score × configured weight | supported only when `retrievalScoreWeight === 0` | additive score | nonzero weight evaluates |
 | relationship fields | selected edge | supported candidate initially direct with strength 0 | signature relevance/class; +0 | active relationship targets evaluate/fallback |
 | `directClass` / `relevanceKind` | all evidence above | exactly `weak` / `direct` for supported candidates | signature fields | exact bound |
