@@ -28,6 +28,20 @@ export type RetrieverName = "full-scan" | "indexed" | "adaptive";
 export type RelevanceKind = "direct" | "related";
 export type DirectClass = "strong" | "moderate" | "weak" | "none";
 
+/**
+ * One configured identity. `aliases[0]` is the canonical lexical sequence.
+ * This is not relationshipMap `kind: "equivalent"` recall.
+ */
+export interface ConfiguredConcept {
+  key: string;
+  /** aliases[0] is the canonical lexical sequence; remaining aliases are same-intent forms. */
+  aliases?: string[][];
+  /** Optional authored/compiled identity metadata. Not a ranking weight. */
+  type?: string;
+  provenance?: string | null;
+  confidence?: number | null;
+}
+
 export interface AdaptiveOptions {
   /** Deterministic document-count cutoff. Not a hardware auto-tuner. Default 1500. */
   documentThreshold?: number;
@@ -51,9 +65,9 @@ export interface SearchPlugin {
   sequences?: ReadonlyArray<{
     tokens: readonly string[];
     kind?: string;
-    entry: EquivalenceEntry;
+    entry: ConfiguredConcept;
   }>;
-  byKey?: ReadonlyMap<string, EquivalenceEntry>;
+  byKey?: ReadonlyMap<string, ConfiguredConcept>;
   /** Unique reviewed standalone token → configured key. Collisions are omitted. */
   standaloneRecallByToken?: ReadonlyMap<string, string>;
   /** Configured key → reviewed topical phrase forms. */
@@ -75,60 +89,6 @@ export interface EnglishPlugin extends SearchPlugin {
   name: "english";
   lemma(token: string): string;
   canonicalLemma(token: string): string | null;
-}
-
-/**
- * Configured-concept plugin shape produced by `compileAuthoredRelevance()`.
- * Plugin `name` is `"dictionary"` (runtime/explain identifier, not a public factory).
- * Core does not read a plugin `entries` array. Authored entries are `{ key, aliases }`
- * plus optional identity metadata (`type`, `provenance`, `confidence`).
- * `standaloneRecallByToken` / `topicalRecallByKey` are compiled from relationshipMap.
- */
-export interface DictionaryPlugin extends SearchPlugin {
-  name: "dictionary";
-  sequences: NonNullable<SearchPlugin["sequences"]>;
-  byKey: ReadonlyMap<string, EquivalenceEntry>;
-  standaloneRecallByToken?: ReadonlyMap<string, string>;
-  topicalRecallByKey?: ReadonlyMap<string, string[][]>;
-  lexicon(): Iterable<string>;
-}
-
-/**
- * Structural plugin shape for one-hop recall. Detected when `name === "synonyms"`
- * and `expand` is present. Applications author `equivalent` edges on
- * `relationshipMap`; `compileAuthoredRelevance()` includes this plugin in
- * `authored.plugins`. Custom plugins may also implement `SearchPlugin.expand`.
- */
-export interface SynonymPlugin extends SearchPlugin {
-  name: "synonyms";
-  expand(token: string): Array<{ form: string }>;
-}
-
-/**
- * Directional one-hop recall map used by enrichment/tooling helpers such as
- * `normalizeSearchEquivalences()`. Not a root application-authoring constructor.
- */
-export type SearchEquivalenceMap = Record<string, string[]>;
-
-export interface SearchEquivalencePair {
-  source: string;
-  target: string;
-}
-
-export interface NormalizedSearchEquivalenceEntry {
-  source: string;
-  targets: string[];
-}
-
-export interface SearchEquivalenceRejection {
-  source: string;
-  target?: string;
-  reason: string;
-}
-
-export interface NormalizedSearchEquivalences {
-  entries: NormalizedSearchEquivalenceEntry[];
-  rejected: SearchEquivalenceRejection[];
 }
 
 /** Opt-in lexicon-only plugin shape (typo vocabulary / prefix words). */
@@ -285,7 +245,7 @@ export interface SearchExplanation {
       key: string;
       forms: string[][];
     } | null;
-    synonymRecall?: SearchEquivalencePair[];
+    synonymRecall?: Array<{ source: string; target: string }>;
     lexicalTokens?: unknown[];
     lexicalPhraseKey?: string;
     normalizedQueryPhrase?: string;
@@ -339,16 +299,6 @@ export interface SearchEngineConstructor {
   prototype: SearchEngine;
 }
 
-export interface EquivalenceEntry {
-  key: string;
-  /** aliases[0] is the canonical lexical sequence; remaining aliases are same-intent forms. */
-  aliases?: string[][];
-  /** Optional authored/compiled identity metadata. Not a ranking weight. */
-  type?: string;
-  provenance?: string | null;
-  confidence?: number | null;
-}
-
 export type RelationshipKind = "equivalent" | "related";
 
 export type RelationshipEndpoint =
@@ -364,18 +314,10 @@ export interface AuthoredRelationshipEdge {
 export type RelationshipMap = Record<string, AuthoredRelationshipEdge[]>;
 
 export interface MigratedConfiguredEntry {
-  entry: EquivalenceEntry;
+  entry: ConfiguredConcept;
   discardedPrimary: string | null;
   standaloneRelationships: Array<{ sourceToken: string; concept: string }>;
   topicalRelationships: Array<{ concept: string; form: string[] }>;
-}
-
-export interface CompiledRelationshipMap {
-  synonymMap: SearchEquivalenceMap;
-  editorialRelationships: Record<
-    string,
-    Array<{ target: string; type: "editorial"; strength: 1; provenance: "manual" }>
-  >;
 }
 
 export interface CompiledAuthoredRelevance {
@@ -392,12 +334,6 @@ export interface CompiledAuthoredRelevance {
    * Combine with a generated semantic artifact via `mergeRelationships(semantic, authored.documentRelationships)`.
    */
   documentRelationships: RelationshipArtifact | null;
-}
-
-export interface EquivalenceArtifact {
-  format: "search-v2-equivalences";
-  version: 1;
-  entries: EquivalenceEntry[];
 }
 
 export interface RelationshipEdge {

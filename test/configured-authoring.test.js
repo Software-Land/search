@@ -6,11 +6,11 @@ import {
   SearchEngine,
   morphology,
   migrateConfiguredEntry,
-  compileRelationshipMap,
   compileAuthoredRelevance,
   InvalidConfigurationError,
-  parseEquivalences,
 } from "../dist/index.js";
+import { compileRelationshipMap } from "../dist/relationshipMap.js";
+import { parseConfiguredConcepts } from "../tools/search-corpus/index.js";
 import { dictionary } from "../dist/dictionary.js";
 import { synonyms as synonymsPrimitive } from "../dist/synonyms.js";
 import { pluginByName } from "./helpers/authored.js";
@@ -302,14 +302,49 @@ describe("authored compile preserves runtime identity", () => {
   });
 });
 
-describe("parseEquivalences hard cut", () => {
-  test("rejects expansion and primary on the public artifact", () => {
+describe("parseConfiguredConcepts hard cut", () => {
+  test("rejects expansion and primary on the configured-concept artifact", () => {
     expect(() =>
-      parseEquivalences({
-        format: "search-v2-equivalences",
+      parseConfiguredConcepts({
+        format: "search-v2-configured-concepts",
         version: 1,
         entries: [{ key: "wifi", expansion: ["wi", "fi"] }],
       })
     ).toThrow(/expansion/);
+  });
+
+  test("parses search-v2-configured-concepts and feeds compileAuthoredRelevance", () => {
+    const parsed = parseConfiguredConcepts({
+      format: "search-v2-configured-concepts",
+      version: 1,
+      entries: [{ key: "wifi", aliases: [["wi", "fi"]] }],
+    });
+    expect(parsed.format).toBe("search-v2-configured-concepts");
+    expect(parsed.version).toBe(1);
+    expect(parsed.entries[0]).toEqual(
+      expect.objectContaining({ key: "wifi", aliases: [["wi", "fi"]] })
+    );
+    const authored = compileAuthoredRelevance({ configuredConcepts: parsed.entries });
+    expect(authored.plugins[0].byKey.get("wifi").key).toBe("wifi");
+  });
+
+  test("rejects search-v2-equivalences", () => {
+    expect(() =>
+      parseConfiguredConcepts({
+        format: "search-v2-equivalences",
+        version: 1,
+        entries: [{ key: "wifi", aliases: [["wi", "fi"]] }],
+      })
+    ).toThrow(/search-v2-equivalences/);
+  });
+
+  test("rejects search-v2-synonyms", () => {
+    expect(() =>
+      parseConfiguredConcepts({
+        format: "search-v2-synonyms",
+        version: 1,
+        entries: [],
+      })
+    ).toThrow(/search-v2-configured-concepts/);
   });
 });

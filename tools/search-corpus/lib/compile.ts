@@ -10,7 +10,7 @@ import {
 } from "./queue.js";
 import type {
   CorpusCandidate,
-  EquivalenceArtifact,
+  ConfiguredConceptArtifact,
   EquivalenceCandidate,
   EvidenceHit,
   InspectionDelta,
@@ -20,6 +20,74 @@ import type {
   GeneratedRelationshipMap,
   SynonymCandidate,
 } from "../types.js";
+
+export const CONFIGURED_CONCEPT_FORMAT = "search-v2-configured-concepts";
+const REMOVED_CONCEPT_FIELDS = ["expansion", "exp", "primary", "standaloneRecall", "topicalRecall"];
+
+function failConfiguredConcept(message: string): never {
+  throw new Error(message);
+}
+
+/**
+ * Fail-closed reader for corpus `search-v2-configured-concepts` artifacts.
+ * Does not accept `search-v2-equivalences`.
+ */
+export function parseConfiguredConcepts(obj?: unknown): ConfiguredConceptArtifact {
+  if (obj == null) {
+    return { format: CONFIGURED_CONCEPT_FORMAT, version: 1, entries: [], compileWarnings: [] };
+  }
+  if (typeof obj !== "object" || Array.isArray(obj)) {
+    failConfiguredConcept("configured-concept artifact must be a plain object");
+  }
+  const rec = obj as Record<string, unknown>;
+  if (rec.format === "search-v2-equivalences") {
+    failConfiguredConcept(
+      "search-v2-equivalences is not supported; regenerate as search-v2-configured-concepts"
+    );
+  }
+  if (!rec.format) failConfiguredConcept("configured-concept artifact is missing required field \"format\"");
+  if (rec.format !== CONFIGURED_CONCEPT_FORMAT) {
+    failConfiguredConcept(`Expected format ${CONFIGURED_CONCEPT_FORMAT}, got ${JSON.stringify(rec.format)}`);
+  }
+  const version = rec.version == null ? null : Number(rec.version);
+  if (version == null) failConfiguredConcept("configured-concept artifact is missing required field \"version\"");
+  if (!Number.isInteger(version) || version < 1) {
+    failConfiguredConcept(`Invalid artifact version for ${CONFIGURED_CONCEPT_FORMAT}: ${JSON.stringify(rec.version)}`);
+  }
+  if (version !== 1) {
+    failConfiguredConcept(
+      `Unsupported ${CONFIGURED_CONCEPT_FORMAT} version ${version}; this runtime reads version 1 only`
+    );
+  }
+  const entries = Array.isArray(rec.entries) ? rec.entries : [];
+  return {
+    format: CONFIGURED_CONCEPT_FORMAT,
+    version: 1,
+    entries: entries
+      .filter((e) => e && typeof e === "object" && (e as { key?: unknown }).key)
+      .map((e) => {
+        const row = e as Record<string, unknown>;
+        const found = REMOVED_CONCEPT_FIELDS.filter((field) => field in row);
+        if (found.length) {
+          failConfiguredConcept(`configured-concept entries must be { key, aliases }; found ${found.join(", ")}`);
+        }
+        const aliases = Array.isArray(row.aliases)
+          ? row.aliases
+              .filter((alias) => Array.isArray(alias) && alias.length)
+              .map((alias) => (alias as unknown[]).map((w) => String(w).toLowerCase()))
+          : [];
+        return {
+          key: String(row.key).toLowerCase(),
+          ...(typeof row.type === "string" ? { type: row.type } : {}),
+          aliases,
+          provenance: row.provenance == null ? null : String(row.provenance),
+          confidence: row.confidence == null ? null : Number(row.confidence),
+          reasons: Array.isArray(row.reasons) ? (row.reasons as string[]) : [],
+        };
+      }),
+    compileWarnings: Array.isArray(rec.compileWarnings) ? rec.compileWarnings : [],
+  };
+}
 
 function reviewerExamples(provenance: EvidenceHit[] | undefined): EvidenceHit[] {
   return (provenance || []).slice(0, 3);
@@ -55,7 +123,7 @@ function reviewerRow(c: CorpusCandidate): ReviewerRow {
   };
 }
 
-export function compileEquivalences(candidates: EquivalenceCandidate[]): EquivalenceArtifact {
+export function compileConfiguredConcepts(candidates: EquivalenceCandidate[]): ConfiguredConceptArtifact {
   const accepted = trustedEquivalences(candidates);
   const byKey = new Map<string, EquivalenceCandidate>();
   const skipped: Array<{ key: string; reason: string; ids: unknown[] }> = [];
@@ -83,7 +151,7 @@ export function compileEquivalences(candidates: EquivalenceCandidate[]): Equival
     return {
       key: c.key || "",
       aliases,
-      type: "equivalence",
+      type: "configured-concept",
       provenance:
         c.flags?.includes("verified-enrichment")
           ? "verified-enrichment"
@@ -97,7 +165,7 @@ export function compileEquivalences(candidates: EquivalenceCandidate[]): Equival
     };
   });
   return {
-    format: "search-v2-equivalences",
+    format: CONFIGURED_CONCEPT_FORMAT,
     version: 1,
     entries,
     compileWarnings: skipped,
@@ -199,26 +267,31 @@ export function compileInspection(lifecycleResult: LifecycleResult, { delta = nu
   };
 }
 
-export function configuredConceptsFromEquivalences(artifact?: unknown): unknown[] {
+export function configuredConceptsFromArtifact(artifact?: unknown): Array<{
+  key: unknown;
+  aliases: string[][];
+  type?: unknown;
+  provenance: unknown;
+  confidence?: unknown;
+}> {
   const rec = artifact as { entries?: unknown[] } | null | undefined;
   return (rec?.entries || []).map((e) => {
-    const row = e as { key?: unknown; expansion?: unknown; aliases?: unknown; provenance?: unknown };
-    const expansion = Array.isArray(row.expansion) ? row.expansion.map((w) => String(w).toLowerCase()) : [];
+    const row = e as {
+      key?: unknown;
+      aliases?: unknown;
+      type?: unknown;
+      provenance?: unknown;
+      confidence?: unknown;
+    };
     const aliases = Array.isArray(row.aliases)
       ? (row.aliases as unknown[]).filter((alias): alias is string[] => Array.isArray(alias) && alias.length > 0)
       : [];
-    const seen = new Set<string>();
-    const authored: string[][] = [];
-    for (const seq of [...(expansion.length ? [expansion] : []), ...aliases]) {
-      const key = (seq as string[]).join("\u001f");
-      if (!seq.length || seen.has(key)) continue;
-      seen.add(key);
-      authored.push([...(seq as string[])]);
-    }
     return {
       key: row.key,
-      aliases: authored,
+      aliases: aliases.map((seq) => [...seq]),
+      ...(typeof row.type === "string" ? { type: row.type } : {}),
       provenance: row.provenance,
+      ...(row.confidence !== undefined ? { confidence: row.confidence } : {}),
     };
   });
 }
@@ -227,14 +300,14 @@ export function compileManifest({
   corpusHash,
   decisionsHash,
   inspection,
-  equivalences,
+  configuredConceptArtifact,
   relationshipMap,
   timings,
 }: {
   corpusHash?: string | null;
   decisionsHash?: string | null;
   inspection?: InspectionDoc;
-  equivalences?: unknown;
+  configuredConceptArtifact?: unknown;
   relationshipMap?: unknown;
   timings?: unknown;
 }) {
@@ -246,7 +319,7 @@ export function compileManifest({
     decisionsHash: decisionsHash || null,
     counts: inspection?.counts || {},
     artifactHashes: {
-      equivalences: hashJson(equivalences),
+      configuredConcepts: hashJson(configuredConceptArtifact),
       relationshipMap: hashJson(relationshipMap),
     },
     timings: timings || null,

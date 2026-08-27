@@ -259,16 +259,16 @@ export interface InspectionDoc {
   counts: Record<string, number>;
 }
 
-export interface EquivalenceArtifact {
-  format: "search-v2-equivalences";
+export interface ConfiguredConceptArtifact {
+  format: "search-v2-configured-concepts";
   version: 1;
   entries: Array<{
     key: string;
     aliases: string[][];
-    type: string;
-    provenance: string;
-    confidence: null;
-    reasons: string[];
+    type?: string;
+    provenance: string | null;
+    confidence: number | null;
+    reasons?: string[];
   }>;
   compileWarnings: Array<{ key: string; reason: string; ids: unknown[] }>;
 }

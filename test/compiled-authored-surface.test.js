@@ -8,9 +8,9 @@ import {
   SearchEngine,
   morphology,
   compileAuthoredRelevance,
-  compileRelationshipMap,
   mergeRelationships,
 } from "../dist/index.js";
+import { compileRelationshipMap } from "../dist/relationshipMap.js";
 import { synonyms as synonymsPrimitive } from "../dist/synonyms.js";
 
 const schema = {

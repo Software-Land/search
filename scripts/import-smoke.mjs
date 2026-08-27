@@ -46,7 +46,13 @@ if (typeof semantic.compileSemantic !== "function") throw new Error("semantic co
 if (typeof lexical.compileLexicalFrequency !== "function") throw new Error("lexical compileLexicalFrequency missing");
 if (typeof corpus.normalizeExternalEquivalences !== "function") throw new Error("corpus normalizeExternalEquivalences missing");
 if (typeof corpus.classifyExpansionRelation !== "function") throw new Error("corpus classifyExpansionRelation missing");
-if (typeof runtime.normalizeSearchEquivalences !== "function") throw new Error("root normalizeSearchEquivalences missing");
+if (typeof corpus.parseConfiguredConcepts !== "function") throw new Error("corpus parseConfiguredConcepts missing");
+if ("normalizeSearchEquivalences" in runtime) throw new Error("root normalizeSearchEquivalences must not remain a public export");
+if ("parseEquivalences" in runtime) throw new Error("root parseEquivalences must not remain a public export");
+if ("compileRelationshipMap" in runtime) throw new Error("root compileRelationshipMap must not remain a public export");
+if ("configuredConceptsFromEquivalences" in corpus) {
+  throw new Error("corpus configuredConceptsFromEquivalences must not remain a public export");
+}
 if ("synonyms" in runtime) throw new Error("root synonyms() must not remain a public export");
 if ("dictionary" in runtime) throw new Error("root dictionary() must not remain a public export");
 if ("parseSynonyms" in runtime) throw new Error("root parseSynonyms must not remain a public export");
@@ -55,6 +61,9 @@ if (typeof runtime.mergeRelationships !== "function") throw new Error("root merg
 if ("mergeEditorialRelationships" in runtime) throw new Error("root mergeEditorialRelationships must not remain a public export");
 if (runtime.ARTIFACT_FORMATS && "synonyms" in runtime.ARTIFACT_FORMATS) {
   throw new Error("ARTIFACT_FORMATS must not list synonyms");
+}
+if (runtime.ARTIFACT_FORMATS && "equivalences" in runtime.ARTIFACT_FORMATS) {
+  throw new Error("ARTIFACT_FORMATS must not list equivalences");
 }
 if ("compileSemantic" in runtime) throw new Error("runtime must not export compileSemantic");
 if ("compileLexicalFrequency" in runtime) throw new Error("runtime must not export compileLexicalFrequency");

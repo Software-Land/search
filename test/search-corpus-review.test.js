@@ -45,8 +45,8 @@ describe("search-corpus durable review", () => {
       },
       { decisions }
     );
-    expect(once.equivalences.entries.some((e) => e.key === "api")).toBe(true);
-    expect(twice.equivalences.entries.some((e) => e.key === "api")).toBe(true);
+    expect(once.configuredConcepts.some((e) => e.key === "api")).toBe(true);
+    expect(twice.configuredConcepts.some((e) => e.key === "api")).toBe(true);
     const row = twice.inspection.candidates.find((c) => c.key === "api" && c.expansionPhrase === "application programming interface");
     expect(row.lifecycle).toBe(LIFECYCLE.HUMAN_ACCEPTED);
     expect(row.id).toBe(once.inspection.candidates.find((c) => c.id === row.id).id);
@@ -60,7 +60,7 @@ describe("search-corpus durable review", () => {
     const row = result.inspection.candidates.find((c) => c.key === "xyz");
     expect(row.lifecycle).toBe(LIFECYCLE.HUMAN_ACCEPTED);
     expect(row.flags).toContain("orphaned-but-complete");
-    expect(result.equivalences.entries.some((e) => e.key === "xyz")).toBe(true);
+    expect(result.configuredConcepts.some((e) => e.key === "xyz")).toBe(true);
   });
 
   test("new ambiguity invalidates a previously accepted expansion", () => {
@@ -73,7 +73,7 @@ describe("search-corpus durable review", () => {
       },
       { decisions }
     );
-    expect(one.equivalences.entries.some((e) => e.key === "abc")).toBe(true);
+    expect(one.configuredConcepts.some((e) => e.key === "abc")).toBe(true);
     const two = compileCorpus(
       {
         documents: [
@@ -83,7 +83,7 @@ describe("search-corpus durable review", () => {
       },
       { decisions }
     );
-    expect(two.equivalences.entries.some((e) => e.key === "abc")).toBe(false);
+    expect(two.configuredConcepts.some((e) => e.key === "abc")).toBe(false);
     expect(two.inspection.conflicts.some((c) => c.type === "ambiguity-invalidation" || c.key === "abc")).toBe(true);
   });
 
@@ -92,8 +92,8 @@ describe("search-corpus durable review", () => {
     const decisions = { equivalences: [{ decision: "reject", key: "cpu" }] };
     const a = compileCorpus(docs, { decisions });
     const b = compileCorpus(docs, { decisions });
-    expect(a.equivalences.entries.some((e) => e.key === "cpu")).toBe(false);
-    expect(b.equivalences.entries.some((e) => e.key === "cpu")).toBe(false);
+    expect(a.configuredConcepts.some((e) => e.key === "cpu")).toBe(false);
+    expect(b.configuredConcepts.some((e) => e.key === "cpu")).toBe(false);
     const row = b.inspection.candidates.find((c) => c.key === "cpu");
     expect(row.lifecycle).toBe(LIFECYCLE.HUMAN_REJECTED);
   });
@@ -108,7 +108,7 @@ describe("search-corpus durable review", () => {
     const row = result.inspection.candidates.find((c) => c.key === "cpu");
     expect(row.lifecycle).toBe(LIFECYCLE.HUMAN_REJECTED);
     expect(row.flags).toContain("rejected-candidate-gained-strong-evidence");
-    expect(result.equivalences.entries.some((e) => e.key === "cpu")).toBe(false);
+    expect(result.configuredConcepts.some((e) => e.key === "cpu")).toBe(false);
   });
 
   test("manual-only definition compiles without a mined candidate", () => {
@@ -120,7 +120,7 @@ describe("search-corpus durable review", () => {
         },
       }
     );
-    expect(result.equivalences.entries.some((e) => e.key === "abc" && e.aliases?.[0]?.join(" ") === "some domain meaning")).toBe(true);
+    expect(result.configuredConcepts.some((e) => e.key === "abc" && e.aliases?.[0]?.join(" ") === "some domain meaning")).toBe(true);
   });
 
   test("malformed accept without expansion fails clearly", () => {
@@ -150,11 +150,11 @@ describe("search-corpus durable review", () => {
     };
     const a = compileCorpus(cpuDocs, { decisions });
     const b = compileCorpus(cpuDocs, { decisions });
-    expect(JSON.stringify(a.equivalences)).toBe(JSON.stringify(b.equivalences));
+    expect(JSON.stringify(a.configuredConceptArtifact)).toBe(JSON.stringify(b.configuredConceptArtifact));
     expect(JSON.stringify(a.relationshipMap)).toBe(JSON.stringify(b.relationshipMap));
-    expect(a.manifest.artifactHashes.equivalences).toBe(b.manifest.artifactHashes.equivalences);
+    expect(a.manifest.artifactHashes.configuredConcepts).toBe(b.manifest.artifactHashes.configuredConcepts);
     expect(a.manifest.artifactHashes.relationshipMap).toBe(b.manifest.artifactHashes.relationshipMap);
-    expect(hashJson(a.equivalences)).toBe(hashJson(b.equivalences));
+    expect(hashJson(a.configuredConceptArtifact)).toBe(hashJson(b.configuredConceptArtifact));
     const analyzed = analyzeCorpus(cpuDocs, { decisions });
     expect(analyzed.inspection.candidates.find((c) => c.key === "cpu").id).toBe(
       a.inspection.candidates.find((c) => c.key === "cpu").id

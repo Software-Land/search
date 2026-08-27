@@ -11,7 +11,6 @@ import { ArtifactVersionError, ArtifactValidationError } from "./errors.js";
 const FORBIDDEN_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 
 export const ARTIFACT_FORMATS = {
-  equivalences: "search-v2-equivalences",
   relationships: "search-v2-relationships",
   corpusStats: "search-v2-corpus-stats",
   lexicalIndex: "search-v2-lexical-index",
@@ -73,46 +72,6 @@ export function assertArtifact(
     );
   }
   return { ...rec, format, version };
-}
-
-/**
- * Equivalence / configured-concept artifact. Affects query interpretation, not relatedness.
- * { format, version, entries: [{ key, aliases, type, provenance, confidence }] }
- * aliases[0] is the canonical lexical sequence.
- */
-export function parseEquivalences(obj?: unknown) {
-  if (obj == null) return { format: ARTIFACT_FORMATS.equivalences, version: 1, entries: [] };
-  const art = assertArtifact(obj, ARTIFACT_FORMATS.equivalences, { optional: false });
-  const entries = Array.isArray(art.entries) ? art.entries : [];
-  const removed = ["expansion", "exp", "primary", "standaloneRecall", "topicalRecall"];
-  return {
-    format: ARTIFACT_FORMATS.equivalences,
-    version: art.version,
-    entries: entries
-      .filter((e) => e && typeof e === "object" && (e as { key?: unknown }).key)
-      .map((e) => {
-        const row = e as Record<string, unknown>;
-        const found = removed.filter((field) => field in row);
-        if (found.length) {
-          throw new ArtifactValidationError(
-            `equivalence entries must be { key, aliases }; found ${found.join(", ")}`,
-            { format: ARTIFACT_FORMATS.equivalences, field: found[0] }
-          );
-        }
-        const aliases = Array.isArray(row.aliases)
-          ? row.aliases
-              .filter((alias) => Array.isArray(alias) && alias.length)
-              .map((alias) => (alias as unknown[]).map((w) => String(w).toLowerCase()))
-          : [];
-        return {
-          key: String(row.key).toLowerCase(),
-          type: row.type || "equivalence",
-          aliases,
-          provenance: row.provenance || null,
-          confidence: row.confidence == null ? null : Number(row.confidence),
-        };
-      }),
-  };
 }
 
 export interface ParsedRelationshipEdge {

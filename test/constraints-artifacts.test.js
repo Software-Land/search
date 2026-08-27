@@ -2,9 +2,9 @@ import {
   SearchEngine,
   morphology,
   parseRelationships,
-  parseEquivalences,
   compileAuthoredRelevance,
 } from "../dist/index.js";
+import { parseConfiguredConcepts } from "../tools/search-corpus/index.js";
 import { dictionary } from "../dist/dictionary.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { compareConstraint, detectConstraintCycles, DEFAULT_CONSTRAINTS } from "../dist/constraints.js";
@@ -138,9 +138,9 @@ describe("compiled artifacts", () => {
     expect(g.neighbors("tls-config")[0].target).toBe("vpn");
   });
 
-  test("equivalence artifacts stay distinct from equivalent relationshipMap recall", () => {
-    const eq = parseEquivalences({
-      format: "search-v2-equivalences",
+  test("configured-concept artifact stays distinct from equivalent relationshipMap recall", () => {
+    const eq = parseConfiguredConcepts({
+      format: "search-v2-configured-concepts",
       version: 1,
       entries: [{ key: "tls", aliases: [["transport", "layer", "security"]], type: "equivalence", provenance: "manual" }],
     });

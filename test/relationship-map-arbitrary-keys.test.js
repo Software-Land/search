@@ -5,10 +5,11 @@
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { compileRelationshipMap, InvalidConfigurationError } from "../dist/index.js";
+import { InvalidConfigurationError } from "../dist/index.js";
+import { compileRelationshipMap } from "../dist/relationshipMap.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const DIST = path.join(ROOT, "..", "dist", "index.js");
+const DIST = path.join(ROOT, "..", "dist", "relationshipMap.js");
 
 function mapFromJson(obj) {
   return JSON.parse(JSON.stringify(obj));

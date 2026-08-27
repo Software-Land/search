@@ -5,7 +5,7 @@
 
 import type {
   AdaptiveOptions,
-  EquivalenceEntry,
+  ConfiguredConcept,
   LexicalIndexArtifact,
   RelationshipArtifact,
   RelationshipStrategy,
@@ -18,7 +18,7 @@ interface InitPayload {
   documents?: SearchDocument[];
   schema?: Schema;
   lexicalIndex?: LexicalIndexArtifact;
-  configuredConcepts?: EquivalenceEntry[];
+  configuredConcepts?: ConfiguredConcept[];
   relationshipMap?: import("../api.js").RelationshipMap;
   documentRelationships?: RelationshipArtifact | null;
   relationshipStrategy?: RelationshipStrategy;

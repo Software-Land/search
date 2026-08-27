@@ -152,7 +152,7 @@ Generated files never overwrite the decisions file.
 
     const result = compileCorpus(input, { decisions, previousInspection: previousInspection as InspectionDoc | null });
     const written = [
-      write(output, "equivalences.json", result.equivalences),
+      write(output, "configured-concepts.json", result.configuredConceptArtifact),
       write(output, "relationship-map.json", result.relationshipMap),
       write(output, "vocabulary.json", result.vocabulary),
       write(output, "spelling-terms.json", { format: "search-corpus-spelling-terms", version: 1, terms: result.spellingTerms }),

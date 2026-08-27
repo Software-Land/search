@@ -254,14 +254,24 @@ try {
   if (!browserApiDts.includes("init(payload: InitPayload)") && !browserApiDts.includes("init(payload: InitPayload):")) {
     throw new Error("packed SearchClient.init is missing InitPayload typing");
   }
-  const compiledBlock = readFileSync(path.join(packedRoot, "dist/api.d.ts"), "utf8").match(
-    /export interface CompiledRelationshipMap \{[\s\S]*?\n\}/
-  );
-  if (!compiledBlock) throw new Error("packed api.d.ts missing CompiledRelationshipMap");
-  if (compiledBlock[0].includes("standaloneRecallByKey") || compiledBlock[0].includes("topicalRecallByKey")) {
-    throw new Error("packed CompiledRelationshipMap must not expose internal recall maps");
+  const apiDts = readFileSync(path.join(packedRoot, "dist/api.d.ts"), "utf8");
+  if (!/\bexport interface ConfiguredConcept \{/.test(apiDts)) {
+    throw new Error("packed api.d.ts missing ConfiguredConcept");
   }
-  const authoredBlock = readFileSync(path.join(packedRoot, "dist/api.d.ts"), "utf8").match(
+  for (const leaked of [
+    "EquivalenceEntry",
+    "EquivalenceArtifact",
+    "DictionaryPlugin",
+    "SynonymPlugin",
+    "SearchEquivalenceMap",
+    "NormalizedSearchEquivalences",
+    "CompiledRelationshipMap",
+  ]) {
+    if (new RegExp(`\\bexport (?:interface|type) ${leaked}\\b`).test(apiDts)) {
+      throw new Error(`packed api.d.ts must not export ${leaked}`);
+    }
+  }
+  const authoredBlock = apiDts.match(
     /export interface CompiledAuthoredRelevance \{[\s\S]*?\n\}/
   );
   if (!authoredBlock) throw new Error("packed api.d.ts missing CompiledAuthoredRelevance");
@@ -287,11 +297,23 @@ try {
     throw new Error("packed SearchEngineOptions must not type relationships");
   }
   const corpusDts = readFileSync(path.join(packedRoot, "tools/search-corpus/index.d.ts"), "utf8");
-  if (!corpusDts.includes("configuredConceptsFromEquivalences")) {
-    throw new Error("packed corpus dts missing configuredConceptsFromEquivalences");
+  if (!corpusDts.includes("parseConfiguredConcepts")) {
+    throw new Error("packed corpus dts missing parseConfiguredConcepts");
+  }
+  if (!corpusDts.includes("ConfiguredConceptArtifact")) {
+    throw new Error("packed corpus dts missing ConfiguredConceptArtifact");
+  }
+  if (!corpusDts.includes("search-v2-configured-concepts")) {
+    throw new Error("packed corpus dts missing search-v2-configured-concepts");
+  }
+  if (corpusDts.includes("configuredConceptsFromEquivalences")) {
+    throw new Error("packed corpus dts must not export configuredConceptsFromEquivalences");
   }
   if (corpusDts.includes("dictionaryEntriesFromEquivalences")) {
     throw new Error("packed corpus dts must not export dictionaryEntriesFromEquivalences");
+  }
+  if (corpusDts.includes("parseEquivalences") || corpusDts.includes("EquivalenceArtifact")) {
+    throw new Error("packed corpus dts must not export EquivalenceArtifact/parseEquivalences");
   }
   const rootDts = readFileSync(path.join(packedRoot, "dist/index.d.ts"), "utf8");
   if (!/\bmergeRelationships\b/.test(rootDts)) throw new Error("packed root dts missing mergeRelationships");
@@ -303,6 +325,24 @@ try {
   }
   if (/\bparseSynonyms\b/.test(rootDts)) {
     throw new Error("packed root dts must not export parseSynonyms");
+  }
+  if (/\bparseEquivalences\b/.test(rootDts)) {
+    throw new Error("packed root dts must not export parseEquivalences");
+  }
+  if (/\bcompileRelationshipMap\b/.test(rootDts)) {
+    throw new Error("packed root dts must not export compileRelationshipMap");
+  }
+  if (/\bnormalizeSearchEquivalences\b/.test(rootDts)) {
+    throw new Error("packed root dts must not export normalizeSearchEquivalences");
+  }
+  if (/\bEquivalenceEntry\b/.test(rootDts)) {
+    throw new Error("packed root dts must not export EquivalenceEntry");
+  }
+  if (/\bDictionaryPlugin\b/.test(rootDts) || /\bSynonymPlugin\b/.test(rootDts)) {
+    throw new Error("packed root dts must not export DictionaryPlugin/SynonymPlugin");
+  }
+  if (!/\bConfiguredConcept\b/.test(rootDts)) {
+    throw new Error("packed root dts missing ConfiguredConcept");
   }
   if (/\bSynonymArtifact\b/.test(rootDts)) {
     throw new Error("packed root dts must not export SynonymArtifact");
@@ -327,9 +367,9 @@ try {
 
   writeFileSync(
     path.join(consumer, "probe.mjs"),
-    `import { SearchEngine, morphology, compileAuthoredRelevance, mergeRelationships, normalizeSearchEquivalences } from "@software-land/search";
+    `import { SearchEngine, morphology, compileAuthoredRelevance, mergeRelationships } from "@software-land/search";
 import { createSearchClient, searchWorkerUrl } from "@software-land/search/browser";
-import { compileCorpus, normalizeExternalEquivalences, classifyExpansionRelation, configuredConceptsFromEquivalences } from "@software-land/search/corpus";
+import { compileCorpus, normalizeExternalEquivalences, classifyExpansionRelation, parseConfiguredConcepts } from "@software-land/search/corpus";
 import { compileRelationships } from "@software-land/search/relationships";
 import { compileSemantic } from "@software-land/search/semantic";
 import { compileLexicalFrequency } from "@software-land/search/lexical";
@@ -338,12 +378,11 @@ if (typeof SearchEngine.create !== "function") throw new Error("root SearchEngin
 if (typeof morphology !== "function") throw new Error("root morphology missing");
 if (typeof compileAuthoredRelevance !== "function") throw new Error("root compileAuthoredRelevance missing");
 if (typeof mergeRelationships !== "function") throw new Error("root mergeRelationships missing");
-if (typeof normalizeSearchEquivalences !== "function") throw new Error("root normalizeSearchEquivalences missing");
 if (typeof createSearchClient !== "function") throw new Error("browser createSearchClient missing");
 if (typeof compileCorpus !== "function") throw new Error("corpus compileCorpus missing");
 if (typeof normalizeExternalEquivalences !== "function") throw new Error("corpus normalizeExternalEquivalences missing");
 if (typeof classifyExpansionRelation !== "function") throw new Error("corpus classifyExpansionRelation missing");
-if (typeof configuredConceptsFromEquivalences !== "function") throw new Error("corpus configuredConceptsFromEquivalences missing");
+if (typeof parseConfiguredConcepts !== "function") throw new Error("corpus parseConfiguredConcepts missing");
 if (typeof compileRelationships !== "function") throw new Error("relationships compileRelationships missing");
 if (typeof compileSemantic !== "function") throw new Error("semantic compileSemantic missing");
 if (typeof compileLexicalFrequency !== "function") throw new Error("lexical compileLexicalFrequency missing");
@@ -352,11 +391,17 @@ import * as packedRoot from "@software-land/search";
 if ("synonyms" in packedRoot) throw new Error("root synonyms() must not remain a public export");
 if ("dictionary" in packedRoot) throw new Error("root dictionary() must not remain a public export");
 if ("parseSynonyms" in packedRoot) throw new Error("root parseSynonyms must not remain a public export");
+if ("parseEquivalences" in packedRoot) throw new Error("root parseEquivalences must not remain a public export");
+if ("compileRelationshipMap" in packedRoot) throw new Error("root compileRelationshipMap must not remain a public export");
+if ("normalizeSearchEquivalences" in packedRoot) throw new Error("root normalizeSearchEquivalences must not remain a public export");
 if (packedRoot.PUBLIC_EXPORTS.includes("synonyms")) throw new Error("PUBLIC_EXPORTS must not list synonyms");
 if (packedRoot.PUBLIC_EXPORTS.includes("dictionary")) throw new Error("PUBLIC_EXPORTS must not list dictionary");
 if (packedRoot.PUBLIC_EXPORTS.includes("parseSynonyms")) throw new Error("PUBLIC_EXPORTS must not list parseSynonyms");
 if (packedRoot.ARTIFACT_FORMATS && "synonyms" in packedRoot.ARTIFACT_FORMATS) {
   throw new Error("ARTIFACT_FORMATS must not list synonyms");
+}
+if (packedRoot.ARTIFACT_FORMATS && "equivalences" in packedRoot.ARTIFACT_FORMATS) {
+  throw new Error("ARTIFACT_FORMATS must not list equivalences");
 }
 if (packedRoot.PUBLIC_EXPORTS.includes("mergeEditorialRelationships")) throw new Error("PUBLIC_EXPORTS must not list mergeEditorialRelationships");
 try {
@@ -445,8 +490,21 @@ if (acceptedEquivalence.relationshipMap.authentication?.[0]?.to?.form !== "auth"
 if ("synonyms" in acceptedEquivalence) {
   throw new Error("compileCorpus must not return synonyms");
 }
-if (!Array.isArray(configuredConceptsFromEquivalences(compiledCorpus.equivalences))) {
-  throw new Error("configuredConceptsFromEquivalences must return concept rows");
+if ("equivalences" in compiledCorpus) {
+  throw new Error("compileCorpus must not return equivalences");
+}
+if (!compiledCorpus.configuredConceptArtifact || compiledCorpus.configuredConceptArtifact.format !== "search-v2-configured-concepts") {
+  throw new Error("compileCorpus must return configuredConceptArtifact");
+}
+const parsedConcepts = parseConfiguredConcepts(compiledCorpus.configuredConceptArtifact);
+if (!Array.isArray(parsedConcepts.entries)) {
+  throw new Error("parseConfiguredConcepts must return configured-concept entries");
+}
+try {
+  parseConfiguredConcepts({ format: "search-v2-equivalences", version: 1, entries: [] });
+  throw new Error("search-v2-equivalences must be rejected");
+} catch (err) {
+  if (String(err?.message || err).includes("must be rejected")) throw err;
 }
 
 const workerUrl = String(searchWorkerUrl());

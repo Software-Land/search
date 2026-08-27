@@ -4,11 +4,11 @@ import { classifyCandidates } from "./classify.js";
 import { loadDecisions, emptyDecisions } from "./decisions.js";
 import { applyLifecycle, LIFECYCLE } from "./lifecycle.js";
 import {
-  compileEquivalences,
+  compileConfiguredConcepts,
   compileEquivalentRelationshipMap,
   compileInspection,
   compileManifest,
-  configuredConceptsFromEquivalences,
+  configuredConceptsFromArtifact,
 } from "./compile.js";
 import { buildVocabulary, spellingTerms } from "./vocabulary.js";
 import { mineSynonymCandidates } from "./synonyms.js";
@@ -99,26 +99,36 @@ export function analyzeCorpus(input?: unknown, { decisions = null, overrides = n
  * Compile trusted runtime artifacts from an analysis (or by re-analyzing).
  */
 export function compileAnalysis(analysis: AnalyzeResult) {
-  const equivalences = compileEquivalences(analysis.life.equivalences);
+  const configuredConceptArtifact = compileConfiguredConcepts(analysis.life.equivalences);
   const relationshipMap = compileEquivalentRelationshipMap(analysis.life.synonyms);
-  const vocabulary = buildVocabulary(analysis.documentRecords, { acceptedEquivalences: equivalences.entries });
+  const vocabulary = buildVocabulary(analysis.documentRecords, {
+    acceptedEquivalences: configuredConceptArtifact.entries,
+  });
   const spelling = spellingTerms(vocabulary);
   const manifest = compileManifest({
     corpusHash: analysis.corpusHash,
     decisionsHash: analysis.decisionsHash,
     inspection: analysis.inspection,
-    equivalences: { format: equivalences.format, version: equivalences.version, entries: equivalences.entries },
+    configuredConceptArtifact: {
+      format: configuredConceptArtifact.format,
+      version: configuredConceptArtifact.version,
+      entries: configuredConceptArtifact.entries,
+    },
     relationshipMap,
     timings: analysis.timings,
   });
   return {
-    equivalences: { format: equivalences.format, version: equivalences.version, entries: equivalences.entries },
+    configuredConceptArtifact: {
+      format: configuredConceptArtifact.format,
+      version: configuredConceptArtifact.version,
+      entries: configuredConceptArtifact.entries,
+    },
     relationshipMap,
     vocabulary,
     spellingTerms: spelling,
     manifest,
-    compileWarnings: equivalences.compileWarnings || [],
-    configuredConcepts: configuredConceptsFromEquivalences(equivalences),
+    compileWarnings: configuredConceptArtifact.compileWarnings || [],
+    configuredConcepts: configuredConceptsFromArtifact(configuredConceptArtifact),
   };
 }
 
@@ -131,7 +141,7 @@ export function compileCorpus(input?: unknown, { overrides = null, decisions = n
   const compiled = compileAnalysis(analysis);
   return {
     documents: analysis.documents,
-    equivalences: compiled.equivalences,
+    configuredConceptArtifact: compiled.configuredConceptArtifact,
     relationshipMap: compiled.relationshipMap,
     vocabulary: compiled.vocabulary,
     spellingTerms: compiled.spellingTerms,

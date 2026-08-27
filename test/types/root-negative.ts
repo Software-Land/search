@@ -1,4 +1,4 @@
-import { SearchEngine, morphology, compileRelationshipMap, compileAuthoredRelevance, ARTIFACT_FORMATS } from "@software-land/search";
+import { SearchEngine, morphology, compileAuthoredRelevance, ARTIFACT_FORMATS } from "@software-land/search";
 
 // @ts-expect-error FeatureVector is not a public export
 import type { FeatureVector } from "@software-land/search";
@@ -36,6 +36,36 @@ import { parseSynonyms } from "@software-land/search";
 // @ts-expect-error SynonymArtifact is not a public export
 import type { SynonymArtifact } from "@software-land/search";
 
+// @ts-expect-error EquivalenceEntry is not a public export
+import type { EquivalenceEntry } from "@software-land/search";
+
+// @ts-expect-error EquivalenceArtifact is not a public export
+import type { EquivalenceArtifact } from "@software-land/search";
+
+// @ts-expect-error parseEquivalences is not a public root export
+import { parseEquivalences } from "@software-land/search";
+
+// @ts-expect-error DictionaryPlugin is not a public export
+import type { DictionaryPlugin } from "@software-land/search";
+
+// @ts-expect-error SynonymPlugin is not a public export
+import type { SynonymPlugin } from "@software-land/search";
+
+// @ts-expect-error SearchEquivalenceMap is not a public export
+import type { SearchEquivalenceMap } from "@software-land/search";
+
+// @ts-expect-error NormalizedSearchEquivalences is not a public export
+import type { NormalizedSearchEquivalences } from "@software-land/search";
+
+// @ts-expect-error normalizeSearchEquivalences is not a public root export
+import { normalizeSearchEquivalences } from "@software-land/search";
+
+// @ts-expect-error compileRelationshipMap is not a public root export
+import { compileRelationshipMap } from "@software-land/search";
+
+// @ts-expect-error CompiledRelationshipMap is not a public export
+import type { CompiledRelationshipMap } from "@software-land/search";
+
 // @ts-expect-error mergeEditorialRelationships is not a public root export
 import { mergeEditorialRelationships } from "@software-land/search";
 
@@ -59,16 +89,6 @@ SearchEngine.create({ relationshipStrategy: "best" });
 const morphologyPlugin = morphology();
 void morphologyPlugin.lemma;
 
-const compiledPublic = compileRelationshipMap({
-  qa: [{ to: { form: "testing" }, kind: "equivalent" }],
-});
-
-// @ts-expect-error standaloneRecallByKey is not a public compileRelationshipMap field
-compiledPublic.standaloneRecallByKey;
-
-// @ts-expect-error topicalRecallByKey is not a public compileRelationshipMap field
-compiledPublic.topicalRecallByKey;
-
 // @ts-expect-error CompiledRelationshipInternals is not a public export
 import type { CompiledRelationshipInternals } from "@software-land/search";
 
@@ -80,9 +100,18 @@ void english;
 void dictionary;
 void synonyms;
 void parseSynonyms;
+void parseEquivalences;
+void normalizeSearchEquivalences;
+void compileRelationshipMap;
 void (null as unknown as SynonymArtifact);
+void (null as unknown as EquivalenceEntry);
+void (null as unknown as EquivalenceArtifact);
+void (null as unknown as DictionaryPlugin);
+void (null as unknown as SynonymPlugin);
+void (null as unknown as SearchEquivalenceMap);
+void (null as unknown as NormalizedSearchEquivalences);
+void (null as unknown as CompiledRelationshipMap);
 void mergeEditorialRelationships;
-void compiledPublic;
 void (null as unknown as CompiledRelationshipInternals);
 
 const authored = compileAuthoredRelevance({
@@ -112,6 +141,9 @@ authored.relationships;
 
 // @ts-expect-error synonyms is not a supported artifact format
 ARTIFACT_FORMATS.synonyms;
+
+// @ts-expect-error equivalences is not a supported root artifact format
+ARTIFACT_FORMATS.equivalences;
 
 SearchEngine.create({
   // @ts-expect-error relationships is not a public SearchEngine.create option

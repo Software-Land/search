@@ -443,6 +443,6 @@ describe("deterministic fps mining still holds after enrichment removal", () => 
     );
     expect(fps).toBeTruthy();
     expect(fps.lifecycle).toBe(LIFECYCLE.REVIEW_PENDING);
-    expect(result.equivalences.entries.some((e) => e.key === "fps")).toBe(false);
+    expect(result.configuredConcepts.some((e) => e.key === "fps")).toBe(false);
   });
 });

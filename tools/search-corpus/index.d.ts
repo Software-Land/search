@@ -7,7 +7,7 @@ export {
   CompileOptions,
   CorpusDocument,
   CorpusInput,
-  EquivalenceArtifact,
+  ConfiguredConceptArtifact,
   GeneratedRelationshipMap,
   InspectionDoc,
   LoadedCorpus,
@@ -15,6 +15,7 @@ export {
 } from "./types.js";
 
 export declare const COMPILER_VERSION: 1;
+export declare const CONFIGURED_CONCEPT_FORMAT: "search-v2-configured-concepts";
 
 export declare const LIFECYCLE: {
   readonly AUTO_ACCEPTED: "AUTO_ACCEPTED";
@@ -34,7 +35,7 @@ export declare function compileAnalysis(analysis: import("./types.js").AnalyzeRe
 export declare function compileCorpus(input?: unknown, opts?: import("./types.js").CompileOptions): Record<string, unknown>;
 export declare function loadCorpus(input?: unknown): import("./types.js").LoadedCorpus;
 export declare function spellingLexiconPlugin(options?: unknown): unknown;
-export declare function configuredConceptsFromEquivalences(equivalences?: unknown): unknown[];
+export declare function parseConfiguredConcepts(obj?: unknown): import("./types.js").ConfiguredConceptArtifact;
 export declare class ExternalEquivalenceError extends Error {
   details: string[];
 }

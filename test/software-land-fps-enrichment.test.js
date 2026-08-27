@@ -57,7 +57,7 @@ describe("Software.Land fps mining diagnostic", () => {
     );
     expect(fps).toBeTruthy();
     expect(fps.lifecycle).toBe(LIFECYCLE.REVIEW_PENDING);
-    expect(result.equivalences.entries.some((e) => e.key === "fps")).toBe(false);
+    expect(result.configuredConcepts.some((e) => e.key === "fps")).toBe(false);
   });
 
   test("optional sibling Software.Land corpus keeps fps in review", () => {
@@ -71,6 +71,6 @@ describe("Software.Land fps mining diagnostic", () => {
     );
     expect(fps).toBeTruthy();
     expect(fps.lifecycle).toBe(LIFECYCLE.REVIEW_PENDING);
-    expect(compiled.equivalences.entries.some((e) => e.key === "fps")).toBe(false);
+    expect(compiled.configuredConcepts.some((e) => e.key === "fps")).toBe(false);
   });
 });

@@ -59,7 +59,7 @@ describe("search-corpus synthetic mining", () => {
     expect(cpu).toBeTruthy();
     expect(cpu.expansion).toEqual(["central", "processing", "unit"]);
     expect(cpu.evidence.explicitDefinitions).toBeGreaterThanOrEqual(1);
-    expect(result.equivalences.entries.some((e) => e.key === "cpu")).toBe(true);
+    expect(result.configuredConcepts.some((e) => e.key === "cpu")).toBe(true);
   });
 
   test("ambiguous acronyms go to review, not runtime", () => {
@@ -71,7 +71,7 @@ describe("search-corpus synthetic mining", () => {
     });
     const abc = statusOf(result, "abc");
     expect(abc.every((c) => c.status === "review")).toBe(true);
-    expect(result.equivalences.entries.some((e) => e.key === "abc")).toBe(false);
+    expect(result.configuredConcepts.some((e) => e.key === "abc")).toBe(false);
   });
 
   test("false initialism coincidence is rejected", () => {
@@ -83,7 +83,7 @@ describe("search-corpus synthetic mining", () => {
     });
     const ioAsIot = statusOf(result, "io", "internet of things");
     expect(ioAsIot.every((c) => c.status === "rejected" || c.initialsMatch === false)).toBe(true);
-    expect(result.equivalences.entries.some((e) => e.key === "io" && (e.aliases?.[0] || []).includes("things"))).toBe(false);
+    expect(result.configuredConcepts.some((e) => e.key === "io" && (e.aliases?.[0] || []).includes("things"))).toBe(false);
   });
 
   test("related documents are not compiled as synonyms or equivalences", () => {
@@ -93,13 +93,13 @@ describe("search-corpus synthetic mining", () => {
         { id: "vpn", title: "VPN Settings", body: "Virtual private network. TLS is mentioned." },
       ],
     });
-    expect(result.equivalences.entries.some((e) => e.key === "tls" && (e.aliases?.[0] || []).includes("vpn"))).toBe(false);
+    expect(result.configuredConcepts.some((e) => e.key === "tls" && (e.aliases?.[0] || []).includes("vpn"))).toBe(false);
     expect(result.inspection.synonymCandidates.some((s) => s.terms.includes("tls") && s.terms.includes("vpn"))).toBe(false);
     expect(result.relationshipMap).toEqual({});
     expect(result.inspection.synonymCandidates.length).toBeLessThan(20);
     const tls = statusOf(result, "tls", "transport layer security");
     expect(tls.some((c) => c.status === "review")).toBe(true);
-    expect(result.equivalences.entries.some((e) => e.key === "tls")).toBe(false);
+    expect(result.configuredConcepts.some((e) => e.key === "tls")).toBe(false);
   });
 
   test("short literals stay in vocabulary and are not spelling-normalized", () => {
@@ -122,10 +122,10 @@ describe("search-corpus synthetic mining", () => {
     });
     const ci = statusOf(result, "ci", "continuous integration");
     expect(ci.some((c) => c.status === "review")).toBe(true);
-    expect(result.equivalences.entries.some((e) => e.key === "ci")).toBe(false);
-    const runtimeKeys = new Set(result.equivalences.entries.map((e) => e.key));
+    expect(result.configuredConcepts.some((e) => e.key === "ci")).toBe(false);
+    const runtimeKeys = new Set(result.configuredConcepts.map((e) => e.key));
     for (const c of result.inspection.review) {
-      expect(runtimeKeys.has(c.key) && result.equivalences.entries.find((e) => e.key === c.key)?.expansion.join(" ") === c.expansionPhrase).toBe(false);
+      expect(runtimeKeys.has(c.key)).toBe(false);
     }
   });
 
@@ -146,7 +146,7 @@ describe("search-corpus synthetic mining", () => {
     });
     const api = statusOf(result, "api", "application programming interface");
     expect(api.some((c) => c.status === "review")).toBe(true);
-    expect(result.equivalences.entries.some((e) => e.key === "api")).toBe(false);
+    expect(result.configuredConcepts.some((e) => e.key === "api")).toBe(false);
     const junk = statusOf(result, "api", "post id");
     expect(junk.every((c) => c.status === "rejected" || c.length === 0)).toBe(true);
     expect(junk.length === 0 || junk.every((c) => c.status === "rejected")).toBe(true);
@@ -159,15 +159,15 @@ describe("search-corpus synthetic mining", () => {
       ],
     };
     const auto = compileCorpus(docs);
-    expect(auto.equivalences.entries.some((e) => e.key === "fbb")).toBe(true);
+    expect(auto.configuredConcepts.some((e) => e.key === "fbb")).toBe(true);
     const overridden = compileCorpus(docs, {
       overrides: {
         reject: [{ key: "fbb" }],
         add: [{ key: "xyz", aliases: [["x", "y", "z"]]}],
       },
     });
-    expect(overridden.equivalences.entries.some((e) => e.key === "fbb")).toBe(false);
-    expect(overridden.equivalences.entries.some((e) => e.key === "xyz")).toBe(true);
+    expect(overridden.configuredConcepts.some((e) => e.key === "fbb")).toBe(false);
+    expect(overridden.configuredConcepts.some((e) => e.key === "xyz")).toBe(true);
   });
 
   test("builds are deterministic", () => {
@@ -177,9 +177,26 @@ describe("search-corpus synthetic mining", () => {
         { id: "a", title: "Graphical User Interface (GUI)", body: "Graphical User Interface (GUI) again." },
       ],
     };
-    const a = JSON.stringify(compileCorpus(docs).equivalences);
-    const b = JSON.stringify(compileCorpus(docs).equivalences);
+    const a = JSON.stringify(compileCorpus(docs).configuredConceptArtifact);
+    const b = JSON.stringify(compileCorpus(docs).configuredConceptArtifact);
     expect(a).toBe(b);
+  });
+
+  test("compileCorpus emits configured-concept artifact, not equivalences", () => {
+    const result = compileCorpus({
+      documents: [
+        { id: "a", title: "Central Processing Unit (CPU)", body: "The Central Processing Unit (CPU) fetches instructions." },
+        { id: "b", title: "CPU cooling", body: "Keep the CPU cool." },
+      ],
+    });
+    expect(result.configuredConceptArtifact.format).toBe("search-v2-configured-concepts");
+    expect(result.configuredConceptArtifact.version).toBe(1);
+    expect(Array.isArray(result.configuredConcepts)).toBe(true);
+    expect(result.configuredConcepts.some((e) => e.key === "cpu")).toBe(true);
+    expect(result).not.toHaveProperty("equivalences");
+    expect(result).not.toHaveProperty("synonyms");
+    expect(typeof result.manifest.artifactHashes.configuredConcepts).toBe("string");
+    expect(result.relationshipMap).toEqual(expect.any(Object));
   });
 });
 

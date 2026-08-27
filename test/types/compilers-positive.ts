@@ -4,13 +4,15 @@ import {
   analyzeCorpus,
   compileAnalysis,
   compileCorpus,
-  configuredConceptsFromEquivalences,
+  parseConfiguredConcepts,
+  CONFIGURED_CONCEPT_FORMAT,
   loadCorpus,
   normalizeExternalEquivalences,
   classifyExpansionRelation,
   ExternalEquivalenceError,
   type AnalyzeResult,
   type CompileOptions,
+  type ConfiguredConceptArtifact,
   type CorpusDocument,
   type GeneratedRelationshipMap,
 } from "@software-land/search/corpus";
@@ -47,7 +49,14 @@ import {
 const documents: CorpusDocument[] = [{ id: "a", title: "CPU", body: "central" }];
 const compileOpts: CompileOptions = {};
 const corpus: Record<string, unknown> = compileCorpus({ documents }, compileOpts);
-void configuredConceptsFromEquivalences(corpus.equivalences);
+void corpus.configuredConcepts;
+const configuredArtifact: ConfiguredConceptArtifact = parseConfiguredConcepts({
+  format: CONFIGURED_CONCEPT_FORMAT,
+  version: 1,
+  entries: [{ key: "cpu", aliases: [["central", "processing", "unit"]] }],
+  compileWarnings: [],
+});
+void configuredArtifact.entries[0].key;
 const generatedEquivalence: GeneratedRelationshipMap = (corpus.relationshipMap || {}) as GeneratedRelationshipMap;
 void generatedEquivalence;
 const analysis: AnalyzeResult = analyzeCorpus({ documents });

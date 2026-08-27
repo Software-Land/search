@@ -30,7 +30,7 @@ describe("search-corpus embedded acronyms", () => {
     expect(fps.initialsMatch).toBe(true);
     expect(fps.lifecycle).toBe(LIFECYCLE.REVIEW_PENDING);
     expect(fps.compilerStatus || fps.status).toBe("review");
-    expect(result.equivalences.entries.some((e) => e.key === "fps")).toBe(false);
+    expect(result.configuredConcepts.some((e) => e.key === "fps")).toBe(false);
     expect(fps.evidence.titleKeyBodyPhrase).toBeGreaterThanOrEqual(1);
     expect(result.inspection.candidates.some((c) => ["cvc", "cvcvw", "cvw", "cvwvw"].includes(c.key))).toBe(false);
   });
@@ -50,7 +50,7 @@ describe("search-corpus embedded acronyms", () => {
     );
     expect(gpu).toBeTruthy();
     expect(gpu.lifecycle).toBe(LIFECYCLE.REVIEW_PENDING);
-    expect(result.equivalences.entries.some((e) => e.key === "gpu")).toBe(false);
+    expect(result.configuredConcepts.some((e) => e.key === "gpu")).toBe(false);
   });
 
   test("expansion-only phrases do not invent initialism keys", () => {
@@ -67,7 +67,7 @@ describe("search-corpus embedded acronyms", () => {
       (c) => c.key === "fps" && c.expansionPhrase === "frames per second"
     );
     expect(fps).toBeFalsy();
-    expect(result.equivalences.entries.some((e) => e.key === "fps")).toBe(false);
+    expect(result.configuredConcepts.some((e) => e.key === "fps")).toBe(false);
     expect(result.inspection.candidates.some((c) => (c.evidence?.provenances || []).includes("generated-initialism"))).toBe(
       false
     );
@@ -89,7 +89,7 @@ describe("search-corpus embedded acronyms", () => {
     const fps = candidates.find((c) => c.key === "fps" && c.expansionPhrase === "frames per second");
     expect(fps).toBeTruthy();
     expect(fps.lifecycle).toBe(LIFECYCLE.REVIEW_PENDING);
-    expect(result.equivalences.entries.some((e) => e.key === "fps")).toBe(false);
+    expect(result.configuredConcepts.some((e) => e.key === "fps")).toBe(false);
     expect(candidates.some((c) => (c.evidence?.provenances || []).includes("generated-initialism"))).toBe(false);
   });
 
@@ -103,7 +103,7 @@ describe("search-corpus embedded acronyms", () => {
     const abc = result.inspection.candidates.filter((c) => c.key === "abc");
     expect(abc.length).toBeGreaterThanOrEqual(2);
     expect(abc.every((c) => c.lifecycle !== LIFECYCLE.AUTO_ACCEPTED)).toBe(true);
-    expect(result.equivalences.entries.some((e) => e.key === "abc")).toBe(false);
+    expect(result.configuredConcepts.some((e) => e.key === "abc")).toBe(false);
   });
 
   test("numeric-attached suffixes are acronym evidence only when independently observed standalone", () => {
@@ -188,7 +188,7 @@ describe("search-corpus embedded acronyms", () => {
         },
       }
     );
-    const entry = result.equivalences.entries.find((e) => e.key === "api");
+    const entry = result.configuredConcepts.find((e) => e.key === "api");
     expect(entry).toBeTruthy();
     expect(entry.aliases).toEqual([
       ["application", "programming", "interface"],

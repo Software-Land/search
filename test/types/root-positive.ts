@@ -17,16 +17,11 @@ import {
   abortError,
   morphology,
   migrateConfiguredEntry,
-  compileRelationshipMap,
   compileAuthoredRelevance,
   mergeRelationships,
   isAbortError,
-  parseEquivalences,
   parseRelationships,
-  normalizeSearchEquivalences,
-  MAX_SEARCH_EQUIVALENCE_TARGETS,
-  type EquivalenceArtifact,
-  type EquivalenceEntry,
+  type ConfiguredConcept,
   type RelationshipArtifact,
   type Schema,
   type SearchDetailedResult,
@@ -34,16 +29,12 @@ import {
   type SearchEngineOptions,
   type SearchOptions,
   type SearchResult,
-  type SynonymPlugin,
   type EnglishPlugin,
-  type DictionaryPlugin,
   type LexicalIndexArtifact,
-  type SearchEquivalenceMap,
-  type NormalizedSearchEquivalences,
   type RelationshipMap,
   type MigratedConfiguredEntry,
   type CompiledAuthoredRelevance,
-  type CompiledRelationshipMap,
+  type SearchPlugin,
 } from "@software-land/search";
 
 const schema: Schema = {
@@ -63,16 +54,17 @@ const relationships: RelationshipArtifact = {
   },
 };
 
-const entries: EquivalenceEntry[] = [
+const entries: ConfiguredConcept[] = [
   { key: "wifi", aliases: [["wi", "fi"]] },
 ];
 
 const morphologyPlugin: EnglishPlugin = morphology();
 const authoredIdentity: CompiledAuthoredRelevance = compileAuthoredRelevance({ configuredConcepts: entries });
-const dictionaryPlugin = authoredIdentity.plugins.find((plugin): plugin is DictionaryPlugin => plugin.name === "dictionary");
-if (!dictionaryPlugin) throw new Error("compileAuthoredRelevance must include the dictionary plugin");
-void dictionaryPlugin.standaloneRecallByToken;
-void dictionaryPlugin.topicalRecallByKey;
+const identityPlugin: SearchPlugin | undefined = authoredIdentity.plugins[0];
+if (!identityPlugin) throw new Error("compileAuthoredRelevance must include configured-identity plugins");
+void identityPlugin.lexicon?.();
+void identityPlugin.standaloneRecallByToken;
+void identityPlugin.topicalRecallByKey;
 const migrated: MigratedConfiguredEntry = migrateConfiguredEntry({
   key: "wifi",
   expansion: ["wi", "fi"],
@@ -83,9 +75,6 @@ void migrated.discardedPrimary;
 const relationshipMap: RelationshipMap = {
   qa: [{ to: { form: "testing" }, kind: "equivalent" }],
 };
-const compiledPublic: CompiledRelationshipMap = compileRelationshipMap(relationshipMap, { concepts: entries });
-void compiledPublic.synonymMap;
-void compiledPublic.editorialRelationships;
 const authored: CompiledAuthoredRelevance = compileAuthoredRelevance({ configuredConcepts: entries, relationshipMap });
 void authored.plugins;
 void authored.documentRelationships;
@@ -109,7 +98,7 @@ const lexicalIndex: LexicalIndexArtifact = {
 
 const options: SearchEngineOptions = {
   schema,
-  plugins: [morphologyPlugin, dictionaryPlugin, morphologyWithLemmas],
+  plugins: [morphologyPlugin, ...authoredIdentity.plugins, morphologyWithLemmas],
   lexicalIndex,
   documentRelationships: relationships,
   relationshipStrategy: "hybrid",
@@ -158,30 +147,15 @@ async function indexAndSearch(engine: SearchEngine): Promise<SearchResult[]> {
 void created;
 void indexAndSearch;
 
-const equivalences: EquivalenceArtifact = parseEquivalences({
-  format: "search-v2-equivalences",
-  version: 1,
-  entries,
-});
-const directionalMap: SearchEquivalenceMap = {
-  qa: ["testing"],
-  "quality assurance": ["testing"],
-  docker: ["container", "containers"],
-};
-const directionalPlugin: SynonymPlugin = {
+const directionalPlugin: SearchPlugin = {
   name: "synonyms",
   expand: (token: string) => (token === "qa" ? [{ form: "testing" }] : []),
 };
-const normalizedEquivalences: NormalizedSearchEquivalences = normalizeSearchEquivalences(directionalMap);
-const targetBound: 8 = MAX_SEARCH_EQUIVALENCE_TARGETS;
 void directionalPlugin.expand;
 void authored.plugins.find((plugin) => plugin.name === "synonyms")?.expand;
-void normalizedEquivalences.entries;
-void targetBound;
 const parsedGraph: RelationshipArtifact = parseRelationships(relationships);
-void equivalences.entries;
 void parsedGraph.relationships;
-void ARTIFACT_FORMATS.equivalences;
+void ARTIFACT_FORMATS.relationships;
 void ARTIFACT_FORMATS.lexicalIndex;
 void ARTIFACT_VERSION;
 void PUBLIC_EXPORTS;

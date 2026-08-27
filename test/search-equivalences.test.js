@@ -9,10 +9,9 @@ import {
   SearchEngine,
   morphology,
   compileAuthoredRelevance,
-  normalizeSearchEquivalences,
-  MAX_SEARCH_EQUIVALENCE_TARGETS,
   InvalidConfigurationError,
 } from "../dist/index.js";
+import { normalizeSearchEquivalences, MAX_SEARCH_EQUIVALENCE_TARGETS } from "../dist/synonyms.js";
 import { dictionary } from "../dist/dictionary.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";

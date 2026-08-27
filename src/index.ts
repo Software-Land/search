@@ -10,7 +10,7 @@ import { SearchEngine as searchEngineImpl } from "./SearchEngine.js";
 import { morphology as morphologyImpl } from "./morphology.js";
 import { compileAuthoredRelevance as compileAuthoredRelevanceImpl } from "./dictionary.js";
 import { migrateConfiguredEntry as migrateConfiguredEntryImpl } from "./configuredAuthoring.js";
-import { compileRelationshipMap as compileRelationshipMapImpl, mergeRelationships as mergeRelationshipsImpl } from "./relationshipMap.js";
+import { mergeRelationships as mergeRelationshipsImpl } from "./relationshipMap.js";
 import {
   RELATIONSHIP_STRATEGIES as relationshipStrategiesImpl,
   DEFAULT_RELATIONSHIP_STRATEGY as defaultRelationshipStrategyImpl,
@@ -19,16 +19,11 @@ import {
   DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD as defaultAdaptiveDocumentThresholdImpl,
 } from "./config.js";
 import {
-  parseEquivalences as parseEquivalencesImpl,
   parseRelationships as parseRelationshipsImpl,
   ARTIFACT_FORMATS as artifactFormatsImpl,
   ARTIFACT_VERSION as artifactVersionImpl,
 } from "./artifacts.js";
 import { abortError as abortErrorImpl, isAbortError as isAbortErrorImpl } from "./cancel.js";
-import {
-  normalizeSearchEquivalences as normalizeSearchEquivalencesImpl,
-  MAX_SEARCH_EQUIVALENCE_TARGETS as maxSearchEquivalenceTargetsImpl,
-} from "./synonyms.js";
 import {
   InvalidConfigurationError as invalidConfigurationErrorImpl,
   InvalidDocumentError as invalidDocumentErrorImpl,
@@ -43,9 +38,7 @@ import type {
   ArtifactVersionErrorConstructor,
   AuthoredRelationshipEdge,
   CompiledAuthoredRelevance,
-  CompiledRelationshipMap,
-  EquivalenceArtifact,
-  EquivalenceEntry,
+  ConfiguredConcept,
   IndexStateError as IndexStateErrorType,
   MigratedConfiguredEntry,
   RelationshipEndpoint,
@@ -63,19 +56,15 @@ import type {
   SearchEngineConstructor,
   EnglishPlugin,
   MorphologyOptions,
-  NormalizedSearchEquivalences,
 } from "./api.js";
 
 export type {
   AdaptiveOptions,
-  DictionaryPlugin,
   DirectClass,
   EnglishPlugin,
   AuthoredRelationshipEdge,
   CompiledAuthoredRelevance,
-  CompiledRelationshipMap,
-  EquivalenceArtifact,
-  EquivalenceEntry,
+  ConfiguredConcept,
   ExperimentalRetrieveOptions,
   MigratedConfiguredEntry,
   RelationshipEndpoint,
@@ -102,13 +91,7 @@ export type {
   SearchOptions,
   SearchPlugin,
   SearchResult,
-  SynonymPlugin,
   TextRole,
-  SearchEquivalenceMap,
-  SearchEquivalencePair,
-  SearchEquivalenceRejection,
-  NormalizedSearchEquivalenceEntry,
-  NormalizedSearchEquivalences,
 } from "./api.js";
 
 export type SearchEngine = SearchEngineType;
@@ -118,27 +101,17 @@ export const morphology: (options?: MorphologyOptions) => EnglishPlugin = morpho
 export const migrateConfiguredEntry: (raw?: unknown) => MigratedConfiguredEntry = migrateConfiguredEntryImpl as (
   raw?: unknown
 ) => MigratedConfiguredEntry;
-export const compileRelationshipMap: (
-  map?: unknown,
-  options?: { concepts?: Iterable<{ key?: string } | string> | Map<string, unknown> | null; documents?: import("./api.js").SearchDocument[] | null }
-) => CompiledRelationshipMap = compileRelationshipMapImpl as (
-  map?: unknown,
-  options?: { concepts?: Iterable<{ key?: string } | string> | Map<string, unknown> | null; documents?: import("./api.js").SearchDocument[] | null }
-) => CompiledRelationshipMap;
 export const compileAuthoredRelevance: (options?: {
-  configuredConcepts?: EquivalenceEntry[];
+  configuredConcepts?: ConfiguredConcept[];
   relationshipMap?: RelationshipMap;
   documents?: import("./api.js").SearchDocument[];
 }) => CompiledAuthoredRelevance = compileAuthoredRelevanceImpl as (options?: {
-  configuredConcepts?: EquivalenceEntry[];
+  configuredConcepts?: ConfiguredConcept[];
   relationshipMap?: RelationshipMap;
   documents?: import("./api.js").SearchDocument[];
 }) => CompiledAuthoredRelevance;
 export const mergeRelationships: (base?: unknown, extra?: unknown) => RelationshipArtifact | null =
   mergeRelationshipsImpl as (base?: unknown, extra?: unknown) => RelationshipArtifact | null;
-export const normalizeSearchEquivalences: (input?: unknown) => NormalizedSearchEquivalences =
-  normalizeSearchEquivalencesImpl as (input?: unknown) => NormalizedSearchEquivalences;
-export const MAX_SEARCH_EQUIVALENCE_TARGETS: 8 = maxSearchEquivalenceTargetsImpl as 8;
 
 export const RELATIONSHIP_STRATEGIES: readonly RelationshipStrategy[] =
   relationshipStrategiesImpl as readonly RelationshipStrategy[];
@@ -147,19 +120,14 @@ export const RETRIEVER_NAMES: readonly RetrieverName[] = retrieverNamesImpl as r
 export const DEFAULT_CANDIDATE_LIMIT: 200 = defaultCandidateLimitImpl;
 export const DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD: 1500 = defaultAdaptiveDocumentThresholdImpl;
 
-export const parseEquivalences: (obj?: unknown) => EquivalenceArtifact = parseEquivalencesImpl as (
-  obj?: unknown
-) => EquivalenceArtifact;
 export const parseRelationships: (obj?: unknown) => RelationshipArtifact = parseRelationshipsImpl as (
   obj?: unknown
 ) => RelationshipArtifact;
 export const ARTIFACT_FORMATS: {
-  equivalences: "search-v2-equivalences";
   relationships: "search-v2-relationships";
   corpusStats: "search-v2-corpus-stats";
   lexicalIndex: "search-v2-lexical-index";
 } = artifactFormatsImpl as {
-  equivalences: "search-v2-equivalences";
   relationships: "search-v2-relationships";
   corpusStats: "search-v2-corpus-stats";
   lexicalIndex: "search-v2-lexical-index";
@@ -189,17 +157,13 @@ export const PUBLIC_EXPORTS: readonly string[] = Object.freeze([
   "SearchEngine",
   "morphology",
   "migrateConfiguredEntry",
-  "compileRelationshipMap",
   "compileAuthoredRelevance",
   "mergeRelationships",
-  "normalizeSearchEquivalences",
-  "MAX_SEARCH_EQUIVALENCE_TARGETS",
   "RELATIONSHIP_STRATEGIES",
   "DEFAULT_RELATIONSHIP_STRATEGY",
   "RETRIEVER_NAMES",
   "DEFAULT_CANDIDATE_LIMIT",
   "DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD",
-  "parseEquivalences",
   "parseRelationships",
   "ARTIFACT_FORMATS",
   "ARTIFACT_VERSION",

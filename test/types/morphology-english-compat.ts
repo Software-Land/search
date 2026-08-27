@@ -1,14 +1,14 @@
 /**
  * morphology() returns EnglishPlugin.
- * compileAuthoredRelevance() produces DictionaryPlugin as authored.plugins identity.
+ * compileAuthoredRelevance() produces SearchPlugin[] as authored.plugins.
  * Root english() is removed. Root dictionary() is removed.
  */
 import {
   compileAuthoredRelevance,
   morphology,
-  type DictionaryPlugin,
   type EnglishPlugin,
   type MorphologyOptions,
+  type SearchPlugin,
 } from "@software-land/search";
 
 // @ts-expect-error english is not a public root export
@@ -30,12 +30,13 @@ void plugin.lemmaTableKeys;
 const withMap: EnglishPlugin = morphology({ lemmas: { widgets: "widget" } });
 void withMap.lemma("widgets");
 
-const dict = compileAuthoredRelevance({ configuredConcepts: [{ key: "wifi" }] }).plugins.find(
-  (plugin): plugin is DictionaryPlugin => plugin.name === "dictionary"
-);
-if (!dict) throw new Error("compileAuthoredRelevance must include the dictionary plugin");
-void dict.name;
-void dict.lexicon;
+const authoredPlugins: SearchPlugin[] = compileAuthoredRelevance({
+  configuredConcepts: [{ key: "wifi" }],
+}).plugins;
+const identity = authoredPlugins[0];
+if (!identity) throw new Error("compileAuthoredRelevance must include configured-identity plugins");
+void identity.name;
+void identity.lexicon?.();
 
 void options;
 void withLemmas;

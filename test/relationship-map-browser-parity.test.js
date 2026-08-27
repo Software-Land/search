@@ -6,10 +6,10 @@ import {
   SearchEngine,
   morphology,
   compileAuthoredRelevance,
-  compileRelationshipMap,
   mergeRelationships,
   InvalidConfigurationError,
 } from "../dist/index.js";
+import { compileRelationshipMap } from "../dist/relationshipMap.js";
 import { createSearchClient, createWorkerRuntime, createLoopbackTransport } from "../dist/browser/index.js";
 
 const schema = {
@@ -152,8 +152,8 @@ async function workerSearch({
   return viewFromWorker(payload);
 }
 
-describe("relationshipMap public compile projection", () => {
-  test("public compileRelationshipMap does not leak internal recall maps", () => {
+describe("relationshipMap compile projection", () => {
+  test("compileRelationshipMap does not leak internal recall maps", () => {
     const compiled = compileRelationshipMap({
       qa: [{ kind: "equivalent", to: { form: "testing" } }],
       hypertext: [{ kind: "related", to: { concept: "http" } }],

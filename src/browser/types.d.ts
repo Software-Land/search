@@ -17,7 +17,7 @@ export interface InitPayload {
   documents?: import("../index.js").SearchDocument[];
   schema?: import("../index.js").Schema;
   lexicalIndex?: import("../index.js").LexicalIndexArtifact;
-  configuredConcepts?: import("../index.js").EquivalenceEntry[];
+  configuredConcepts?: import("../index.js").ConfiguredConcept[];
   relationshipMap?: import("../index.js").RelationshipMap;
   documentRelationships?: import("../index.js").RelationshipArtifact | null;
   relationshipStrategy?: import("../index.js").RelationshipStrategy;

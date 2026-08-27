@@ -26,11 +26,11 @@ describe("search-corpus review queue", () => {
     expect(ci.every((c) => c.compilerDecision !== "short-token-weak-evidence")).toBe(true);
     const row = ci[0];
     if (row.lifecycle === LIFECYCLE.AUTO_ACCEPTED) {
-      expect(result.equivalences.entries.some((e) => e.key === "ci")).toBe(true);
+      expect(result.configuredConcepts.some((e) => e.key === "ci")).toBe(true);
     } else {
       expect(row.lifecycle).toBe(LIFECYCLE.REVIEW_PENDING);
       expect(row.reviewBand).toBe("HIGH");
-      expect(result.equivalences.entries.some((e) => e.key === "ci")).toBe(false);
+      expect(result.configuredConcepts.some((e) => e.key === "ci")).toBe(false);
     }
   });
 
@@ -89,7 +89,7 @@ describe("search-corpus review queue", () => {
     const api = byKeyPhrase(result, "api", "application programming interface")[0];
     expect(api.lifecycle).toBe(LIFECYCLE.REVIEW_PENDING);
     expect(api.reviewBand).toBe("HIGH");
-    expect(result.equivalences.entries.some((e) => e.key === "api")).toBe(false);
+    expect(result.configuredConcepts.some((e) => e.key === "api")).toBe(false);
     expect(api.decisionSkeleton).toEqual({
       candidateId: api.id,
       decision: "accept",
@@ -171,7 +171,7 @@ describe("search-corpus review queue", () => {
         { id: "c", title: "OOP notes", body: "The object oriented paradigm is sometimes used as a synonym." },
       ],
     });
-    const accepted = result.equivalences.entries.find((e) => e.key === "oop");
+    const accepted = result.configuredConcepts.find((e) => e.key === "oop");
     expect(accepted).toBeTruthy();
     const paradigm = result.inspection.candidates.find(
       (c) => c.key === "oop" && c.expansionPhrase === "object oriented paradigm"

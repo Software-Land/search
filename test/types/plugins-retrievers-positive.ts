@@ -5,13 +5,11 @@ import {
   SearchEngine,
   morphology,
   compileAuthoredRelevance,
-  type DictionaryPlugin,
   type EnglishPlugin,
   type ExperimentalRetrieveOptions,
   type ExperimentalRetriever,
   type LexiconPlugin,
   type SearchPlugin,
-  type SynonymPlugin,
 } from "@software-land/search";
 
 const jsShaped = {
@@ -26,11 +24,9 @@ SearchEngine.create({
 });
 const fromMorphology: EnglishPlugin = morphology();
 void fromMorphology.lemma;
-const fromDictionary = compileAuthoredRelevance({ configuredConcepts: [{ key: "wifi" }] }).plugins.find(
-  (plugin): plugin is DictionaryPlugin => plugin.name === "dictionary"
-);
-if (!fromDictionary) throw new Error("compileAuthoredRelevance must include the dictionary plugin");
-void fromDictionary.lexicon;
+const fromAuthored = compileAuthoredRelevance({ configuredConcepts: [{ key: "wifi" }] }).plugins[0];
+if (!fromAuthored) throw new Error("compileAuthoredRelevance must include configured-identity plugins");
+void fromAuthored.lexicon?.();
 
 SearchEngine.create({
   retriever: {
@@ -57,8 +53,8 @@ const e: EnglishPlugin = {
   },
 };
 
-const d: DictionaryPlugin = {
-  name: "dictionary",
+const d: SearchPlugin = {
+  name: "configured-identity",
   sequences: [{ tokens: ["wifi"], kind: "key", entry: { key: "wifi", aliases: [["wi", "fi"]]} }],
   byKey: new Map([["wifi", { key: "wifi", aliases: [["wi", "fi"]]}]]),
   lexicon() {
@@ -66,8 +62,7 @@ const d: DictionaryPlugin = {
   },
 };
 
-const s: SynonymPlugin = {
-  name: "synonyms",
+const s: SearchPlugin = {
   expand(token: string) {
     return [{ form: token }];
   },

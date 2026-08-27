@@ -12,11 +12,10 @@ import {
   abortError,
   morphology,
   isAbortError,
-  parseEquivalences,
   parseRelationships,
   compileAuthoredRelevance,
   type EnglishPlugin,
-  type DictionaryPlugin,
+  type SearchPlugin,
   type MorphologyOptions,
 } from "@software-land/search";
 
@@ -78,18 +77,15 @@ void new ArtifactValidationErrorConstructor("aliased");
 void new IndexStateErrorConstructor("aliased");
 
 const morphologyFn: (options?: MorphologyOptions) => EnglishPlugin = morphology;
-const parseEquivalencesFn: (obj?: unknown) => unknown = parseEquivalences;
 const parseRelationshipsFn: (obj?: unknown) => unknown = parseRelationships;
 const abortErrorFn: (message?: string) => Error = abortError;
 const isAbortErrorFn: (err: unknown) => boolean = isAbortError;
 
 void typeof morphology;
 void typeof compileAuthoredRelevance;
-void typeof parseEquivalences;
 void typeof abortError;
 void typeof SearchEngine;
 void morphologyFn();
-void parseEquivalencesFn();
 void parseRelationshipsFn();
 void abortErrorFn("Aborted");
 void isAbortErrorFn(new Error("no"));
@@ -97,11 +93,10 @@ void morphology({ lemmas: { widgets: "widget" } });
 const authored = compileAuthoredRelevance({ configuredConcepts: [{ key: "qa", aliases: [["quality", "assurance"]] }],
   relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
 });
-void authored.plugins.find((plugin): plugin is DictionaryPlugin => plugin.name === "dictionary")?.lexicon;
+void authored.plugins.find((plugin): plugin is SearchPlugin => typeof plugin.lexicon === "function")?.lexicon;
 void authored.plugins.find((plugin) => plugin.name === "synonyms")?.expand;
 void authored.plugins[0];
 void authored.documentRelationships;
-void parseEquivalences();
 void parseRelationships();
 void abortError();
 void isAbortError(abortError());

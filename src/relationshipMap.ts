@@ -45,7 +45,7 @@ export type EditorialRelationshipEdge = {
   provenance: "manual";
 };
 
-/** Public compileRelationshipMap() return value. Internal recall maps stay private. */
+/** Internal compileRelationshipMap() projection. Internal recall maps stay private. */
 export interface CompiledRelationshipMap {
   synonymMap: Record<string, string[]>;
   editorialRelationships: Record<string, EditorialRelationshipEdge[]>;
