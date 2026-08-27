@@ -17,6 +17,7 @@ import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { assertAuthoredRelevanceContract } from "./authored-relevance-contract.mjs";
 
 export const harnessDir = path.dirname(fileURLToPath(import.meta.url));
 export const repoRoot = path.resolve(harnessDir, "..", "..");
@@ -276,6 +277,14 @@ export async function preparePackedConsumer(tmp) {
   if (!existsSync(workerFile)) {
     throw new Error(`packed searchWorker.js missing next to browser entry: ${workerFile}`);
   }
+  const installedRoot = path.dirname(installedPkgPath);
+  assertAuthoredRelevanceContract(
+    {
+      workerRuntime: readFileSync(path.join(installedRoot, "dist/browser/workerRuntime.js"), "utf8"),
+      dictionary: readFileSync(path.join(installedRoot, "dist/dictionary.js"), "utf8"),
+    },
+    envTarball ? `SEARCH_PACK_TGZ=${tarball}` : `fresh pack ${tarball}`
+  );
 
   const importMap = {
     imports: {
@@ -290,7 +299,7 @@ export async function preparePackedConsumer(tmp) {
     tarball,
     installedPkg,
     installedPkgPath,
-    installedRoot: path.dirname(installedPkgPath),
+    installedRoot,
     browserExport,
     lexicalRel,
     importMap,
