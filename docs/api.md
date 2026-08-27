@@ -87,11 +87,12 @@ const authored = compileAuthoredRelevance({
 });
 
 SearchEngine.create({
-  plugins: [morphology(), authored.dictionary, authored.synonyms],
+  plugins: [morphology(), ...authored.plugins],
+  relationships: authored.relationships,
 });
 ```
 
-`authored.synonyms` is the compiled low-level one-hop recall plugin produced by the compiler. Applications author `equivalent` edges; they do not separately construct that plugin.
+`authored.plugins` is the canonical ordered plugin collection. `authored.synonyms` remains the compiled low-level one-hop recall plugin for inspection; applications author `equivalent` edges and do not separately construct that plugin.
 
 `relationshipMap` is directional. Kinds are `equivalent` and `related`. Endpoints are `{ form }`, `{ concept }`, or `{ document }`. Edges do not auto-reverse and must not carry numeric weights. Equivalent edges do not rewrite typed tokens.
 
@@ -102,7 +103,7 @@ SearchEngine.create({
 | `related` concept → `{ form }` | existing topical-recall |
 | `related` document → `{ document }` | existing editorial relationship artifact (`type: editorial`, provenance `manual`, strength 1) |
 
-`dictionary({ entries })` compiles configured-concept identity only. Complete authored relevance — equivalent recall, related standalone/topical forms, and editorial document edges — is `compileAuthoredRelevance({ entries, relationshipMap, documents })`. Browser `SearchClient.init({ relationshipMap })` uses that same full authored-relevance meaning. Generated MiniLM relationships stay in the separate semantic artifact; they are not authored here.
+`dictionary({ entries })` compiles configured-concept identity only. Complete authored relevance — equivalent recall, related standalone/topical forms, and editorial document edges — is `compileAuthoredRelevance({ entries, relationshipMap, documents })`. Pass `...authored.plugins` and `authored.relationships` to `SearchEngine.create`. Browser `SearchClient.init({ relationshipMap })` uses that same full authored-relevance meaning. Generated MiniLM relationships stay in the separate semantic artifact; merge them with authored editorial edges via `mergeEditorialRelationships(semantic, authored.editorialRelationships)`.
 
 `compileRelationshipMap()` is a lower-level/partial compiler for tooling. It does not install dictionary related-recall or produce a ready plugin set. Prefer `compileAuthoredRelevance()` for application initialization.
 

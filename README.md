@@ -91,13 +91,17 @@ const engine = SearchEngine.create({
   },
   plugins: [
     morphology(),
-    authored.dictionary,
-    authored.synonyms,
+    ...authored.plugins,
   ],
+  relationships: authored.relationships,
 });
 ```
 
-`equivalent` edges compile onto the package's existing one-hop recall machinery. `authored.synonyms` is that compiled plugin, not a second application-authoring constructor. Edges do not auto-reverse: `qa → testing` does not imply `testing → qa`. Phrase sources match as exact contiguous normalized phrases.
+`authored.plugins` is the compiler-owned plugin list: configured identity (including related standalone/topical recall) then compiled equivalent one-hop recall. Ordinary applications do not assemble those pieces by name. `equivalent` edges do not auto-reverse: `qa → testing` does not imply `testing → qa`. Phrase sources match as exact contiguous normalized phrases.
+
+`authored.relationships` is the editorial document→document artifact, or `null` when none were authored. Combine it with a generated semantic artifact using `mergeEditorialRelationships(semantic, authored.editorialRelationships)`.
+
+Low-level fields `authored.dictionary`, `authored.synonyms`, and `authored.synonymMap` remain for inspection and compatibility. `authored.synonyms` is compiled equivalent-recall, not a second application-authoring constructor.
 
 `dictionary({ entries })` compiles concept identity only. Complete authored relevance — equivalent recall, related standalone/topical forms, and editorial document edges — uses `compileAuthoredRelevance()`.
 
@@ -278,7 +282,7 @@ v0. The runtime facade, result shape, artifact `format`+`version`, `relationship
 
 Supported imports: `@software-land/search`, `@software-land/search/browser`, `@software-land/search/corpus`, `@software-land/search/lexical`, `@software-land/search/relationships`, `@software-land/search/semantic`. The last four are build-time compilers/helpers. Root and `./browser` do not import them.
 
-Root exports: `SearchEngine`, `morphology`, `dictionary`, `compileAuthoredRelevance`, `compileRelationshipMap`, `migrateConfiguredEntry`, strategy/retriever constants, artifact parsers (`parseEquivalences`, `parseSynonyms`, `parseRelationships`), enrichment/tooling helpers (`normalizeSearchEquivalences`), abort helpers, public error classes. `searchWorkerUrl()` is exported only from `./browser`.
+Root exports: `SearchEngine`, `morphology`, `dictionary`, `compileAuthoredRelevance`, `compileRelationshipMap`, `migrateConfiguredEntry`, `mergeEditorialRelationships`, strategy/retriever constants, artifact parsers (`parseEquivalences`, `parseSynonyms`, `parseRelationships`), enrichment/tooling helpers (`normalizeSearchEquivalences`), abort helpers, public error classes. `searchWorkerUrl()` is exported only from `./browser`.
 
 ## Docs
 
