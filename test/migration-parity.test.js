@@ -61,13 +61,15 @@ describe("0.2.0 migration parity", () => {
       SearchEngine.create({ schema, plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: mlDict })] }),
       docs
     );
-    const expectedIds = ["key-only", "strong-phrase", "machine-only", "learn-only"];
-    const expectedTitles = ["ML Notes", "Phrase Heavy Guide", "Machine Shop", "Learn Notes"];
+    const expectedIds = ["key-only", "strong-phrase"];
+    const expectedTitles = ["ML Notes", "Phrase Heavy Guide"];
     for (const query of ["ml", "machine learning", "machine learn"]) {
       const rows = engine.search(query);
       expect(ids(rows)).toEqual(expectedIds);
       expect(titles(rows)).toEqual(expectedTitles);
       expect(ids(rows)).not.toContain("weak-incidental");
+      expect(ids(rows)).not.toContain("machine-only");
+      expect(ids(rows)).not.toContain("learn-only");
     }
 
     const ml = engine.searchDetailed("ml", { explain: true }).results;
@@ -155,16 +157,17 @@ describe("0.2.0 migration parity", () => {
       SearchEngine.create({ schema, plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: httpDict })] }),
       docs
     );
-    const httpIds = ["expansion-title", "http", "protocol-only", "transfer-only"];
+    const httpIds = ["expansion-title", "http"];
     expect(ids(engine.search("http"))).toEqual(httpIds);
     expect(ids(engine.search("hypertext transfer protocol"))).toEqual(httpIds);
-    // Partial expansion occupancy still projects the HTTP expansion, so protocol-only is legitimate weak-direct evidence.
     expect(ids(engine.search("hypertext transfer"))).toEqual(httpIds);
+    expect(ids(engine.search("http"))).not.toContain("protocol-only");
+    expect(ids(engine.search("http"))).not.toContain("transfer-only");
 
     const exact = engine.searchDetailed("http", { explain: true }).results;
     expect(stableSurface(exact[0])).toMatchObject({
       id: "expansion-title",
-      configuredConceptMatch: "expansion",
+      configuredConceptMatch: "form",
       normalizedQueryPhrase: "hypertext transfer protocol",
     });
     expect(stableSurface(exact[1])).toMatchObject({
@@ -187,7 +190,7 @@ describe("0.2.0 migration parity", () => {
       SearchEngine.create({ schema, plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: siblingDict })] }),
       siblingDocs
     );
-    const siblingIds = ["http-title", "transfer-only", "http-body"];
+    const siblingIds = ["http-title", "http-body"];
     expect(ids(sibling.search("http"))).toEqual(siblingIds);
     expect(ids(sibling.search("hypertext transfer protocol"))).toEqual(siblingIds);
     expect(ids(sibling.search("hypertext transfer"))).toEqual(siblingIds);
@@ -209,7 +212,7 @@ describe("0.2.0 migration parity", () => {
     expect(stableSurface(rows[0])).toMatchObject({
       id: "wifi",
       title: "Wi-Fi",
-      configuredConceptMatch: "expansion",
+      configuredConceptMatch: "form",
       normalizedQueryPhrase: "wi fi",
     });
   });

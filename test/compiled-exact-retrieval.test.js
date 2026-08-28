@@ -410,6 +410,10 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
         explain: true,
       });
       expect(actual.meta.matchCount).toBeGreaterThan(200);
+      // Occupied incidental unigrams no longer retrieve the distractor flood.
+      // These prefixes still do, so representative reduction remains observable.
+      expect(actual.meta.representativeSelection.retained)
+        .toBeLessThan(actual.meta.candidateCount);
     }
     const conflict = expectExact(full, compiled, "what are apis", {
       limit: 10,
@@ -423,7 +427,7 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
     expect(conflict.results[0].explanation.constraintMeta.conflictCount)
       .toBe(conflict.meta.constraintConflicts);
     expect(conflict.meta.representativeSelection.retained)
-      .toBeLessThan(conflict.meta.candidateCount);
+      .toBeLessThanOrEqual(conflict.meta.candidateCount);
   }, 120_000);
 
   test.each([400, 1_000, 5_000])(

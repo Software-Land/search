@@ -31,7 +31,7 @@ function blankFeatures(over = {}) {
     phraseAdjacency: 0,
     bodyLexicalMatch: 0,
     titleTokenCount: 3,
-    expansionEvidence: 0,
+    configuredFormEvidence: 0,
     canonicalKeyTitle: false,
     relationshipStrength: 0,
     relationshipType: null,
@@ -238,10 +238,10 @@ describe("general lexical search", () => {
     });
     const hit = q.concepts.find((c) => c.id === "cd" || c.id === "cicd");
     expect(hit).toBeTruthy();
-    expect(hit.provenance).toBe("partial-expansion");
+    expect(hit.provenance).toBe("partial-form");
   });
 
-  test("prefix of a longer expansion is partial-expansion not a rewrite", () => {
+  test("prefix of a longer expansion is partial-form not a rewrite", () => {
     const q = analyzeQuery("application programming", {
       plugins: [
         morphology(),
@@ -251,7 +251,7 @@ describe("general lexical search", () => {
     });
     const hit = q.concepts.find((c) => c.id === "api");
     expect(hit).toBeTruthy();
-    expect(hit.provenance).toBe("partial-expansion");
+    expect(hit.provenance).toBe("partial-form");
   });
 
   test("single-letter still does not prefix a configured-concept key", () => {
@@ -277,8 +277,8 @@ describe("general lexical search", () => {
     const results = engine.search("oop", { limit: 5, explain: true });
     expect(results[0].title).toBe("What is OOP (Object-Oriented Programming)?");
     expect(results[0].features.configuredConceptMatch).toBe("key-in-title");
-    expect(results[0].features.expansionEvidence).toBeGreaterThan(
-      results.find((r) => r.id === "/oop-vs/").features.expansionEvidence
+    expect(results[0].features.configuredFormEvidence).toBeGreaterThan(
+      results.find((r) => r.id === "/oop-vs/").features.configuredFormEvidence
     );
   });
 

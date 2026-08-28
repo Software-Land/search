@@ -70,7 +70,7 @@ function versionBand(v: unknown) {
 
 function equivBand(v: unknown) {
   if (v === "key-in-title") return 2;
-  if (v === "expansion") return 1;
+  if (v === "form") return 1;
   return 0;
 }
 

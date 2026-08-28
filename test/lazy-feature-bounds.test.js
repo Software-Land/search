@@ -53,7 +53,7 @@ function baseFeat(extra = {}) {
     phraseAdjacency: 0,
     bodyLexicalMatch: 0,
     titleTokenCount: 3,
-    expansionEvidence: 0,
+    configuredFormEvidence: 0,
     canonicalKeyTitle: false,
     queryTokenCount: 3,
     bodyPhraseCount: 0,

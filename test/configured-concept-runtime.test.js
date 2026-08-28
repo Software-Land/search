@@ -192,11 +192,11 @@ describe("canonical ConfiguredConcept query occupancy", () => {
             ["http", "protocol"],
           ])
         );
-        if (raw === "http") expect(concept?.expansion).toEqual([]);
+        if (raw === "http") expect(concept?.matchedForm).toEqual([]);
         if (raw === "hypertext transfer protocol") {
-          expect(concept?.expansion).toEqual(["hypertext", "transfer", "protocol"]);
+          expect(concept?.matchedForm).toEqual(["hypertext", "transfer", "protocol"]);
         }
-        if (raw === "http protocol") expect(concept?.expansion).toEqual(["http", "protocol"]);
+        if (raw === "http protocol") expect(concept?.matchedForm).toEqual(["http", "protocol"]);
       }
     }
     const standalone = analyzeQuery("hypertext", { plugins });
@@ -212,6 +212,6 @@ describe("canonical ConfiguredConcept query occupancy", () => {
     expect(topical.topicalRecall).toEqual({ key: "appsec", forms: [["authentication"]] });
     const detailed = engine.searchDetailed("http", { limit: 10, explain: true });
     expect(detailed.results[0].id).toBe("http");
-    expect(detailed.results[0].explanation.query.configuredSequenceIntent.expansion).toEqual([]);
+    expect(detailed.results[0].explanation.query.configuredSequenceIntent.matchedForm).toEqual([]);
   });
 });

@@ -69,7 +69,7 @@ function bodyOnlySingleTokenContext(query: AnalyzedQuery): BoundContext | null {
     concept &&
     concept.kind === "term" &&
     concept.provenance === "surface" &&
-    !concept.expansion?.length &&
+    !concept.matchedForm?.length &&
     !concept.aliases?.length &&
     query.alternatives.length === 0 &&
     query.dottedSpans.length === 0 &&

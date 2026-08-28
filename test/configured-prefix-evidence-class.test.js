@@ -47,14 +47,14 @@ describe("configured expansion prefix evidence class", () => {
     if (body) expect(body.directClass).not.toBe("moderate");
   });
 
-  test("2/3 exact left prefix uniquely occupies xyz with full concept-level ranking coverage", () => {
+  test("2/3 exact left prefix uniquely occupies xyz with matched-form coverage 2/3", () => {
     const q = analyzeQuery("alpha beta", { plugins });
     const xyz = q.concepts.find((c) => c.kind === "configured-concept" && c.id === "xyz");
     expect(xyz).toMatchObject({
-      provenance: "partial-expansion",
-      matchedExpansionTokens: 2,
-      expansionTokenCount: 3,
-      expansionCoverage: 1,
+      provenance: "partial-form",
+      matchedFormTokens: 2,
+      formTokenCount: 3,
+      formCoverage: 0.6667,
     });
     expect(q.concepts.some((c) => c.id === "abc")).toBe(false);
 
@@ -62,32 +62,31 @@ describe("configured expansion prefix evidence class", () => {
     const fullHit = hit(engine, "alpha beta gamma", "xyz-key");
     expect(keyHit).toBeTruthy();
     expect(fullHit).toBeTruthy();
-    expect(keyHit.directClass).toBe(fullHit.directClass);
     expect(keyHit.features.configuredConceptMatch).toBe("key-in-title");
-    expect(keyHit.features.configuredExpansionCoverage).toBe(1);
+    expect(keyHit.features.configuredFormCoverage).toBe(0.6667);
 
     const prefixTitle = hit(engine, "alpha beta", "xyz-prefix-title");
     expect(prefixTitle).toBeTruthy();
-    expect(prefixTitle.features.expansionEvidence).toBeGreaterThanOrEqual(2 / 3);
-    expect(prefixTitle.features.configuredExpansionCoverage).toBe(1);
+    expect(prefixTitle.features.configuredFormEvidence).toBeGreaterThanOrEqual(2 / 3);
+    expect(prefixTitle.features.configuredFormCoverage).toBe(0.6667);
 
     const body = hit(engine, "alpha beta", "xyz-body");
     expect(body).toBeTruthy();
     expect(body.features.configuredConceptMatch).toBe(false);
     expect(body.features).not.toHaveProperty("configuredEquivalenceMatch");
-    expect(body.features.configuredExpansionCoverage).toBe(1);
+    expect(body.features.configuredFormCoverage).toBe(0.6667);
     expect(body.features.bodyLexicalMatch).toBeGreaterThan(0);
   });
 
   test("3/3 exact expansion keeps existing stronger title-expansion classification", () => {
     const q = analyzeQuery("alpha beta gamma", { plugins });
     const xyz = q.concepts.find((c) => c.kind === "configured-concept" && c.id === "xyz");
-    expect(xyz.expansionCoverage).toBe(1);
+    expect(xyz.formCoverage).toBe(1);
     expect(xyz.kind).toBe("configured-concept");
     expect(q.concepts.every((c) => c.kind !== "acronym")).toBe(true);
     const full = hit(engine, "alpha beta gamma", "xyz-full");
     expect(full).toBeTruthy();
-    expect(full.features.configuredConceptMatch).toBe("expansion");
+    expect(full.features.configuredConceptMatch).toBe("form");
     expect(full.features).not.toHaveProperty("configuredEquivalenceMatch");
     expect(["moderate", "strong"]).toContain(full.directClass);
     expect(full.directClass).not.toBe("weak");

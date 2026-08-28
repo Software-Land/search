@@ -197,7 +197,7 @@ describe("core cancellation", () => {
         shortLiteralLeadMatch: false,
         phraseAdjacency: 0,
         titleTokenCount: 2,
-        expansionEvidence: 0,
+        configuredFormEvidence: 0,
         relationshipStrength: 0,
       },
     }));
@@ -295,8 +295,8 @@ describe("query analysis repair", () => {
     const q = analyzeQuery("asdfsafhttp", { plugins });
     expect(q.originalSurface).toEqual(["asdfsafhttp"]);
     expect(q.tokens.map((t) => t.normalized)).toEqual(["http"]);
-    expect(q.lexicalPhraseTokens).toEqual(["hypertext", "transfer", "protocol"]);
-    expect(q.concepts.some((c) => c.id === "http" && c.provenance === "key")).toBe(true);
+    expect(q.lexicalPhraseTokens).toEqual(["http"]);
+    expect(q.configuredSequenceIntent?.key).toBe("http");
   });
 
   test("morphological tokens are not compound-split or over-corrected", () => {

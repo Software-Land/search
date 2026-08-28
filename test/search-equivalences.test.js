@@ -132,7 +132,7 @@ describe("directional search equivalences", () => {
     expect(q.tokens.map((t) => t.normalized)).toEqual(["qa"]);
     expect(q.tokens.map((t) => t.surfaceNormalized)).toEqual(["qa"]);
     expect(q.configuredSequenceIntent.key).toBe("qa");
-    expect(q.lexicalPhraseKey).toBe("quality assurance");
+    expect(q.lexicalPhraseKey).toBe("qa");
     expect(q.equivalentRecall).toEqual([{ source: "qa", target: "testing" }]);
     expect(q.topicalRecall).toBeFalsy();
     expect(q.standaloneRecall).toBeFalsy();

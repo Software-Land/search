@@ -35,8 +35,8 @@ function occupancyOf(raw, entries) {
     key: q.configuredSequenceIntent?.key ?? null,
     matchedKinds: [...(q.configuredSequenceIntent?.matchedKinds || [])].sort(),
     provenance: concept?.provenance ?? null,
-    matchedForm: q.configuredSequenceIntent?.expansion || [],
-    expansionCoverage: concept?.expansionCoverage ?? null,
+    matchedForm: q.configuredSequenceIntent?.matchedForm || [],
+    formCoverage: concept?.formCoverage ?? null,
     spanKinds: (q.configuredSpans || []).flatMap((s) => s.matchedKinds).sort(),
     prefixSpanKinds: (q.configuredPrefixSpans || []).flatMap((s) => s.matchedKinds).sort(),
   };
@@ -55,9 +55,15 @@ function publicView(engine, analyzePlugins, raw, limit = 20) {
     directClass: detailed.results.map((h) => h.directClass),
     relatedIds: (detailed.related || []).map((h) => h.id),
     retrievalSources: detailed.results.map((h) => [...(h.retrievalSources || [])].sort()),
-    expansionEvidence: detailed.results.map((h) => h.features?.expansionEvidence ?? null),
+    configuredFormEvidence: detailed.results.map((h) => h.features?.configuredFormEvidence ?? null),
     configuredConceptMatch: detailed.results.map((h) => h.features?.configuredConceptMatch ?? null),
-    configuredExpansionCoverage: occupied?.expansionCoverage ?? null,
+    configuredFormCoverage: occupied?.formCoverage ?? null,
+    configuredFormBodyMatch: detailed.results.map((h) => h.features?.configuredFormBodyMatch ?? null),
+    phraseAdjacency: detailed.results.map((h) => h.features?.phraseAdjacency ?? null),
+    queryTokenCount: detailed.results.map((h) => h.features?.queryTokenCount ?? null),
+    titlePrefixQuality: detailed.results.map((h) => h.features?.titlePrefixQuality ?? null),
+    titleCoverage: detailed.results.map((h) => h.features?.titleCoverage ?? null),
+    exactTitleTokenMatch: detailed.results.map((h) => h.features?.exactTitleTokenMatch ?? null),
   };
 }
 
@@ -70,6 +76,15 @@ function expectSameSemantic(a, b) {
   expect(b.directClass).toEqual(a.directClass);
   expect(b.relatedIds).toEqual(a.relatedIds);
   expect(b.retrievalSources).toEqual(a.retrievalSources);
+  expect(b.configuredFormEvidence).toEqual(a.configuredFormEvidence);
+  expect(b.configuredConceptMatch).toEqual(a.configuredConceptMatch);
+  expect(b.configuredFormCoverage).toEqual(a.configuredFormCoverage);
+  expect(b.configuredFormBodyMatch).toEqual(a.configuredFormBodyMatch);
+  expect(b.phraseAdjacency).toEqual(a.phraseAdjacency);
+  expect(b.queryTokenCount).toEqual(a.queryTokenCount);
+  expect(b.titlePrefixQuality).toEqual(a.titlePrefixQuality);
+  expect(b.titleCoverage).toEqual(a.titleCoverage);
+  expect(b.exactTitleTokenMatch).toEqual(a.exactTitleTokenMatch);
 }
 
 const apiPeers = {
@@ -114,6 +129,32 @@ describe("peer-alias parity", () => {
     expect(prefixA.key).toBe("api");
     expect(prefixB.key).toBe("api");
     expectSameSemantic(prefixA, prefixB);
+  });
+
+  test("peer-form completeness is distinct from occupancy and is symmetric", async () => {
+    const entries = [apiPeers];
+    const { engine, plug } = await engineFor(apiPeers.aliases);
+    const fullA = occupancyOf("application programming interface", entries);
+    const fullB = occupancyOf("application program interface", entries);
+    const prefixA = occupancyOf("application programming", entries);
+    const prefixB = occupancyOf("application program", entries);
+    expect(fullA.key).toBe("api");
+    expect(fullB.key).toBe("api");
+    expect(fullA.formCoverage).toBe(1);
+    expect(fullB.formCoverage).toBe(1);
+    expect(prefixA.formCoverage).toBe(0.6667);
+    expect(prefixB.formCoverage).toBe(0.6667);
+    expect(prefixA.formCoverage).toBe(prefixB.formCoverage);
+    const fullViewA = publicView(engine, plug, "application programming interface");
+    const prefixViewA = publicView(engine, plug, "application programming");
+    expect(fullViewA.configuredFormCoverage).toBe(1);
+    expect(prefixViewA.configuredFormCoverage).toBe(0.6667);
+    expect(prefixViewA.configuredFormCoverage).toBeLessThan(fullViewA.configuredFormCoverage);
+    for (const aliases of permutations(apiPeers.aliases)) {
+      expect(occupancyOf("application programming", [{ key: "api", aliases }]).formCoverage).toBe(0.6667);
+      expect(occupancyOf("application program", [{ key: "api", aliases }]).formCoverage).toBe(0.6667);
+      expect(occupancyOf("application programming interface", [{ key: "api", aliases }]).formCoverage).toBe(1);
+    }
   });
 
   test("javascript / ecmascript are peer exact queries with one-token prefix safety", async () => {
@@ -250,9 +291,9 @@ describe("fixture multi-alias exhaustive permutation occupancy", () => {
   );
   const multi = fixture.filter((e) => Array.isArray(e.aliases) && e.aliases.length >= 2);
 
-  test("fixture has multi-alias concepts with small alias cardinalities", () => {
-    expect(multi.length).toBeGreaterThan(0);
-    expect(Math.max(...multi.map((e) => e.aliases.length))).toBeLessThanOrEqual(5);
+  test("fixture has 17 multi-alias concepts with max 5 aliases", () => {
+    expect(multi.length).toBe(17);
+    expect(Math.max(...multi.map((e) => e.aliases.length))).toBe(5);
   });
 
   test.each(multi.map((e) => [e.key, e.aliases.length]))(
@@ -293,7 +334,7 @@ describe("occupied ranking features are alias-order independent", () => {
     const baseRows = detailed.results.map((h) => ({
       id: h.id,
       score: h.score,
-      expansionEvidence: h.features?.expansionEvidence,
+      configuredFormEvidence: h.features?.configuredFormEvidence,
       configuredConceptMatch: h.features?.configuredConceptMatch,
       phraseAdjacency: h.features?.phraseAdjacency,
     }));
@@ -306,16 +347,184 @@ describe("occupied ranking features are alias-order independent", () => {
         const rows = next.searchDetailed(q, { limit: 10, explain: true }).results.map((h) => ({
           id: h.id,
           score: h.score,
-          expansionEvidence: h.features?.expansionEvidence,
+          configuredFormEvidence: h.features?.configuredFormEvidence,
           configuredConceptMatch: h.features?.configuredConceptMatch,
           phraseAdjacency: h.features?.phraseAdjacency,
         }));
         expect(rows.map((r) => r.id)).toEqual(baseRows.map((r) => r.id));
         expect(rows.map((r) => r.score)).toEqual(baseRows.map((r) => r.score));
-        expect(rows.map((r) => r.expansionEvidence)).toEqual(baseRows.map((r) => r.expansionEvidence));
+        expect(rows.map((r) => r.configuredFormEvidence)).toEqual(baseRows.map((r) => r.configuredFormEvidence));
         expect(rows.map((r) => r.configuredConceptMatch)).toEqual(baseRows.map((r) => r.configuredConceptMatch));
         expect(rows.map((r) => r.phraseAdjacency)).toEqual(baseRows.map((r) => r.phraseAdjacency));
       }
     }
   });
 });
+
+function rankingQueriesFor(concept) {
+  const queries = [concept.key];
+  for (const alias of concept.aliases) {
+    queries.push(alias.join(" "));
+    if (alias.length >= 3) queries.push(alias.slice(0, 2).join(" "));
+  }
+  return [...new Set(queries)];
+}
+
+function docsForConcept(concept) {
+  const docs = [{ id: `${concept.key}-key`, title: String(concept.key).toUpperCase(), body: `${concept.key} key document` }];
+  concept.aliases.forEach((alias, i) => {
+    docs.push({
+      id: `${concept.key}-form-${i}`,
+      title: alias.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
+      body: alias.join(" "),
+    });
+  });
+  docs.push({ id: "noise", title: "Unrelated Noise", body: "zzzz" });
+  return docs;
+}
+
+describe("fixture multi-alias exhaustive ranking permutation", () => {
+  const fixture = JSON.parse(
+    readFileSync(path.join(ROOT, "fixtures", "software-land", "configured-concepts.json"), "utf8")
+  );
+  const multi = fixture.filter((e) => Array.isArray(e.aliases) && e.aliases.length >= 2);
+
+  test.each(multi.map((e) => [e.key, e.aliases.length]))(
+    "exhaustive permutations of %s (%s aliases) preserve occupied ranking",
+    async (key) => {
+      const concept = fixture.find((e) => e.key === key);
+      const docs = docsForConcept(concept);
+      const queries = rankingQueriesFor(concept).filter((q) => occupancyOf(q, [concept]).key === key);
+      expect(queries.length).toBeGreaterThan(0);
+      const firstPlug = plugins([concept]);
+      const first = SearchEngine.create({ schema, plugins: firstPlug, retriever: "full-scan" });
+      await first.index(docs);
+      const baseline = Object.fromEntries(queries.map((q) => [q, publicView(first, firstPlug, q)]));
+      for (const aliases of permutations(concept.aliases)) {
+        const entries = [{ ...concept, aliases }];
+        const plug = plugins(entries);
+        const engine = SearchEngine.create({ schema, plugins: plug, retriever: "full-scan" });
+        await engine.index(docs);
+        for (const q of queries) {
+          expectSameSemantic(baseline[q], publicView(engine, plug, q));
+        }
+      }
+    }
+  );
+});
+
+describe("alias-cardinality stability", () => {
+  const docs = [
+    { id: "alpha", title: "Alpha Widget", body: "alpha widget notes" },
+    { id: "beta", title: "Beta Gadget", body: "beta gadget notes" },
+    { id: "noise", title: "Unrelated", body: "noise document" },
+  ];
+
+  async function viewFor(aliases, raw) {
+    const entries = [{ key: "aw", aliases }];
+    const plug = plugins(entries);
+    const engine = SearchEngine.create({ schema, plugins: plug, retriever: "full-scan" });
+    await engine.index(docs);
+    return publicView(engine, plug, raw);
+  }
+
+  test("unused peer form with zero corpus evidence does not dilute existing matches", async () => {
+    const one = [["alpha", "widget"]];
+    const twoMatching = [["alpha", "widget"], ["beta", "gadget"]];
+    const unused = [["alpha", "widget"], ["beta", "gadget"], ["zeta", "quorum"]];
+    const unusedLong = [["alpha", "widget"], ["beta", "gadget"], ["zeta", "quorum", "unused", "peer"]];
+    const duplicate = [["alpha", "widget"], ["alpha", "widget"]];
+    const baseline = await viewFor(one, "alpha widget");
+    const expanded = await viewFor(twoMatching, "alpha widget");
+    const unusedView = await viewFor(unused, "alpha widget");
+    const unusedLongView = await viewFor(unusedLong, "alpha widget");
+    const keyExpanded = await viewFor(twoMatching, "aw");
+    const unusedKey = await viewFor(unused, "aw");
+    const unusedLongKey = await viewFor(unusedLong, "aw");
+    const duplicateView = await viewFor(duplicate, "alpha widget");
+    expect(baseline.key).toBe("aw");
+    expect(expanded.ids).toEqual(expect.arrayContaining(["alpha", "beta"]));
+    expect(baseline.ids).toContain("alpha");
+    expectSameSemantic(expanded, unusedView);
+    expectSameSemantic(keyExpanded, unusedKey);
+    expectSameSemantic(baseline, duplicateView);
+    expect(unusedLongView.ids).toEqual(expanded.ids);
+    expect(unusedLongView.scores).toEqual(expanded.scores);
+    expect(unusedLongView.relevanceKind).toEqual(expanded.relevanceKind);
+    expect(unusedLongView.directClass).toEqual(expanded.directClass);
+    expect(unusedLongView.configuredFormEvidence).toEqual(expanded.configuredFormEvidence);
+    expect(unusedLongKey.ids).toEqual(keyExpanded.ids);
+    expect(unusedLongKey.scores).toEqual(keyExpanded.scores);
+  });
+});
+
+describe("stopword and false-friend evidence", () => {
+  test("internet of things does not rank an unrelated title for of", async () => {
+    const entries = [{ key: "iot", aliases: [["internet", "of", "things"]] }];
+    const docs = [
+      { id: "iot", title: "Internet of Things", body: "iot notes" },
+      { id: "of-trap", title: "Staying Ahead of the AI Revolution", body: "unrelated of title" },
+    ];
+    const plug = plugins(entries);
+    const engine = SearchEngine.create({ schema, plugins: plug, retriever: "full-scan" });
+    await engine.index(docs);
+    const detailed = engine.searchDetailed("internet of things", { limit: 10, explain: true });
+    const trap = detailed.results.find((h) => h.id === "of-trap");
+    const hit = detailed.results.find((h) => h.id === "iot");
+    expect(hit).toBeTruthy();
+    expect(hit.features.configuredConceptMatch).toBe("form");
+    if (trap) {
+      expect(trap.features.configuredConceptMatch).not.toBe("form");
+      expect(trap.features.configuredFormEvidence).toBe(0);
+      expect(trap.rank).toBeGreaterThan(hit.rank);
+    }
+    expect((detailed.meta.candidateIds || []).includes("of-trap")).toBe(false);
+  });
+
+  test("platform as a service does not rank unrelated titles for as/a", async () => {
+    const entries = [{ key: "paas", aliases: [["platform", "as", "a", "service"]] }];
+    const docs = [
+      { id: "paas", title: "Platform as a Service", body: "paas notes" },
+      { id: "as-trap", title: "As a Matter of Fact", body: "unrelated as a title" },
+    ];
+    const plug = plugins(entries);
+    const engine = SearchEngine.create({ schema, plugins: plug, retriever: "full-scan" });
+    await engine.index(docs);
+    const detailed = engine.searchDetailed("platform as a service", { limit: 10, explain: true });
+    const trap = detailed.results.find((h) => h.id === "as-trap");
+    const hit = detailed.results.find((h) => h.id === "paas");
+    expect(hit).toBeTruthy();
+    if (trap) {
+      expect(trap.features.configuredConceptMatch).not.toBe("form");
+      expect(trap.features.configuredFormEvidence).toBe(0);
+    }
+    expect((detailed.meta.candidateIds || []).includes("as-trap")).toBe(false);
+  });
+
+  test("development operations is not developer-title evidence; devops in a title is", async () => {
+    const entries = [{ key: "devop", aliases: [["development", "operations"], ["devops"]] }];
+    const docs = [
+      { id: "devops", title: "What is DevOps?", body: "devops culture" },
+      { id: "developer", title: "Software Engineer vs Software Developer", body: "career comparison" },
+    ];
+    const plug = plugins(entries);
+    const engine = SearchEngine.create({ schema, plugins: plug, retriever: "full-scan" });
+    await engine.index(docs);
+    const ops = engine.searchDetailed("development operations", { limit: 10, explain: true });
+    const key = engine.searchDetailed("devop", { limit: 10, explain: true });
+    const devopsHit = ops.results.find((h) => h.id === "devops");
+    const developer = ops.results.find((h) => h.id === "developer");
+    expect(devopsHit).toBeTruthy();
+    expect(devopsHit.features.configuredFormEvidence).toBeGreaterThan(0);
+    expect(["form", "key-in-title"]).toContain(devopsHit.features.configuredConceptMatch);
+    if (developer) {
+      expect(developer.features.configuredConceptMatch).not.toBe("form");
+      expect(developer.features.configuredFormEvidence).toBe(0);
+      expect(developer.score).toBeLessThan(devopsHit.score);
+    }
+    expectSameSemantic(publicView(engine, plug, "development operations"), publicView(engine, plug, "devops"));
+    expectSameSemantic(publicView(engine, plug, "devop"), publicView(engine, plug, "devops"));
+    expect(key.results.find((h) => h.id === "devops").features.configuredFormEvidence).toBeGreaterThan(0);
+  });
+});
+

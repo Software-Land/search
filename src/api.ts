@@ -208,11 +208,11 @@ export interface SearchExplanation {
       activePrefix: string;
       completedToken: string;
       canonicalToken: string;
-      source: "configured-expansion-prefix";
+      source: "configured-form-prefix";
     } | null;
     configuredSequenceIntent?: {
       key: string;
-      expansion: string[];
+      matchedForm: string[];
       matchedKinds: string[];
     } | null;
     configuredSpans?: Array<{

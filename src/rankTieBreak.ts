@@ -13,6 +13,7 @@ import type { FeaturedHit, FeatureVector } from "./types.js";
  */
 export function isWeakSingleTokenBodyPack(f: Partial<FeatureVector> | undefined) {
   if (!f) return false;
+  if ((f.configuredFormCoverage || 0) > 0) return false;
   if ((f.queryTokenCount || 0) !== 1) return false;
   if (f.relevanceKind === "related") return false;
   if (f.directClass !== "weak" && f.directClass !== "none") return false;

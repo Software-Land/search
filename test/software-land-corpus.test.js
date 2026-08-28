@@ -327,10 +327,14 @@ describe("software-land fixture inputs are load-bearing", () => {
     expect(titles[0]).not.toBe("App Sec");
   });
 
-  test("machine learning phrase ranking depends on lexical-frequency", async () => {
+  test("machine learning compiled phrase counts come from lexical-frequency", async () => {
+    const withFreq = await indexEngine(createEngine());
     const without = await indexEngine(createEngine(), { useLexicalFrequency: false });
-    const titles = without.search("machine learning", { limit: 2 }).map((hit) => hit.title);
-    expect(titles).not.toContain("Linear vs Logistic Regression");
+    const title = "Linear vs Logistic Regression";
+    const withHit = withFreq.searchDetailed("machine learning", { limit: 10, explain: true }).results.find((hit) => hit.title === title);
+    const withoutHit = without.searchDetailed("machine learning", { limit: 10, explain: true }).results.find((hit) => hit.title === title);
+    expect(withHit?.features.bodyPhraseCount).toBeGreaterThan(0);
+    expect(withoutHit?.features.bodyPhraseCount || 0).toBe(0);
   });
 
   test("tls VPN related hit depends on the relationship graph", async () => {
@@ -398,8 +402,8 @@ describe("software-land candidate-stage survival", () => {
       2: 63,
       "Edge Computing": 62,
       aplicationsecurity: 4,
-      tls: 7,
-      "machine learning": 9,
+      tls: 6,
+      "machine learning": 6,
       what: 79,
     };
     for (const [query, c] of Object.entries(expected)) {

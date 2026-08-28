@@ -252,20 +252,22 @@ function relatedOverWeakDirectConstraint(a: FeaturedHit, b: FeaturedHit) {
 
 /**
  * Multi-token queries: repeated compiled full-phrase body evidence (or a
- * configured expansion) outranks weak/incidental direct evidence. It does not
+ * configured peer form) outranks weak/incidental direct evidence. It does not
  * outrank strong or moderate direct evidence, exact title, configured
  * key-in-title, canonical key title, full query/title coverage, or contextual
  * aligned prefix. It is not a universal bodyPhraseCount comparison.
  */
 function hasRepeatedPhraseEvidence(f: Partial<FeatureVector>) {
-  return (f.queryTokenCount || 0) >= 2 && (f.bodyPhraseCount || 0) >= REPEATED_BODY_PHRASE_MIN;
+  if ((f.bodyPhraseCount || 0) < REPEATED_BODY_PHRASE_MIN) return false;
+  // Occupied concepts must not use queryTokenCount as an alias-cardinality gate.
+  if ((f.configuredFormCoverage || 0) > 0) return true;
+  return (f.queryTokenCount || 0) >= 2;
 }
 
 function hasConfiguredExpansionEvidence(f: Partial<FeatureVector>) {
-  return (
-    (f.queryTokenCount || 0) >= 2 &&
-    (f.configuredConceptMatch === "expansion" || f.configuredConceptMatch === "key-in-title")
-  );
+  if (f.configuredConceptMatch !== "form" && f.configuredConceptMatch !== "key-in-title") return false;
+  if ((f.configuredFormCoverage || 0) > 0) return true;
+  return (f.queryTokenCount || 0) >= 2;
 }
 
 function isIncidentalTitleToken(f: Partial<FeatureVector>) {
@@ -277,13 +279,13 @@ function isIncidentalTitleToken(f: Partial<FeatureVector>) {
     (f.bodyPhraseCount || 0) === 0 &&
     !f.exactTitleMatch &&
     f.configuredConceptMatch !== "key-in-title" &&
-    f.configuredConceptMatch !== "expansion" &&
+    f.configuredConceptMatch !== "form" &&
     !f.contextualTitlePrefix
   );
 }
 
 /**
- * Repeated full-phrase body evidence (or configured expansion) outranks
+ * Repeated full-phrase body evidence (or configured peer-form evidence) outranks
  * weak/incidental direct evidence, including incidental title-token overlap
  * and weak body-only hits. It is not a universal ordering over every lower
  * bodyPhraseCount.
@@ -352,7 +354,7 @@ function fullBodyMultiConceptOverWeakSubsetConstraint(a: FeaturedHit, b: Feature
 }
 
 /**
- * When the query is a configured key, a title that also states the expansion
+ * When the query is a configured key, a title that also states a peer form
  * outranks a title that only contains the key (canonical vs comparison title).
  */
 function canonicalKeyConstraint(a: FeaturedHit, b: FeaturedHit) {

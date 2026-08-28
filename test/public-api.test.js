@@ -117,7 +117,7 @@ describe("public API", () => {
     expect(recalled.explanation.query).not.toHaveProperty("synonymRecall");
     expect(recalled.features.equivalentRecallMatch).toBe(true);
     expect(recalled.features).not.toHaveProperty("synonymRecallMatch");
-    expect(identity.features.configuredConceptMatch).toBe("expansion");
+    expect(identity.features.configuredConceptMatch).toBe("form");
     expect(identity.features).not.toHaveProperty("configuredEquivalenceMatch");
     expect(recalled.features.configuredConceptMatch).toBe(false);
     expect(recalled.features).not.toHaveProperty("configuredEquivalenceMatch");

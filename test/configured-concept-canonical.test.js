@@ -43,7 +43,6 @@ function publicView(engine, analyzePlugins, raw, limit = 20) {
 
 function expectSameResults(a, b) {
   expect(a.key).toBe(b.key);
-  expect(a.lexical).toEqual(b.lexical);
   expect(a.candidateCount).toBe(b.candidateCount);
   expect(a.ids).toEqual(b.ids);
   expect(a.scores).toEqual(b.scores);

@@ -131,25 +131,25 @@ export interface PrefixCompletion {
 }
 
 /**
- * Unique configured-expansion completion of a trailing typed stub.
+ * Unique configured-form completion of a trailing typed stub.
  * Ranking evidence only. Never a rewrite of the typed QueryToken.
  */
 export interface ContextualCompletion {
   activePrefix: string;
   completedToken: string;
   canonicalToken: string;
-  source: "configured-expansion-prefix";
+  source: "configured-form-prefix";
 }
 
 /**
  * Unique complete-query alignment to one configured concept.
- * `expansion` is the matched peer form for this query (explain/provenance).
+ * `matchedForm` is the matched peer form for this query (explain/provenance).
  * It is not a canonical or privileged alias. Concept-level ranking uses
  * the unordered set of peer forms.
  */
 export interface ConfiguredSequenceIntent {
   key: string;
-  expansion: string[];
+  matchedForm: string[];
   matchedKinds: string[];
 }
 
@@ -166,7 +166,7 @@ export interface ConfiguredSpan {
 
 /**
  * Incomplete configured subspan aligned with sequenceAligns prefix rules,
- * plus unique 1-token first-expansion prefixes. Occupies configured-concept
+ * plus unique 1-token first-form prefixes. Occupies configured-concept
  * evidence only. Not exact configuredSpans, not whole-query
  * configuredSequenceIntent, and not topical recall.
  */
@@ -196,11 +196,11 @@ export interface QueryConcept {
    */
   forms: string[];
   provenance: string;
-  expansion?: string[];
+  matchedForm?: string[];
   aliases?: string[][];
-  matchedExpansionTokens?: number;
-  expansionTokenCount?: number;
-  expansionCoverage?: number;
+  matchedFormTokens?: number;
+  formTokenCount?: number;
+  formCoverage?: number;
 }
 
 export interface SearchEquivalenceRecall {
@@ -221,7 +221,8 @@ export interface AnalyzedQuery {
   /**
    * Typed query identity after analysis, including unique-prefix rewrite of
    * the final token when applicable. Unique configured-key matches no longer
-   * rewrite these tokens; occupied concept-level ranking identity lives on `lexicalTokens`.
+   * rewrite these tokens. Occupied concept-level ranking evaluates each peer
+   * form independently; `lexicalTokens` is not a concatenated alias stream.
    */
   tokens: QueryToken[];
   concepts: QueryConcept[];
@@ -229,8 +230,8 @@ export interface AnalyzedQuery {
   dottedSpans: string[];
   prefixCompletion?: PrefixCompletion | null;
   /**
-   * Unique configured-expansion completion of the trailing typed token.
-   * Present only when the completion is unambiguous under trusted expansions.
+   * Unique configured-form completion of the trailing typed token.
+   * Present only when the completion is unambiguous under trusted peer forms.
    */
   contextualCompletion?: ContextualCompletion | null;
   /**
@@ -239,7 +240,7 @@ export interface AnalyzedQuery {
    */
   configuredSequenceIntent?: ConfiguredSequenceIntent | null;
   /**
-   * Exact configured key/expansion/alias windows. Absent or empty when no
+   * Exact configured key/form windows. Absent or empty when no
    * exact subspan matches. Not whole-query configuredSequenceIntent.
    */
   configuredSpans?: ConfiguredSpan[];
@@ -272,13 +273,20 @@ export interface AnalyzedQuery {
   equivalentRecall?: SearchEquivalenceRecall[];
   /**
    * Canonical lexical-intent stream for compiled phrase lookup. May include
-   * unique configured-sequence projection or contextual expansion completion.
+   * unique contextual form completion for unoccupied queries.
+   * Occupied configured concepts do not concatenate peer aliases here.
    * Not typed identity; ranking features that mean "what the user typed" must
-   * use `tokens` / `surfaceNormalized`.
+   * use `tokens` / `surfaceNormalized`. Occupied ranking evaluates each peer
+   * form independently.
    */
   lexicalTokens: QueryToken[];
   lexicalPhraseTokens: string[];
   lexicalPhraseKey: string;
+  /**
+   * Lemmatized token streams for each occupied peer form, independently.
+   * Used for compiled phrase lookup. Never concatenated into one query.
+   */
+  peerFormLexical?: string[][];
   stopstripped: QueryToken[];
 }
 
@@ -393,7 +401,7 @@ export interface FeatureVector {
   unmatchedTitleTokensAfter: number;
   titleSequenceTightness: number;
   contextualPrefixQuality: number;
-  configuredConceptMatch: false | "key-in-title" | "expansion";
+  configuredConceptMatch: false | "key-in-title" | "form";
   morphologyMatch: boolean;
   typoDistance: number;
   versionMatch: false | string;
@@ -409,18 +417,24 @@ export interface FeatureVector {
    */
   ordinaryEquivalenceBodyMatch: boolean;
   titleTokenCount: number;
-  expansionEvidence: number;
+  configuredFormEvidence: number;
   /**
-   * Occupied configured-expansion coverage from query analysis.
+   * Occupied matched-form completeness from query analysis.
    * 0 when the query does not uniquely occupy a configured concept.
+   * Unique occupancy does not imply this is 1.
    */
-  configuredExpansionCoverage: number;
+  configuredFormCoverage: number;
   /**
-   * Unambiguous partial configured-expansion prefix with the contiguous
-   * canonical expansion in the body.
+   * Unambiguous partial configured-form prefix with a contiguous
+   * n≥3 peer form in the body.
    */
-  configuredExpansionBodyMatch: boolean;
+  configuredFormBodyMatch: boolean;
   canonicalKeyTitle: boolean;
+  /**
+   * Non-stop analyzed query token count. Occupied concepts use the max
+   * non-stop length of one peer form. This summary is not a lexical scoring
+   * denominator; per-form features use that form's own length.
+   */
   queryTokenCount: number;
   normalizedQueryPhrase: string;
   matchingPhraseKey: string | null;

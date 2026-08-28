@@ -58,7 +58,7 @@ function versionNum(v: unknown) {
 
 function equivNum(v: unknown) {
   if (v === "key-in-title") return 1;
-  if (v === "expansion") return 0.8;
+  if (v === "form") return 0.8;
   return 0;
 }
 
@@ -75,7 +75,7 @@ export function scoreFeatures(f: Partial<FeatureVector>) {
     (f.titlePrefixQuality || 0) * 1.8 +
     equivNum(f.configuredConceptMatch) * 1.5 +
     boolNum(f.canonicalKeyTitle) * 1.3 +
-    (f.expansionEvidence || 0) * 0.8 +
+    (f.configuredFormEvidence || 0) * 0.8 +
     boolNum(f.morphologyMatch) * 0.4 +
     Math.min(f.typoDistance || 0, 2) * 0.35 +
     versionNum(f.versionMatch) * 2.2 +

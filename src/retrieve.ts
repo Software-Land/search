@@ -32,7 +32,7 @@ import type {
   TopicalRecall,
 } from "./types.js";
 
-type ConceptTitleMatch = "key" | "expansion" | "exact" | "prefix" | "lemma";
+type ConceptTitleMatch = "key" | "form" | "exact" | "prefix" | "lemma";
 type VersionCompanion = "none" | "absent" | "covered" | "weak";
 
 interface VersionHit {
@@ -58,7 +58,11 @@ function sequencePresent(needles: string[], hay: string[]) {
   return false;
 }
 
-function configuredPeerForms(concept: QueryConcept | null | undefined): string[][] {
+export function formContentTokens(form: string[]): string[] {
+  return (form || []).filter((f) => f && !/^\d+$/.test(f) && !DEFAULT_STOP.has(f));
+}
+
+export function configuredPeerForms(concept: QueryConcept | null | undefined): string[][] {
   const aliases = concept?.aliases;
   if (Array.isArray(aliases) && aliases.length) {
     const out: string[][] = [];
@@ -73,8 +77,8 @@ function configuredPeerForms(concept: QueryConcept | null | undefined): string[]
     }
     return out.sort((a, b) => sequenceKey(a).localeCompare(sequenceKey(b)));
   }
-  if (Array.isArray(concept?.expansion) && concept.expansion.length) {
-    const seq = concept.expansion.filter((f) => f && f !== concept.id && !/^\d+$/.test(f));
+  if (Array.isArray(concept?.matchedForm) && concept.matchedForm.length) {
+    const seq = concept.matchedForm.filter((f) => f && f !== concept.id && !/^\d+$/.test(f));
     return seq.length ? [seq] : [];
   }
   return [];
@@ -88,25 +92,28 @@ function configuredPeerForms(concept: QueryConcept | null | undefined): string[]
  * A single token that is a member of any longer peer form is never full
  * multi-token configured-concept evidence.
  */
-function isSingleExpansionWordAlias(seq: string[], peerForms: string[][]) {
+function isSingleFormWordAlias(seq: string[], peerForms: string[][]) {
   return isOneTokenMemberOfLongerPeerForm(seq, { aliases: peerForms });
 }
 
-function fieldHasExpansionEvidence(
-  expansion: string[],
+function fieldHasFormEvidence(
+  form: string[],
   tokens: string[],
   lemmas: string[],
   tokenSet: Set<string>,
   lemmaSet: Set<string>,
   { requireContiguous = false }: { requireContiguous?: boolean } = {}
 ) {
-  if (!expansion.length) return false;
-  if (expansion.length === 1) {
-    return tokenSet.has(expansion[0]) || lemmaSet.has(expansion[0]);
+  if (!form.length) return false;
+  if (form.length === 1) {
+    if (DEFAULT_STOP.has(form[0])) return false;
+    return tokenSet.has(form[0]) || lemmaSet.has(form[0]);
   }
-  if (sequencePresent(expansion, tokens) || sequencePresent(expansion, lemmas)) return true;
+  if (sequencePresent(form, tokens) || sequencePresent(form, lemmas)) return true;
   if (requireContiguous) return false;
-  return expansion.every((f) => tokenSet.has(f) || lemmaSet.has(f));
+  const content = formContentTokens(form);
+  if (!content.length) return false;
+  return content.every((f) => tokenSet.has(f) || lemmaSet.has(f));
 }
 
 function acronymFieldEvidence(
@@ -120,8 +127,8 @@ function acronymFieldEvidence(
   if (tokenSet.has(concept.id) || lemmaSet.has(concept.id)) return true;
   const peerForms = configuredPeerForms(concept);
   for (const seq of peerForms) {
-    if (isSingleExpansionWordAlias(seq, peerForms)) continue;
-    if (fieldHasExpansionEvidence(seq, tokens, lemmas, tokenSet, lemmaSet, opts)) return true;
+    if (isSingleFormWordAlias(seq, peerForms)) continue;
+    if (fieldHasFormEvidence(seq, tokens, lemmas, tokenSet, lemmaSet, opts)) return true;
   }
   return false;
 }
@@ -191,7 +198,7 @@ function conceptMatchesTitle(concept: QueryConcept, doc: IndexedDocument): Conce
         { requireContiguous: false }
       )
     ) {
-      return "expansion";
+      return "form";
     }
     return null;
   }
@@ -269,8 +276,8 @@ export function typedForm(token: Pick<QueryToken, "surface" | "surfaceNormalized
 }
 
 /**
- * Unique contextual expansion completion binds the trailing typed token to one
- * configured expansion word. The typed stub stays on the query for explain;
+ * Unique contextual form completion binds the trailing typed token to one
+ * configured form word. The typed stub stays on the query for explain;
  * it must not independently generate unbound lexical evidence unless the user
  * already typed that completed word or its canonical lemma (`learn` of
  * `learning`). Short proper prefixes (`sec`, `prot`, `l`) are consumed.
@@ -342,10 +349,9 @@ export function standaloneRecallConcept(query: AnalyzedQuery | null | undefined)
     id: hint.key,
     kind: "configured-concept",
     forms: Array.isArray(hint.forms) && hint.forms.length ? hint.forms : [hint.key],
-    expansion: [],
+    matchedForm: [],
     aliases: configuredPeerForms({
       aliases: hint.aliases,
-      expansion: hint.expansion,
       id: hint.key,
     } as QueryConcept).map((alias) => [...alias]),
     provenance: "standalone-recall",
@@ -439,9 +445,8 @@ export function documentMatchesTopicalRecall(query: AnalyzedQuery, doc: IndexedD
 }
 
 export function identityTokens(query: AnalyzedQuery): QueryToken[] {
-  if (hasConfiguredSequenceIntent(query) && query.lexicalTokens?.length) {
-    return query.lexicalTokens;
-  }
+  if (hasConfiguredSequenceIntent(query)) return query.tokens || [];
+  if (query.lexicalTokens?.length) return query.lexicalTokens;
   return query.tokens || [];
 }
 
@@ -453,9 +458,7 @@ export function unboundTypedTokens(query: AnalyzedQuery): QueryToken[] {
 }
 
 export function evidenceTokens(query: AnalyzedQuery): QueryToken[] {
-  if (hasConfiguredSequenceIntent(query) && query.lexicalTokens?.length) {
-    return query.lexicalTokens;
-  }
+  if (hasConfiguredSequenceIntent(query)) return [];
   return unboundTypedTokens(query);
 }
 
@@ -563,7 +566,7 @@ export function matchContextualTitlePrefix(query: AnalyzedQuery, doc: IndexedDoc
   };
 }
 
-function occupiedTitleJoins(query: AnalyzedQuery): string[] {
+export function occupiedTitleJoins(query: AnalyzedQuery): string[] {
   const acr = (query.concepts || []).find((c) => c.kind === "configured-concept");
   if (!acr || !hasConfiguredSequenceIntent(query)) return [];
   const joins = new Set<string>();
@@ -571,7 +574,24 @@ function occupiedTitleJoins(query: AnalyzedQuery): string[] {
   for (const form of configuredPeerForms(acr)) {
     if (form.length) joins.add(form.join(" "));
   }
+  const coverage = acr.formCoverage;
+  if (typeof coverage === "number" && coverage < 1) {
+    const typed = (query.tokens || []).map((t) => t.normalized).filter(Boolean).join(" ");
+    if (typed) joins.add(typed);
+  }
   return [...joins].sort();
+}
+
+function occupiedOneTokenFormPrefixHit(query: AnalyzedQuery, doc: IndexedDocument) {
+  const acr = (query.concepts || []).find((c) => c.kind === "configured-concept");
+  if (!acr || !hasConfiguredSequenceIntent(query)) return false;
+  for (const form of configuredPeerForms(acr)) {
+    if (form.length !== 1) continue;
+    const tok = form[0];
+    if (!tok || DEFAULT_STOP.has(tok) || isAllDigitToken(tok)) continue;
+    if (doc.titleTokens.some((titleTok) => allowPrefixMatch(tok, titleTok))) return true;
+  }
+  return false;
 }
 
 function scanDocument(
@@ -591,13 +611,12 @@ function scanDocument(
     const qNorm = identity.map((t) => t.normalized).join(" ");
     if (qNorm && doc.normalizedTitle.startsWith(qNorm)) add(doc, "title-prefix");
   }
-  const unbound = evidenceTokens(query);
-  if (
-    doc.titleTokens.some((tok) =>
-      unbound.some((t) => allowPrefixMatch(t.normalized, tok))
-    ) ||
-    documentHasShortTitleTokenPrefix(query, doc)
-  ) {
+  const prefixHit = hasConfiguredSequenceIntent(query)
+    ? occupiedOneTokenFormPrefixHit(query, doc)
+    : doc.titleTokens.some((tok) =>
+        evidenceTokens(query).some((t) => allowPrefixMatch(t.normalized, tok))
+      ) || documentHasShortTitleTokenPrefix(query, doc);
+  if (prefixHit) {
     add(doc, "title-token-prefix");
   }
 

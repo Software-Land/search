@@ -20,13 +20,13 @@ import {
   allConfiguredConceptForms,
   isOneTokenMemberOfLongerPeerForm,
   sequenceKey,
-  sortConfiguredForms,
 } from "./configuredAuthoring.js";
 import {
   resolveConfiguredPrefixSpans,
   resolveConfiguredSequence,
   resolveConfiguredSpans,
   tokenAlignsConfiguredKey,
+  uniqueLongestFirstFormPrefix,
 } from "./configuredSequence.js";
 import type {
   AnalyzedQuery,
@@ -163,17 +163,25 @@ function attachConfiguredPrefixSpanConcept(
   if (!compiled?.key) return [];
   const tokenCount = span.end - span.start;
   const aliases = allConfiguredConceptForms(compiled);
-  const matchedLen = Math.max(tokenCount, 1);
+  let matchedForm: string[] = [];
+  let formLen = tokenCount;
+  if (tokenCount === 1) {
+    const hit = uniqueLongestFirstFormPrefix(tokens[span.start], configured);
+    if (hit?.matchedForm?.length) {
+      matchedForm = [...hit.matchedForm];
+      formLen = hit.matchedForm.length;
+    }
+  }
   const concept = {
     id: compiled.key,
     kind: "configured-concept",
     forms: formsForConfiguredConcept(compiled),
-    expansion: [],
+    matchedForm,
     aliases: aliases.map((a) => [...a]),
     provenance: provenanceForSequenceKinds(span.matchedKinds, true),
-    matchedExpansionTokens: tokenCount,
-    expansionTokenCount: matchedLen,
-    expansionCoverage: Number((tokenCount / matchedLen).toFixed(4)),
+    matchedFormTokens: tokenCount,
+    formTokenCount: Math.max(formLen, 1),
+    formCoverage: Number((tokenCount / Math.max(formLen, 1)).toFixed(4)),
   };
   const existing = concepts.find((c) => c.kind === "configured-concept" && c.id === span.key);
   if (existing) Object.assign(existing, concept);
@@ -315,9 +323,9 @@ function spellingLexiconFrom(plugins: SearchPlugin[], base: Set<string>) {
 
 /**
  * Exact one-token query forms authored as configured lexical intent.
- * Multi-token configured expansion words and synonym targets are deliberately
+ * Multi-token configured form words and synonym targets are deliberately
  * excluded: they are recall forms, not independently authored query keys.
- * A complete one-token expansion is itself an explicit configured query form.
+ * A complete one-token form is itself an explicit configured query form.
  */
 const explicitQueryIntentKeyCache = new WeakMap<object, Set<string>>();
 
@@ -466,7 +474,7 @@ function typedTokenForm(tok: QueryToken) {
 }
 
 /**
- * Preceding configured-expansion tokens compare against typed surface first,
+ * Preceding configured-form tokens compare against typed surface first,
  * then retrieval identity. Morphology (`frames` → `frame`) must not block
  * alignment with a configured word such as `frames`.
  */
@@ -485,7 +493,7 @@ function tokenAlignsConfiguredPrefix(tok: QueryToken, want: string) {
 
 /**
  * Distinct keys for a span. Two or more keys sharing the same exact
- * expansion do not collapse. Insertion order, lexicographic order, and
+ * peer form do not collapse. Insertion order, lexicographic order, and
  * `primary` are not used.
  */
 function uniqueConfiguredKey(concepts: ConfiguredConcept[]) {
@@ -502,12 +510,12 @@ interface ConfiguredConceptMatchHit {
   kind: string;
   from: number;
   to: number;
-  matchedExpansionTokens: number;
-  expansionTokenCount: number;
-  expansionCoverage: number | undefined;
+  matchedFormTokens: number;
+  formTokenCount: number;
+  formCoverage: number | undefined;
 }
 
-function exactConfiguredExpansionConceptsAt(tokens: QueryToken[], configured: SearchPlugin, from: number, n: number) {
+function exactConfiguredFormConceptsAt(tokens: QueryToken[], configured: SearchPlugin, from: number, n: number) {
   const concepts: ConfiguredConcept[] = [];
   const seen = new Set<string>();
   if (!configured?.sequences) return concepts;
@@ -530,7 +538,7 @@ function exactConfiguredExpansionConceptsAt(tokens: QueryToken[], configured: Se
   return concepts;
 }
 
-function configuredExpansionPrefixConceptsAt(tokens: QueryToken[], configured: SearchPlugin, from: number, n: number) {
+function configuredFormPrefixConceptsAt(tokens: QueryToken[], configured: SearchPlugin, from: number, n: number) {
   const concepts: ConfiguredConcept[] = [];
   const seen = new Set<string>();
   if (!configured?.sequences) return concepts;
@@ -559,29 +567,20 @@ function configuredExpansionPrefixConceptsAt(tokens: QueryToken[], configured: S
 }
 
 function provenanceForSequenceKinds(kinds: string[], usedPrefix: boolean) {
-  if (usedPrefix) return "partial-expansion";
+  if (usedPrefix) return "partial-form";
   if (kinds.length === 1 && kinds[0] === "key") return "key";
   if (kinds.includes("form")) return "form";
   return "key";
 }
 
 /**
- * Lemmatize configured expansion words with the same morphology rules as
- * typed query tokens, so "machine learning" and a projected "ml" share
- * canonical intent terms such as ["machine","learn"].
+ * Lemmatize one configured peer form with the same morphology rules as
+ * typed query tokens. Used for unique contextual completion of that form,
+ * not as a concatenated ranking identity.
  */
-function lemmatizedPeerFormUnion(concept: ConfiguredConcept | undefined, plugins: SearchPlugin[]) {
+function lemmatizedFormTokens(form: string[], plugins: SearchPlugin[]) {
   const out: QueryToken[] = [];
-  const forms = sortConfiguredForms(allConfiguredConceptForms(concept));
-  for (const form of forms) {
-    out.push(...lemmatizedExpansionTokens(form, plugins));
-  }
-  return out;
-}
-
-function lemmatizedExpansionTokens(expansion: string[], plugins: SearchPlugin[]) {
-  const out: QueryToken[] = [];
-  for (const word of expansion || []) {
+  for (const word of form || []) {
     const w = String(word || "");
     if (!w || isAllDigitToken(w)) continue;
     const lemma = pluginLemma(plugins, w);
@@ -599,6 +598,25 @@ function lemmatizedExpansionTokens(expansion: string[], plugins: SearchPlugin[])
       lemma: canonical || lemma,
       sources,
     });
+  }
+  return out;
+}
+
+function configuredPeerFormLexical(concept: QueryConcept, plugins: SearchPlugin[]): string[][] {
+  const forms = Array.isArray(concept.aliases) && concept.aliases.length
+    ? concept.aliases
+    : concept.matchedForm?.length
+      ? [concept.matchedForm]
+      : [];
+  const out: string[][] = [];
+  const seen = new Set<string>();
+  for (const form of forms) {
+    const toks = canonicalLexicalTokensFromQuery(lemmatizedFormTokens(form, plugins));
+    if (!toks.length) continue;
+    const key = toks.join("\0");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(toks);
   }
   return out;
 }
@@ -623,20 +641,22 @@ function attachConfiguredSequenceConcept(
     if (concepts[i].kind === "configured-concept" && concepts[i].id !== intent.key) concepts.splice(i, 1);
   }
   const aliases = allConfiguredConceptForms(concept);
-  const matched = Array.isArray(intent.expansion) ? intent.expansion : [];
+  const matched = Array.isArray(intent.matchedForm) ? intent.matchedForm : [];
   const matchedLen = usedPrefix ? Math.max(matched.length, tokenCount, 1) : Math.max(matched.length, 1);
   const fields = {
     id: concept.key,
     kind: "configured-concept",
     forms: formsForConfiguredConcept(concept),
-    expansion: [...matched],
+    matchedForm: [...matched],
     aliases: aliases.map((a) => [...a]),
     provenance: provenanceForSequenceKinds(intent.matchedKinds, usedPrefix),
-    matchedExpansionTokens: tokenCount,
-    expansionTokenCount: usedPrefix ? matchedLen : matched.length || 1,
-    // Unique occupancy is concept-level. Prefix vs exact/key must not change
-    // ranking coverage; matched token counts stay on explain fields above.
-    expansionCoverage: 1,
+    matchedFormTokens: tokenCount,
+    formTokenCount: usedPrefix ? matchedLen : matched.length || 1,
+    // Occupancy is boolean (this concept is uniquely established).
+    // formCoverage is matched-form completeness, not occupancy.
+    formCoverage: usedPrefix
+      ? Number((tokenCount / matchedLen).toFixed(4))
+      : 1,
   };
   const existing = concepts.find((c) => c.kind === "configured-concept" && c.id === intent.key);
   if (existing) Object.assign(existing, fields);
@@ -655,19 +675,19 @@ function configuredConceptOwnsExactTypedToken(concept: ConfiguredConcept | undef
 }
 
 /**
- * Unique configured-expansion prefix completion of the trailing typed token.
+ * Unique configured-form prefix completion of the trailing typed token.
  *
- * Typed tokens are not rewritten. The completed expansion prefix is a separate
- * canonical lexical-intent projection for phrase/ranking evidence.
+ * Typed tokens are not rewritten. The completed form prefix is explain-only
+ * when the query already occupies a concept; ranking uses per-form evidence.
  *
  * Trust/uniqueness: only configured form sequences (not corpus vocabulary).
- * Preceding tokens must align exactly with E[0..k-2].
- * The last typed surface must be a non-empty proper prefix of E[k-1], and
+ * Preceding tokens must align exactly with form[0..k-2].
+ * The last typed surface must be a non-empty proper prefix of form[k-1], and
  * must not already be an exact configured token of that same entry (key or
  * any peer form). If more than one distinct lemmatized
  * completed-prefix signature fits, do not project.
  */
-function projectContextualExpansionIntent(
+function projectContextualFormIntent(
   tokens: QueryToken[],
   configured: SearchPlugin | null,
   plugins: SearchPlugin[]
@@ -682,22 +702,22 @@ function projectContextualExpansionIntent(
   const signatures = new Set<string>();
   for (const seq of configured.sequences) {
     if (seq.kind !== "form") continue;
-    const expansion = seq.tokens || [];
-    if (expansion.length < k) continue;
+    const form = seq.tokens || [];
+    if (form.length < k) continue;
     if (configuredConceptOwnsExactTypedToken(seq.concept, typedLast)) continue;
     let precedingOk = true;
     for (let j = 0; j < k - 1; j++) {
-      if (!tokenAlignsConfiguredExact(tokens[j], expansion[j])) {
+      if (!tokenAlignsConfiguredExact(tokens[j], form[j])) {
         precedingOk = false;
         break;
       }
     }
     if (!precedingOk) continue;
-    const want = expansion[k - 1];
+    const want = form[k - 1];
     if (!want || tokenExactConfiguredWord(last, want)) continue;
     if (!want.startsWith(typedLast) || typedLast.length >= want.length) continue;
-    const completedPrefix = expansion.slice(0, k);
-    const projected = lemmatizedExpansionTokens(completedPrefix, plugins);
+    const completedPrefix = form.slice(0, k);
+    const projected = lemmatizedFormTokens(completedPrefix, plugins);
     if (projected.length !== completedPrefix.length) continue;
     const signature = projected.map((t) => t.lemma || t.normalized).join("\0");
     if (!signatures.has(signature)) {
@@ -707,7 +727,7 @@ function projectContextualExpansionIntent(
   }
   if (matches.length !== 1) return null;
   const chosen = matches[0];
-  const projected = lemmatizedExpansionTokens(chosen.completedPrefix, plugins).map((t) => ({
+  const projected = lemmatizedFormTokens(chosen.completedPrefix, plugins).map((t) => ({
     ...t,
     sources: t.sources.includes("contextual-completion")
       ? t.sources
@@ -721,12 +741,12 @@ function projectContextualExpansionIntent(
       activePrefix: typedLast,
       completedToken: chosen.completedWord,
       canonicalToken: canonicalLast.lemma || canonicalLast.normalized,
-      source: "configured-expansion-prefix",
+      source: "configured-form-prefix",
     },
   };
 }
 
-function isSingleExpansionWordAliasSequence(seq: {
+function isSingleFormWordAliasSequence(seq: {
   kind?: string;
   tokens?: string[];
   concept?: ConfiguredConcept;
@@ -741,7 +761,7 @@ function matchConfiguredConceptSequences(tokens: QueryToken[], configured: Searc
   const used = new Set<number>();
   const norms = tokens.map((t) => t.normalized);
   for (const seq of configured.sequences) {
-    if (isSingleExpansionWordAliasSequence(seq)) continue;
+    if (isSingleFormWordAliasSequence(seq)) continue;
     const n = seq.tokens.length;
     if (n === 0) continue;
     for (let i = 0; i <= norms.length - n; i++) {
@@ -792,20 +812,20 @@ function matchConfiguredConceptSequences(tokens: QueryToken[], configured: Searc
       if (!ok) continue;
       if (seq.kind === "form") {
         const concepts = lastWasPrefix
-          ? configuredExpansionPrefixConceptsAt(tokens, configured, i, n)
-          : exactConfiguredExpansionConceptsAt(tokens, configured, i, n);
+          ? configuredFormPrefixConceptsAt(tokens, configured, i, n)
+          : exactConfiguredFormConceptsAt(tokens, configured, i, n);
         const key = uniqueConfiguredKey(concepts);
         if (!key || key !== seq.concept.key) continue;
       }
       for (let j = 0; j < n; j++) used.add(i + j);
       hits.push({
         concept: seq.concept,
-        kind: lastWasPrefix ? "partial-expansion" : seq.kind,
+        kind: lastWasPrefix ? "partial-form" : seq.kind,
         from: i,
         to: i + n,
-        matchedExpansionTokens: n,
-        expansionTokenCount: n,
-        expansionCoverage:
+        matchedFormTokens: n,
+        formTokenCount: n,
+        formCoverage:
           seq.kind === "form" || lastWasPrefix
             ? Number((n / Math.max(n, 1)).toFixed(4))
             : seq.kind === "key"
@@ -817,21 +837,21 @@ function matchConfiguredConceptSequences(tokens: QueryToken[], configured: Searc
   return hits;
 }
 
-const MIN_EXPANSION_PREFIX_TOKENS = 2;
-const MIN_EXPANSION_PREFIX_COVERAGE = 2 / 3;
+const MIN_FORM_PREFIX_TOKENS = 2;
+const MIN_FORM_PREFIX_COVERAGE = 2 / 3;
 
 /**
- * Left-prefix of a longer configured expansion. Does not collapse to the key.
- * Requires ≥2 aligned tokens, coverage ≥ 2/3, a unique best expansion, and
- * that the match start at expansion token 0. The final typed token may be a
- * prefix of the corresponding expansion token.
+ * Left-prefix of a longer configured peer form. Does not collapse to the key.
+ * Requires ≥2 aligned tokens, coverage ≥ 2/3, a unique best form, and
+ * that the match start at form token 0. The final typed token may be a
+ * prefix of the corresponding form token.
  */
-function matchExpansionPrefixes(tokens: QueryToken[], configured: SearchPlugin | null, used: Set<number>) {
+function matchFormPrefixes(tokens: QueryToken[], configured: SearchPlugin | null, used: Set<number>) {
   if (!configured || !configured.sequences) return [];
   const norms = tokens.map((t) => t.normalized);
   const k = norms.length;
-  if (k < MIN_EXPANSION_PREFIX_TOKENS) return [];
-  const candidates: Array<ConfiguredConceptMatchHit & { expansionCoverage: number; formKey: string }> = [];
+  if (k < MIN_FORM_PREFIX_TOKENS) return [];
+  const candidates: Array<ConfiguredConceptMatchHit & { formCoverage: number; formKey: string }> = [];
   for (const seq of configured.sequences) {
     if (seq.kind !== "form") continue;
     const n = seq.tokens.length;
@@ -858,28 +878,28 @@ function matchExpansionPrefixes(tokens: QueryToken[], configured: SearchPlugin |
     }
     if (!ok) continue;
     const coverage = k / n;
-    if (coverage < MIN_EXPANSION_PREFIX_COVERAGE) continue;
+    if (coverage < MIN_FORM_PREFIX_COVERAGE) continue;
     candidates.push({
       concept: seq.concept,
-      kind: "partial-expansion",
+      kind: "partial-form",
       from: 0,
       to: k,
-      matchedExpansionTokens: k,
-      expansionTokenCount: n,
-      expansionCoverage: Number(coverage.toFixed(4)),
+      matchedFormTokens: k,
+      formTokenCount: n,
+      formCoverage: Number(coverage.toFixed(4)),
       formKey: sequenceKey(seq.tokens),
     });
   }
   if (!candidates.length) return [];
   candidates.sort(
     (a, b) =>
-      b.expansionCoverage - a.expansionCoverage ||
-      a.expansionTokenCount - b.expansionTokenCount ||
+      b.formCoverage - a.formCoverage ||
+      a.formTokenCount - b.formTokenCount ||
       a.formKey.localeCompare(b.formKey) ||
       String(a.concept.key).localeCompare(String(b.concept.key))
   );
-  const best = candidates[0].expansionCoverage;
-  const top = candidates.filter((c) => c.expansionCoverage === best);
+  const best = candidates[0].formCoverage;
+  const top = candidates.filter((c) => c.formCoverage === best);
   const keys = new Set(top.map((c) => c.concept.key));
   if (keys.size !== 1) return [];
   const hit = top[0];
@@ -914,19 +934,18 @@ function matchFinalActiveKeyPrefix(tokens: QueryToken[], configured: SearchPlugi
   if (candidates.length !== 1) return [];
   const concept = candidates[0];
   used.add(i);
-  let expansionLen = 1;
-  for (const form of allConfiguredConceptForms(concept)) {
-    if (form.length > expansionLen) expansionLen = form.length;
-  }
+  const keyTok = String(concept.key || "");
+  const typed = String(tokens[i]?.surfaceNormalized || tokens[i]?.normalized || tok);
+  const denom = Math.max(keyTok.length, 1);
   return [
     {
       concept,
-      kind: "partial-expansion",
+      kind: "partial-form",
       from: i,
       to: i + 1,
-      matchedExpansionTokens: 1,
-      expansionTokenCount: expansionLen,
-      expansionCoverage: Number((1 / expansionLen).toFixed(4)),
+      matchedFormTokens: 1,
+      formTokenCount: 1,
+      formCoverage: Number((Math.min(typed.length, denom) / denom).toFixed(4)),
     },
   ];
 }
@@ -1194,7 +1213,7 @@ export function analyzeQuery(
   for (const hit of configuredHits) {
     for (let i = hit.from; i < hit.to; i++) configuredOccupiedIndexes.add(i);
   }
-  const prefixHits = matchExpansionPrefixes(analyzedTokens, configured, configuredOccupiedIndexes);
+  const prefixHits = matchFormPrefixes(analyzedTokens, configured, configuredOccupiedIndexes);
   const keyPrefixHits = matchFinalActiveKeyPrefix(analyzedTokens, configured, configuredOccupiedIndexes);
   const covered = new Set<number>();
   for (const hit of [...configuredHits, ...prefixHits, ...keyPrefixHits]) {
@@ -1204,19 +1223,19 @@ export function analyzeQuery(
       id: hit.concept.key,
       kind: "configured-concept",
       forms,
-      expansion: [],
+      matchedForm: [],
       aliases: aliases.map((a) => [...a]),
       provenance: hit.kind,
-      matchedExpansionTokens: hit.matchedExpansionTokens,
-      expansionTokenCount: hit.expansionTokenCount,
-      expansionCoverage: hit.expansionCoverage,
+      matchedFormTokens: hit.matchedFormTokens,
+      formTokenCount: hit.formTokenCount,
+      formCoverage: hit.formCoverage,
     });
     // Matched configured-concept spans occupy one concept. Tokens outside
     // the span (unmatched surface terms) remain ordinary term concepts.
     if (
       hit.kind === "key" ||
       hit.kind === "form" ||
-      hit.kind === "partial-expansion"
+      hit.kind === "partial-form"
     ) {
       for (let i = hit.from; i < hit.to; i++) covered.add(i);
     }
@@ -1290,32 +1309,28 @@ export function analyzeQuery(
   const dotted = extractDottedSpans(raw);
   throwIfAborted(signal);
 
-  const contextual = projectContextualExpansionIntent(analyzedTokens, configured, plugins);
-  const occupied =
-    configuredSequenceIntent?.key && configured
-      ? configured.byKey?.get(configuredSequenceIntent.key)
-      : undefined;
-  const peerLexical = occupied ? lemmatizedPeerFormUnion(occupied, plugins) : [];
-  // Occupied ranking identity is the unordered peer-form union, never the
-  // matched/completed surface. Contextual completion stays on
-  // contextualCompletion for explain; it must not replace concept-level
-  // ranking identity (otherwise unique prefixes would rank unlike exact aliases).
+  const contextual = projectContextualFormIntent(analyzedTokens, configured, plugins);
+  // Occupied ranking evaluates each peer form independently. Do not
+  // concatenate aliases into lexicalTokens. Contextual completion stays on
+  // contextualCompletion for explain.
   const lexicalTokens = configuredSequenceIntent
-    ? peerLexical.length
-      ? peerLexical
-      : contextual?.tokens?.length
-        ? contextual.tokens
-        : analyzedTokens
+    ? analyzedTokens
     : contextual?.tokens?.length
       ? contextual.tokens
       : analyzedTokens;
   const lexicalPhraseTokens = canonicalLexicalTokensFromQuery(
     configuredSequenceIntent
-      ? lexicalTokens
+      ? analyzedTokens
       : contextual?.tokens?.length
         ? contextual.tokens
         : lexicalTokens
   );
+  const occupiedConcept = configuredSequenceIntent
+    ? concepts.find((c) => c.kind === "configured-concept" && c.id === configuredSequenceIntent.key)
+    : null;
+  const peerFormLexical = occupiedConcept
+    ? configuredPeerFormLexical(occupiedConcept, plugins)
+    : undefined;
   const standaloneRecall = resolveStandaloneRecall(
     analyzedTokens,
     prefixCompletion,
@@ -1345,6 +1360,7 @@ export function analyzeQuery(
     lexicalTokens,
     lexicalPhraseTokens,
     lexicalPhraseKey: lexicalPhraseTokens.join(" "),
+    ...(peerFormLexical && peerFormLexical.length ? { peerFormLexical } : {}),
     stopstripped:
       analyzedTokens.length > 2
         ? analyzedTokens.filter((t) => !DEFAULT_STOP.has(t.normalized))

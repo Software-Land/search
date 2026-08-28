@@ -80,7 +80,7 @@ export function stage3AUnsupportedReason(query: AnalyzedQuery): string | null {
   const terms = concepts.filter((concept) => concept.kind === "term");
   if (terms.length < 2) return "term-concept-count";
   for (const concept of terms) {
-    if (concept.expansion?.length || concept.aliases?.length) return "concept-expansion";
+    if (concept.matchedForm?.length || concept.aliases?.length) return "concept-expansion";
     if (concept.provenance && concept.provenance !== "surface" && concept.provenance !== "morphology") {
       return "concept-provenance";
     }

@@ -76,13 +76,13 @@ describe("contextual expansion completion representation", () => {
     expect(q.tokens[1].normalized).toBe(stub);
     expect(q.tokens[1].lemma).toBe(stub);
     expect(q.tokens[1].completedToken).toBeUndefined();
-    expect(q.lexicalTokens.map((t) => t.lemma || t.normalized)).toEqual(["machine", "learn"]);
-    expect(q.lexicalPhraseKey).toBe("machine learn");
+    expect(q.lexicalTokens.map((t) => t.lemma || t.normalized)).toEqual(["machine", stub]);
+    expect(q.lexicalPhraseKey).toBe(`machine ${stub}`);
     expect(q.contextualCompletion).toMatchObject({
       activePrefix: stub,
       completedToken: "learning",
       canonicalToken: "learn",
-      source: "configured-expansion-prefix",
+      source: "configured-form-prefix",
     });
     expect(q.tokens.some((t) => t.sources.includes("contextual-completion"))).toBe(false);
   });
@@ -118,7 +118,7 @@ describe("contextual expansion completion representation", () => {
     expect(q.lexicalTokens.map((t) => t.lemma || t.normalized)).toEqual([
       "hypertext",
       "transfer",
-      "protocol",
+      "prot",
     ]);
     expect(q.contextualCompletion.completedToken).toBe("protocol");
   });
@@ -134,7 +134,9 @@ describe("contextual expansion completion representation", () => {
     expect(q.tokens.map((t) => t.surfaceNormalized || t.normalized)).toEqual(["application", "sec"]);
     expect(q.contextualCompletion).toBeNull();
     expect(q.configuredSequenceIntent).toMatchObject({ key: "appsec" });
-    expect(q.lexicalPhraseKey).toBe(analyze("application security").lexicalPhraseKey);
+    expect(q.lexicalTokens.map((t) => t.normalized)).toEqual(["application", "sec"]);
+    const full = analyze("application security");
+    expect(full.configuredSequenceIntent?.key).toBe("appsec");
   });
 });
 
@@ -156,7 +158,7 @@ describe("contextual expansion completion ranking", () => {
       expect(linear.features.matchingPhraseKey).toBe("machine learn");
       expect(linear.features.bodyPhraseCount).toBe(5);
       expect(detailed.results[0].explanation.query.tokens[1].surface).toMatch(/^l/);
-      expect(detailed.results[0].explanation.query.lexicalPhraseKey).toBe("machine learn");
+      expect(detailed.results[0].explanation.query.lexicalPhraseKey).toBe(query);
       if (appsec) expect(appsec.rank).toBeGreaterThan(linear.rank);
     }
   });
@@ -187,7 +189,7 @@ describe("contextual expansion completion ranking", () => {
     expect(http).toBeTruthy();
     expect(proto).toBeUndefined();
     expect(detailed.results[0].explanation.query.tokens[2].surface).toBe("prot");
-    expect(detailed.results[0].explanation.query.lexicalPhraseKey).toBe("hypertext transfer protocol");
+    expect(detailed.results[0].explanation.query.lexicalPhraseKey).toBe("hypertext transfer prot");
   });
 
   test("standalone proto/protobuf still match Protobuf Encoding", () => {

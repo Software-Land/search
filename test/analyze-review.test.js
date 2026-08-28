@@ -289,7 +289,8 @@ describe("configured-concept token ownership", () => {
     const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "js", aliases: [["javascript"]]}] })];
     const expansion = analyzeQuery("javascript", { plugins });
     const key = analyzeQuery("js", { plugins });
-    expect(expansion.lexicalPhraseKey).toEqual(key.lexicalPhraseKey);
+    expect(expansion.configuredSequenceIntent?.key).toBe("js");
+    expect(key.configuredSequenceIntent?.key).toBe("js");
     expect(key.tokens.map((t) => t.normalized)).toEqual(["js"]);
     expect(expansion.concepts.filter((c) => c.kind === "configured-concept").map((c) => c.id)).toEqual(["js"]);
     expect(expansion.concepts.some((c) => c.kind === "term")).toBe(false);
@@ -300,7 +301,8 @@ describe("configured-concept token ownership", () => {
     const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "ml", aliases: [["machine", "learning"]]}] })];
     const expansion = analyzeQuery("machine learning", { plugins });
     const key = analyzeQuery("ml", { plugins });
-    expect(expansion.lexicalPhraseKey).toEqual(key.lexicalPhraseKey);
+    expect(expansion.configuredSequenceIntent?.key).toBe("ml");
+    expect(key.configuredSequenceIntent?.key).toBe("ml");
     expect(expansion.lexicalPhraseTokens).toEqual(["machine", "learn"]);
     expect(key.tokens.map((t) => t.normalized)).toEqual(["ml"]);
     expect(expansion.concepts.find((c) => c.kind === "configured-concept")?.id).toBe("ml");
@@ -467,7 +469,7 @@ describe("acronym body evidence is contiguous", () => {
     const phraseHit = results.find((r) => r.id === "phrase");
     expect(phraseHit).toBeTruthy();
     if (learningOnly) {
-      expect(learningOnly.features.configuredConceptMatch).not.toBe("expansion");
+      expect(learningOnly.features.configuredConceptMatch).not.toBe("form");
       expect(learningOnly.features.configuredConceptMatch).not.toBe("key-in-title");
     }
 
@@ -499,7 +501,7 @@ describe("acronym body evidence is contiguous", () => {
     const phraseHit = results.find((r) => r.id === "phrase");
     expect(phraseHit).toBeTruthy();
     if (learningOnly) {
-      expect(learningOnly.features.configuredConceptMatch).not.toBe("expansion");
+      expect(learningOnly.features.configuredConceptMatch).not.toBe("form");
       expect(learningOnly.features.configuredConceptMatch).not.toBe("key-in-title");
     }
   });

@@ -169,9 +169,9 @@ describe("single-token frames ranking window", () => {
     const q = analyze("frames per");
     const fps = q.concepts.find((c) => c.kind === "configured-concept" && c.id === "fps");
     expect(fps).toBeTruthy();
-    expect(fps.provenance).toBe("partial-expansion");
-    expect(fps.matchedExpansionTokens).toBe(2);
-    expect(fps.expansionCoverage).toBe(1);
+    expect(fps.provenance).toBe("partial-form");
+    expect(fps.matchedFormTokens).toBe(2);
+    expect(fps.formCoverage).toBe(0.6667);
     expect(q.contextualCompletion).toBeNull();
   });
 
@@ -249,13 +249,13 @@ describe("bound-token consumption", () => {
     const q = analyze("frames per sec");
     expect(q.tokens.map((t) => t.surface)).toEqual(["frames", "per", "sec"]);
     expect(q.tokens[2].normalized).toBe("sec");
-    expect(q.lexicalTokens.map((t) => t.lemma || t.normalized)).toEqual(["frame", "per", "second"]);
-    expect(q.lexicalPhraseKey).toBe("frame per second");
+    expect(q.lexicalTokens.map((t) => t.lemma || t.normalized)).toEqual(["frame", "per", "sec"]);
+    expect(q.lexicalPhraseKey).not.toBe("frame per second");
     expect(q.contextualCompletion).toMatchObject({
       activePrefix: "sec",
       completedToken: "second",
       canonicalToken: "second",
-      source: "configured-expansion-prefix",
+      source: "configured-form-prefix",
     });
   });
 

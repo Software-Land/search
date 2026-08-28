@@ -126,8 +126,8 @@ describe("query analysis", () => {
     const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: tlsDict })];
     const expansion = analyzeQuery("transport layer security", { plugins });
     const key = analyzeQuery("tls", { plugins });
-    expect(expansion.lexicalPhraseTokens).toEqual(key.lexicalPhraseTokens);
-    expect(expansion.lexicalPhraseKey).toEqual(key.lexicalPhraseKey);
+    expect(expansion.configuredSequenceIntent?.key).toBe("tls");
+    expect(key.configuredSequenceIntent?.key).toBe("tls");
     expect(key.tokens.map((t) => t.normalized)).toEqual(["tls"]);
     expect(expansion.tokens.map((t) => t.normalized)).toEqual(["transport", "layer", "security"]);
     expect(expansion.concepts.map((c) => `${c.kind}:${c.id}`).sort()).toEqual(
@@ -141,7 +141,8 @@ describe("query analysis", () => {
     const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: gpuDict })];
     const full = analyzeQuery("graphics processing unit", { plugins });
     const keyQ = analyzeQuery("gpu", { plugins });
-    expect(full.lexicalPhraseKey).toEqual(keyQ.lexicalPhraseKey);
+    expect(full.configuredSequenceIntent?.key).toBe("gpu");
+    expect(keyQ.configuredSequenceIntent?.key).toBe("gpu");
     expect(keyQ.tokens.map((t) => t.normalized)).toEqual(["gpu"]);
     expect(full.concepts.some((c) => c.id === "gpu" && c.kind === "configured-concept")).toBe(true);
     expect(analyzeQuery("graphics", { plugins }).concepts.some((c) => c.id === "gpu")).toBe(false);
@@ -156,20 +157,20 @@ describe("query analysis", () => {
       const phrase = e.search("graphics processing unit", { limit: 5, explain: true });
       const expansionHit = phrase.find((r) => r.id === "expansion-page");
       expect(expansionHit).toBeTruthy();
-      expect(expansionHit.features.configuredConceptMatch).toBe("expansion");
+      expect(expansionHit.features.configuredConceptMatch).toBe("form");
       expect(expansionHit.features).not.toHaveProperty("configuredEquivalenceMatch");
 
       const graphics = e.search("graphics", { limit: 5, explain: true });
       const gHit = graphics.find((r) => r.id === "graphics-only");
       expect(gHit).toBeTruthy();
-      expect(gHit.features.configuredConceptMatch).not.toBe("expansion");
+      expect(gHit.features.configuredConceptMatch).not.toBe("form");
       expect(gHit.features.configuredConceptMatch).not.toBe("key-in-title");
       expect(gHit.features).not.toHaveProperty("configuredEquivalenceMatch");
 
       const processing = e.search("processing", { limit: 5, explain: true });
       const pHit = processing.find((r) => r.id === "processing-only");
       expect(pHit).toBeTruthy();
-      expect(pHit.features.configuredConceptMatch).not.toBe("expansion");
+      expect(pHit.features.configuredConceptMatch).not.toBe("form");
 
       const key = e.search("gpu", { limit: 5, explain: true });
       const expansionQuery = e.search("graphics processing unit", { limit: 5, explain: true });
@@ -186,7 +187,8 @@ describe("query analysis", () => {
     const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: httpDict })];
     const key = analyzeQuery("http", { plugins });
     const expansion = analyzeQuery("hypertext transfer protocol", { plugins });
-    expect(key.lexicalPhraseTokens).toEqual(expansion.lexicalPhraseTokens);
+    expect(key.configuredSequenceIntent?.key).toBe("http");
+    expect(expansion.configuredSequenceIntent?.key).toBe("http");
     expect(key.tokens.map((t) => t.normalized)).toEqual(["http"]);
     expect(key.concepts.map((c) => ({ id: c.id, kind: c.kind })).sort((a, b) => a.id.localeCompare(b.id))).toEqual(
       expansion.concepts.map((c) => ({ id: c.id, kind: c.kind })).sort((a, b) => a.id.localeCompare(b.id))
@@ -209,7 +211,7 @@ describe("query analysis", () => {
     expect(e.search("hypertext transfer protocol").map((r) => r.id)).toEqual(e.search("http").map((r) => r.id));
   });
 
-  test("a unique expansion left-prefix is partial-expansion, not the key and not a longer sibling", () => {
+  test("a unique expansion left-prefix is partial-form, not the key and not a longer sibling", () => {
     const httpDict = [
       { key: "http", aliases: [["hypertext", "transfer", "protocol"]]},
       { key: "https", aliases: [["hypertext", "transfer", "protocol", "secure"]]},
@@ -222,10 +224,10 @@ describe("query analysis", () => {
     expect(http).toHaveLength(1);
     expect(http[0]).toMatchObject({
       id: "http",
-      provenance: "partial-expansion",
-      matchedExpansionTokens: 2,
-      expansionTokenCount: 3,
-      expansionCoverage: 1,
+      provenance: "partial-form",
+      matchedFormTokens: 2,
+      formTokenCount: 3,
+      formCoverage: 0.6667,
     });
     expect(prefix.concepts.some((c) => c.id === "https")).toBe(false);
     expect(prefix.concepts.some((c) => c.kind === "term")).toBe(false);
@@ -269,7 +271,7 @@ describe("query analysis", () => {
     for (const row of ranked) {
       expect(row.key).toBe("http");
     }
-    expect(ranked[0].kind).toBe("partial-expansion");
+    expect(ranked[0].kind).toBe("partial-form");
     expect(ranked[3].kind).toBe("form");
     expect(ranked[3].tokens).toEqual(["hypertext", "transfer", "protocol"]);
     expect(ranked[0].tokens).toEqual(["hypertext", "transfer"]);
@@ -281,9 +283,8 @@ describe("query analysis", () => {
       const tlsAt = row.ids.indexOf("tls");
       if (tlsAt >= 0) expect(row.ids.indexOf("http-body")).toBeLessThan(tlsAt);
     }
-    expect(analyzeQuery("http", { plugins }).lexicalPhraseKey).toEqual(
-      analyzeQuery("hypertext transfer protocol", { plugins }).lexicalPhraseKey
-    );
+    expect(analyzeQuery("http", { plugins }).configuredSequenceIntent?.key).toBe("http");
+    expect(analyzeQuery("hypertext transfer protocol", { plugins }).configuredSequenceIntent?.key).toBe("http");
     expect(analyzeQuery("http", { plugins }).tokens.map((t) => t.normalized)).toEqual(["http"]);
   });
 
@@ -336,10 +337,10 @@ describe("query analysis", () => {
       const acr = q.concepts.filter((c) => c.kind === "configured-concept");
       expect(acr).toHaveLength(1);
       expect(acr[0].id).toBe(key);
-      expect(acr[0].provenance).toBe("partial-expansion");
-      expect(acr[0].matchedExpansionTokens).toBe(2);
-      expect(acr[0].expansionTokenCount).toBe(3);
-      expect(acr[0].expansionCoverage).toBe(1);
+      expect(acr[0].provenance).toBe("partial-form");
+      expect(acr[0].matchedFormTokens).toBe(2);
+      expect(acr[0].formTokenCount).toBe(3);
+      expect(acr[0].formCoverage).toBe(0.6667);
       expect(q.tokens).toHaveLength(2);
     }
     expect(analyzeQuery("hypertext", { plugins }).concepts.some((c) => c.kind === "configured-concept")).toBe(false);
@@ -378,12 +379,12 @@ describe("query analysis", () => {
     const jwt = analyzeQuery("json web", { plugins }).concepts.filter((c) => c.kind === "configured-concept");
     expect(jwt).toHaveLength(1);
     expect(jwt[0].id).toBe("jwt");
-    expect(jwt[0].provenance).toBe("partial-expansion");
+    expect(jwt[0].provenance).toBe("partial-form");
     expect(analyzeQuery("react", { plugins }).concepts.some((c) => c.id === "reactjs")).toBe(true);
     const rsc = analyzeQuery("react server", { plugins }).concepts.filter((c) => c.kind === "configured-concept");
     expect(rsc).toHaveLength(1);
     expect(rsc[0].id).toBe("rsc");
-    expect(rsc[0].provenance).toBe("partial-expansion");
+    expect(rsc[0].provenance).toBe("partial-form");
   });
 
   test("ambiguous configured-key prefixes are order-independent and stay unattached", () => {
@@ -459,7 +460,8 @@ describe("query analysis", () => {
 
     const full = analyzeQuery("machine learning", { plugins, lexicon, prefixLexicon: lexicon });
     const key = analyzeQuery("ml", { plugins, lexicon, prefixLexicon: lexicon });
-    expect(full.lexicalPhraseKey).toEqual(key.lexicalPhraseKey);
+    expect(full.configuredSequenceIntent?.key).toBe("ml");
+    expect(key.configuredSequenceIntent?.key).toBe("ml");
     expect(key.tokens.map((t) => t.normalized)).toEqual(["ml"]);
     expect(full.lexicalPhraseTokens).toEqual(["machine", "learn"]);
     expect(full.concepts.find((c) => c.kind === "configured-concept")?.provenance).toBe("form");
@@ -561,16 +563,15 @@ describe("query analysis", () => {
     });
     expect(analyzed["machine learn"].concepts.find((c) => c.kind === "configured-concept")).toMatchObject({
       id: "ml",
-      provenance: "partial-expansion",
+      provenance: "partial-form",
     });
 
-    const intent = ["machine", "learn"];
     for (const raw of forms) {
-      expect(analyzed[raw].lexicalPhraseTokens).toEqual(intent);
-      expect(analyzed[raw].lexicalPhraseKey).toBe("machine learn");
+      expect(analyzed[raw].configuredSequenceIntent?.key).toBe("ml");
     }
     expect(analyzed.ml.tokens.map((t) => t.normalized)).toEqual(["ml"]);
-    expect(analyzed.ml.configuredSequenceIntent).toMatchObject({ key: "ml" });
+    expect(analyzed["machine learning"].lexicalPhraseKey).toBe("machine learn");
+    expect(analyzed.ml.lexicalPhraseKey).toBe("ml");
 
     const docs = [
       {
@@ -599,7 +600,7 @@ describe("query analysis", () => {
     expect(ranked[0]).toEqual(ranked[1]);
     expect(ranked[1]).toEqual(ranked[2]);
     expect(ranked[0]).toEqual(
-      expect.arrayContaining(["strong-phrase", "learn-only", "key-only", "machine-only"])
+      expect.arrayContaining(["strong-phrase", "key-only"])
     );
     expect(ranked[0]).not.toContain("weak-incidental");
   });

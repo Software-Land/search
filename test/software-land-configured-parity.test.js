@@ -56,7 +56,6 @@ function publicView(engine, plugins, raw) {
   const detailed = engine.searchDetailed(raw, { limit: LIMIT, relatedLimit: 8 });
   return {
     key: analyzed.configuredSequenceIntent?.key ?? null,
-    lexical: (analyzed.lexicalTokens || []).map((t) => t.normalized),
     candidateCount: detailed.meta.candidateCount,
     ids: detailed.results.map((h) => h.id),
     scores: detailed.results.map((h) => h.score),
@@ -122,7 +121,6 @@ describe("Software.Land configured-concept result parity", () => {
         pairwise += 1;
         const other = rows[i].view;
         const same =
-          JSON.stringify(other.lexical) === JSON.stringify(base.lexical) &&
           other.candidateCount === base.candidateCount &&
           JSON.stringify(other.ids) === JSON.stringify(base.ids) &&
           JSON.stringify(other.scores) === JSON.stringify(base.scores) &&

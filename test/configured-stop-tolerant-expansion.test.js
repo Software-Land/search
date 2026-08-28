@@ -158,7 +158,7 @@ describe("stop-tolerant configured expansion alignment", () => {
     const q = analyze(raw);
     expect(q.originalSurface).toEqual(["national", "institute", "of", "standards", "and", "technology"]);
     expect(q.tokens.map((t) => t.surface)).toEqual(q.originalSurface);
-    expect(q.configuredSequenceIntent?.expansion).toEqual([
+    expect(q.configuredSequenceIntent?.matchedForm).toEqual([
       "national",
       "institute",
       "standards",
@@ -230,7 +230,7 @@ describe("explicit exact 1-token configured aliases", () => {
     expect(q.tokens.map((t) => t.surface)).toEqual(["institute"]);
     expect(q.configuredSequenceIntent?.key).toBe("nist");
     expect(q.configuredSequenceIntent?.matchedKinds).toEqual(["form"]);
-    expect(q.configuredSequenceIntent?.expansion).toEqual(["institute"]);
+    expect(q.configuredSequenceIntent?.matchedForm).toEqual(["institute"]);
     expect(resolveConfiguredSequence(q.tokens, plugins(nistAliases)[1])).toMatchObject({
       status: "unique",
       alignment: "full",

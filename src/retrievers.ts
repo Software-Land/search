@@ -26,8 +26,11 @@ import {
   isSearchEquivalenceRecallConcept,
   hasConfiguredSequenceIntent,
   retrievalFormKindAllowsPrefix,
+  occupiedTitleJoins,
+  configuredPeerForms,
+  formContentTokens,
 } from "./retrieve.js";
-import { allowPrefixMatch } from "./text.js";
+import { allowPrefixMatch, DEFAULT_STOP } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
 import { throwIfAborted } from "./cancel.js";
 import {
@@ -82,6 +85,13 @@ function postingBodySource(kind: QueryFormKind) {
   if (kind === "topical-recall") return "topical-recall";
   if (kind === "equivalent-recall") return "equivalent-recall";
   return "body-lexical";
+}
+
+function titleNormsForQuery(query: AnalyzedQuery): string[] {
+  const joins = occupiedTitleJoins(query);
+  if (joins.length) return joins;
+  const qNorm = identityTokens(query).map((t) => t.normalized).join(" ");
+  return qNorm ? [qNorm] : [];
 }
 
 function formKindAllowsPrefix(kind: QueryFormKind) {
@@ -143,9 +153,12 @@ function queryForms(query: AnalyzedQuery) {
     seen.add(`${kind}:${f}`);
     forms.push({ form: f, kind });
   }
-  for (const tok of evidenceTokens(query)) {
-    add(tok.normalized, "token");
-    if (tok.lemma && tok.lemma !== tok.normalized) add(tok.lemma, "lemma");
+  const occupied = hasConfiguredSequenceIntent(query);
+  if (!occupied) {
+    for (const tok of evidenceTokens(query)) {
+      add(tok.normalized, "token");
+      if (tok.lemma && tok.lemma !== tok.normalized) add(tok.lemma, "lemma");
+    }
   }
   for (const c of query.concepts || []) {
     if (isBoundTrailingTermConcept(query, c)) continue;
@@ -160,13 +173,29 @@ function queryForms(query: AnalyzedQuery) {
       }
       continue;
     }
-    add(c.id, c.kind === "configured-concept" ? "acronym-key" : "concept");
+    if (c.kind === "configured-concept") {
+      add(c.id, "acronym-key");
+      for (const form of configuredPeerForms(c)) {
+        const join = form.join(" ");
+        if (join) add(join, "acronym-form");
+        // Candidate generation is a union of peer forms, not a concatenated
+        // token query. Stopwords never become independent retrieval terms.
+        // Multi-token content tokens probe inverted lists; scanDocument then
+        // rechecks form-level provenance before a hit is kept.
+        if (form.length === 1) {
+          if (form[0] && !DEFAULT_STOP.has(form[0])) add(form[0], "acronym-form");
+        } else {
+          for (const part of formContentTokens(form)) add(part, "acronym-form");
+        }
+      }
+      continue;
+    }
+    add(c.id, "concept");
     for (const f of c.forms || []) {
-      const kind = c.kind === "configured-concept" ? "acronym-form" : "concept";
-      add(f, kind);
+      add(f, "concept");
       const parts = String(f).split(/\s+/).filter(Boolean);
       if (parts.length >= 2) {
-        for (const part of parts) add(part, kind);
+        for (const part of parts) add(part, "concept");
       }
     }
   }
@@ -364,14 +393,12 @@ export function createIndexedLexicalRetriever({
     const byPos = new Map<number, IndexedHit>();
     const k = limitOverride || candidateLimit;
     const forms = queryForms(query);
-    const qNorm = identityTokens(query).map((t) => t.normalized).join(" ");
-
-    const exact = state.titleByNorm.get(qNorm);
-    if (exact) {
-      for (const pos of exact) addHit(byPos, pos, "exact-title", 50);
-    }
-
-    if (qNorm) {
+    const occupied = hasConfiguredSequenceIntent(query);
+    for (const qNorm of titleNormsForQuery(query)) {
+      const exact = state.titleByNorm.get(qNorm);
+      if (exact) {
+        for (const pos of exact) addHit(byPos, pos, "exact-title", 50);
+      }
       const start = lowerBoundNorm(state.sortedTitles, qNorm);
       const prefixHits: Array<{ norm: string; pos: number }> = [];
       for (let i = start; i < state.sortedTitles.length; i++) {
@@ -406,7 +433,9 @@ export function createIndexedLexicalRetriever({
       const bodyL = state.bodyLemmaPostings.get(form);
       if (bodyL) accumulatePosting(byPos, bodyL, "morphology", 0.5, state.avgBodyDl, state.bodyDl, { signal, n });
 
-      if (formKindAllowsPrefix(kind) && !isAllDigitToken(form) && form.length >= 3) {
+      const skipOccupiedFormPrefix =
+        occupied && (kind === "acronym-form" || kind === "acronym-key");
+      if (!skipOccupiedFormPrefix && formKindAllowsPrefix(kind) && !isAllDigitToken(form) && form.length >= 3) {
         for (const term of prefixTerms(form, (t) => allowPrefixMatch(form, t))) {
           if (term === form) continue;
           const tp = state.titlePostings.get(term);
@@ -503,8 +532,18 @@ export function createIndexedLexicalRetriever({
     titlePrefixMust.sort((a, b) => {
       const titleA = docs[a.pos]?.normalizedTitle || "";
       const titleB = docs[b.pos]?.normalizedTitle || "";
-      const qa = qNorm.length / Math.max(titleA.length, 1);
-      const qb = qNorm.length / Math.max(titleB.length, 1);
+      const tightness = (title: string) => {
+        let best = 0;
+        for (const qNorm of titleNormsForQuery(query)) {
+          if (!qNorm) continue;
+          if (title === qNorm || title.startsWith(qNorm)) {
+            best = Math.max(best, qNorm.length / Math.max(title.length, 1));
+          }
+        }
+        return best;
+      };
+      const qa = tightness(titleA);
+      const qb = tightness(titleB);
       if (qb !== qa) return qb - qa;
       return a.pos - b.pos;
     });
@@ -727,11 +766,10 @@ export function createCompiledLexicalRetriever(): Retriever {
 
     const forms = queryForms(query);
     last.queryFormsExpanded = forms.length;
-    const qNorm = identityTokens(query).map((token) => token.normalized).join(" ");
-    const exact = compiled.titleByNorm.get(qNorm);
-    if (exact) for (const pos of exact) add(pos, "exact-title", 50);
-
-    if (qNorm) {
+    const occupied = hasConfiguredSequenceIntent(query);
+    for (const qNorm of titleNormsForQuery(query)) {
+      const exact = compiled.titleByNorm.get(qNorm);
+      if (exact) for (const pos of exact) add(pos, "exact-title", 50);
       let i = lowerBoundNorm(compiled.sortedTitles, qNorm);
       while (i < compiled.sortedTitles.length) {
         const row = compiled.sortedTitles[i++];
@@ -750,7 +788,9 @@ export function createCompiledLexicalRetriever(): Retriever {
       accumulateLemma(compiled.byLemma.get(form), "title", "morphology", TITLE_BOOST * 0.6);
       if (!skipBodyWalk) accumulateLemma(compiled.byLemma.get(form), "body", "morphology", 0.5);
 
-      if (formKindAllowsPrefix(kind) && !isAllDigitToken(form) && form.length >= 3) {
+      const skipOccupiedFormPrefix =
+        occupied && (kind === "acronym-form" || kind === "acronym-key");
+      if (!skipOccupiedFormPrefix && formKindAllowsPrefix(kind) && !isAllDigitToken(form) && form.length >= 3) {
         let i = lowerBoundTerm(compiled.sortedTerms, form);
         while (i < compiled.sortedTerms.length) {
           const term = compiled.sortedTerms[i++];

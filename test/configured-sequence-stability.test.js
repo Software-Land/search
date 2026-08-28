@@ -122,7 +122,6 @@ describe("configured sequence alignment and result stability", () => {
       expect(acronymIds(q)).toEqual(["appsec"]);
       expect(q.tokens.map((t) => t.surface)).toEqual(typedSurfaces(raw));
       expect(q.configuredSequenceIntent).toMatchObject({ key: "appsec" });
-      expect(q.lexicalPhraseKey).toBe(analyze("application security").lexicalPhraseKey);
       const detailed = e.searchDetailed(raw, { limit: 5, explain: true });
       expect(e.search(raw, { limit: 5 }).map((r) => r.id)).toEqual(detailed.results.map((r) => r.id));
       expect(detailed.results.map((r) => r.id)).toEqual(baselineIds);

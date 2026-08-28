@@ -572,8 +572,8 @@ if (!recallHit.features?.equivalentRecallMatch) {
 if (identityHit.features?.configuredEquivalenceMatch != null || recallHit.features?.configuredEquivalenceMatch != null) {
   throw new Error("configuredEquivalenceMatch must not remain public explain output");
 }
-if (identityHit.features?.configuredConceptMatch !== "expansion") {
-  throw new Error("configuredConceptMatch must remain expansion on configured title identity");
+if (identityHit.features?.configuredConceptMatch !== "form") {
+  throw new Error("configuredConceptMatch must remain form on configured title identity");
 }
 if (recallHit.features?.configuredConceptMatch !== false) {
   throw new Error("equivalent-recall hits must keep configuredConceptMatch false");

@@ -193,9 +193,6 @@ describe("partial expansion projects configured sequence intent", () => {
   test("unique n>=2 left prefix occupies intent without a one-token special case", () => {
     const q = analyzeQuery("application programming", { plugins: plugins(apiAppsecDict) });
     expect(q.configuredSequenceIntent?.key).toBe("api");
-    expect(q.lexicalPhraseKey).toBe(
-      analyzeQuery("api", { plugins: plugins(apiAppsecDict) }).lexicalPhraseKey
-    );
     expect(acronymIds(q)).toEqual(["api"]);
     expect(q.tokens.map((t) => t.surface)).toEqual(["application", "programming"]);
   });

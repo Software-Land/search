@@ -37,7 +37,7 @@ function hit(id, over = {}) {
       lexicalConceptCoverage: 0,
       coverageConceptCount: 2,
       titleTokenCount: 3,
-      expansionEvidence: 0,
+      configuredFormEvidence: 0,
       canonicalKeyTitle: false,
       queryTokenCount: 2,
       bodyPhraseCount: 0,

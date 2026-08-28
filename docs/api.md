@@ -70,6 +70,11 @@ Once a query unambiguously occupies one configured concept, every authored spell
 - one-token aliases that are members of a longer peer form occupy only on exact typed identity
 - multi-token configured forms may still complete an incomplete final token when preceding tokens uniquely identify the concept (`continuous d` → `cd`). Ambiguous peer completions fail closed.
 - incomplete guessing of a configured *key* remains subject to the short-prefix information bound (`form.length < 3`)
+- occupancy is whether one concept was uniquely established. Matched-form completeness (`configuredFormCoverage`) is how much of the matched peer form the query actually covered. Unique occupancy does not force coverage to 1.
+- occupied ranking evaluates each peer form independently and reduces (usually max) order-independently. Peer aliases are not concatenated into one synthetic query. Stopwords may remain in authored forms for phrase structure, but they are not independent title/retrieval evidence.
+- explain `queryTokenCount` for an occupied concept is the max non-stop length of one peer form. It is a debug summary, not a scoring denominator.
+
+Public 0.5 explain names use peer-form terminology: `configuredConceptMatch: "form"`, `configuredSequenceIntent.matchedForm`, `configuredFormEvidence`, `configuredFormCoverage`, `configuredFormBodyMatch`, `QueryConcept.matchedForm` / `formCoverage`, and `contextualCompletion.source: "configured-form-prefix"`. 0.4 authoring still accepts `exp` / `expansion` through `migrateConfiguredEntry()`. Corpus-miner candidate `expansion` is unchanged.
 
 ```js
 import {

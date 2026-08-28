@@ -37,10 +37,12 @@ Search data is four distinct layers:
 
 A concept is authored as `key` + `aliases`. Aliases are unordered semantic peers; alias array order has no search semantic effect. `key` remains the concept identifier and lexical key form. Every alias identifies the **same** configured intent; aliases are not loose recall hints.
 
-Once occupancy is unambiguous, key and alias spellings have identical search semantics and ranked results. Typed surface stays on the query for explain/provenance and must not leak into ranking.
+Once occupancy is unambiguous, key and alias spellings have identical search semantics and ranked results. Typed surface stays on the query for explain/provenance and must not leak into ranking. Occupied ranking evaluates each peer form independently; it does not concatenate aliases into one lexical query.
 
-- Exact configured-key identity outranks a conflicting foreign one-token alias or one-token expansion of that same typed form. Two distinct exact keys still fail closed.
-- One-token aliases and one-token expansions occupy only on exact typed identity.
+Occupancy is not matched-form completeness. A unique prefix may occupy a concept while `formCoverage` remains the true prefix coverage (`application programming` is 2/3 of `application programming interface`). An unused extra alias must not dilute an existing form match.
+
+- Exact configured-key identity outranks a conflicting foreign one-token alias of that same typed form. Two distinct exact keys still fail closed.
+- One-token aliases occupy only on exact typed identity.
 - Multi-token configured forms may complete an incomplete final token when preceding context uniquely identifies the concept.
 - Incomplete guessing of a configured *key* remains subject to the short-prefix information bound (`form.length < 3`). Exact keys occupy regardless of key length.
 

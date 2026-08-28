@@ -31,7 +31,7 @@ function blankFeatures(over = {}) {
     phraseAdjacency: 0,
     bodyLexicalMatch: 0,
     titleTokenCount: 3,
-    expansionEvidence: 0,
+    configuredFormEvidence: 0,
     canonicalKeyTitle: false,
     relationshipStrength: 0,
     relationshipType: null,

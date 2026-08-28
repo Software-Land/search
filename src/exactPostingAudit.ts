@@ -7,7 +7,7 @@
  * every posting entry.
  */
 import { queryForms } from "./retrievers.js";
-import { retrievalSourcesForDocument, identityTokens, shortTitleTokenPrefixStub } from "./retrieve.js";
+import { retrievalSourcesForDocument, identityTokens, shortTitleTokenPrefixStub, occupiedTitleJoins, hasConfiguredSequenceIntent } from "./retrieve.js";
 import { allowPrefixMatch } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
 import type { CompiledLexicalRuntime, CompiledTermRuntime } from "./lexicalIndex.js";
@@ -252,8 +252,14 @@ export function auditCompiledPostingWork(
   }
 
   const forms = queryForms(query);
-  const qNorm = identityTokens(query).map((token) => token.normalized).join(" ");
-  if (qNorm) {
+  const titleNorms = occupiedTitleJoins(query);
+  const qNorms = titleNorms.length
+    ? titleNorms
+    : (() => {
+        const qNorm = identityTokens(query).map((token) => token.normalized).join(" ");
+        return qNorm ? [qNorm] : [];
+      })();
+  for (const qNorm of qNorms) {
     const exact = compiled.titleByNorm.get(qNorm);
     if (exact) {
       for (const pos of exact) {
@@ -271,6 +277,7 @@ export function auditCompiledPostingWork(
     }
   }
 
+  const occupied = hasConfiguredSequenceIntent(query);
   for (const { form, kind } of forms) {
     const surface = compiled.bySurface.get(form);
     accumulate(surface, "title", form, kind, "surface", false);
@@ -278,7 +285,11 @@ export function auditCompiledPostingWork(
     accumulateLemma(compiled.byLemma.get(form), "title", form, kind);
     accumulateLemma(compiled.byLemma.get(form), "body", form, kind);
 
-    if (!isAllDigitToken(form) && form.length >= 3) {
+    if (
+      !(occupied && (kind === "acronym-form" || kind === "acronym-key")) &&
+      !isAllDigitToken(form) &&
+      form.length >= 3
+    ) {
       let i = lowerBound(compiled.sortedTerms, form);
       while (i < compiled.sortedTerms.length) {
         const term = compiled.sortedTerms[i++];
