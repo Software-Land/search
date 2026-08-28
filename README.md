@@ -10,7 +10,7 @@ Source: [github.com/Software-Land/search](https://github.com/Software-Land/searc
 
 A JavaScript **runtime** that indexes documents, searches them, explains hits, and can attach a related-document rail from a compiled graph. It does not download models, call an LLM, or depend on a CMS.
 
-Pairwise ranking used to be Θ(C²) in the candidate set C. Builtin ranking now groups constraint-equivalent candidates and compares signatures (B of them) instead of every pair; worst case remains Θ(C²) when B = C or constraints are custom. Default **indexed** retrieval enumerates every legitimate match, then retains exact per-signature representatives for ranking; pass `retriever: "full-scan"` only as an explicit reference mode. A narrow exact Stage-2A path can reject full feature work for proven single-token body-only blocks, but posting/membership work remains Θ(matches).
+Pairwise ranking used to be Θ(C²) in the candidate set C. Builtin ranking now groups constraint-equivalent candidates and compares signatures (B of them) instead of every pair; worst case remains Θ(C²) when B = C or constraints are custom. Default **indexed** retrieval is exact: it preserves the same result semantics as exhaustive compiled retrieval while retaining exact per-signature representatives for ranking. Stage 2A can avoid full feature work for proven single-token body-only blocks, and Stage 3A can skip unread noncompetitive 1-of-k body postings for supported exact multi-token queries. Unsupported or uncertain cases fail closed to exhaustive retrieval. Pass `retriever: "full-scan"` only as an explicit reference mode.
 
 **Zero production npm dependencies.** Node 18+.
 
@@ -209,7 +209,7 @@ await engine.index(documents);
 
 The artifact format is `search-v2-lexical-index` version 1. It is a unified analyzed-index representation: stable document metadata, a sorted surface dictionary, positional title/body streams, compact surface→lemma ownership, version/dotted-span metadata, and corpus statistics hydrate both exact lookup and compact query-time document views. Raw title/body text and per-document lexical-frequency maps are not duplicated; supplied documents remain fingerprint-validated owners of display titles and attached `lexicalFrequency` data, typically produced from the separate build artifact with `attachLexicalFrequency()`.
 
-The default exact indexed path enumerates legitimate matches, reconstructs the same current features, and keeps mathematically sufficient representatives per builtin constraint signature before sparse ranking. Its additive v1 pruning extension can skip full feature evaluation for blocks whose reachable signature and rounded score are proved exactly. Stage 3A may skip unread noncompetitive 1-of-k body postings on ordinary exact multi-token compiled `search()` using additive `exact-pruning-v2` presence masks; results stay identical to exhaustive compiled search. Uncertain, prefix, diagnostic, custom, and active-relationship cases fail closed to exhaustive retrieval. This is not WAND/MaxScore/early termination. A supplied incompatible or corrupt artifact throws. If the artifact is omitted, each `index()` call compiles equivalent state from `documents`; this performs raw lexical analysis during initialization but still performs zero query-time raw-document scans. `retriever: "full-scan"` remains the reference mode.
+The default exact indexed path preserves exhaustive compiled-search results while reconstructing the same ranking features and keeping mathematically sufficient representatives per builtin constraint signature. Stage 2A's additive v1 pruning extension can skip full feature evaluation for blocks whose reachable signature and rounded score are proved exactly. Stage 3A may skip unread noncompetitive 1-of-k body postings on ordinary exact multi-token compiled `search()` using additive `exact-pruning-v2` presence masks; results stay identical to exhaustive compiled search. Uncertain, prefix, diagnostic, custom, and active-relationship cases fail closed to exhaustive retrieval. This is not WAND/MaxScore/early termination. A supplied incompatible or corrupt artifact throws. If the artifact is omitted, each `index()` call compiles equivalent state from `documents`; this performs raw lexical analysis during initialization but still performs zero query-time raw-document scans. `retriever: "full-scan"` remains the reference mode.
 
 After successful initialization from a supplied artifact, the engine releases its reference to the artifact envelope and parsed document tuples. Callers still own their original artifact reference and can release it after `index()` resolves or a Worker reports `ready`. A subsequent identical `index()` reuses that hydrated artifact state; incompatible replacement documents reject.
 
@@ -260,7 +260,8 @@ corpus JSON
                            → search-v2-lexical-index v1
   → search-semantic (opt.) → relationships (semantic)
   → search-relationships   → search-v2-relationships v1
-  → SearchEngine.create({ lexicalIndex, documentRelationships, plugins from configuredConcepts })
+  → compileAuthoredRelevance({ configuredConcepts, relationshipMap, documents })
+  → SearchEngine.create({ lexicalIndex, documentRelationships, plugins })
 ```
 
 Runtime parsers validate each artifact's `format` + `version`; lexical indexes additionally fail closed on integrity, analyzer, schema, or corpus mismatch.
