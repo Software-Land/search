@@ -37,4 +37,9 @@ describe("retrieval mismatch diagnostic labels", () => {
     expect(cause(["title-token", "relationship"])).toBe("title-token posting / prefix semantics");
     expect(cause(["contextual-title-prefix", "relationship"])).toBe("contextual prefix");
   });
+
+  test("labels a missing row with no usable retrieval provenance", () => {
+    expect(cause(["relationship"])).toBe("relationship path");
+    expect(cause([])).toBe("missing retrieval provenance");
+  });
 });

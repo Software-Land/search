@@ -101,7 +101,7 @@ function classifyMismatch({ missing, extra, missingSources, extraSources }) {
   if (missing.length && miss.has("topical-recall")) return "topical-recall path";
   if (missing.length && miss.has(CONTEXTUAL)) return "contextual prefix";
   if (missing.length && miss.has("relationship")) return "relationship path";
-  if (missing.length && (miss.has("typo-correction") || extraSources.length === 0)) return "typo path / missing retrieval provenance";
+  if (missing.length && extraSources.length === 0) return "missing retrieval provenance";
   if (!missing.length && extra.length) {
     if ([...add].some((s) => s === "indexed-lexical" || s === "body-lexical" || s === "title-token-prefix")) {
       return "additional indexed posting (full-scan-only selectivity)";
