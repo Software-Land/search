@@ -279,7 +279,7 @@ describe("configured-concept token ownership", () => {
         }),
       ],
     });
-    expect(q.concepts.some((c) => c.kind === "configured-concept" && c.id === "js" && c.provenance === "alias")).toBe(true);
+    expect(q.concepts.some((c) => c.kind === "configured-concept" && c.id === "js" && c.provenance === "form")).toBe(true);
     expect(q.concepts.some((c) => c.kind === "term" && (c.id === "ecmascript" || c.forms.includes("ecmascript")))).toBe(
       false
     );
@@ -304,7 +304,7 @@ describe("configured-concept token ownership", () => {
     expect(expansion.lexicalPhraseTokens).toEqual(["machine", "learn"]);
     expect(key.tokens.map((t) => t.normalized)).toEqual(["ml"]);
     expect(expansion.concepts.find((c) => c.kind === "configured-concept")?.id).toBe("ml");
-    expect(expansion.concepts.find((c) => c.kind === "configured-concept")?.provenance).toBe("expansion");
+    expect(expansion.concepts.find((c) => c.kind === "configured-concept")?.provenance).toBe("form");
     expect(key.concepts.find((c) => c.kind === "configured-concept")?.provenance).toBe("key");
     expect(expansion.concepts.some((c) => c.kind === "term")).toBe(false);
   });

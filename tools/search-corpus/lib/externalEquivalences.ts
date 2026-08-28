@@ -306,7 +306,8 @@ function mergeRows(into: ExternalConfiguredConceptRow, extra: ExternalConfigured
 }
 
 function projectConfiguredConcept(row: ExternalConfiguredConceptRow): ReconciledConfiguredConcept {
-  const aliases = [[...row.expansion], ...row.aliases.map((alias) => [...alias])];
+  const aliases = mergeAliases([[...row.expansion], ...row.aliases.map((alias) => [...alias])], []);
+  aliases.sort((a, b) => phraseKey(a).localeCompare(phraseKey(b)));
   const concept: ReconciledConfiguredConcept = { key: row.key, aliases };
   if (row.provenance != null && row.provenance !== "") concept.provenance = row.provenance;
   return concept;
@@ -393,7 +394,7 @@ function emptyResult(): ReconcileExternalConfiguredConceptsResult {
  * Does not call a model. Canonicalizes keys/forms, clusters compatible
  * duplicates, rejects malformed rows, and records ambiguity or conflict
  * as unresolved inspection evidence instead of deleting the key.
- * Successful identities project to ConfiguredConcept (`aliases[0]` canonical).
+ * Successful identities project to ConfiguredConcept (aliases are unordered peers).
  */
 export function reconcileExternalConfiguredConcepts(
   rows: unknown,

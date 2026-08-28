@@ -94,7 +94,7 @@ describe("configured prefix span resolver", () => {
     expect(resolveConfiguredSequence(q.tokens, plugins()[1]).status).toBe("none");
     expect(resolveConfiguredSpans(q.tokens, plugins()[1])).toEqual([]);
     expect(resolveConfiguredPrefixSpans(q.tokens, plugins()[1])).toEqual([
-      { key: "appsec", start: 3, end: 5, matchedKinds: ["expansion"], usedPrefix: true },
+      { key: "appsec", start: 3, end: 5, matchedKinds: ["form"], usedPrefix: true },
     ]);
   });
 
@@ -102,7 +102,7 @@ describe("configured prefix span resolver", () => {
     const q = analyzeQuery("what is application s", { plugins: plugins() });
     expect(resolveConfiguredSpans(q.tokens, plugins()[1])).toEqual([]);
     expect(resolveConfiguredPrefixSpans(q.tokens, plugins()[1])).toEqual([
-      { key: "appsec", start: 2, end: 4, matchedKinds: ["expansion"], usedPrefix: true },
+      { key: "appsec", start: 2, end: 4, matchedKinds: ["form"], usedPrefix: true },
     ]);
   });
 
@@ -147,7 +147,7 @@ describe("configured prefix span resolver", () => {
 
   test("exact configured windows stay on configuredSpans", () => {
     const q = analyzeQuery("what is an app sec", { plugins: plugins() });
-    expect(q.configuredSpans).toEqual([{ key: "appsec", start: 3, end: 5, matchedKinds: ["alias"] }]);
+    expect(q.configuredSpans).toEqual([{ key: "appsec", start: 3, end: 5, matchedKinds: ["form"] }]);
     expect(resolveConfiguredPrefixSpans(q.tokens, plugins()[1])).toEqual([]);
     expect(q.configuredPrefixSpans).toEqual([]);
   });
@@ -162,7 +162,7 @@ describe("wrapped configured prefix activation", () => {
     expect(q.configuredSequenceIntent).toBeNull();
     expect(q.configuredSpans).toEqual([]);
     expect(q.configuredPrefixSpans).toEqual([
-      { key: "appsec", start: 3, end: 5, matchedKinds: ["expansion"], usedPrefix: true },
+      { key: "appsec", start: 3, end: 5, matchedKinds: ["form"], usedPrefix: true },
     ]);
     expect(q.topicalRecall ?? null).toBeNull();
     expect(q.standaloneRecall ?? null).toBeNull();
@@ -246,7 +246,7 @@ describe("wrapped configured prefix retrieval", () => {
     const q = e._prepareQuery("what is an applicatio security");
     expect(q.configuredSequenceIntent).toBeNull();
     expect(q.configuredPrefixSpans).toEqual([
-      { key: "appsec", start: 3, end: 5, matchedKinds: ["expansion"], usedPrefix: true },
+      { key: "appsec", start: 3, end: 5, matchedKinds: ["form"], usedPrefix: true },
     ]);
     expect(q.topicalRecall ?? null).toBeNull();
     const hits = retrieveCandidates(q, e._index);
@@ -256,7 +256,7 @@ describe("wrapped configured prefix retrieval", () => {
     expect(detailed.results[0].features.configuredConceptMatch).toBeTruthy();
     expect(detailed.results[0].explanation.query.configuredSequenceIntent).toBeNull();
     expect(detailed.results[0].explanation.query.configuredPrefixSpans).toEqual([
-      { key: "appsec", start: 3, end: 5, matchedKinds: ["expansion"], usedPrefix: true },
+      { key: "appsec", start: 3, end: 5, matchedKinds: ["form"], usedPrefix: true },
     ]);
     expect(detailed.results[0].explanation.query.topicalRecall).toBeNull();
     expect(detailed.results[0].explanation.query.tokens.map((t) => t.surface)).toEqual([
@@ -281,7 +281,7 @@ describe("wrapped configured prefix retrieval", () => {
     expect(detailed.results[0].id).toBe("direct");
     expect(detailed.results[0].explanation.query.configuredPrefixSpans).toEqual([]);
     expect(detailed.results[0].explanation.query.configuredSpans).toEqual([
-      { key: "appsec", start: 3, end: 5, matchedKinds: ["alias"] },
+      { key: "appsec", start: 3, end: 5, matchedKinds: ["form"] },
     ]);
     expect(detailed.results[0].explanation.query.topicalRecall.key).toBe("appsec");
     const ids = retrieveCandidates(e._prepareQuery("what is an app sec"), e._index).map((h) => h.document.id);

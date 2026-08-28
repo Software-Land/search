@@ -148,6 +148,7 @@ export function compileConfiguredConcepts(candidates: EquivalenceCandidate[]): C
       seen.add(key);
       aliases.push([...seq]);
     }
+    aliases.sort((a, b) => a.join("\u001f").localeCompare(b.join("\u001f")));
     return {
       key: c.key || "",
       aliases,

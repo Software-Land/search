@@ -60,15 +60,15 @@ Type contracts `SearchPlugin`, `EnglishPlugin`, and `LexiconPlugin` describe the
 
 ## Configured concepts and relationshipMap
 
-Configured concepts are authored as `{ key, aliases }` plus optional identity metadata (`type`, `provenance`, `confidence`). `aliases[0]` is the canonical lexical sequence (compiled internally as the existing expansion sequence). Later aliases are alternate same-intent forms. Former fields `expansion` / `exp`, `primary`, `standaloneRecall`, and `topicalRecall` are rejected on `configuredConcepts` rows. Those metadata fields are not ranking weights. `migrateConfiguredEntry()` emits a `ConfiguredConcept` (`{ key, aliases, type?, provenance?, confidence? }`); `primary` is discarded, and standalone/topical recall are extracted into relationship descriptors.
+Configured concepts are authored as `{ key, aliases }` plus optional identity metadata (`type`, `provenance`, `confidence`). Aliases are unordered semantic peers: alias array order has no search semantic effect. `key` remains stable concept identity and the lexical key form used for exact-key recognition/disambiguation. Former fields `expansion` / `exp`, `primary`, `standaloneRecall`, and `topicalRecall` are rejected on `configuredConcepts` rows. Those metadata fields are not ranking weights. `migrateConfiguredEntry()` emits a `ConfiguredConcept` (`{ key, aliases, type?, provenance?, confidence? }`); former `exp` / `expansion` becomes one peer alias; `primary` is discarded, and standalone/topical recall are extracted into relationship descriptors.
 
 Once a query unambiguously occupies one configured concept, every authored spelling of that concept is the same search intent:
 
-- the key, `aliases[0]`, and later aliases produce identical ranked results (same candidate set, IDs, order, scores, `relevanceKind`, `directClass`, and related rail)
+- the key and every peer alias produce identical ranked results (same candidate set, IDs, order, scores, `relevanceKind`, `directClass`, and related rail)
 - typed surface stays on the query for explain/provenance and must not leak into ranking
-- exact configured-key identity outranks another concept's one-token alias or one-token expansion of that same typed form; two distinct exact keys still fail closed
-- one-token aliases and one-token expansions occupy only on exact typed identity
-- multi-token configured forms may still complete an incomplete final token when preceding tokens uniquely identify the concept (`continuous d` → `cd`)
+- exact configured-key identity outranks another concept's one-token alias of that same typed form; two distinct exact keys still fail closed
+- one-token aliases that are members of a longer peer form occupy only on exact typed identity
+- multi-token configured forms may still complete an incomplete final token when preceding tokens uniquely identify the concept (`continuous d` → `cd`). Ambiguous peer completions fail closed.
 - incomplete guessing of a configured *key* remains subject to the short-prefix information bound (`form.length < 3`)
 
 ```js

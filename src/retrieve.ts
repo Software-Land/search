@@ -1,3 +1,4 @@
+import { isOneTokenMemberOfLongerPeerForm, sequenceKey } from "./configuredAuthoring.js";
 import { isNearCompletePrefix, allowPrefixMatch, DEFAULT_STOP } from "./text.js";
 import {
   isAllDigitToken,
@@ -57,23 +58,38 @@ function sequencePresent(needles: string[], hay: string[]) {
   return false;
 }
 
-function expansionSequence(concept: QueryConcept) {
-  if (Array.isArray(concept.expansion) && concept.expansion.length) {
-    return concept.expansion.filter((f) => f && f !== concept.id && !/^\d+$/.test(f));
+function configuredPeerForms(concept: QueryConcept | null | undefined): string[][] {
+  const aliases = concept?.aliases;
+  if (Array.isArray(aliases) && aliases.length) {
+    const out: string[][] = [];
+    const seen = new Set<string>();
+    for (const alias of aliases) {
+      const seq = (alias || []).filter((f) => f && !/^\d+$/.test(f));
+      if (!seq.length) continue;
+      const key = sequenceKey(seq);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(seq);
+    }
+    return out.sort((a, b) => sequenceKey(a).localeCompare(sequenceKey(b)));
   }
-  return (concept.forms || []).filter((f) => f !== concept.id && !/^\d+$/.test(f));
+  if (Array.isArray(concept?.expansion) && concept.expansion.length) {
+    const seq = concept.expansion.filter((f) => f && f !== concept.id && !/^\d+$/.test(f));
+    return seq.length ? [seq] : [];
+  }
+  return [];
 }
 
 /**
- * Multi-token expansions require the expansion as a contiguous phrase.
+ * Multi-token forms require the form as a contiguous phrase.
  * Title fields may also accept a complete token set (short titles).
- * Body fields require a contiguous normalized expansion phrase — dispersed
+ * Body fields require a contiguous normalized phrase — dispersed
  * body tokens are not full configured-concept evidence.
- * A single expansion word is never full multi-token configured-concept evidence,
- * including a 1-token alias that is just one of the expansion words.
+ * A single token that is a member of any longer peer form is never full
+ * multi-token configured-concept evidence.
  */
-function isSingleExpansionWordAlias(seq: string[], expansion: string[]) {
-  return expansion.length >= 2 && seq.length === 1 && expansion.includes(seq[0]);
+function isSingleExpansionWordAlias(seq: string[], peerForms: string[][]) {
+  return isOneTokenMemberOfLongerPeerForm(seq, { aliases: peerForms });
 }
 
 function fieldHasExpansionEvidence(
@@ -102,11 +118,9 @@ function acronymFieldEvidence(
   opts: { requireContiguous?: boolean } = {}
 ) {
   if (tokenSet.has(concept.id) || lemmaSet.has(concept.id)) return true;
-  const expansion = expansionSequence(concept);
-  if (fieldHasExpansionEvidence(expansion, tokens, lemmas, tokenSet, lemmaSet, opts)) return true;
-  for (const alias of concept.aliases || []) {
-    const seq = (alias || []).filter((f) => f && !/^\d+$/.test(f));
-    if (isSingleExpansionWordAlias(seq, expansion)) continue;
+  const peerForms = configuredPeerForms(concept);
+  for (const seq of peerForms) {
+    if (isSingleExpansionWordAlias(seq, peerForms)) continue;
     if (fieldHasExpansionEvidence(seq, tokens, lemmas, tokenSet, lemmaSet, opts)) return true;
   }
   return false;
@@ -327,9 +341,13 @@ export function standaloneRecallConcept(query: AnalyzedQuery | null | undefined)
   return {
     id: hint.key,
     kind: "configured-concept",
-    forms: Array.isArray(hint.forms) && hint.forms.length ? hint.forms : [hint.key, ...(hint.expansion || [])],
-    expansion: [...(hint.expansion || [])],
-    aliases: (hint.aliases || []).map((alias) => [...alias]),
+    forms: Array.isArray(hint.forms) && hint.forms.length ? hint.forms : [hint.key],
+    expansion: [],
+    aliases: configuredPeerForms({
+      aliases: hint.aliases,
+      expansion: hint.expansion,
+      id: hint.key,
+    } as QueryConcept).map((alias) => [...alias]),
     provenance: "standalone-recall",
   };
 }
@@ -545,18 +563,34 @@ export function matchContextualTitlePrefix(query: AnalyzedQuery, doc: IndexedDoc
   };
 }
 
+function occupiedTitleJoins(query: AnalyzedQuery): string[] {
+  const acr = (query.concepts || []).find((c) => c.kind === "configured-concept");
+  if (!acr || !hasConfiguredSequenceIntent(query)) return [];
+  const joins = new Set<string>();
+  if (acr.id) joins.add(acr.id);
+  for (const form of configuredPeerForms(acr)) {
+    if (form.length) joins.add(form.join(" "));
+  }
+  return [...joins].sort();
+}
+
 function scanDocument(
   query: AnalyzedQuery,
   doc: IndexedDocument,
   add: (doc: IndexedDocument, source: string) => void
 ) {
   const identity = identityTokens(query);
-  if (doc.normalizedTitle === identity.map((t) => t.normalized).join(" ")) {
-    add(doc, "exact-title");
+  const occupiedJoins = occupiedTitleJoins(query);
+  if (occupiedJoins.length) {
+    if (occupiedJoins.includes(doc.normalizedTitle)) add(doc, "exact-title");
+    else if (occupiedJoins.some((join) => join && doc.normalizedTitle.startsWith(join))) add(doc, "title-prefix");
+  } else {
+    if (doc.normalizedTitle === identity.map((t) => t.normalized).join(" ")) {
+      add(doc, "exact-title");
+    }
+    const qNorm = identity.map((t) => t.normalized).join(" ");
+    if (qNorm && doc.normalizedTitle.startsWith(qNorm)) add(doc, "title-prefix");
   }
-
-  const qNorm = identity.map((t) => t.normalized).join(" ");
-  if (qNorm && doc.normalizedTitle.startsWith(qNorm)) add(doc, "title-prefix");
   const unbound = evidenceTokens(query);
   if (
     doc.titleTokens.some((tok) =>

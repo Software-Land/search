@@ -65,11 +65,11 @@ describe("exact configured spans", () => {
   test("exact alias and expansion windows collapse same-key duplicate forms", () => {
     const alias = analyzeQuery("what is an app sec", { plugins: plugins() });
     expect(resolveConfiguredSpans(alias.tokens, plugins()[1])).toEqual([
-      { key: "appsec", start: 3, end: 5, matchedKinds: ["alias"] },
+      { key: "appsec", start: 3, end: 5, matchedKinds: ["form"] },
     ]);
     const expansion = analyzeQuery("what is application security", { plugins: plugins() });
     const spans = resolveConfiguredSpans(expansion.tokens, plugins()[1]);
-    expect(spans).toEqual([{ key: "appsec", start: 2, end: 4, matchedKinds: ["expansion"] }]);
+    expect(spans).toEqual([{ key: "appsec", start: 2, end: 4, matchedKinds: ["form"] }]);
   });
 
   test("incomplete and prefix tokens do not create spans", () => {
@@ -213,7 +213,7 @@ describe("wrapped span retrieval", () => {
     const detailed = e.searchDetailed("what is an app sec", { limit: 10, explain: true });
     expect(detailed.results[0].explanation.query.configuredSequenceIntent).toBeNull();
     expect(detailed.results[0].explanation.query.configuredSpans).toEqual([
-      { key: "appsec", start: 3, end: 5, matchedKinds: ["alias"] },
+      { key: "appsec", start: 3, end: 5, matchedKinds: ["form"] },
     ]);
     expect(detailed.results[0].explanation.query.topicalRecall.key).toBe("appsec");
     expect(detailed.results[0].explanation.query.tokens.map((t) => t.surface)).toEqual(["what", "is", "an", "app", "sec"]);

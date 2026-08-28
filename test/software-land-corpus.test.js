@@ -312,11 +312,12 @@ describe("software-land corpus fixture", () => {
 });
 
 describe("software-land fixture inputs are load-bearing", () => {
-  test("dynamic programming #2 depends on the site lemma table", async () => {
+  test("sorting #3 depends on the site lemma table", async () => {
     const without = await indexEngine(createEngine({ useLemmas: false }));
-    expect(without.search("dynamic programming", { limit: 2 }).map((hit) => hit.title)).not.toEqual([
+    expect(without.search("sorting", { limit: 3 }).map((hit) => hit.title)).not.toEqual([
+      "Python Custom Sorting",
+      "Topological Sort",
       "Dynamic Programming Matrix",
-      "What is Recursion?",
     ]);
   });
 
@@ -396,7 +397,7 @@ describe("software-land candidate-stage survival", () => {
     const expected = {
       2: 63,
       "Edge Computing": 62,
-      aplicationsecurity: 3,
+      aplicationsecurity: 4,
       tls: 7,
       "machine learning": 9,
       what: 79,

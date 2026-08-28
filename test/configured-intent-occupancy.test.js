@@ -166,7 +166,7 @@ describe("first-token configured prefix disambiguation", () => {
     expect(q.tokens.map((t) => t.surface)).toEqual(["what", "is", "an", "appl"]);
     expect(q.configuredSequenceIntent).toBeNull();
     expect(q.configuredPrefixSpans).toEqual([
-      { key: "api", start: 3, end: 4, matchedKinds: ["expansion"], usedPrefix: true },
+      { key: "api", start: 3, end: 4, matchedKinds: ["form"], usedPrefix: true },
     ]);
     expect(acronymIds(q)).toEqual(["api"]);
     expect(q.topicalRecall ?? null).toBeNull();

@@ -28,7 +28,7 @@ export interface SearchDocument {
 
 export interface ConfiguredConcept {
   key: string;
-  /** aliases[0] is the canonical lexical sequence; remaining aliases are same-intent forms. */
+  /** Unordered peer lexical forms. Alias array order has no search semantic effect. */
   aliases?: string[][];
   type?: string;
   provenance?: string | null;
@@ -56,7 +56,7 @@ export interface TopicalRecall {
 export interface ConfiguredConceptSequence {
   concept: ConfiguredConcept;
   tokens: string[];
-  kind: "key" | "expansion" | "alias" | string;
+  kind: "key" | "form" | string;
 }
 
 export interface SearchPlugin {
@@ -143,7 +143,9 @@ export interface ContextualCompletion {
 
 /**
  * Unique complete-query alignment to one configured concept.
- * Canonical expansion is lexical intent; typed tokens stay typed.
+ * `expansion` is the matched peer form for this query (explain/provenance).
+ * It is not a canonical or privileged alias. Concept-level ranking uses
+ * the unordered set of peer forms.
  */
 export interface ConfiguredSequenceIntent {
   key: string;
@@ -219,7 +221,7 @@ export interface AnalyzedQuery {
   /**
    * Typed query identity after analysis, including unique-prefix rewrite of
    * the final token when applicable. Unique configured-key matches no longer
-   * rewrite these tokens; canonical expansion lives on `lexicalTokens`.
+   * rewrite these tokens; occupied concept-level ranking identity lives on `lexicalTokens`.
    */
   tokens: QueryToken[];
   concepts: QueryConcept[];

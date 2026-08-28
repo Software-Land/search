@@ -6,16 +6,16 @@
  * Authored shape:
  * { key: "tls", aliases: [["transport","layer","security"], ["transport","layer"]] }
  *
- * aliases[0] is the canonical lexical sequence (sequence kind "expansion").
- * aliases[1...] are additional same-concept forms (sequence kind "alias").
+ * `key` compiles as the key sequence. Every alias compiles as an equal non-key
+ * sequence kind "form". Alias array order is not a ranking signal.
  * standaloneRecall / topicalRecall are compiled from relationshipMap, not stored on the concept.
  */
 
 import type { ConfiguredConcept, ConfiguredConceptSequence, RelationshipArtifact } from "./types.js";
 import {
-  additionalConfiguredConceptAliases,
-  canonicalConfiguredConceptForm,
+  allConfiguredConceptForms,
   compileAuthoredConcept,
+  sequenceKey,
 } from "./configuredAuthoring.js";
 import { ARTIFACT_FORMATS, ARTIFACT_VERSION } from "./artifacts.js";
 import {
@@ -62,16 +62,19 @@ function configuredConceptPluginFromNormalized(
   for (const concept of list) {
     byKey.set(concept.key, concept);
     sequences.push({ concept, tokens: [concept.key], kind: "key" });
-    const canonical = canonicalConfiguredConceptForm(concept);
-    if (canonical.length) {
-      sequences.push({ concept, tokens: canonical, kind: "expansion" });
-    }
-    for (const alias of additionalConfiguredConceptAliases(concept)) {
-      sequences.push({ concept, tokens: alias, kind: "alias" });
+    for (const form of allConfiguredConceptForms(concept)) {
+      if (!form.length) continue;
+      sequences.push({ concept, tokens: form, kind: "form" });
     }
   }
 
-  sequences.sort((a, b) => b.tokens.length - a.tokens.length);
+  sequences.sort(
+    (a, b) =>
+      b.tokens.length - a.tokens.length ||
+      sequenceKey(a.tokens).localeCompare(sequenceKey(b.tokens)) ||
+      a.concept.key.localeCompare(b.concept.key) ||
+      String(a.kind).localeCompare(String(b.kind))
+  );
 
   return {
     name: "configured-concepts",

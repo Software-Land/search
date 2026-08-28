@@ -1,9 +1,12 @@
 /**
  * 0.5.0 configured-concept authoring.
  *
- * Public entries are `{ key, aliases }`. aliases[0] is the canonical lexical
- * sequence and is compiled internally as sequence kind "expansion".
- * This module does not rank, retrieve, or rewrite query identity.
+ * Public entries are `{ key, aliases }`. Every alias is an unordered semantic
+ * peer. Alias array order has no search semantic effect. `key` is stable
+ * concept identity and the lexical key form. This module does not rank,
+ * retrieve, or rewrite query identity.
+ * Runtime may sort or otherwise derive deterministic internal representations
+ * with no ranking privilege.
  */
 
 import { InvalidConfigurationError } from "./errors.js";
@@ -96,9 +99,44 @@ function dedupeSequences(sequences: string[][]): string[][] {
 }
 
 /**
+ * Unordered peer lexical forms of a configured concept. Deduped. Author
+ * order is preserved for the stored artifact only and has no ranking meaning.
+ */
+export function allConfiguredConceptForms(concept?: { aliases?: string[][] } | null): string[][] {
+  const aliases = concept?.aliases;
+  if (!Array.isArray(aliases) || !aliases.length) return [];
+  return dedupeSequences(aliases.filter((alias) => Array.isArray(alias) && alias.length));
+}
+
+/**
+ * Serialization-only ordering. Never a ranking or occupancy tie-break.
+ */
+export function sortConfiguredForms(forms: string[][]): string[][] {
+  return [...forms].sort((a, b) => sequenceKey(a).localeCompare(sequenceKey(b)));
+}
+
+/**
+ * One-token form that is a member of any longer peer form of the same concept.
+ * Exact-only occupancy; not a prefix/span of the longer form.
+ */
+export function isOneTokenMemberOfLongerPeerForm(
+  tokens: readonly string[] | null | undefined,
+  concept?: { key?: string; aliases?: string[][] } | null
+): boolean {
+  if (!tokens || tokens.length !== 1) return false;
+  const token = tokens[0];
+  if (!token) return false;
+  for (const form of allConfiguredConceptForms(concept)) {
+    if (form.length < 2) continue;
+    if (form.includes(token)) return true;
+  }
+  return false;
+}
+
+/**
  * One-shot helper for 0.4 / early-0.5 `{ key, exp|expansion, aliases, primary, type, provenance, confidence, standaloneRecall, topicalRecall }`.
- * Runtime search does not call this. aliases[0] is the former canonical expansion,
- * preserving existing alias order. Exact duplicate sequences are dropped, not reordered.
+ * Runtime search does not call this. Former `exp` / `expansion` becomes one
+ * peer alias among the rest. Exact duplicate sequences are dropped, not reordered.
  * Identity metadata `type` / `provenance` / `confidence` is preserved when supplied.
  * `primary` is discarded and is not mapped to any relationship.
  */
@@ -117,11 +155,11 @@ export function migrateConfiguredEntry(raw: unknown): MigratedConfiguredEntry {
       expected: "non-empty string",
     });
   }
-  const canonical = asSequence(rec.exp != null ? rec.exp : rec.expansion);
+  const fromExp = asSequence(rec.exp != null ? rec.exp : rec.expansion);
   const rest = Array.isArray(rec.aliases)
     ? rec.aliases.map((alias) => asSequence(alias)).filter((alias) => alias.length)
     : [];
-  const aliases = dedupeSequences(canonical.length ? [canonical, ...rest] : rest);
+  const aliases = dedupeSequences(fromExp.length ? [fromExp, ...rest] : rest);
   const discardedPrimary = rec.primary == null || rec.primary === "" ? null : String(rec.primary);
   const standaloneRelationships: MigratedStandaloneRelationship[] = [];
   if (Array.isArray(rec.standaloneRecall)) {
@@ -165,23 +203,11 @@ export function authoredConceptRemovedFields(raw: object): string[] {
   return REMOVED_AUTHORED_FIELDS.filter((field) => field in raw);
 }
 
-/** Canonical lexical sequence. Sequence kind "expansion". */
-export function canonicalConfiguredConceptForm(concept?: { aliases?: string[][] } | null): string[] {
-  const form = concept?.aliases?.[0];
-  return Array.isArray(form) ? form : [];
-}
-
-/** Additional same-concept forms. Sequence kind "alias". */
-export function additionalConfiguredConceptAliases(concept?: { aliases?: string[][] } | null): string[][] {
-  const aliases = concept?.aliases;
-  if (!Array.isArray(aliases) || aliases.length < 2) return [];
-  return aliases.slice(1);
-}
-
 /**
  * Compile a public `{ key, aliases }` row into a compiler-owned ConfiguredConcept.
- * aliases[0] is the canonical lexical sequence; aliases[1...] are additional forms.
- * Sequence kinds "expansion" / "alias" are derived at index build, not stored.
+ * Aliases are unordered semantic peers. Sequence kind "form" is derived at
+ * index build for every alias; it is not stored. Alias array order is
+ * preserved in the compiled row and has no ranking meaning.
  */
 export function compileAuthoredConcept(raw: unknown): ConfiguredConcept | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw) || !("key" in raw) || !(raw as { key?: unknown }).key) {
@@ -191,7 +217,7 @@ export function compileAuthoredConcept(raw: unknown): ConfiguredConcept | null {
   const removed = authoredConceptRemovedFields(rec);
   if (removed.length) {
     throw new InvalidConfigurationError(
-      `authored configured entries must be { key, aliases }; found ${removed.join(", ")}. Use migrateConfiguredEntry() for a one-shot conversion; aliases[0] is the canonical lexical sequence.`,
+      `authored configured entries must be { key, aliases }; found ${removed.join(", ")}. Use migrateConfiguredEntry() for a one-shot conversion; aliases are unordered semantic peers.`,
       { field: removed[0], expected: "aliases" }
     );
   }

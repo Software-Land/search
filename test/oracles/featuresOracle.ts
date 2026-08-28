@@ -10,6 +10,7 @@ import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatches
 import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, identityTokens, evidenceTokens, isSearchEquivalenceRecallConcept } from "../../src/retrieve.js";
 import { saturatingFrequency } from "../../src/saturatingFrequency.js";
 import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "../../src/lexicalNormalize.js";
+import { sequenceKey } from "../../src/configuredAuthoring.js";
 import {
   FULL_QUERY_COVERAGE,
   TWO_THIRDS_QUERY_COVERAGE,
@@ -30,6 +31,51 @@ import type {
 
 export { saturatingFrequency };
 
+function peerFormsOf(concept: QueryConcept | null | undefined): string[][] {
+  if (!concept) return [];
+  const raw = Array.isArray(concept.aliases) && concept.aliases.length
+    ? concept.aliases
+    : concept.expansion?.length
+      ? [concept.expansion]
+      : [];
+  const out: string[][] = [];
+  const seen = new Set<string>();
+  for (const alias of raw) {
+    const seq = (alias || []).filter((f) => f && !/^\d+$/.test(f));
+    if (!seq.length) continue;
+    const key = sequenceKey(seq);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(seq);
+  }
+  return out.sort((a, b) => sequenceKey(a).localeCompare(sequenceKey(b)));
+}
+
+function peerFormJoinsOf(concept: QueryConcept | null | undefined): string[] {
+  const joins = new Set<string>();
+  if (concept?.id) joins.add(concept.id);
+  for (const form of peerFormsOf(concept)) {
+    const join = form.join(" ");
+    if (join) joins.add(join);
+  }
+  return [...joins].sort();
+}
+
+function primaryPhraseOf(keys: string[]): string {
+  if (!keys.length) return "";
+  let best = keys[0];
+  let bestN = best.split(/\s+/).length;
+  for (let i = 1; i < keys.length; i++) {
+    const key = keys[i];
+    const n = key.split(/\s+/).length;
+    if (n > bestN || (n === bestN && key < best)) {
+      best = key;
+      bestN = n;
+    }
+  }
+  return best;
+}
+
 type ConfiguredConceptMatch = false | "key-in-title" | "expansion";
 type VersionMatch = false | "dotted" | "compact-dotted" | "compact-weak" | "dotted-weak";
 
@@ -44,6 +90,9 @@ function conceptCoveredInTitle(concept: QueryConcept, doc: IndexedDocument) {
 }
 
 function exactTitle(query: AnalyzedQuery, doc: IndexedDocument) {
+  const acr = query.concepts.find((c) => c.kind === "configured-concept") || null;
+  const joins = hasConfiguredSequenceIntent(query) ? peerFormJoinsOf(acr) : [];
+  if (joins.length) return joins.includes(doc.normalizedTitle);
   const q = identityTokens(query).map((t) => t.normalized).join(" ");
   return q.length > 0 && q === doc.normalizedTitle;
 }
@@ -246,6 +295,17 @@ function adjacentOn(queryToks: string[], fieldToks: string[]) {
 }
 
 function phraseAdjacency(query: AnalyzedQuery, doc: IndexedDocument) {
+  const acr = query.concepts.find((c) => c.kind === "configured-concept") || null;
+  const forms = hasConfiguredSequenceIntent(query) ? peerFormsOf(acr) : [];
+  if (forms.length) {
+    let best = 0;
+    for (const form of forms) {
+      if (form.length < 2) continue;
+      if (adjacentOn(form, doc.titleTokens) || adjacentOn(form, doc.titleLemmas)) return 1;
+      if (adjacentOn(form, doc.bodyTokens) || adjacentOn(form, doc.bodyLemmas)) best = Math.max(best, 0.5);
+    }
+    return best;
+  }
   const qToks = queryNonStop(query).map((t) => t.normalized);
   const qLemmas = queryNonStop(query).map((t) => t.lemma || t.normalized);
   if (qToks.length < 2) return 0;
@@ -257,13 +317,16 @@ function phraseAdjacency(query: AnalyzedQuery, doc: IndexedDocument) {
 function expansionEvidence(query: AnalyzedQuery, doc: IndexedDocument) {
   const acr = query.concepts.find((c) => c.kind === "configured-concept");
   if (!acr) return 0;
-  const expansion =
-    Array.isArray(acr.expansion) && acr.expansion.length
-      ? acr.expansion.filter((f) => f !== acr.id && !/^\d+$/.test(f))
-      : acr.forms.filter((f) => f !== acr.id && !/^\d+$/.test(f));
-  if (!expansion.length) return 0;
-  const hits = expansion.filter((f) => doc.titleTokenSet.has(f) || doc.titleLemmaSet.has(f));
-  return Number((hits.length / expansion.length).toFixed(4));
+  const forms = peerFormsOf(acr);
+  if (!forms.length) return 0;
+  let best = 0;
+  for (const form of forms) {
+    if (!form.length) continue;
+    const hits = form.filter((f) => doc.titleTokenSet.has(f) || doc.titleLemmaSet.has(f));
+    const score = hits.length / form.length;
+    if (score > best) best = score;
+  }
+  return Number(best.toFixed(4));
 }
 
 function occupiedPartialExpansion(query: AnalyzedQuery) {
@@ -303,12 +366,11 @@ function exactTokenSequence(seq: string[], fieldToks: string[]) {
 function configuredExpansionBodyMatch(query: AnalyzedQuery, doc: IndexedDocument) {
   const acr = occupiedPartialExpansion(query);
   if (!acr) return false;
-  const expansion =
-    Array.isArray(acr.expansion) && acr.expansion.length
-      ? acr.expansion.filter((f) => f !== acr.id && !/^\d+$/.test(f))
-      : (acr.forms || []).filter((f) => f !== acr.id && !/^\d+$/.test(f));
-  if (expansion.length < 3) return false;
-  return exactTokenSequence(expansion, doc.bodyTokens) || exactTokenSequence(expansion, doc.bodyLemmas);
+  const forms = peerFormsOf(acr).filter((form) => form.length >= 3);
+  if (!forms.length) return false;
+  return forms.some(
+    (form) => exactTokenSequence(form, doc.bodyTokens) || exactTokenSequence(form, doc.bodyLemmas)
+  );
 }
 
 function queryIsConfiguredKey(query: AnalyzedQuery) {
@@ -379,6 +441,35 @@ function lexicalQueryNonStop(query: AnalyzedQuery) {
 }
 
 function phraseKeyCandidates(query: AnalyzedQuery) {
+  const acr = query.concepts.find((c) => c.kind === "configured-concept") || null;
+  const occupiedForms = hasConfiguredSequenceIntent(query) ? peerFormsOf(acr) : [];
+  if (occupiedForms.length) {
+    const keys: string[] = [];
+    const seen = new Set<string>();
+    const lexical = query.lexicalTokens || [];
+    for (const form of occupiedForms) {
+      if (form.length < 1) continue;
+      const toks = form.map((word) => {
+        const hit = lexical.find(
+          (t) => t.surface === word || t.surfaceNormalized === word || t.normalized === word
+        );
+        return hit ? hit.lemma || hit.normalized : word;
+      });
+      const key = toks.join(" ");
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      keys.push(key);
+      if (toks.length >= 3) {
+        const left = toks.slice(0, 2).join(" ");
+        if (left && !seen.has(left)) {
+          seen.add(left);
+          keys.push(left);
+        }
+      }
+    }
+    keys.sort();
+    return keys;
+  }
   const source = lexicalPhraseQueryTokens(query);
   const toks = canonicalLexicalTokensFromQuery(source);
   if (!toks.length) return [];
@@ -401,7 +492,7 @@ function phraseKeyCandidates(query: AnalyzedQuery) {
 function compiledPhraseLookup(query: AnalyzedQuery, doc: IndexedDocument) {
   const candidates = phraseKeyCandidates(query);
   const ngrams = doc.lexicalFrequency || null;
-  const primary = candidates[0] || "";
+  const primary = primaryPhraseOf(candidates);
   let matchingPhraseKey: string | null = null;
   let count = 0;
   const firstPositive = hasBoundContextualCompletion(query) && candidates.length > 1;
@@ -415,7 +506,7 @@ function compiledPhraseLookup(query: AnalyzedQuery, doc: IndexedDocument) {
       }
       continue;
     }
-    if (n > count) {
+    if (n > count || (n === count && n > 0 && matchingPhraseKey != null && key < matchingPhraseKey)) {
       count = n;
       matchingPhraseKey = key;
     }

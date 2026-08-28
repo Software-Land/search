@@ -8,8 +8,8 @@ import { classifyExpansionRelation } from "../tools/search-corpus/lib/externalEq
 import { acronymKey, expansionTokens } from "../tools/search-corpus/lib/text.js";
 import { compileAuthoredRelevance } from "../dist/index.js";
 
-function extraAliases(concept) {
-  return (concept.aliases || []).slice(1);
+function peerAliases(concept) {
+  return [...(concept.aliases || [])];
 }
 
 function forbiddenConceptFields(row) {
@@ -41,8 +41,13 @@ describe("reconcileExternalConfiguredConcepts", () => {
     ]);
     expect(result.configuredConcepts.map((e) => e.key)).toEqual(["api", "ml"]);
     expect(result.format).toBe("search-corpus-external-configured-concept-reconciliation");
-    expect(result.configuredConcepts[0].aliases[0]).toEqual(["application", "programming", "interface"]);
-    expect(extraAliases(result.configuredConcepts[0])).toEqual([["app", "programming", "interface"]]);
+    expect(peerAliases(result.configuredConcepts[0])).toEqual(
+      expect.arrayContaining([
+        ["application", "programming", "interface"],
+        ["app", "programming", "interface"],
+      ])
+    );
+    expect(peerAliases(result.configuredConcepts[0])).toHaveLength(2);
     expect(forbiddenConceptFields(result.configuredConcepts[0])).toEqual([]);
     expect(result.configuredConcepts[1].aliases[0]).toEqual(["machine", "learning"]);
     expect(result.reconciliations.find((row) => row.key === "ml").evidenceDocumentIds).toEqual(["a", "b"]);
@@ -59,7 +64,9 @@ describe("reconcileExternalConfiguredConcepts", () => {
     expect(result.configuredConcepts).toHaveLength(1);
     expect(result.configuredConcepts[0].key).toBe("fps");
     expect(result.reconciliations[0].evidenceDocumentIds).toEqual(["d1", "d2"]);
-    expect(extraAliases(result.configuredConcepts[0])).toEqual([["frame", "rate"]]);
+    expect(peerAliases(result.configuredConcepts[0])).toEqual(
+      expect.arrayContaining([["frames", "per", "second"], ["frame", "rate"]])
+    );
   });
 
   test("skips empty alias entries instead of rejecting the row", () => {
@@ -67,7 +74,7 @@ describe("reconcileExternalConfiguredConcepts", () => {
       { key: "fps", expansion: "frames per second", aliases: [[], [""], ["frame", "rate"]] },
     ]);
     expect(result.configuredConcepts).toHaveLength(1);
-    expect(result.configuredConcepts[0].aliases).toEqual([["frames", "per", "second"], ["frame", "rate"]]);
+    expect(result.configuredConcepts[0].aliases).toEqual([["frame", "rate"], ["frames", "per", "second"]]);
   });
 
   test("skips expansions that tokenize to only function words", () => {
@@ -142,8 +149,13 @@ describe("reconcileExternalConfiguredConcepts", () => {
     expect(result.conflicts).toHaveLength(0);
     const row = result.configuredConcepts[0];
     expect(row.key).toBe("grpc");
-    expect(row.aliases[0]).toEqual(["google", "remote", "procedure", "call"]);
-    expect(extraAliases(row)).toEqual([["grpc", "remote", "procedure", "calls"]]);
+    expect(peerAliases(row)).toEqual(
+      expect.arrayContaining([
+        ["google", "remote", "procedure", "call"],
+        ["grpc", "remote", "procedure", "calls"],
+      ])
+    );
+    expect(peerAliases(row)).toHaveLength(2);
     expect(result.reconciliations[0].evidenceDocumentIds).toEqual(["a", "b"]);
     expect(result.reconciliations[0]).toMatchObject({ key: "grpc", kind: "compatible", eligible: true });
   });
@@ -154,8 +166,12 @@ describe("reconcileExternalConfiguredConcepts", () => {
       { key: "iot", expansion: "internet things", evidenceDocumentIds: ["b"] },
     ]);
     expect(result.configuredConcepts).toHaveLength(1);
-    expect(result.configuredConcepts[0].aliases[0]).toEqual(["internet", "things"]);
-    expect(extraAliases(result.configuredConcepts[0])).toEqual([["internet", "of", "things"]]);
+    expect(peerAliases(result.configuredConcepts[0])).toEqual(
+      expect.arrayContaining([
+        ["internet", "things"],
+        ["internet", "of", "things"],
+      ])
+    );
   });
 
   test("collapses plural/singular compatible variants", () => {
@@ -165,7 +181,7 @@ describe("reconcileExternalConfiguredConcepts", () => {
     ]);
     expect(result.configuredConcepts).toHaveLength(1);
     expect(result.unresolved).toHaveLength(0);
-    expect(extraAliases(result.configuredConcepts[0]).length).toBe(1);
+    expect(peerAliases(result.configuredConcepts[0]).length).toBe(2);
   });
 
   test("keeps CI/CD delivery vs deployment as ambiguity, not an auto-unioned alias", () => {
@@ -270,8 +286,9 @@ describe("reconcileExternalConfiguredConcepts spelling and abbreviation compatib
     expect(result.conflicts).toHaveLength(0);
     const row = result.configuredConcepts[0];
     expect(row.key).toBe("ack");
-    expect(row.aliases[0]).toEqual(["acknowledgement"]);
-    expect(extraAliases(row)).toEqual([["acknowledgment"]]);
+    expect(peerAliases(row)).toEqual(
+      expect.arrayContaining([["acknowledgement"], ["acknowledgment"]])
+    );
     expect(result.reconciliations[0].evidenceDocumentIds).toEqual(["cf", "r"]);
     expect(result.reconciliations[0]).toMatchObject({ key: "ack", kind: "compatible", eligible: true });
   });
@@ -328,8 +345,10 @@ describe("reconcileExternalConfiguredConcepts spelling and abbreviation compatib
       ],
       { strict: false }
     );
-    expect(spoken.configuredConcepts.find((row) => row.key === "cpp").aliases[0]).toEqual(["c", "plus", "plus"]);
-    expect(extraAliases(spoken.configuredConcepts.find((row) => row.key === "cpp"))).toEqual([]);
+    expect(spoken.configuredConcepts.find((row) => row.key === "cpp").aliases).toEqual(
+      expect.arrayContaining([["c", "plus", "plus"]])
+    );
+    expect(peerAliases(spoken.configuredConcepts.find((row) => row.key === "cpp"))).toHaveLength(1);
     expect(spoken.configuredConcepts.find((row) => row.key === "csharp").aliases[0]).toEqual(["c", "sharp"]);
     expect(spoken.configuredConcepts.find((row) => row.key === "fsharp").aliases[0]).toEqual(["f", "sharp"]);
     expect(spoken.configuredConcepts.find((row) => row.key === "astar").aliases[0]).toEqual(["a", "star"]);
@@ -384,8 +403,7 @@ describe("reconcileExternalConfiguredConcepts spelling and abbreviation compatib
     expect(result.configuredConcepts).toHaveLength(1);
     expect(result.unresolved).toHaveLength(0);
     const row = result.configuredConcepts[0];
-    expect(row.aliases[0]).toEqual(["tech", "debt"]);
-    expect(extraAliases(row)).toEqual([["technical", "debt"]]);
+    expect(peerAliases(row)).toEqual(expect.arrayContaining([["tech", "debt"], ["technical", "debt"]]));
     expect(result.reconciliations[0]).toMatchObject({ key: "techdebt", kind: "compatible", eligible: true });
   });
 
@@ -421,7 +439,7 @@ describe("reconcileExternalConfiguredConcepts spelling and abbreviation compatib
     ).toThrow(/primary/);
   });
 
-  test("candidate expansion projects to aliases[0] and feeds compileAuthoredRelevance", () => {
+  test("candidate expansion projects as one peer alias and feeds compileAuthoredRelevance", () => {
     expect(() =>
       reconcileExternalConfiguredConcepts([{ key: "cd", expansions: [["continuous", "delivery"]] }])
     ).toThrow(ExternalConfiguredConceptError);

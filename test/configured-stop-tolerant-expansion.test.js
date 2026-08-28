@@ -50,7 +50,7 @@ describe("stop-tolerant configured expansion alignment", () => {
       "technology",
     ]);
     expect(q.configuredSequenceIntent?.key).toBe("nist");
-    expect(q.configuredSequenceIntent?.matchedKinds).toContain("expansion");
+    expect(q.configuredSequenceIntent?.matchedKinds).toContain("form");
     expect(resolveConfiguredSequence(q.tokens, plugins()[1])).toMatchObject({
       status: "unique",
       alignment: "full",
@@ -229,13 +229,8 @@ describe("explicit exact 1-token configured aliases", () => {
     const q = analyze("institute", nistAliases);
     expect(q.tokens.map((t) => t.surface)).toEqual(["institute"]);
     expect(q.configuredSequenceIntent?.key).toBe("nist");
-    expect(q.configuredSequenceIntent?.matchedKinds).toEqual(["alias"]);
-    expect(q.configuredSequenceIntent?.expansion).toEqual([
-      "national",
-      "institute",
-      "standards",
-      "technology",
-    ]);
+    expect(q.configuredSequenceIntent?.matchedKinds).toEqual(["form"]);
+    expect(q.configuredSequenceIntent?.expansion).toEqual(["institute"]);
     expect(resolveConfiguredSequence(q.tokens, plugins(nistAliases)[1])).toMatchObject({
       status: "unique",
       alignment: "full",
@@ -247,15 +242,21 @@ describe("explicit exact 1-token configured aliases", () => {
   test("an explicit 2-token alias occupies without prefixing unrelated institute queries", () => {
     const q = analyze("institute standards", nistAliases);
     expect(q.configuredSequenceIntent?.key).toBe("nist");
-    expect(q.configuredSequenceIntent?.matchedKinds).toContain("alias");
+    expect(q.configuredSequenceIntent?.matchedKinds).toContain("form");
     for (const raw of ["institute technology", "institute programming", "institute security"]) {
       expect(analyze(raw, nistAliases).configuredSequenceIntent).toBeNull();
     }
   });
 
   test("a prefix of a 1-token alias does not occupy", () => {
+    const dict = [
+      {
+        key: "nist",
+        aliases: [["national", "institute", "standards", "technology"], ["institute"]],
+      },
+    ];
     for (const raw of ["inst", "instit", "institu"]) {
-      expect(analyze(raw, nistAliases).configuredSequenceIntent?.key).not.toBe("nist");
+      expect(analyze(raw, dict).configuredSequenceIntent?.key).not.toBe("nist");
     }
   });
 

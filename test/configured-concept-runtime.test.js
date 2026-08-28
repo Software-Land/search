@@ -42,12 +42,14 @@ describe("canonical ConfiguredConcept runtime", () => {
       expect(seq.concept).toBe(plugin.byKey.get(seq.concept.key));
     }
     expect(plugin.sequences.find((s) => s.kind === "key").tokens).toEqual(["http"]);
-    expect(plugin.sequences.find((s) => s.kind === "expansion").tokens).toEqual([
-      "hypertext",
-      "transfer",
-      "protocol",
-    ]);
-    expect(plugin.sequences.find((s) => s.kind === "alias").tokens).toEqual(["http", "protocol"]);
+    const forms = plugin.sequences.filter((s) => s.kind === "form").map((s) => s.tokens);
+    expect(forms).toEqual(
+      expect.arrayContaining([
+        ["hypertext", "transfer", "protocol"],
+        ["http", "protocol"],
+      ])
+    );
+    expect(plugin.sequences.filter((s) => s.kind === "form")).toHaveLength(2);
   });
 
   test("omitted type is not invented", () => {
@@ -91,7 +93,7 @@ describe("canonical ConfiguredConcept runtime", () => {
     ).has("institute")).toBe(false);
   });
 
-  test("standalone recall query hydration uses aliases[0] and aliases[1...]", () => {
+  test("standalone recall query hydration uses all peer aliases without a privileged expansion", () => {
     const plugin = configuredConceptPluginFromLegacy([
       {
         key: "http",
@@ -106,9 +108,13 @@ describe("canonical ConfiguredConcept runtime", () => {
     expect(q.standaloneRecall).toMatchObject({
       key: "http",
       sourceToken: "hypertext",
-      expansion: ["hypertext", "transfer", "protocol"],
-      aliases: [["http", "protocol"]],
+      expansion: [],
+      aliases: expect.arrayContaining([
+        ["hypertext", "transfer", "protocol"],
+        ["http", "protocol"],
+      ]),
     });
+    expect(q.standaloneRecall.aliases).toHaveLength(2);
     expect(q.standaloneRecall.forms).toEqual(["http", "hypertext", "transfer", "protocol"]);
   });
 
@@ -179,24 +185,33 @@ describe("canonical ConfiguredConcept query occupancy", () => {
       const q = analyzeQuery(raw, { plugins });
       expect(q.configuredSequenceIntent?.key ?? null).toBe(key);
       if (key === "http" && raw !== "hypertext") {
-        expect(q.concepts.find((c) => c.kind === "configured-concept")?.expansion).toEqual([
-          "hypertext",
-          "transfer",
-          "protocol",
-        ]);
+        const concept = q.concepts.find((c) => c.kind === "configured-concept");
+        expect(concept?.aliases).toEqual(
+          expect.arrayContaining([
+            ["hypertext", "transfer", "protocol"],
+            ["http", "protocol"],
+          ])
+        );
+        if (raw === "http") expect(concept?.expansion).toEqual([]);
+        if (raw === "hypertext transfer protocol") {
+          expect(concept?.expansion).toEqual(["hypertext", "transfer", "protocol"]);
+        }
+        if (raw === "http protocol") expect(concept?.expansion).toEqual(["http", "protocol"]);
       }
     }
     const standalone = analyzeQuery("hypertext", { plugins });
     expect(standalone.standaloneRecall?.key).toBe("http");
-    expect(standalone.standaloneRecall?.expansion).toEqual(["hypertext", "transfer", "protocol"]);
+    expect(standalone.standaloneRecall?.expansion).toEqual([]);
+    expect(standalone.standaloneRecall?.aliases).toEqual(
+      expect.arrayContaining([
+        ["hypertext", "transfer", "protocol"],
+        ["http", "protocol"],
+      ])
+    );
     const topical = analyzeQuery("appsec", { plugins });
     expect(topical.topicalRecall).toEqual({ key: "appsec", forms: [["authentication"]] });
     const detailed = engine.searchDetailed("http", { limit: 10, explain: true });
     expect(detailed.results[0].id).toBe("http");
-    expect(detailed.results[0].explanation.query.configuredSequenceIntent.expansion).toEqual([
-      "hypertext",
-      "transfer",
-      "protocol",
-    ]);
+    expect(detailed.results[0].explanation.query.configuredSequenceIntent.expansion).toEqual([]);
   });
 });

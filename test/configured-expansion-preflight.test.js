@@ -171,7 +171,7 @@ describe("single-token frames ranking window", () => {
     expect(fps).toBeTruthy();
     expect(fps.provenance).toBe("partial-expansion");
     expect(fps.matchedExpansionTokens).toBe(2);
-    expect(fps.expansionCoverage).toBe(0.6667);
+    expect(fps.expansionCoverage).toBe(1);
     expect(q.contextualCompletion).toBeNull();
   });
 

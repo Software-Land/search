@@ -33,8 +33,10 @@ function expansionFromAuthored(item: { expansion?: unknown; aliases?: unknown } 
   const fromExp = asExpansion(item?.expansion);
   if (fromExp.length) return fromExp;
   const aliases = Array.isArray(item?.aliases) ? item.aliases : [];
-  if (aliases.length) return asExpansion(aliases[0]);
-  return [];
+  const forms = aliases.map(asExpansion).filter((form) => form.length);
+  if (!forms.length) return [];
+  forms.sort((a, b) => phraseKey(a).localeCompare(phraseKey(b)));
+  return forms[0];
 }
 
 function asTerms(raw: unknown): string[] {

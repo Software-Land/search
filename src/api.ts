@@ -29,12 +29,12 @@ export type RelevanceKind = "direct" | "related";
 export type DirectClass = "strong" | "moderate" | "weak" | "none";
 
 /**
- * One configured concept. `aliases[0]` is the canonical lexical sequence.
+ * One configured concept. Aliases are unordered semantic peers.
  * This is not relationshipMap `kind: "equivalent"` recall.
  */
 export interface ConfiguredConcept {
   key: string;
-  /** aliases[0] is the canonical lexical sequence; remaining aliases are same-intent forms. */
+  /** Unordered peer lexical forms. Alias array order has no search semantic effect. */
   aliases?: string[][];
   /** Optional authored/compiled identity metadata. Not a ranking weight. */
   type?: string;

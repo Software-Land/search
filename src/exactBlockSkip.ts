@@ -57,6 +57,7 @@ const UNSUPPORTED_TOKEN_SOURCES = new Set([
   "contextual-completion",
   "configured-concept",
   "expansion",
+  "form",
 ]);
 
 export function oneOfKBodyOnlyMaxRoundedScore(conceptCount: number) {

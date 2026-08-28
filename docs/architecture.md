@@ -13,7 +13,7 @@ Distribution: **one npm package** (`@software-land/search`) with subpath exports
 
 Application relevance authoring is two primitives plus a separate generated graph. See [concepts.md](concepts.md):
 
-- **Configured concepts** (`configuredConcepts`): which query forms mean the same configured concept. `aliases[0]` is canonical. This is not the corpus lexicon; term postings live in `lexicalIndex`.
+- **Configured concepts** (`configuredConcepts`): which query forms mean the same configured concept. Aliases are unordered peers. This is not the corpus lexicon; term postings live in `lexicalIndex`.
 - **Relationship map** (`relationshipMap`): which other forms, concepts, or documents are explicitly `equivalent` or `related`. Directional. No auto-reverse. No authored numeric weight.
 - **Document relationships** (`documentRelationships`): compiled document-to-document `RelationshipArtifact` consumed by `SearchEngine.create`. Distinct from `relationshipMap`. Authored editorial edges come from `compileAuthoredRelevance()`.
 - **Semantic graph**: generated document-to-document neighbors the model inferred. Not authored in `relationshipMap`. Merge onto `documentRelationships` with `mergeRelationships()`. Generated-edge rejection stays a separate follow-up.

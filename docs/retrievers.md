@@ -140,6 +140,6 @@ Semantic query input:
 - **Optional:** a join of repaired typed surfaces (`surfaceNormalized`)
 - **Must never embed:** `query.tokens` after key projection, `token.normalized`, `token.lemma` after prefix completion, `completedToken`, `prefixCompletion.canonicalToken`, or `concepts.forms`
 
-Lexical unique-prefix completion may rewrite retrieval identity of the final typed token. Unique configured-sequence alignment keeps typed tokens intact and projects canonical expansion onto `lexicalTokens` instead. Those lexical rewrites must not silently become the semantic query representation.
+Lexical unique-prefix completion may rewrite retrieval identity of the final typed token. Unique configured-sequence alignment keeps typed tokens intact and projects the occupied concept's peer-form ranking identity onto `lexicalTokens` instead. Those lexical rewrites must not silently become the semantic query representation.
 
 When a semantic similarity feature is added, introduce an explicit `semanticScore`. Do not overload lexical `retrievalScore` to smuggle semantic similarity into ranking.

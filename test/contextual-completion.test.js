@@ -84,7 +84,6 @@ describe("contextual expansion completion representation", () => {
       canonicalToken: "learn",
       source: "configured-expansion-prefix",
     });
-    expect(q.lexicalTokens.some((t) => t.sources.includes("contextual-completion"))).toBe(true);
     expect(q.tokens.some((t) => t.sources.includes("contextual-completion"))).toBe(false);
   });
 
@@ -135,7 +134,7 @@ describe("contextual expansion completion representation", () => {
     expect(q.tokens.map((t) => t.surfaceNormalized || t.normalized)).toEqual(["application", "sec"]);
     expect(q.contextualCompletion).toBeNull();
     expect(q.configuredSequenceIntent).toMatchObject({ key: "appsec" });
-    expect(q.lexicalPhraseKey).toMatch(/security$/);
+    expect(q.lexicalPhraseKey).toBe(analyze("application security").lexicalPhraseKey);
   });
 });
 

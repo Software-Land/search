@@ -20,8 +20,8 @@ const schema = {
   body: { type: "text", role: "body" },
 };
 
-describe("canonical alias compiler", () => {
-  test("A. aliases[0] compiles internally as expansion", () => {
+describe("peer-alias compiler", () => {
+  test("A. every alias compiles as an equal form sequence", () => {
     const plugin = compileConfiguredConceptPlugin({ configuredConcepts: [
         {
           key: "paas",
@@ -33,21 +33,24 @@ describe("canonical alias compiler", () => {
       ],
     });
     const concept = plugin.byKey.get("paas");
-    expect(concept.aliases[0]).toEqual(["platform", "service"]);
-    expect(concept.aliases.slice(1)).toEqual([["platform", "as", "a", "service"]]);
+    expect(concept.aliases).toEqual([
+      ["platform", "service"],
+      ["platform", "as", "a", "service"],
+    ]);
     expect(concept).not.toHaveProperty("expansion");
     expect(concept).not.toHaveProperty("standaloneRecall");
     expect(concept).not.toHaveProperty("topicalRecall");
     const kinds = plugin.sequences.filter((s) => s.concept.key === "paas").map((s) => s.kind);
-    expect(kinds).toEqual(expect.arrayContaining(["key", "expansion", "alias"]));
-    expect(plugin.sequences.find((s) => s.kind === "expansion" && s.concept.key === "paas").tokens).toEqual([
+    expect(kinds).toEqual(expect.arrayContaining(["key", "form"]));
+    expect(kinds.filter((k) => k === "form")).toHaveLength(2);
+    expect(plugin.sequences.find((s) => s.kind === "form" && s.concept.key === "paas" && s.tokens[1] === "service").tokens).toEqual([
       "platform",
       "service",
     ]);
-    expect(plugin.sequences.find((s) => s.kind === "expansion" && s.concept.key === "paas").concept).toBe(concept);
+    expect(plugin.sequences.find((s) => s.kind === "form" && s.concept.key === "paas").concept).toBe(concept);
   });
 
-  test("B. aliases[1...] identify the same configured concept", () => {
+  test("B. later aliases identify the same configured concept", () => {
     const plugin = compileConfiguredConceptPlugin({ configuredConcepts: [
         {
           key: "paas",
@@ -58,7 +61,7 @@ describe("canonical alias compiler", () => {
         },
       ],
     });
-    const alias = plugin.sequences.find((s) => s.kind === "alias" && s.concept.key === "paas");
+    const alias = plugin.sequences.find((s) => s.kind === "form" && s.concept.key === "paas" && s.tokens.includes("as"));
     expect(alias.tokens).toEqual(["platform", "as", "a", "service"]);
     expect(alias.concept.key).toBe("paas");
     expect(alias.concept).toBe(plugin.byKey.get("paas"));
@@ -99,7 +102,7 @@ describe("canonical alias compiler", () => {
     ).toThrow(/expansion/);
   });
 
-  test("migrateConfiguredEntry inserts exp once as aliases[0] and preserves alias order", () => {
+  test("migrateConfiguredEntry inserts exp as one peer alias and preserves remaining alias order", () => {
     const migrated = migrateConfiguredEntry({
       key: "iot",
       exp: ["internet", "things"],

@@ -225,7 +225,7 @@ describe("query analysis", () => {
       provenance: "partial-expansion",
       matchedExpansionTokens: 2,
       expansionTokenCount: 3,
-      expansionCoverage: 0.6667,
+      expansionCoverage: 1,
     });
     expect(prefix.concepts.some((c) => c.id === "https")).toBe(false);
     expect(prefix.concepts.some((c) => c.kind === "term")).toBe(false);
@@ -270,7 +270,7 @@ describe("query analysis", () => {
       expect(row.key).toBe("http");
     }
     expect(ranked[0].kind).toBe("partial-expansion");
-    expect(ranked[3].kind).toBe("expansion");
+    expect(ranked[3].kind).toBe("form");
     expect(ranked[3].tokens).toEqual(["hypertext", "transfer", "protocol"]);
     expect(ranked[0].tokens).toEqual(["hypertext", "transfer"]);
     const httpIds = e.search("http").map((r) => r.id);
@@ -339,13 +339,13 @@ describe("query analysis", () => {
       expect(acr[0].provenance).toBe("partial-expansion");
       expect(acr[0].matchedExpansionTokens).toBe(2);
       expect(acr[0].expansionTokenCount).toBe(3);
-      expect(acr[0].expansionCoverage).toBe(0.6667);
+      expect(acr[0].expansionCoverage).toBe(1);
       expect(q.tokens).toHaveLength(2);
     }
     expect(analyzeQuery("hypertext", { plugins }).concepts.some((c) => c.kind === "configured-concept")).toBe(false);
     const full = analyzeQuery("hypertext transfer protocol", { plugins });
     expect(full.tokens.map((t) => t.normalized)).toEqual(["hypertext", "transfer", "protocol"]);
-    expect(full.concepts.find((c) => c.kind === "configured-concept")?.provenance).toBe("expansion");
+    expect(full.concepts.find((c) => c.kind === "configured-concept")?.provenance).toBe("form");
   });
 
   test("incomplete key prefixes match only the final active token", () => {
@@ -462,7 +462,7 @@ describe("query analysis", () => {
     expect(full.lexicalPhraseKey).toEqual(key.lexicalPhraseKey);
     expect(key.tokens.map((t) => t.normalized)).toEqual(["ml"]);
     expect(full.lexicalPhraseTokens).toEqual(["machine", "learn"]);
-    expect(full.concepts.find((c) => c.kind === "configured-concept")?.provenance).toBe("expansion");
+    expect(full.concepts.find((c) => c.kind === "configured-concept")?.provenance).toBe("form");
     expect(key.concepts.find((c) => c.kind === "configured-concept")?.provenance).toBe("key");
 
     const docs = [
@@ -507,7 +507,7 @@ describe("query analysis", () => {
     expect(full.tokens.map((t) => t.normalized)).toEqual(["machine", "learn"]);
     expect(full.concepts.find((c) => c.kind === "configured-concept")).toMatchObject({
       id: "ml",
-      provenance: "expansion",
+      provenance: "form",
     });
     expect(full.lexicalPhraseKey).toBe("machine learn");
     expect(full.lexicalPhraseTokens).toEqual(["machine", "learn"]);
@@ -557,7 +557,7 @@ describe("query analysis", () => {
     });
     expect(analyzed["machine learning"].concepts.find((c) => c.kind === "configured-concept")).toMatchObject({
       id: "ml",
-      provenance: "expansion",
+      provenance: "form",
     });
     expect(analyzed["machine learn"].concepts.find((c) => c.kind === "configured-concept")).toMatchObject({
       id: "ml",

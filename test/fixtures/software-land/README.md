@@ -51,7 +51,7 @@ are executable Software.Land relevance contracts in
 `test/software-land-historical-relevance.test.js` (membership within topN, not
 exact order). Classification C is omitted. That suite is not the exact-output
 oracle and not Core default ranking policy. The relevance engine loads authored `relationship-map.json` (`equivalent` edges from the live curated-plus-generated map plus AppSec `related` forms), omits the `testing` configured-concept key, and patches
-NIST exact institute aliases plus AppSec aliases from `relevance-config.json`. Frozen `configured-concepts.json` is `{ key, aliases }` with `aliases[0]` the former expansion. The live search-equivalence snapshot
+NIST exact institute aliases plus AppSec aliases from `relevance-config.json`. Frozen `configured-concepts.json` is `{ key, aliases }` with aliases as unordered peers (stored order may preserve a former expansion first; that order is serialization only). The live search-equivalence snapshot
 matches Software.Land commit `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6`
 (`LIVE_SEARCH_EQUIVALENCE_MAP`: curated `SYNONYM_MAP` plus four generated
 additions with isolated incremental value; curated wins; no auto-reverse). AppSec `topicalRecall` still matches
@@ -77,7 +77,7 @@ and `tests/search-v2-contracts.js` from the committed scenario SHA.
 ## Files
 
 - `documents.json` — `id`, `title`, normalized search `body` (live V2 indexed shape)
-- `configured-concepts.json` — merged Software.Land acronym map + compiled equivalences as `configuredConcepts` authored `{ key, aliases }` (`aliases[0]` canonical). The `dff24cf` snapshot is retained, then missing later `acronymMap.js` keys are merged from `dictionaryAcronymMapSoftwareLandCommit` (`df852eb4136dc5fb5b23cbf0bc22d45170e71423`). `testing` remains for the exact-output oracle and is omitted only by `relevance-config.json`.
+- `configured-concepts.json` — merged Software.Land acronym map + compiled equivalences as `configuredConcepts` authored `{ key, aliases }` (aliases are unordered peers). The `dff24cf` snapshot is retained, then missing later `acronymMap.js` keys are merged from `dictionaryAcronymMapSoftwareLandCommit` (`df852eb4136dc5fb5b23cbf0bc22d45170e71423`). `testing` remains for the exact-output oracle and is omitted only by `relevance-config.json`.
 - `lemmas.json` — site lemma table as `morphology({ lemmas })`
 - `relationships.json` — runtime relationship graph, including TLS ↔ VPN editorial edges (generated + domain editorial; not relationshipMap)
 - `lexical-frequency.json` — production lexical-frequency artifact

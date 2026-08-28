@@ -11,11 +11,18 @@ function expansionFromAuthored(item: { expansion?: unknown; aliases?: unknown } 
   }
   if (typeof item?.expansion === "string" && item.expansion.trim()) return expansionTokens(item.expansion);
   const aliases = Array.isArray(item?.aliases) ? item.aliases : [];
-  if (aliases.length && Array.isArray(aliases[0])) {
-    return aliases[0].map((t) => String(t).toLowerCase()).filter(Boolean);
+  const forms: string[][] = [];
+  for (const alias of aliases) {
+    if (Array.isArray(alias)) {
+      const form = alias.map((t) => String(t).toLowerCase()).filter(Boolean);
+      if (form.length) forms.push(form);
+    } else if (typeof alias === "string" && alias.trim()) {
+      forms.push(expansionTokens(alias));
+    }
   }
-  if (typeof aliases[0] === "string") return expansionTokens(aliases[0]);
-  return [];
+  if (!forms.length) return [];
+  forms.sort((a, b) => phraseKey(a).localeCompare(phraseKey(b)));
+  return forms[0];
 }
 
 export function loadOverrides(raw: unknown): {

@@ -191,14 +191,14 @@ describe("search-corpus embedded acronyms", () => {
     const entry = result.configuredConcepts.find((e) => e.key === "api");
     expect(entry).toBeTruthy();
     expect(entry.aliases).toEqual([
-      ["application", "programming", "interface"],
       ["app", "iface"],
+      ["application", "programming", "interface"],
     ]);
     expect(entry.primary).toBeUndefined();
     const dict = result.configuredConcepts.find((e) => e.key === "api");
     expect(dict.aliases).toEqual([
-      ["application", "programming", "interface"],
       ["app", "iface"],
+      ["application", "programming", "interface"],
     ]);
     expect(dict.primary).toBeUndefined();
   });

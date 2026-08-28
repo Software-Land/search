@@ -27,7 +27,7 @@ Search data is four distinct layers:
 
 | | Lives where | Means |
 | --- | --- | --- |
-| Concept map (`configuredConcepts`: `{ key, aliases }`) | what query forms mean the **same thing** | `aliases[0]` is the canonical lexical sequence (compiled internally as expansion). Later aliases are alternate same-intent forms. Unambiguous key/alias spellings share ranked results. Compile with `compileAuthoredRelevance()`. |
+| Concept map (`configuredConcepts`: `{ key, aliases }`) | what query forms mean the **same thing** | Aliases are unordered semantic peers. `key` is the concept identifier and lexical key form. Unambiguous key/alias spellings share ranked results. Compile with `compileAuthoredRelevance()`. |
 | Relationship map (`relationshipMap`) | what other forms/concepts/documents are explicitly **related** | kinds `equivalent` (one-hop recall) and `related` (standalone / topical / editorial). Directional. No auto-reverse. No authored numeric weight. Compile with `compileAuthoredRelevance()`. |
 | Semantic graph (generated MiniLM artifact) | what relationships the **model inferred** | separate generated pipeline with embedding provenance. Not authored in `relationshipMap`. |
 
@@ -35,7 +35,7 @@ Search data is four distinct layers:
 
 ### Configured occupancy and ranking
 
-A concept is authored as `key` + `aliases`. `aliases[0]` is the canonical lexical form used internally. Every alias identifies the **same** configured intent; aliases are not loose recall hints.
+A concept is authored as `key` + `aliases`. Aliases are unordered semantic peers; alias array order has no search semantic effect. `key` remains the concept identifier and lexical key form. Every alias identifies the **same** configured intent; aliases are not loose recall hints.
 
 Once occupancy is unambiguous, key and alias spellings have identical search semantics and ranked results. Typed surface stays on the query for explain/provenance and must not leak into ranking.
 

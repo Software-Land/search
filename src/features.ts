@@ -1,3 +1,4 @@
+import { sequenceKey } from "./configuredAuthoring.js";
 import { isNearCompletePrefix, levenshteinAtMost, DEFAULT_STOP, allowPrefixMatch } from "./text.js";
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "./versionForms.js";
 import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall, topicalRecallHint, topicalFormEvidence, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts, coverageConcepts } from "./retrieve.js";
@@ -73,12 +74,50 @@ type QueryFeatPrep = {
   acronym: QueryConcept | null;
   isConfiguredKey: boolean;
   expansion: string[];
+  peerForms: string[][];
+  peerFormJoins: string[];
   typoTokens: QueryToken[];
   formSet: Set<string>;
   shortLiteralTok: string | null;
 };
 
 const queryFeatPrep = new WeakMap<AnalyzedQuery, QueryFeatPrep>();
+
+function peerFormsOf(concept: QueryConcept | null): string[][] {
+  if (!concept) return [];
+  const raw = Array.isArray(concept.aliases) && concept.aliases.length
+    ? concept.aliases
+    : concept.expansion?.length
+      ? [concept.expansion]
+      : [];
+  const out: string[][] = [];
+  const seen = new Set<string>();
+  for (const alias of raw) {
+    const seq = (alias || []).filter((f) => f && !/^\d+$/.test(f));
+    if (!seq.length) continue;
+    const key = sequenceKey(seq);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(seq);
+  }
+  return out.sort((a, b) => sequenceKey(a).localeCompare(sequenceKey(b)));
+}
+
+/** Longest phrase key, then lexical. Serialization/explain only; no ranking privilege. */
+function primaryPhraseOf(keys: string[]): string {
+  if (!keys.length) return "";
+  let best = keys[0];
+  let bestN = best.split(/\s+/).length;
+  for (let i = 1; i < keys.length; i++) {
+    const key = keys[i];
+    const n = key.split(/\s+/).length;
+    if (n > bestN || (n === bestN && key < best)) {
+      best = key;
+      bestN = n;
+    }
+  }
+  return best;
+}
 
 function getQueryFeatPrep(query: AnalyzedQuery): QueryFeatPrep {
   const cached = queryFeatPrep.get(query);
@@ -91,12 +130,21 @@ function getQueryFeatPrep(query: AnalyzedQuery): QueryFeatPrep {
   const lexicalNonStop = lexicalSource.filter((t) => !DEFAULT_STOP.has(t.normalized) || lexicalSource.length <= 2);
   const lexicalUse = lexicalNonStop.length ? lexicalNonStop : lexicalSource;
   const acronym = query.concepts.find((c) => c.kind === "configured-concept") || null;
-  const expansion =
-    acronym == null
-      ? []
-      : Array.isArray(acronym.expansion) && acronym.expansion.length
-        ? acronym.expansion.filter((f) => f !== acronym.id && !/^\d+$/.test(f))
-        : (acronym.forms || []).filter((f) => f !== acronym.id && !/^\d+$/.test(f));
+  const peerForms = peerFormsOf(acronym);
+  const expansion = acronym == null ? [] : [];
+  const peerFormJoins: string[] = [];
+  const joinSeen = new Set<string>();
+  if (acronym?.id) {
+    joinSeen.add(acronym.id);
+    peerFormJoins.push(acronym.id);
+  }
+  for (const form of peerForms) {
+    const join = form.join(" ");
+    if (!join || joinSeen.has(join)) continue;
+    joinSeen.add(join);
+    peerFormJoins.push(join);
+  }
+  peerFormJoins.sort();
   const formSet = new Set<string>();
   for (const c of query.concepts) {
     if (c.kind === "configured-concept") continue;
@@ -104,7 +152,7 @@ function getQueryFeatPrep(query: AnalyzedQuery): QueryFeatPrep {
     if (isSearchEquivalenceRecallConcept(query, c)) continue;
     for (const form of c.forms || []) formSet.add(form);
   }
-  const phraseKeys = phraseKeyCandidates(query);
+  const phraseKeys = phraseKeyCandidates(query, peerForms);
   const prep: QueryFeatPrep = {
     joinedNorm: ranking.map((t) => t.normalized).join(" "),
     nonStop: nonStopUse,
@@ -112,10 +160,8 @@ function getQueryFeatPrep(query: AnalyzedQuery): QueryFeatPrep {
     nonStopLemma: nonStopUse.map((t) => t.lemma || t.normalized),
     lexicalNonStopCount: lexicalUse.length,
     phraseKeys,
-    primaryPhrase: phraseKeys[0] || "",
+    primaryPhrase: primaryPhraseOf(phraseKeys),
     acronym,
-    // Occupied configured concepts rank from the canonical expansion, not the
-    // typed key spelling (`ci` must match `continuous integration`).
     isConfiguredKey: Boolean(
       acronym &&
         !hasConfiguredSequenceIntent(query) &&
@@ -123,6 +169,8 @@ function getQueryFeatPrep(query: AnalyzedQuery): QueryFeatPrep {
         tokens[0].normalized === acronym.id
     ),
     expansion,
+    peerForms,
+    peerFormJoins,
     typoTokens: ranking.filter((t) => t.normalized.length >= 5),
     formSet,
     shortLiteralTok:
@@ -155,7 +203,11 @@ function conceptCoveredInTitle(concept: QueryConcept, doc: IndexedDocument) {
 }
 
 function exactTitle(query: AnalyzedQuery, doc: IndexedDocument) {
-  const q = getQueryFeatPrep(query).joinedNorm;
+  const prep = getQueryFeatPrep(query);
+  if (hasConfiguredSequenceIntent(query) && prep.peerFormJoins.length) {
+    return prep.peerFormJoins.includes(doc.normalizedTitle);
+  }
+  const q = prep.joinedNorm;
   return q.length > 0 && q === doc.normalizedTitle;
 }
 
@@ -401,8 +453,57 @@ function adjacentOn(queryToks: string[], fieldToks: string[], posMap?: Map<strin
   return false;
 }
 
+function formAdjacency(form: string[], query: AnalyzedQuery, doc: IndexedDocument) {
+  if (form.length < 2) return 0;
+  const qToks = form;
+  const qLemmas = form;
+  const queryLemmasDiffer = false;
+  const store = asCompactStore(doc);
+  if (store) {
+    const ordinal = compactOrdinal(doc);
+    const titleLemmasDiffer = compactLemmasDiffer(store, ordinal, "title");
+    if (
+      compactAdjacentTokens(store, ordinal, KIND_TITLE, qToks, tokenAdjacencyMatch) ||
+      ((queryLemmasDiffer || titleLemmasDiffer) &&
+        compactAdjacentTokens(store, ordinal, KIND_TITLE_LEMMA, qLemmas, tokenAdjacencyMatch))
+    ) {
+      return 1;
+    }
+    const bodyLemmasDiffer = compactLemmasDiffer(store, ordinal, "body");
+    if (
+      compactAdjacentTokens(store, ordinal, KIND_BODY, qToks, tokenAdjacencyMatch) ||
+      ((queryLemmasDiffer || bodyLemmasDiffer) &&
+        compactAdjacentTokens(store, ordinal, KIND_BODY_LEMMA, qLemmas, tokenAdjacencyMatch))
+    ) {
+      return 0.5;
+    }
+    return 0;
+  }
+  const titleLemmasDiffer = !sameStringArray(doc.titleTokens, doc.titleLemmas);
+  if (adjacentOn(qToks, doc.titleTokens) || ((queryLemmasDiffer || titleLemmasDiffer) && adjacentOn(qLemmas, doc.titleLemmas))) {
+    return 1;
+  }
+  const bodyLemmasDiffer = !sameStringArray(doc.bodyTokens, doc.bodyLemmas);
+  if (
+    adjacentOn(qToks, doc.bodyTokens, doc.bodyTokenPositions) ||
+    ((queryLemmasDiffer || bodyLemmasDiffer) && adjacentOn(qLemmas, doc.bodyLemmas, doc.bodyLemmaPositions))
+  ) {
+    return 0.5;
+  }
+  return 0;
+}
+
 function phraseAdjacency(query: AnalyzedQuery, doc: IndexedDocument) {
   const prep = getQueryFeatPrep(query);
+  if (prep.peerForms.length && hasConfiguredSequenceIntent(query)) {
+    let best = 0;
+    for (const form of prep.peerForms) {
+      const score = formAdjacency(form, query, doc);
+      if (score > best) best = score;
+      if (best === 1) return 1;
+    }
+    return best;
+  }
   const qToks = prep.nonStopNorm;
   const qLemmas = prep.nonStopLemma;
   if (qToks.length < 2) return 0;
@@ -443,10 +544,16 @@ function phraseAdjacency(query: AnalyzedQuery, doc: IndexedDocument) {
 }
 
 function expansionEvidence(query: AnalyzedQuery, doc: IndexedDocument) {
-  const expansion = getQueryFeatPrep(query).expansion;
-  if (!expansion.length) return 0;
-  const hits = expansion.filter((f) => doc.titleTokenSet.has(f) || doc.titleLemmaSet.has(f));
-  return Number((hits.length / expansion.length).toFixed(4));
+  const forms = getQueryFeatPrep(query).peerForms;
+  if (!forms.length) return 0;
+  let best = 0;
+  for (const form of forms) {
+    if (!form.length) continue;
+    const hits = form.filter((f) => doc.titleTokenSet.has(f) || doc.titleLemmaSet.has(f));
+    const score = hits.length / form.length;
+    if (score > best) best = score;
+  }
+  return Number(best.toFixed(4));
 }
 
 /**
@@ -493,17 +600,20 @@ function exactTokenSequence(seq: string[], fieldToks: string[]) {
 function configuredExpansionBodyMatch(query: AnalyzedQuery, doc: IndexedDocument) {
   const acr = occupiedPartialExpansion(query);
   if (!acr) return false;
-  const expansion = getQueryFeatPrep(query).expansion;
-  if (expansion.length < 3) return false;
+  const forms = getQueryFeatPrep(query).peerForms.filter((form) => form.length >= 3);
+  if (!forms.length) return false;
   const store = asCompactStore(doc);
   if (store) {
     const ordinal = compactOrdinal(doc);
-    return (
-      compactAdjacentTokens(store, ordinal, KIND_BODY, expansion, (qt, tt) => qt === tt) ||
-      compactAdjacentTokens(store, ordinal, KIND_BODY_LEMMA, expansion, (qt, tt) => qt === tt)
+    return forms.some(
+      (expansion) =>
+        compactAdjacentTokens(store, ordinal, KIND_BODY, expansion, (qt, tt) => qt === tt) ||
+        compactAdjacentTokens(store, ordinal, KIND_BODY_LEMMA, expansion, (qt, tt) => qt === tt)
     );
   }
-  return exactTokenSequence(expansion, doc.bodyTokens) || exactTokenSequence(expansion, doc.bodyLemmas);
+  return forms.some(
+    (expansion) => exactTokenSequence(expansion, doc.bodyTokens) || exactTokenSequence(expansion, doc.bodyLemmas)
+  );
 }
 
 function queryIsConfiguredKey(query: AnalyzedQuery) {
@@ -591,7 +701,37 @@ function lexicalPhraseQueryTokens(query: AnalyzedQuery) {
   return query.tokens;
 }
 
-function phraseKeyCandidates(query: AnalyzedQuery) {
+function phraseKeyCandidates(query: AnalyzedQuery, peerForms?: string[][]) {
+  const occupiedForms = peerForms && peerForms.length ? peerForms : null;
+  if (occupiedForms && hasConfiguredSequenceIntent(query)) {
+    const keys: string[] = [];
+    const seen = new Set<string>();
+    const lexical = query.lexicalTokens || [];
+    for (const form of occupiedForms) {
+      if (form.length < 1) continue;
+      const toks = form.map((word) => {
+        const hit = lexical.find(
+          (t) => t.surface === word || t.surfaceNormalized === word || t.normalized === word
+        );
+        return hit ? hit.lemma || hit.normalized : word;
+      });
+      const key = toks.join(" ");
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      keys.push(key);
+      // Compiler stores 1–2 grams. A 3+ token form may miss as a full join;
+      // the leading bigram is a compiler fallback, not a tail-bigram max.
+      if (toks.length >= 3) {
+        const left = toks.slice(0, 2).join(" ");
+        if (left && !seen.has(left)) {
+          seen.add(left);
+          keys.push(left);
+        }
+      }
+    }
+    keys.sort();
+    return keys;
+  }
   const source = lexicalPhraseQueryTokens(query);
   const toks = canonicalLexicalTokensFromQuery(source);
   if (!toks.length) return [];
@@ -633,7 +773,7 @@ function compiledPhraseLookup(query: AnalyzedQuery, doc: IndexedDocument) {
       }
       continue;
     }
-    if (n > count) {
+    if (n > count || (n === count && n > 0 && matchingPhraseKey != null && key < matchingPhraseKey)) {
       count = n;
       matchingPhraseKey = key;
     }
@@ -679,13 +819,22 @@ function shadowStandaloneQuery(query: AnalyzedQuery): AnalyzedQuery | null {
     lemma: hint.key,
     sources: [],
   };
-  const expansionToks: QueryToken[] = (hint.expansion || []).map((token) => ({
-    surface: token,
-    surfaceNormalized: token,
-    normalized: token,
-    lemma: token,
-    sources: [],
-  }));
+  const forms = Array.isArray(hint.aliases) && hint.aliases.length
+    ? [...hint.aliases].sort((a, b) => sequenceKey(a).localeCompare(sequenceKey(b)))
+    : [];
+  const expansionToks: QueryToken[] = [];
+  for (const form of forms) {
+    for (const token of form || []) {
+      if (!token) continue;
+      expansionToks.push({
+        surface: token,
+        surfaceNormalized: token,
+        normalized: token,
+        lemma: token,
+        sources: [],
+      });
+    }
+  }
   const lexicalTokens = expansionToks.length ? expansionToks : [keyTok];
   const lexicalPhraseTokens = lexicalTokens.map((token) => token.lemma || token.normalized);
   const concept = standaloneRecallConcept(query);
@@ -965,7 +1114,7 @@ export const FEATURE_DEFINITIONS = {
   unmatchedTitleTokensAfter: "Count of title tokens after the aligned final-token completion (0 when the title ends at the completed token).",
   titleSequenceTightness: "1 / (1 + unmatchedTitleTokensAfter). Prefer titles that complete the query and end there.",
   contextualPrefixQuality: "completeness * titleSequenceTightness, where completeness is finalPrefix.length / completedTitleToken.length.",
-  configuredConceptMatch: "Configured-concept title match: key-in-title | expansion | false.",
+  configuredConceptMatch: "Configured-concept title match: key-in-title | expansion | false. The value expansion means a peer form is in the title, not aliases[0].",
   morphologyMatch: "Query lemma matches a title token/lemma while surface may differ. A trailing stub bound by unique contextual expansion completion is excluded.",
   typoDistance: "0–2 style evidence: 0 none, 1 repeat-collapse or edit-distance 2, 2 edit-distance 1.",
   versionMatch: "false | compact-weak | compact-dotted | dotted | dotted-weak.",
@@ -977,10 +1126,10 @@ export const FEATURE_DEFINITIONS = {
   coverageConceptCount: "Count of typed/configured coverage concepts (search-equivalence recall concepts excluded). Distinct from queryTokenCount, which includes configured expansion tokens.",
   ordinaryEquivalenceBodyMatch: "True only when the candidate BODY matches a directed target form from an ordinary same-concept search equivalence. This is provenance, not additional lexical coverage or score.",
   titleTokenCount: "Non-stop title token count; used for tightness, not as a boost constant.",
-  expansionEvidence: "Fraction of a configured expansion evidenced in the title.",
-  configuredExpansionCoverage: "Occupied configured-expansion coverage from query analysis (0 when the query does not uniquely occupy a configured concept). 2/3 is the existing expansion-prefix occupancy information bound.",
-  configuredExpansionBodyMatch: "True when an unambiguous partial configured-expansion prefix (at least 2 tokens and 2/3 coverage, not full expansion) has the contiguous canonical expansion in the body.",
-  canonicalKeyTitle: "True when the query is exactly a configured key and the title also states most of the expansion.",
+  expansionEvidence: "Max fraction of any configured peer form evidenced in the title. Not aliases[0].",
+  configuredExpansionCoverage: "Occupied configured-form coverage from query analysis (0 when the query does not uniquely occupy a configured concept). 2/3 is the existing form-prefix occupancy information bound.",
+  configuredExpansionBodyMatch: "True when an unambiguous partial configured-form prefix (at least 2 tokens and 2/3 coverage, not full occupancy) has any contiguous n≥3 peer form in the body.",
+  canonicalKeyTitle: "True when the query is exactly a configured key and the title also states most of a peer form.",
   queryTokenCount: "Non-stop analyzed query token count.",
   normalizedQueryPhrase: "Lemmatized non-stop query tokens joined as the compiled n-gram lookup key. An incomplete final token may be completed through vocabulary+morphology first.",
   matchingPhraseKey: "Compiled n-gram key that matched, or null when the count is 0.",
