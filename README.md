@@ -106,14 +106,14 @@ Search data is four distinct layers:
 
 | Name | Meaning |
 | --- | --- |
-| `configuredConcepts` | authored identities `{ key, aliases }` |
+| `configuredConcepts` | authored concepts `{ key, aliases }` |
 | `lexicalIndex` | corpus lexical term/posting index |
 | `relationshipMap` | authored form/concept/document relevance |
 | `documentRelationships` | compiled document-to-document graph |
 
-`configuredConcepts` is the authored identity list `{ key, aliases }`. It is not the corpus lexicon; term postings live in `lexicalIndex`.
+`configuredConcepts` is the authored concept list `{ key, aliases }`. It is not the corpus lexicon; term postings live in `lexicalIndex`.
 
-`authored.plugins` is the compiler-owned plugin list: configured identity (including related standalone/topical recall) followed by compiled equivalent one-hop recall. Ordinary applications do not assemble those pieces by name. `equivalent` edges are directional and do not auto-reverse. `qa → testing` does not imply `testing → qa`. When equivalence is symmetric, author both directions. Trusted corpus-mined accepted groups do this automatically by compiling each group into a bidirectional equivalent clique. Phrase sources match as exact contiguous normalized phrases.
+`authored.plugins` is the compiler-owned plugin list: configured-concept recognition (including related standalone/topical recall) followed by compiled equivalent one-hop recall. Ordinary applications do not assemble those pieces by name. `equivalent` edges are directional and do not auto-reverse. `qa → testing` does not imply `testing → qa`. When equivalence is symmetric, author both directions. Trusted corpus-mined accepted groups do this automatically by compiling each group into a bidirectional equivalent clique. Phrase sources match as exact contiguous normalized phrases.
 
 `authored.documentRelationships` is the editorial document→document artifact, or `null` when none were authored. Combine it with a generated semantic artifact using `mergeRelationships(semantic, authored.documentRelationships)`.
 
@@ -279,7 +279,7 @@ npm test
 
 A repository checkout requires `npm run build` before executing the runtime, Jest tests, or `examples/catalog`. Python is outside `tsc`. Typecheck configs are not in the npm tarball; consumers use the shipped `dist` declarations for `.` and `./browser`.
 
-`SearchEngine.create({ plugins })` accepts `SearchPlugin[]`. Custom `SearchPlugin` hooks are `lemma`, `canonicalLemma`, and `lexicon`. `compileAuthoredRelevance()` returns the ordered `SearchPlugin[]` needed for configured identity and authored relevance; do not hand-build compiled identity internals. `morphology()` returns `EnglishPlugin`. Custom retrievers type as `ExperimentalRetriever`. Runtime still duck-types plugin objects and custom `retrieve` functions.
+`SearchEngine.create({ plugins })` accepts `SearchPlugin[]`. Custom `SearchPlugin` hooks are `lemma`, `canonicalLemma`, and `lexicon`. `compileAuthoredRelevance()` returns the ordered `SearchPlugin[]` needed for configured-concept recognition and authored relevance; do not hand-build compiled configured-concept internals. `morphology()` returns `EnglishPlugin`. Custom retrievers type as `ExperimentalRetriever`. Runtime still duck-types plugin objects and custom `retrieve` functions.
 
 Authoring interfaces (`SearchPlugin`, `EnglishPlugin`, `LexiconPlugin`, `ExperimentalRetriever`) do not publish query-analysis or index internals. Custom retrievers remain experimental; `query` and `index` arguments are intentionally `unknown`. `morphology().lemma` typechecks. There is no public `english()` root export.
 

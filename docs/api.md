@@ -54,9 +54,9 @@ Same documents, configuration, artifacts, and query produce the same ordering, e
 
 ## Plugins (opt-in types)
 
-`SearchEngine.create({ plugins })` accepts `SearchPlugin[]`. `compileAuthoredRelevance()` returns the ordered `SearchPlugin[]` needed for configured identity and authored relevance. `morphology()` returns `EnglishPlugin`. There is no public `dictionary()` factory. Custom retrievers type as `ExperimentalRetriever`. Permissive duck-typed plugin objects remain valid at runtime.
+`SearchEngine.create({ plugins })` accepts `SearchPlugin[]`. `compileAuthoredRelevance()` returns the ordered `SearchPlugin[]` needed for configured-concept recognition and authored relevance. `morphology()` returns `EnglishPlugin`. There is no public `dictionary()` factory. Custom retrievers type as `ExperimentalRetriever`. Permissive duck-typed plugin objects remain valid at runtime.
 
-Type contracts `SearchPlugin`, `EnglishPlugin`, and `LexiconPlugin` describe the duck-typed hooks Core actually reads (`lemma`, `canonicalLemma`, `lexicon`). They do not make analysis or ranking internals public, and they do not change runtime dispatch. Custom plugins may supply those morphology/lexicon hooks plus `name` / `indexIdentity`. Configured identity is not a custom-plugin contract; author `configuredConcepts` and compile with `compileAuthoredRelevance()`. Compiled related-recall tables are not public `SearchPlugin` fields; author `relationshipMap` `kind: "related"` and compile with `compileAuthoredRelevance()`. `english()` is not a public root export. Equivalent relevance is not a custom-plugin contract; author `relationshipMap` `kind: "equivalent"` and compile with `compileAuthoredRelevance()`.
+Type contracts `SearchPlugin`, `EnglishPlugin`, and `LexiconPlugin` describe the duck-typed hooks Core actually reads (`lemma`, `canonicalLemma`, `lexicon`). They do not make analysis or ranking internals public, and they do not change runtime dispatch. Custom plugins may supply those morphology/lexicon hooks plus `name` / `indexIdentity`. Configured concepts are not a custom-plugin contract; author `configuredConcepts` and compile with `compileAuthoredRelevance()`. Compiled related-recall tables are not public `SearchPlugin` fields; author `relationshipMap` `kind: "related"` and compile with `compileAuthoredRelevance()`. `english()` is not a public root export. Equivalent relevance is not a custom-plugin contract; author `relationshipMap` `kind: "equivalent"` and compile with `compileAuthoredRelevance()`.
 
 ## Configured concepts and relationshipMap
 
@@ -92,7 +92,7 @@ SearchEngine.create({
 });
 ```
 
-`authored.plugins` is the canonical ordered plugin collection: configured identity (including related standalone/topical recall) then compiled equivalent one-hop recall. Applications author `equivalent` edges and do not separately construct a recall plugin.
+`authored.plugins` is the canonical ordered plugin collection: configured-concept recognition (including related standalone/topical recall) then compiled equivalent one-hop recall. Applications author `equivalent` edges and do not separately construct a recall plugin.
 
 `CompiledAuthoredRelevance` has two supported fields:
 

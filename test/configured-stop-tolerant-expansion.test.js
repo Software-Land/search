@@ -206,7 +206,7 @@ describe("stop-tolerant configured expansion alignment", () => {
     expect(acronymIds(q)).not.toContain("techdebt");
   });
 
-  test("compound configured identity occupies as configured-concept, not acronym", () => {
+  test("compound configured concept occupies as configured-concept, not acronym", () => {
     const q = analyze("tech debt");
     expect(q.configuredSequenceIntent?.key).toBe("techdebt");
     expect(acronymIds(q)).toEqual(["techdebt"]);

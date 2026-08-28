@@ -23,7 +23,7 @@ describe("retrieval mismatch diagnostic labels", () => {
     expect(cause(["relationship"])).toBe("relationship path");
   });
 
-  test("keeps configured identity ahead of equivalent and related recall", () => {
+  test("keeps configured concepts ahead of equivalent and related recall", () => {
     expect(cause(["configured-concept", "equivalent-recall", "standalone-recall", "topical-recall"])).toBe(
       "configured-concept path"
     );

@@ -61,7 +61,7 @@ const entries: ConfiguredConcept[] = [
 const morphologyPlugin: EnglishPlugin = morphology();
 const authoredIdentity: CompiledAuthoredRelevance = compileAuthoredRelevance({ configuredConcepts: entries });
 const identityPlugin: SearchPlugin | undefined = authoredIdentity.plugins[0];
-if (!identityPlugin) throw new Error("compileAuthoredRelevance must include configured-identity plugins");
+if (!identityPlugin) throw new Error("compileAuthoredRelevance must include configured-concept plugins");
 void identityPlugin.lexicon?.();
 const migrated: MigratedConfiguredEntry = migrateConfiguredEntry({
   key: "wifi",

@@ -6,7 +6,7 @@ Artifact format/version identifiers are independent of the npm package version. 
 
 | format | version | required | role |
 | --- | --- | --- | --- |
-| `search-v2-configured-concepts` | 1 | `entries[]` with `key` | corpus/tooling configured identity (`ConfiguredConcept` rows `{ key, aliases }`) |
+| `search-v2-configured-concepts` | 1 | `entries[]` with `key` | corpus/tooling configured concepts (`ConfiguredConcept` rows `{ key, aliases }`) |
 | `search-v2-relationships` | 1 | `relationships` map of source id → edges | related expansion |
 | `search-v2-corpus-stats` | 1 | `stats` object | optional diagnostics |
 | `search-v2-lexical-frequency` | 1 | n-gram policy and per-document maps | build-time artifact attached to documents |

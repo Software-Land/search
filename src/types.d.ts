@@ -255,7 +255,7 @@ export interface AnalyzedQuery {
    */
   standaloneRecall?: StandaloneRecall | null;
   /**
-   * One-hop topical recall for a trusted configured identity: either
+   * One-hop topical recall for a trusted configured concept: either
    * configuredSequenceIntent.key or a unique exact configured span whose
    * remaining tokens are existing stopwords. Absent unless that key declares
    * topicalRecall forms. Does not rewrite tokens, lexical intent, or
@@ -265,7 +265,7 @@ export interface AnalyzedQuery {
   /**
    * One-hop search-equivalence recall pairs admitted from accepted query
    * semantics. Absent or empty when no equivalent-recall plugin fires. Does not rewrite
-   * tokens, lexical intent, or configured identity.
+   * tokens, lexical intent, or configured-concept occupancy.
    */
   equivalentRecall?: SearchEquivalenceRecall[];
   /**

@@ -79,6 +79,14 @@ try {
   if (packedRel.includes("dist/dictionary.js")) {
     throw new Error("tarball must not include stale dist/dictionary.js");
   }
+  const packedConfiguredConcepts = readFileSync(path.join(packedRoot, "dist/configuredConcepts.js"), "utf8");
+  if (packedConfiguredConcepts.includes("configuredConceptsFromAcronymMap")) {
+    throw new Error("packed configuredConcepts must not export configuredConceptsFromAcronymMap");
+  }
+  const packedApiDts = readFileSync(path.join(packedRoot, "dist/api.d.ts"), "utf8");
+  if (/configured identity|configured-identity/i.test(packedApiDts)) {
+    throw new Error("packed api.d.ts must not document configured identity");
+  }
 
   const packedToolTs = packedRel.filter((rel) => rel.startsWith("tools/") && rel.endsWith(".ts") && !rel.endsWith(".d.ts"));
   if (packedToolTs.length) throw new Error(`tarball must not include tool TypeScript source: ${packedToolTs.join(", ")}`);
@@ -303,7 +311,7 @@ try {
     throw new Error("packed SearchPlugin must not expose expand");
   }
   if (/\bsequences\b/.test(pluginBlock) || /\bbyKey\b/.test(pluginBlock)) {
-    throw new Error("packed SearchPlugin must not expose compiled configured-identity internals");
+    throw new Error("packed SearchPlugin must not expose compiled configured-concept internals");
   }
   if (/\bstandaloneRecallByToken\b/.test(pluginBlock) || /\btopicalRecallByKey\b/.test(pluginBlock)) {
     throw new Error("packed SearchPlugin must not expose compiled related-recall maps");
@@ -572,7 +580,7 @@ if (recallHit.features?.configuredConceptMatch !== false) {
 }
 const occupied = identityHit.explanation?.query?.concepts?.find((concept) => concept.id === "qa");
 if (occupied?.kind !== "configured-concept") {
-  throw new Error("occupied configured identity must explain kind configured-concept");
+  throw new Error("occupied configured concept must explain kind configured-concept");
 }
 if (identityHit.explanation?.query?.concepts?.some((concept) => concept.kind === "acronym")) {
   throw new Error("query.concepts must not use historical kind acronym");
@@ -584,7 +592,7 @@ const debtExplained = engine.searchDetailed("tech debt", { limit: 5, explain: tr
 const debtHit = debtExplained.results.find((hit) => hit.id === "debt");
 const debtConcept = debtHit?.explanation?.query?.concepts?.find((concept) => concept.id === "techdebt");
 if (debtConcept?.kind !== "configured-concept") {
-  throw new Error("non-acronym configured identity must explain kind configured-concept");
+  throw new Error("non-acronym configured concept must explain kind configured-concept");
 }
 if (debtHit?.explanation?.query?.concepts?.some((concept) => concept.kind === "acronym")) {
   throw new Error("query.concepts must not use historical kind acronym");

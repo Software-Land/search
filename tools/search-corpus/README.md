@@ -13,7 +13,7 @@ corpus JSON
 
 Generated evidence is disposable. Reviewed decisions are durable. Runtime receives only trusted compiled truth.
 
-This is **not** `search-semantic`. Configured identity (`configuredConcepts`) ≠ equivalent recall (`relationshipMap` `kind: "equivalent"`) ≠ relatedness.
+This is **not** `search-semantic`. Configured concepts (`configuredConcepts`) ≠ equivalent recall (`relationshipMap` `kind: "equivalent"`) ≠ relatedness.
 
 Search Core must never import this package.
 

@@ -34,7 +34,7 @@ const authoredPlugins: SearchPlugin[] = compileAuthoredRelevance({
   configuredConcepts: [{ key: "wifi" }],
 }).plugins;
 const identity = authoredPlugins[0];
-if (!identity) throw new Error("compileAuthoredRelevance must include configured-identity plugins");
+if (!identity) throw new Error("compileAuthoredRelevance must include configured-concept plugins");
 void identity.name;
 void identity.lexicon?.();
 

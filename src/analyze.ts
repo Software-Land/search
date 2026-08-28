@@ -221,7 +221,7 @@ function admitSearchEquivalenceTargets(
 /**
  * Additive one-hop synonym recall after configured occupancy.
  * Lookup uses accepted configured/phrase/uncovered semantics only.
- * Does not rewrite tokens, lexical intent, or configured identity.
+ * Does not rewrite tokens, lexical intent, or configured-concept occupancy.
  */
 function attachSearchEquivalenceRecall(
   query: {

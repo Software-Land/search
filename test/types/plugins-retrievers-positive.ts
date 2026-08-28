@@ -25,7 +25,7 @@ SearchEngine.create({
 const fromMorphology: EnglishPlugin = morphology();
 void fromMorphology.lemma;
 const fromAuthored = compileAuthoredRelevance({ configuredConcepts: [{ key: "wifi" }] }).plugins[0];
-if (!fromAuthored) throw new Error("compileAuthoredRelevance must include configured-identity plugins");
+if (!fromAuthored) throw new Error("compileAuthoredRelevance must include configured-concept plugins");
 void fromAuthored.lexicon?.();
 
 SearchEngine.create({

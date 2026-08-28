@@ -95,7 +95,7 @@ describe("topical recall lookup", () => {
 });
 
 describe("topical recall analysis", () => {
-  test("configured identity activates topical forms without mutating query representation", () => {
+  test("configured concept activates topical forms without mutating query representation", () => {
     const withTopical = plugins();
     const withoutTopical = plugins([
       { key: "appsec", aliases: [["application", "security"], ["app", "sec"]] },

@@ -220,12 +220,3 @@ export function compileStandaloneRecallLookup(standaloneRecallByKey: Map<string,
   }
   return lookup;
 }
-
-export function configuredConceptsFromAcronymMap(
-  acronymMap?: Record<string, { aliases?: string[][] } | null | undefined> | null
-) {
-  return Object.entries(acronymMap || {}).map(([key, def]) => ({
-    key,
-    aliases: Array.isArray(def?.aliases) ? def.aliases : [],
-  }));
-}

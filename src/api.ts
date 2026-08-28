@@ -29,7 +29,7 @@ export type RelevanceKind = "direct" | "related";
 export type DirectClass = "strong" | "moderate" | "weak" | "none";
 
 /**
- * One configured identity. `aliases[0]` is the canonical lexical sequence.
+ * One configured concept. `aliases[0]` is the canonical lexical sequence.
  * This is not relationshipMap `kind: "equivalent"` recall.
  */
 export interface ConfiguredConcept {
@@ -54,7 +54,7 @@ export interface AdaptiveOptions {
  *
  * Hooks are duck-typed at runtime. Provide only the hooks you implement.
  * Custom plugins may supply `lemma`, `canonicalLemma`, and `lexicon`.
- * Configured identity is not a custom-plugin field set; author
+ * Configured concepts are not a custom-plugin field set; author
  * `configuredConcepts` and compile with `compileAuthoredRelevance()`.
  */
 export interface SearchPlugin {
@@ -313,8 +313,8 @@ export interface MigratedConfiguredEntry {
 
 export interface CompiledAuthoredRelevance {
   /**
-   * Canonical SearchEngine plugin list for authored relevance: configured
-   * identity (including compiled standalone/topical related recall) then
+   * Canonical SearchEngine plugin list for authored relevance: configured-concept
+   * recognition (including compiled standalone/topical related recall) then
    * compiled equivalent one-hop recall. Pass as `plugins: [morphology(), ...authored.plugins]`.
    * Order is owned by the compiler.
    */
