@@ -1,4 +1,4 @@
-import { SearchEngine, morphology, compileAuthoredRelevance, ARTIFACT_FORMATS } from "@software-land/search";
+import { SearchEngine, morphology, compileAuthoredRelevance, migrateConfiguredEntry, ARTIFACT_FORMATS } from "@software-land/search";
 
 // @ts-expect-error FeatureVector is not a public export
 import type { FeatureVector } from "@software-land/search";
@@ -113,6 +113,9 @@ void (null as unknown as NormalizedSearchEquivalences);
 void (null as unknown as CompiledRelationshipMap);
 void mergeEditorialRelationships;
 void (null as unknown as CompiledRelationshipInternals);
+
+// @ts-expect-error migrateConfiguredEntry requires an entry object
+migrateConfiguredEntry();
 
 const authored = compileAuthoredRelevance({
   configuredConcepts: [{ key: "qa", aliases: [["quality", "assurance"]] }],

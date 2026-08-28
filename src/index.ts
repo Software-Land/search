@@ -98,8 +98,8 @@ export type SearchEngine = SearchEngineType;
 export const SearchEngine: SearchEngineConstructor = searchEngineImpl as unknown as SearchEngineConstructor;
 
 export const morphology: (options?: MorphologyOptions) => EnglishPlugin = morphologyImpl;
-export const migrateConfiguredEntry: (raw?: unknown) => MigratedConfiguredEntry = migrateConfiguredEntryImpl as (
-  raw?: unknown
+export const migrateConfiguredEntry: (raw: unknown) => MigratedConfiguredEntry = migrateConfiguredEntryImpl as (
+  raw: unknown
 ) => MigratedConfiguredEntry;
 export const compileAuthoredRelevance: (options?: {
   configuredConcepts?: ConfiguredConcept[];
