@@ -96,6 +96,8 @@ function classifyMismatch({ missing, extra, missingSources, extraSources }) {
   if (missing.length && miss.has("version")) return "version / dotted-span path";
   if (missing.length && miss.has("configured-concept")) return "configured-concept path";
   if (missing.length && miss.has("equivalent-recall")) return "equivalent-recall path";
+  if (missing.length && miss.has("standalone-recall")) return "standalone-recall path";
+  if (missing.length && miss.has("topical-recall")) return "topical-recall path";
   if (missing.length && miss.has(CONTEXTUAL)) return "contextual prefix";
   if (missing.length && (miss.has("typo-correction") || extraSources.length === 0)) return "typo path / missing retrieval provenance";
   if (!missing.length && extra.length) {
@@ -402,7 +404,16 @@ function contractPass(engine, cases) {
   console.log(JSON.stringify(summary, null, 2));
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+export { classifyMismatch };
+
+function isDirectRun() {
+  const entry = process.argv[1];
+  return Boolean(entry) && path.resolve(entry) === fileURLToPath(import.meta.url);
+}
+
+if (isDirectRun()) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
