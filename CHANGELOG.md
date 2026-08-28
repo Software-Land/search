@@ -57,6 +57,7 @@
 ### Changed
 
 - Title-prefix scoring excludes a concept form that is a proper prefix of another form in the same concept, so a morphology-derived lemma cannot prefix-match a longer unrelated title token. Independent exact and lemma token matches still use the full form bag.
+- Software.Land historical `expectedTop` contracts and the 215-query exact-output oracle were refreshed to the accepted equal-alias ranking: incidental unigram, lemma false-friend, and top-N boundary titles no longer outrank occupied identity. Query-side prefix completeness remains explain metadata; candidate `configuredFormCoverage` is occupied-only.
 - Weak single-token body-frequency remains a last-resort within-class tie-break: it applies only to one-token queries among otherwise equivalent weak or none body-lexical hits, after score. It is not a score term and does not attach, occupy, or promote configured concepts.
 
 ### Security

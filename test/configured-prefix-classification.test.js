@@ -164,6 +164,43 @@ describe("Software.Land non-occupied prefix classification", () => {
     return engine.searchDetailed(query, { limit: 20, relatedLimit: 8, explain: true });
   }
 
+  test("what is an appli keeps query-side 1/3 form completeness while candidate coverage stays 0", () => {
+    const result = engine.searchDetailed("what is an appli", {
+      limit: loadJson("documents.json").length,
+      relatedLimit: 8,
+      explain: true,
+    });
+    const q = result.results[0].explanation.query;
+    expect(q.configuredSequenceIntent?.key ?? null).toBeNull();
+    const prefix = (q.configuredPrefixSpans || []).find((s) => s.key === "api");
+    expect(prefix).toEqual({
+      key: "api",
+      start: 3,
+      end: 4,
+      matchedKinds: ["form"],
+      usedPrefix: true,
+    });
+    const concept = q.concepts.find((c) => c.kind === "configured-concept" && c.id === "api");
+    expect(concept.matchedForm).toEqual(["application", "programming", "interface"]);
+    expect(concept.matchedFormTokens).toBe(1);
+    expect(concept.formTokenCount).toBe(3);
+    expect(concept.formCoverage).toBe(0.3333);
+    expect(concept.provenance).toBe("partial-form");
+    for (const hit of [...result.results, ...result.related]) {
+      expect(hit.features.configuredFormCoverage).toBe(0);
+    }
+
+    const container = [...result.results, ...result.related].find((h) => h.title === "What is a Container?");
+    const related = result.results.find((h) => h.title === "gRPC vs REST") || result.related.find((h) => h.title === "gRPC vs REST");
+    expect(container).toBeTruthy();
+    expect(container.features.configuredFormEvidence).toBe(0);
+    expect(container.directClass).not.toBe("moderate");
+    expect(container.directClass).not.toBe("strong");
+    expect(related).toBeTruthy();
+    expect(related.relevanceKind).toBe("related");
+    expect(related.rank).toBeLessThan(container.rank);
+  });
+
   test("what is an appli does not promote Container via query formCoverage", () => {
     const q = analyzed("what is an appli");
     expect(q.configuredSequenceIntent?.key ?? null).toBeNull();
@@ -189,8 +226,17 @@ describe("Software.Land non-occupied prefix classification", () => {
   test("next does not occupy nextjs and does not inherit moderate from prefix coverage", () => {
     const q = analyzed("next");
     expect(q.configuredSequenceIntent?.key ?? null).toBeNull();
-    expect(q.concepts.some((c) => c.kind === "configured-concept" && c.id === "nextjs")).toBe(true);
-    const result = detailed("next");
+    const nextjs = q.concepts.find((c) => c.kind === "configured-concept" && c.id === "nextjs");
+    expect(nextjs).toBeTruthy();
+    expect(nextjs.formCoverage).toBe(0.6667);
+    expect(nextjs.provenance).toBe("partial-form");
+    const explained = detailed("next");
+    const explainConcept = explained.results[0].explanation.query.concepts.find(
+      (c) => c.kind === "configured-concept" && c.id === "nextjs"
+    );
+    expect(explainConcept.formCoverage).toBe(0.6667);
+    expect(explained.results[0].explanation.query.configuredSequenceIntent?.key ?? null).toBeNull();
+    const result = explained;
     for (const hit of result.results) {
       expect(hit.features.configuredFormCoverage).toBe(0);
       if (!hit.features.configuredConceptMatch && !hit.features.configuredFormEvidence) {

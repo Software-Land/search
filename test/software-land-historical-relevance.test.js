@@ -279,21 +279,30 @@ describe("Software.Land historical relevance contracts", () => {
     }
   });
 
-  test("API relationship neighborhood keeps Interface and Class vs Interface", () => {
-    const whatIs = engine.search("what is an api", { limit: 6 }).map((hit) => hit.title);
-    const whatAre = engine.search("what are apis", { limit: 6 }).map((hit) => hit.title);
+  test("API relationship neighborhood keeps Interface with occupied Class vs Interface nearby", () => {
+    const whatIs = engine.search("what is an api", { limit: 8 }).map((hit) => hit.title);
+    const whatAre = engine.search("what are apis", { limit: 8 }).map((hit) => hit.title);
+    const occupied = engine.search("application programming interface", { limit: 8 }).map((hit) => hit.title);
     expect(whatIs.slice(0, 5)).toEqual([
       "What is an API?",
       "REST API vs GraphQL",
       "Working with APIs",
       "What is an Interface?",
-      "Class vs Interface",
+      "What is Refactoring?",
     ]);
     expect(whatAre.slice(0, 5)).toEqual([
       "What is an API?",
       "Working with APIs",
       "REST API vs GraphQL",
       "What is an Interface?",
+      "What is Refactoring?",
+    ]);
+    expect(occupied.slice(0, 6)).toEqual([
+      "What is an API?",
+      "REST API vs GraphQL",
+      "Working with APIs",
+      "What is an Interface?",
+      "What is Refactoring?",
       "Class vs Interface",
     ]);
   });

@@ -59,6 +59,10 @@ Software.Land commit `eac7a90a15d772f0f0626a0fa9481eb9efa55521`. NIST aliases ma
 Software.Land commit `7628a85166781d4ab42f60646e2f66da5f336eaa`.
 Product-approved historical `expectedTop` contracts match Software.Land
 `3ad49e867f82db06aa06cd1c7f38dca8faecf246` (`historical-contract-updates.json`).
+OSS 0.5 equal-alias additionally rebaselined 25 historical rows in
+`historical-contract-updates.json` `equalAliasAcceptedRebaselines` (not a
+Software.Land overlay). Candidate `configuredFormCoverage` is occupied-only;
+query-side prefix `formCoverage` may still be 1/3 without occupancy.
 Corpus document/lemma/relationship/lexical-frequency artifacts remain the
 `dff24cf` snapshot. `configured-concepts.json` additionally merges missing keys from
 the later committed Software.Land `acronymMap.js` at

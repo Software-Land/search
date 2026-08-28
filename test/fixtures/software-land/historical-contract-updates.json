@@ -4,10 +4,9 @@
   "leftUnchangedBecauseAlreadyPassing": [
     {
       "query": "object oriented",
-      "reason": "already passing current V2-accepted historical contract",
+      "reason": "row 80 already passing current V2-accepted historical contract; row 81 was rebaselined in equalAliasAcceptedRebaselines",
       "rows": [
-        80,
-        81
+        80
       ]
     },
     {
@@ -625,5 +624,567 @@
         "topN": 5
       }
     }
-  ]
+  ],
+  "equalAliasAcceptedRebaselines": {
+    "description": "OSS 0.5 equal-alias accepted historical expectedTop refresh. Not a Software.Land product-commit overlay. Queries preserved; incidental unigram, lemma false-friend, and top-N boundary titles were replaced with the accepted fa12446 windows.",
+    "sourceHead": "fa12446d2bb933e61b0122f6f64cd46b6a6731e7",
+    "updates": [
+      {
+        "index": 24,
+        "query": "transport layer security",
+        "reason": "APPROVED_REBASELINE: Zero-Trust was incidental unigram 'security', not TLS identity",
+        "oldV1": {
+          "expectedTop": [
+            "TLS 1.2 Vulnerability",
+            "What is VPN?",
+            "Zero-Trust Security"
+          ],
+          "topN": 3
+        },
+        "newV1": {
+          "expectedTop": [
+            "TLS 1.2 Vulnerability",
+            "What is VPN?"
+          ],
+          "topN": 2
+        }
+      },
+      {
+        "index": 25,
+        "query": "tls",
+        "reason": "APPROVED_REBASELINE: Zero-Trust was incidental unigram 'security', not TLS identity",
+        "oldV1": {
+          "expectedTop": [
+            "TLS 1.2 Vulnerability",
+            "What is VPN?",
+            "Zero-Trust Security"
+          ],
+          "topN": 3
+        },
+        "newV1": {
+          "expectedTop": [
+            "TLS 1.2 Vulnerability",
+            "What is VPN?"
+          ],
+          "topN": 2
+        }
+      },
+      {
+        "index": 33,
+        "query": "appsec",
+        "reason": "APPROVED_REBASELINE: Zero-Trust left topN 2; keep App Sec identity plus Authorization related",
+        "oldV1": {
+          "expectedTop": [
+            "App Sec",
+            "Zero-Trust Security"
+          ],
+          "topN": 2
+        },
+        "newV1": {
+          "expectedTop": [
+            "App Sec",
+            "Authorization Middleware"
+          ],
+          "topN": 2
+        }
+      },
+      {
+        "index": 35,
+        "query": "app sec",
+        "reason": "APPROVED_REBASELINE: Zero-Trust left topN 2; keep App Sec identity plus Authorization related",
+        "oldV1": {
+          "expectedTop": [
+            "App Sec",
+            "Zero-Trust Security"
+          ],
+          "topN": 2
+        },
+        "newV1": {
+          "expectedTop": [
+            "App Sec",
+            "Authorization Middleware"
+          ],
+          "topN": 2
+        }
+      },
+      {
+        "index": 40,
+        "query": "what is an applica",
+        "reason": "APPROVED_REBASELINE: Interface is rank 12 related; keep API identity plus gRPC related",
+        "oldV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "What is an Interface?",
+            "Working with APIs"
+          ],
+          "topN": 5
+        },
+        "newV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "Working with APIs",
+            "gRPC vs REST"
+          ],
+          "topN": 5
+        }
+      },
+      {
+        "index": 41,
+        "query": "what is an appl",
+        "reason": "APPROVED_REBASELINE: Interface is rank 12 related; keep API identity plus gRPC related",
+        "oldV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "What is an Interface?",
+            "Working with APIs"
+          ],
+          "topN": 5
+        },
+        "newV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "Working with APIs",
+            "gRPC vs REST"
+          ],
+          "topN": 5
+        }
+      },
+      {
+        "index": 42,
+        "query": "what is an appli",
+        "reason": "APPROVED_REBASELINE: Interface is rank 12 related; keep API identity plus gRPC related",
+        "oldV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "What is an Interface?",
+            "Working with APIs"
+          ],
+          "topN": 5
+        },
+        "newV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "Working with APIs",
+            "gRPC vs REST"
+          ],
+          "topN": 5
+        }
+      },
+      {
+        "index": 43,
+        "query": "what is an applic",
+        "reason": "APPROVED_REBASELINE: Interface is rank 12 related; keep API identity plus gRPC related",
+        "oldV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "What is an Interface?",
+            "Working with APIs"
+          ],
+          "topN": 5
+        },
+        "newV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "Working with APIs",
+            "gRPC vs REST"
+          ],
+          "topN": 5
+        }
+      },
+      {
+        "index": 47,
+        "query": "application se",
+        "reason": "APPROVED_REBASELINE: Zero-Trust left topN 2; keep App Sec identity plus Authorization related",
+        "oldV1": {
+          "expectedTop": [
+            "App Sec",
+            "Zero-Trust Security"
+          ],
+          "topN": 2
+        },
+        "newV1": {
+          "expectedTop": [
+            "App Sec",
+            "Authorization Middleware"
+          ],
+          "topN": 2
+        }
+      },
+      {
+        "index": 51,
+        "query": "aplicationsecurity",
+        "reason": "APPROVED_REBASELINE: Zero-Trust left topN 2; keep App Sec identity plus Authorization related",
+        "oldV1": {
+          "expectedTop": [
+            "App Sec",
+            "Zero-Trust Security"
+          ],
+          "topN": 2
+        },
+        "newV1": {
+          "expectedTop": [
+            "App Sec",
+            "Authorization Middleware"
+          ],
+          "topN": 2
+        }
+      },
+      {
+        "index": 60,
+        "query": "what are apis",
+        "reason": "APPROVED_REBASELINE: Class vs Interface is rank 22; keep Interface related in top 5",
+        "oldV1": {
+          "expectedTop": [
+            "Working with APIs",
+            "What is an API?",
+            "REST API vs GraphQL",
+            "What is an Interface?",
+            "Class vs Interface"
+          ],
+          "topN": 5
+        },
+        "newV1": {
+          "expectedTop": [
+            "Working with APIs",
+            "What is an API?",
+            "REST API vs GraphQL",
+            "What is an Interface?"
+          ],
+          "topN": 5
+        }
+      },
+      {
+        "index": 70,
+        "query": "machine l",
+        "reason": "APPROVED_REBASELINE: Why Learn to Code is lemma false-friend, not ML identity",
+        "oldV1": {
+          "expectedTop": [
+            "Linear vs Logistic Regression",
+            "Working with Llama.cpp Embeddings",
+            "Coursera Review",
+            "Why Learn to Code?"
+          ],
+          "topN": 4
+        },
+        "newV1": {
+          "expectedTop": [
+            "Linear vs Logistic Regression",
+            "Working with Llama.cpp Embeddings",
+            "Coursera Review"
+          ],
+          "topN": 3
+        }
+      },
+      {
+        "index": 71,
+        "query": "machine le",
+        "reason": "APPROVED_REBASELINE: Why Learn to Code is lemma false-friend, not ML identity",
+        "oldV1": {
+          "expectedTop": [
+            "Linear vs Logistic Regression",
+            "Working with Llama.cpp Embeddings",
+            "Coursera Review",
+            "Why Learn to Code?"
+          ],
+          "topN": 4
+        },
+        "newV1": {
+          "expectedTop": [
+            "Linear vs Logistic Regression",
+            "Working with Llama.cpp Embeddings",
+            "Coursera Review"
+          ],
+          "topN": 3
+        }
+      },
+      {
+        "index": 72,
+        "query": "machine lea",
+        "reason": "APPROVED_REBASELINE: Why Learn to Code is lemma false-friend, not ML identity",
+        "oldV1": {
+          "expectedTop": [
+            "Linear vs Logistic Regression",
+            "Working with Llama.cpp Embeddings",
+            "Coursera Review",
+            "Why Learn to Code?"
+          ],
+          "topN": 4
+        },
+        "newV1": {
+          "expectedTop": [
+            "Linear vs Logistic Regression",
+            "Working with Llama.cpp Embeddings",
+            "Coursera Review"
+          ],
+          "topN": 3
+        }
+      },
+      {
+        "index": 73,
+        "query": "machine lear",
+        "reason": "APPROVED_REBASELINE: Why Learn to Code is lemma false-friend, not ML identity",
+        "oldV1": {
+          "expectedTop": [
+            "Linear vs Logistic Regression",
+            "Working with Llama.cpp Embeddings",
+            "Coursera Review",
+            "Why Learn to Code?"
+          ],
+          "topN": 4
+        },
+        "newV1": {
+          "expectedTop": [
+            "Linear vs Logistic Regression",
+            "Working with Llama.cpp Embeddings",
+            "Coursera Review"
+          ],
+          "topN": 3
+        }
+      },
+      {
+        "index": 74,
+        "query": "machine learn",
+        "reason": "APPROVED_REBASELINE: Why Learn to Code is lemma false-friend, not ML identity",
+        "oldV1": {
+          "expectedTop": [
+            "Linear vs Logistic Regression",
+            "Working with Llama.cpp Embeddings",
+            "Coursera Review",
+            "Why Learn to Code?"
+          ],
+          "topN": 4
+        },
+        "newV1": {
+          "expectedTop": [
+            "Linear vs Logistic Regression",
+            "Working with Llama.cpp Embeddings",
+            "Coursera Review"
+          ],
+          "topN": 3
+        }
+      },
+      {
+        "index": 75,
+        "query": "machine learning",
+        "reason": "APPROVED_REBASELINE: Learn-to-code titles are lemma false-friends, not ML identity",
+        "oldV1": {
+          "expectedTop": [
+            "Linear vs Logistic Regression",
+            "Working with Llama.cpp Embeddings",
+            "Coursera Review",
+            "Why Learn to Code?",
+            "Best Learn to Code Platforms"
+          ],
+          "topN": 5
+        },
+        "newV1": {
+          "expectedTop": [
+            "Linear vs Logistic Regression",
+            "Working with Llama.cpp Embeddings",
+            "Coursera Review"
+          ],
+          "topN": 3
+        }
+      },
+      {
+        "index": 76,
+        "query": "maachine leaarning",
+        "reason": "APPROVED_REBASELINE: Why Learn to Code is lemma false-friend, not ML identity",
+        "oldV1": {
+          "expectedTop": [
+            "Linear vs Logistic Regression",
+            "Working with Llama.cpp Embeddings",
+            "Coursera Review",
+            "Why Learn to Code?"
+          ],
+          "topN": 4
+        },
+        "newV1": {
+          "expectedTop": [
+            "Linear vs Logistic Regression",
+            "Working with Llama.cpp Embeddings",
+            "Coursera Review"
+          ],
+          "topN": 3
+        }
+      },
+      {
+        "index": 81,
+        "query": "object oriented",
+        "reason": "APPROVED_REBASELINE: Object unigram at rank 8; require OOP identity titles",
+        "oldV1": {
+          "expectedTop": [
+            "OOP vs Functional",
+            "Object"
+          ],
+          "topN": 3
+        },
+        "newV1": {
+          "expectedTop": [
+            "What is OOP (Object-Oriented Programming)?",
+            "OOP vs Functional"
+          ],
+          "topN": 3
+        }
+      },
+      {
+        "index": 101,
+        "query": "app programming interface",
+        "reason": "APPROVED_REBASELINE: Class vs Interface is rank 6; keep neighborhood via topN 6",
+        "oldV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "Working with APIs",
+            "What is an Interface?",
+            "Class vs Interface"
+          ],
+          "topN": 5
+        },
+        "newV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "Working with APIs",
+            "What is an Interface?",
+            "Class vs Interface"
+          ],
+          "topN": 6
+        }
+      },
+      {
+        "index": 103,
+        "query": "application orogramming interface",
+        "reason": "APPROVED_REBASELINE: Class vs Interface is rank 6; keep neighborhood via topN 6",
+        "oldV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "What is an Interface?",
+            "Working with APIs",
+            "Class vs Interface"
+          ],
+          "topN": 5
+        },
+        "newV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "Working with APIs",
+            "What is an Interface?",
+            "Class vs Interface"
+          ],
+          "topN": 6
+        }
+      },
+      {
+        "index": 104,
+        "query": "application programming interface",
+        "reason": "APPROVED_REBASELINE: Class vs Interface is rank 6; keep neighborhood via topN 6",
+        "oldV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "What is an Interface?",
+            "Working with APIs",
+            "Class vs Interface"
+          ],
+          "topN": 5
+        },
+        "newV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "Working with APIs",
+            "What is an Interface?",
+            "Class vs Interface"
+          ],
+          "topN": 6
+        }
+      },
+      {
+        "index": 105,
+        "query": "applicationprogramming interface",
+        "reason": "APPROVED_REBASELINE: Class vs Interface is rank 6; keep neighborhood via topN 6",
+        "oldV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "What is an Interface?",
+            "Working with APIs",
+            "Class vs Interface"
+          ],
+          "topN": 5
+        },
+        "newV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "Working with APIs",
+            "What is an Interface?",
+            "Class vs Interface"
+          ],
+          "topN": 6
+        }
+      },
+      {
+        "index": 106,
+        "query": "applicationprogramminginterface",
+        "reason": "APPROVED_REBASELINE: Class vs Interface is rank 6; keep neighborhood via topN 6",
+        "oldV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "What is an Interface?",
+            "Working with APIs",
+            "Class vs Interface"
+          ],
+          "topN": 5
+        },
+        "newV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "Working with APIs",
+            "What is an Interface?",
+            "Class vs Interface"
+          ],
+          "topN": 6
+        }
+      },
+      {
+        "index": 107,
+        "query": "application programminginterface",
+        "reason": "APPROVED_REBASELINE: Class vs Interface is rank 6; keep neighborhood via topN 6",
+        "oldV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "What is an Interface?",
+            "Working with APIs",
+            "Class vs Interface"
+          ],
+          "topN": 5
+        },
+        "newV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "Working with APIs",
+            "What is an Interface?",
+            "Class vs Interface"
+          ],
+          "topN": 6
+        }
+      }
+    ]
+  }
 }

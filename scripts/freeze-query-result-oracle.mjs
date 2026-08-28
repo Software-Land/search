@@ -63,8 +63,8 @@ const rows = historical.rows.map((row) => {
 const out = {
   format: "software-land-query-result-oracle",
   version: 1,
-  note: "Identity freeze after 0.5.0 retrieval-mode completeness and configured-concept canonicalization. Dict-only full-scan change detector for the 215 historical queries. Not a Core ranking contract and not the product historical expectedTop suite.",
-  head: "5ec5eb5c39588e6eb5beaa7341ffb4816d5f79fd",
+  note: "Identity freeze after 0.5 equal-alias occupancy and occupied-only configuredFormCoverage. Dict-only full-scan change detector for the 215 historical queries. Not a Core ranking contract and not the product historical expectedTop suite.",
+  head: "fa12446d2bb933e61b0122f6f64cd46b6a6731e7",
   resultLimit: RESULT_LIMIT,
   relatedLimit: RELATED_LIMIT,
   documentCount: documents.length,
