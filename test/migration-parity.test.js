@@ -12,7 +12,6 @@ import {
   searchWorkerUrl,
 } from "../dist/browser/index.js";
 import { compileLexicalFrequency } from "../tools/search-lexical/index.js";
-const dictionary = ({ entries } = {}) => compileConfiguredConceptPlugin({ configuredConcepts: entries || [] });
 
 const schema = {
   title: { type: "text", role: "title" },
@@ -280,7 +279,7 @@ describe("0.2.0 migration parity", () => {
       { id: "nfc", title: "NFC", body: "Near-field communication." },
       { id: "vpn", title: "VPN", body: "Virtual private network." },
     ];
-    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, dictionary });
+    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, compileConfiguredConceptPlugin });
     const transport = createLoopbackTransport(runtime);
     const published = [];
     const client = createSearchClient({

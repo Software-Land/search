@@ -236,6 +236,10 @@ try {
   if (packedRel.includes("dist/browser/types.d.ts")) {
     throw new Error("tarball must not include internal browser protocol declarations");
   }
+  const packedWorkerRuntime = readFileSync(path.join(packedRoot, "dist/browser/workerRuntime.js"), "utf8");
+  if (/\bdictionary\b/.test(packedWorkerRuntime)) {
+    throw new Error("packed workerRuntime must not retain dictionary factory terminology");
+  }
   const browserApiDts = readFileSync(path.join(packedRoot, "dist/browser/api.d.ts"), "utf8");
   const browserIndexDts = readFileSync(path.join(packedRoot, "dist/browser/index.d.ts"), "utf8");
   for (const leaked of ["_exactPruningMode", "_includeRetrievalDiagnostics", "postingBlocksVisited", "pruningFallbackReason", "representativeSelection"]) {

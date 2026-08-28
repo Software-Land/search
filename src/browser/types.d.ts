@@ -136,14 +136,13 @@ export interface SearchClientOptions {
 export interface WorkerRuntimeFactories {
   SearchEngine?: typeof import("../SearchEngine.js").SearchEngine;
   english?: typeof import("../english.js").english;
-  /** Full authored-relevance compiler. Takes precedence over the legacy `dictionary` factory. */
+  /** Full authored-relevance compiler. Takes precedence over `compileConfiguredConceptPlugin`. */
   compileAuthoredRelevance?: typeof import("../configuredConcepts.js").compileAuthoredRelevance;
   /**
-   * Legacy custom-host factory. Invoked only when init has no `relationshipMap`.
-   * Pre-0.5 option shape `{ entries }` only. `relationshipMap` requires
-   * `compileAuthoredRelevance`.
+   * Custom-host configured-concept compiler. Invoked only when init has no
+   * `relationshipMap`. `relationshipMap` requires `compileAuthoredRelevance`.
    */
-  dictionary?: (options?: { entries?: unknown[] }) => unknown;
+  compileConfiguredConceptPlugin?: typeof import("../configuredConcepts.js").compileConfiguredConceptPlugin;
 }
 
 export interface EngineLike {

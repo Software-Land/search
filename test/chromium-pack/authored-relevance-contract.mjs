@@ -14,6 +14,11 @@ export function assertAuthoredRelevanceContract(sources, where = "package") {
       `${label} Worker still reads payload.dictionaryEntries; SearchClient.init sends configuredConcepts`
     );
   }
+  if (/\bdictionary\s*\(/.test(workerRuntime) || workerRuntime.includes("createWorkerRuntime({ dictionary")) {
+    throw new Error(
+      `${label} Worker still injects a dictionary factory; use compileConfiguredConceptPlugin`
+    );
+  }
   if (!workerRuntime.includes("payload.configuredConcepts")) {
     throw new Error(`${label} Worker does not read payload.configuredConcepts`);
   }

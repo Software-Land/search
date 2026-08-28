@@ -16,7 +16,6 @@ import {
 } from "../dist/index.js";
 import { createSearchClient, createWorkerRuntime, createLoopbackTransport } from "../dist/browser/index.js";
 import { pluginByName } from "./helpers/authored.js";
-const dictionary = ({ entries } = {}) => compileConfiguredConceptPlugin({ configuredConcepts: entries || [] });
 
 const schema = {
   title: { type: "text", role: "title" },
@@ -273,7 +272,7 @@ describe("public API", () => {
   });
 
   test("Worker init accepts retriever names; latest-wins still publishes the last query", async () => {
-    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, dictionary });
+    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, compileConfiguredConceptPlugin });
     const transport = createLoopbackTransport(runtime);
     const published = [];
     const payloads = [];
@@ -301,7 +300,7 @@ describe("public API", () => {
       relatedLimit: 3,
       explain: true,
     });
-    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, dictionary });
+    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, compileConfiguredConceptPlugin });
     const transport = createLoopbackTransport(runtime);
     let publish;
     const published = new Promise((resolve) => {
@@ -344,7 +343,7 @@ describe("public API", () => {
   });
 
   test("Worker retrieval diagnostics stay opt-in and off the default protocol", async () => {
-    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, dictionary });
+    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, compileConfiguredConceptPlugin });
     const transport = createLoopbackTransport(runtime);
     let publish;
     const published = new Promise((resolve) => {
@@ -372,7 +371,7 @@ describe("public API", () => {
   });
 
   test("Worker invalid lexical artifacts reject initialization instead of hanging", async () => {
-    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, dictionary });
+    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, compileConfiguredConceptPlugin });
     const client = createSearchClient({
       worker: createLoopbackTransport(runtime),
     });

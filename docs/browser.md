@@ -47,4 +47,4 @@ Worker searches use the normal exact representative path, including fail-closed 
 
 `createLatestWinsSession` and `createWorkerRuntime` exist for tests and custom hosts. Prefer `createSearchClient` in apps.
 
-The packaged Worker compiles `relationshipMap` through `compileAuthoredRelevance()`. A custom host may inject that same full compiler. A legacy `dictionary` factory is still invoked when init has no `relationshipMap`. Supplying `dictionary` together with `relationshipMap` and no `compileAuthoredRelevance` fails closed instead of dropping equivalent or editorial edges.
+The packaged Worker compiles `relationshipMap` through `compileAuthoredRelevance()`. A custom host may inject that same full compiler. A custom `compileConfiguredConceptPlugin` factory is invoked when init has no `relationshipMap`. Supplying `compileConfiguredConceptPlugin` together with `relationshipMap` and no `compileAuthoredRelevance` fails closed instead of dropping equivalent or editorial edges.

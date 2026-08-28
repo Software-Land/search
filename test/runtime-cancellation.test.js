@@ -11,7 +11,6 @@ import {
   createLoopbackTransport,
   createSearchClient,
 } from "../dist/browser/index.js";
-const dictionary = ({ entries } = {}) => compileConfiguredConceptPlugin({ configuredConcepts: entries || [] });
 
 const schema = {
   title: { type: "text", role: "title" },
@@ -462,7 +461,7 @@ describe("latest-wins scheduling", () => {
 
 describe("worker adapter", () => {
   test("loopback worker inits once and latest-wins cancels stale work", async () => {
-    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, dictionary });
+    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, compileConfiguredConceptPlugin });
     const transport = createLoopbackTransport(runtime);
     const published = [];
     const client = createSearchClient({
@@ -493,7 +492,7 @@ describe("worker adapter", () => {
   });
 
   test("worker teardown prevents later publishes", async () => {
-    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, dictionary });
+    const runtime = createWorkerRuntime({ SearchEngine, english: morphology, compileConfiguredConceptPlugin });
     const transport = createLoopbackTransport(runtime);
     const published = [];
     const client = createSearchClient({

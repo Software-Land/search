@@ -16,7 +16,6 @@ import {
   createSearchClient,
   createWorkerRuntime,
 } from "../dist/browser/index.js";
-const dictionary = ({ entries } = {}) => compileConfiguredConceptPlugin({ configuredConcepts: entries || [] });
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixture = path.join(here, "fixtures", "software-land");
@@ -204,7 +203,7 @@ async function searchWorker(
   const runtime = createWorkerRuntime({
     SearchEngine,
     english: morphology,
-    dictionary,
+    compileConfiguredConceptPlugin,
   });
   let publish;
   let rejectPublish;

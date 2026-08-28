@@ -24,7 +24,6 @@ import {
   createWorkerRuntime,
 } from "../dist/browser/index.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
-const dictionary = ({ entries } = {}) => compileConfiguredConceptPlugin({ configuredConcepts: entries || [] });
 
 const schema = {
   title: { type: "text", role: "title" },
@@ -736,7 +735,7 @@ describe("Stage-2A exact document-feature block pruning", () => {
     const runtime = createWorkerRuntime({
       SearchEngine,
       english: morphology,
-      dictionary,
+      compileConfiguredConceptPlugin,
     });
     let publish;
     const published = new Promise((resolve) => {
@@ -799,7 +798,7 @@ describe("Stage-2A exact document-feature block pruning", () => {
     const runtime = createWorkerRuntime({
       SearchEngine,
       english: morphology,
-      dictionary,
+      compileConfiguredConceptPlugin,
     });
     let publish;
     const published = new Promise((resolve) => {

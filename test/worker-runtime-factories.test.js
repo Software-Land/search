@@ -1,6 +1,6 @@
 /**
  * createWorkerRuntime factory compatibility.
- * Packed searchWorker.js uses compileAuthoredRelevance, not this legacy dictionary path.
+ * Packed searchWorker.js uses compileAuthoredRelevance, not compileConfiguredConceptPlugin.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
@@ -56,19 +56,19 @@ async function searchOnce(runtime, initPayload, query, options = {}) {
 }
 
 describe("createWorkerRuntime factory compatibility", () => {
-  test("legacy dictionary factory is invoked when relationshipMap is absent", async () => {
+  test("compileConfiguredConceptPlugin is invoked when relationshipMap is absent", async () => {
     let calls = 0;
     const configuredConcepts = [{ key: "zephyr", aliases: [["customhost", "token"]] }];
-    const customDictionary = (opts) => {
+    const customCompiler = (opts) => {
       calls += 1;
-      expect(Object.keys(opts).sort()).toEqual(["entries"]);
-      expect(opts.entries).toEqual(configuredConcepts);
-      return compileConfiguredConceptPlugin({ configuredConcepts: opts.entries });
+      expect(Object.keys(opts).sort()).toEqual(["configuredConcepts"]);
+      expect(opts.configuredConcepts).toEqual(configuredConcepts);
+      return compileConfiguredConceptPlugin({ configuredConcepts: opts.configuredConcepts });
     };
     const runtime = createWorkerRuntime({
       SearchEngine,
       english: morphology,
-      dictionary: customDictionary,
+      compileConfiguredConceptPlugin: customCompiler,
     });
     const result = await searchOnce(
       runtime,
@@ -84,7 +84,7 @@ describe("createWorkerRuntime factory compatibility", () => {
     expect(result.results.map((hit) => hit.id)).toEqual(["zephyr"]);
   });
 
-  test("packaged Worker compiler path does not use the legacy dictionary factory", async () => {
+  test("packaged Worker compiler path does not use compileConfiguredConceptPlugin", async () => {
     let compileCalls = 0;
     const runtime = createWorkerRuntime({
       SearchEngine,
@@ -173,16 +173,16 @@ describe("createWorkerRuntime factory compatibility", () => {
     expect((editorial.related || []).map((hit) => hit.id)).toEqual(["doc-b", "qa-guide"]);
   });
 
-  test("legacy dictionary factory plus relationshipMap fails closed", async () => {
+  test("compileConfiguredConceptPlugin plus relationshipMap fails closed", async () => {
     let calls = 0;
-    const customDictionary = () => {
+    const customCompiler = () => {
       calls += 1;
       return compileConfiguredConceptPlugin({ configuredConcepts: authoredEntries });
     };
     const runtime = createWorkerRuntime({
       SearchEngine,
       english: morphology,
-      dictionary: customDictionary,
+      compileConfiguredConceptPlugin: customCompiler,
     });
     const client = createSearchClient({
       worker: createLoopbackTransport(runtime),

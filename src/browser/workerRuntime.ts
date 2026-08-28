@@ -60,7 +60,7 @@ function retrievalDiagnosticMeta(meta?: any) {
 export function createWorkerRuntime({
   SearchEngine,
   english,
-  dictionary,
+  compileConfiguredConceptPlugin,
   compileAuthoredRelevance,
 }: WorkerRuntimeFactories = {}) {
   let engine: SearchEngine | null = null;
@@ -88,15 +88,15 @@ export function createWorkerRuntime({
       const plugins = [];
       if (typeof english === "function") plugins.push(english(payload.englishOptions || {}));
       const hasCustomCompiler = typeof compileAuthoredRelevance === "function";
-      const hasLegacyDictionary = typeof dictionary === "function";
+      const hasConfiguredConceptCompiler = typeof compileConfiguredConceptPlugin === "function";
       const hasRelationshipMap = payload.relationshipMap != null;
       // 1. custom compileAuthoredRelevance, if supplied
       // 2. otherwise built-in full compiler when relationshipMap is authored
-      //    or no legacy dictionary factory is present
-      // 3. legacy custom dictionary factory only when relationshipMap is absent
-      if (hasLegacyDictionary && hasRelationshipMap && !hasCustomCompiler) {
+      //    or no configured-concept compiler is present
+      // 3. custom compileConfiguredConceptPlugin only when relationshipMap is absent
+      if (hasConfiguredConceptCompiler && hasRelationshipMap && !hasCustomCompiler) {
         throw new InvalidConfigurationError(
-          "createWorkerRuntime({ dictionary }) cannot compile relationshipMap; supply compileAuthoredRelevance for full authored relevance, or omit relationshipMap to use the legacy dictionary factory",
+          "createWorkerRuntime({ compileConfiguredConceptPlugin }) cannot compile relationshipMap; supply compileAuthoredRelevance for full authored relevance, or omit relationshipMap to use compileConfiguredConceptPlugin",
           { field: "relationshipMap", expected: "compileAuthoredRelevance" }
         );
       }
@@ -105,7 +105,7 @@ export function createWorkerRuntime({
       includeRetrievalDiagnostics = payload._includeRetrievalDiagnostics === true;
       const documents = payload.documents || [];
       let authored = null;
-      if (hasCustomCompiler || hasRelationshipMap || !hasLegacyDictionary) {
+      if (hasCustomCompiler || hasRelationshipMap || !hasConfiguredConceptCompiler) {
         const compile = hasCustomCompiler ? compileAuthoredRelevance : defaultCompileAuthoredRelevance;
         authored = compile({
           configuredConcepts: payload.configuredConcepts || [],
@@ -115,8 +115,8 @@ export function createWorkerRuntime({
         plugins.push(...authored.plugins);
       } else {
         plugins.push(
-          dictionary({
-            entries: payload.configuredConcepts || [],
+          compileConfiguredConceptPlugin({
+            configuredConcepts: payload.configuredConcepts || [],
           })
         );
       }

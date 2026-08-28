@@ -107,13 +107,13 @@ async function workerSearch({
   query,
   options = {},
   compileAuthoredRelevance: compile,
-  dictionary,
+  compileConfiguredConceptPlugin,
 }) {
   const runtime = createWorkerRuntime({
     SearchEngine,
     english: morphology,
     ...(compile ? { compileAuthoredRelevance: compile } : {}),
-    ...(dictionary ? { dictionary } : {}),
+    ...(compileConfiguredConceptPlugin ? { compileConfiguredConceptPlugin } : {}),
   });
   let settled;
   const got = new Promise((resolve) => {
@@ -277,7 +277,7 @@ describe("relationshipMap browser parity with in-process authored relevance", ()
     expect(actual).toEqual(reference);
   });
 
-  test("compiles relationshipMap once at init, not per query, and does not call dictionary()", async () => {
+  test("compiles relationshipMap once at init, not per query, and does not call compileConfiguredConceptPlugin()", async () => {
     let compiles = 0;
     const compile = (opts) => {
       compiles += 1;
@@ -287,8 +287,8 @@ describe("relationshipMap browser parity with in-process authored relevance", ()
       SearchEngine,
       english: morphology,
       compileAuthoredRelevance: compile,
-      dictionary: () => {
-        throw new Error("dictionary factory must not run");
+      compileConfiguredConceptPlugin: () => {
+        throw new Error("compileConfiguredConceptPlugin must not run");
       },
     });
     const published = [];
