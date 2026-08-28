@@ -53,7 +53,7 @@ export declare function compileLexicalIndex(
 `
 );
 
-for (const name of ["rankOracle.js", "featuresOracle.js", "rankOracle.d.ts", "featuresOracle.d.ts"]) {
+for (const name of ["rankOracle.js", "featuresOracle.js", "rankOracle.d.ts", "featuresOracle.d.ts", "dictionary.js", "dictionary.js.map", "dictionary.d.ts"]) {
   const stale = path.join(dist, name);
   if (existsSync(stale)) unlinkSync(stale);
 }

@@ -76,6 +76,9 @@ try {
 
   const packedSrcJs = packedRel.filter((rel) => rel.startsWith("src/") && rel.endsWith(".js"));
   if (packedSrcJs.length) throw new Error(`tarball must not include runtime src JS: ${packedSrcJs.join(", ")}`);
+  if (packedRel.includes("dist/dictionary.js")) {
+    throw new Error("tarball must not include stale dist/dictionary.js");
+  }
 
   const packedToolTs = packedRel.filter((rel) => rel.startsWith("tools/") && rel.endsWith(".ts") && !rel.endsWith(".d.ts"));
   if (packedToolTs.length) throw new Error(`tarball must not include tool TypeScript source: ${packedToolTs.join(", ")}`);
