@@ -2,7 +2,7 @@
 
 Deterministic, explainable document search with optional offline corpus and semantic compilation. Ranking uses named features and partial-order constraints. Relatedness is a **build-time artifact**, not a runtime embedding model.
 
-Copyright 2026 Sam Malayek. 0.5.0+ is source-available under Business Source License 1.1.
+Copyright 2026 Software.Land. 0.5.0+ is source-available under Business Source License 1.1.
 
 Source: [github.com/Software-Land/search](https://github.com/Software-Land/search). This tree is **0.x**.
 
