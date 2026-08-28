@@ -26,16 +26,10 @@ export interface SearchDocument {
   [field: string]: unknown;
 }
 
-export interface DictionaryEntry {
+export interface ConfiguredConcept {
   key: string;
-  /** Compiled from authored aliases[0]. Sequence kind "expansion". */
-  expansion: string[];
-  /** Compiled from authored aliases[1...]. Sequence kind "alias". */
-  aliases: string[][];
-  /** Compiled from related token → concept edges. Not authored on the concept. */
-  standaloneRecall?: string[];
-  /** Compiled from related concept → form edges. Not authored on the concept. */
-  topicalRecall?: string[][];
+  /** aliases[0] is the canonical lexical sequence; remaining aliases are same-intent forms. */
+  aliases?: string[][];
   type?: string;
   provenance?: string | null;
   confidence?: number | null;
@@ -60,7 +54,7 @@ export interface TopicalRecall {
 }
 
 export interface DictionarySequence {
-  entry: DictionaryEntry;
+  concept: ConfiguredConcept;
   tokens: string[];
   kind: "key" | "expansion" | "alias" | string;
 }
@@ -76,7 +70,7 @@ export interface SearchPlugin {
   /** Inflected lemma-table keys for typo vocabulary. Not a public root export. */
   lemmaTableKeys?: () => Iterable<string>;
   sequences?: DictionarySequence[];
-  byKey?: Map<string, DictionaryEntry>;
+  byKey?: Map<string, ConfiguredConcept>;
   standaloneRecallByToken?: Map<string, string>;
   topicalRecallByKey?: Map<string, string[][]>;
   expand?: (token: string) => Array<{
@@ -86,7 +80,6 @@ export interface SearchPlugin {
     confidence?: number | null;
   }>;
   collapseRepeats?: (token: string) => string;
-  entries?: DictionaryEntry[];
   format?: string;
   version?: number;
   lookup?: Map<string, unknown>;

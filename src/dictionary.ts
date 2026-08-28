@@ -6,15 +6,19 @@
  * Authored shape:
  * { key: "tls", aliases: [["transport","layer","security"], ["transport","layer"]] }
  *
- * aliases[0] compiles internally as sequence kind "expansion".
- * standaloneRecall / topicalRecall are compiled from relationshipMap, not authored here.
+ * aliases[0] is the canonical lexical sequence (sequence kind "expansion").
+ * aliases[1...] are additional same-concept forms (sequence kind "alias").
+ * standaloneRecall / topicalRecall are compiled from relationshipMap, not stored on the concept.
  */
 
-import type { DictionaryEntry, DictionarySequence, RelationshipArtifact } from "./types.js";
-import { compileAuthoredConcept } from "./configuredAuthoring.js";
+import type { ConfiguredConcept, DictionarySequence, RelationshipArtifact } from "./types.js";
+import {
+  additionalConfiguredConceptAliases,
+  canonicalConfiguredConceptForm,
+  compileAuthoredConcept,
+} from "./configuredAuthoring.js";
 import { ARTIFACT_FORMATS, ARTIFACT_VERSION } from "./artifacts.js";
 import {
-  applyCompiledRelationships,
   compileRelationshipMapInternal,
   mergeRelationships,
   type RelationshipDocumentRef,
@@ -23,8 +27,7 @@ import { synonyms as synonymsPlugin } from "./synonyms.js";
 
 export interface DictionaryPlugin {
   name: "dictionary";
-  entries: DictionaryEntry[];
-  byKey: Map<string, DictionaryEntry>;
+  byKey: Map<string, ConfiguredConcept>;
   sequences: DictionarySequence[];
   standaloneRecallByToken: Map<string, string>;
   topicalRecallByKey: Map<string, string[][]>;
@@ -37,18 +40,25 @@ export interface AuthoredRelevanceOptions {
   documents?: RelationshipDocumentRef[];
 }
 
-function dictionaryFromCompiled(list: DictionaryEntry[]): DictionaryPlugin {
-  const byKey = new Map<string, DictionaryEntry>();
+function dictionaryFromCompiled(
+  list: ConfiguredConcept[],
+  recall: {
+    standaloneRecallByKey?: Map<string, string[]>;
+    topicalRecallByKey?: Map<string, string[][]>;
+  } = {}
+): DictionaryPlugin {
+  const byKey = new Map<string, ConfiguredConcept>();
   const sequences: DictionarySequence[] = [];
 
-  for (const entry of list) {
-    byKey.set(entry.key, entry);
-    sequences.push({ entry, tokens: [entry.key], kind: "key" });
-    if (entry.expansion.length) {
-      sequences.push({ entry, tokens: entry.expansion, kind: "expansion" });
+  for (const concept of list) {
+    byKey.set(concept.key, concept);
+    sequences.push({ concept, tokens: [concept.key], kind: "key" });
+    const canonical = canonicalConfiguredConceptForm(concept);
+    if (canonical.length) {
+      sequences.push({ concept, tokens: canonical, kind: "expansion" });
     }
-    for (const alias of entry.aliases) {
-      sequences.push({ entry, tokens: alias, kind: "alias" });
+    for (const alias of additionalConfiguredConceptAliases(concept)) {
+      sequences.push({ concept, tokens: alias, kind: "alias" });
     }
   }
 
@@ -56,17 +66,15 @@ function dictionaryFromCompiled(list: DictionaryEntry[]): DictionaryPlugin {
 
   return {
     name: "dictionary",
-    entries: list,
     byKey,
     sequences,
-    standaloneRecallByToken: compileStandaloneRecallLookup(list),
-    topicalRecallByKey: compileTopicalRecallLookup(list),
+    standaloneRecallByToken: compileStandaloneRecallLookup(recall.standaloneRecallByKey || new Map()),
+    topicalRecallByKey: compileTopicalRecallLookup(recall.topicalRecallByKey || new Map()),
     lexicon() {
       const words = new Set<string>();
-      for (const entry of list) {
-        words.add(entry.key);
-        for (const w of entry.expansion) words.add(w);
-        for (const alias of entry.aliases) {
+      for (const concept of list) {
+        words.add(concept.key);
+        for (const alias of concept.aliases || []) {
           for (const w of alias) words.add(w);
         }
       }
@@ -76,10 +84,10 @@ function dictionaryFromCompiled(list: DictionaryEntry[]): DictionaryPlugin {
 }
 
 export function dictionary({ entries = [] }: { entries?: unknown[] } = {}): DictionaryPlugin {
-  const list: DictionaryEntry[] = [];
+  const list: ConfiguredConcept[] = [];
   for (const raw of entries) {
-    const entry = compileAuthoredConcept(raw);
-    if (entry) list.push(entry);
+    const concept = compileAuthoredConcept(raw);
+    if (concept) list.push(concept);
   }
   return dictionaryFromCompiled(list);
 }
@@ -99,14 +107,16 @@ export function compileAuthoredRelevance({
   relationshipMap,
   documents,
 }: AuthoredRelevanceOptions = {}): CompiledAuthoredRelevance {
-  const list: DictionaryEntry[] = [];
+  const list: ConfiguredConcept[] = [];
   for (const raw of configuredConcepts) {
-    const entry = compileAuthoredConcept(raw);
-    if (entry) list.push(entry);
+    const concept = compileAuthoredConcept(raw);
+    if (concept) list.push(concept);
   }
   const compiled = compileRelationshipMapInternal(relationshipMap, { concepts: list, documents: documents || [] });
-  applyCompiledRelationships(list, compiled);
-  const dictionaryPlugin = dictionaryFromCompiled(list);
+  const dictionaryPlugin = dictionaryFromCompiled(list, {
+    standaloneRecallByKey: compiled.standaloneRecallByKey,
+    topicalRecallByKey: compiled.topicalRecallByKey,
+  });
   const synonyms = synonymsPlugin(compiled.synonymMap);
   return {
     plugins: [dictionaryPlugin, synonyms],
@@ -175,24 +185,20 @@ export function normalizeTopicalRecall(raw: unknown): string[][] {
   return out;
 }
 
-export function compileTopicalRecallLookup(entries: DictionaryEntry[]): Map<string, string[][]> {
+export function compileTopicalRecallLookup(topicalRecallByKey: Map<string, string[][]>): Map<string, string[][]> {
   const lookup = new Map<string, string[][]>();
-  for (const entry of entries || []) {
-    const key = entry?.key;
-    if (!key) continue;
-    const forms = Array.isArray(entry.topicalRecall) ? entry.topicalRecall : [];
-    if (!forms.length) continue;
+  for (const [key, forms] of topicalRecallByKey || []) {
+    if (!key || !Array.isArray(forms) || !forms.length) continue;
     lookup.set(key, forms.map((form) => [...form]));
   }
   return lookup;
 }
 
-export function compileStandaloneRecallLookup(entries: DictionaryEntry[]): Map<string, string> {
+export function compileStandaloneRecallLookup(standaloneRecallByKey: Map<string, string[]>): Map<string, string> {
   const claimed = new Map<string, Set<string>>();
-  for (const entry of entries || []) {
-    const key = entry?.key;
+  for (const [key, tokens] of standaloneRecallByKey || []) {
     if (!key) continue;
-    for (const token of entry.standaloneRecall || []) {
+    for (const token of tokens || []) {
       let keys = claimed.get(token);
       if (!keys) {
         keys = new Set();

@@ -1,8 +1,9 @@
+import { canonicalConfiguredConceptForm } from "./configuredAuthoring.js";
 import { allowPrefixMatch, DEFAULT_STOP } from "./text.js";
 import type {
+  ConfiguredConcept,
   ConfiguredPrefixSpan,
   ConfiguredSpan,
-  DictionaryEntry,
   DictionarySequence,
   QueryToken,
   SearchPlugin,
@@ -31,7 +32,7 @@ export type ConfiguredSequenceResolution =
   | {
       status: "unique";
       intent: ConfiguredSequenceIntent;
-      entry: DictionaryEntry;
+      concept: ConfiguredConcept;
       usedPrefix: boolean;
       alignment: ConfiguredAlignmentKind;
     }
@@ -90,8 +91,8 @@ function alignsLast(tok: QueryToken, want: string): boolean {
  */
 function isSingleExpansionWordAlias(seq: DictionarySequence): boolean {
   if (seq.kind !== "alias") return false;
-  const key = seq.entry?.key;
-  const expansion = (seq.entry?.expansion || []).filter((f) => f && f !== key && !/^\d+$/.test(f));
+  const key = seq.concept?.key;
+  const expansion = canonicalConfiguredConceptForm(seq.concept).filter((f) => f && f !== key && !/^\d+$/.test(f));
   const tokens = seq.tokens || [];
   return expansion.length >= 2 && tokens.length === 1 && expansion.includes(tokens[0]);
 }
@@ -102,8 +103,8 @@ function exactTypedConfiguredKeys(tok: QueryToken, dict: SearchPlugin | null | u
   const typed = String(tok.surfaceNormalized || tok.surface || "").toLowerCase();
   if (!typed) return keys;
   for (const seq of dict.sequences) {
-    if (!seq?.entry?.key || !seq.tokens?.length) continue;
-    if (seq.tokens.includes(typed)) keys.add(seq.entry.key);
+    if (!seq?.concept?.key || !seq.tokens?.length) continue;
+    if (seq.tokens.includes(typed)) keys.add(seq.concept.key);
   }
   return keys;
 }
@@ -293,7 +294,7 @@ const MIN_EXPANSION_PREFIX_TOKENS = 2;
 const MIN_EXPANSION_PREFIX_COVERAGE = 2 / 3;
 
 function uniqueResolution(
-  entry: DictionaryEntry,
+  concept: ConfiguredConcept,
   matchedKinds: string[],
   usedPrefix: boolean,
   alignment: ConfiguredAlignmentKind = "full"
@@ -301,11 +302,11 @@ function uniqueResolution(
   return {
     status: "unique",
     intent: {
-      key: entry.key,
-      expansion: [...(entry.expansion || [])],
+      key: concept.key,
+      expansion: [...canonicalConfiguredConceptForm(concept)],
       matchedKinds,
     },
-    entry,
+    concept,
     usedPrefix,
     alignment,
   };
@@ -327,10 +328,10 @@ function uniqueExpansionLeftPrefix(
     [];
   const seen = new Set<string>();
   for (const seq of dict.sequences) {
-    if (seq.kind !== "expansion" || !seq.entry?.key || !seq.tokens?.length) continue;
+    if (seq.kind !== "expansion" || !seq.concept?.key || !seq.tokens?.length) continue;
     const n = seq.tokens.length;
     if (n <= k) continue;
-    if (seen.has(seq.entry.key)) continue;
+    if (seen.has(seq.concept.key)) continue;
     let usedPrefix = k < n;
     let ok = true;
     for (let j = 0; j < k; j++) {
@@ -354,17 +355,17 @@ function uniqueExpansionLeftPrefix(
     if (!ok) continue;
     const coverage = k / n;
     if (coverage < MIN_EXPANSION_PREFIX_COVERAGE) continue;
-    seen.add(seq.entry.key);
+    seen.add(seq.concept.key);
     candidates.push({ seq, coverage, n, usedPrefix });
   }
   if (!candidates.length) return { status: "none" };
   candidates.sort((a, b) => b.coverage - a.coverage || a.n - b.n);
   const best = candidates[0].coverage;
   const top = candidates.filter((c) => c.coverage === best);
-  const keys = new Set(top.map((c) => c.seq.entry.key));
+  const keys = new Set(top.map((c) => c.seq.concept.key));
   if (keys.size !== 1) return { status: "none" };
   const hit = top[0];
-  const entry = dict.byKey?.get(hit.seq.entry.key) || hit.seq.entry;
+  const entry = dict.byKey?.get(hit.seq.concept.key) || hit.seq.concept;
   return uniqueResolution(entry, ["expansion"], hit.usedPrefix, "left-prefix");
 }
 
@@ -386,10 +387,10 @@ function uniqueCandidateResolution(
   candidates.sort((a, b) => b.coverage - a.coverage || a.n - b.n);
   const best = candidates[0].coverage;
   const top = candidates.filter((c) => c.coverage === best);
-  const keys = new Set(top.map((c) => c.seq.entry.key));
+  const keys = new Set(top.map((c) => c.seq.concept.key));
   if (keys.size !== 1) return { status: "none" };
   const hit = top[0];
-  const entry = dict.byKey?.get(hit.seq.entry.key) || hit.seq.entry;
+  const entry = dict.byKey?.get(hit.seq.concept.key) || hit.seq.concept;
   return uniqueResolution(entry, ["expansion"], hit.usedPrefix, alignment);
 }
 
@@ -408,17 +409,17 @@ function uniqueStopTolerantLeftPrefix(
   const candidates: ExpansionAlignCandidate[] = [];
   const seen = new Set<string>();
   for (const seq of dict.sequences) {
-    if (seq.kind !== "expansion" || !seq.entry?.key || !seq.tokens?.length) continue;
+    if (seq.kind !== "expansion" || !seq.concept?.key || !seq.tokens?.length) continue;
     const n = seq.tokens.length;
     if (n < MIN_EXPANSION_PREFIX_TOKENS) continue;
-    if (seen.has(seq.entry.key)) continue;
+    if (seen.has(seq.concept.key)) continue;
     if (leadingTypedStopBlocks(tokens, seq.tokens[0])) continue;
     const aligned = alignSequential(tokens, seq.tokens, 0, { allowNonLastPrefix: false });
     if (!aligned.ok || aligned.consumedAllWant) continue;
     if (aligned.typedContentMatched < MIN_EXPANSION_PREFIX_TOKENS) continue;
     const coverage = aligned.matchedWant / n;
     if (coverage < MIN_EXPANSION_PREFIX_COVERAGE) continue;
-    seen.add(seq.entry.key);
+    seen.add(seq.concept.key);
     candidates.push({ seq, coverage, n, usedPrefix: aligned.usedPrefix });
   }
   return uniqueCandidateResolution(candidates, dict, "left-prefix");
@@ -438,11 +439,11 @@ function uniqueExpansionSuffix(
   const candidates: ExpansionAlignCandidate[] = [];
   const seen = new Set<string>();
   for (const seq of dict.sequences) {
-    if (seq.kind !== "expansion" || !seq.entry?.key || !seq.tokens?.length) continue;
+    if (seq.kind !== "expansion" || !seq.concept?.key || !seq.tokens?.length) continue;
     const want = seq.tokens;
     const n = want.length;
     if (n < MIN_EXPANSION_SUFFIX_CONTENT + 1) continue;
-    if (seen.has(seq.entry.key)) continue;
+    if (seen.has(seq.concept.key)) continue;
     let best: SequentialAlign | null = null;
     for (let startJ = 1; startJ < n; startJ++) {
       if (!alignsExact(tokens[0], want[startJ])) continue;
@@ -454,7 +455,7 @@ function uniqueExpansionSuffix(
       if (!best || aligned.matchedWant > best.matchedWant) best = aligned;
     }
     if (!best) continue;
-    seen.add(seq.entry.key);
+    seen.add(seq.concept.key);
     candidates.push({
       seq,
       coverage: best.matchedWant / n,
@@ -480,14 +481,14 @@ function uniqueExactOneTokenAlias(
   const matches: DictionarySequence[] = [];
   const keys = new Set<string>();
   for (const seq of dict.sequences) {
-    if (!isSingleExpansionWordAlias(seq) || !seq.entry?.key) continue;
+    if (!isSingleExpansionWordAlias(seq) || !seq.concept?.key) continue;
     if (!exactTypedToken(tokens[0], seq.tokens[0])) continue;
     matches.push(seq);
-    keys.add(seq.entry.key);
+    keys.add(seq.concept.key);
   }
   if (!matches.length) return { status: "none" };
   if (keys.size > 1) return { status: "ambiguous", keys: [...keys] };
-  const entry = dict.byKey?.get(matches[0].entry.key) || matches[0].entry;
+  const entry = dict.byKey?.get(matches[0].concept.key) || matches[0].concept;
   return uniqueResolution(entry, ["alias"], false, "full");
 }
 
@@ -499,10 +500,10 @@ function configuredKeyPrefixKeys(tok: QueryToken, dict: SearchPlugin): string[] 
   if (!form || form.length < 3 || !dict.sequences?.length) return [];
   const keys = new Set<string>();
   for (const seq of dict.sequences) {
-    if (seq.kind !== "key" || seq.tokens?.length !== 1 || !seq.entry?.key) continue;
+    if (seq.kind !== "key" || seq.tokens?.length !== 1 || !seq.concept?.key) continue;
     const want = seq.tokens[0];
     if (!want || want === form) continue;
-    if (want.startsWith(form)) keys.add(seq.entry.key);
+    if (want.startsWith(form)) keys.add(seq.concept.key);
   }
   return [...keys];
 }
@@ -523,7 +524,7 @@ function tokenProperPrefixOf(tok: QueryToken, want: string): boolean {
 function uniqueLongestFirstExpansionPrefix(
   tok: QueryToken,
   dict: SearchPlugin
-): { entry: DictionaryEntry } | null {
+): { concept: ConfiguredConcept } | null {
   if (!tok || !dict.sequences?.length) return null;
   if (configuredKeyPrefixKeys(tok, dict).length) return null;
   const typed = String(tok.surfaceNormalized || tok.surface || "").toLowerCase();
@@ -533,33 +534,33 @@ function uniqueLongestFirstExpansionPrefix(
       if (seq.tokens[0] === typed) return null;
     }
   }
-  const byKey = new Map<string, { entry: DictionaryEntry; expansionLen: number }>();
+  const byKey = new Map<string, { concept: ConfiguredConcept; expansionLen: number }>();
   for (const seq of dict.sequences) {
-    if (seq.kind !== "expansion" || !seq.entry?.key || !seq.tokens?.length) continue;
+    if (seq.kind !== "expansion" || !seq.concept?.key || !seq.tokens?.length) continue;
     const first = seq.tokens[0];
     if (!first || !tokenProperPrefixOf(tok, first)) continue;
-    const expansionLen = Math.max((seq.entry.expansion || []).length, seq.tokens.length);
-    const prev = byKey.get(seq.entry.key);
+    const expansionLen = Math.max(canonicalConfiguredConceptForm(seq.concept).length, seq.tokens.length);
+    const prev = byKey.get(seq.concept.key);
     if (!prev || expansionLen > prev.expansionLen) {
-      byKey.set(seq.entry.key, { entry: seq.entry, expansionLen });
+      byKey.set(seq.concept.key, { concept: seq.concept, expansionLen });
     }
   }
   if (!byKey.size) return null;
   const rows = [...byKey.values()];
-  if (rows.length === 1) return { entry: rows[0].entry };
+  if (rows.length === 1) return { concept: rows[0].concept };
   let bestLen = -1;
-  const winners: DictionaryEntry[] = [];
+  const winners: ConfiguredConcept[] = [];
   for (const row of byKey.values()) {
     if (row.expansionLen > bestLen) {
       bestLen = row.expansionLen;
       winners.length = 0;
-      winners.push(row.entry);
+      winners.push(row.concept);
     } else if (row.expansionLen === bestLen) {
-      winners.push(row.entry);
+      winners.push(row.concept);
     }
   }
   if (winners.length !== 1) return null;
-  return { entry: winners[0] };
+  return { concept: winners[0] };
 }
 
 /**
@@ -571,13 +572,13 @@ function uniqueExactKeyOverForeignOneToken(
   chosen: Array<{ seq: DictionarySequence; usedPrefix: boolean }>
 ): string | null {
   const exactKeys = chosen.filter(
-    (m) => m.seq.kind === "key" && !m.usedPrefix && (m.seq.tokens?.length || 0) === 1 && m.seq.entry?.key
+    (m) => m.seq.kind === "key" && !m.usedPrefix && (m.seq.tokens?.length || 0) === 1 && m.seq.concept?.key
   );
-  const keySet = new Set(exactKeys.map((m) => m.seq.entry.key));
+  const keySet = new Set(exactKeys.map((m) => m.seq.concept.key));
   if (keySet.size !== 1) return null;
   const winner = keySet.values().next().value as string;
   for (const m of chosen) {
-    if (m.seq.entry.key === winner) continue;
+    if (m.seq.concept.key === winner) continue;
     const n = m.seq.tokens?.length || 0;
     if (m.seq.kind === "key") return null;
     if ((m.seq.kind === "alias" || m.seq.kind === "expansion") && n === 1) continue;
@@ -596,7 +597,7 @@ export function resolveConfiguredSequence(
   if (!dict?.sequences?.length || !tokens.length) return { status: "none" };
   const matches: Array<{ seq: DictionarySequence; usedPrefix: boolean }> = [];
   for (const seq of dict.sequences) {
-    if (!seq?.entry?.key || !seq.tokens?.length) continue;
+    if (!seq?.concept?.key || !seq.tokens?.length) continue;
     if (isSingleExpansionWordAlias(seq)) continue;
     const aligned = sequenceAligns(tokens, seq, dict);
     if (!aligned.ok) continue;
@@ -605,15 +606,15 @@ export function resolveConfiguredSequence(
   if (matches.length) {
     const exact = matches.filter((m) => !m.usedPrefix);
     const chosen = exact.length ? exact : matches;
-    const chosenKeys = new Set(chosen.map((m) => m.seq.entry.key));
+    const chosenKeys = new Set(chosen.map((m) => m.seq.concept.key));
     let resolved = chosen;
     if (chosenKeys.size > 1) {
       const winner = uniqueExactKeyOverForeignOneToken(chosen);
       if (!winner) return { status: "ambiguous", keys: [...chosenKeys] };
-      resolved = chosen.filter((m) => m.seq.entry.key === winner);
+      resolved = chosen.filter((m) => m.seq.concept.key === winner);
     }
-    const key = resolved[0].seq.entry.key;
-    const entry = dict.byKey?.get(key) || resolved[0].seq.entry;
+    const key = resolved[0].seq.concept.key;
+    const entry = dict.byKey?.get(key) || resolved[0].seq.concept;
     const matchedKinds = [...new Set(resolved.map((m) => String(m.seq.kind || "")))].filter(Boolean);
     const usedPrefix = resolved.some((m) => m.usedPrefix);
     return uniqueResolution(entry, matchedKinds, usedPrefix, "full");
@@ -628,7 +629,7 @@ export function resolveConfiguredSequence(
   if (suffix.status !== "none") return suffix;
   if (tokens.length === 1) {
     const hit = uniqueLongestFirstExpansionPrefix(tokens[0], dict);
-    if (hit) return uniqueResolution(hit.entry, ["expansion"], true, "left-prefix");
+    if (hit) return uniqueResolution(hit.concept, ["expansion"], true, "left-prefix");
   }
   return { status: "none" };
 }
@@ -678,17 +679,17 @@ export function resolveConfiguredSpans(
   if (!dict?.sequences?.length || !tokens.length) return [];
   const grouped = new Map<string, { key: string; start: number; end: number; kinds: Set<string> }>();
   for (const seq of dict.sequences) {
-    if (!seq?.entry?.key || !seq.tokens?.length) continue;
+    if (!seq?.concept?.key || !seq.tokens?.length) continue;
     if (!SPAN_SEQUENCE_KINDS.has(String(seq.kind || ""))) continue;
     if (isSingleExpansionWordAlias(seq)) continue;
     const n = seq.tokens.length;
     for (let start = 0; start <= tokens.length - n; start++) {
       if (!sequenceAlignsExactAt(tokens, start, seq, dict)) continue;
       const end = start + n;
-      const id = spanKeyId(seq.entry.key, start, end);
+      const id = spanKeyId(seq.concept.key, start, end);
       let row = grouped.get(id);
       if (!row) {
-        row = { key: seq.entry.key, start, end, kinds: new Set() };
+        row = { key: seq.concept.key, start, end, kinds: new Set() };
         grouped.set(id, row);
       }
       if (seq.kind) row.kinds.add(String(seq.kind));
@@ -731,7 +732,7 @@ export function resolveConfiguredPrefixSpans(
     { start: number; end: number; kinds: Set<string>; keys: Set<string> }
   >();
   for (const seq of dict.sequences) {
-    if (!seq?.entry?.key || !seq.tokens?.length) continue;
+    if (!seq?.concept?.key || !seq.tokens?.length) continue;
     if (!PREFIX_SPAN_SEQUENCE_KINDS.has(String(seq.kind || ""))) continue;
     if (isSingleExpansionWordAlias(seq)) continue;
     const n = seq.tokens.length;
@@ -747,7 +748,7 @@ export function resolveConfiguredPrefixSpans(
         row = { start, end, kinds: new Set(), keys: new Set() };
         grouped.set(id, row);
       }
-      row.keys.add(seq.entry.key);
+      row.keys.add(seq.concept.key);
       if (seq.kind) row.kinds.add(String(seq.kind));
     }
   }
@@ -765,14 +766,14 @@ export function resolveConfiguredPrefixSpans(
     }
     if (contained) continue;
     const hit = uniqueLongestFirstExpansionPrefix(tok, dict);
-    if (!hit?.entry?.key) continue;
+    if (!hit?.concept?.key) continue;
     const id = windowId(start, end);
     let row = grouped.get(id);
     if (!row) {
       row = { start, end, kinds: new Set(), keys: new Set() };
       grouped.set(id, row);
     }
-    row.keys.add(hit.entry.key);
+    row.keys.add(hit.concept.key);
     row.kinds.add("expansion");
   }
   return [...grouped.values()]

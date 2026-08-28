@@ -17,6 +17,10 @@ import {
 import { canonicalLexicalTokensFromQuery } from "./lexicalNormalize.js";
 import { bindMorphologyDerivedEquivalences } from "./synonyms.js";
 import {
+  additionalConfiguredConceptAliases,
+  canonicalConfiguredConceptForm,
+} from "./configuredAuthoring.js";
+import {
   resolveConfiguredPrefixSpans,
   resolveConfiguredSequence,
   resolveConfiguredSpans,
@@ -25,11 +29,11 @@ import {
 import type {
   AnalyzedQuery,
   AnalyzeOptions,
+  ConfiguredConcept,
   ConfiguredPrefixSpan,
   ConfiguredSequenceIntent,
   ConfiguredSpan,
   ContextualCompletion,
-  DictionaryEntry,
   PrefixCompletion,
   QueryAlternative,
   QueryConcept,
@@ -93,22 +97,20 @@ function resolveStandaloneRecall(
   if (!typed || typed !== tok.normalized) return null;
   const key = dict.standaloneRecallByToken?.get(typed);
   if (!key) return null;
-  const entry = dict.byKey?.get(key);
-  if (!entry || entry.key !== key) return null;
+  const concept = dict.byKey?.get(key);
+  if (!concept || concept.key !== key) return null;
   return {
-    key: entry.key,
+    key: concept.key,
     sourceToken: typed,
-    expansion: [...(entry.expansion || [])],
-    aliases: (entry.aliases || []).map((alias) => [...alias]),
-    forms: formsForEntry(entry),
+    expansion: [...canonicalConfiguredConceptForm(concept)],
+    aliases: additionalConfiguredConceptAliases(concept).map((alias) => [...alias]),
+    forms: formsForEntry(concept),
   };
 }
 
 function topicalRecallForKey(key: string | null | undefined, dict: SearchPlugin | null): TopicalRecall | null {
   if (!key || !dict) return null;
-  const fromLookup = dict.topicalRecallByKey?.get(key);
-  const fromEntry = dict.byKey?.get(key)?.topicalRecall;
-  const forms = fromLookup?.length ? fromLookup : fromEntry;
+  const forms = dict.topicalRecallByKey?.get(key);
   if (!Array.isArray(forms) || !forms.length) return null;
   return {
     key,
@@ -155,19 +157,20 @@ function attachConfiguredPrefixSpanConcept(
   const span = spans[0];
   if (uniqueStopRemainderSpanKey(tokens, [span]) !== span.key) return [];
   if (concepts.some((c) => c.kind === "configured-concept" && c.id !== span.key)) return [];
-  const entry = dict.byKey?.get(span.key);
-  if (!entry?.key) return [];
+  const compiled = dict.byKey?.get(span.key);
+  if (!compiled?.key) return [];
   const tokenCount = span.end - span.start;
+  const canonical = canonicalConfiguredConceptForm(compiled);
   const concept = {
-    id: entry.key,
+    id: compiled.key,
     kind: "configured-concept",
-    forms: formsForEntry(entry),
-    expansion: [...(entry.expansion || [])],
-    aliases: (entry.aliases || []).map((a) => [...a]),
+    forms: formsForEntry(compiled),
+    expansion: [...canonical],
+    aliases: additionalConfiguredConceptAliases(compiled).map((a) => [...a]),
     provenance: provenanceForSequenceKinds(span.matchedKinds, true),
     matchedExpansionTokens: tokenCount,
-    expansionTokenCount: (entry.expansion || []).length,
-    expansionCoverage: Number((tokenCount / Math.max((entry.expansion || []).length, 1)).toFixed(4)),
+    expansionTokenCount: canonical.length,
+    expansionCoverage: Number((tokenCount / Math.max(canonical.length, 1)).toFixed(4)),
   };
   const existing = concepts.find((c) => c.kind === "configured-concept" && c.id === span.key);
   if (existing) Object.assign(existing, concept);
@@ -483,7 +486,7 @@ function tokenAlignsConfiguredPrefix(tok: QueryToken, want: string) {
  * expansion do not collapse. Insertion order, lexicographic order, and
  * `primary` are not used.
  */
-function uniqueConfiguredKey(entries: DictionaryEntry[]) {
+function uniqueConfiguredKey(entries: ConfiguredConcept[]) {
   const keys = new Set<string>();
   for (const e of entries || []) {
     if (e?.key) keys.add(e.key);
@@ -493,7 +496,7 @@ function uniqueConfiguredKey(entries: DictionaryEntry[]) {
 }
 
 interface DictionaryMatchHit {
-  entry: DictionaryEntry;
+  concept: ConfiguredConcept;
   kind: string;
   from: number;
   to: number;
@@ -503,13 +506,13 @@ interface DictionaryMatchHit {
 }
 
 function exactExpansionEntriesAt(tokens: QueryToken[], dict: SearchPlugin, from: number, n: number) {
-  const entries: DictionaryEntry[] = [];
+  const entries: ConfiguredConcept[] = [];
   const seen = new Set<string>();
   if (!dict?.sequences) return entries;
   for (const seq of dict.sequences) {
     if (seq.kind !== "expansion") continue;
     if (seq.tokens.length !== n) continue;
-    const key = seq.entry?.key;
+    const key = seq.concept?.key;
     if (!key || seen.has(key)) continue;
     let exact = true;
     for (let j = 0; j < n; j++) {
@@ -520,19 +523,19 @@ function exactExpansionEntriesAt(tokens: QueryToken[], dict: SearchPlugin, from:
     }
     if (!exact) continue;
     seen.add(key);
-    entries.push(seq.entry);
+    entries.push(seq.concept);
   }
   return entries;
 }
 
 function expansionPrefixEntriesAt(tokens: QueryToken[], dict: SearchPlugin, from: number, n: number) {
-  const entries: DictionaryEntry[] = [];
+  const entries: ConfiguredConcept[] = [];
   const seen = new Set<string>();
   if (!dict?.sequences) return entries;
   for (const seq of dict.sequences) {
     if (seq.kind !== "expansion") continue;
     if (seq.tokens.length !== n) continue;
-    const key = seq.entry?.key;
+    const key = seq.concept?.key;
     if (!key || seen.has(key)) continue;
     let ok = true;
     for (let j = 0; j < n; j++) {
@@ -548,7 +551,7 @@ function expansionPrefixEntriesAt(tokens: QueryToken[], dict: SearchPlugin, from
     }
     if (!ok) continue;
     seen.add(key);
-    entries.push(seq.entry);
+    entries.push(seq.concept);
   }
   return entries;
 }
@@ -607,33 +610,34 @@ function attachConfiguredSequenceConcept(
     return null;
   }
   if (resolution.status !== "unique") return null;
-  const { intent, entry, usedPrefix } = resolution;
+  const { intent, concept, usedPrefix } = resolution;
   for (let i = concepts.length - 1; i >= 0; i--) {
     if (concepts[i].kind === "configured-concept" && concepts[i].id !== intent.key) concepts.splice(i, 1);
   }
   const exists = concepts.some((c) => c.kind === "configured-concept" && c.id === intent.key);
   if (!exists) {
+    const canonical = canonicalConfiguredConceptForm(concept);
     concepts.push({
-      id: entry.key,
+      id: concept.key,
       kind: "configured-concept",
-      forms: formsForEntry(entry),
-      expansion: [...(entry.expansion || [])],
-      aliases: (entry.aliases || []).map((a) => [...a]),
+      forms: formsForEntry(concept),
+      expansion: [...canonical],
+      aliases: additionalConfiguredConceptAliases(concept).map((a) => [...a]),
       provenance: provenanceForSequenceKinds(intent.matchedKinds, usedPrefix),
       matchedExpansionTokens: tokenCount,
-      expansionTokenCount: (entry.expansion || []).length,
-      expansionCoverage: Number((tokenCount / Math.max((entry.expansion || []).length, 1)).toFixed(4)),
+      expansionTokenCount: canonical.length,
+      expansionCoverage: Number((tokenCount / Math.max(canonical.length, 1)).toFixed(4)),
     });
   }
   for (let i = 0; i < tokenCount; i++) covered.add(i);
   return intent;
 }
 
-function entryOwnsExactTypedToken(entry: DictionaryEntry | undefined, typed: string) {
-  if (!entry || !typed) return false;
-  if (entry.key === typed) return true;
-  if ((entry.expansion || []).includes(typed)) return true;
-  for (const alias of entry.aliases || []) {
+function entryOwnsExactTypedToken(concept: ConfiguredConcept | undefined, typed: string) {
+  if (!concept || !typed) return false;
+  if (concept.key === typed) return true;
+  if (canonicalConfiguredConceptForm(concept).includes(typed)) return true;
+  for (const alias of additionalConfiguredConceptAliases(concept)) {
     if (alias.includes(typed)) return true;
   }
   return false;
@@ -669,7 +673,7 @@ function projectContextualExpansionIntent(
     if (seq.kind !== "expansion") continue;
     const expansion = seq.tokens || [];
     if (expansion.length < k) continue;
-    if (entryOwnsExactTypedToken(seq.entry, typedLast)) continue;
+    if (entryOwnsExactTypedToken(seq.concept, typedLast)) continue;
     let precedingOk = true;
     for (let j = 0; j < k - 1; j++) {
       if (!tokenAlignsConfiguredExact(tokens[j], expansion[j])) {
@@ -714,11 +718,11 @@ function projectContextualExpansionIntent(
 function isSingleExpansionWordAliasSequence(seq: {
   kind?: string;
   tokens?: string[];
-  entry?: { key?: string; expansion?: string[] };
+  concept?: ConfiguredConcept;
 }) {
   if (seq.kind !== "alias") return false;
-  const key = seq.entry?.key;
-  const expansion = (seq.entry?.expansion || []).filter((f) => f && f !== key && !/^\d+$/.test(f));
+  const key = seq.concept?.key;
+  const expansion = canonicalConfiguredConceptForm(seq.concept).filter((f) => f && f !== key && !/^\d+$/.test(f));
   const tokens = seq.tokens || [];
   return expansion.length >= 2 && tokens.length === 1 && expansion.includes(tokens[0]);
 }
@@ -754,7 +758,7 @@ function matchDictionarySequences(tokens: QueryToken[], dict: SearchPlugin | nul
           ok = false;
           break;
         }
-        if (tok === seq.entry.key && n === 1) {
+        if (tok === seq.concept.key && n === 1) {
           if (tok !== want && !tokenSatisfiesDictToken(tok, want, { isLast: true })) {
             ok = false;
             break;
@@ -783,19 +787,20 @@ function matchDictionarySequences(tokens: QueryToken[], dict: SearchPlugin | nul
           ? expansionPrefixEntriesAt(tokens, dict, i, n)
           : exactExpansionEntriesAt(tokens, dict, i, n);
         const key = uniqueConfiguredKey(entries);
-        if (!key || key !== seq.entry.key) continue;
+        if (!key || key !== seq.concept.key) continue;
       }
       for (let j = 0; j < n; j++) used.add(i + j);
+      const canonicalLen = canonicalConfiguredConceptForm(seq.concept).length;
       hits.push({
-        entry: seq.entry,
+        concept: seq.concept,
         kind: lastWasPrefix ? "partial-expansion" : seq.kind,
         from: i,
         to: i + n,
         matchedExpansionTokens: n,
-        expansionTokenCount: (seq.entry.expansion || []).length,
+        expansionTokenCount: canonicalLen,
         expansionCoverage:
           seq.kind === "expansion" || lastWasPrefix
-            ? Number((n / Math.max((seq.entry.expansion || []).length, 1)).toFixed(4))
+            ? Number((n / Math.max(canonicalLen, 1)).toFixed(4))
             : seq.kind === "key"
               ? 1
               : undefined,
@@ -825,7 +830,7 @@ function matchExpansionPrefixes(tokens: QueryToken[], dict: SearchPlugin | null,
     if (seq.kind !== "expansion") continue;
     const n = seq.tokens.length;
     if (n <= k) continue;
-    const key = seq.entry?.key;
+    const key = seq.concept?.key;
     if (!key || seen.has(key)) continue;
     let ok = true;
     for (let j = 0; j < k; j++) {
@@ -850,7 +855,7 @@ function matchExpansionPrefixes(tokens: QueryToken[], dict: SearchPlugin | null,
     if (coverage < MIN_EXPANSION_PREFIX_COVERAGE) continue;
     seen.add(key);
     candidates.push({
-      entry: seq.entry,
+      concept: seq.concept,
       kind: "partial-expansion",
       from: 0,
       to: k,
@@ -864,7 +869,7 @@ function matchExpansionPrefixes(tokens: QueryToken[], dict: SearchPlugin | null,
     (a, b) =>
       b.expansionCoverage - a.expansionCoverage ||
       a.expansionTokenCount - b.expansionTokenCount ||
-      String(a.entry.key).localeCompare(String(b.entry.key))
+      String(a.concept.key).localeCompare(String(b.concept.key))
   );
   const best = candidates[0].expansionCoverage;
   const top = candidates.filter((c) => c.expansionCoverage === best);
@@ -885,26 +890,26 @@ function matchFinalActiveKeyPrefix(tokens: QueryToken[], dict: SearchPlugin | nu
   const i = norms.length - 1;
   if (used.has(i)) return [];
   const tok = norms[i];
-  const candidates: DictionaryEntry[] = [];
+  const candidates: ConfiguredConcept[] = [];
   const seen = new Set<string>();
   for (const seq of dict.sequences) {
     if (seq.kind !== "key") continue;
     if (seq.tokens.length !== 1) continue;
-    const key = seq.entry?.key;
+    const key = seq.concept?.key;
     if (!key || seen.has(key)) continue;
     const want = seq.tokens[0];
     if (tok === want) continue;
     if (!tokenSatisfiesDictToken(tok, want, { isLast: true })) continue;
     seen.add(key);
-    candidates.push(seq.entry);
+    candidates.push(seq.concept);
   }
   if (candidates.length !== 1) return [];
-  const entry = candidates[0];
+  const concept = candidates[0];
   used.add(i);
-  const expansionLen = Math.max((entry.expansion || []).length, 1);
+  const expansionLen = Math.max(canonicalConfiguredConceptForm(concept).length, 1);
   return [
     {
-      entry,
+      concept,
       kind: "partial-expansion",
       from: i,
       to: i + 1,
@@ -915,10 +920,10 @@ function matchFinalActiveKeyPrefix(tokens: QueryToken[], dict: SearchPlugin | nu
   ];
 }
 
-function formsForEntry(entry: DictionaryEntry) {
-  const forms = new Set([entry.key, ...entry.expansion]);
-  for (const alias of entry.aliases) {
-    for (const w of alias) forms.add(w);
+function formsForEntry(concept: ConfiguredConcept) {
+  const forms = new Set([concept.key]);
+  for (const seq of concept.aliases || []) {
+    for (const w of seq) if (w) forms.add(w);
   }
   return [...forms];
 }
@@ -1182,13 +1187,14 @@ export function analyzeQuery(
   const keyPrefixHits = matchFinalActiveKeyPrefix(analyzedTokens, dict, dictionaryOccupiedIndexes);
   const covered = new Set<number>();
   for (const hit of [...dictHits, ...prefixHits, ...keyPrefixHits]) {
-    const forms = formsForEntry(hit.entry);
+    const forms = formsForEntry(hit.concept);
+    const canonical = canonicalConfiguredConceptForm(hit.concept);
     concepts.push({
-      id: hit.entry.key,
+      id: hit.concept.key,
       kind: "configured-concept",
       forms,
-      expansion: [...hit.entry.expansion],
-      aliases: hit.entry.aliases.map((a) => [...a]),
+      expansion: [...canonical],
+      aliases: additionalConfiguredConceptAliases(hit.concept).map((a) => [...a]),
       provenance: hit.kind,
       matchedExpansionTokens: hit.matchedExpansionTokens,
       expansionTokenCount: hit.expansionTokenCount,

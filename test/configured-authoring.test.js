@@ -33,15 +33,19 @@ describe("canonical alias compiler", () => {
         },
       ],
     });
-    const entry = plugin.byKey.get("paas");
-    expect(entry.expansion).toEqual(["platform", "service"]);
-    expect(entry.aliases).toEqual([["platform", "as", "a", "service"]]);
-    const kinds = plugin.sequences.filter((s) => s.entry.key === "paas").map((s) => s.kind);
+    const concept = plugin.byKey.get("paas");
+    expect(concept.aliases[0]).toEqual(["platform", "service"]);
+    expect(concept.aliases.slice(1)).toEqual([["platform", "as", "a", "service"]]);
+    expect(concept).not.toHaveProperty("expansion");
+    expect(concept).not.toHaveProperty("standaloneRecall");
+    expect(concept).not.toHaveProperty("topicalRecall");
+    const kinds = plugin.sequences.filter((s) => s.concept.key === "paas").map((s) => s.kind);
     expect(kinds).toEqual(expect.arrayContaining(["key", "expansion", "alias"]));
-    expect(plugin.sequences.find((s) => s.kind === "expansion" && s.entry.key === "paas").tokens).toEqual([
+    expect(plugin.sequences.find((s) => s.kind === "expansion" && s.concept.key === "paas").tokens).toEqual([
       "platform",
       "service",
     ]);
+    expect(plugin.sequences.find((s) => s.kind === "expansion" && s.concept.key === "paas").concept).toBe(concept);
   });
 
   test("B. aliases[1...] identify the same configured concept", () => {
@@ -56,9 +60,10 @@ describe("canonical alias compiler", () => {
         },
       ],
     });
-    const alias = plugin.sequences.find((s) => s.kind === "alias" && s.entry.key === "paas");
+    const alias = plugin.sequences.find((s) => s.kind === "alias" && s.concept.key === "paas");
     expect(alias.tokens).toEqual(["platform", "as", "a", "service"]);
-    expect(alias.entry.key).toBe("paas");
+    expect(alias.concept.key).toBe("paas");
+    expect(alias.concept).toBe(plugin.byKey.get("paas"));
   });
 
   test("O. primary is absent from the new schema", () => {
@@ -201,7 +206,8 @@ describe("canonical alias compiler", () => {
     const plugin = pluginByName(authored, "dictionary");
     const compiled = plugin.byKey.get("api");
     expect(compiled.key).toBe("api");
-    expect(compiled.expansion).toEqual(["application", "programming", "interface"]);
+    expect(compiled.aliases[0]).toEqual(["application", "programming", "interface"]);
+    expect(compiled).not.toHaveProperty("expansion");
     expect(compiled.type).toBe("acronym");
     expect(compiled.provenance).toBe("manual");
     expect(compiled.confidence).toBe(0.9);
@@ -265,7 +271,7 @@ describe("relationshipMap compile", () => {
     });
     const plugin = pluginByName(compiled, "dictionary");
     expect(plugin.standaloneRecallByToken.get("hypertext")).toBe("http");
-    expect(plugin.byKey.get("http").standaloneRecall).toEqual(["hypertext"]);
+    expect(plugin.byKey.get("http")).not.toHaveProperty("standaloneRecall");
   });
 
   test("I. related concept -> form compiles to existing topical behavior", () => {

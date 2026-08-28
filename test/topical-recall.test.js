@@ -81,16 +81,16 @@ describe("topical recall lookup", () => {
         ],
       },
     ]);
-    expect(plugin.entries[0].topicalRecall).toEqual([["authentication"], ["bearer", "token"]]);
     expect(plugin.topicalRecallByKey.get("appsec")).toEqual([["authentication"], ["bearer", "token"]]);
+    expect(plugin.byKey.get("appsec")).not.toHaveProperty("topicalRecall");
   });
 
   test("non-array topicalRecall fails closed to empty", () => {
     const plugin = dictionaryFromLegacy([
       { key: "appsec", aliases: [["application", "security"]], topicalRecall: "authentication" },
     ]);
-    expect(plugin.entries[0].topicalRecall).toEqual([]);
     expect(plugin.topicalRecallByKey.has("appsec")).toBe(false);
+    expect(plugin.byKey.get("appsec")).not.toHaveProperty("topicalRecall");
   });
 });
 

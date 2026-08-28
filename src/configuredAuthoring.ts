@@ -7,7 +7,7 @@
  */
 
 import { InvalidConfigurationError } from "./errors.js";
-import type { DictionaryEntry } from "./types.js";
+import type { ConfiguredConcept } from "./types.js";
 
 const FORBIDDEN_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 const REMOVED_AUTHORED_FIELDS = [
@@ -165,11 +165,25 @@ export function authoredConceptRemovedFields(raw: object): string[] {
   return REMOVED_AUTHORED_FIELDS.filter((field) => field in raw);
 }
 
+/** Canonical lexical sequence. Sequence kind "expansion". */
+export function canonicalConfiguredConceptForm(concept?: { aliases?: string[][] } | null): string[] {
+  const form = concept?.aliases?.[0];
+  return Array.isArray(form) ? form : [];
+}
+
+/** Additional same-concept forms. Sequence kind "alias". */
+export function additionalConfiguredConceptAliases(concept?: { aliases?: string[][] } | null): string[][] {
+  const aliases = concept?.aliases;
+  if (!Array.isArray(aliases) || aliases.length < 2) return [];
+  return aliases.slice(1);
+}
+
 /**
- * Compile a public `{ key, aliases }` row into the internal dictionary entry.
- * aliases[0] becomes sequence kind "expansion"; aliases[1...] stay "alias".
+ * Compile a public `{ key, aliases }` row into a compiler-owned ConfiguredConcept.
+ * aliases[0] is the canonical lexical sequence; aliases[1...] are additional forms.
+ * Sequence kinds "expansion" / "alias" are derived at index build, not stored.
  */
-export function compileAuthoredConcept(raw: unknown): DictionaryEntry | null {
+export function compileAuthoredConcept(raw: unknown): ConfiguredConcept | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw) || !("key" in raw) || !(raw as { key?: unknown }).key) {
     return null;
   }
@@ -186,16 +200,13 @@ export function compileAuthoredConcept(raw: unknown): DictionaryEntry | null {
   const aliases = dedupeSequences(
     Array.isArray(rec.aliases) ? rec.aliases.map((alias) => asSequence(alias)).filter((alias) => alias.length) : []
   );
-  const expansion = aliases.length ? [...aliases[0]] : [];
-  const restAliases = aliases.slice(1);
-  return {
-    key,
-    expansion,
-    aliases: restAliases,
-    standaloneRecall: [],
-    topicalRecall: [],
-    type: rec.type == null ? "equivalence" : String(rec.type),
-    provenance: rec.provenance == null ? null : String(rec.provenance),
-    confidence: rec.confidence == null ? null : Number(rec.confidence),
-  };
+  const compiled: ConfiguredConcept = { key, aliases };
+  if (rec.type != null) compiled.type = String(rec.type);
+  if ("provenance" in rec) {
+    compiled.provenance = rec.provenance == null ? null : String(rec.provenance);
+  }
+  if ("confidence" in rec) {
+    compiled.confidence = rec.confidence == null ? null : Number(rec.confidence);
+  }
+  return compiled;
 }

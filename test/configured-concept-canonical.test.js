@@ -109,7 +109,7 @@ describe("exact configured key beats a foreign one-token alias", () => {
       ],
     });
     const aid = dict.byKey.get("aid");
-    dict.sequences.push({ kind: "key", tokens: ["ai"], entry: aid });
+    dict.sequences.push({ kind: "key", tokens: ["ai"], concept: aid });
     const q = analyzeQuery("ai", { plugins: [morphology(), dict] });
     const res = resolveConfiguredSequence(q.tokens, dict);
     expect(res.status).toBe("ambiguous");

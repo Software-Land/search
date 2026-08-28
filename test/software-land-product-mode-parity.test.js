@@ -101,8 +101,8 @@ function divergence(full, indexed) {
 function occupyingForms(dict) {
   const seen = new Set();
   const out = [];
-  for (const entry of dict.entries) {
-    for (const form of [[entry.key], entry.expansion, ...(entry.aliases || [])]) {
+  for (const entry of dict.byKey.values()) {
+    for (const form of [[entry.key], ...(entry.aliases || [])]) {
       if (!form?.length) continue;
       const q = form.join(" ");
       if (!q || seen.has(q)) continue;

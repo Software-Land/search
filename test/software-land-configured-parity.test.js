@@ -99,9 +99,9 @@ describe("Software.Land configured-concept result parity", () => {
   test("every occupying key/alias pair of one concept has identical results", () => {
     const dict = plugins[1];
     const byKey = new Map();
-    for (const entry of dict.entries) {
+    for (const entry of dict.byKey.values()) {
       const seen = new Set();
-      const forms = [[entry.key], entry.expansion, ...(entry.aliases || [])];
+      const forms = [[entry.key], ...(entry.aliases || [])];
       for (const form of forms) {
         if (!form?.length) continue;
         const q = formText(form);

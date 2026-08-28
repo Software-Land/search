@@ -40,12 +40,14 @@ async function engine(entries = httpDict, extraDocs = docs) {
 
 describe("standalone recall lookup", () => {
   test("unique reviewed tokens compile and collisions fail closed", () => {
-    const lookup = compileStandaloneRecallLookup([
-      { key: "http", aliases: [["hypertext", "transfer", "protocol"]], standaloneRecall: ["hypertext"] },
-      { key: "acid", aliases: [["atomicity", "consistency", "isolation", "durability"]], standaloneRecall: ["atomicity"] },
-      { key: "nist", aliases: [["national", "institute"]], standaloneRecall: ["institute"] },
-      { key: "gatech", aliases: [["georgia", "institute"]], standaloneRecall: ["institute"] },
-    ]);
+    const lookup = compileStandaloneRecallLookup(
+      new Map([
+        ["http", ["hypertext"]],
+        ["acid", ["atomicity"]],
+        ["nist", ["institute"]],
+        ["gatech", ["institute"]],
+      ])
+    );
     expect(lookup.get("hypertext")).toBe("http");
     expect(lookup.get("atomicity")).toBe("acid");
     expect(lookup.has("institute")).toBe(false);
@@ -59,8 +61,8 @@ describe("standalone recall lookup", () => {
         standaloneRecall: ["", "  ", "hypertext transfer", "hypertext", "hypertext"],
       },
     ]);
-    expect(plugin.entries[0].standaloneRecall).toEqual(["hypertext"]);
     expect(plugin.standaloneRecallByToken.get("hypertext")).toBe("http");
+    expect(plugin.byKey.get("http")).not.toHaveProperty("standaloneRecall");
   });
 });
 

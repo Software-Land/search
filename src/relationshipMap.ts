@@ -10,7 +10,7 @@
 import { InvalidConfigurationError } from "./errors.js";
 import { sequenceKey } from "./configuredAuthoring.js";
 import { ARTIFACT_FORMATS, ARTIFACT_VERSION, parseRelationships } from "./artifacts.js";
-import type { DictionaryEntry, RelationshipArtifact, RelationshipEdge } from "./types.js";
+import type { ConfiguredConcept, RelationshipArtifact, RelationshipEdge } from "./types.js";
 
 const FORBIDDEN_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 const KINDS = new Set(["equivalent", "related"]);
@@ -57,7 +57,7 @@ export interface CompiledRelationshipInternals extends CompiledRelationshipMap {
 }
 
 export interface CompileRelationshipMapOptions {
-  concepts?: Iterable<DictionaryEntry | { key?: string } | string> | Map<string, unknown> | null;
+  concepts?: Iterable<ConfiguredConcept | { key?: string } | string> | Map<string, unknown> | null;
   documents?: Iterable<RelationshipDocumentRef> | null;
 }
 
@@ -395,36 +395,4 @@ export function mergeRelationships(base: unknown = null, extra: unknown = null):
   }
   const extraParsed = parseRelationships(extra);
   return mergeEditorialRelationships(base, extraParsed.relationships);
-}
-
-export function applyCompiledRelationships(
-  entries: DictionaryEntry[],
-  compiled: CompiledRelationshipInternals
-): DictionaryEntry[] {
-  for (const entry of entries) {
-    const standalone = compiled.standaloneRecallByKey.get(entry.key);
-    if (standalone?.length) {
-      const seen = new Set(entry.standaloneRecall || []);
-      const next = [...(entry.standaloneRecall || [])];
-      for (const token of standalone) {
-        if (seen.has(token)) continue;
-        seen.add(token);
-        next.push(token);
-      }
-      entry.standaloneRecall = next;
-    }
-    const topical = compiled.topicalRecallByKey.get(entry.key);
-    if (topical?.length) {
-      const seen = new Set((entry.topicalRecall || []).map((form) => sequenceKey(form)));
-      const next = [...(entry.topicalRecall || []).map((form) => [...form])];
-      for (const form of topical) {
-        const key = sequenceKey(form);
-        if (seen.has(key)) continue;
-        seen.add(key);
-        next.push([...form]);
-      }
-      entry.topicalRecall = next;
-    }
-  }
-  return entries;
 }
