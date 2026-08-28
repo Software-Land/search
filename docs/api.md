@@ -99,7 +99,7 @@ SearchEngine.create({
 - `plugins` — the correctly ordered authored relevance plugins for `SearchEngine.create({ plugins: [morphology(), ...authored.plugins] })`
 - `documentRelationships` — compiled authored document→document edges as a `search-v2-relationships` artifact, or `null`
 
-`relationshipMap` is directional. Kinds are `equivalent` and `related`. Endpoints are `{ form }`, `{ concept }`, or `{ document }`. Edges do not auto-reverse and must not carry numeric weights. Equivalent edges do not rewrite typed tokens.
+`relationshipMap` is directional. Kinds are `equivalent` and `related`. Endpoints are `{ form }`, `{ concept }`, or `{ document }`. `equivalent` edges are directional and do not auto-reverse. `qa → testing` does not imply `testing → qa`. When equivalence is symmetric, author both directions. Trusted corpus-mined accepted groups do this automatically by compiling each group into a bidirectional equivalent clique. Edges must not carry numeric weights. Equivalent edges do not rewrite typed tokens.
 
 | Authored edge | Compiles onto |
 | --- | --- |

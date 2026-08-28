@@ -113,7 +113,7 @@ Search data is four distinct layers:
 
 `configuredConcepts` is the authored identity list `{ key, aliases }`. It is not the corpus lexicon; term postings live in `lexicalIndex`.
 
-`authored.plugins` is the compiler-owned plugin list: configured identity (including related standalone/topical recall) then compiled equivalent one-hop recall. Ordinary applications do not assemble those pieces by name. `equivalent` edges do not auto-reverse: `qa → testing` does not imply `testing → qa`. Phrase sources match as exact contiguous normalized phrases.
+`authored.plugins` is the compiler-owned plugin list: configured identity (including related standalone/topical recall) followed by compiled equivalent one-hop recall. Ordinary applications do not assemble those pieces by name. `equivalent` edges are directional and do not auto-reverse. `qa → testing` does not imply `testing → qa`. When equivalence is symmetric, author both directions. Trusted corpus-mined accepted groups do this automatically by compiling each group into a bidirectional equivalent clique. Phrase sources match as exact contiguous normalized phrases.
 
 `authored.documentRelationships` is the editorial document→document artifact, or `null` when none were authored. Combine it with a generated semantic artifact using `mergeRelationships(semantic, authored.documentRelationships)`.
 
