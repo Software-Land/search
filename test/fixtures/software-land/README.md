@@ -32,6 +32,7 @@ They must never become Core defaults.
 | Strict V2 contracts | 99 (`v2-contracts.json`) |
 | B-intent regressions | 60 (`regression-scenarios.json`, compatibility coverage, not Core policy) |
 | Historical inventory | 215 rows (`historical-scenarios.json`); 214 executable relevance contracts |
+| V2 vs V1 historical top-N | `v1-historical-topn-contract.json` — complete V1 E2E `expectedTop`/`titlePrefix`/`topN` freeze executed on V2 (`test/software-land-v1-contract-on-v2.test.js`). Not the 320-suite mix and not a V1 engine test. |
 | Historical contract updates | `historical-contract-updates.json` (Software.Land `3ad49e867f82db06aa06cd1c7f38dca8faecf246`) |
 | Historical relevance config | `relevance-config.json` + `relationship-map.json` (authored equivalent + AppSec related; synonym-map.json remains the db5a070 provenance snapshot) |
 | `relevanceSoftwareLandCommit` | `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6` — live `LIVE_SEARCH_EQUIVALENCE_MAP` / `synonym-map.json` snapshot only. Not the NIST alias pin (`relevance-config.json` `7628a85`), not the later relationshipMap/editorial/semantic-rejection commits, and not HEAD. |

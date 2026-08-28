@@ -1,0 +1,2326 @@
+{
+  "description": "Complete Software.Land V1 E2E historical query/expectedTop/topN contract, executed against V2 SearchEngine. Not a V1 engine test. Assertion is membership-within-topN (normalized title identity), matching tests/search-e2e-result-helpers.js. titlePrefix rows require every title in the first topN to start with the prefix. Classification C is inventory-only and is not enforced (obsolete). Duplicate query strings are distinct rows keyed by index.",
+  "contractName": "V2 against V1 historical top-N contract",
+  "engineUnderTest": "v2",
+  "source": {
+    "softwareLand": "tests/search-scenarios.js scenario.v1",
+    "ossMirror": "test/fixtures/software-land/historical-scenarios.json"
+  },
+  "assertion": "every expectedTop title must appear as normalized exact title identity within the first min(topN, 10) results; order inside that window is not required. titlePrefix: every rendered title in the first topN must start with the prefix.",
+  "inventoryCount": 215,
+  "enforcedCount": 214,
+  "obsolete": [
+    {
+      "index": 115,
+      "query": "open",
+      "classification": "C",
+      "reason": "classification C is obsolete; not enforced on V1 or V2 E2E"
+    }
+  ],
+  "sha256": "fb1dc6c27d6f3b961e3c86954193267f9613d7403efff87f2a29cf426190c511",
+  "rows": [
+    {
+      "index": 0,
+      "query": "library",
+      "expectedTop": [
+        "Framework vs Library vs Package",
+        "React Component Libraries"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 1,
+      "query": "libraries",
+      "expectedTop": [
+        "Framework vs Library vs Package",
+        "React Component Libraries"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 2,
+      "query": "compute",
+      "expectedTop": [
+        "Edge Computing"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 3,
+      "query": "testing",
+      "expectedTop": [
+        "Testing in Software Engineering",
+        "Load vs Stress Testing"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 4,
+      "query": "wha",
+      "expectedTop": null,
+      "titlePrefix": "What",
+      "topN": 10
+    },
+    {
+      "index": 5,
+      "query": "continuous d",
+      "expectedTop": [
+        "CI/CD"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 6,
+      "query": "zer",
+      "expectedTop": [
+        "Zero-Trust Security"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 7,
+      "query": "hypertext",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 8,
+      "query": "hypertext tran",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability",
+        "Request Response",
+        "REST API vs GraphQL",
+        "Authorization Middleware",
+        "gRPC vs REST",
+        "TCP vs UDP",
+        "What is an API?",
+        "Working with APIs",
+        "React Data Fetching",
+        "React Authentication"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 9,
+      "query": "hypertext transfer",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability",
+        "Request Response",
+        "REST API vs GraphQL",
+        "Authorization Middleware",
+        "gRPC vs REST",
+        "TCP vs UDP",
+        "What is an API?",
+        "Working with APIs",
+        "React Data Fetching",
+        "React Authentication"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 10,
+      "query": "hypertext transfer protocol",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability",
+        "Request Response",
+        "REST API vs GraphQL",
+        "Authorization Middleware",
+        "gRPC vs REST",
+        "TCP vs UDP",
+        "What is an API?",
+        "Working with APIs",
+        "React Data Fetching",
+        "React Authentication"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 11,
+      "query": "http",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability",
+        "Request Response",
+        "REST API vs GraphQL",
+        "Authorization Middleware",
+        "gRPC vs REST",
+        "TCP vs UDP",
+        "What is an API?",
+        "Working with APIs",
+        "React Data Fetching",
+        "React Authentication"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 12,
+      "query": "bfs",
+      "expectedTop": [
+        "InOrder vs PreOrder vs PostOrder",
+        "A-Star Pathfinding",
+        "Maximum Flow Algorithm"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 13,
+      "query": "breadth first search",
+      "expectedTop": [
+        "InOrder vs PreOrder vs PostOrder",
+        "A-Star Pathfinding",
+        "Maximum Flow Algorithm"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 14,
+      "query": "depth first search",
+      "expectedTop": [
+        "DFS Backtracking",
+        "InOrder vs PreOrder vs PostOrder",
+        "What is Recursion?",
+        "Topological Sort",
+        "Minmax Tree",
+        "Maximum Flow Algorithm"
+      ],
+      "titlePrefix": null,
+      "topN": 6
+    },
+    {
+      "index": 15,
+      "query": "dfs back",
+      "expectedTop": [
+        "DFS Backtracking",
+        "What is Recursion?"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 16,
+      "query": "dfs backtr",
+      "expectedTop": [
+        "DFS Backtracking",
+        "A-Star Pathfinding"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 17,
+      "query": "asyncronou",
+      "expectedTop": [
+        "Asynchronous vs Synchronous"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 18,
+      "query": "input output",
+      "expectedTop": [
+        "What is IO?"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 19,
+      "query": "io",
+      "expectedTop": [
+        "What is IO?"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 20,
+      "query": "iot",
+      "expectedTop": [
+        "What is IoT?"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 21,
+      "query": "what is iot",
+      "expectedTop": [
+        "What is IoT?"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 22,
+      "query": "what is cod",
+      "expectedTop": [
+        "What is Code?"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 23,
+      "query": "what is ci",
+      "expectedTop": [
+        "CI/CD"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 24,
+      "query": "transport layer security",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability",
+        "What is VPN?"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 25,
+      "query": "tls",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability",
+        "What is VPN?"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 26,
+      "query": "rbac",
+      "expectedTop": [
+        "RBAC (Role Based Access Control)",
+        "CockroachDB vs Postgres",
+        "React Authentication",
+        "Authorization Middleware"
+      ],
+      "titlePrefix": null,
+      "topN": 8
+    },
+    {
+      "index": 27,
+      "query": "role based access control",
+      "expectedTop": [
+        "RBAC (Role Based Access Control)",
+        "CockroachDB vs Postgres",
+        "React Authentication",
+        "Authorization Middleware"
+      ],
+      "titlePrefix": null,
+      "topN": 8
+    },
+    {
+      "index": 28,
+      "query": "what is an app sec",
+      "expectedTop": [
+        "App Sec",
+        "Authorization Middleware",
+        "SAML vs OAuth",
+        "React Authentication",
+        "RBAC (Role Based Access Control)",
+        "Zero-Trust Security"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 29,
+      "query": "applicationsecurity",
+      "expectedTop": [
+        "App Sec",
+        "Authorization Middleware",
+        "SAML vs OAuth",
+        "RBAC (Role Based Access Control)",
+        "Bearer Token",
+        "React Authentication",
+        "TLS 1.2 Vulnerability",
+        "Zero-Trust Security"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 30,
+      "query": "applicationsec",
+      "expectedTop": [
+        "App Sec",
+        "Authorization Middleware",
+        "SAML vs OAuth",
+        "RBAC (Role Based Access Control)",
+        "Bearer Token",
+        "React Authentication",
+        "TLS 1.2 Vulnerability",
+        "Zero-Trust Security"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 31,
+      "query": "appsecurity",
+      "expectedTop": [
+        "App Sec",
+        "Authorization Middleware",
+        "SAML vs OAuth",
+        "RBAC (Role Based Access Control)",
+        "Bearer Token",
+        "React Authentication",
+        "TLS 1.2 Vulnerability",
+        "Zero-Trust Security"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 32,
+      "query": "appsec",
+      "expectedTop": [
+        "App Sec",
+        "Authorization Middleware",
+        "SAML vs OAuth",
+        "RBAC (Role Based Access Control)",
+        "Bearer Token",
+        "React Authentication",
+        "TLS 1.2 Vulnerability",
+        "Zero-Trust Security"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 33,
+      "query": "appsec",
+      "expectedTop": [
+        "App Sec",
+        "Authorization Middleware"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 34,
+      "query": "app sec",
+      "expectedTop": [
+        "App Sec",
+        "Authorization Middleware",
+        "SAML vs OAuth",
+        "RBAC (Role Based Access Control)",
+        "Bearer Token",
+        "React Authentication",
+        "TLS 1.2 Vulnerability",
+        "Zero-Trust Security"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 35,
+      "query": "app sec",
+      "expectedTop": [
+        "App Sec",
+        "Authorization Middleware"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 36,
+      "query": "what is an applicatio security",
+      "expectedTop": [
+        "App Sec"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 37,
+      "query": "what is an ap",
+      "expectedTop": [
+        "What is an API?",
+        "App Sec"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 38,
+      "query": "what is an ap",
+      "expectedTop": [
+        "What is an API?",
+        "App Sec"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 39,
+      "query": "app sec",
+      "expectedTop": [
+        "App Sec",
+        "Authorization Middleware",
+        "TLS 1.2 Vulnerability",
+        "Zero-Trust Security",
+        "React Authentication",
+        "Bearer Token",
+        "SAML vs OAuth"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 40,
+      "query": "what is an applica",
+      "expectedTop": [
+        "What is an API?",
+        "REST API vs GraphQL",
+        "Working with APIs",
+        "gRPC vs REST"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 41,
+      "query": "what is an appl",
+      "expectedTop": [
+        "What is an API?",
+        "REST API vs GraphQL",
+        "Working with APIs",
+        "gRPC vs REST"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 42,
+      "query": "what is an appli",
+      "expectedTop": [
+        "What is an API?",
+        "REST API vs GraphQL",
+        "Working with APIs",
+        "gRPC vs REST"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 43,
+      "query": "what is an applic",
+      "expectedTop": [
+        "What is an API?",
+        "REST API vs GraphQL",
+        "Working with APIs",
+        "gRPC vs REST"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 44,
+      "query": "applic",
+      "expectedTop": [
+        "What is an API?",
+        "REST API vs GraphQL",
+        "What is an Interface?",
+        "Working with APIs"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 45,
+      "query": "app",
+      "expectedTop": [
+        "App Sec"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 46,
+      "query": "appl",
+      "expectedTop": [
+        "What is an API?"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 47,
+      "query": "application se",
+      "expectedTop": [
+        "App Sec",
+        "Authorization Middleware"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 48,
+      "query": "aplication s3curity",
+      "expectedTop": [
+        "App Sec"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 49,
+      "query": "aPplicationsecurity",
+      "expectedTop": [
+        "App Sec"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 50,
+      "query": "aplicationsecurity",
+      "expectedTop": [
+        "App Sec"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 51,
+      "query": "aplicationsecurity",
+      "expectedTop": [
+        "App Sec",
+        "Authorization Middleware"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 52,
+      "query": "aplication s3curity",
+      "expectedTop": [
+        "App Sec",
+        "Zero-Trust Security",
+        "TLS 1.2 Vulnerability",
+        "React Authentication",
+        "Bearer Token",
+        "SAML vs OAuth"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 53,
+      "query": "application security",
+      "expectedTop": [
+        "App Sec",
+        "Zero-Trust Security",
+        "TLS 1.2 Vulnerability",
+        "React Authentication",
+        "Bearer Token",
+        "SAML vs OAuth"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 54,
+      "query": "object oriented prog",
+      "expectedTop": [
+        "OOP vs Functional",
+        "What is OOP (Object-Oriented Programming)?"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 55,
+      "query": "oop",
+      "expectedTop": [
+        "What is OOP (Object-Oriented Programming)?"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 56,
+      "query": "what is an a",
+      "expectedTop": [
+        "What is an API?"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 57,
+      "query": "programming",
+      "expectedTop": [
+        "Which Programming Language to Start?"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 58,
+      "query": "programming",
+      "expectedTop": [
+        "What is OOP (Object-Oriented Programming)?",
+        "Which Programming Language to Start?",
+        "Dynamic Programming Matrix"
+      ],
+      "titlePrefix": null,
+      "topN": 4
+    },
+    {
+      "index": 59,
+      "query": "programming",
+      "expectedTop": [
+        "What is OOP (Object-Oriented Programming)?",
+        "Dynamic Programming Matrix"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 60,
+      "query": "what are apis",
+      "expectedTop": [
+        "Working with APIs",
+        "What is an API?",
+        "REST API vs GraphQL",
+        "What is an Interface?"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 61,
+      "query": "interface",
+      "expectedTop": [
+        "What is an Interface?",
+        "Class vs Interface",
+        "What is an API?",
+        "REST API vs GraphQL"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 62,
+      "query": "what is dev",
+      "expectedTop": [
+        "What is DevOps?"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 63,
+      "query": "what is c",
+      "expectedTop": [
+        "What is Code?"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 64,
+      "query": "what is a c",
+      "expectedTop": [
+        "What is a Container?"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 65,
+      "query": "what is a co",
+      "expectedTop": [
+        "What is a Container?"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 66,
+      "query": "what is c",
+      "expectedTop": [
+        "What is Clean Code?"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 67,
+      "query": "internet of th",
+      "expectedTop": [
+        "What is IoT?"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 68,
+      "query": "application programming",
+      "expectedTop": [
+        "What is an API?"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 69,
+      "query": "application programming",
+      "expectedTop": [
+        "What is an API?"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 70,
+      "query": "machine l",
+      "expectedTop": [
+        "Linear vs Logistic Regression",
+        "Working with Llama.cpp Embeddings",
+        "Coursera Review"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 71,
+      "query": "machine le",
+      "expectedTop": [
+        "Linear vs Logistic Regression",
+        "Working with Llama.cpp Embeddings",
+        "Coursera Review"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 72,
+      "query": "machine lea",
+      "expectedTop": [
+        "Linear vs Logistic Regression",
+        "Working with Llama.cpp Embeddings",
+        "Coursera Review"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 73,
+      "query": "machine lear",
+      "expectedTop": [
+        "Linear vs Logistic Regression",
+        "Working with Llama.cpp Embeddings",
+        "Coursera Review"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 74,
+      "query": "machine learn",
+      "expectedTop": [
+        "Linear vs Logistic Regression",
+        "Working with Llama.cpp Embeddings",
+        "Coursera Review"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 75,
+      "query": "machine learning",
+      "expectedTop": [
+        "Linear vs Logistic Regression",
+        "Working with Llama.cpp Embeddings",
+        "Coursera Review"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 76,
+      "query": "maachine leaarning",
+      "expectedTop": [
+        "Linear vs Logistic Regression",
+        "Working with Llama.cpp Embeddings",
+        "Coursera Review"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 77,
+      "query": "what is machine learning",
+      "expectedTop": [
+        "Linear vs Logistic Regression",
+        "Working with Llama.cpp Embeddings",
+        "Coursera Review",
+        "Why Learn to Code?"
+      ],
+      "titlePrefix": null,
+      "topN": 4
+    },
+    {
+      "index": 78,
+      "query": "application programming",
+      "expectedTop": [
+        "What is an API?",
+        "REST API vs GraphQL",
+        "Working with APIs",
+        "What is an Interface?"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 79,
+      "query": "object oriented programming vs functional",
+      "expectedTop": [
+        "OOP vs Functional",
+        "What is OOP (Object-Oriented Programming)?"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 80,
+      "query": "object oriented",
+      "expectedTop": [
+        "OOP vs Functional",
+        "What is OOP (Object-Oriented Programming)?"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 81,
+      "query": "object oriented",
+      "expectedTop": [
+        "What is OOP (Object-Oriented Programming)?",
+        "OOP vs Functional"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 82,
+      "query": "dynamicprogramming",
+      "expectedTop": [
+        "Dynamic Programming Matrix",
+        "What is Recursion?"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 83,
+      "query": "dynamic programming",
+      "expectedTop": [
+        "Dynamic Programming Matrix",
+        "What is Recursion?"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 84,
+      "query": "dp",
+      "expectedTop": [
+        "Dynamic Programming Matrix",
+        "What is Recursion?"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 85,
+      "query": "applicationprogramminginterface",
+      "expectedTop": [
+        "What is an API?",
+        "REST API vs GraphQL",
+        "What is an Interface?"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 86,
+      "query": "shadcnuireactcomponents",
+      "expectedTop": [
+        "Shadcn UI React Components"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 87,
+      "query": "ai",
+      "expectedTop": [
+        "Staying Ahead of the AI Revolution"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 88,
+      "query": "asdfasdfcontainerasdfadfs",
+      "expectedTop": [
+        "What is Docker?",
+        "What is a Container?"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 89,
+      "query": "hypertext transfer protocol secure",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability",
+        "TCP vs UDP",
+        "Bearer Token",
+        "gRPC vs REST",
+        "React Authentication",
+        "Vite React"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 90,
+      "query": "https",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability",
+        "TCP vs UDP",
+        "Bearer Token",
+        "gRPC vs REST",
+        "React Authentication",
+        "Vite React"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 91,
+      "query": "asdfsafhttp",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability",
+        "REST API vs GraphQL",
+        "gRPC vs REST",
+        "TCP vs UDP"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 92,
+      "query": "devops",
+      "expectedTop": [
+        "What is DevOps?",
+        "CI/CD"
+      ],
+      "titlePrefix": null,
+      "topN": 4
+    },
+    {
+      "index": 93,
+      "query": "dev ops",
+      "expectedTop": [
+        "What is DevOps?",
+        "CI/CD"
+      ],
+      "titlePrefix": null,
+      "topN": 4
+    },
+    {
+      "index": 94,
+      "query": "dev op",
+      "expectedTop": [
+        "What is DevOps?",
+        "CI/CD"
+      ],
+      "titlePrefix": null,
+      "topN": 4
+    },
+    {
+      "index": 95,
+      "query": "devop",
+      "expectedTop": [
+        "What is DevOps?",
+        "CI/CD"
+      ],
+      "titlePrefix": null,
+      "topN": 4
+    },
+    {
+      "index": 96,
+      "query": "quality ass",
+      "expectedTop": [
+        "Load vs Stress Testing",
+        "Testing in Software Engineering"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 97,
+      "query": "service mseh",
+      "expectedTop": [
+        "What is a Service Mesh?",
+        "Protobuf Encoding"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 98,
+      "query": "next",
+      "expectedTop": [
+        "Shadcn UI React Components",
+        "React Authentication",
+        "React Server Components",
+        "Vite React",
+        "React Design Systems",
+        "React Suspense",
+        "React Data Fetching"
+      ],
+      "titlePrefix": null,
+      "topN": 7
+    },
+    {
+      "index": 99,
+      "query": "nextjs",
+      "expectedTop": [
+        "Shadcn UI React Components",
+        "React Authentication",
+        "React Server Components",
+        "Vite React",
+        "React Design Systems",
+        "React Suspense",
+        "React Data Fetching"
+      ],
+      "titlePrefix": null,
+      "topN": 7
+    },
+    {
+      "index": 100,
+      "query": "next js",
+      "expectedTop": [
+        "Shadcn UI React Components",
+        "React Authentication",
+        "React Server Components",
+        "Vite React",
+        "React Design Systems",
+        "React Suspense",
+        "React Data Fetching"
+      ],
+      "titlePrefix": null,
+      "topN": 7
+    },
+    {
+      "index": 101,
+      "query": "app programming interface",
+      "expectedTop": [
+        "What is an API?",
+        "REST API vs GraphQL",
+        "Working with APIs",
+        "What is an Interface?",
+        "Class vs Interface"
+      ],
+      "titlePrefix": null,
+      "topN": 6
+    },
+    {
+      "index": 102,
+      "query": "app security",
+      "expectedTop": [
+        "App Sec",
+        "SAML vs OAuth",
+        "Bearer Token",
+        "TLS 1.2 Vulnerability",
+        "Zero-Trust Security",
+        "RBAC (Role Based Access Control)",
+        "React Authentication",
+        "Authorization Middleware"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 103,
+      "query": "application orogramming interface",
+      "expectedTop": [
+        "What is an API?",
+        "REST API vs GraphQL",
+        "Working with APIs",
+        "What is an Interface?",
+        "Class vs Interface"
+      ],
+      "titlePrefix": null,
+      "topN": 6
+    },
+    {
+      "index": 104,
+      "query": "application programming interface",
+      "expectedTop": [
+        "What is an API?",
+        "REST API vs GraphQL",
+        "Working with APIs",
+        "What is an Interface?",
+        "Class vs Interface"
+      ],
+      "titlePrefix": null,
+      "topN": 6
+    },
+    {
+      "index": 105,
+      "query": "applicationprogramming interface",
+      "expectedTop": [
+        "What is an API?",
+        "REST API vs GraphQL",
+        "Working with APIs",
+        "What is an Interface?",
+        "Class vs Interface"
+      ],
+      "titlePrefix": null,
+      "topN": 6
+    },
+    {
+      "index": 106,
+      "query": "applicationprogramminginterface",
+      "expectedTop": [
+        "What is an API?",
+        "REST API vs GraphQL",
+        "Working with APIs",
+        "What is an Interface?",
+        "Class vs Interface"
+      ],
+      "titlePrefix": null,
+      "topN": 6
+    },
+    {
+      "index": 107,
+      "query": "application programminginterface",
+      "expectedTop": [
+        "What is an API?",
+        "REST API vs GraphQL",
+        "Working with APIs",
+        "What is an Interface?",
+        "Class vs Interface"
+      ],
+      "titlePrefix": null,
+      "topN": 6
+    },
+    {
+      "index": 108,
+      "query": "grpc",
+      "expectedTop": [
+        "Protobuf Encoding",
+        "gRPC vs REST"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 109,
+      "query": "grpc remote procedure call",
+      "expectedTop": [
+        "Protobuf Encoding",
+        "gRPC vs REST"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 110,
+      "query": "grpc vs kafka",
+      "expectedTop": [
+        "gRPC vs Kafka",
+        "gRPC Interceptor",
+        "gRPC vs REST"
+      ],
+      "titlePrefix": null,
+      "topN": 4
+    },
+    {
+      "index": 111,
+      "query": "rpc vs kafka",
+      "expectedTop": [
+        "gRPC vs Kafka",
+        "gRPC Interceptor",
+        "gRPC vs REST"
+      ],
+      "titlePrefix": null,
+      "topN": 4
+    },
+    {
+      "index": 112,
+      "query": "vpn",
+      "expectedTop": [
+        "What is VPN?",
+        "TLS 1.2 Vulnerability",
+        "Symmetric vs Asymmetric Encryption"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 113,
+      "query": "vpns",
+      "expectedTop": [
+        "What is VPN?",
+        "TLS 1.2 Vulnerability",
+        "Symmetric vs Asymmetric Encryption"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 114,
+      "query": "virtual private network",
+      "expectedTop": [
+        "What is VPN?",
+        "TLS 1.2 Vulnerability",
+        "Symmetric vs Asymmetric Encryption"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 116,
+      "query": "what is an ap",
+      "expectedTop": [
+        "What is an API?"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 117,
+      "query": "dfs",
+      "expectedTop": [
+        "DFS Backtracking",
+        "InOrder vs PreOrder vs PostOrder",
+        "What is Recursion?",
+        "Topological Sort",
+        "Minmax Tree",
+        "Maximum Flow Algorithm"
+      ],
+      "titlePrefix": null,
+      "topN": 6
+    },
+    {
+      "index": 118,
+      "query": "astar",
+      "expectedTop": [
+        "A-Star Pathfinding"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 119,
+      "query": "a*",
+      "expectedTop": [
+        "A-Star Pathfinding"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 120,
+      "query": "build time",
+      "expectedTop": [
+        "Build Time",
+        "Dependency Graph",
+        "CI/CD",
+        "Protobuf Encoding",
+        "gRPC vs REST"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 121,
+      "query": "protobuf",
+      "expectedTop": [
+        "Protobuf Encoding"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 122,
+      "query": "national institute of standards and technology",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 123,
+      "query": "national institute of stan",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 124,
+      "query": "national institute of standards and tec",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 125,
+      "query": "national institute of standard",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 126,
+      "query": "institute of standards and technology",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 127,
+      "query": "institute standards",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 128,
+      "query": "institute",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 129,
+      "query": "recursion",
+      "expectedTop": [
+        "What is Recursion?",
+        "DFS Backtracking",
+        "React Performance Optimization",
+        "Dynamic Programming Matrix",
+        "InOrder vs PreOrder vs PostOrder"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 130,
+      "query": "recursion",
+      "expectedTop": [
+        "What is Recursion?",
+        "DFS Backtracking",
+        "InOrder vs PreOrder vs PostOrder"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 131,
+      "query": "recursing",
+      "expectedTop": [
+        "What is Recursion?",
+        "DFS Backtracking",
+        "React Performance Optimization",
+        "Dynamic Programming Matrix",
+        "InOrder vs PreOrder vs PostOrder"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 132,
+      "query": "recursed",
+      "expectedTop": [
+        "What is Recursion?",
+        "DFS Backtracking",
+        "React Performance Optimization",
+        "Dynamic Programming Matrix",
+        "InOrder vs PreOrder vs PostOrder"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 133,
+      "query": "recursive",
+      "expectedTop": [
+        "What is Recursion?",
+        "DFS Backtracking",
+        "React Performance Optimization",
+        "Dynamic Programming Matrix",
+        "InOrder vs PreOrder vs PostOrder"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 134,
+      "query": "shard",
+      "expectedTop": [
+        "Sharding",
+        "Hot Shards",
+        "CockroachDB vs Postgres",
+        "SQL vs NoSQL",
+        "gRPC vs Kafka"
+      ],
+      "titlePrefix": null,
+      "topN": 6
+    },
+    {
+      "index": 135,
+      "query": "shardin",
+      "expectedTop": [
+        "Sharding",
+        "Hot Shards",
+        "CockroachDB vs Postgres",
+        "SQL vs NoSQL",
+        "gRPC vs Kafka"
+      ],
+      "titlePrefix": null,
+      "topN": 6
+    },
+    {
+      "index": 136,
+      "query": "sharde",
+      "expectedTop": [
+        "Sharding",
+        "Hot Shards",
+        "CockroachDB vs Postgres",
+        "SQL vs NoSQL",
+        "gRPC vs Kafka"
+      ],
+      "titlePrefix": null,
+      "topN": 6
+    },
+    {
+      "index": 137,
+      "query": "shards",
+      "expectedTop": [
+        "Hot Shards"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 138,
+      "query": "shardsss",
+      "expectedTop": [
+        "Hot Shards"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 139,
+      "query": "sharding",
+      "expectedTop": [
+        "Sharding"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 140,
+      "query": "sharde",
+      "expectedTop": [
+        "Sharding",
+        "Hot Shards",
+        "Throughput vs Latency",
+        "CockroachDB vs Postgres",
+        "SQL vs NoSQL",
+        "gRPC vs Kafka"
+      ],
+      "titlePrefix": null,
+      "topN": 6
+    },
+    {
+      "index": 141,
+      "query": "recursiv",
+      "expectedTop": [
+        "What is Recursion?",
+        "DFS Backtracking",
+        "React Performance Optimization",
+        "Dynamic Programming Matrix",
+        "InOrder vs PreOrder vs PostOrder"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 142,
+      "query": "recurssing",
+      "expectedTop": [
+        "What is Recursion?",
+        "DFS Backtracking",
+        "React Performance Optimization",
+        "Dynamic Programming Matrix",
+        "InOrder vs PreOrder vs PostOrder"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 143,
+      "query": "authent",
+      "expectedTop": [
+        "React Authentication",
+        "TLS 1.2 Vulnerability",
+        "Zero-Trust Security",
+        "SAML vs OAuth"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 144,
+      "query": "authentication",
+      "expectedTop": [
+        "React Authentication",
+        "TLS 1.2 Vulnerability",
+        "Zero-Trust Security",
+        "SAML vs OAuth"
+      ],
+      "titlePrefix": null,
+      "topN": 10
+    },
+    {
+      "index": 145,
+      "query": "auth",
+      "expectedTop": [
+        "React Authentication",
+        "Authorization Middleware"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 146,
+      "query": "author",
+      "expectedTop": [
+        "React Authentication",
+        "Authorization Middleware"
+      ],
+      "titlePrefix": null,
+      "topN": 7
+    },
+    {
+      "index": 147,
+      "query": "author",
+      "expectedTop": [
+        "Authorization Middleware"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 148,
+      "query": "authen",
+      "expectedTop": [
+        "React Authentication"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 149,
+      "query": "interceptor",
+      "expectedTop": [
+        "gRPC Interceptor",
+        "Authorization Middleware"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 150,
+      "query": "interceptor",
+      "expectedTop": [
+        "gRPC Interceptor"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 151,
+      "query": "zerk trust security",
+      "expectedTop": [
+        "Zero-Trust Security"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 152,
+      "query": "internetofthings",
+      "expectedTop": [
+        "What is IoT?",
+        "Edge Computing",
+        "Event Driven Architecture",
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 153,
+      "query": "internet of things",
+      "expectedTop": [
+        "What is IoT?",
+        "Edge Computing",
+        "Event Driven Architecture",
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 154,
+      "query": "iot",
+      "expectedTop": [
+        "What is IoT?",
+        "Edge Computing",
+        "Event Driven Architecture",
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 155,
+      "query": "platform as a service",
+      "expectedTop": [
+        "What is Kubernetes?",
+        "What is the Cloud?"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 156,
+      "query": "paas",
+      "expectedTop": [
+        "What is Kubernetes?",
+        "What is the Cloud?"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 157,
+      "query": "topological sorti",
+      "expectedTop": [
+        "Topological Sort"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 158,
+      "query": "sorting",
+      "expectedTop": [
+        "Python Custom Sorting"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 159,
+      "query": "sorti",
+      "expectedTop": [
+        "Python Custom Sorting"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 160,
+      "query": "sorts",
+      "expectedTop": [
+        "Topological Sort"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 161,
+      "query": "sort",
+      "expectedTop": [
+        "Topological Sort"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 162,
+      "query": "authenticated",
+      "expectedTop": [
+        "React Authentication"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 163,
+      "query": "authentication",
+      "expectedTop": [
+        "React Authentication"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 164,
+      "query": "authenticating",
+      "expectedTop": [
+        "React Authentication"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 165,
+      "query": "authorizing",
+      "expectedTop": [
+        "Authorization Middleware",
+        "React Authentication",
+        "Zero-Trust Security",
+        "Bearer Token"
+      ],
+      "titlePrefix": null,
+      "topN": 8
+    },
+    {
+      "index": 166,
+      "query": "authorization",
+      "expectedTop": [
+        "Authorization Middleware",
+        "React Authentication",
+        "Zero-Trust Security",
+        "Bearer Token"
+      ],
+      "titlePrefix": null,
+      "topN": 8
+    },
+    {
+      "index": 167,
+      "query": "authorized",
+      "expectedTop": [
+        "Authorization Middleware",
+        "React Authentication",
+        "Zero-Trust Security",
+        "Bearer Token"
+      ],
+      "titlePrefix": null,
+      "topN": 8
+    },
+    {
+      "index": 168,
+      "query": "authorizes",
+      "expectedTop": [
+        "Authorization Middleware",
+        "React Authentication",
+        "Zero-Trust Security",
+        "Bearer Token"
+      ],
+      "titlePrefix": null,
+      "topN": 8
+    },
+    {
+      "index": 169,
+      "query": "authoriz",
+      "expectedTop": [
+        "Authorization Middleware",
+        "React Authentication",
+        "Zero-Trust Security",
+        "Bearer Token"
+      ],
+      "titlePrefix": null,
+      "topN": 8
+    },
+    {
+      "index": 170,
+      "query": "intercept",
+      "expectedTop": [
+        "gRPC Interceptor"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 171,
+      "query": "intercepting",
+      "expectedTop": [
+        "gRPC Interceptor"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 172,
+      "query": "intercepted",
+      "expectedTop": [
+        "gRPC Interceptor"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 173,
+      "query": "sort recurses",
+      "expectedTop": [
+        "Dynamic Programming Matrix",
+        "React Performance Optimization",
+        "Topological Sort",
+        "What is Recursion?"
+      ],
+      "titlePrefix": null,
+      "topN": 4
+    },
+    {
+      "index": 174,
+      "query": "sort recursion",
+      "expectedTop": [
+        "Dynamic Programming Matrix",
+        "React Performance Optimization",
+        "Topological Sort",
+        "What is Recursion?"
+      ],
+      "titlePrefix": null,
+      "topN": 4
+    },
+    {
+      "index": 175,
+      "query": "sort recursing",
+      "expectedTop": [
+        "Dynamic Programming Matrix",
+        "React Performance Optimization",
+        "Topological Sort",
+        "What is Recursion?"
+      ],
+      "titlePrefix": null,
+      "topN": 4
+    },
+    {
+      "index": 176,
+      "query": "sort recurses",
+      "expectedTop": [
+        "Dynamic Programming Matrix"
+      ],
+      "titlePrefix": null,
+      "topN": 4
+    },
+    {
+      "index": 177,
+      "query": "sort recursing",
+      "expectedTop": [
+        "Dynamic Programming Matrix"
+      ],
+      "titlePrefix": null,
+      "topN": 4
+    },
+    {
+      "index": 178,
+      "query": "sort recursion",
+      "expectedTop": [
+        "Dynamic Programming Matrix"
+      ],
+      "titlePrefix": null,
+      "topN": 4
+    },
+    {
+      "index": 179,
+      "query": "object",
+      "expectedTop": [
+        "Object"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 180,
+      "query": "developme operations",
+      "expectedTop": [
+        "What is DevOps?",
+        "CI/CD",
+        "Agile vs Waterfall",
+        "What is Cloud Migration?",
+        "Build Time"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 181,
+      "query": "development operations",
+      "expectedTop": [
+        "What is DevOps?",
+        "CI/CD",
+        "Agile vs Waterfall",
+        "What is Cloud Migration?",
+        "Build Time"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 182,
+      "query": "authenticat",
+      "expectedTop": [
+        "React Authentication",
+        "Zero-Trust Security",
+        "Authorization Middleware",
+        "Bearer Token",
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 183,
+      "query": "authenticated",
+      "expectedTop": [
+        "React Authentication",
+        "Zero-Trust Security",
+        "Authorization Middleware",
+        "Bearer Token",
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 184,
+      "query": "authenticating",
+      "expectedTop": [
+        "React Authentication",
+        "Zero-Trust Security",
+        "Authorization Middleware",
+        "Bearer Token",
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 185,
+      "query": "authentication",
+      "expectedTop": [
+        "React Authentication",
+        "Zero-Trust Security",
+        "Authorization Middleware",
+        "Bearer Token",
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 5
+    },
+    {
+      "index": 186,
+      "query": "authenticat",
+      "expectedTop": [
+        "React Authentication"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 187,
+      "query": "authenticated",
+      "expectedTop": [
+        "React Authentication"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 188,
+      "query": "authenticating",
+      "expectedTop": [
+        "React Authentication"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 189,
+      "query": "authentication",
+      "expectedTop": [
+        "React Authentication"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 190,
+      "query": "rate limiting",
+      "expectedTop": [
+        "Rate Limiting"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 191,
+      "query": "rate limit",
+      "expectedTop": [
+        "Rate Limiting"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 192,
+      "query": "algorithmm",
+      "expectedTop": [
+        "Raft Algorithm",
+        "Maximum Flow Algorithm",
+        "Rate Limiting Algorithms"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 193,
+      "query": "algorithms",
+      "expectedTop": [
+        "Rate Limiting Algorithms"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 194,
+      "query": "algorithmsss",
+      "expectedTop": [
+        "Rate Limiting Algorithms"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 195,
+      "query": "distributed s",
+      "expectedTop": [
+        "What are Distributed Systems?",
+        "Distributed Cloud"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 196,
+      "query": "distributed sy",
+      "expectedTop": [
+        "What are Distributed Systems?",
+        "Distributed Cloud"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 197,
+      "query": "distributed sys",
+      "expectedTop": [
+        "What are Distributed Systems?",
+        "Distributed Cloud"
+      ],
+      "titlePrefix": null,
+      "topN": 3
+    },
+    {
+      "index": 198,
+      "query": "mono",
+      "expectedTop": [
+        "Monotonic Stack"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 199,
+      "query": "monoto",
+      "expectedTop": [
+        "Monotonic Stack"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 200,
+      "query": "monoton",
+      "expectedTop": [
+        "Monotonic Stack"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 201,
+      "query": "12 vulnerability",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 202,
+      "query": "tls 12",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 203,
+      "query": "1.2 vulnerability",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 204,
+      "query": "tls 1.2",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 205,
+      "query": "120",
+      "expectedTop": [
+        "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 206,
+      "query": "12 vulnerabilit",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 207,
+      "query": "12 vulnerabili",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 208,
+      "query": "12 vulnerab",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 209,
+      "query": "2",
+      "expectedTop": [
+        "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 210,
+      "query": "20",
+      "expectedTop": [
+        "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 211,
+      "query": "200",
+      "expectedTop": [
+        "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 212,
+      "query": "200fps",
+      "expectedTop": [
+        "200FPS: CSS vs Canvas vs WebGL vs WebGPU"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 213,
+      "query": "1.2",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 214,
+      "query": "12",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    }
+  ]
+}
