@@ -3,7 +3,7 @@
 Software.Land-derived realistic integration test data. It is not default package policy.
 
 See `NOTICE.md` in this directory: Software.Land editorial/body content is not
-Apache-2.0 licensed merely because it lives in this repository.
+licensed under the project license merely because it lives in this repository.
 
 This directory is a frozen snapshot of live V2 `SearchEngine` inputs from the
 Software.Land application. It exists so `@software-land/search` can exercise

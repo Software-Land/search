@@ -143,8 +143,23 @@ try {
   if (packedFixtures.length) {
     throw new Error(`tarball must not include test fixtures: ${packedFixtures.join(", ")}`);
   }
-  for (const required of ["SECURITY.md", "CONTRIBUTING.md", "CHANGELOG.md"]) {
+  for (const required of ["LICENSE", "COMMERCIAL-LICENSING.md", "SECURITY.md", "CONTRIBUTING.md", "CHANGELOG.md"]) {
     if (!packedRel.includes(required)) throw new Error(`packed tarball missing ${required}`);
+  }
+
+  const packedPkg = JSON.parse(readFileSync(path.join(packedRoot, "package.json"), "utf8"));
+  if (packedPkg.license !== "BUSL-1.1") {
+    throw new Error(`packed package.json license must be BUSL-1.1 (got ${JSON.stringify(packedPkg.license)})`);
+  }
+  const packedLicense = readFileSync(path.join(packedRoot, "LICENSE"), "utf8");
+  if (!packedLicense.includes("Business Source License 1.1")) {
+    throw new Error("packed LICENSE must be Business Source License 1.1");
+  }
+  if (!packedLicense.includes("Change Date:          2030-08-28")) {
+    throw new Error("packed LICENSE must include Change Date 2030-08-28");
+  }
+  if (/Apache License[\s\S]{0,80}Version 2\.0, January 2004/.test(packedLicense)) {
+    throw new Error("packed LICENSE must not be the Apache-2.0 full text");
   }
 
   const forbidden = packedRel.filter(

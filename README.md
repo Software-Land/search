@@ -2,7 +2,7 @@
 
 Deterministic, explainable document search with optional offline corpus and semantic compilation. Ranking uses named features and partial-order constraints. Relatedness is a **build-time artifact**, not a runtime embedding model.
 
-Copyright 2026 Sam Malayek. Licensed under Apache-2.0.
+Copyright 2026 Sam Malayek. 0.5.0+ is source-available under Business Source License 1.1.
 
 Source: [github.com/Software-Land/search](https://github.com/Software-Land/search). This tree is **0.x**.
 
@@ -334,6 +334,8 @@ The checked-in toy fixture is evaluation machinery, not a ranking-quality claim.
 
 ## License
 
-Copyright 2026 Sam Malayek.
+`@software-land/search` 0.5.0+ is source-available under the Business Source License 1.1. Non-production use is free. Production use is also free for organizations with less than USD $10M in consolidated annual gross revenue. Organizations at or above that threshold require a commercial license from Software.Land.
 
-Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).
+See [LICENSE](LICENSE) and [COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md).
+
+Versions through 0.4.0 remain Apache-2.0.

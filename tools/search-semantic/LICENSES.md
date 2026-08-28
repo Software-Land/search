@@ -6,7 +6,7 @@ search runtime artifact.
 
 | Component | Typical license | Notes |
 | --- | --- | --- |
-| Builder code in this directory | Apache-2.0 (same as this repository) | Stdlib lexical path has no extra deps |
+| Builder code in this directory | BUSL-1.1 (same as this repository for 0.5.0+) | Stdlib lexical path has no extra deps |
 | NumPy | BSD | Embedding path only |
 | FastEmbed | Apache-2.0 | Embedding path only |
 | ONNX Runtime | MIT | Transitive via FastEmbed |

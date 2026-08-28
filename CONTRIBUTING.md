@@ -55,4 +55,4 @@ Chromium Worker coverage lives in `test/chromium-pack/` and is isolated from roo
 
 ## License
 
-Contributions are under the Apache License 2.0. See [LICENSE](LICENSE).
+Contributions are under the current [LICENSE](LICENSE) (Business Source License 1.1 for 0.5.0+). See also [COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md). Versions through 0.4.0 remain Apache-2.0.
