@@ -1,6 +1,6 @@
 # Content notice
 
-`@software-land/search` 0.5.0 and later is licensed under the Business Source
+`@software-land/search` 0.5.0 is licensed under the Business Source
 License 1.1. Versions through 0.4.0 remain Apache-2.0. Those licenses cover the
 search engine software, tests, and fixture harness.
 

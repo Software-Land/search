@@ -1,6 +1,27 @@
 # Contributing
 
-Issues and pull requests are welcome. This is a small pre-1.0 search runtime. Keep changes focused.
+Issues, discussion, and documentation feedback are welcome. This is a small
+pre-1.0 search runtime. Keep changes focused.
+
+## Contributor terms
+
+The project [LICENSE](LICENSE) governs **use** of Software.Land's released
+code. It does not by itself give Software.Land the right to include outside
+code in separately licensed commercial distributions. See
+[COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md).
+
+- Issues, discussion, bug reports, and documentation suggestions may be
+  submitted in the ordinary way.
+- External **code** contributions are reviewed, but Software.Land will not
+  merge them until appropriate contributor terms covering commercial relicensing
+  have been accepted.
+- Submitting code solely under Business Source License 1.1 is not sufficient
+  for acceptance.
+- Software.Land may require a contributor license agreement or equivalent
+  contributor-rights agreement before accepting code. No such agreement is
+  published in this repository yet.
+
+Versions through 0.4.0 remain Apache-2.0.
 
 ## Before substantial work
 
@@ -52,7 +73,3 @@ node benchmarks/relevance/run.mjs
 Document new performance workloads next to those harnesses. Builtin ranking is sparse in the constraint-signature count; worst case remains Θ(C²) in the **candidate** count C. Corpus size N is a retrieval problem. Do not present full-scan of a large high-DF corpus as scalable ranking.
 
 Chromium Worker coverage lives in `test/chromium-pack/` and is isolated from root runtime dependencies. Playwright is not a production dependency.
-
-## License
-
-Contributions are under the current [LICENSE](LICENSE) (Business Source License 1.1 for 0.5.0+). See also [COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md). Versions through 0.4.0 remain Apache-2.0.

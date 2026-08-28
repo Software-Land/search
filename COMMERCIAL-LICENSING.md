@@ -4,9 +4,9 @@ This document explains Software.Land’s public commercial licensing policy for
 `@software-land/search`. It is not a commercial license agreement and does not
 itself grant commercial production rights.
 
-## Current versions (0.5.0 and later)
+## 0.5.0
 
-`@software-land/search` 0.5.0 and later is source-available under the
+`@software-land/search` 0.5.0 is source-available under the
 [Business Source License 1.1](LICENSE) (SPDX: `BUSL-1.1`).
 
 - Non-production use is free under the standard BSL 1.1 grant.
