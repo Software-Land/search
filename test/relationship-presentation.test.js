@@ -1,5 +1,5 @@
 import { morphology, SearchEngine } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { classifyDirect } from "../dist/features.js";
 import { analyzeQuery } from "../dist/analyze.js";
 
@@ -23,7 +23,7 @@ const graph = {
   },
 };
 
-const plugins = [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })];
+const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })];
 
 describe("direct classes", () => {
   test("exact title is strong; body-only is weak; related is none", async () => {

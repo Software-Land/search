@@ -6,14 +6,14 @@
   "scenarioSourceCommit": "3ad49e867f82db06aa06cd1c7f38dca8faecf246",
   "searchPackageVersion": "0.3.1",
   "documentCount": 122,
-  "dictionaryEntryCount": 192,
+  "configuredConceptCount": 192,
   "lemmaCount": 1206,
   "files": {
     "documents.json": {
       "bytes": 759396,
       "sha256": "e5d27ce5b12a83db8a1d39e11c4eabe37a60a9e3f708b3730480c71b10c65dc2"
     },
-    "dictionary.json": {
+    "configured-concepts.json": {
       "bytes": 24623,
       "sha256": "d0a4e72b54d7431233d5ebc7c9608c88922ddbeeabc52bfdb0a6015fef2f85f5"
     },

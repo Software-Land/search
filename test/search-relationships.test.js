@@ -12,7 +12,7 @@ import { normalizePath } from "../tools/search-relationships/lib/ids.js";
 import { RelationshipError as ImplementationRelationshipError } from "../tools/search-relationships/lib/domain.js";
 import { filterRelationships as filterRelationshipsImpl } from "../tools/search-relationships/lib/compile.js";
 import { morphology, SearchEngine } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 
 import { fileURLToPath } from "node:url";
@@ -164,7 +164,7 @@ describe("search-relationships compilation", () => {
 
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries: [] })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [] })],
       documentRelationships: compiled.runtime,
     });
     await engine.index(bluetoothDocs.documents);
@@ -300,7 +300,7 @@ describe("search-relationships compilation", () => {
     );
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries: [] })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [] })],
       documentRelationships: compiled.runtime,
     });
     const tls = analyzeQuery("tls", { plugins: engine.plugins });

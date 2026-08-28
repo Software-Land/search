@@ -10,7 +10,7 @@
  * candidates through pairwise ranking.
  */
 import { morphology, SearchEngine } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 import { retrieveCandidates } from "../dist/retrieve.js";
@@ -69,7 +69,7 @@ describe("indexed unbounded must-keep lanes", () => {
   });
 
   test("configured-concept title matches bypass candidateLimit", () => {
-    const plugins = [morphology(), dictionary({ entries: [{ key: "ml", aliases: [["machine", "learning"]]}] })];
+    const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "ml", aliases: [["machine", "learning"]]}] })];
     const docs = [];
     for (let i = 0; i < 18; i += 1) {
       docs.push({ id: `c${i}`, title: `ML notes ${i}`, body: "x" });

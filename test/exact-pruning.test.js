@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { extractFeatures } from "../dist/features.js";
 import {
   compileLexicalIndex,
@@ -24,6 +24,7 @@ import {
   createWorkerRuntime,
 } from "../dist/browser/index.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
+const dictionary = ({ entries } = {}) => compileConfiguredConceptPlugin({ configuredConcepts: entries || [] });
 
 const schema = {
   title: { type: "text", role: "title" },
@@ -236,7 +237,7 @@ describe("Stage-2A exact document-feature block pruning", () => {
     const english = morphology({ lemmas: load("lemmas.json") });
     const plugins = [
       english,
-      dictionary({ entries: load("dictionary.json") }),
+      compileConfiguredConceptPlugin({ configuredConcepts: load("configured-concepts.json") }),
     ];
     const lexicalIndex = compileLexicalIndex(documents, {
       schema,
@@ -276,7 +277,7 @@ describe("Stage-2A exact document-feature block pruning", () => {
     const english = morphology({ lemmas: load("lemmas.json") });
     const plugins = [
       english,
-      dictionary({ entries: load("dictionary.json") }),
+      compileConfiguredConceptPlugin({ configuredConcepts: load("configured-concepts.json") }),
     ];
     const lexicalIndex = compileLexicalIndex(documents, {
       schema,
@@ -325,7 +326,7 @@ describe("Stage-2A exact document-feature block pruning", () => {
       const english = morphology({ lemmas: load("lemmas.json") });
       const plugins = [
         english,
-        dictionary({ entries: load("dictionary.json") }),
+        compileConfiguredConceptPlugin({ configuredConcepts: load("configured-concepts.json") }),
       ];
       const lexicalIndex = compileLexicalIndex(documents, {
         schema,

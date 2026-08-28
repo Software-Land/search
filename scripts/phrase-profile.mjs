@@ -6,7 +6,7 @@
  */
 import { parseArgs } from "node:util";
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { compileLexicalIndex } from "../dist/lexicalIndex.js";
 import { startFeatureProfile, lastFeatureProfile, stopFeatureProfile } from "../dist/features.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";
@@ -44,7 +44,7 @@ function mixedCorpus(size) {
 
 const plugins = [
   morphology({ lemmas: { searching: "search", searched: "search", searches: "search" } }),
-  dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] }),
+  compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "tls", aliases: [["transport", "layer", "security"]] }] }),
 ];
 const docs = mixedCorpus(n);
 const artifact = compileLexicalIndex(docs, { schema: SCHEMA, plugins });

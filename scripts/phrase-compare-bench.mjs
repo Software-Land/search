@@ -73,18 +73,18 @@ async function loadDist() {
   const href = (name) => pathToFileURL(path.join(distDir, name)).href;
   const root = await import(href("index.js"));
   const lexical = await import(href("lexicalIndex.js"));
-  const dictMod = await import(href("dictionary.js"));
+  const dictMod = await import(href("configuredConcepts.js"));
   return {
     SearchEngine: root.SearchEngine,
     morphology: root.morphology,
-    dictionary: dictMod.dictionary,
+    compileConfiguredConceptPlugin: dictMod.compileConfiguredConceptPlugin,
     compileLexicalIndex: lexical.compileLexicalIndex,
   };
 }
 
 const pluginsSpec = {
   lemmas: { searching: "search", searched: "search", searches: "search" },
-  dictionary: [{ key: "tls", expansion: ["transport", "layer", "security"] }],
+  configuredConcepts: [{ key: "tls", aliases: [["transport", "layer", "security"]] }],
 };
 
 const queries = [
@@ -118,8 +118,8 @@ function sample(engine, query) {
   };
 }
 
-const { SearchEngine, morphology, dictionary, compileLexicalIndex } = await loadDist();
-const plugins = [morphology({ lemmas: pluginsSpec.lemmas }), dictionary({ entries: pluginsSpec.dictionary })];
+const { SearchEngine, morphology, compileConfiguredConceptPlugin, compileLexicalIndex } = await loadDist();
+const plugins = [morphology({ lemmas: pluginsSpec.lemmas }), compileConfiguredConceptPlugin({ configuredConcepts: pluginsSpec.configuredConcepts })];
 
 const sizesOut = [];
 for (const size of sizes) {

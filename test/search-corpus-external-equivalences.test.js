@@ -452,8 +452,8 @@ describe("reconcileExternalConfiguredConcepts spelling and abbreviation compatib
         hypertext: [{ kind: "related", to: { concept: "http" } }],
       },
     });
-    const dictionaryPlugin = authored.plugins.find((plugin) => plugin.name === "dictionary");
-    expect(dictionaryPlugin.standaloneRecallByToken.get("hypertext")).toBe("http");
+    const plugin = authored.plugins.find((plugin) => plugin.name === "configured-concepts");
+    expect(plugin.standaloneRecallByToken.get("hypertext")).toBe("http");
   });
 });
 

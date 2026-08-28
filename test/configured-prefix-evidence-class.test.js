@@ -3,14 +3,13 @@
  * Independent of Software.Land / FPS.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 const plugins = [
   morphology(),
-  dictionary({
-    entries: [
+  compileConfiguredConceptPlugin({ configuredConcepts: [
       { key: "xyz", aliases: [["alpha", "beta", "gamma"]] },
       { key: "abc", aliases: [["alpha", "delta", "epsilon"]] },
     ],

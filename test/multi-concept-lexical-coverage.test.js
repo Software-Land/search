@@ -12,7 +12,7 @@ import { analyzeQuery } from "../dist/analyze.js";
 import { extractFeatures } from "../dist/features.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 import { morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 
 function hit(id, over = {}) {
   return {
@@ -236,7 +236,7 @@ describe("lexicalConceptCoverage extractFeatures", () => {
 
   test("configured expansion with queryTokenCount > 1 still has one coverage concept", () => {
     const tlsDict = [{ key: "tls", aliases: [["transport", "layer", "security"]]}];
-    const plugins = [morphology(), dictionary({ entries: tlsDict })];
+    const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: tlsDict })];
     const index = buildIndex(
       [
         { id: "full-body", title: "Unrelated", body: "transport layer security appears in the body" },

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import {
   retrieveCandidates,
@@ -11,7 +11,7 @@ import {
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
 import { allowPrefixMatch, DEFAULT_STOP } from "../dist/text.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
-import { dictionaryFromLegacy } from "./helpers/authored.js";
+import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const dict = [
   {
@@ -44,7 +44,7 @@ const docs = [
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 
 function plugins(entries = dict) {
-  return [morphology(), dictionaryFromLegacy(entries)];
+  return [morphology(), configuredConceptPluginFromLegacy(entries)];
 }
 
 async function engine(retriever) {
@@ -245,7 +245,7 @@ describe("short title-token prefix on Software.Land fixture", () => {
   beforeAll(async () => {
     fixturePlugins = [
       morphology({ lemmas: load("lemmas.json") }),
-      dictionary({ entries: load("dictionary.json") }),
+      compileConfiguredConceptPlugin({ configuredConcepts: load("configured-concepts.json") }),
     ];
     const documents = attachLexicalFrequency(load("documents.json"), load("lexical-frequency.json"));
     const opts = {

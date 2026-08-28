@@ -169,7 +169,7 @@ describe("search-corpus embedded acronyms", () => {
     expect(threeGb.inspection.candidates.some((c) => c.key === "gb")).toBe(false);
   });
 
-  test("decision aliases and primary compile through to dictionary entries", () => {
+  test("decision aliases and primary compile through to configured concepts", () => {
     const result = compileCorpus(
       {
         documents: [{ id: "x", title: "Notes", body: "No acronym evidence here." }],

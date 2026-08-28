@@ -15,7 +15,7 @@ import { loadSoftwareLandJson, loadSoftwareLandRelevanceInputs } from "./helpers
 
 const {
   documents,
-  dictionaryEntries,
+  configuredConcepts,
   lemmas,
   relationshipMap,
   relationships,
@@ -26,7 +26,7 @@ const {
   schema,
 } = loadSoftwareLandRelevanceInputs();
 const synonymFixture = loadSoftwareLandJson("synonym-map.json");
-const omitKeys = new Set(relevanceConfig.omitDictionaryKeys || []);
+const omitKeys = new Set(relevanceConfig.omitConfiguredConceptKeys || []);
 const recorded = [];
 const APPSEC_TOPICAL = [
   ["authentication"],
@@ -40,7 +40,7 @@ const APPSEC_TOPICAL = [
 ];
 
 function createRelevanceEngine() {
-  const compiled = compileAuthoredRelevance({ configuredConcepts: dictionaryEntries,
+  const compiled = compileAuthoredRelevance({ configuredConcepts: configuredConcepts,
     relationshipMap,
   });
   return SearchEngine.create({
@@ -181,28 +181,28 @@ describe("Software.Land historical relevance contracts", () => {
     expect(relevanceConfig.softwareLandCommit).toBe("7628a85166781d4ab42f60646e2f66da5f336eaa");
     expect(relevanceConfig.synonymMapKind).toBe("explicit-directional-curated-plus-generated");
     expect(omitKeys.has("testing")).toBe(true);
-    expect(dictionaryEntries.some((entry) => entry.key === "testing")).toBe(false);
-    expect(loadSoftwareLandJson("dictionary.json").some((entry) => entry.key === "testing")).toBe(true);
-    expect(loadSoftwareLandJson("dictionary.json").some((entry) => entry.key === "fps")).toBe(true);
-    expect(dictionaryEntries.find((entry) => entry.key === "fps")?.aliases).toEqual([["frames", "per", "second"]]);
-    const frozenAppsec = loadSoftwareLandJson("dictionary.json").find((entry) => entry.key === "appsec");
+    expect(configuredConcepts.some((entry) => entry.key === "testing")).toBe(false);
+    expect(loadSoftwareLandJson("configured-concepts.json").some((entry) => entry.key === "testing")).toBe(true);
+    expect(loadSoftwareLandJson("configured-concepts.json").some((entry) => entry.key === "fps")).toBe(true);
+    expect(configuredConcepts.find((entry) => entry.key === "fps")?.aliases).toEqual([["frames", "per", "second"]]);
+    const frozenAppsec = loadSoftwareLandJson("configured-concepts.json").find((entry) => entry.key === "appsec");
     expect(frozenAppsec.aliases[0]).toEqual(["application", "security"]);
     expect(frozenAppsec.aliases).toEqual(expect.arrayContaining([["security"]]));
     expect(frozenAppsec.expansion).toBeUndefined();
     expect(frozenAppsec.primary).toBeUndefined();
     expect(frozenAppsec.topicalRecall).toBeUndefined();
     expect(frozenAppsec.standaloneRecall).toBeUndefined();
-    const frozenNist = loadSoftwareLandJson("dictionary.json").find((entry) => entry.key === "nist");
+    const frozenNist = loadSoftwareLandJson("configured-concepts.json").find((entry) => entry.key === "nist");
     expect(frozenNist.aliases).toEqual([["national", "institute", "standards", "technology"]]);
-    const nist = dictionaryEntries.find((entry) => entry.key === "nist");
+    const nist = configuredConcepts.find((entry) => entry.key === "nist");
     expect(nist.aliases).toEqual([
       ["national", "institute", "standards", "technology"],
       ["institute"],
       ["institute", "standards"],
     ]);
-    const gatech = dictionaryEntries.find((entry) => entry.key === "gatech");
+    const gatech = configuredConcepts.find((entry) => entry.key === "gatech");
     expect(gatech.aliases).toEqual([["georgia", "institute", "of", "technology"]]);
-    const appsec = dictionaryEntries.find((entry) => entry.key === "appsec");
+    const appsec = configuredConcepts.find((entry) => entry.key === "appsec");
     expect(appsec.aliases).toEqual([
       ["application", "security"],
       ["app", "sec"],
@@ -221,10 +221,10 @@ describe("Software.Land historical relevance contracts", () => {
       "vulnerability",
       ["signed", "cookies"],
     ]);
-    const compiled = compileAuthoredRelevance({ configuredConcepts: dictionaryEntries, relationshipMap });
-    const dictionaryPlugin = compiled.plugins.find((plugin) => plugin.name === "dictionary");
-    expect(dictionaryPlugin.topicalRecallByKey.get("appsec")).toEqual(APPSEC_TOPICAL);
-    const map = compileRelationshipMap(relationshipMap, { concepts: dictionaryEntries });
+    const compiled = compileAuthoredRelevance({ configuredConcepts: configuredConcepts, relationshipMap });
+    const plugin = compiled.plugins.find((plugin) => plugin.name === "configured-concepts");
+    expect(plugin.topicalRecallByKey.get("appsec")).toEqual(APPSEC_TOPICAL);
+    const map = compileRelationshipMap(relationshipMap, { concepts: configuredConcepts });
     expect(map.synonymMap.appsec).toEqual(["oath"]);
     expect(map.synonymMap.qa).toEqual(["testing"]);
     expect(synonymFixture.softwareLandCommit).toBe("db5a070dbc6ac112dfae403f38fdfd0fffbedbf6");

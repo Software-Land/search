@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -33,7 +33,7 @@ function createEngine(retriever, extra = {}) {
     schema: { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } },
     plugins: [
       morphology({ lemmas: load("lemmas.json") }),
-      dictionary({ entries: load("dictionary.json") }),
+      compileConfiguredConceptPlugin({ configuredConcepts: load("configured-concepts.json") }),
     ],
     documentRelationships: load("relationships.json"),
     relationshipStrategy: "hybrid",

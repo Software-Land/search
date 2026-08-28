@@ -20,7 +20,7 @@ import {
 } from "./rank.js";
 import { constraintsForStrategy } from "./constraints.js";
 import { morphology } from "./morphology.js";
-import { dictionary } from "./dictionary.js";
+import { compileConfiguredConceptPlugin } from "./configuredConcepts.js";
 import { bindMorphologyDerivedEquivalences } from "./synonyms.js";
 import {
   RelationshipGraph,
@@ -922,4 +922,4 @@ export class SearchEngine {
   }
 }
 
-export { morphology, dictionary };
+export { morphology, compileConfiguredConceptPlugin };

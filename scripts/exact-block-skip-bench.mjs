@@ -10,7 +10,7 @@
  */
 import { parseArgs } from "node:util";
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { compileLexicalIndex } from "../dist/lexicalIndex.js";
 import { EXACT_PRUNING_V2_EXTENSION } from "../dist/lexicalIndex.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";
@@ -115,7 +115,7 @@ function v2Stats(artifact) {
 
 const plugins = [
   morphology({ lemmas: { searching: "search", searched: "search", searches: "search" } }),
-  dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] }),
+  compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "tls", aliases: [["transport", "layer", "security"]] }] }),
 ];
 
 for (const size of sizes) {

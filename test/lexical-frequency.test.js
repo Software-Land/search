@@ -1,6 +1,6 @@
 import { compileLexicalFrequency, attachLexicalFrequency, saturatingFrequency, resolveLexicalPolicy } from "../tools/search-lexical/index.js";
 import { morphology, SearchEngine } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { extractFeatures, saturatingFrequency as runtimeSaturatingFrequency } from "../dist/features.js";
 import { saturatingFrequency as sharedSaturatingFrequency } from "../dist/saturatingFrequency.js";
@@ -40,7 +40,7 @@ describe("lexical-frequency compiler", () => {
     expect(JSON.stringify(artifact)).toBe(JSON.stringify(compileLexicalFrequency(docs, { lemma })));
 
     const indexed = attachLexicalFrequency(docs, artifact);
-    const engine = SearchEngine.create({ schema, plugins: [morphology(), dictionary({ entries: [] })] });
+    const engine = SearchEngine.create({ schema, plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [] })] });
     await engine.index(indexed);
     const row = engine.searchDetailed("machine learning", { limit: 5, explain: true }).results[0];
     expect(row.id).toBe("a");
@@ -93,7 +93,7 @@ describe("compiled phrase vs incidental title token", () => {
     ];
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries: [] })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [] })],
       relationshipStrategy: "hybrid",
     });
     await engine.index(docs);
@@ -157,7 +157,7 @@ describe("final-token prefix completion for compiled phrases", () => {
 
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries: [] })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [] })],
       relationshipStrategy: "hybrid",
     });
     await engine.index(docs);
@@ -207,7 +207,7 @@ describe("final-token prefix completion for compiled phrases", () => {
 
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries: [] })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [] })],
       relationshipStrategy: "hybrid",
     });
     await engine.index(attachLexicalFrequency(rawDocs, artifact));
@@ -390,7 +390,7 @@ describe("lexical compiler body-only n-grams", () => {
 
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries: [] })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [] })],
     });
     await engine.index(attachLexicalFrequency(docs, artifact));
     expect(

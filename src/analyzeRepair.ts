@@ -150,14 +150,14 @@ export interface SalvagedContainedTerm {
 
 /**
  * High-confidence salvage of one known term inside a long junk token.
- * Dictionary keys (len≥4, with an expansion) or long lexicon/title terms (len≥7).
+ * Configured-concept keys (len≥4, with an expansion) or long lexicon/title terms (len≥7).
  * Requires leftover junk and that the whole token is not itself a lexicon word.
  */
 export function salvageContainedTerm(
   token: unknown,
-  { lexicon, dictionaryKeys, signal }: {
+  { lexicon, configuredConceptKeys, signal }: {
     lexicon?: Set<string> | Iterable<string>;
-    dictionaryKeys?: Iterable<string>;
+    configuredConceptKeys?: Iterable<string>;
     signal?: AbortSignal;
   } = {}
 ): SalvagedContainedTerm | null {
@@ -167,7 +167,7 @@ export function salvageContainedTerm(
   if (t.length > MAX_COMPOUND_REPAIR_TOKEN_LENGTH) return null;
   if (lexicon && "has" in lexicon && lexicon.has(t)) return null;
 
-  const keys = [...(dictionaryKeys || [])].filter((k) => k.length >= 4).sort((a, b) => b.length - a.length);
+  const keys = [...(configuredConceptKeys || [])].filter((k) => k.length >= 4).sort((a, b) => b.length - a.length);
   const long = t.length >= 12 ? lexiconWords(lexicon || [], { min: 7, max: 24 }).sort((a, b) => b.length - a.length) : [];
 
   function leftoverOk(term: string, idx: number) {

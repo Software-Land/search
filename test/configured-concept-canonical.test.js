@@ -3,14 +3,14 @@
  * short-key vs prefix-guessing, and same-concept result equivalence.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { resolveConfiguredSequence } from "../dist/configuredSequence.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 
 function plugins(entries) {
-  return [morphology(), dictionary({ entries })];
+  return [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: entries })];
 }
 
 function intentOf(raw, entries) {
@@ -19,9 +19,9 @@ function intentOf(raw, entries) {
 }
 
 function resolutionOf(raw, entries) {
-  const dict = dictionary({ entries });
-  const q = analyzeQuery(raw, { plugins: [morphology(), dict] });
-  return resolveConfiguredSequence(q.tokens, dict);
+  const plugin = compileConfiguredConceptPlugin({ configuredConcepts: entries });
+  const q = analyzeQuery(raw, { plugins: [morphology(), plugin] });
+  return resolveConfiguredSequence(q.tokens, plugin);
 }
 
 function publicView(engine, analyzePlugins, raw, limit = 20) {
@@ -102,16 +102,15 @@ describe("exact configured key beats a foreign one-token alias", () => {
   });
 
   test("two genuine exact key identities for the same typed form fail closed", () => {
-    const dict = dictionary({
-      entries: [
+    const plugin = compileConfiguredConceptPlugin({ configuredConcepts: [
         { key: "ai", aliases: [["artificial", "intelligence"]] },
         { key: "aid", aliases: [["aid", "system"]] },
       ],
     });
-    const aid = dict.byKey.get("aid");
-    dict.sequences.push({ kind: "key", tokens: ["ai"], concept: aid });
-    const q = analyzeQuery("ai", { plugins: [morphology(), dict] });
-    const res = resolveConfiguredSequence(q.tokens, dict);
+    const aid = plugin.byKey.get("aid");
+    plugin.sequences.push({ kind: "key", tokens: ["ai"], concept: aid });
+    const q = analyzeQuery("ai", { plugins: [morphology(), plugin] });
+    const res = resolveConfiguredSequence(q.tokens, plugin);
     expect(res.status).toBe("ambiguous");
     expect(new Set(res.keys)).toEqual(new Set(["ai", "aid"]));
     expect(q.configuredSequenceIntent?.key ?? null).toBeNull();

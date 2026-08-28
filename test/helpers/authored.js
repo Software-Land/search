@@ -48,13 +48,13 @@ export function pluginByName(authored, name) {
   return authored.plugins.find((plugin) => plugin.name === name);
 }
 
-export function dictionaryFromLegacy(entries, extra = {}) {
+export function configuredConceptPluginFromLegacy(entries, extra = {}) {
   const split = splitAuthored(entries);
   return pluginByName(
     compileAuthoredRelevance({ configuredConcepts: split.entries,
       relationshipMap: extra.relationshipMap || split.relationshipMap,
       documents: extra.documents,
     }),
-    "dictionary"
+    "configured-concepts"
   );
 }

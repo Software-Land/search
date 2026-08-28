@@ -44,7 +44,7 @@ describe("Worker configuredConcepts / relationshipMap init contract", () => {
     assertAuthoredRelevanceContract(
       {
         workerRuntime: readFileSync(path.join(ROOT, "dist/browser/workerRuntime.js"), "utf8"),
-        dictionary: readFileSync(path.join(ROOT, "dist/dictionary.js"), "utf8"),
+        configuredConceptsModule: readFileSync(path.join(ROOT, "dist/configuredConcepts.js"), "utf8"),
       },
       "dist"
     );
@@ -55,7 +55,7 @@ describe("Worker configuredConcepts / relationshipMap init contract", () => {
       assertAuthoredRelevanceContract(
         {
           workerRuntime: "authored = compile({ entries: payload.dictionaryEntries || [], relationshipMap: payload.relationshipMap });",
-          dictionary: "export function compileAuthoredRelevance({ entries = [], relationshipMap, documents, } = {}) {",
+          configuredConceptsModule: "export function compileAuthoredRelevance({ entries = [], relationshipMap, documents, } = {}) {",
         },
         "stale pack"
       )

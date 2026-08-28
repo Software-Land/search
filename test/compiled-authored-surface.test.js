@@ -101,9 +101,9 @@ describe("compileAuthoredRelevance aggregate surface", () => {
 
   test("plugins are compiler-owned and ordered", () => {
     expect(authored.plugins).toHaveLength(2);
-    expect(authored.plugins.map((plugin) => plugin.name)).toEqual(["dictionary", "synonyms"]);
-    expect(pluginByName(authored, "dictionary").standaloneRecallByToken.get("hypertext")).toBe("http");
-    expect(pluginByName(authored, "dictionary").topicalRecallByKey.get("appsec")).toEqual([["authentication"]]);
+    expect(authored.plugins.map((plugin) => plugin.name)).toEqual(["configured-concepts", "synonyms"]);
+    expect(pluginByName(authored, "configured-concepts").standaloneRecallByToken.get("hypertext")).toBe("http");
+    expect(pluginByName(authored, "configured-concepts").topicalRecallByKey.get("appsec")).toEqual([["authentication"]]);
     expect(pluginByName(authored, "synonyms").expand("qa").map((row) => row.form)).toEqual(["testing"]);
   });
 
@@ -111,7 +111,7 @@ describe("compileAuthoredRelevance aggregate surface", () => {
     const relatedOnly = compileAuthoredRelevance({ configuredConcepts: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
       relationshipMap: { hypertext: [{ kind: "related", to: { concept: "http" } }] },
     });
-    expect(relatedOnly.plugins.map((plugin) => plugin.name)).toEqual(["dictionary", "synonyms"]);
+    expect(relatedOnly.plugins.map((plugin) => plugin.name)).toEqual(["configured-concepts", "synonyms"]);
     expect(pluginByName(relatedOnly, "synonyms").expand("hypertext")).toEqual([]);
     expect(relatedOnly.documentRelationships).toBeNull();
   });

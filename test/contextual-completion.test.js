@@ -1,5 +1,5 @@
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { typedForm } from "../dist/retrieve.js";
 import { buildIndex } from "../dist/indexDocuments.js";
@@ -56,7 +56,7 @@ const docs = [
   },
 ];
 
-const plugins = [morphology(), dictionary({ entries: dict })];
+const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: dict })];
 
 function engine(retriever = "full-scan") {
   const e = SearchEngine.create({ schema, plugins, retriever });
@@ -99,8 +99,7 @@ describe("contextual expansion completion representation", () => {
   test("ambiguous trusted expansions do not invent a unique completion", () => {
     const ambiguousPlugins = [
       morphology(),
-      dictionary({
-        entries: [
+      compileConfiguredConceptPlugin({ configuredConcepts: [
           { key: "ml", aliases: [["machine", "learning"]]},
           { key: "mlang", aliases: [["machine", "language"]]},
         ],
@@ -229,7 +228,7 @@ describe("version/compact companion does not regain inferred-completion as typed
   ];
 
   test("12 vuln stays weak compact companion and 12 v stays unboosted", async () => {
-    const plugins = [morphology(), dictionary({ entries: tlsDict })];
+    const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: tlsDict })];
     const e = SearchEngine.create({ schema, plugins });
     await e.index(tlsDocs);
     const index = buildIndex(tlsDocs, schema, plugins);

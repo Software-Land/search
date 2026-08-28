@@ -191,7 +191,7 @@ async function main() {
       JSON.stringify({
         documents,
         schema: inputs.schema,
-        configuredConcepts: inputs.dictionaryEntries,
+        configuredConcepts: inputs.configuredConcepts,
         relationshipMap: inputs.relationshipMap,
         documentRelationships: inputs.relationships,
         relationshipStrategy: "hybrid",
@@ -315,7 +315,7 @@ async function main() {
         assertions: applicable.length,
       },
       v2Contracts: {
-        browser: "not duplicated; Node Jest dictionary() stack in software-land-corpus.test.js remains source for 99 V2 + 60 regression cases",
+        browser: "not duplicated; Node Jest compileAuthoredRelevance() stack in software-land-corpus.test.js remains source for 99 V2 + 60 regression cases",
       },
       controls: Object.fromEntries(
         CRITICAL_CONTROLS.map((query) => [

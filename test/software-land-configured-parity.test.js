@@ -22,7 +22,7 @@ function aliasKey(alias) {
   return JSON.stringify(Array.isArray(alias) ? alias : []);
 }
 
-function applyDictionaryPatches(entries, patches) {
+function applyConfiguredConceptPatches(entries, patches) {
   return entries.map((entry) => {
     const patch = patches?.[entry.key];
     if (!patch) return entry;
@@ -41,10 +41,10 @@ function applyDictionaryPatches(entries, patches) {
 }
 
 const relevanceConfig = loadJson("relevance-config.json");
-const omitKeys = new Set(relevanceConfig.omitDictionaryKeys || []);
-const dictionaryEntries = applyDictionaryPatches(
-  loadJson("dictionary.json").filter((entry) => !omitKeys.has(entry.key)),
-  relevanceConfig.dictionaryPatches
+const omitKeys = new Set(relevanceConfig.omitConfiguredConceptKeys || []);
+const configuredConcepts = applyConfiguredConceptPatches(
+  loadJson("configured-concepts.json").filter((entry) => !omitKeys.has(entry.key)),
+  relevanceConfig.configuredConceptPatches
 );
 
 function formText(form) {
@@ -72,7 +72,7 @@ describe("Software.Land configured-concept result parity", () => {
   let plugins;
 
   beforeAll(async () => {
-    const compiled = compileAuthoredRelevance({ configuredConcepts: dictionaryEntries,
+    const compiled = compileAuthoredRelevance({ configuredConcepts: configuredConcepts,
       relationshipMap: loadJson(relevanceConfig.relationshipMapFile).map,
     });
     plugins = [

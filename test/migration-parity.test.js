@@ -4,7 +4,7 @@
  * Does not replace the existing 248-test suite.
  */
 import { morphology, SearchEngine } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import {
   createSearchClient,
   createWorkerRuntime,
@@ -12,6 +12,7 @@ import {
   searchWorkerUrl,
 } from "../dist/browser/index.js";
 import { compileLexicalFrequency } from "../tools/search-lexical/index.js";
+const dictionary = ({ entries } = {}) => compileConfiguredConceptPlugin({ configuredConcepts: entries || [] });
 
 const schema = {
   title: { type: "text", role: "title" },
@@ -58,7 +59,7 @@ describe("0.2.0 migration parity", () => {
       { id: "weak-incidental", title: "Unrelated Overview", body: "security notes" },
     ];
     const engine = await index(
-      SearchEngine.create({ schema, plugins: [morphology(), dictionary({ entries: mlDict })] }),
+      SearchEngine.create({ schema, plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: mlDict })] }),
       docs
     );
     const expectedIds = ["key-only", "strong-phrase", "machine-only", "learn-only"];
@@ -152,7 +153,7 @@ describe("0.2.0 migration parity", () => {
       { id: "protocol-only", title: "Network Protocol", body: "a protocol overview" },
     ];
     const engine = await index(
-      SearchEngine.create({ schema, plugins: [morphology(), dictionary({ entries: httpDict })] }),
+      SearchEngine.create({ schema, plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: httpDict })] }),
       docs
     );
     const httpIds = ["expansion-title", "http", "protocol-only", "transfer-only"];
@@ -184,7 +185,7 @@ describe("0.2.0 migration parity", () => {
       { id: "transfer-only", title: "Transfer Rates", body: "transfer transfer transfer" },
     ];
     const sibling = await index(
-      SearchEngine.create({ schema, plugins: [morphology(), dictionary({ entries: siblingDict })] }),
+      SearchEngine.create({ schema, plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: siblingDict })] }),
       siblingDocs
     );
     const siblingIds = ["http-title", "transfer-only", "http-body"];
@@ -197,7 +198,7 @@ describe("0.2.0 migration parity", () => {
     const engine = await index(
       SearchEngine.create({
         schema,
-        plugins: [morphology(), dictionary({ entries: [{ key: "wifi", aliases: [["wi", "fi"]]}] })],
+        plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "wifi", aliases: [["wi", "fi"]]}] })],
       }),
       [
         { id: "wifi", title: "Wi-Fi", body: "Connect to wireless networks." },
@@ -241,7 +242,7 @@ describe("0.2.0 migration parity", () => {
     const engine = await index(
       SearchEngine.create({
         schema,
-        plugins: [morphology(), dictionary({ entries: appsecDict })],
+        plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: appsecDict })],
         relationshipStrategy: "hybrid",
       }),
       docs

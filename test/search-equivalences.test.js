@@ -12,14 +12,14 @@ import {
   InvalidConfigurationError,
 } from "../dist/index.js";
 import { normalizeSearchEquivalences, MAX_SEARCH_EQUIVALENCE_TARGETS } from "../dist/synonyms.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
 import { coverageConcepts, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts } from "../dist/retrieve.js";
 import { compareConstraint } from "../dist/constraints.js";
 import { synonyms, deriveMorphologyEquivalenceLookup } from "../dist/synonyms.js";
 import { extractFeatures } from "../dist/features.js";
-import { dictionaryFromLegacy } from "./helpers/authored.js";
+import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = path.join(ROOT, "fixtures", "software-land");
@@ -43,7 +43,7 @@ function ids(hits) {
 }
 
 function plugins({ dict = [{ key: "qa", aliases: [["quality", "assurance"]]}], map = { qa: ["testing"] }, lemmas } = {}) {
-  const list = [morphology(lemmas ? { lemmas } : {}), dictionaryFromLegacy(dict)];
+  const list = [morphology(lemmas ? { lemmas } : {}), configuredConceptPluginFromLegacy(dict)];
   if (map) list.push(synonyms(map));
   return list;
 }
@@ -367,7 +367,7 @@ describe("search-equivalence regression controls without synonyms", () => {
       relationshipStrategy: "hybrid",
       retriever: "full-scan",
     };
-    const basePlugins = [morphology({ lemmas: loadJson("lemmas.json") }), dictionary({ entries: loadJson("dictionary.json") })];
+    const basePlugins = [morphology({ lemmas: loadJson("lemmas.json") }), compileConfiguredConceptPlugin({ configuredConcepts: loadJson("configured-concepts.json") })];
     baseline = SearchEngine.create({ ...common, plugins: basePlugins });
     emptyPlugin = SearchEngine.create({ ...common, plugins: [...basePlugins, synonyms({})] });
     await baseline.index(documents);
@@ -533,7 +533,7 @@ describe("extra synonym recall vs merged ordinary-term synonyms", () => {
 });
 
 function morphPlugins({ lemmas = {}, dict = [], map } = {}) {
-  const list = [morphology({ lemmas }), dictionary({ entries: dict })];
+  const list = [morphology({ lemmas }), compileConfiguredConceptPlugin({ configuredConcepts: dict })];
   if (map) list.push(synonyms(map));
   return list;
 }

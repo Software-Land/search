@@ -1,5 +1,5 @@
 import { morphology, SearchEngine, isAbortError } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery, suggestTypoForms } from "../dist/analyze.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 import { pickPrimariesForExpansion } from "../dist/relationships.js";
@@ -10,7 +10,7 @@ const schema = {
   body: { type: "text", role: "body" },
 };
 
-const plugins = [morphology(), dictionary({ entries: [] })];
+const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [] })];
 
 const reversedPrimaryDocs = [
   { id: "a-guide", title: "Bluetooth Guide", body: "A longer guide to bluetooth setup." },

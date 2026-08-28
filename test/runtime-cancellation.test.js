@@ -1,5 +1,5 @@
 import { morphology, SearchEngine, isAbortError } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { retrieveCandidates } from "../dist/retrieve.js";
 import { rankCandidates } from "../dist/rank.js";
@@ -11,6 +11,7 @@ import {
   createLoopbackTransport,
   createSearchClient,
 } from "../dist/browser/index.js";
+const dictionary = ({ entries } = {}) => compileConfiguredConceptPlugin({ configuredConcepts: entries || [] });
 
 const schema = {
   title: { type: "text", role: "title" },
@@ -26,7 +27,7 @@ const dictEntries = [
   },
 ];
 
-const plugins = [morphology(), dictionary({ entries: dictEntries })];
+const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: dictEntries })];
 
 const graph = {
   format: "search-v2-relationships",
@@ -291,7 +292,7 @@ describe("query analysis repair", () => {
     expect(q.alternatives[0].source).toBe("junk-token-salvage");
   });
 
-  test("http salvage from junk uses a dictionary key", () => {
+  test("http salvage from junk uses a configured-concept key", () => {
     const q = analyzeQuery("asdfsafhttp", { plugins });
     expect(q.originalSurface).toEqual(["asdfsafhttp"]);
     expect(q.tokens.map((t) => t.normalized)).toEqual(["http"]);

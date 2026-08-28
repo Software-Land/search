@@ -6,7 +6,7 @@ import {
   SearchEngine,
   morphology,
 } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import {
   attachLexicalFrequency,
   compileLexicalIndex,
@@ -16,6 +16,7 @@ import {
   createSearchClient,
   createWorkerRuntime,
 } from "../dist/browser/index.js";
+const dictionary = ({ entries } = {}) => compileConfiguredConceptPlugin({ configuredConcepts: entries || [] });
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixture = path.join(here, "fixtures", "software-land");
@@ -106,7 +107,7 @@ async function engines(documents, {
   precompiled = false,
 } = {}) {
   const english = morphology({ lemmas });
-  const plugins = [english, dictionary({ entries })];
+  const plugins = [english, compileConfiguredConceptPlugin({ configuredConcepts: entries })];
   const common = { schema, plugins, documentRelationships: relationships, relationshipStrategy };
   const full = SearchEngine.create({ ...common, retriever: "full-scan" });
   const lexicalIndex = precompiled
@@ -244,7 +245,7 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
     const relationships = load("relationships.json");
     const { full, compiled } = await engines(documents, {
       lemmas: load("lemmas.json"),
-      entries: load("dictionary.json"),
+      entries: load("configured-concepts.json"),
       relationships,
       relationshipStrategy: "hybrid",
       precompiled: true,
@@ -355,7 +356,7 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
       },
     };
     const english = morphology();
-    const plugins = [english, dictionary({ entries: [] })];
+    const plugins = [english, compileConfiguredConceptPlugin({ configuredConcepts: [] })];
     const lexicalIndex = compileLexicalIndex(documents, {
       schema,
       lemma: english.lemma,
@@ -398,7 +399,7 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
     const documents = [...originals, ...softwareLandDistractors(1_000)];
     const { full, compiled } = await engines(documents, {
       lemmas: load("lemmas.json"),
-      entries: load("dictionary.json"),
+      entries: load("configured-concepts.json"),
       relationships: load("relationships.json"),
       relationshipStrategy: "hybrid",
       precompiled: true,
@@ -433,7 +434,7 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
       const documents = [...originals, ...softwareLandDistractors(flood)];
       const { full, compiled } = await engines(documents, {
         lemmas: load("lemmas.json"),
-        entries: load("dictionary.json"),
+        entries: load("configured-concepts.json"),
         relationships: load("relationships.json"),
         relationshipStrategy: "hybrid",
         precompiled: flood !== 1_000,

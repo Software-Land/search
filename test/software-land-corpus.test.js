@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -21,7 +21,7 @@ function loadJson(name) {
 
 const manifest = loadJson("manifest.json");
 const documents = loadJson("documents.json");
-const dictionaryEntries = loadJson("dictionary.json");
+const configuredConcepts = loadJson("configured-concepts.json");
 const lemmas = loadJson("lemmas.json");
 const relationships = loadJson("relationships.json");
 const lexicalFrequency = loadJson("lexical-frequency.json");
@@ -45,7 +45,7 @@ function createEngine({
     schema,
     plugins: [
       morphology(useLemmas ? { lemmas } : {}),
-      dictionary({ entries: useDictionary ? dictionaryEntries : [] }),
+      compileConfiguredConceptPlugin({ configuredConcepts: useDictionary ? configuredConcepts : [] }),
     ],
     documentRelationships: useRelationships ? relationships : undefined,
     relationshipStrategy: useRelationships ? "hybrid" : undefined,
@@ -201,7 +201,7 @@ describe("software-land corpus fixture", () => {
     expect(manifest.historicalRelevanceApplicable).toBe(214);
     expect(manifest.searchPackageVersion).toBe("0.3.1");
     expect(manifest.documentCount).toBe(122);
-    expect(manifest.dictionaryEntryCount).toBe(192);
+    expect(manifest.configuredConceptCount).toBe(192);
     expect(documents).toHaveLength(122);
     expect(manifest.description).toMatch(/not default package policy/i);
     expect(manifest.scenarioCount).toBe(215);
@@ -238,9 +238,9 @@ describe("software-land corpus fixture", () => {
     expect(readme).not.toMatch(/df852eb \/ HEAD/);
   });
 
-  test("dictionary.json bytes match the recorded manifest hash", () => {
-    const rec = manifest.files["dictionary.json"];
-    const buf = readFileSync(path.join(FIXTURE, "dictionary.json"));
+  test("configured-concepts.json bytes match the recorded manifest hash", () => {
+    const rec = manifest.files["configured-concepts.json"];
+    const buf = readFileSync(path.join(FIXTURE, "configured-concepts.json"));
     expect(buf.byteLength).toBe(rec.bytes);
     expect(createHash("sha256").update(buf).digest("hex")).toBe(rec.sha256);
     expect(rec.sha256).toBe("d0a4e72b54d7431233d5ebc7c9608c88922ddbeeabc52bfdb0a6015fef2f85f5");
@@ -320,7 +320,7 @@ describe("software-land fixture inputs are load-bearing", () => {
     ]);
   });
 
-  test("aplicationsecurity #1 depends on the fixture dictionary", async () => {
+  test("aplicationsecurity #1 depends on the fixture configured concepts", async () => {
     const without = await indexEngine(createEngine({ useDictionary: false }));
     const titles = without.search("aplicationsecurity", { limit: 10 }).map((hit) => hit.title);
     expect(titles[0]).not.toBe("App Sec");

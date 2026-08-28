@@ -8,7 +8,7 @@ import {
   compileAuthoredRelevance,
   DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD,
 } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { synonyms } from "../dist/synonyms.js";
 import { createIndexedLexicalRetriever } from "../dist/retrievers.js";
 import { retrievalFormKindAllowsPrefix } from "../dist/retrieve.js";
@@ -79,7 +79,7 @@ async function makeModeEngines({ plugins, docs }) {
 
 const ciPlugins = [
   morphology(),
-  dictionary({ entries: [{ key: "ci", aliases: [["continuous", "integration"]] }] }),
+  compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "ci", aliases: [["continuous", "integration"]] }] }),
   synonyms({ ci: ["devops"] }),
 ];
 
@@ -137,12 +137,12 @@ describe("equivalent-recall prefix information bound", () => {
     ];
     const plugins1 = [
       morphology(),
-      dictionary({ entries: [{ key: "ci", aliases: [["continuous", "integration"]] }] }),
+      compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "ci", aliases: [["continuous", "integration"]] }] }),
       synonyms({ ci: ["d"] }),
     ];
     const plugins2 = [
       morphology(),
-      dictionary({ entries: [{ key: "ci", aliases: [["continuous", "integration"]] }] }),
+      compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "ci", aliases: [["continuous", "integration"]] }] }),
       synonyms({ ci: ["de"] }),
     ];
     const one = await makeModeEngines({ plugins: plugins1, docs });
@@ -162,7 +162,7 @@ describe("equivalent-recall prefix information bound", () => {
     ];
     const plugins = [
       morphology(),
-      dictionary({ entries: [{ key: "ci", aliases: [["continuous", "integration"]] }] }),
+      compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "ci", aliases: [["continuous", "integration"]] }] }),
       synonyms({ ci: ["dev"] }),
     ];
     const engines = await makeModeEngines({ plugins, docs });
@@ -189,7 +189,7 @@ describe("topical-recall remains exact-only", () => {
     morphology(),
     compileAuthoredRelevance({ configuredConcepts: [{ key: "appsec", aliases: [["application", "security"]] }],
       relationshipMap: { appsec: [{ to: { form: ["authentication"] }, kind: "related" }] },
-    }).plugins.find((plugin) => plugin.name === "dictionary"),
+    }).plugins.find((plugin) => plugin.name === "configured-concepts"),
   ];
   const docs = [
     { id: "direct", title: "Application Security", body: "overview" },

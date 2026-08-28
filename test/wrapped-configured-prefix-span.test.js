@@ -7,7 +7,7 @@ import {
   resolveConfiguredSpans,
 } from "../dist/configuredSequence.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
-import { dictionaryFromLegacy } from "./helpers/authored.js";
+import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const dict = [
   {
@@ -64,7 +64,7 @@ const docs = [
 ];
 
 function plugins(entries = dict) {
-  return [morphology(), dictionaryFromLegacy(entries)];
+  return [morphology(), configuredConceptPluginFromLegacy(entries)];
 }
 
 async function engine(retriever) {

@@ -1,5 +1,5 @@
 import { morphology, SearchEngine } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 import { retrieveCandidates, matchContextualTitlePrefix } from "../dist/retrieve.js";
@@ -135,7 +135,7 @@ describe("contextual MUST_KEEP bound", () => {
   test("exact-title, configured-concept, and version remain unbounded must-keep", () => {
     const plugins = [
       morphology(),
-      dictionary({ entries: [{ key: "ml", aliases: [["machine", "learning"]]}] }),
+      compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "ml", aliases: [["machine", "learning"]]}] }),
     ];
     const docs = [
       { id: "exact", title: "quantum foam", body: "x" },
@@ -192,7 +192,7 @@ describe("frozen contextual regressions", () => {
   async function engine() {
     const e = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries: appsecDict })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: appsecDict })],
       relationshipStrategy: "hybrid",
     });
     await e.index(docs);

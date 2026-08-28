@@ -2,7 +2,7 @@ import {
   SearchEngine,
   morphology,
 } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { extractFeatures, FEATURE_DEFINITIONS } from "../dist/features.js";
 import { compareConstraint, constraintCatalog } from "../dist/constraints.js";
@@ -24,7 +24,7 @@ function engine(docs, dictEntries = []) {
       title: { type: "text", role: "title" },
       body: { type: "text", role: "body" },
     },
-    plugins: [morphology(), dictionary({ entries: dictEntries })],
+    plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: dictEntries })],
   });
   return e.index(docs).then(() => e);
 }
@@ -123,7 +123,7 @@ describe("query analysis", () => {
   });
 
   test("maps configured expansions to the same canonical query as the key", () => {
-    const plugins = [morphology(), dictionary({ entries: tlsDict })];
+    const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: tlsDict })];
     const expansion = analyzeQuery("transport layer security", { plugins });
     const key = analyzeQuery("tls", { plugins });
     expect(expansion.lexicalPhraseTokens).toEqual(key.lexicalPhraseTokens);
@@ -138,7 +138,7 @@ describe("query analysis", () => {
 
   test("exact expansion canonicalizes to the key and does not treat one expansion word as the key", () => {
     const gpuDict = [{ key: "gpu", aliases: [["graphics", "processing", "unit"]]}];
-    const plugins = [morphology(), dictionary({ entries: gpuDict })];
+    const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: gpuDict })];
     const full = analyzeQuery("graphics processing unit", { plugins });
     const keyQ = analyzeQuery("gpu", { plugins });
     expect(full.lexicalPhraseKey).toEqual(keyQ.lexicalPhraseKey);
@@ -183,7 +183,7 @@ describe("query analysis", () => {
 
   test("http and its exact expansion share one canonical query, candidates, and ranking", async () => {
     const httpDict = [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]]}];
-    const plugins = [morphology(), dictionary({ entries: httpDict })];
+    const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: httpDict })];
     const key = analyzeQuery("http", { plugins });
     const expansion = analyzeQuery("hypertext transfer protocol", { plugins });
     expect(key.lexicalPhraseTokens).toEqual(expansion.lexicalPhraseTokens);
@@ -215,7 +215,7 @@ describe("query analysis", () => {
       { key: "https", aliases: [["hypertext", "transfer", "protocol", "secure"]]},
       { key: "html", aliases: [["hypertext", "markup", "language"]]},
     ];
-    const plugins = [morphology(), dictionary({ entries: httpDict })];
+    const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: httpDict })];
     const prefix = analyzeQuery("hypertext transfer", { plugins });
     expect(prefix.tokens.map((t) => t.normalized)).toEqual(["hypertext", "transfer"]);
     const http = prefix.concepts.filter((c) => c.kind === "configured-concept");
@@ -242,7 +242,7 @@ describe("query analysis", () => {
       { key: "http", aliases: [["hypertext", "transfer", "protocol"]]},
       { key: "https", aliases: [["hypertext", "transfer", "protocol", "secure"]]},
     ];
-    const plugins = [morphology(), dictionary({ entries: httpDict })];
+    const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: httpDict })];
     const docs = [
       { id: "http-title", title: "HTTP", body: "methods and status codes" },
       { id: "http-body", title: "Request Response", body: "http methods and status codes" },
@@ -290,8 +290,7 @@ describe("query analysis", () => {
   test("ambiguous shared expansion prefixes are not attached", () => {
     const plugins = [
       morphology(),
-      dictionary({
-        entries: [
+      compileConfiguredConceptPlugin({ configuredConcepts: [
           { key: "sla", aliases: [["service", "level", "agreement"]]},
           { key: "slo", aliases: [["service", "level", "objective"]]},
           { key: "sli", aliases: [["service", "level", "indicator"]]},
@@ -315,8 +314,7 @@ describe("query analysis", () => {
   test("unique three-token expansion prefixes attach the shorter winner", () => {
     const plugins = [
       morphology(),
-      dictionary({
-        entries: [
+      compileConfiguredConceptPlugin({ configuredConcepts: [
           { key: "http", aliases: [["hypertext", "transfer", "protocol"]]},
           { key: "https", aliases: [["hypertext", "transfer", "protocol", "secure"]]},
           { key: "api", aliases: [["application", "programming", "interface"]]},
@@ -353,8 +351,7 @@ describe("query analysis", () => {
   test("incomplete key prefixes match only the final active token", () => {
     const plugins = [
       morphology(),
-      dictionary({
-        entries: [
+      compileConfiguredConceptPlugin({ configuredConcepts: [
           { key: "graphql", aliases: [["graph", "query", "language"]]},
           { key: "gql", aliases: [["graph", "query", "language"]]},
           { key: "jwt", aliases: [["json", "web", "token"]]},
@@ -396,7 +393,7 @@ describe("query analysis", () => {
     ];
     const reverse = [...forward].reverse();
     for (const entries of [forward, reverse]) {
-      const plugins = [morphology(), dictionary({ entries })];
+      const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: entries })];
       expect(analyzeQuery("react", { plugins }).concepts.some((c) => c.kind === "configured-concept")).toBe(false);
       const exact = analyzeQuery("reactjs", { plugins }).concepts.filter((c) => c.kind === "configured-concept");
       expect(exact).toHaveLength(1);
@@ -404,7 +401,7 @@ describe("query analysis", () => {
       expect(exact[0].provenance).toBe("key");
     }
     const unique = analyzeQuery("react", {
-      plugins: [morphology(), dictionary({ entries: [forward[0]] })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [forward[0]] })],
     }).concepts.filter((c) => c.kind === "configured-concept");
     expect(unique).toHaveLength(1);
     expect(unique[0].id).toBe("reactjs");
@@ -417,7 +414,7 @@ describe("query analysis", () => {
     ];
     const reverse = [...forward].reverse();
     for (const entries of [forward, reverse]) {
-      const plugins = [morphology(), dictionary({ entries })];
+      const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: entries })];
       const q = analyzeQuery("graph query language", { plugins });
       expect(q.tokens.map((t) => t.normalized)).toEqual(["graph", "query", "language"]);
       expect(q.concepts.some((c) => c.kind === "configured-concept")).toBe(false);
@@ -430,7 +427,7 @@ describe("query analysis", () => {
     ];
     for (const entries of [withPrimaryHint, [...withPrimaryHint].reverse()]) {
       const q = analyzeQuery("graph query language", {
-        plugins: [morphology(), dictionary({ entries })],
+        plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: entries })],
       });
       expect(q.tokens.map((t) => t.normalized)).toEqual(["graph", "query", "language"]);
       expect(q.concepts.some((c) => c.kind === "configured-concept")).toBe(false);
@@ -439,7 +436,7 @@ describe("query analysis", () => {
 
   test("unique learn* prefixes share canonical tokens, candidates, and ranked IDs", async () => {
     const mlDict = [{ key: "ml", aliases: [["machine", "learning"]]}];
-    const plugins = [morphology(), dictionary({ entries: mlDict })];
+    const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: mlDict })];
     const lexicon = ["machine", "learn", "learning", "learnings", "application", "security"];
     const incomplete = ["machine learn", "machine learni", "machine learnin"];
     const analyzed = incomplete.map((raw) => analyzeQuery(raw, { plugins, lexicon, prefixLexicon: lexicon }));
@@ -494,7 +491,7 @@ describe("query analysis", () => {
 
   test("exact expansion collapse keeps pre-collapse lexical phrase evidence", async () => {
     const mlDict = [{ key: "ml", aliases: [["machine", "learning"]]}];
-    const plugins = [morphology(), dictionary({ entries: mlDict })];
+    const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: mlDict })];
     const lexicon = ["machine", "learn", "learning", "learnings"];
     const docs = [
       {
@@ -547,7 +544,7 @@ describe("query analysis", () => {
 
   test("unique configured-concept forms share canonical intent and ranked IDs", async () => {
     const mlDict = [{ key: "ml", aliases: [["machine", "learning"]]}];
-    const plugins = [morphology(), dictionary({ entries: mlDict })];
+    const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: mlDict })];
     const lexicon = ["machine", "learn", "learning", "learnings", "notes"];
     const forms = ["ml", "machine learning", "machine learn"];
     const analyzed = Object.fromEntries(
@@ -619,9 +616,9 @@ describe("query analysis", () => {
     expect(q.tokens[1].completedToken).toBeUndefined();
   });
 
-  test("single-letter queries do not prefix-match dictionary keys", () => {
+  test("single-letter queries do not prefix-match configured-concept keys", () => {
     const q = analyzeQuery("a", {
-      plugins: [morphology(), dictionary({ entries: tlsDict })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: tlsDict })],
     });
     expect(q.concepts.some((c) => c.kind === "configured-concept")).toBe(false);
   });
@@ -766,7 +763,7 @@ describe("version compact", () => {
   });
 
   test("inferred completion is not typed compact companion evidence", async () => {
-    const plugins = [morphology(), dictionary({ entries: tlsDict })];
+    const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: tlsDict })];
     const schema = {
       title: { type: "text", role: "title" },
       body: { type: "text", role: "body" },

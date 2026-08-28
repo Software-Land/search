@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { extractFeatures } from "../dist/features.js";
 import { extractFeaturesOracle } from "../build/test/oracles/featuresOracle.js";
@@ -43,7 +43,7 @@ describe("feature extraction oracle", () => {
       },
       plugins: [
         morphology({ lemmas: loadJson("lemmas.json") }),
-        dictionary({ entries: loadJson("dictionary.json") }),
+        compileConfiguredConceptPlugin({ configuredConcepts: loadJson("configured-concepts.json") }),
       ],
       documentRelationships: loadJson("relationships.json"),
       relationshipStrategy: "hybrid",

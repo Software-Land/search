@@ -53,7 +53,7 @@ export interface TopicalRecall {
   forms: string[][];
 }
 
-export interface DictionarySequence {
+export interface ConfiguredConceptSequence {
   concept: ConfiguredConcept;
   tokens: string[];
   kind: "key" | "expansion" | "alias" | string;
@@ -69,7 +69,7 @@ export interface SearchPlugin {
   lexicon?: () => Iterable<string>;
   /** Inflected lemma-table keys for typo vocabulary. Not a public root export. */
   lemmaTableKeys?: () => Iterable<string>;
-  sequences?: DictionarySequence[];
+  sequences?: ConfiguredConceptSequence[];
   byKey?: Map<string, ConfiguredConcept>;
   standaloneRecallByToken?: Map<string, string>;
   topicalRecallByKey?: Map<string, string[][]>;

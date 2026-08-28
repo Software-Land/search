@@ -19,7 +19,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { SearchEngine, morphology } from "../../dist/index.js";
-import { dictionary } from "../../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../../dist/configuredConcepts.js";
 import { attachLexicalFrequency } from "../../tools/search-lexical/index.js";
 import { lastRankStats, rankCandidates } from "../../dist/rank.js";
 import { rankCandidatesPairwise } from "../../build/test/oracles/rankOracle.js";
@@ -168,7 +168,7 @@ async function measureSoftwareLand() {
     schema: SCHEMA,
     plugins: [
       morphology({ lemmas: load("lemmas.json") }),
-      dictionary({ entries: load("dictionary.json") }),
+      compileConfiguredConceptPlugin({ configuredConcepts: load("configured-concepts.json") }),
     ],
     documentRelationships: load("relationships.json"),
     relationshipStrategy: "hybrid",

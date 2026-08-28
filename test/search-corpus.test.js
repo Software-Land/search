@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { compileCorpus, spellingLexiconPlugin } from "../tools/search-corpus/index.js";
 import { morphology, SearchEngine } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 
 import { fileURLToPath } from "node:url";
@@ -206,7 +206,7 @@ describe("search-corpus spelling plugin", () => {
       schema,
       plugins: [
         morphology(),
-        dictionary({ entries: [] }),
+        compileConfiguredConceptPlugin({ configuredConcepts: [] }),
         spellingLexiconPlugin(["kubernetes", "authorization", "application"]),
       ],
     });

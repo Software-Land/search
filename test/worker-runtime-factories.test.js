@@ -3,7 +3,7 @@
  * Packed searchWorker.js uses compileAuthoredRelevance, not this legacy dictionary path.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { createSearchClient, createWorkerRuntime, createLoopbackTransport } from "../dist/browser/index.js";
 
 const schema = {
@@ -58,12 +58,12 @@ async function searchOnce(runtime, initPayload, query, options = {}) {
 describe("createWorkerRuntime factory compatibility", () => {
   test("legacy dictionary factory is invoked when relationshipMap is absent", async () => {
     let calls = 0;
-    const dictionaryEntries = [{ key: "zephyr", aliases: [["customhost", "token"]] }];
+    const configuredConcepts = [{ key: "zephyr", aliases: [["customhost", "token"]] }];
     const customDictionary = (opts) => {
       calls += 1;
       expect(Object.keys(opts).sort()).toEqual(["entries"]);
-      expect(opts.entries).toEqual(dictionaryEntries);
-      return dictionary({ entries: opts.entries });
+      expect(opts.entries).toEqual(configuredConcepts);
+      return compileConfiguredConceptPlugin({ configuredConcepts: opts.entries });
     };
     const runtime = createWorkerRuntime({
       SearchEngine,
@@ -75,7 +75,7 @@ describe("createWorkerRuntime factory compatibility", () => {
       {
         documents: [{ id: "zephyr", title: "Zephyr Target", body: "zephyr only body text" }],
         schema,
-        configuredConcepts: dictionaryEntries,
+        configuredConcepts: configuredConcepts,
         retriever: "full-scan",
       },
       "customhost token"
@@ -177,7 +177,7 @@ describe("createWorkerRuntime factory compatibility", () => {
     let calls = 0;
     const customDictionary = () => {
       calls += 1;
-      return dictionary({ entries: authoredEntries });
+      return compileConfiguredConceptPlugin({ configuredConcepts: authoredEntries });
     };
     const runtime = createWorkerRuntime({
       SearchEngine,

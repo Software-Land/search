@@ -1,5 +1,5 @@
 import { morphology, SearchEngine } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { extractFeatures } from "../dist/features.js";
 import { matchContextualTitlePrefix } from "../dist/retrieve.js";
@@ -33,7 +33,7 @@ const appsecDict = [
 async function engine() {
   const e = SearchEngine.create({
     schema,
-    plugins: [morphology(), dictionary({ entries: appsecDict })],
+    plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: appsecDict })],
     relationshipStrategy: "hybrid",
   });
   await e.index(docs.concat([{ id: "appsec", title: "App Sec", body: "application security practices" }]));
@@ -119,9 +119,9 @@ describe("contextual title-sequence prefix", () => {
 });
 
 describe("compound segmentation uses vocabulary, not a hardcoded glue map", () => {
-  test("dictionary-supported app+security split survives a longer key prefix", () => {
+  test("configured-concept-supported app+security split survives a longer key prefix", () => {
     const q = analyzeQuery("appsecurity", {
-      plugins: [morphology(), dictionary({ entries: appsecDict })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: appsecDict })],
     });
     expect(q.tokens.map((t) => t.normalized)).toEqual(["app", "security"]);
     expect(q.alternatives.some((a) => a.source === "compound-segment")).toBe(true);

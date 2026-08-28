@@ -7,7 +7,7 @@
  */
 export function assertAuthoredRelevanceContract(sources, where = "package") {
   const workerRuntime = String(sources?.workerRuntime || "");
-  const dictionary = String(sources?.dictionary || "");
+  const configuredConceptsModule = String(sources?.configuredConceptsModule || "");
   const label = String(where || "package");
   if (workerRuntime.includes("payload.dictionaryEntries")) {
     throw new Error(
@@ -17,7 +17,7 @@ export function assertAuthoredRelevanceContract(sources, where = "package") {
   if (!workerRuntime.includes("payload.configuredConcepts")) {
     throw new Error(`${label} Worker does not read payload.configuredConcepts`);
   }
-  if (!/compileAuthoredRelevance\(\{\s*configuredConcepts/.test(dictionary)) {
+  if (!/compileAuthoredRelevance\(\{\s*configuredConcepts/.test(configuredConceptsModule)) {
     throw new Error(`${label} compileAuthoredRelevance does not take configuredConcepts`);
   }
 }

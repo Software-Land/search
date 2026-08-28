@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../../dist/index.js";
-import { dictionary } from "../../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../../dist/configuredConcepts.js";
 import { attachLexicalFrequency } from "../../tools/search-lexical/index.js";
 import { startFeatureProfile, lastFeatureProfile, stopFeatureProfile, extractFeatures } from "../../dist/features.js";
 import { extractFeaturesOracle } from "../../build/test/oracles/featuresOracle.js";
@@ -118,7 +118,7 @@ const fixture = path.join(ROOT, "test", "fixtures", "software-land");
 const load = (n) => JSON.parse(readFileSync(path.join(fixture, n), "utf8"));
 const slEngine = SearchEngine.create({
   schema: SCHEMA,
-  plugins: [morphology({ lemmas: load("lemmas.json") }), dictionary({ entries: load("dictionary.json") })],
+  plugins: [morphology({ lemmas: load("lemmas.json") }), compileConfiguredConceptPlugin({ configuredConcepts: load("configured-concepts.json") })],
   documentRelationships: load("relationships.json"),
   relationshipStrategy: "hybrid",
   retriever: "full-scan",

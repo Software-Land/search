@@ -1,9 +1,9 @@
 import { SearchEngine, morphology } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { retrieveCandidates } from "../dist/retrieve.js";
-import { compileStandaloneRecallLookup } from "../dist/dictionary.js";
+import { compileStandaloneRecallLookup } from "../dist/configuredConcepts.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
-import { dictionaryFromLegacy } from "./helpers/authored.js";
+import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const httpDict = [
   {
@@ -23,7 +23,7 @@ const docs = [
 ];
 
 function plugins(entries = httpDict) {
-  return [morphology(), dictionaryFromLegacy(entries)];
+  return [morphology(), configuredConceptPluginFromLegacy(entries)];
 }
 
 async function engine(entries = httpDict, extraDocs = docs) {
@@ -54,7 +54,7 @@ describe("standalone recall lookup", () => {
   });
 
   test("empty, blank, and multi-token standalone values are rejected", () => {
-    const plugin = dictionaryFromLegacy([
+    const plugin = configuredConceptPluginFromLegacy([
       {
         key: "http",
         aliases: [["hypertext", "transfer", "protocol"]],

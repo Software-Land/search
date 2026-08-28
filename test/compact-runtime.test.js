@@ -10,7 +10,7 @@ import {
   SearchEngine,
   morphology,
 } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { extractFeatures } from "../dist/features.js";
 import {
   compileLexicalIndex,
@@ -37,7 +37,7 @@ describe("compact compiled lexical runtime", () => {
   const documents = attachLexicalFrequency(load("documents.json"), load("lexical-frequency.json"));
   const plugins = [
     morphology({ lemmas: load("lemmas.json") }),
-    dictionary({ entries: load("dictionary.json") }),
+    compileConfiguredConceptPlugin({ configuredConcepts: load("configured-concepts.json") }),
   ];
   const relationships = load("relationships.json");
   const queries = ["2", "machine l", "the", "vpn", "nfc", "tls 1.2", "virtual private network"];

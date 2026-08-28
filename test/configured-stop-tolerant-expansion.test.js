@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { resolveConfiguredSequence } from "../dist/configuredSequence.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
@@ -27,7 +27,7 @@ const nistFamily = [
 ];
 
 function plugins(entries = nistFamily) {
-  return [morphology(), dictionary({ entries })];
+  return [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: entries })];
 }
 
 function analyze(raw, entries) {
@@ -289,7 +289,7 @@ describe("NIST spoken forms on the Software.Land fixture", () => {
     const documents = attachLexicalFrequency(loadJson("documents.json"), loadJson("lexical-frequency.json"));
     const pluginsForEngine = [
       morphology({ lemmas: loadJson("lemmas.json") }),
-      dictionary({ entries: loadJson("dictionary.json") }),
+      compileConfiguredConceptPlugin({ configuredConcepts: loadJson("configured-concepts.json") }),
     ];
     engine = SearchEngine.create({ schema, plugins: pluginsForEngine, retriever: "full-scan" });
     await engine.index(documents);

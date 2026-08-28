@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { gzipSync } from "node:zlib";
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { attachLexicalFrequency, compileLexicalIndex } from "../tools/search-lexical/index.js";
 import { retrieveCandidates } from "../dist/retrieve.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";
@@ -552,7 +552,7 @@ function analyzePressureQuery(fullEngine, indexedEngine, queryText, meta = {}) {
 function createEngine(retriever, docs, extra = {}) {
   const engine = SearchEngine.create({
     schema: SCHEMA,
-    plugins: extra.plugins || [morphology({ lemmas: extra.lemmas || {} }), dictionary({ entries: extra.dictionary || [] })],
+    plugins: extra.plugins || [morphology({ lemmas: extra.lemmas || {} }), compileConfiguredConceptPlugin({ configuredConcepts: extra.configuredConcepts || [] })],
     documentRelationships: extra.relationships || null,
     relationshipStrategy: extra.relationshipStrategy || "hybrid",
     retriever,
@@ -926,7 +926,7 @@ const MIXED_QUERIES = [
 ];
 
 const LEMMAS = { searching: "search", searched: "search", searches: "search" };
-const DICTIONARY = [{ key: "tls", expansion: ["transport", "layer", "security"] }];
+const CONFIGURED_CONCEPTS = [{ key: "tls", aliases: [["transport", "layer", "security"]] }];
 const RELATIONSHIPS = {
   format: "search-v2-relationships",
   version: 1,
@@ -940,7 +940,7 @@ async function suiteMixed(sizes) {
   const out = [];
   for (const n of sizes) {
     const docs = mixedCorpus(n);
-    const extra = { lemmas: LEMMAS, dictionary: DICTIONARY, relationships: RELATIONSHIPS, relationshipStrategy: "hybrid" };
+    const extra = { lemmas: LEMMAS, configuredConcepts: CONFIGURED_CONCEPTS, relationships: RELATIONSHIPS, relationshipStrategy: "hybrid" };
     const full = await createEngine("full-scan", docs, extra);
     const indexed = await createEngine("indexed", docs, extra);
     for (const { cls, q } of MIXED_QUERIES) {
@@ -985,7 +985,7 @@ async function suiteAdversarial() {
   }
   for (const d of [199, 250, 400]) {
     const { docs, query } = adversarialPhrase(d);
-    const extra = { relationshipStrategy: "none", dictionary: [{ key: "ml", expansion: ["machine", "learning"] }] };
+    const extra = { relationshipStrategy: "none", configuredConcepts: [{ key: "ml", aliases: [["machine", "learning"]] }] };
     const full = await createEngine("full-scan", docs, extra);
     const indexed = await createEngine("indexed", docs, extra);
     rows.push({ family: "phrase-vs-title-token", distractors: d, ...compareQuery(full, indexed, query, { k: 200, topN: 10 }) });
@@ -1021,7 +1021,7 @@ async function suiteSweep() {
     MIXED_QUERIES.map((row) => row.q),
     {
       lemmas: LEMMAS,
-      dictionary: DICTIONARY,
+      configuredConcepts: CONFIGURED_CONCEPTS,
       relationships: RELATIONSHIPS,
       relationshipStrategy: "hybrid",
     }
@@ -1035,7 +1035,7 @@ async function suiteSweep() {
     oracle.rows.map((row) => row.query),
     {
       lemmas: load("lemmas.json"),
-      dictionary: load("dictionary.json"),
+      configuredConcepts: load("configured-concepts.json"),
       relationships: load("relationships.json"),
       relationshipStrategy: "hybrid",
     }
@@ -1047,7 +1047,7 @@ async function suiteSweep() {
     ["equal-signature-id", adversarialEqualSignature(1000), "tiezz", {}],
     ["equal-tightness-score", adversarialEqualTightnessDifferentScore(1000), "alpha beta", {}],
     ["coverage", adversarialCoverage(1000).docs, "alpha beta gamma", {}],
-    ["phrase", adversarialPhrase(1000).docs, "machine learning", { dictionary: [{ key: "ml", expansion: ["machine", "learning"] }] }],
+    ["phrase", adversarialPhrase(1000).docs, "machine learning", { configuredConcepts: [{ key: "ml", aliases: [["machine", "learning"]] }] }],
     ["dotted-span", adversarialDottedSpan(1000), "2", {}],
   ];
   for (const [corpus, docs, query, extra] of adversarial) {
@@ -1109,7 +1109,7 @@ async function suiteSoftwareLand(floodNs) {
   const oracle = load("query-result-oracle.json");
   const extra = {
     lemmas: load("lemmas.json"),
-    dictionary: load("dictionary.json"),
+    configuredConcepts: load("configured-concepts.json"),
     relationships: load("relationships.json"),
     relationshipStrategy: "hybrid",
   };
@@ -1274,7 +1274,7 @@ async function suiteArchitecture(sizes, floodNs) {
     const docs = mixedCorpus(n);
     const extra = {
       lemmas: LEMMAS,
-      dictionary: DICTIONARY,
+      configuredConcepts: CONFIGURED_CONCEPTS,
       relationships: RELATIONSHIPS,
       relationshipStrategy: "hybrid",
     };
@@ -1290,7 +1290,7 @@ async function suiteArchitecture(sizes, floodNs) {
   const oracle = load("query-result-oracle.json");
   const slExtra = {
     lemmas: load("lemmas.json"),
-    dictionary: load("dictionary.json"),
+    configuredConcepts: load("configured-concepts.json"),
     relationships: load("relationships.json"),
     relationshipStrategy: "hybrid",
   };
@@ -1344,7 +1344,7 @@ async function suiteArchitecture(sizes, floodNs) {
       family: "phrase",
       query: "machine learning",
       docs: adversarialPhrase(1000).docs,
-      extra: { dictionary: [{ key: "ml", expansion: ["machine", "learning"] }] },
+      extra: { configuredConcepts: [{ key: "ml", aliases: [["machine", "learning"]] }] },
     },
     {
       family: "dotted-span",
@@ -1527,7 +1527,7 @@ async function suiteArtifactEstimate(sizes) {
     const docs = mixedCorpus(n);
     const engine = await createEngine("indexed", docs, {
       lemmas: LEMMAS,
-      dictionary: DICTIONARY,
+      configuredConcepts: CONFIGURED_CONCEPTS,
       relationships: RELATIONSHIPS,
       relationshipStrategy: "hybrid",
     });
@@ -1536,7 +1536,7 @@ async function suiteArtifactEstimate(sizes) {
   const originals = attachLexicalFrequency(load("documents.json"), load("lexical-frequency.json"));
   const engine = await createEngine("indexed", originals, {
     lemmas: load("lemmas.json"),
-    dictionary: load("dictionary.json"),
+    configuredConcepts: load("configured-concepts.json"),
     relationships: load("relationships.json"),
     relationshipStrategy: "hybrid",
   });
@@ -1639,7 +1639,7 @@ function compareArtifactLayouts(artifact) {
 async function measureActualStage1(docs, extra, queries) {
   if (typeof globalThis.gc === "function") globalThis.gc();
   const english = morphology({ lemmas: extra.lemmas || {} });
-  const plugins = [english, dictionary({ entries: extra.dictionary || [] })];
+  const plugins = [english, compileConfiguredConceptPlugin({ configuredConcepts: extra.configuredConcepts || [] })];
   const options = {
     schema: SCHEMA,
     plugins,
@@ -1774,7 +1774,7 @@ async function suiteActualStage1(sizes) {
       originals,
       {
         lemmas: load("lemmas.json"),
-        dictionary: load("dictionary.json"),
+        configuredConcepts: load("configured-concepts.json"),
         relationships: load("relationships.json"),
         relationshipStrategy: "hybrid",
       },
@@ -1788,7 +1788,7 @@ async function suiteActualStage1(sizes) {
         mixedCorpus(n),
         {
           lemmas: LEMMAS,
-          dictionary: DICTIONARY,
+          configuredConcepts: CONFIGURED_CONCEPTS,
           relationships: RELATIONSHIPS,
           relationshipStrategy: "hybrid",
         },

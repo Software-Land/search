@@ -15,7 +15,7 @@
 import { performance } from "node:perf_hooks";
 import { parseArgs } from "node:util";
 import { SearchEngine, morphology } from "../../dist/index.js";
-import { dictionary } from "../../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../../dist/configuredConcepts.js";
 import { generateArticle, generateSettings } from "../memory/lib/generate.mjs";
 const SCHEMA = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 const SEED = 0x51e07e11;
@@ -71,12 +71,12 @@ const RELATIONSHIPS = {
 };
 
 const LEMMAS = { searching: "search", searched: "search", searches: "search" };
-const DICTIONARY = [{ key: "tls", expansion: ["transport", "layer", "security"] }];
+const CONFIGURED_CONCEPTS = [{ key: "tls", aliases: [["transport", "layer", "security"]] }];
 
 async function createEngine(retriever, docs, extra = {}) {
   const engine = SearchEngine.create({
     schema: SCHEMA,
-    plugins: [morphology({ lemmas: LEMMAS }), dictionary({ entries: DICTIONARY })],
+    plugins: [morphology({ lemmas: LEMMAS }), compileConfiguredConceptPlugin({ configuredConcepts: CONFIGURED_CONCEPTS })],
     documentRelationships: RELATIONSHIPS,
     relationshipStrategy: "hybrid",
     retriever,

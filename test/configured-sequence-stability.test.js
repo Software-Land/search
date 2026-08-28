@@ -6,7 +6,7 @@
  * desired generic property, not an appsec-specific exception.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
 
@@ -63,7 +63,7 @@ const docs = [
   },
 ];
 
-const plugins = [morphology(), dictionary({ entries: dict })];
+const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: dict })];
 
 const EXACT_EQUIVALENT_QUERIES = [
   "appsec",

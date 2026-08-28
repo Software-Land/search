@@ -6,7 +6,7 @@ import {
   SearchEngine,
   morphology,
 } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { extractFeatures } from "../dist/features.js";
 import {
   compileLexicalIndex,
@@ -39,7 +39,7 @@ function refreshIntegrity(artifact) {
 describe("search-v2-lexical-index v1", () => {
   const documents = attachLexicalFrequency(load("documents.json"), load("lexical-frequency.json"));
   const lemmas = load("lemmas.json");
-  const dictionaryEntries = load("dictionary.json");
+  const configuredConcepts = load("configured-concepts.json");
   const queries = load("query-result-oracle.json").rows.map((row) => row.query);
   let english;
   let plugins;
@@ -47,7 +47,7 @@ describe("search-v2-lexical-index v1", () => {
 
   beforeAll(() => {
     english = morphology({ lemmas });
-    plugins = [english, dictionary({ entries: dictionaryEntries })];
+    plugins = [english, compileConfiguredConceptPlugin({ configuredConcepts: configuredConcepts })];
     artifact = compileLexicalIndex(documents, { schema, plugins });
   });
 

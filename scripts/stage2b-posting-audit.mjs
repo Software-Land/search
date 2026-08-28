@@ -15,7 +15,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { compileLexicalIndex } from "../dist/lexicalIndex.js";
 import {
   auditCompiledPostingWork,
@@ -223,7 +223,7 @@ if (sizes.includes(25000)) {
     schema,
     plugins: [
       morphology({ lemmas: { searching: "search", searched: "search", searches: "search" } }),
-      dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] }),
+      compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "tls", aliases: [["transport", "layer", "security"]] }] }),
     ],
   });
   const mixedEngine = SearchEngine.create({
@@ -233,7 +233,7 @@ if (sizes.includes(25000)) {
     relationshipStrategy: "none",
     plugins: [
       morphology({ lemmas: { searching: "search", searched: "search", searches: "search" } }),
-      dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] }),
+      compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "tls", aliases: [["transport", "layer", "security"]] }] }),
     ],
   });
   await mixedEngine.index(mixed);
@@ -263,7 +263,7 @@ for (const extra of [400, 1000, 5000]) {
   const documents = softwareLandExpanded(extra);
   const plugins = [
     morphology({ lemmas: load("lemmas.json") }),
-    dictionary({ entries: load("dictionary.json") }),
+    compileConfiguredConceptPlugin({ configuredConcepts: load("configured-concepts.json") }),
   ];
   const engine = SearchEngine.create({
     schema,

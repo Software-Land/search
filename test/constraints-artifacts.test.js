@@ -5,7 +5,7 @@ import {
   compileAuthoredRelevance,
 } from "../dist/index.js";
 import { parseConfiguredConcepts } from "../tools/search-corpus/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { compareConstraint, detectConstraintCycles, DEFAULT_CONSTRAINTS } from "../dist/constraints.js";
 import { RelationshipGraph } from "../dist/relationships.js";
@@ -184,7 +184,7 @@ describe("precomputed relationships", () => {
   test("direct result stays first; related enter with provenance; unrelated stay out", async () => {
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
       documentRelationships: graph,
     });
     await engine.index(docs);
@@ -208,7 +208,7 @@ describe("precomputed relationships", () => {
   test("omitting the graph does not add related documents", async () => {
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
     });
     await engine.index(docs);
     const titles = engine.search("tls", { limit: 10 }).map((r) => r.title);
@@ -218,7 +218,7 @@ describe("precomputed relationships", () => {
 
   test("relationships are not query equivalences", async () => {
     const q = analyzeQuery("tls", {
-      plugins: [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
     });
     expect(q.concepts.some((c) => c.forms.includes("vpn"))).toBe(false);
   });
@@ -229,8 +229,7 @@ describe("general lexical search", () => {
     const q = analyzeQuery("continuous d", {
       plugins: [
         morphology(),
-        dictionary({
-          entries: [
+        compileConfiguredConceptPlugin({ configuredConcepts: [
             { key: "cd", aliases: [["continuous", "deployment"]]},
             { key: "cicd", aliases: [["continuous", "integration", "continuous", "deployment"]]},
           ],
@@ -246,8 +245,7 @@ describe("general lexical search", () => {
     const q = analyzeQuery("application programming", {
       plugins: [
         morphology(),
-        dictionary({
-          entries: [{ key: "api", aliases: [["application", "programming", "interface"]]}],
+        compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "api", aliases: [["application", "programming", "interface"]]}],
         }),
       ],
     });
@@ -256,9 +254,9 @@ describe("general lexical search", () => {
     expect(hit.provenance).toBe("partial-expansion");
   });
 
-  test("single-letter still does not prefix a dictionary key", () => {
+  test("single-letter still does not prefix a configured-concept key", () => {
     const q = analyzeQuery("a", {
-      plugins: [morphology(), dictionary({ entries: [{ key: "api", aliases: [["application", "programming", "interface"]]}] })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "api", aliases: [["application", "programming", "interface"]]}] })],
     });
     expect(q.concepts.some((c) => c.kind === "configured-concept")).toBe(false);
   });
@@ -266,7 +264,7 @@ describe("general lexical search", () => {
   test("configured-key query prefers a title that states the expansion", async () => {
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries: [{ key: "oop", aliases: [["object", "oriented", "programming"]]}] })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "oop", aliases: [["object", "oriented", "programming"]]}] })],
     });
     await engine.index([
       { id: "/oop-vs/", title: "OOP vs Functional", body: "Comparing OOP and functional programming." },

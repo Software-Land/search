@@ -2,7 +2,7 @@ import {
   SearchEngine,
   morphology,
 } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { createIndexedLexicalRetriever } from "../dist/retrievers.js";
 import { retrieveCandidates } from "../dist/retrieve.js";
 import { analyzeQuery } from "../dist/analyze.js";
@@ -20,7 +20,7 @@ const docs = [
 ];
 
 async function engines() {
-  const plugins = [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })];
+  const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })];
   const full = SearchEngine.create({ schema, plugins });
   const indexed = SearchEngine.create({
     schema,

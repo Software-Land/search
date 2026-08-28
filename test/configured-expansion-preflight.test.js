@@ -6,7 +6,7 @@
  * one-token fps expansion-prefix recall or contextual completion.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { extractFeatures } from "../dist/features.js";
 import { conceptMatchesTitle } from "../dist/retrieve.js";
@@ -55,7 +55,7 @@ const frameworkDecoys = Array.from({ length: 12 }, (_, i) => ({
   body: "a software framework package and library comparison",
 }));
 
-const plugins = [morphology(), dictionary({ entries: fpsDict })];
+const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: fpsDict })];
 
 function engine(extraDocs = [], retriever = "full-scan") {
   const e = SearchEngine.create({ schema, plugins, retriever });
@@ -208,8 +208,7 @@ describe("single-token frames ranking window", () => {
   test("ambiguous first-token prefixes must not uniquely project one meaning", () => {
     const ambiguousPlugins = [
       morphology(),
-      dictionary({
-        entries: [
+      compileConfiguredConceptPlugin({ configuredConcepts: [
           { key: "ml", aliases: [["machine", "learning"]]},
           { key: "mlang", aliases: [["machine", "language"]]},
         ],

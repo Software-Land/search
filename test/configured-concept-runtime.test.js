@@ -3,9 +3,9 @@
  * configured-concept representation. Diagnostic-only internal plugin fields.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
-import { dictionary, compileStandaloneRecallLookup } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin, compileStandaloneRecallLookup } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
-import { dictionaryFromLegacy } from "./helpers/authored.js";
+import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 
@@ -22,7 +22,7 @@ const httpConcept = {
 
 describe("canonical ConfiguredConcept runtime", () => {
   test("compiled byKey values are ConfiguredConcept and sequences share them", () => {
-    const plugin = dictionary({ entries: [httpConcept] });
+    const plugin = compileConfiguredConceptPlugin({ configuredConcepts: [httpConcept] });
     const concept = plugin.byKey.get("http");
     expect(concept).toEqual({
       key: "http",
@@ -51,8 +51,7 @@ describe("canonical ConfiguredConcept runtime", () => {
   });
 
   test("omitted type is not invented", () => {
-    const plugin = dictionary({
-      entries: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
+    const plugin = compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
     });
     expect(plugin.byKey.get("http")).not.toHaveProperty("type");
     expect(plugin.byKey.get("http")).not.toHaveProperty("provenance");
@@ -60,7 +59,7 @@ describe("canonical ConfiguredConcept runtime", () => {
   });
 
   test("lexicon is the union of key and every alias token", () => {
-    const plugin = dictionary({ entries: [httpConcept] });
+    const plugin = compileConfiguredConceptPlugin({ configuredConcepts: [httpConcept] });
     expect([...plugin.lexicon()].sort()).toEqual(["http", "hypertext", "protocol", "transfer"]);
   });
 
@@ -79,7 +78,7 @@ describe("canonical ConfiguredConcept runtime", () => {
         hypertext: [{ to: { concept: "http" }, kind: "related" }],
       },
     });
-    const plugin = authored.plugins.find((p) => p.name === "dictionary");
+    const plugin = authored.plugins.find((p) => p.name === "configured-concepts");
     expect(plugin.standaloneRecallByToken.get("hypertext")).toBe("http");
     expect(plugin.standaloneRecallByToken.has("institute")).toBe(false);
     expect(plugin.byKey.get("http")).not.toHaveProperty("standaloneRecall");
@@ -93,7 +92,7 @@ describe("canonical ConfiguredConcept runtime", () => {
   });
 
   test("standalone recall query hydration uses aliases[0] and aliases[1...]", () => {
-    const plugin = dictionaryFromLegacy([
+    const plugin = configuredConceptPluginFromLegacy([
       {
         key: "http",
         aliases: [
@@ -123,11 +122,10 @@ describe("canonical ConfiguredConcept runtime", () => {
         ],
       },
     });
-    const plugin = authored.plugins.find((p) => p.name === "dictionary");
+    const plugin = authored.plugins.find((p) => p.name === "configured-concepts");
     expect(plugin.topicalRecallByKey.get("appsec")).toEqual([["authentication"], ["bearer", "token"]]);
     expect(plugin.byKey.get("appsec")).not.toHaveProperty("topicalRecall");
-    const identity = dictionary({
-      entries: [{ key: "appsec", aliases: [["application", "security"]] }],
+    const identity = compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "appsec", aliases: [["application", "security"]] }],
     });
     expect(identity.topicalRecallByKey.size).toBe(0);
   });

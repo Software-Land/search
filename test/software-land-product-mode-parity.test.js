@@ -21,7 +21,7 @@ function aliasKey(alias) {
   return JSON.stringify(Array.isArray(alias) ? alias : []);
 }
 
-function applyDictionaryPatches(entries, patches) {
+function applyConfiguredConceptPatches(entries, patches) {
   return entries.map((entry) => {
     const patch = patches?.[entry.key];
     if (!patch) return entry;
@@ -40,10 +40,10 @@ function applyDictionaryPatches(entries, patches) {
 }
 
 const relevanceConfig = loadJson("relevance-config.json");
-const omitKeys = new Set(relevanceConfig.omitDictionaryKeys || []);
-const dictionaryEntries = applyDictionaryPatches(
-  loadJson("dictionary.json").filter((entry) => !omitKeys.has(entry.key)),
-  relevanceConfig.dictionaryPatches
+const omitKeys = new Set(relevanceConfig.omitConfiguredConceptKeys || []);
+const configuredConcepts = applyConfiguredConceptPatches(
+  loadJson("configured-concepts.json").filter((entry) => !omitKeys.has(entry.key)),
+  relevanceConfig.configuredConceptPatches
 );
 const documents = loadJson("documents.json");
 
@@ -158,7 +158,7 @@ describe("Software.Land product retrieval-mode parity", () => {
   ];
 
   beforeAll(async () => {
-    compiled = compileAuthoredRelevance({ configuredConcepts: dictionaryEntries,
+    compiled = compileAuthoredRelevance({ configuredConcepts: configuredConcepts,
       relationshipMap: loadJson(relevanceConfig.relationshipMapFile).map,
     });
     const plugins = [
@@ -226,7 +226,7 @@ describe("Software.Land product retrieval-mode parity", () => {
   });
 
   test("every authored configured form matches across retrieval modes", () => {
-    const queries = occupyingForms(compiled.plugins.find((plugin) => plugin.name === "dictionary"));
+    const queries = occupyingForms(compiled.plugins.find((plugin) => plugin.name === "configured-concepts"));
     expect(queries.length).toBeGreaterThan(300);
     expect(compareQueries(queries, 10)).toEqual([]);
     expect(compareQueries(queries, documents.length)).toEqual([]);

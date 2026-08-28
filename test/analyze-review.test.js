@@ -1,6 +1,6 @@
 import { analyzeQuery } from "../dist/analyze.js";
 import { morphology, SearchEngine } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { synonyms } from "../dist/synonyms.js";
 import { extractFeatures } from "../dist/features.js";
 import { compoundSpellSegment, MAX_COMPOUND_REPAIR_TOKEN_LENGTH } from "../dist/analyzeRepair.js";
@@ -20,14 +20,14 @@ describe("exact compound segmentation", () => {
 
   test("appsecurity splits to app + security", () => {
     const q = analyzeQuery("appsecurity", {
-      plugins: [morphology(), dictionary({ entries: appsecDict })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: appsecDict })],
     });
     expect(q.tokens.map((t) => t.normalized)).toEqual(["app", "security"]);
   });
 
   test("failed longest candidate backtracks to a valid split", () => {
     const q = analyzeQuery("appsecurity", {
-      plugins: [morphology(), dictionary({ entries: appsecDict })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: appsecDict })],
       lexicon: ["app", "security", "appsec"],
     });
     expect(q.tokens.map((t) => t.normalized)).toEqual(["app", "security"]);
@@ -262,10 +262,10 @@ describe("final-token prefix completion", () => {
   });
 });
 
-describe("dictionary token ownership", () => {
+describe("configured-concept token ownership", () => {
   test("explicit key stays one acronym concept", () => {
     const q = analyzeQuery("tls", {
-      plugins: [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
     });
     expect(q.concepts.filter((c) => c.kind === "configured-concept" && c.id === "tls")).toHaveLength(1);
     expect(q.concepts.some((c) => c.kind === "term" && c.id === "tls")).toBe(false);
@@ -275,8 +275,7 @@ describe("dictionary token ownership", () => {
     const q = analyzeQuery("ecmascript", {
       plugins: [
         morphology(),
-        dictionary({
-          entries: [{ key: "js", aliases: [["javascript"], ["ecmascript"]] }],
+        compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "js", aliases: [["javascript"], ["ecmascript"]] }],
         }),
       ],
     });
@@ -287,7 +286,7 @@ describe("dictionary token ownership", () => {
   });
 
   test("single-token expansion canonicalizes to the same key concept as the acronym", () => {
-    const plugins = [morphology(), dictionary({ entries: [{ key: "js", aliases: [["javascript"]]}] })];
+    const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "js", aliases: [["javascript"]]}] })];
     const expansion = analyzeQuery("javascript", { plugins });
     const key = analyzeQuery("js", { plugins });
     expect(expansion.lexicalPhraseKey).toEqual(key.lexicalPhraseKey);
@@ -297,8 +296,8 @@ describe("dictionary token ownership", () => {
     expect(key.concepts.some((c) => c.kind === "term")).toBe(false);
   });
 
-  test("exact multi-token expansion canonicalizes to the dictionary key", () => {
-    const plugins = [morphology(), dictionary({ entries: [{ key: "ml", aliases: [["machine", "learning"]]}] })];
+  test("exact multi-token expansion canonicalizes to the configured-concept key", () => {
+    const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "ml", aliases: [["machine", "learning"]]}] })];
     const expansion = analyzeQuery("machine learning", { plugins });
     const key = analyzeQuery("ml", { plugins });
     expect(expansion.lexicalPhraseKey).toEqual(key.lexicalPhraseKey);
@@ -344,8 +343,7 @@ describe("exact authored query intent precedes typo correction", () => {
   test("an exact configured alias receives the same protection", () => {
     const q = analyzeQuery("abcde", {
       plugins: [
-        dictionary({
-          entries: [{ key: "concept", aliases: [["concept"], ["abcde"]] }],
+        compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "concept", aliases: [["concept"], ["abcde"]] }],
         }),
       ],
       lexicon: ["abcdf"],
@@ -387,7 +385,7 @@ describe("exact authored query intent precedes typo correction", () => {
   test("exact OAuth remains OAuth", () => {
     const q = analyzeQuery("oauth", {
       plugins: [
-        dictionary({ entries: [{ key: "oauth", aliases: [["open", "authorization"]]}] }),
+        compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "oauth", aliases: [["open", "authorization"]]}] }),
         synonyms({ oauth: ["saml"] }),
       ],
       lexicon: ["authn", "oauth"],
@@ -423,7 +421,7 @@ describe("exact authored query intent precedes typo correction", () => {
     const engine = SearchEngine.create({
       schema,
       plugins: [
-        dictionary({ entries: [{ key: "oauth", aliases: [["open", "authorization"]]}] }),
+        compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "oauth", aliases: [["open", "authorization"]]}] }),
         synonyms({ authn: ["authentication"], authz: ["authorization"] }),
       ],
       retriever: "full-scan",
@@ -461,7 +459,7 @@ describe("acronym body evidence is contiguous", () => {
     ];
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries: dict })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: dict })],
     });
     await engine.index(docs);
     const results = engine.searchDetailed("machine learning", { limit: 5, explain: true }).results;
@@ -473,8 +471,8 @@ describe("acronym body evidence is contiguous", () => {
       expect(learningOnly.features.configuredConceptMatch).not.toBe("key-in-title");
     }
 
-    const index = buildIndex(docs, schema, [morphology(), dictionary({ entries: dict })]);
-    const q = analyzeQuery("machine learning", { plugins: [morphology(), dictionary({ entries: dict })] });
+    const index = buildIndex(docs, schema, [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: dict })]);
+    const q = analyzeQuery("machine learning", { plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: dict })] });
     const acr = q.concepts.find((c) => c.kind === "configured-concept");
     const learningDoc = index.documents.find((d) => d.id === "learning-only");
     const dispersed = index.documents.find((d) => d.id === "dispersed");
@@ -493,7 +491,7 @@ describe("acronym body evidence is contiguous", () => {
     ];
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries: dict })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: dict })],
     });
     await engine.index(docs);
     const results = engine.searchDetailed("machine learning", { limit: 5, explain: true }).results;
@@ -511,8 +509,7 @@ describe("unknown-token repair", () => {
   const apiLexicon = ["application", "programming", "interface", "security"];
   const apiPlugins = [
     morphology(),
-    dictionary({
-      entries: [{ key: "api", aliases: [["application", "programming", "interface"]]}],
+    compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "api", aliases: [["application", "programming", "interface"]]}],
     }),
   ];
 

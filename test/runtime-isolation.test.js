@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { parseRelationships } from "../dist/artifacts.js";
 import { morphology, SearchEngine } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 
 import { fileURLToPath } from "node:url";
@@ -66,7 +66,7 @@ describe("runtime isolation", () => {
   test("strong direct title still outranks a compiled semantic neighbor", async () => {
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
       documentRelationships: {
         format: "search-v2-relationships",
         version: 1,
@@ -91,7 +91,7 @@ describe("runtime isolation", () => {
 
   test("query analysis does not treat relationship targets as synonyms", () => {
     const q = analyzeQuery("tls", {
-      plugins: [morphology(), dictionary({ entries: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
     });
     expect(q.concepts.some((c) => (c.forms || []).includes("vpn"))).toBe(false);
   });

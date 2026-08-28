@@ -281,7 +281,7 @@ export async function preparePackedConsumer(tmp) {
   assertAuthoredRelevanceContract(
     {
       workerRuntime: readFileSync(path.join(installedRoot, "dist/browser/workerRuntime.js"), "utf8"),
-      dictionary: readFileSync(path.join(installedRoot, "dist/dictionary.js"), "utf8"),
+      configuredConceptsModule: readFileSync(path.join(installedRoot, "dist/configuredConcepts.js"), "utf8"),
     },
     envTarball ? `SEARCH_PACK_TGZ=${tarball}` : `fresh pack ${tarball}`
   );

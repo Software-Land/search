@@ -10,7 +10,7 @@
  */
 import { parseArgs } from "node:util";
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { compileLexicalIndex, parseLexicalIndex, loadLexicalIndex } from "../dist/lexicalIndex.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";
 
@@ -102,7 +102,7 @@ function sample(engine, query, opts = {}) {
 
 const plugins = [
   morphology({ lemmas: { searching: "search", searched: "search", searches: "search" } }),
-  dictionary({ entries: [{ key: "tls", expansion: ["transport", "layer", "security"] }] }),
+  compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "tls", aliases: [["transport", "layer", "security"]] }] }),
 ];
 const queries = [
   ["rare", "ZX9 UniqueRareTitle"],

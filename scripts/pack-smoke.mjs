@@ -494,7 +494,7 @@ const synonymsPlugin = authored.plugins.find((plugin) => plugin.name === "synony
 if (synonymsPlugin?.expand("qa")[0]?.form !== "testing") {
   throw new Error("compileAuthoredRelevance must produce one-hop recall");
 }
-if (authored.plugins.length !== 2 || authored.plugins.map((plugin) => plugin.name).join(",") !== "dictionary,synonyms") {
+if (authored.plugins.length !== 2 || authored.plugins.map((plugin) => plugin.name).join(",") !== "configured-concepts,synonyms") {
   throw new Error("compileAuthoredRelevance.plugins must be the compiler-owned plugin list");
 }
 

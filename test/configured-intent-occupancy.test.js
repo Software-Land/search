@@ -4,7 +4,7 @@
  * ambiguous first-expansion prefixes disambiguate by unique longest expansion.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import {
   resolveConfiguredPrefixSpans,
@@ -12,7 +12,7 @@ import {
   resolveConfiguredSpans,
   tokenAlignsConfiguredKey,
 } from "../dist/configuredSequence.js";
-import { dictionaryFromLegacy } from "./helpers/authored.js";
+import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 
@@ -38,7 +38,7 @@ const sameLengthDict = [
 const widgetDict = [{ key: "widget", aliases: [["user", "interface", "control"]]}];
 
 function plugins(entries) {
-  return [morphology(), dictionaryFromLegacy(entries)];
+  return [morphology(), configuredConceptPluginFromLegacy(entries)];
 }
 
 function acronymIds(q) {
@@ -100,7 +100,7 @@ describe("canonical lemma occupies exact configured key", () => {
     const q = analyzeQuery("sprocket", {
       plugins: [
         morphology(),
-        dictionary({ entries: widgetDict }),
+        compileConfiguredConceptPlugin({ configuredConcepts: widgetDict }),
         { name: "synonyms", expand: (token) => (token === "sprocket" ? [{ form: "widget" }] : []) },
       ],
     });

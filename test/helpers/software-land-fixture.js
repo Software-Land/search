@@ -19,7 +19,7 @@ function aliasKey(alias) {
   return JSON.stringify(Array.isArray(alias) ? alias : []);
 }
 
-export function applyDictionaryPatches(entries, patches) {
+export function applyConfiguredConceptPatches(entries, patches) {
   return entries.map((entry) => {
     const patch = patches?.[entry.key];
     if (!patch) return entry;
@@ -42,10 +42,10 @@ export function applyDictionaryPatches(entries, patches) {
 
 export function loadSoftwareLandRelevanceInputs() {
   const relevanceConfig = loadSoftwareLandJson("relevance-config.json");
-  const omitKeys = new Set(relevanceConfig.omitDictionaryKeys || []);
-  const dictionaryEntries = applyDictionaryPatches(
-    loadSoftwareLandJson("dictionary.json").filter((entry) => !omitKeys.has(entry.key)),
-    relevanceConfig.dictionaryPatches
+  const omitKeys = new Set(relevanceConfig.omitConfiguredConceptKeys || []);
+  const configuredConcepts = applyConfiguredConceptPatches(
+    loadSoftwareLandJson("configured-concepts.json").filter((entry) => !omitKeys.has(entry.key)),
+    relevanceConfig.configuredConceptPatches
   );
   const historical = loadSoftwareLandJson("historical-scenarios.json");
   const applicable = historical.rows.filter(isHistoricalRelevanceApplicable);
@@ -53,7 +53,7 @@ export function loadSoftwareLandRelevanceInputs() {
     fixtureDir: SOFTWARE_LAND_FIXTURE,
     relevanceConfig,
     documents: loadSoftwareLandJson("documents.json"),
-    dictionaryEntries,
+    configuredConcepts,
     lemmas: loadSoftwareLandJson("lemmas.json"),
     relationshipMap: loadSoftwareLandJson(relevanceConfig.relationshipMapFile).map,
     relationships: loadSoftwareLandJson("relationships.json"),

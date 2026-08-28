@@ -1,5 +1,5 @@
 import * as publicApi from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import {
   SearchEngine,
   morphology,
@@ -16,6 +16,7 @@ import {
 } from "../dist/index.js";
 import { createSearchClient, createWorkerRuntime, createLoopbackTransport } from "../dist/browser/index.js";
 import { pluginByName } from "./helpers/authored.js";
+const dictionary = ({ entries } = {}) => compileConfiguredConceptPlugin({ configuredConcepts: entries || [] });
 
 const schema = {
   title: { type: "text", role: "title" },
@@ -93,7 +94,7 @@ describe("public API", () => {
       relationshipMap: { qa: [{ to: { form: "testing" }, kind: "equivalent" }] },
     });
     expect(pluginByName(authored, "synonyms").expand("qa").map((row) => row.form)).toEqual(["testing"]);
-    expect(authored.plugins.map((plugin) => plugin.name)).toEqual(["dictionary", "synonyms"]);
+    expect(authored.plugins.map((plugin) => plugin.name)).toEqual(["configured-concepts", "synonyms"]);
     expect(Object.keys(authored).sort()).toEqual(["documentRelationships", "plugins"]);
     const engine = SearchEngine.create({
       schema,
@@ -131,16 +132,15 @@ describe("public API", () => {
     expect(ids(engine.search("qa", { limit: 5 }))).toEqual(ids(explained.results));
   });
 
-  test("internal dictionary() does not compile relationshipMap as a complete authoring path", () => {
-    const plugin = dictionary({
-      entries: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
+  test("internal compileConfiguredConceptPlugin() does not compile relationshipMap as a complete authoring path", () => {
+    const plugin = compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
       relationshipMap: { hypertext: [{ to: { concept: "http" }, kind: "related" }] },
     });
     expect(plugin.standaloneRecallByToken.get("hypertext")).toBeUndefined();
     const authored = compileAuthoredRelevance({ configuredConcepts: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
       relationshipMap: { hypertext: [{ to: { concept: "http" }, kind: "related" }] },
     });
-    expect(pluginByName(authored, "dictionary").standaloneRecallByToken.get("hypertext")).toBe("http");
+    expect(pluginByName(authored, "configured-concepts").standaloneRecallByToken.get("hypertext")).toBe("http");
   });
 
   test("root does not export parseSynonyms or a synonym artifact parser", () => {

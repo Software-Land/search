@@ -1,5 +1,5 @@
 import { morphology, SearchEngine } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import {
   buildConstraintGraph,
   buildConstraintGraphAsync,
@@ -383,7 +383,7 @@ describe("query 2 ranking is unchanged", () => {
         title: { type: "text", role: "title" },
         body: { type: "text", role: "body" },
       },
-      plugins: [morphology(), dictionary({ entries: tlsDict })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: tlsDict })],
     });
     await e.index(docs);
     const detailed = e.searchDetailed("2", { limit: 10, explain: true });

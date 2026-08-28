@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -47,7 +47,7 @@ function shortLiteralCorpus(matchN, backgroundN = 80) {
 async function pair(docs, extra = {}) {
   const plugins = extra.plugins || [
     morphology({ lemmas: extra.lemmas || {} }),
-    dictionary({ entries: extra.dictionary || [] }),
+    compileConfiguredConceptPlugin({ configuredConcepts: extra.configuredConcepts || [] }),
   ];
   const common = {
     schema,
@@ -86,7 +86,7 @@ describe("indexed retrieval under candidate-budget pressure", () => {
     }
     const { full, indexed } = await pair([...originals, ...distractors], {
       lemmas: loadJson("lemmas.json"),
-      dictionary: loadJson("dictionary.json"),
+      configuredConcepts: loadJson("configured-concepts.json"),
       relationships: loadJson("relationships.json"),
       relationshipStrategy: "hybrid",
     });

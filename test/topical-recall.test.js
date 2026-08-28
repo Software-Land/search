@@ -1,9 +1,9 @@
 import { SearchEngine, morphology } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { retrieveCandidates } from "../dist/retrieve.js";
-import { normalizeTopicalRecall } from "../dist/dictionary.js";
+import { normalizeTopicalRecall } from "../dist/configuredConcepts.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
-import { dictionaryFromLegacy } from "./helpers/authored.js";
+import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const appsecDict = [
   {
@@ -37,7 +37,7 @@ const docs = [
 ];
 
 function plugins(entries = appsecDict) {
-  return [morphology(), dictionaryFromLegacy(entries)];
+  return [morphology(), configuredConceptPluginFromLegacy(entries)];
 }
 
 async function engine(entries = appsecDict, extraDocs = docs, retriever) {
@@ -68,7 +68,7 @@ describe("topical recall lookup", () => {
       ])
     ).toEqual([["authentication"], ["bearer", "token"]]);
 
-    const plugin = dictionaryFromLegacy([
+    const plugin = configuredConceptPluginFromLegacy([
       {
         key: "appsec",
         aliases: [["application", "security"]],
@@ -86,7 +86,7 @@ describe("topical recall lookup", () => {
   });
 
   test("non-array topicalRecall fails closed to empty", () => {
-    const plugin = dictionaryFromLegacy([
+    const plugin = configuredConceptPluginFromLegacy([
       { key: "appsec", aliases: [["application", "security"]], topicalRecall: "authentication" },
     ]);
     expect(plugin.topicalRecallByKey.has("appsec")).toBe(false);

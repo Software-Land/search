@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { DEFAULT_CONSTRAINTS, HYBRID_CONSTRAINTS, compareConstraint } from "../dist/constraints.js";
 import { rankCandidates, rankCandidatesAsync, lastRankStats } from "../dist/rank.js";
@@ -495,7 +495,7 @@ describe("ranking equivalence oracle", () => {
 describe("ranking equivalence on Software.Land featured hits", () => {
   let engine;
   const documents = loadJson("documents.json");
-  const dictionaryEntries = loadJson("dictionary.json");
+  const configuredConcepts = loadJson("configured-concepts.json");
   const lemmas = loadJson("lemmas.json");
   const relationships = loadJson("relationships.json");
   const lexicalFrequency = loadJson("lexical-frequency.json");
@@ -508,7 +508,7 @@ describe("ranking equivalence on Software.Land featured hits", () => {
         title: { type: "text", role: "title" },
         body: { type: "text", role: "body" },
       },
-      plugins: [morphology({ lemmas }), dictionary({ entries: dictionaryEntries })],
+      plugins: [morphology({ lemmas }), compileConfiguredConceptPlugin({ configuredConcepts: configuredConcepts })],
       documentRelationships: relationships,
       relationshipStrategy: "hybrid",
       retriever: "full-scan",

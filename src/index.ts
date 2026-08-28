@@ -8,7 +8,7 @@
 
 import { SearchEngine as searchEngineImpl } from "./SearchEngine.js";
 import { morphology as morphologyImpl } from "./morphology.js";
-import { compileAuthoredRelevance as compileAuthoredRelevanceImpl } from "./dictionary.js";
+import { compileAuthoredRelevance as compileAuthoredRelevanceImpl } from "./configuredConcepts.js";
 import { migrateConfiguredEntry as migrateConfiguredEntryImpl } from "./configuredAuthoring.js";
 import { mergeRelationships as mergeRelationshipsImpl } from "./relationshipMap.js";
 import {

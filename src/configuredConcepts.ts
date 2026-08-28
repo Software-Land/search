@@ -1,7 +1,7 @@
 /**
  * Internal configured-concept plugin compiler.
  * Public applications author `configuredConcepts` and call `compileAuthoredRelevance()`.
- * `dictionary()` is not a root export.
+ * `compileConfiguredConceptPlugin()` is not a root export.
  *
  * Authored shape:
  * { key: "tls", aliases: [["transport","layer","security"], ["transport","layer"]] }
@@ -11,7 +11,7 @@
  * standaloneRecall / topicalRecall are compiled from relationshipMap, not stored on the concept.
  */
 
-import type { ConfiguredConcept, DictionarySequence, RelationshipArtifact } from "./types.js";
+import type { ConfiguredConcept, ConfiguredConceptSequence, RelationshipArtifact } from "./types.js";
 import {
   additionalConfiguredConceptAliases,
   canonicalConfiguredConceptForm,
@@ -25,10 +25,10 @@ import {
 } from "./relationshipMap.js";
 import { synonyms as synonymsPlugin } from "./synonyms.js";
 
-export interface DictionaryPlugin {
-  name: "dictionary";
+export interface ConfiguredConceptPlugin {
+  name: "configured-concepts";
   byKey: Map<string, ConfiguredConcept>;
-  sequences: DictionarySequence[];
+  sequences: ConfiguredConceptSequence[];
   standaloneRecallByToken: Map<string, string>;
   topicalRecallByKey: Map<string, string[][]>;
   lexicon(): Set<string>;
@@ -40,15 +40,24 @@ export interface AuthoredRelevanceOptions {
   documents?: RelationshipDocumentRef[];
 }
 
-function dictionaryFromCompiled(
+function compileConfiguredConceptList(raw: unknown[]): ConfiguredConcept[] {
+  const list: ConfiguredConcept[] = [];
+  for (const row of raw) {
+    const concept = compileAuthoredConcept(row);
+    if (concept) list.push(concept);
+  }
+  return list;
+}
+
+function configuredConceptPluginFromNormalized(
   list: ConfiguredConcept[],
   recall: {
     standaloneRecallByKey?: Map<string, string[]>;
     topicalRecallByKey?: Map<string, string[][]>;
   } = {}
-): DictionaryPlugin {
+): ConfiguredConceptPlugin {
   const byKey = new Map<string, ConfiguredConcept>();
-  const sequences: DictionarySequence[] = [];
+  const sequences: ConfiguredConceptSequence[] = [];
 
   for (const concept of list) {
     byKey.set(concept.key, concept);
@@ -65,7 +74,7 @@ function dictionaryFromCompiled(
   sequences.sort((a, b) => b.tokens.length - a.tokens.length);
 
   return {
-    name: "dictionary",
+    name: "configured-concepts",
     byKey,
     sequences,
     standaloneRecallByToken: compileStandaloneRecallLookup(recall.standaloneRecallByKey || new Map()),
@@ -83,17 +92,18 @@ function dictionaryFromCompiled(
   };
 }
 
-export function dictionary({ entries = [] }: { entries?: unknown[] } = {}): DictionaryPlugin {
-  const list: ConfiguredConcept[] = [];
-  for (const raw of entries) {
-    const concept = compileAuthoredConcept(raw);
-    if (concept) list.push(concept);
-  }
-  return dictionaryFromCompiled(list);
+/**
+ * Compile authored ConfiguredConcept rows into the internal recognition plugin.
+ * Recall maps are empty unless supplied by compileAuthoredRelevance().
+ */
+export function compileConfiguredConceptPlugin({
+  configuredConcepts = [],
+}: { configuredConcepts?: unknown[] } = {}): ConfiguredConceptPlugin {
+  return configuredConceptPluginFromNormalized(compileConfiguredConceptList(configuredConcepts));
 }
 
 export interface CompiledAuthoredRelevance {
-  plugins: [DictionaryPlugin, ReturnType<typeof synonymsPlugin>];
+  plugins: [ConfiguredConceptPlugin, ReturnType<typeof synonymsPlugin>];
   documentRelationships: RelationshipArtifact | null;
 }
 
@@ -107,19 +117,15 @@ export function compileAuthoredRelevance({
   relationshipMap,
   documents,
 }: AuthoredRelevanceOptions = {}): CompiledAuthoredRelevance {
-  const list: ConfiguredConcept[] = [];
-  for (const raw of configuredConcepts) {
-    const concept = compileAuthoredConcept(raw);
-    if (concept) list.push(concept);
-  }
+  const list = compileConfiguredConceptList(configuredConcepts);
   const compiled = compileRelationshipMapInternal(relationshipMap, { concepts: list, documents: documents || [] });
-  const dictionaryPlugin = dictionaryFromCompiled(list, {
+  const plugin = configuredConceptPluginFromNormalized(list, {
     standaloneRecallByKey: compiled.standaloneRecallByKey,
     topicalRecallByKey: compiled.topicalRecallByKey,
   });
   const synonyms = synonymsPlugin(compiled.synonymMap);
   return {
-    plugins: [dictionaryPlugin, synonyms],
+    plugins: [plugin, synonyms],
     documentRelationships: mergeRelationships(null, {
       format: ARTIFACT_FORMATS.relationships,
       version: ARTIFACT_VERSION,
@@ -215,7 +221,7 @@ export function compileStandaloneRecallLookup(standaloneRecallByKey: Map<string,
   return lookup;
 }
 
-export function entriesFromAcronymMap(
+export function configuredConceptsFromAcronymMap(
   acronymMap?: Record<string, { aliases?: string[][] } | null | undefined> | null
 ) {
   return Object.entries(acronymMap || {}).map(([key, def]) => ({

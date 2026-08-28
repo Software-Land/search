@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { SearchEngine, morphology } from "../dist/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { compileLexicalIndex } from "../dist/lexicalIndex.js";
 import {
   auditCompiledPostingWork,
@@ -192,7 +192,7 @@ describe("Stage-2B exact posting-work audit", () => {
     const engine = await compiledEngine(documents, {
       plugins: [
         morphology({ lemmas: load("lemmas.json") }),
-        dictionary({ entries: load("dictionary.json") }),
+        compileConfiguredConceptPlugin({ configuredConcepts: load("configured-concepts.json") }),
       ],
       relationships: load("relationships.json"),
       relationshipStrategy: "hybrid",
@@ -215,7 +215,7 @@ describe("Stage-2B exact posting-work audit", () => {
     const sl = await compiledEngine(expanded, {
       plugins: [
         morphology({ lemmas: load("lemmas.json") }),
-        dictionary({ entries: load("dictionary.json") }),
+        compileConfiguredConceptPlugin({ configuredConcepts: load("configured-concepts.json") }),
       ],
     });
     for (const query of ["2", "the", "machine l", "tls"]) {

@@ -11,7 +11,7 @@ import {
 } from "../dist/index.js";
 import { compileRelationshipMap } from "../dist/relationshipMap.js";
 import { parseConfiguredConcepts } from "../tools/search-corpus/index.js";
-import { dictionary } from "../dist/dictionary.js";
+import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { synonyms as synonymsPrimitive } from "../dist/synonyms.js";
 import { pluginByName } from "./helpers/authored.js";
 
@@ -22,8 +22,7 @@ const schema = {
 
 describe("canonical alias compiler", () => {
   test("A. aliases[0] compiles internally as expansion", () => {
-    const plugin = dictionary({
-      entries: [
+    const plugin = compileConfiguredConceptPlugin({ configuredConcepts: [
         {
           key: "paas",
           aliases: [
@@ -49,8 +48,7 @@ describe("canonical alias compiler", () => {
   });
 
   test("B. aliases[1...] identify the same configured concept", () => {
-    const plugin = dictionary({
-      entries: [
+    const plugin = compileConfiguredConceptPlugin({ configuredConcepts: [
         {
           key: "paas",
           aliases: [
@@ -68,7 +66,7 @@ describe("canonical alias compiler", () => {
 
   test("O. primary is absent from the new schema", () => {
     expect(() =>
-      dictionary({ entries: [{ key: "api", aliases: [["application", "programming", "interface"]], primary: "interface" }] })
+      compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "api", aliases: [["application", "programming", "interface"]], primary: "interface" }] })
     ).toThrow(InvalidConfigurationError);
     const migrated = migrateConfiguredEntry({
       key: "api",
@@ -89,17 +87,15 @@ describe("canonical alias compiler", () => {
 
   test("P. old recall fields are absent from the new schema", () => {
     expect(() =>
-      dictionary({
-        entries: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]], standaloneRecall: ["hypertext"] }],
+      compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]], standaloneRecall: ["hypertext"] }],
       })
     ).toThrow(/standaloneRecall/);
     expect(() =>
-      dictionary({
-        entries: [{ key: "appsec", aliases: [["application", "security"]], topicalRecall: [["authentication"]] }],
+      compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "appsec", aliases: [["application", "security"]], topicalRecall: [["authentication"]] }],
       })
     ).toThrow(/topicalRecall/);
     expect(() =>
-      dictionary({ entries: [{ key: "http", expansion: ["hypertext", "transfer", "protocol"] }] })
+      compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "http", expansion: ["hypertext", "transfer", "protocol"] }] })
     ).toThrow(/expansion/);
   });
 
@@ -203,7 +199,7 @@ describe("canonical alias compiler", () => {
     });
     const authored = compileAuthoredRelevance({ configuredConcepts: [migrated.entry] });
     expect(authored.plugins.length).toBeGreaterThan(0);
-    const plugin = pluginByName(authored, "dictionary");
+    const plugin = pluginByName(authored, "configured-concepts");
     const compiled = plugin.byKey.get("api");
     expect(compiled.key).toBe("api");
     expect(compiled.aliases[0]).toEqual(["application", "programming", "interface"]);
@@ -243,7 +239,7 @@ describe("relationshipMap compile", () => {
     });
     const viaPrimitive = SearchEngine.create({
       schema,
-      plugins: [morphology(), dictionary({ entries }), synonymsPrimitive({ qa: ["testing"] })],
+      plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: entries }), synonymsPrimitive({ qa: ["testing"] })],
       retriever: "full-scan",
       relationshipStrategy: "none",
     });
@@ -269,7 +265,7 @@ describe("relationshipMap compile", () => {
     const compiled = compileAuthoredRelevance({ configuredConcepts: [{ key: "http", aliases: [["hypertext", "transfer", "protocol"]] }],
       relationshipMap: { hypertext: [{ to: { concept: "http" }, kind: "related" }] },
     });
-    const plugin = pluginByName(compiled, "dictionary");
+    const plugin = pluginByName(compiled, "configured-concepts");
     expect(plugin.standaloneRecallByToken.get("hypertext")).toBe("http");
     expect(plugin.byKey.get("http")).not.toHaveProperty("standaloneRecall");
   });
@@ -283,7 +279,7 @@ describe("relationshipMap compile", () => {
         ],
       },
     });
-    const plugin = pluginByName(compiled, "dictionary");
+    const plugin = pluginByName(compiled, "configured-concepts");
     expect(plugin.topicalRecallByKey.get("appsec")).toEqual([["authentication"], ["bearer", "token"]]);
   });
 
@@ -356,8 +352,7 @@ describe("authored compile preserves runtime identity", () => {
       schema,
       plugins: [
         morphology(),
-        dictionary({
-          entries: [
+        compileConfiguredConceptPlugin({ configuredConcepts: [
             {
               key: "api",
               aliases: [
