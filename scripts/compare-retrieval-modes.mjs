@@ -94,7 +94,8 @@ function classifyMismatch({ missing, extra, missingSources, extraSources }) {
   if (missing.length && miss.has("body-lexical")) return "body posting";
   if (missing.length && miss.has("morphology")) return "morphology path";
   if (missing.length && miss.has("version")) return "version / dotted-span path";
-  if (missing.length && miss.has("configured-concept")) return "synonym / equivalence path";
+  if (missing.length && miss.has("configured-concept")) return "configured-concept path";
+  if (missing.length && miss.has("equivalent-recall")) return "equivalent-recall path";
   if (missing.length && miss.has(CONTEXTUAL)) return "contextual prefix";
   if (missing.length && (miss.has("typo-correction") || extraSources.length === 0)) return "typo path / missing retrieval provenance";
   if (!missing.length && extra.length) {
