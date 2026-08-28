@@ -88,6 +88,7 @@ function classifyHit(sources) {
 function classifyMismatch({ missing, extra, missingSources, extraSources }) {
   const miss = new Set(missingSources.flat());
   const add = new Set(extraSources.flat());
+  if (missing.length && miss.has("exact-title")) return "exact-title path";
   if (missing.length && (miss.has("title-token") || miss.has("title-token-prefix") || miss.has("title-prefix"))) {
     return "title-token posting / prefix semantics";
   }
@@ -99,6 +100,7 @@ function classifyMismatch({ missing, extra, missingSources, extraSources }) {
   if (missing.length && miss.has("standalone-recall")) return "standalone-recall path";
   if (missing.length && miss.has("topical-recall")) return "topical-recall path";
   if (missing.length && miss.has(CONTEXTUAL)) return "contextual prefix";
+  if (missing.length && miss.has("relationship")) return "relationship path";
   if (missing.length && (miss.has("typo-correction") || extraSources.length === 0)) return "typo path / missing retrieval provenance";
   if (!missing.length && extra.length) {
     if ([...add].some((s) => s === "indexed-lexical" || s === "body-lexical" || s === "title-token-prefix")) {
