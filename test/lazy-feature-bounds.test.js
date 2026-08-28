@@ -106,6 +106,29 @@ describe("lazy feature bound theorems (investigation; not a production path)", (
     expect(classifyDirect(baseFeat({ queryTokenCount: 3, bodyPhraseCount: 1 }))).toBe("none");
   });
 
+  test("query-side formCoverage does not make a unigram body phrase moderate", () => {
+    expect(
+      classifyDirect(
+        baseFeat({
+          queryTokenCount: 1,
+          configuredFormCoverage: 0.3333,
+          bodyPhraseCount: 2,
+          bodyLexicalMatch: 0,
+        })
+      )
+    ).toBe("none");
+    expect(
+      classifyDirect(
+        baseFeat({
+          queryTokenCount: 1,
+          configuredFormCoverage: 0.6667,
+          bodyPhraseCount: 2,
+          bodyLexicalMatch: 1,
+        })
+      )
+    ).toBe("weak");
+  });
+
   test("title-first bound never underestimates extractFeatures on synthetic phrase docs", async () => {
     const docs = [
       { id: "title-hit", title: "Virtual private network guide", body: "unrelated notes" },

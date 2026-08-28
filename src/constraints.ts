@@ -259,8 +259,9 @@ function relatedOverWeakDirectConstraint(a: FeaturedHit, b: FeaturedHit) {
  */
 function hasRepeatedPhraseEvidence(f: Partial<FeatureVector>) {
   if ((f.bodyPhraseCount || 0) < REPEATED_BODY_PHRASE_MIN) return false;
-  // Occupied concepts must not use queryTokenCount as an alias-cardinality gate.
-  if ((f.configuredFormCoverage || 0) > 0) return true;
+  // Multi-token compiled phrase only. Occupied queryTokenCount is the max
+  // non-stop length of one peer form, not alias-cardinality. Query-side
+  // formCoverage is not a substitute for a multi-token phrase.
   return (f.queryTokenCount || 0) >= 2;
 }
 

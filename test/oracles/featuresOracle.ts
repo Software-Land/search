@@ -420,6 +420,7 @@ function occupiedPartialForm(query: AnalyzedQuery) {
 }
 
 function configuredFormCoverage(query: AnalyzedQuery) {
+  if (!hasConfiguredSequenceIntent(query)) return 0;
   const acr = query.concepts.find((c) => c.kind === "configured-concept");
   if (!acr) return 0;
   const coverage = acr.formCoverage;
@@ -697,8 +698,7 @@ export function classifyDirectOracle(f: Partial<FeatureVector>): DirectClass {
     f.shortLiteralLeadMatch ||
     f.dottedSpanComponentTitleMatch ||
     (f.exactTitleTokenMatch && (f.queryCoverage || 0) > 0) ||
-    (((f.queryTokenCount || 0) >= 2 || (f.configuredFormCoverage || 0) > 0) &&
-      (f.bodyPhraseCount || 0) >= REPEATED_BODY_PHRASE_MIN) ||
+    ((f.queryTokenCount || 0) >= 2 && (f.bodyPhraseCount || 0) >= REPEATED_BODY_PHRASE_MIN) ||
     f.contextualTitlePrefix
   ) {
     return "moderate";

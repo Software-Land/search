@@ -663,6 +663,10 @@ function occupiedPartialForm(query: AnalyzedQuery) {
 }
 
 function configuredFormCoverage(query: AnalyzedQuery) {
+  // Candidate feature: occupied matched-form completeness only.
+  // Non-occupied prefix spans / key prefixes stay on query analysis; they
+  // must not stamp completeness onto every hit as ranking evidence.
+  if (!hasConfiguredSequenceIntent(query)) return 0;
   const acr = getQueryFeatPrep(query).acronym;
   if (!acr) return 0;
   const coverage = acr.formCoverage;
@@ -1153,8 +1157,7 @@ export function classifyDirect(f: Partial<FeatureVector>): DirectClass {
     f.shortLiteralLeadMatch ||
     f.dottedSpanComponentTitleMatch ||
     (f.exactTitleTokenMatch && (f.queryCoverage || 0) > 0) ||
-    (((f.queryTokenCount || 0) >= 2 || (f.configuredFormCoverage || 0) > 0) &&
-      (f.bodyPhraseCount || 0) >= REPEATED_BODY_PHRASE_MIN) ||
+    ((f.queryTokenCount || 0) >= 2 && (f.bodyPhraseCount || 0) >= REPEATED_BODY_PHRASE_MIN) ||
     f.contextualTitlePrefix
   ) {
     return "moderate";
