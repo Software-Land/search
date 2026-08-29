@@ -239,4 +239,66 @@ describe("search-v2-lexical-index v1", () => {
     refreshIntegrity(badOffset);
     expect(() => loadLexicalIndex(badOffset, documents, schema, plugins)).toThrow(/document offset/i);
   });
+
+  test("v1 corpus fingerprint ignores summary; consumed re-index does not", async () => {
+    const summarySchema = {
+      title: { type: "text", role: "title" },
+      summary: { type: "text", role: "summary" },
+      body: { type: "text", role: "body" },
+    };
+    const english = morphology();
+    const docsA = [{ id: "edge", title: "CloudFront", summary: "two layer authorization", body: "cdn cookies" }];
+    const docsB = [{ id: "edge", title: "CloudFront", summary: "signed cookie primer", body: "cdn cookies" }];
+    const artifactA = compileLexicalIndex(docsA, { schema: summarySchema, plugins: [english] });
+    const artifactB = compileLexicalIndex(docsB, { schema: summarySchema, plugins: [english] });
+    expect(artifactA.version).toBe(1);
+    expect(artifactA.corpus.fingerprint).toBe(artifactB.corpus.fingerprint);
+    expect(JSON.stringify(artifactA.data.documents[0])).not.toContain("two layer");
+    expect(JSON.stringify(artifactA.data.documents[0])).not.toContain("authorization");
+
+    const engine = SearchEngine.create({
+      schema: summarySchema,
+      plugins: [english],
+      retriever: "indexed",
+      lexicalIndex: JSON.parse(JSON.stringify(artifactA)),
+    });
+    await engine.index(docsA);
+    expect(engine._index.documents[0].summary).toBe("two layer authorization");
+    await engine.index(docsA);
+    expect(engine._index.documents[0].summary).toBe("two layer authorization");
+    try {
+      await engine.index(docsB);
+      throw new Error("expected stale-summary re-index to reject");
+    } catch (err) {
+      expect(err.name).toBe("ArtifactValidationError");
+      expect(err.field).toBe("hydration.fingerprint");
+    }
+
+    const fresh = SearchEngine.create({
+      schema: summarySchema,
+      plugins: [english],
+      retriever: "indexed",
+      lexicalIndex: JSON.parse(JSON.stringify(artifactA)),
+    });
+    await fresh.index(docsB);
+    expect(fresh._index.documents[0].summary).toBe("signed cookie primer");
+    expect(fresh.search("signed cookie primer", { limit: 5 }).map((hit) => hit.id)).toEqual(["edge"]);
+    expect(fresh.search("two layer authorization", { limit: 5 })).toEqual([]);
+  });
+
+  test("title/body-only re-index ignores a summary property change", async () => {
+    const english = morphology();
+    const docsA = [{ id: "edge", title: "CloudFront", summary: "two layer authorization", body: "cdn cookies" }];
+    const docsB = [{ id: "edge", title: "CloudFront", summary: "signed cookie primer", body: "cdn cookies" }];
+    const artifact = compileLexicalIndex(docsA, { schema, plugins: [english] });
+    const engine = SearchEngine.create({
+      schema,
+      plugins: [english],
+      retriever: "indexed",
+      lexicalIndex: JSON.parse(JSON.stringify(artifact)),
+    });
+    await engine.index(docsA);
+    await engine.index(docsB);
+    expect(engine._index.documents[0].summary).toBe("");
+  });
 });

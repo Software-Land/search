@@ -52,6 +52,10 @@ Pre-aborted signals throw immediately.
 
 Same documents, configuration, artifacts, and query produce the same ordering, explanations, and related rail. Ties break on document id. Cross-engine floating-point bit identity is not claimed.
 
+## Documents and schema
+
+Stable field roles are `title`, `body`, and optional `summary`. Role `"summary"` is short authored summary or search-description text, distinct from `body`. It is optional: omit the role to keep the two-field contract. See `docs/schema.md`.
+
 ## Plugins (opt-in types)
 
 `SearchEngine.create({ plugins })` accepts `SearchPlugin[]`. `compileAuthoredRelevance()` returns the ordered `SearchPlugin[]` needed for configured-concept recognition and authored relevance. `morphology()` returns `EnglishPlugin`. There is no public `dictionary()` factory. Custom retrievers type as `ExperimentalRetriever`. Permissive duck-typed plugin objects remain valid at runtime.

@@ -106,10 +106,10 @@ export function validateSchema(schema?: unknown): Schema {
         expected: "text",
       });
     }
-    if (spec.role != null && spec.role !== "title" && spec.role !== "body") {
+    if (spec.role != null && spec.role !== "title" && spec.role !== "body" && spec.role !== "summary") {
       throw new InvalidConfigurationError(
-        `schema.${name}.role must be "title" or "body" (got ${JSON.stringify(spec.role)}). Other roles are not a stable search contract.`,
-        { field: `schema.${name}.role`, expected: "title | body" }
+        `schema.${name}.role must be "title", "body", or "summary" (got ${JSON.stringify(spec.role)}). Other roles are not a stable search contract.`,
+        { field: `schema.${name}.role`, expected: "title | body | summary" }
       );
     }
     if ((spec.type || "text") === "text") textFields.push(name);

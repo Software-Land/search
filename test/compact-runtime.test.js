@@ -130,6 +130,7 @@ describe("compact compiled lexical runtime", () => {
     expect(compact.lexicalIndex).toBeNull();
     expect(compact.loadedLexicalIndex).toEqual({
       fingerprint: artifact.corpus.fingerprint,
+      hydrationFingerprint: artifact.corpus.fingerprint,
       analyzer: artifact.compatibility.analyzer,
       schema: artifact.compatibility.schema,
     });

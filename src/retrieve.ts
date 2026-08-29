@@ -58,6 +58,24 @@ export function sequencePresent(needles: string[], hay: string[] | ArrayLike<str
   return false;
 }
 
+/** Exact contiguous occurrence count. Same token identity as `sequencePresent`. */
+export function sequenceCount(needles: string[], hay: string[] | ArrayLike<string>): number {
+  const n = needles.length;
+  if (!n || hay.length < n) return 0;
+  let count = 0;
+  for (let i = 0; i <= hay.length - n; i++) {
+    let ok = true;
+    for (let j = 0; j < n; j++) {
+      if (hay[i + j] !== needles[j]) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) count += 1;
+  }
+  return count;
+}
+
 export function formContentTokens(form: string[]): string[] {
   return (form || []).filter((f) => f && !/^\d+$/.test(f) && !DEFAULT_STOP.has(f));
 }

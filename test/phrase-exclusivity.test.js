@@ -1,15 +1,11 @@
 /**
- * 0.6.0 long-phrase exclusivity. Additive coverage with real contiguous
- * Software.Land excerpts. Pins MIN=4 as the product boundary.
- * Operates on the typed surface, so a long configured alias/form may
- * exclusive-collapse while its short configured key does not. That is an
- * explicit exception to ordinary configured key/form result parity, not an
- * accidental identity regression.
+ * Query-plan phrase cohort policy on the Software.Land fixture.
+ * Token count is not a relevance primitive. Body-only rare phrases do not
+ * exclusive-collapse. Title/summary rare phrases and I ⊆ P still may.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import {
-  MAX_PHRASE_DOCUMENT_FREQUENCY,
-  MIN_PHRASE_TOKENS,
+  MAX_EXCLUSIVE_PHRASE_COHORT,
   documentHasExactTypedPhrase,
   exclusivePhraseDocuments,
   typedPhraseTokens,
@@ -27,52 +23,7 @@ const {
   schema,
 } = loadSoftwareLandRelevanceInputs();
 
-const UNIQUE_PHRASES = [
-  { phrase: "retries are exactly what it sounds", title: "Retries (Retry Patterns)" },
-  { phrase: "saml and oauth are orthogonal concepts", title: "SAML vs OAuth" },
-  { phrase: "rate limiting is a concept that", title: "Rate Limiting" },
-  { phrase: "before exploring the differences between rest", title: "REST API vs GraphQL" },
-  { phrase: "the concept of vertical vs horizontal", title: "Sharding" },
-  { phrase: "what is the difference between software", title: "Software Engineer vs Software Developer" },
-  { phrase: "this blog contains information i wish", title: "About this Blog" },
-  { phrase: "protobufs a are the preferred messaging", title: "Protobuf Encoding" },
-  { phrase: "there are already great sources that", title: "RBAC (Role Based Access Control)" },
-  { phrase: "and fundamental forms of communication between", title: "Request Response" },
-];
-
-const SHARED_TWO_DOC_PHRASES = [
-  {
-    phrase: "communication between microservices in a distributed",
-    titles: ["Protobuf Encoding", "gRPC vs REST"],
-  },
-  {
-    phrase: "between microservices in a distributed system",
-    titles: ["Protobuf Encoding", "gRPC vs REST"],
-  },
-];
-
-const SHARED_THREE_PLUS_PHRASES = [
-  "be updated with diagrams after text",
-  "after text used for llm training",
-];
-
-const ABSENT_PHRASES = [
-  "this exact six token phrase nowhere",
-  "contiguous excerpt that does not exist here at all",
-];
-
-const SHORT_QUERIES = [
-  "distributed systems",
-  "load balancer",
-  "async programming",
-  "machine learning",
-  "idempotency keys",
-  "vpn",
-  "appsec",
-  "tls",
-];
-
-const FOUR_TOKEN_ACTIVATIONS = [
+const TITLE_RARE_PHRASES = [
   {
     phrase: "linear vs logistic regression",
     titles: ["Linear vs Logistic Regression"],
@@ -83,60 +34,24 @@ const FOUR_TOKEN_ACTIVATIONS = [
   },
 ];
 
-const ADJUDICATED_QUERIES = [
+const BODY_ONLY_MUST_NOT_COLLAPSE = [
+  "retries are exactly what it sounds",
+  "in many programming languages",
+  "a series of a",
+  "entire browser process management",
+  "responsible for managing",
+  "for example with",
+];
+
+const ADJUDICATED_SUPPORT_SUBSET = [
   {
     query: "role based access control",
     titles: ["RBAC (Role Based Access Control)", "Authorization Middleware"],
-    nonPhrase: [
-      "Working with APIs",
-      "SAML vs OAuth",
-      "CockroachDB vs Postgres",
-      "React Authentication",
-    ],
   },
   {
     query: "platform as a service",
     titles: ["What is Kubernetes?", "What is the Cloud?"],
-    nonPhrase: [
-      "What is a Container?",
-      "Distributed Cloud",
-      "Encapsulation",
-      "What is Cloud Migration?",
-      "What is IoT?",
-      "What is Serverless?",
-      "Cloud Ingress Egress",
-      "gRPC vs REST",
-    ],
   },
-  {
-    query: "hypertext transfer protocol secure",
-    titles: ["TLS 1.2 Vulnerability"],
-    nonPhrase: [
-      "gRPC vs REST",
-      "TCP vs UDP",
-      "React Authentication",
-      "Vite React",
-      "CloudFront Signed Cookies",
-      "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
-      "Bearer Token",
-    ],
-  },
-  {
-    query: "object oriented programming vs functional",
-    titles: ["What is OOP (Object-Oriented Programming)?"],
-    nonPhrase: [
-      "OOP vs Functional",
-      "Functional vs Procedural",
-      "Object",
-      "Class vs Interface",
-      "Declarative vs Imperative",
-    ],
-  },
-];
-
-const THREE_TOKEN_NON_ACTIVATIONS = [
-  "rate limiting algorithms",
-  "responsible for managing",
 ];
 
 function createEngine() {
@@ -154,7 +69,7 @@ function publicTitles(engine, query, limit = 10) {
   return engine.search(query, { limit }).map((hit) => hit.title);
 }
 
-describe("0.6.0 long-phrase exclusivity", () => {
+describe("query-plan phrase cohort on Software.Land fixture", () => {
   let engine;
 
   beforeAll(async () => {
@@ -162,96 +77,63 @@ describe("0.6.0 long-phrase exclusivity", () => {
     await engine.index(attachLexicalFrequency(documents, lexicalFrequency));
   });
 
-  test("activation constants are 4 tokens and DF <= 2", () => {
-    expect(MIN_PHRASE_TOKENS).toBe(4);
-    expect(MAX_PHRASE_DOCUMENT_FREQUENCY).toBe(2);
+  test("result-set cohort bound is 2, not a token-length gate", () => {
+    expect(MAX_EXCLUSIVE_PHRASE_COHORT).toBe(2);
   });
 
-  test("unique contiguous excerpts collapse public results to that document", () => {
-    for (const { phrase, title } of UNIQUE_PHRASES) {
-      const analyzed = engine._prepareQuery(phrase);
-      const tokens = typedPhraseTokens(analyzed);
-      expect(tokens.length).toBeGreaterThanOrEqual(6);
-      const hits = exclusivePhraseDocuments(analyzed, engine._index);
-      expect(hits.map((doc) => doc.title)).toEqual([title]);
-      const doc = hits[0];
-      expect(documentHasExactTypedPhrase(tokens, doc)).toBe(true);
-      expect(publicTitles(engine, phrase)).toEqual([title]);
-    }
-  });
-
-  test("two-document phrases collapse public results to those documents", () => {
-    for (const { phrase, titles } of SHARED_TWO_DOC_PHRASES) {
+  test("rare title phrases may collapse without using token count", () => {
+    for (const { phrase, titles } of TITLE_RARE_PHRASES) {
       const analyzed = engine._prepareQuery(phrase);
       const hits = exclusivePhraseDocuments(analyzed, engine._index);
       expect(hits.map((doc) => doc.title).sort()).toEqual([...titles].sort());
       expect(publicTitles(engine, phrase).sort()).toEqual([...titles].sort());
+      expect(documentHasExactTypedPhrase(typedPhraseTokens(analyzed), hits[0])).toBe(true);
     }
   });
 
-  test("four-token rare phrases activate exclusivity", () => {
-    for (const { phrase, titles } of FOUR_TOKEN_ACTIVATIONS) {
-      const analyzed = engine._prepareQuery(phrase);
-      expect(typedPhraseTokens(analyzed).length).toBeGreaterThanOrEqual(4);
-      expect(typedPhraseTokens(analyzed).length).toBeLessThan(6);
-      const hits = exclusivePhraseDocuments(analyzed, engine._index);
-      expect(hits.map((doc) => doc.title).sort()).toEqual([...titles].sort());
-      expect(publicTitles(engine, phrase).sort()).toEqual([...titles].sort());
-    }
-  });
-
-  test("adjudicated existing queries collapse to the exact phrase cohort", () => {
-    for (const { query, titles, nonPhrase } of ADJUDICATED_QUERIES) {
+  test("body-only rare phrases do not exclusive-collapse", () => {
+    for (const query of BODY_ONLY_MUST_NOT_COLLAPSE) {
       const analyzed = engine._prepareQuery(query);
-      expect(typedPhraseTokens(analyzed).length).toBeGreaterThanOrEqual(MIN_PHRASE_TOKENS);
-      const hits = exclusivePhraseDocuments(analyzed, engine._index);
-      expect(hits.map((doc) => doc.title).sort()).toEqual([...titles].sort());
+      expect(exclusivePhraseDocuments(analyzed, engine._index)).toBeNull();
+      expect(publicTitles(engine, query).length).toBeGreaterThan(1);
+    }
+  });
+
+  test("support subset of rare phrase keeps the accepted occupied truncations", () => {
+    for (const { query, titles } of ADJUDICATED_SUPPORT_SUBSET) {
       const publicList = publicTitles(engine, query);
       expect(publicList.sort()).toEqual([...titles].sort());
-      for (const title of nonPhrase) {
-        expect(publicList).not.toContain(title);
-      }
     }
   });
 
-  test("three-token rare phrases do not trigger exclusivity", () => {
-    for (const query of THREE_TOKEN_NON_ACTIVATIONS) {
-      const analyzed = engine._prepareQuery(query);
-      expect(typedPhraseTokens(analyzed)).toHaveLength(3);
-      expect(exclusivePhraseDocuments(analyzed, engine._index)).toBeNull();
-      const publicList = publicTitles(engine, query);
-      expect(publicList.length).toBeGreaterThan(2);
-    }
+  test("spoken HTTPS expansion stays TLS-first without equivalent HTTPS/TLS identity", () => {
+    const titles = publicTitles(engine, "hypertext transfer protocol secure");
+    expect(titles[0]).toBe("TLS 1.2 Vulnerability");
+    expect(titles.length).toBeGreaterThan(1);
+    expect(exclusivePhraseDocuments(engine._prepareQuery("hypertext transfer protocol secure"), engine._index)).toBeNull();
   });
 
-  test("DF 0 and DF >= 3 do not exclusive-collapse", () => {
-    for (const phrase of ABSENT_PHRASES) {
-      const analyzed = engine._prepareQuery(phrase);
-      expect(typedPhraseTokens(analyzed).length).toBeGreaterThanOrEqual(6);
-      expect(exclusivePhraseDocuments(analyzed, engine._index)).toBeNull();
-      expect(engine.search(phrase, { limit: 5 }).length).toBeGreaterThan(0);
-    }
-    for (const phrase of SHARED_THREE_PLUS_PHRASES) {
-      const analyzed = engine._prepareQuery(phrase);
-      const hits = exclusivePhraseDocuments(analyzed, engine._index);
-      expect(hits).toBeNull();
-      expect(engine.search(phrase, { limit: 10 }).length).toBeGreaterThan(2);
-    }
+  test("object oriented programming vs functional is not forced exclusive", () => {
+    const titles = publicTitles(engine, "object oriented programming vs functional");
+    expect(titles[0]).toBe("What is OOP (Object-Oriented Programming)?");
+    expect(titles).toContain("OOP vs Functional");
   });
 
-  test("ordinary short queries do not activate exclusivity", () => {
-    for (const query of SHORT_QUERIES) {
-      const analyzed = engine._prepareQuery(query);
-      expect(typedPhraseTokens(analyzed).length).toBeLessThan(MIN_PHRASE_TOKENS);
-      expect(exclusivePhraseDocuments(analyzed, engine._index)).toBeNull();
-      expect(engine.search(query, { limit: 8 }).length).toBeGreaterThan(1);
-    }
+  test("dangerous occupied expansions do not collapse to the mention document", () => {
+    expect(publicTitles(engine, "remote procedure call")[0]).toBe("gRPC vs REST");
+    expect(publicTitles(engine, "cross site scripting")[0]).toBe("React Authentication");
+    expect(publicTitles(engine, "application programming interface")[0]).toBe("What is an API?");
+    expect(exclusivePhraseDocuments(engine._prepareQuery("remote procedure call"), engine._index)).toBeNull();
+    expect(exclusivePhraseDocuments(engine._prepareQuery("cross site scripting"), engine._index)).toBeNull();
+    expect(exclusivePhraseDocuments(engine._prepareQuery("command line interface"), engine._index)).toBeNull();
+    expect(exclusivePhraseDocuments(engine._prepareQuery("simple queue service"), engine._index)).toBeNull();
+    expect(exclusivePhraseDocuments(engine._prepareQuery("application programming interface"), engine._index)).toBeNull();
   });
 
-  test("phrase identity is typed surface, not lemma or synonym rewrite", () => {
-    const analyzed = engine._prepareQuery("retries are exactly what it sounds");
-    expect(typedPhraseTokens(analyzed)).toEqual(["retries", "are", "exactly", "what", "it", "sounds"]);
-    const lemmaQuery = engine._prepareQuery("retry are exactly what it sound");
-    expect(exclusivePhraseDocuments(lemmaQuery, engine._index)).toBeNull();
+  test("version queries do not phrase-filter", () => {
+    expect(exclusivePhraseDocuments(engine._prepareQuery("tls 1.2"), engine._index)).toBeNull();
+    expect(exclusivePhraseDocuments(engine._prepareQuery("1.2 vulnerability"), engine._index)).toBeNull();
+    expect(publicTitles(engine, "tls 1.2")[0]).toBe("TLS 1.2 Vulnerability");
+    expect(publicTitles(engine, "1.2 vulnerability")[0]).toBe("TLS 1.2 Vulnerability");
   });
 });

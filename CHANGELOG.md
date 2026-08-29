@@ -4,7 +4,14 @@
 
 ### Added
 
-- Long-phrase exclusivity: when the typed query tokenizes to at least 4 tokens and that exact contiguous surface phrase occurs in 1 or 2 documents, public `search()` / `searchDetailed().results` are exactly those documents, ranked with the existing scorer. Shorter queries, phrases that occur in no document, and phrases that occur in 3 or more documents keep 0.5.0 retrieval and ranking. Phrase identity uses the existing tokenizer (lowercase, punctuation folding, typed surface tokens) and does not use lemmas, typos, synonyms, configured aliases, equivalent recall, prefix completion, or `phraseAdjacency`. Because identity is the typed surface, a long configured alias/form may exclusive-collapse while its short configured key does not; that is an explicit exception to ordinary configured key/form result parity, not an identity regression.
+- Optional schema role `summary` for a third searchable text field. Existing title/body callers are unchanged. Exact typed-phrase evidence records per-field `titleTf` / `summaryTf` / `bodyTf`.
+- Query-plan result-set policy for rare exact phrases: collapse the public primary list only when the typed phrase identifies one or two documents and ranking-independent title-grade corroborating support (configured identity in title, equivalent-recall title, topical-recall title, dotted version) is a subset of that phrase cohort, or when that support set is empty and every phrase hit is in title or summary. Body-only rare phrases do not exclusive-collapse. Version/`dottedSpans` queries never phrase-filter. Token count is not a relevance primitive. Topical recall is corroborating support, not concept identity.
+- Title or summary exact phrase is strong lexical field evidence and outranks incidental one-token title overlap via the existing repeated-phrase-over-weak-direct constraint class. Markdown/body-only exact phrases stay weak lexical and do not beat title-grade structured/equivalent/topical/version support.
+
+### Changed
+
+- 0.6.0 no longer activates phrase exclusivity at ≥4 typed tokens. `MIN_PHRASE_TOKENS` is removed.
+- Re-index after a consumed `search-v2-lexical-index` also checks a hydration fingerprint that includes optional `summary`. The v1 artifact corpus fingerprint remains `(id, title, body, lexicalFrequency)`.
 
 ## 0.5.0
 

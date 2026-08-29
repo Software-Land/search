@@ -1,6 +1,6 @@
 # Schema and documents
 
-Stable field roles are **title** and **body** only.
+Stable field roles are **title**, **body**, and optional **summary**.
 
 ```js
 {
@@ -9,7 +9,17 @@ Stable field roles are **title** and **body** only.
 }
 ```
 
-If `schema` is omitted, that default is used. If `schema` is provided, it must be a plain object with at least one `{ type: "text" }` field. `role` must be `"title"` or `"body"` when present. Other roles are not a supported contract; extra text fields without those roles are not independently ranked.
+An optional third text field uses role `"summary"` (not `"description"`). Callers that omit it keep the two-field contract.
+
+```js
+{
+  title: { type: "text", role: "title" },
+  summary: { type: "text", role: "summary" },
+  body: { type: "text", role: "body" },
+}
+```
+
+If `schema` is omitted, the default title/body schema is used. If `schema` is provided, it must be a plain object with at least one `{ type: "text" }` field. `role` must be `"title"`, `"body"`, or `"summary"` when present.
 
 ## Documents
 
@@ -17,11 +27,14 @@ If `schema` is omitted, that default is used. If `schema` is provided, it must b
 {
   id: "wifi",
   title: "Wi-Fi",
-  body: "Connect to wireless networks.",
+  summary: "Connect to wireless networks.",
+  body: "Full article text.",
   metadata?: { ... },
   lexicalFrequency?: { "connect wireless": 2 }
 }
 ```
+
+`summary` is optional. Documents without it, and schemas without a summary role, index as title/body only. Core does not concatenate summary into body.
 
 | Rule | Behavior |
 | --- | --- |
@@ -33,7 +46,7 @@ If `schema` is omitted, that default is used. If `schema` is provided, it must b
 | Field concat | Caller responsibility. Core does not prepend category names |
 | Mutation after `index()` | Title/body are copied as strings. Do not rely on mutating the original object |
 
-When a supplied `search-v2-lexical-index` is used, callers must still pass documents whose canonical ids, raw title/body strings, and attached `lexicalFrequency` maps match its corpus fingerprint. The body is validated even though hydrated query-time state comes from positional postings.
+When a supplied `search-v2-lexical-index` is used, callers must still pass documents whose canonical ids, raw title/body strings, and attached `lexicalFrequency` maps match its corpus fingerprint. The v1 fingerprint is `(id, title, body, lexicalFrequency)` and does not include `summary`: summary is not stored in the artifact. Load hydrates summary from the caller documents. After that artifact has been consumed, re-index reuse also checks a separate hydration fingerprint so a summary-only edit cannot keep stale search-relevant state. Title/body-only schemas are unchanged. The body is validated even though hydrated query-time title/body state comes from positional postings.
 
 There is no append/incremental API. Artifact-omitted `index(documents)` rebuilds from replacement input. After a supplied artifact has been consumed, the identical validated corpus reuses the hydrated state and incompatible replacement input rejects. Indexing is async at the function signature but the work is currently synchronous inside. Cancellation of `index()` is not supported.
 

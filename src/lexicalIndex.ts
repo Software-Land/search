@@ -5,10 +5,15 @@
  * surface term. Each surface term carries its deterministic lemma, so lemma
  * postings are reconstructed as an inverse term mapping rather than duplicated
  * in the artifact. Raw title/body text is deliberately absent; caller-supplied
- * documents provide display titles and the separately owned lexical-frequency
- * data after the corpus fingerprint has been validated.
+ * documents provide display titles, optional summary text, and the separately
+ * owned lexical-frequency data after the corpus fingerprint has been validated.
+ * The v1 corpus fingerprint is (id, title, body, lexicalFrequency). Summary is
+ * not stored in the artifact; load hydrates it from caller documents. Re-index
+ * reuse after a consumed artifact also checks a separate hydration fingerprint
+ * so a summary-only edit cannot keep stale search-relevant state.
  */
 
+import { tokenize } from "./text.js";
 import { assertArtifact } from "./artifacts.js";
 import { canonicalDocumentId } from "./documentId.js";
 import { ArtifactValidationError } from "./errors.js";
@@ -68,7 +73,7 @@ type LexicalIndexPayload = {
   extensions: Record<string, unknown>;
 };
 
-type SourceRow = [string, string, string, Record<string, number> | null];
+type SourceRow = [string, string, string, Record<string, number> | null, string, string[]];
 
 export type ExactPruningExtensionV1 = {
   revision: typeof EXACT_PRUNING_REVISION;
@@ -151,7 +156,7 @@ function inputDocuments(input: unknown): unknown[] {
 
 function sourceRows(documents: unknown, schema?: Schema | null) {
   const { titleField, bodyField } = resolveSchema(schema);
-  const byId = new Map<string, SourceRow>();
+  const byId = new Map<string, [string, string, string, Record<string, number> | null]>();
   const rows = inputDocuments(documents);
   for (let i = 0; i < rows.length; i++) {
     const value = rows[i];
@@ -168,8 +173,56 @@ function sourceRows(documents: unknown, schema?: Schema | null) {
   return [...byId.values()].sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
 }
 
+/**
+ * Runtime hydration identity. Includes optional summary when the schema has
+ * role `summary`. Not stored on the v1 artifact; used only to refuse re-index
+ * reuse of a consumed lexical index whose caller summaries changed.
+ */
+function hydrationRows(documents: unknown, schema?: Schema | null) {
+  const { titleField, bodyField, summaryField } = resolveSchema(schema);
+  if (!summaryField) return sourceRows(documents, schema);
+  const byId = new Map<string, [string, string, string, Record<string, number> | null, string]>();
+  const rows = inputDocuments(documents);
+  for (let i = 0; i < rows.length; i++) {
+    const value = rows[i];
+    if (!plainRecord(value)) {
+      fail(`Lexical index source document ${i} must be a plain object`, `documents[${i}]`);
+    }
+    const doc = value as SearchDocument;
+    const id = canonicalDocumentId(doc.id);
+    if (!id) fail(`Lexical index source document ${i} requires a non-empty id`, `documents[${i}].id`);
+    const title = doc[titleField] == null && doc.title == null ? "" : String(doc[titleField] ?? doc.title ?? "");
+    const body = doc[bodyField] == null && doc.body == null ? "" : String(doc[bodyField] ?? doc.body ?? "");
+    const summary = String(doc[summaryField] ?? doc.summary ?? "");
+    byId.set(id, [id, title, body, sortedNumberRecord(doc.lexicalFrequency), summary]);
+  }
+  return [...byId.values()].sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+}
+
+function compactSourceById(documents: unknown, schema?: Schema | null): Map<string, SourceRow> {
+  const { titleField, bodyField, summaryField } = resolveSchema(schema);
+  const byId = new Map<string, SourceRow>();
+  const rows = inputDocuments(documents);
+  for (let i = 0; i < rows.length; i++) {
+    const value = rows[i];
+    if (!plainRecord(value)) continue;
+    const doc = value as SearchDocument;
+    const id = canonicalDocumentId(doc.id);
+    if (!id) continue;
+    const title = doc[titleField] == null && doc.title == null ? "" : String(doc[titleField] ?? doc.title ?? "");
+    const body = doc[bodyField] == null && doc.body == null ? "" : String(doc[bodyField] ?? doc.body ?? "");
+    const summary = summaryField ? String(doc[summaryField] ?? doc.summary ?? "") : "";
+    byId.set(id, [id, title, body, sortedNumberRecord(doc.lexicalFrequency), summary, tokenize(summary)]);
+  }
+  return byId;
+}
+
 export function lexicalCorpusFingerprint(documents: unknown, schema?: Schema | null) {
   return stableFingerprint(sourceRows(documents, schema));
+}
+
+export function lexicalHydrationFingerprint(documents: unknown, schema?: Schema | null) {
+  return stableFingerprint(hydrationRows(documents, schema));
 }
 
 function indexedCorpusFingerprint(index: SearchIndex) {
@@ -343,7 +396,17 @@ function envelope(
 
 function sourceRowsFromIndex(index: SearchIndex): Map<string, SourceRow> {
   return new Map(
-    index.documents.map((doc) => [doc.id, [doc.id, doc.title, "", doc.lexicalFrequency]])
+    index.documents.map((doc) => [
+      doc.id,
+      [
+        doc.id,
+        doc.title,
+        "",
+        doc.lexicalFrequency,
+        doc.summary || "",
+        Array.isArray(doc.summaryTokens) ? [...doc.summaryTokens] : [],
+      ],
+    ])
   );
 }
 
@@ -353,7 +416,7 @@ export function compactIndexFromAnalyzed(
 ): SearchIndex {
   const payload = buildPayload(index);
   const artifact = envelope(payload, index, analyzer);
-  return indexFromPayload(payload, artifact, sourceRowsFromIndex(index));
+  return indexFromPayload(payload, artifact, sourceRowsFromIndex(index), index.schema.fields);
 }
 
 export function compileLexicalIndexFromSearchIndex(
@@ -791,6 +854,8 @@ function compactStoreFromPayload(
   const versionForms = new Array<string[]>(n);
   const dottedSpans = new Array<string[]>(n);
   const lexicalFrequency = new Array<Record<string, number> | null>(n);
+  const summaries = new Array<string>(n);
+  const summaryTokenRows = new Array<string[]>(n);
   for (let pos = 0; pos < n; pos++) {
     const row = payload.documents[pos];
     const source = sourceById.get(row[0]);
@@ -801,6 +866,8 @@ function compactStoreFromPayload(
     versionForms[pos] = row[4].length ? row[4] : [];
     dottedSpans[pos] = row[5].length ? row[5] : [];
     lexicalFrequency[pos] = source[3];
+    summaries[pos] = source[4] || "";
+    summaryTokenRows[pos] = source[5] && source[5].length ? source[5] : [];
     const marked = row[6];
     const dottedStart = dottedOff[pos];
     for (let i = 0; i < marked.length; i++) {
@@ -835,6 +902,8 @@ function compactStoreFromPayload(
     dottedOff,
     dottedIdx,
     lexicalFrequency,
+    summaries,
+    summaryTokenRows,
     titleTokenSet,
     surfaceVocabulary,
   };
@@ -843,18 +912,25 @@ function compactStoreFromPayload(
 function indexFromPayload(
   payload: LexicalIndexPayload,
   artifact: LexicalIndexArtifact,
-  sourceById: Map<string, SourceRow>
+  sourceById: Map<string, SourceRow>,
+  schema?: Schema | null
 ): SearchIndex {
   const store = compactStoreFromPayload(payload, artifact, sourceById);
   const documents = compactDocuments(store);
+  const resolved = resolveSchema(schema);
+  const fields: Schema = {
+    [artifact.compatibility.schema[0]]: { type: "text", role: "title" },
+    [artifact.compatibility.schema[1]]: { type: "text", role: "body" },
+  };
+  if (resolved.summaryField) {
+    fields[resolved.summaryField] = { type: "text", role: "summary" };
+  }
   return {
     schema: {
-      fields: {
-        [artifact.compatibility.schema[0]]: { type: "text", role: "title" },
-        [artifact.compatibility.schema[1]]: { type: "text", role: "body" },
-      },
+      fields,
       titleField: artifact.compatibility.schema[0],
       bodyField: artifact.compatibility.schema[1],
+      summaryField: resolved.summaryField,
     },
     documents,
     byId: new Map(documents.map((doc) => [doc.id, doc])),
@@ -942,11 +1018,7 @@ export function loadLexicalIndex(
   if (stableFingerprint(rows) !== artifact.corpus.fingerprint) {
     fail("Lexical index corpus fingerprint does not match supplied searchable text", "corpus.fingerprint");
   }
-  return indexFromPayload(
-    payload,
-    artifact,
-    new Map(rows.map((row) => [row[0], row]))
-  );
+  return indexFromPayload(payload, artifact, compactSourceById(documents, schema), schema);
 }
 
 export function ensureCompiledLexicalIndex(index: SearchIndex, plugins: SearchPlugin[] = []) {

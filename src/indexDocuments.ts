@@ -14,7 +14,7 @@ import type {
 function fieldRole(schema: Schema | null | undefined, name: string) {
   const spec = schema?.[name];
   if (!spec) return null;
-  return spec.role || (name === "title" ? "title" : name === "body" ? "body" : null);
+  return spec.role || (name === "title" ? "title" : name === "body" ? "body" : name === "summary" ? "summary" : null);
 }
 
 export function resolveSchema(schema?: Schema | null): ResolvedSchema {
@@ -24,6 +24,7 @@ export function resolveSchema(schema?: Schema | null): ResolvedSchema {
       : { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
   let titleField: string | null = null;
   let bodyField: string | null = null;
+  let summaryField: string | null = null;
   const textFields: string[] = [];
   for (const [name, spec] of Object.entries(fields)) {
     if (!spec || spec.type !== "text") continue;
@@ -31,15 +32,19 @@ export function resolveSchema(schema?: Schema | null): ResolvedSchema {
     const role = fieldRole(fields, name);
     if (role === "title" && !titleField) titleField = name;
     if (role === "body" && !bodyField) bodyField = name;
+    if (role === "summary" && !summaryField) summaryField = name;
   }
   if (!titleField) titleField = textFields[0] || "title";
-  if (!bodyField) bodyField = textFields.find((n) => n !== titleField) || titleField;
-  return { fields, titleField, bodyField };
+  if (!bodyField) bodyField = textFields.find((n) => n !== titleField && n !== summaryField) || titleField;
+  return { fields, titleField, bodyField, summaryField };
 }
 
-function copyRaw(doc: SearchDocument, id: string, title: string, body: string) {
+function copyRaw(doc: SearchDocument, id: string, title: string, body: string, summary: string) {
   const metadata = doc && doc.metadata != null && typeof doc.metadata === "object" && !Array.isArray(doc.metadata) ? { ...doc.metadata } : undefined;
-  return metadata ? { id, title, body, metadata } : { id, title, body };
+  const raw: { id: string; title: string; body: string; summary?: string; metadata?: Record<string, unknown> } = { id, title, body };
+  if (summary) raw.summary = summary;
+  if (metadata) raw.metadata = metadata;
+  return raw;
 }
 
 /**
@@ -101,34 +106,44 @@ export function analyzeDocument(
     throw new InvalidDocumentError("Each document must be a plain object", { index, field: "document" });
   }
   const rec = doc as SearchDocument;
-  const { titleField, bodyField } = resolveSchema(schema);
+  const { titleField, bodyField, summaryField } = resolveSchema(schema);
   const id = canonicalDocumentId(rec.id);
   if (!id) {
     throw new InvalidDocumentError("Each document must have a non-empty string id", { index, field: "id" });
   }
   const title = rec[titleField] == null && rec.title == null ? "" : String(rec[titleField] ?? rec.title ?? "");
   const body = rec[bodyField] == null && rec.body == null ? "" : String(rec[bodyField] ?? rec.body ?? "");
+  const summary = summaryField
+    ? String(rec[summaryField] ?? rec.summary ?? "")
+    : "";
   const titleTokens = tokenize(title);
   const bodyTokens = tokenize(body);
+  const summaryTokens = tokenize(summary);
   const titleLemmas = titleTokens.map(lemma);
   const bodyLemmas = bodyTokens.map(lemma);
+  const summaryLemmas = summaryTokens.map(lemma);
   const nonStopTitle = titleTokens.filter((t) => !DEFAULT_STOP.has(t));
   const spanIndexes = dottedSpanComponentIndexes(title);
   const independentTitleTokens = independentTitleList(titleTokens, spanIndexes);
   const independentTitleLemmas = independentTitleList(titleLemmas, spanIndexes);
   return {
     id,
-    raw: copyRaw(rec, id, title, body),
+    raw: copyRaw(rec, id, title, body, summary),
     title,
     body,
+    summary,
     titleTokens,
     bodyTokens,
+    summaryTokens,
     titleLemmas,
     bodyLemmas,
+    summaryLemmas,
     titleLemmaSet: new Set(titleLemmas),
     bodyLemmaSet: new Set(bodyLemmas),
+    summaryLemmaSet: new Set(summaryLemmas),
     titleTokenSet: new Set(titleTokens),
     bodyTokenSet: new Set(bodyTokens),
+    summaryTokenSet: new Set(summaryTokens),
     nonStopTitle,
     firstToken: firstSurfaceToken(title),
     normalizedTitle: titleTokens.join(" "),
@@ -173,6 +188,7 @@ export function buildIndex(
     }
     for (const t of analyzed.titleLemmas) titleTokenSet.add(t);
     for (const t of analyzed.bodyTokens) surfaceVocabulary.add(t);
+    for (const t of analyzed.summaryTokens) surfaceVocabulary.add(t);
   }
   return { schema: resolveSchema(schema), documents: docs, byId, titleTokenSet, surfaceVocabulary };
 }

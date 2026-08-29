@@ -5,11 +5,12 @@ import {
   exactPruningRuntime,
   lexicalAnalyzerIdentity,
   lexicalCorpusFingerprint,
+  lexicalHydrationFingerprint,
   loadLexicalIndex,
 } from "./lexicalIndex.js";
 import { extractFeatures } from "./features.js";
 import { retrievalSourcesForDocument } from "./retrieve.js";
-import { applyLongPhraseExclusivity } from "./phraseExclusivity.js";
+import { applyPhraseCohortPolicy } from "./phraseExclusivity.js";
 import {
   exhaustiveFeaturePruningStats,
   planExactFeaturePruning,
@@ -327,6 +328,7 @@ export class SearchEngine {
   declare lexicalIndex: LexicalIndexArtifact | null;
   declare loadedLexicalIndex: {
     fingerprint: string;
+    hydrationFingerprint: string;
     analyzer: string;
     schema: [string, string];
   } | null;
@@ -369,15 +371,24 @@ export class SearchEngine {
       const resolved = resolveSchema(this.schema);
       const analyzer = lexicalAnalyzerIdentity(this.plugins, { requireIdentified: true });
       const fingerprint = lexicalCorpusFingerprint(documents || [], this.schema);
+      const hydrationFingerprint = lexicalHydrationFingerprint(documents || [], this.schema);
       if (
         analyzer !== this.loadedLexicalIndex.analyzer ||
         resolved.titleField !== this.loadedLexicalIndex.schema[0] ||
         resolved.bodyField !== this.loadedLexicalIndex.schema[1] ||
-        fingerprint !== this.loadedLexicalIndex.fingerprint
+        fingerprint !== this.loadedLexicalIndex.fingerprint ||
+        hydrationFingerprint !== this.loadedLexicalIndex.hydrationFingerprint
       ) {
         throw new ArtifactValidationError(
           "Re-index input is incompatible with the consumed lexical index",
-          { format: "search-v2-lexical-index", field: "corpus.fingerprint" }
+          {
+            format: "search-v2-lexical-index",
+            field:
+              fingerprint === this.loadedLexicalIndex.fingerprint &&
+              hydrationFingerprint !== this.loadedLexicalIndex.hydrationFingerprint
+                ? "hydration.fingerprint"
+                : "corpus.fingerprint",
+          }
         );
       }
       this.indexBuildMs = performance.now() - t0;
@@ -401,6 +412,7 @@ export class SearchEngine {
     if (suppliedLexicalIndex) {
       this.loadedLexicalIndex = {
         fingerprint: suppliedLexicalIndex.corpus.fingerprint,
+        hydrationFingerprint: lexicalHydrationFingerprint(documents || [], this.schema),
         analyzer: suppliedLexicalIndex.compatibility.analyzer,
         schema: [...suppliedLexicalIndex.compatibility.schema],
       };
@@ -727,11 +739,17 @@ export class SearchEngine {
     });
     let featured = expanded.featured;
     const { applied, featureMs, relationshipMs, pruningStats, featureVectorsConstructed } = expanded;
-    featured = applyLongPhraseExclusivity(featured, query, index, (doc) => ({
-      document: doc,
-      retrievalSources: retrievalSourcesForDocument(query, doc),
-      features: extractFeatures(query, doc, { relationship: null, retrievalScore: 0 }),
-    }));
+    featured = applyPhraseCohortPolicy(
+      featured,
+      query,
+      index,
+      (doc) => ({
+        document: doc,
+        retrievalSources: retrievalSourcesForDocument(query, doc),
+        features: extractFeatures(query, doc, { relationship: null, retrievalScore: 0 }),
+      }),
+      strategy
+    );
 
     const constraints = constraintsForStrategy(strategy);
     let representativeStats: Record<string, unknown> | null = null;
@@ -862,11 +880,17 @@ export class SearchEngine {
     });
     let featured = expanded.featured;
     const { applied, featureMs, relationshipMs, pruningStats, featureVectorsConstructed } = expanded;
-    featured = applyLongPhraseExclusivity(featured, query, index, (doc) => ({
-      document: doc,
-      retrievalSources: retrievalSourcesForDocument(query, doc),
-      features: extractFeatures(query, doc, { relationship: null, retrievalScore: 0 }),
-    }));
+    featured = applyPhraseCohortPolicy(
+      featured,
+      query,
+      index,
+      (doc) => ({
+        document: doc,
+        retrievalSources: retrievalSourcesForDocument(query, doc),
+        features: extractFeatures(query, doc, { relationship: null, retrievalScore: 0 }),
+      }),
+      strategy
+    );
 
     throwIfAborted(signal);
     await Promise.resolve();

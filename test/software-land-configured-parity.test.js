@@ -1,10 +1,11 @@
 /**
  * Exhaustive Software.Land fixture audit: unambiguous key/alias forms of one
  * configured concept must produce identical ranked results, except when a
- * typed form activates 0.6.0 long-phrase exclusivity (rare contiguous phrase
- * of at least 4 tokens). That narrowing of a long configured alias/form
+ * typed form activates independent phrase-cohort restriction (rare exact
+ * phrase whose title-grade support set is covered by that cohort, or an unoccupied
+ * title/summary phrase). That narrowing of a long configured alias/form
  * relative to its short configured key is an explicit exception to ordinary
- * key/form result parity, not an accidental identity regression. Occupancy
+ * key/form result parity, not an accidental occupancy regression. Occupancy
  * key is unchanged in that case.
  * Fixture-only. Not Core default ranking policy.
  */
@@ -164,11 +165,18 @@ describe("Software.Land configured-concept result parity", () => {
     const ciExp = publicView(engine, plugins, "continuous integration");
     expect(ci.key).toBe("ci");
     expect(ciExp.key).toBe("ci");
-    expect(ci).toEqual(ciExp);
     const cd = publicView(engine, plugins, "cd");
     const cdExp = publicView(engine, plugins, "continuous deployment");
     expect(cd.key).toBe("cd");
-    expect(cd).toEqual(cdExp);
+    expect(cdExp.key).toBe("cd");
+    expectSameConceptViews(engine, [
+      { q: "ci", view: ci },
+      { q: "continuous integration", view: ciExp },
+    ]);
+    expectSameConceptViews(engine, [
+      { q: "cd", view: cd },
+      { q: "continuous deployment", view: cdExp },
+    ]);
   });
 
   test("cicd family and paas family share results", () => {

@@ -39,6 +39,8 @@ export type CompactDocumentStore = {
   dottedOff: Uint32Array;
   dottedIdx: Uint32Array;
   lexicalFrequency: Array<Record<string, number> | null>;
+  summaries?: string[];
+  summaryTokenRows?: string[][];
   titleTokenSet: Set<string>;
   surfaceVocabulary: Set<string>;
 };
@@ -545,7 +547,9 @@ export class CompactIndexedDocument {
   private _dottedSpanComponentIndexes: PackedIndexSet | null = null;
   private _bodyTokenPositions: PackedPosMap | null = null;
   private _bodyLemmaPositions: PackedPosMap | null = null;
-  private _raw: { id: string; title: string; body: string } | null = null;
+  private _raw: { id: string; title: string; body: string; summary?: string } | null = null;
+  private _summaryTokenSet: Set<string> | null = null;
+  private _summaryLemmaSet: Set<string> | null = null;
 
   constructor(store: CompactDocumentStore, ordinal: number) {
     this._store = store;
@@ -560,7 +564,25 @@ export class CompactIndexedDocument {
   }
 
   get raw() {
-    return this._raw || (this._raw = { id: this.id, title: this.title, body: "" });
+    const summary = this.summary;
+    return this._raw || (this._raw = summary
+      ? { id: this.id, title: this.title, body: "", summary }
+      : { id: this.id, title: this.title, body: "" });
+  }
+  get summary() {
+    return this._store.summaries?.[this._ordinal] || "";
+  }
+  get summaryTokens() {
+    return this._store.summaryTokenRows?.[this._ordinal] || EMPTY_STRINGS;
+  }
+  get summaryLemmas() {
+    return this.summaryTokens;
+  }
+  get summaryTokenSet() {
+    return this._summaryTokenSet || (this._summaryTokenSet = new Set(this.summaryTokens));
+  }
+  get summaryLemmaSet() {
+    return this._summaryLemmaSet || (this._summaryLemmaSet = new Set(this.summaryLemmas));
   }
   get titleTokens() {
     return this._titleTokens || (this._titleTokens = packedTokens(this._store, this._ordinal, KIND_TITLE));
@@ -657,6 +679,8 @@ export function emptyCompactStore(n: number): CompactDocumentStore {
     dottedOff,
     dottedIdx: EMPTY_U32,
     lexicalFrequency: new Array(n),
+    summaries: new Array(n).fill(""),
+    summaryTokenRows: new Array(n).fill(EMPTY_STRINGS),
     titleTokenSet: new Set(),
     surfaceVocabulary: new Set(),
   };

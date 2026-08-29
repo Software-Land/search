@@ -1,7 +1,7 @@
 import { sequenceKey } from "./configuredAuthoring.js";
 import { isNearCompletePrefix, levenshteinAtMost, DEFAULT_STOP, allowPrefixMatch } from "./text.js";
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "./versionForms.js";
-import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall, topicalRecallHint, topicalFormEvidence, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts, coverageConcepts, formContentTokens } from "./retrieve.js";
+import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall, topicalRecallHint, topicalFormEvidence, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts, coverageConcepts, formContentTokens, sequenceCount } from "./retrieve.js";
 import { scoreFeatures } from "./rank.js";
 import { saturatingFrequency } from "./saturatingFrequency.js";
 import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "./lexicalNormalize.js";
@@ -847,6 +847,20 @@ function phraseKeyCandidates(query: AnalyzedQuery, peerForms?: string[][]) {
   return keys;
 }
 
+function typedPhraseFieldFrequencies(query: AnalyzedQuery, doc: IndexedDocument) {
+  const tokens = (query.originalSurface || []).filter(Boolean);
+  if (tokens.length < 2) {
+    return { titlePhraseFrequency: 0, summaryPhraseFrequency: 0, exactTitleOrSummaryPhrase: false };
+  }
+  const titlePhraseFrequency = sequenceCount(tokens, doc.titleTokens);
+  const summaryPhraseFrequency = sequenceCount(tokens, doc.summaryTokens || []);
+  return {
+    titlePhraseFrequency,
+    summaryPhraseFrequency,
+    exactTitleOrSummaryPhrase: titlePhraseFrequency > 0 || summaryPhraseFrequency > 0,
+  };
+}
+
 function compiledPhraseLookup(query: AnalyzedQuery, doc: IndexedDocument) {
   const prep = getQueryFeatPrep(query);
   const candidates = prep.phraseKeys;
@@ -1065,6 +1079,7 @@ function computeFeatureFields(query: AnalyzedQuery, doc: IndexedDocument) {
     matchingPhraseKey: phrase.matchingPhraseKey,
     bodyPhraseCount: phrase.bodyPhraseCount,
     bodyPhraseFrequency: phrase.bodyPhraseFrequency,
+    ...typedPhraseFieldFrequencies(query, doc),
   };
 }
 
@@ -1123,6 +1138,7 @@ export function extractFeatures(
     matchingPhraseKey: phrase.matchingPhraseKey,
     bodyPhraseCount: phrase.bodyPhraseCount,
     bodyPhraseFrequency: phrase.bodyPhraseFrequency,
+    ...typedPhraseFieldFrequencies(query, doc),
       }))
     )
   );
@@ -1154,6 +1170,7 @@ export function classifyDirect(f: Partial<FeatureVector>): DirectClass {
     (f.configuredFormEvidence || 0) >= TWO_THIRDS_QUERY_COVERAGE ||
     f.configuredFormBodyMatch ||
     f.phraseAdjacency === 1 ||
+    f.exactTitleOrSummaryPhrase ||
     f.shortLiteralLeadMatch ||
     f.dottedSpanComponentTitleMatch ||
     (f.exactTitleTokenMatch && (f.queryCoverage || 0) > 0) ||
@@ -1211,6 +1228,9 @@ export const FEATURE_DEFINITIONS = {
   matchingPhraseKey: "Compiled n-gram key that matched, or null when the count is 0.",
   bodyPhraseCount: "Build-time integer occurrence count of the normalized query phrase in this document BODY. 0 if missing.",
   bodyPhraseFrequency: "Bounded transform log1p(count)/(1+log1p(count)) of bodyPhraseCount.",
+  titlePhraseFrequency: "Exact typed-surface originalSurface occurrences in the title field.",
+  summaryPhraseFrequency: "Exact typed-surface originalSurface occurrences in the optional summary field.",
+  exactTitleOrSummaryPhrase: "True when the complete typed phrase occurs in title or summary. Strong lexical field evidence, not a score boost.",
   relationshipStrength: "0–1 strength of a precomputed document relationship used for related-result ranking. 0 if none.",
   relationshipType: "Relationship type (semantic, same-category, …) or null. Not a query equivalence.",
   relationshipSourceId: "Primary document id that licensed this related candidate, or null.",

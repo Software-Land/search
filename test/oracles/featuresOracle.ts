@@ -7,7 +7,7 @@
 
 import { isNearCompletePrefix, levenshtein, DEFAULT_STOP, allowPrefixMatch } from "../../src/text.js";
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "../../src/versionForms.js";
-import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, identityTokens, evidenceTokens, isSearchEquivalenceRecallConcept, formContentTokens } from "../../src/retrieve.js";
+import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, identityTokens, evidenceTokens, isSearchEquivalenceRecallConcept, formContentTokens, sequenceCount } from "../../src/retrieve.js";
 import { saturatingFrequency } from "../../src/saturatingFrequency.js";
 import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "../../src/lexicalNormalize.js";
 import { sequenceKey } from "../../src/configuredAuthoring.js";
@@ -568,6 +568,20 @@ function phraseKeyCandidates(query: AnalyzedQuery) {
   return keys;
 }
 
+function typedPhraseFieldFrequencies(query: AnalyzedQuery, doc: IndexedDocument) {
+  const tokens = (query.originalSurface || []).filter(Boolean);
+  if (tokens.length < 2) {
+    return { titlePhraseFrequency: 0, summaryPhraseFrequency: 0, exactTitleOrSummaryPhrase: false };
+  }
+  const titlePhraseFrequency = sequenceCount(tokens, doc.titleTokens);
+  const summaryPhraseFrequency = sequenceCount(tokens, doc.summaryTokens || []);
+  return {
+    titlePhraseFrequency,
+    summaryPhraseFrequency,
+    exactTitleOrSummaryPhrase: titlePhraseFrequency > 0 || summaryPhraseFrequency > 0,
+  };
+}
+
 function compiledPhraseLookup(query: AnalyzedQuery, doc: IndexedDocument) {
   const candidates = phraseKeyCandidates(query);
   const ngrams = doc.lexicalFrequency || null;
@@ -656,6 +670,7 @@ export function extractFeaturesOracle(
     matchingPhraseKey: phrase.matchingPhraseKey,
     bodyPhraseCount: phrase.bodyPhraseCount,
     bodyPhraseFrequency: phrase.bodyPhraseFrequency,
+    ...typedPhraseFieldFrequencies(query, doc),
     relationshipStrength: relationship?.strength || 0,
     relationshipType: relationship?.type ?? null,
     relationshipSourceId: relationship?.sourceId ?? null,
@@ -695,6 +710,7 @@ export function classifyDirectOracle(f: Partial<FeatureVector>): DirectClass {
     (f.configuredFormEvidence || 0) >= TWO_THIRDS_QUERY_COVERAGE ||
     f.configuredFormBodyMatch ||
     f.phraseAdjacency === 1 ||
+    f.exactTitleOrSummaryPhrase ||
     f.shortLiteralLeadMatch ||
     f.dottedSpanComponentTitleMatch ||
     (f.exactTitleTokenMatch && (f.queryCoverage || 0) > 0) ||
@@ -751,6 +767,9 @@ export const FEATURE_DEFINITIONS = {
   matchingPhraseKey: "Compiled n-gram key that matched, or null when the count is 0.",
   bodyPhraseCount: "Build-time integer occurrence count of the normalized query phrase in this document BODY. 0 if missing.",
   bodyPhraseFrequency: "Bounded transform log1p(count)/(1+log1p(count)) of bodyPhraseCount.",
+  titlePhraseFrequency: "Exact typed-surface originalSurface occurrences in the title field.",
+  summaryPhraseFrequency: "Exact typed-surface originalSurface occurrences in the optional summary field.",
+  exactTitleOrSummaryPhrase: "True when the complete typed phrase occurs in title or summary.",
   relationshipStrength: "0–1 strength of a precomputed document relationship used for related-result ranking. 0 if none.",
   relationshipType: "Relationship type (semantic, same-category, …) or null. Not a query equivalence.",
   relationshipSourceId: "Primary document id that licensed this related candidate, or null.",

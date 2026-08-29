@@ -7,7 +7,7 @@ export type RelationshipStrategy = "none" | "mixed" | "hybrid" | "separate";
 export type RetrieverName = "full-scan" | "indexed" | "adaptive";
 export type RelevanceKind = "direct" | "related";
 export type DirectClass = "strong" | "moderate" | "weak" | "none";
-export type TextRole = "title" | "body";
+export type TextRole = "title" | "body" | "summary";
 export type ConstraintClass = "absolute" | "strong" | "soft";
 export type SourcePolicy = "top1-strong" | "all-strong" | "top-n-strong" | string;
 
@@ -299,17 +299,23 @@ export interface AnalyzeOptions {
 
 export interface IndexedDocument {
   id: string;
-  raw: { id: string; title: string; body: string; metadata?: Record<string, unknown> };
+  raw: { id: string; title: string; body: string; summary?: string; metadata?: Record<string, unknown> };
   title: string;
   body: string;
+  /** Optional third text field. Empty when the schema omits role `summary`. */
+  summary: string;
   titleTokens: string[];
   bodyTokens: string[];
+  summaryTokens: string[];
   titleLemmas: string[];
   bodyLemmas: string[];
+  summaryLemmas: string[];
   titleLemmaSet: Set<string>;
   bodyLemmaSet: Set<string>;
+  summaryLemmaSet: Set<string>;
   titleTokenSet: Set<string>;
   bodyTokenSet: Set<string>;
+  summaryTokenSet: Set<string>;
   nonStopTitle: string[];
   firstToken: string;
   normalizedTitle: string;
@@ -332,6 +338,8 @@ export interface ResolvedSchema {
   fields: Schema;
   titleField: string;
   bodyField: string;
+  /** Null when the schema has no `summary` role. */
+  summaryField: string | null;
 }
 
 export interface SearchIndex {
@@ -342,6 +350,34 @@ export interface SearchIndex {
   surfaceVocabulary: Set<string>;
   /** Internal compact postings compiled at build time or initialization. */
   compiledLexical?: unknown;
+}
+
+/**
+ * Exact typed-surface phrase statistics. Facts only: no ranking policy
+ * constants (minimum token count, maximum DF) live here.
+ */
+export interface ExactPhraseHit {
+  document: IndexedDocument;
+  titleFrequency: number;
+  summaryFrequency: number;
+  bodyFrequency: number;
+}
+
+export interface ExactPhraseEvidence {
+  /** Typed `query.originalSurface` tokens (tokenizer identity). */
+  tokens: string[];
+  /** `tokens.length`; metadata only, not a policy branch. */
+  tokenCount: number;
+  corpusSize: number;
+  /** Documents with the exact contiguous sequence in title, summary, or body. */
+  phraseDf: number;
+  /** Documents containing every typed token, any order, title∪summary∪body. */
+  conjunctionDf: number;
+  /** `phraseDf / conjunctionDf` when `conjunctionDf > 0`, else null. */
+  selectivity: number | null;
+  /** Per unique typed token, first-seen order: documents containing that token. */
+  tokenDfs: Array<{ token: string; df: number }>;
+  hits: ExactPhraseHit[];
 }
 
 export interface RelationshipEdge {
@@ -440,6 +476,12 @@ export interface FeatureVector {
   matchingPhraseKey: string | null;
   bodyPhraseCount: number;
   bodyPhraseFrequency: number;
+  /** Exact typed-surface phrase occurrences in the title field. */
+  titlePhraseFrequency: number;
+  /** Exact typed-surface phrase occurrences in the optional summary field. */
+  summaryPhraseFrequency: number;
+  /** True when the complete typed phrase occurs in title or summary. */
+  exactTitleOrSummaryPhrase: boolean;
   standaloneRecallMatch?: boolean;
   standaloneRecallScore?: number;
   topicalRecallMatch?: boolean;

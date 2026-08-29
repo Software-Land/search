@@ -257,6 +257,10 @@ function relatedOverWeakDirectConstraint(a: FeaturedHit, b: FeaturedHit) {
  * key-in-title, canonical key title, full query/title coverage, or contextual
  * aligned prefix. It is not a universal bodyPhraseCount comparison.
  */
+function hasStrongLexicalFieldPhrase(f: Partial<FeatureVector>) {
+  return Boolean(f.exactTitleOrSummaryPhrase);
+}
+
 function hasRepeatedPhraseEvidence(f: Partial<FeatureVector>) {
   if ((f.bodyPhraseCount || 0) < REPEATED_BODY_PHRASE_MIN) return false;
   // Multi-token compiled phrase only. Occupied queryTokenCount is the max
@@ -279,6 +283,7 @@ function isIncidentalTitleToken(f: Partial<FeatureVector>) {
     lowCoverage &&
     (f.bodyPhraseCount || 0) === 0 &&
     !f.exactTitleMatch &&
+    !f.exactTitleOrSummaryPhrase &&
     f.configuredConceptMatch !== "key-in-title" &&
     f.configuredConceptMatch !== "form" &&
     !f.contextualTitlePrefix
@@ -296,7 +301,7 @@ function isIncidentalTitleToken(f: Partial<FeatureVector>) {
  * (coverage ≥ 2/3, contextual prefix, etc.) is not.
  */
 function isWeakIncidentalPhraseCompetitor(f: Partial<FeatureVector>) {
-  if (hasRepeatedPhraseEvidence(f) || hasConfiguredExpansionEvidence(f)) return false;
+  if (hasRepeatedPhraseEvidence(f) || hasConfiguredExpansionEvidence(f) || hasStrongLexicalFieldPhrase(f)) return false;
   if (f.exactTitleMatch || f.canonicalKeyTitle || f.configuredConceptMatch === "key-in-title") return false;
   if ((f.queryCoverage || 0) >= FULL_QUERY_COVERAGE) return false;
   if (f.directClass === "strong") return false;
@@ -307,8 +312,14 @@ function isWeakIncidentalPhraseCompetitor(f: Partial<FeatureVector>) {
 }
 
 function repeatedPhraseOverWeakDirectConstraint(a: FeaturedHit, b: FeaturedHit) {
-  const aPhrase = hasRepeatedPhraseEvidence(a.features) || hasConfiguredExpansionEvidence(a.features);
-  const bPhrase = hasRepeatedPhraseEvidence(b.features) || hasConfiguredExpansionEvidence(b.features);
+  const aPhrase =
+    hasRepeatedPhraseEvidence(a.features) ||
+    hasConfiguredExpansionEvidence(a.features) ||
+    hasStrongLexicalFieldPhrase(a.features);
+  const bPhrase =
+    hasRepeatedPhraseEvidence(b.features) ||
+    hasConfiguredExpansionEvidence(b.features) ||
+    hasStrongLexicalFieldPhrase(b.features);
   if (aPhrase && isWeakIncidentalPhraseCompetitor(b.features)) return -1;
   if (bPhrase && isWeakIncidentalPhraseCompetitor(a.features)) return 1;
   return 0;

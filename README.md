@@ -39,6 +39,7 @@ const authored = compileAuthoredRelevance({
 const engine = SearchEngine.create({
   schema: {
     title: { type: "text", role: "title" },
+    summary: { type: "text", role: "summary" },
     body: { type: "text", role: "body" },
   },
   plugins: [
@@ -48,12 +49,14 @@ const engine = SearchEngine.create({
 });
 
 await engine.index([
-  { id: "wifi", title: "Wi-Fi", body: "Connect to wireless networks." },
+  { id: "wifi", title: "Wi-Fi", summary: "Connect to wireless networks.", body: "Full article text." },
   { id: "bluetooth", title: "Bluetooth", body: "Connect wireless accessories." },
 ]);
 
 engine.search("wireless");
 ```
+
+Optional schema role `"summary"` is short authored summary or search-description text, distinct from `body`. Omit the role (and the field) to keep the existing title/body contract.
 
 `wifi` as a single token does not match the title `Wi-Fi` unless you configure an alias. That is corpus configuration, not a Core heuristic.
 

@@ -588,7 +588,7 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
       ...Array.from({ length: 120 }, (_, i) => ({
         id: `direct-${String(i).padStart(3, "0")}`,
         title: `Primary notes ${i}`,
-        body: "primary primary",
+        body: i < 2 ? "exact primary primary primary" : "primary primary",
       })),
       ...related,
     ];

@@ -6,7 +6,7 @@
  * and custom retrievers; the declarations no longer leave those slots untyped.
  */
 
-export type TextRole = "title" | "body";
+export type TextRole = "title" | "body" | "summary";
 
 export interface SchemaField {
   type: "text";
@@ -19,6 +19,8 @@ export interface SearchDocument {
   id: string;
   title?: string;
   body?: string;
+  /** Optional summary/abstract field when the schema includes role `summary`. */
+  summary?: string;
   metadata?: Record<string, unknown>;
   [field: string]: unknown;
 }

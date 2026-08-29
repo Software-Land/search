@@ -1,5 +1,5 @@
 /**
- * Canonical V1 E2E historical top-N contract (query / expectedTop / topN).
+ * V2 against V1 historical top-N contract (query / expectedTop / topN).
  * Software.Land tests/search-scenarios.js scenario.v1 is the source of truth.
  * This helper freezes the OSS mirror and hashes it so the two repos cannot
  * silently diverge. It does not run search.
@@ -7,7 +7,7 @@
 import { createHash } from "node:crypto";
 
 export const V1_HISTORICAL_TOPN_CONTRACT_SHA256 =
-  "8818469e04d6d0ff25bbfb400971b0e9440c5d9fc3e0a964d7554761791d43ce";
+  "585c6e92f2d9efa10f7dc42d6c01fe7106b8ca6d97abc4df3700112e2c35bbf6";
 export const V1_HISTORICAL_TOPN_INVENTORY_COUNT = 215;
 export const V1_HISTORICAL_TOPN_ENFORCED_COUNT = 214;
 export const V1_HISTORICAL_TOPN_OBSOLETE_QUERY = "open";

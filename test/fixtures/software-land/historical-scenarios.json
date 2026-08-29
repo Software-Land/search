@@ -653,7 +653,7 @@
       "query": "transport layer security",
       "classification": "B",
       "disposition": "regression-b-intent",
-      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "note": "0.6 phrase-cohort: spoken TLS expansion is a rare exact phrase whose configured title-grade support set is {TLS 1.2 Vulnerability}, so the public primary list collapses to that document. VPN remains equivalent-recall for the short key tls, not for this phrase query.",
       "intent": {
         "requiredPrimary": [
           "TLS 1.2 Vulnerability"
@@ -669,10 +669,9 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "TLS 1.2 Vulnerability",
-          "What is VPN?"
+          "TLS 1.2 Vulnerability"
         ],
-        "topN": 2
+        "topN": 1
       }
     },
     {
@@ -2164,6 +2163,7 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
+          "OOP vs Functional",
           "What is OOP (Object-Oriented Programming)?"
         ],
         "topN": 2
@@ -2416,7 +2416,12 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "TLS 1.2 Vulnerability"
+          "TLS 1.2 Vulnerability",
+          "TCP vs UDP",
+          "Bearer Token",
+          "gRPC vs REST",
+          "React Authentication",
+          "Vite React"
         ],
         "topN": 10
       }
@@ -4084,7 +4089,7 @@
       "query": "internet of things",
       "classification": "B",
       "disposition": "regression-b-intent",
-      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "note": "0.6 phrase-cohort: spoken IoT expansion is a rare exact phrase whose configured title-grade support set is {What is IoT?}, so the public primary list collapses to that document.",
       "intent": {
         "requiredPrimary": [
           "What is IoT?"
@@ -4100,12 +4105,9 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "What is IoT?",
-          "Edge Computing",
-          "Event Driven Architecture",
-          "TLS 1.2 Vulnerability"
+          "What is IoT?"
         ],
-        "topN": 5
+        "topN": 1
       }
     },
     {
