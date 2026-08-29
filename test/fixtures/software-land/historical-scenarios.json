@@ -753,8 +753,6 @@
       "v1": {
         "expectedTop": [
           "RBAC (Role Based Access Control)",
-          "CockroachDB vs Postgres",
-          "React Authentication",
           "Authorization Middleware"
         ],
         "topN": 8
@@ -2166,7 +2164,6 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "OOP vs Functional",
           "What is OOP (Object-Oriented Programming)?"
         ],
         "topN": 2
@@ -2419,12 +2416,7 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "TLS 1.2 Vulnerability",
-          "TCP vs UDP",
-          "Bearer Token",
-          "gRPC vs REST",
-          "React Authentication",
-          "Vite React"
+          "TLS 1.2 Vulnerability"
         ],
         "topN": 10
       }

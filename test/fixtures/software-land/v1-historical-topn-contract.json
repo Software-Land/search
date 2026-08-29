@@ -17,7 +17,7 @@
       "reason": "classification C is obsolete; not enforced on V1 or V2 E2E"
     }
   ],
-  "sha256": "fb1dc6c27d6f3b961e3c86954193267f9613d7403efff87f2a29cf426190c511",
+  "sha256": "8818469e04d6d0ff25bbfb400971b0e9440c5d9fc3e0a964d7554761791d43ce",
   "rows": [
     {
       "index": 0,
@@ -320,8 +320,6 @@
       "query": "role based access control",
       "expectedTop": [
         "RBAC (Role Based Access Control)",
-        "CockroachDB vs Postgres",
-        "React Authentication",
         "Authorization Middleware"
       ],
       "titlePrefix": null,
@@ -897,7 +895,6 @@
       "index": 79,
       "query": "object oriented programming vs functional",
       "expectedTop": [
-        "OOP vs Functional",
         "What is OOP (Object-Oriented Programming)?"
       ],
       "titlePrefix": null,
@@ -996,12 +993,7 @@
       "index": 89,
       "query": "hypertext transfer protocol secure",
       "expectedTop": [
-        "TLS 1.2 Vulnerability",
-        "TCP vs UDP",
-        "Bearer Token",
-        "gRPC vs REST",
-        "React Authentication",
-        "Vite React"
+        "TLS 1.2 Vulnerability"
       ],
       "titlePrefix": null,
       "topN": 10

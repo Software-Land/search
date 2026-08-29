@@ -8,6 +8,8 @@ import {
   loadLexicalIndex,
 } from "./lexicalIndex.js";
 import { extractFeatures } from "./features.js";
+import { retrievalSourcesForDocument } from "./retrieve.js";
+import { applyLongPhraseExclusivity } from "./phraseExclusivity.js";
 import {
   exhaustiveFeaturePruningStats,
   planExactFeaturePruning,
@@ -725,6 +727,11 @@ export class SearchEngine {
     });
     let featured = expanded.featured;
     const { applied, featureMs, relationshipMs, pruningStats, featureVectorsConstructed } = expanded;
+    featured = applyLongPhraseExclusivity(featured, query, index, (doc) => ({
+      document: doc,
+      retrievalSources: retrievalSourcesForDocument(query, doc),
+      features: extractFeatures(query, doc, { relationship: null, retrievalScore: 0 }),
+    }));
 
     const constraints = constraintsForStrategy(strategy);
     let representativeStats: Record<string, unknown> | null = null;
@@ -855,6 +862,11 @@ export class SearchEngine {
     });
     let featured = expanded.featured;
     const { applied, featureMs, relationshipMs, pruningStats, featureVectorsConstructed } = expanded;
+    featured = applyLongPhraseExclusivity(featured, query, index, (doc) => ({
+      document: doc,
+      retrievalSources: retrievalSourcesForDocument(query, doc),
+      features: extractFeatures(query, doc, { relationship: null, retrievalScore: 0 }),
+    }));
 
     throwIfAborted(signal);
     await Promise.resolve();

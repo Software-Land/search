@@ -42,7 +42,7 @@ interface VersionHit {
   numberConcepts: number;
 }
 
-function sequencePresent(needles: string[], hay: string[]) {
+export function sequencePresent(needles: string[], hay: string[] | ArrayLike<string>) {
   const n = needles.length;
   if (!n || hay.length < n) return false;
   for (let i = 0; i <= hay.length - n; i++) {

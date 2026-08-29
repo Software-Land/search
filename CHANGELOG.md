@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0
+
+### Added
+
+- Long-phrase exclusivity: when the typed query tokenizes to at least 4 tokens and that exact contiguous surface phrase occurs in 1 or 2 documents, public `search()` / `searchDetailed().results` are exactly those documents, ranked with the existing scorer. Shorter queries, phrases that occur in no document, and phrases that occur in 3 or more documents keep 0.5.0 retrieval and ranking. Phrase identity uses the existing tokenizer (lowercase, punctuation folding, typed surface tokens) and does not use lemmas, typos, synonyms, configured aliases, equivalent recall, prefix completion, or `phraseAdjacency`. Because identity is the typed surface, a long configured alias/form may exclusive-collapse while its short configured key does not; that is an explicit exception to ordinary configured key/form result parity, not an identity regression.
+
 ## 0.5.0
 
 ### Breaking
