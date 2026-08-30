@@ -133,3 +133,31 @@ export function buildTokenGraph(query: AnalyzedQuery): TokenGraph {
 export function graphHasConfiguredAlternatives(graph: TokenGraph): boolean {
   return graph.configuredEdgeCount > 0;
 }
+
+/** True when executing the DAG (not a plain PhraseQuery) would use configured edges. */
+export function queryHasTypedConfiguredGraph(query: AnalyzedQuery): boolean {
+  const typed = typedSurfacePhraseTokens(query);
+  if (typed.length < 2) return false;
+  const spans = query.configuredSpans || [];
+  for (const span of spans) {
+    if (!configuredSpanIsTypedIdentity(query, span)) continue;
+    const key = String(span.key || "").toLowerCase();
+    if (!key) continue;
+    const surface = typed.slice(span.start, span.end);
+    if (surface.length === 1 && surface[0] === key) continue;
+    return true;
+  }
+  return false;
+}
+
+export function emptyTokenGraph(typedTokens: string[]): TokenGraph {
+  const n = typedTokens.length;
+  return {
+    typedTokens,
+    length: n,
+    edges: [],
+    edgesFrom: Array.from({ length: n + 1 }, () => []),
+    configuredEdgeCount: 0,
+    maxFanout: 0,
+  };
+}

@@ -19,7 +19,10 @@ export interface SearchDocument {
   id: string;
   title?: string;
   body?: string;
-  /** Optional summary/abstract field when the schema includes role `summary`. */
+  /**
+   * Optional summary/abstract when the schema includes role `summary`.
+   * Phrase, configured-field, and ranking evidence only — not unigram candidate generation.
+   */
   summary?: string;
   metadata?: Record<string, unknown>;
   [field: string]: unknown;
@@ -163,7 +166,8 @@ export interface SearchOptions {
    * `"complete-interpretation"` keeps documents that fully match a positional
    * phrase or phrase-prefix clause. If the typed phrase has no exact PhraseQuery
    * hit, every PhrasePrefix field participates. If an exact hit exists, body-only
-   * PhrasePrefix expansions stay out. Occupancy and version queries skip it.
+   * PhrasePrefix expansions stay out. Occupancy, configured-content identity, and
+   * version queries skip it.
    */
   resultCollector?: "complete-interpretation";
 }

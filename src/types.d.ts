@@ -314,7 +314,7 @@ export interface IndexedDocument {
   raw: { id: string; title: string; body: string; summary?: string; metadata?: Record<string, unknown> };
   title: string;
   body: string;
-  /** Optional third text field. Empty when the schema omits role `summary`. */
+  /** Optional third text field. Empty when the schema omits role `summary`. Phrase/configured/ranking evidence, not unigram postings. */
   summary: string;
   titleTokens: string[];
   bodyTokens: string[];
@@ -729,7 +729,8 @@ export interface SearchOptions {
   /**
    * Optional built-in result collector applied after query execution and
    * before ranking. Default is ordinary ranked retrieval. When the typed
-   * phrase has no exact hit, all PhrasePrefix fields participate.
+   * phrase has no exact hit, all PhrasePrefix fields participate. Occupancy,
+   * configured-content identity, and version queries skip the collector.
    */
   resultCollector?: "complete-interpretation";
 }

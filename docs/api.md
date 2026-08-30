@@ -57,7 +57,7 @@ Same documents, configuration, artifacts, and query produce the same ordering, e
 
 ## Documents and schema
 
-Stable field roles are `title`, `body`, and optional `summary`. Role `"summary"` is short authored summary or search-description text, distinct from `body`. It is optional: omit the role to keep the two-field contract. See `docs/schema.md`.
+Stable field roles are `title`, `body`, and optional `summary`. Role `"summary"` is short authored summary or search-description text, distinct from `body`. It is optional: omit the role to keep the two-field contract. Summary is phrase/configured/ranking evidence, not a third unigram posting field. See `docs/schema.md`.
 
 ## Plugins (opt-in types)
 

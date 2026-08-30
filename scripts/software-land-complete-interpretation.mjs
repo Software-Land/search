@@ -78,6 +78,7 @@ function probe(q, enableCollector) {
     version: plan.versionIntent,
     exactHits: plan.exactHits,
     prefixHits: plan.prefixHits,
+    configuredContentIdentity: Boolean(plan.configuredContentIdentity),
   });
   const graph = buildTokenGraph(analyzed);
   const opts = enableCollector ? { limit: 10, resultCollector: COMPLETE_INTERPRETATION_COLLECTOR } : { limit: 10 };

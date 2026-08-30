@@ -4,7 +4,8 @@
  * not the frozen ranking oracle.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
-import { COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/completeInterpretationCollector.js";
+import { COMPLETE_INTERPRETATION_COLLECTOR, collectCompleteInterpretations } from "../dist/completeInterpretationCollector.js";
+import { buildQueryPlan } from "../dist/queryPlan.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { loadSoftwareLandRelevanceInputs } from "./helpers/software-land-fixture.js";
 import { readdirSync, readFileSync } from "node:fs";
@@ -152,11 +153,36 @@ describe("Software.Land complete-interpretation collector", () => {
   });
 
   test("configured-content identity declines the collector for wrapper-complete keys", () => {
-    for (const q of ["what is an api", "what is rpc", "what is tls", "what is oauth", "an api", "the api"]) {
+    for (const q of ["what is an api", "what is rpc", "what is tls", "what is oauth", "an api", "the api", "what is appsec"]) {
       const off = engine.search(q, { limit: 10 }).map((h) => h.id);
       const on = engine.search(q, COLLECTOR).map((h) => h.id);
       expect(on).toEqual(off);
       expect(on.length).toBeGreaterThan(1);
     }
+  });
+
+  test("direct collectCompleteInterpretations must pass configuredContentIdentity", () => {
+    const q = "what is appsec";
+    const analyzed = engine._prepareQuery(q);
+    const plan = buildQueryPlan(analyzed, engine._index);
+    expect(plan.configuredContentIdentity).toBe("appsec");
+    expect(plan.structuredKey).toBeFalsy();
+    const omitted = collectCompleteInterpretations({
+      occupancy: Boolean(plan.structuredKey),
+      version: plan.versionIntent,
+      exactHits: plan.exactHits,
+      prefixHits: plan.prefixHits,
+    });
+    const faithful = collectCompleteInterpretations({
+      occupancy: Boolean(plan.structuredKey),
+      version: plan.versionIntent,
+      exactHits: plan.exactHits,
+      prefixHits: plan.prefixHits,
+      configuredContentIdentity: Boolean(plan.configuredContentIdentity),
+    });
+    expect(omitted.reason).not.toBe("configured-content-identity");
+    expect(faithful.apply).toBe(false);
+    expect(faithful.reason).toBe("configured-content-identity");
+    expect(engine.search(q, COLLECTOR).map((h) => h.id)).toEqual(engine.search(q, { limit: 10 }).map((h) => h.id));
   });
 });

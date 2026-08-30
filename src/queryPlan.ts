@@ -4,7 +4,7 @@
  * Does not call extractFeatures on the corpus. Does not choose the public list.
  */
 
-import { buildTokenGraph, graphHasConfiguredAlternatives, type TokenGraph } from "./configuredFormGraph.js";
+import { buildTokenGraph, emptyTokenGraph, queryHasTypedConfiguredGraph, type TokenGraph } from "./configuredFormGraph.js";
 import { typedSurfacePhraseTokens } from "./phraseEvidence.js";
 import {
   emptyExecutionStats,
@@ -51,6 +51,8 @@ export type PhraseGeometry = {
 
 /** Phrase geometry from the search-path execution. Ranking/features reuse this. */
 export const queryPhraseGeometry = new WeakMap<AnalyzedQuery, Map<string, PhraseGeometry>>();
+/** When true, geometry includes configured-key shortcuts and must not replace typed-surface sequence counts. */
+export const queryPhraseGeometryFromGraph = new WeakSet<AnalyzedQuery>();
 
 function recordGeometry(query: AnalyzedQuery, exact: FieldPhraseHit[], prefix: FieldPhraseHit[]) {
   const map = new Map<string, PhraseGeometry>();
@@ -108,11 +110,12 @@ export function titleGradeSupportKinds(features: Partial<FeatureVector>): TitleG
 export function buildQueryPlan(query: AnalyzedQuery, index: SearchIndex): QueryPlan {
   const typedTokens = typedSurfacePhraseTokens(query);
   const stats = emptyExecutionStats();
-  const tokenGraph = buildTokenGraph(query);
-  const useGraph = graphHasConfiguredAlternatives(tokenGraph);
+  const useGraph = queryHasTypedConfiguredGraph(query);
+  const tokenGraph = useGraph ? buildTokenGraph(query) : emptyTokenGraph(typedTokens);
   let exactHits: FieldPhraseHit[] = [];
   let prefixHits: FieldPhraseHit[] = [];
   if (useGraph) {
+    queryPhraseGeometryFromGraph.add(query);
     exactHits = executeTokenGraph(tokenGraph, index, false, stats);
     prefixHits = executeTokenGraph(tokenGraph, index, true, stats);
   } else if (typedTokens.length >= 2) {

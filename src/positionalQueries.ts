@@ -72,10 +72,22 @@ export function emptyExecutionStats(): ExecutionStats {
 
 function nextAligned(positions: number[], minPos: number, stats: ExecutionStats): number | null {
   stats.positionalComparisons += 1;
-  for (let i = 0; i < positions.length; i++) {
-    if (positions[i] >= minPos) return positions[i];
+  const n = positions.length;
+  if (!n || positions[n - 1] < minPos) return null;
+  if (n <= 8) {
+    for (let i = 0; i < n; i++) {
+      if (positions[i] >= minPos) return positions[i];
+    }
+    return null;
   }
-  return null;
+  let lo = 0;
+  let hi = n;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (positions[mid] < minPos) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo < n ? positions[lo] : null;
 }
 
 function phraseFrequency(
@@ -181,33 +193,36 @@ function unionFirstTokenDocs(index: PositionalIndex, tokens: string[], field: Ph
 
 function accumulateFieldHits(
   searchIndex: SearchIndex,
-  docs: number[],
+  perField: Map<PhraseField, number[]>,
   freq: (d: number, field: PhraseField) => number,
   stats: ExecutionStats,
   fields: PhraseField[]
 ): FieldPhraseHit[] {
   const byDoc = new Map<number, FieldPhraseHit>();
-  stats.docsVisited += docs.length;
+  let docsVisited = 0;
   for (const field of fields) {
-    stats.fieldDocProbes += docs.length;
-    for (const d of docs) {
+    const row = perField.get(field) || [];
+    docsVisited += row.length;
+    stats.fieldDocProbes += row.length;
+    for (const d of row) {
       const frequency = freq(d, field);
       if (!frequency) continue;
-      let row = byDoc.get(d);
-      if (!row) {
-        row = {
+      let hit = byDoc.get(d);
+      if (!hit) {
+        hit = {
           document: searchIndex.documents[d],
           titleFrequency: 0,
           summaryFrequency: 0,
           bodyFrequency: 0,
         };
-        byDoc.set(d, row);
+        byDoc.set(d, hit);
       }
-      if (field === "title") row.titleFrequency = frequency;
-      else if (field === "summary") row.summaryFrequency = frequency;
-      else row.bodyFrequency = frequency;
+      if (field === "title") hit.titleFrequency = frequency;
+      else if (field === "summary") hit.summaryFrequency = frequency;
+      else hit.bodyFrequency = frequency;
     }
   }
+  stats.docsVisited += docsVisited;
   return [...byDoc.values()].filter((h) => h.titleFrequency + h.summaryFrequency + h.bodyFrequency > 0);
 }
 
@@ -224,13 +239,13 @@ export function executePhraseQuery(
   if (tokens.length < 2) return [];
   const pos = positionalIndexOf(searchIndex);
   const fields = fieldsOf(query);
-  const docs = new Set<number>();
+  const perField = new Map<PhraseField, number[]>();
   for (const field of fields) {
-    for (const d of candidateDocs(pos, tokens, field, stats)) docs.add(d);
+    perField.set(field, candidateDocs(pos, tokens, field, stats));
   }
   return accumulateFieldHits(
     searchIndex,
-    [...docs],
+    perField,
     (d, field) => phraseFrequency(pos, tokens, field, d, stats),
     stats,
     fields
@@ -247,13 +262,13 @@ export function executePhrasePrefixQuery(
   if (!prefix || preceding.length < 1) return [];
   const pos = positionalIndexOf(searchIndex);
   const fields = fieldsOf(query);
-  const docs = new Set<number>();
+  const perField = new Map<PhraseField, number[]>();
   for (const field of fields) {
-    for (const d of candidateDocs(pos, preceding, field, stats)) docs.add(d);
+    perField.set(field, candidateDocs(pos, preceding, field, stats));
   }
   return accumulateFieldHits(
     searchIndex,
-    [...docs],
+    perField,
     (d, field) => phrasePrefixFrequency(pos, preceding, prefix, field, d, searchIndex, stats),
     stats,
     fields
@@ -385,13 +400,13 @@ export function executeTokenGraph(
   const pos = positionalIndexOf(searchIndex);
   const first = graphFirstTokens(graph);
   if (!first.length) return [];
-  const docs = new Set<number>();
+  const perField = new Map<PhraseField, number[]>();
   for (const field of PHRASE_FIELDS) {
-    for (const d of unionFirstTokenDocs(pos, first, field, stats)) docs.add(d);
+    perField.set(field, unionFirstTokenDocs(pos, first, field, stats));
   }
   return accumulateFieldHits(
     searchIndex,
-    [...docs],
+    perField,
     (d, field) =>
       graphFrequency(
         tokensOf(searchIndex.documents[d], field),

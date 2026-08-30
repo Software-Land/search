@@ -11,6 +11,15 @@ Stable field roles are **title**, **body**, and optional **summary**.
 
 An optional third text field uses role `"summary"` (not `"description"`). Callers that omit it keep the two-field contract.
 
+`summary` is **not** a third ordinary lexical posting field. Unigram / token / lemma candidate generation still uses **title** and **body** only. Summary is consumed for:
+
+- positional PhraseQuery and PhrasePrefixQuery (contiguous originalSurface in the summary token stream)
+- configured-concept field evidence (`configuredConceptFieldEvidence.summary`)
+- typed-phrase ranking features (`summaryPhraseFrequency`, `exactTitleOrSummaryPhrase`)
+- complete-interpretation authored (title∪summary) prefix membership
+
+A term that occurs only as a summary unigram, with no title/body lexical hit and no ≥2-token exact phrase, is not a retrieval candidate.
+
 ```js
 {
   title: { type: "text", role: "title" },

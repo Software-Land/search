@@ -416,7 +416,12 @@ export function compactIndexFromAnalyzed(
 ): SearchIndex {
   const payload = buildPayload(index);
   const artifact = envelope(payload, index, analyzer);
-  return indexFromPayload(payload, artifact, sourceRowsFromIndex(index), index.schema.fields);
+  const next = indexFromPayload(payload, artifact, sourceRowsFromIndex(index), index.schema.fields);
+  const positional = (index as SearchIndex & { positional?: unknown }).positional;
+  if (positional && index.documents.length === next.documents.length) {
+    (next as SearchIndex & { positional?: unknown }).positional = positional;
+  }
+  return next;
 }
 
 export function compileLexicalIndexFromSearchIndex(

@@ -2,6 +2,7 @@ import { sequenceKey } from "./configuredAuthoring.js";
 import { isNearCompletePrefix, levenshteinAtMost, DEFAULT_STOP, allowPrefixMatch } from "./text.js";
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "./versionForms.js";
 import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, hasConfiguredRankingIntent, hasConfiguredContentIdentity, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall, topicalRecallHint, topicalFormEvidence, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts, rankingCoverageConcepts, formContentTokens, sequenceCount, shortTitleTokenPrefixStub, configuredConceptFieldMatch } from "./retrieve.js";
+import { queryPhraseGeometry, queryPhraseGeometryFromGraph } from "./queryPlan.js";
 import { scoreFeatures } from "./rank.js";
 import { saturatingFrequency } from "./saturatingFrequency.js";
 import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "./lexicalNormalize.js";
@@ -912,6 +913,16 @@ function typedPhraseFieldFrequencies(query: AnalyzedQuery, doc: IndexedDocument)
   // Typed originalSurface only. Token-graph hits (configured-key shortcuts)
   // are not complete typed-phrase evidence — a summary mention of a 1-token
   // key is not an exact title/summary phrase of a multi-token form.
+  if (!queryPhraseGeometryFromGraph.has(query)) {
+    const geo = queryPhraseGeometry.get(query)?.get(doc.id);
+    if (geo) {
+      return {
+        titlePhraseFrequency: geo.titleFrequency,
+        summaryPhraseFrequency: geo.summaryFrequency,
+        exactTitleOrSummaryPhrase: geo.titleFrequency > 0 || geo.summaryFrequency > 0,
+      };
+    }
+  }
   const titlePhraseFrequency = sequenceCount(tokens, doc.titleTokens);
   const summaryPhraseFrequency = sequenceCount(tokens, doc.summaryTokens || []);
   return {
