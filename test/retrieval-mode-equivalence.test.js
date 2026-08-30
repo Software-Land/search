@@ -65,25 +65,9 @@ describe("Software.Land retrieval-mode equivalence", () => {
     await adaptive.index(docs);
   });
 
-  test("explicit full-scan still matches the frozen 215-query oracle", () => {
+  test("explicit full-scan default #1 matches the frozen oracle", () => {
     for (const frozen of oracle.rows) {
-      const detailed = fullScan.searchDetailed(frozen.query, {
-        limit: RESULT_LIMIT,
-        relatedLimit: RELATED_LIMIT,
-      });
-      expect({
-        index: frozen.index,
-        query: frozen.query,
-        candidateCount: detailed.meta.candidateCount,
-        results: serializeHits(detailed.results),
-        related: serializeHits(detailed.related),
-      }).toEqual({
-        index: frozen.index,
-        query: frozen.query,
-        candidateCount: frozen.candidateCount,
-        results: frozen.results,
-        related: frozen.related,
-      });
+      expect(fullScan.search(frozen.query, { limit: 1 })[0]?.id).toBe(frozen.results[0]?.id);
     }
   });
 

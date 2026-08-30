@@ -1,17 +1,12 @@
 /**
- * Optional summary field, exact phrase field provenance, and query-plan
- * result-set permission. Token count is not a relevance policy.
+ * Optional summary field, exact phrase field provenance, and QueryPlan facts.
+ * Result-set collapse is not QueryPlan policy.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import { extractFeatures } from "../dist/features.js";
 import { computeExactPhraseEvidence } from "../dist/phraseEvidence.js";
-import { exclusivePhraseDocuments } from "../dist/phraseExclusivity.js";
-import {
-  buildQueryPlan,
-  MAX_EXCLUSIVE_PHRASE_COHORT,
-  phraseCohortFilterPermission,
-  titleGradeSupportKinds,
-} from "../dist/queryPlan.js";
+import { buildQueryPlan, titleGradeSupportKinds } from "../dist/queryPlan.js";
+import { collectCompleteInterpretations, COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/completeInterpretationCollector.js";
 import { rankCandidates } from "../dist/rank.js";
 import { constraintsForStrategy } from "../dist/constraints.js";
 import { retrievalSourcesForDocument } from "../dist/retrieve.js";
@@ -136,8 +131,6 @@ describe("exact phrase field evidence", () => {
   beforeAll(async () => {
     engine = createEngine({
       rpc: [{ kind: "equivalent", to: { form: "grpc" } }],
-      // Synthetic equivalent support for the supportSet ⊆ P predicate only.
-      // Not Software.Land authored data: HTTPS is not equivalent to TLS.
       https: [{ kind: "equivalent", to: { form: "tls" } }],
       xss: [{ kind: "related", to: { form: ["react", "authentication"] } }],
     });
@@ -168,97 +161,67 @@ describe("exact phrase field evidence", () => {
     expect(bodyEv.hits[0].titleFrequency).toBe(0);
     expect(bodyEv.hits[0].summaryFrequency).toBe(0);
   });
-
-  test("phrase cohort is independent of ordinary retrieval", () => {
-    const query = engine._prepareQuery("two-layer authorization");
-    const ev = computeExactPhraseEvidence(query, engine._index);
-    expect(ev.hits.map((hit) => hit.document.id)).toEqual(["cloudfront"]);
-    expect(ev.phraseDf).toBe(1);
-  });
 });
 
-describe("query-plan clause agreement and filter permission", () => {
+describe("query-plan facts", () => {
   let engine;
 
   beforeAll(async () => {
     engine = createEngine({
       rpc: [{ kind: "equivalent", to: { form: "grpc" } }],
-      // Synthetic equivalent support for the supportSet ⊆ P predicate only.
-      // Not Software.Land authored data: HTTPS is not equivalent to TLS.
       https: [{ kind: "equivalent", to: { form: "tls" } }],
       xss: [{ kind: "related", to: { form: ["react", "authentication"] } }],
     });
     await engine.index(docs);
   });
 
-  test("query plan records independent clauses without a public DSL", () => {
+  test("query plan records independent clauses without result policy", () => {
     const plan = buildQueryPlan(engine._prepareQuery("remote procedure call"), engine._index);
     expect(plan.clauses.lexical).toBe(true);
     expect(plan.clauses.exactPhrase).toBe(true);
     expect(plan.clauses.structuredIntent).toBe(true);
     expect(plan.clauses.equivalentRecall).toBe(true);
     expect(plan.clauses.versionIntent).toBe(false);
-    expect(plan.clauses.topicalRecall).toBe(false);
+    expect("filterToPhraseCohort" in plan).toBe(false);
+    expect("phraseIds" in plan).toBe(false);
+    expect("filterReason" in plan).toBe(false);
   });
 
-  test("MAX_EXCLUSIVE_PHRASE_COHORT is a result-set bound of 2", () => {
-    expect(MAX_EXCLUSIVE_PHRASE_COHORT).toBe(2);
+  test("occupancy and version are facts, not filter permission", () => {
+    const rpc = buildQueryPlan(engine._prepareQuery("remote procedure call"), engine._index);
+    expect(rpc.structuredKey).toBe("rpc");
+    expect(rpc.versionIntent).toBe(false);
+    const tls = buildQueryPlan(engine._prepareQuery("tls 1.2"), engine._index);
+    expect(tls.versionIntent).toBe(true);
   });
 
-  test("supportSet ⊆ P allows filter", () => {
-    const plan = buildQueryPlan(engine._prepareQuery("hypertext transfer protocol secure"), engine._index);
-    expect(plan.supportIds).toContain("tls");
-    expect(plan.phraseIds).toEqual(["tls"]);
-    expect(plan.filterToPhraseCohort).toBe(true);
-    expect(plan.filterReason).toBe("support-subset-of-rare-phrase");
-  });
-
-  test("support outside P forbids filter", () => {
-    const plan = buildQueryPlan(engine._prepareQuery("remote procedure call"), engine._index);
-    expect(plan.phraseIds).toEqual(["build"]);
-    expect(plan.supportIds).toContain("grpc");
-    expect(plan.filterToPhraseCohort).toBe(false);
-    expect(plan.filterReason).toBe("support-outside-phrase-cohort");
-    expect(exclusivePhraseDocuments(engine._prepareQuery("remote procedure call"), engine._index)).toBeNull();
-  });
-
-  test("empty support + title/summary phrase allows filter", () => {
-    const plan = buildQueryPlan(engine._prepareQuery("two-layer authorization"), engine._index);
-    expect(plan.supportIds).toEqual([]);
-    expect(plan.filterToPhraseCohort).toBe(true);
-    expect(plan.filterReason).toBe("unoccupied-title-or-summary-rare-phrase");
-  });
-
-  test("empty support + body-only phrase forbids filter", () => {
-    const plan = buildQueryPlan(engine._prepareQuery("in many programming languages"), engine._index);
-    expect(plan.filterToPhraseCohort).toBe(false);
-    expect(plan.filterReason).toBe("body-only-phrase-without-support");
-  });
-
-  test("version intent forbids filter even with a title phrase", () => {
-    const plan = buildQueryPlan(engine._prepareQuery("tls 1.2"), engine._index);
-    expect(plan.versionIntent).toBe(true);
-    expect(plan.filterToPhraseCohort).toBe(false);
-    expect(plan.filterReason).toBe("version-clause-present");
-    const permission = phraseCohortFilterPermission({
-      versionIntent: true,
-      phraseIds: ["tls"],
-      supportIds: ["tls"],
-      hits: plan.exactPhrase.hits,
-    });
-    expect(permission.filter).toBe(false);
-  });
-
-  test("support kinds are title-grade only, with distinct provenance", () => {
+  test("support kinds are title-grade only", () => {
     const query = engine._prepareQuery("remote procedure call");
     const grpc = engine._index.documents.find((doc) => doc.id === "grpc");
     const build = engine._index.documents.find((doc) => doc.id === "build");
     expect(titleGradeSupportKinds(extractFeatures(query, grpc))).toContain("equivalent-recall-title");
     expect(titleGradeSupportKinds(extractFeatures(query, build))).toEqual([]);
-    const plan = buildQueryPlan(query, engine._index);
-    const grpcSupport = plan.support.find((row) => row.id === "grpc");
-    expect(grpcSupport.provenance).toContain("equivalent");
-    expect(grpcSupport.provenance).not.toContain("topical");
+  });
+
+  test("collector declines occupancy and version from plan facts", () => {
+    const rpc = buildQueryPlan(engine._prepareQuery("remote procedure call"), engine._index);
+    expect(
+      collectCompleteInterpretations({
+        occupancy: Boolean(rpc.structuredKey),
+        version: rpc.versionIntent,
+        exactHits: rpc.exactHits,
+        prefixHits: rpc.prefixHits,
+      }).reason
+    ).toBe("occupancy");
+    const tls = buildQueryPlan(engine._prepareQuery("tls 1.2"), engine._index);
+    expect(
+      collectCompleteInterpretations({
+        occupancy: Boolean(tls.structuredKey),
+        version: tls.versionIntent,
+        exactHits: tls.exactHits,
+        prefixHits: tls.prefixHits,
+      }).reason
+    ).toBe("version");
   });
 });
 
@@ -268,8 +231,6 @@ describe("phrase ranking vs result-set policy", () => {
   beforeAll(async () => {
     engine = createEngine({
       rpc: [{ kind: "equivalent", to: { form: "grpc" } }],
-      // Synthetic equivalent support for the supportSet ⊆ P predicate only.
-      // Not Software.Land authored data: HTTPS is not equivalent to TLS.
       https: [{ kind: "equivalent", to: { form: "tls" } }],
       xss: [{ kind: "related", to: { form: ["react", "authentication"] } }],
     });
@@ -278,7 +239,8 @@ describe("phrase ranking vs result-set policy", () => {
 
   test("summary exact phrase beats incidental one-token title overlap", () => {
     const titles = engine.search("two-layer authorization", { limit: 5 }).map((hit) => hit.title);
-    expect(titles).toEqual(["CloudFront Signed Cookies"]);
+    expect(titles[0]).toBe("CloudFront Signed Cookies");
+    expect(titles.length).toBeGreaterThan(1);
     const query = engine._prepareQuery("two layer authorization");
     const featured = engine._index.documents.map((document) => ({
       document,
@@ -294,20 +256,23 @@ describe("phrase ranking vs result-set policy", () => {
 
   test("hyphen and case variants of the summary phrase match", () => {
     for (const q of ["two-layer authorization", "two layer authorization", "TWO-LAYER AUTHORIZATION"]) {
-      expect(engine.search(q, { limit: 3 }).map((hit) => hit.title)).toEqual(["CloudFront Signed Cookies"]);
+      expect(engine.search(q, { limit: 3 }).map((hit) => hit.title)[0]).toBe("CloudFront Signed Cookies");
     }
   });
 
-  test("body-only phrase does not beat conflicting structured/equivalent support", () => {
-    expect(exclusivePhraseDocuments(engine._prepareQuery("remote procedure call"), engine._index)).toBeNull();
+  test("default search does not collapse occupancy phrase mentions", () => {
     const titles = engine.search("remote procedure call", { limit: 5 }).map((hit) => hit.title);
     expect(titles.length).toBeGreaterThan(1);
     expect(titles).toContain("gRPC vs REST");
     expect(titles).toContain("Build Time");
+    const collectorOn = engine.search("remote procedure call", {
+      limit: 5,
+      resultCollector: COMPLETE_INTERPRETATION_COLLECTOR,
+    }).map((hit) => hit.title);
+    expect(collectorOn).toEqual(titles);
   });
 
-  test("occupied markdown mention does not exclusive-collapse XSS", () => {
-    expect(exclusivePhraseDocuments(engine._prepareQuery("cross site scripting"), engine._index)).toBeNull();
+  test("occupied markdown mention does not collapse XSS", () => {
     const titles = engine.search("cross site scripting", { limit: 5 }).map((hit) => hit.title);
     expect(titles.length).toBeGreaterThan(1);
     expect(titles).toContain("React Authentication");

@@ -5,6 +5,7 @@ import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTit
 import { scoreFeatures } from "./rank.js";
 import { saturatingFrequency } from "./saturatingFrequency.js";
 import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "./lexicalNormalize.js";
+import { queryPhraseGeometry } from "./queryPlan.js";
 import {
   asCompactStore,
   compactAdjacentTokens,
@@ -852,6 +853,15 @@ function typedPhraseFieldFrequencies(query: AnalyzedQuery, doc: IndexedDocument)
   if (tokens.length < 2) {
     return { titlePhraseFrequency: 0, summaryPhraseFrequency: 0, exactTitleOrSummaryPhrase: false };
   }
+  const cached = queryPhraseGeometry.get(query)?.get(doc.id);
+  if (cached) {
+    return {
+      titlePhraseFrequency: cached.titleFrequency,
+      summaryPhraseFrequency: cached.summaryFrequency,
+      exactTitleOrSummaryPhrase: cached.titleFrequency > 0 || cached.summaryFrequency > 0,
+    };
+  }
+  // Fallback for extractFeatures callers that did not go through search planning.
   const titlePhraseFrequency = sequenceCount(tokens, doc.titleTokens);
   const summaryPhraseFrequency = sequenceCount(tokens, doc.summaryTokens || []);
   return {

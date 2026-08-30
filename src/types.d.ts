@@ -350,6 +350,8 @@ export interface SearchIndex {
   surfaceVocabulary: Set<string>;
   /** Internal compact postings compiled at build time or initialization. */
   compiledLexical?: unknown;
+  /** Inverted positional postings for PhraseQuery / PhrasePrefixQuery / token-graph execution. */
+  positional?: unknown;
 }
 
 /**
@@ -702,6 +704,11 @@ export interface SearchOptions {
   signal?: AbortSignal;
   candidateLimit?: number | null;
   sourcePolicy?: SourcePolicy;
+  /**
+   * Optional built-in result collector applied after query execution and
+   * before ranking. Default is ordinary ranked retrieval.
+   */
+  resultCollector?: "complete-interpretation";
 }
 
 export interface SearchResultRow {

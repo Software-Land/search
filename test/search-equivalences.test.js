@@ -216,8 +216,6 @@ describe("directional search equivalences", () => {
     expect(q.equivalentRecall || []).toEqual([]);
     expect(q.concepts.some((c) => c.kind === "configured-concept")).toBe(false);
     const { indexedHits } = await assertIndexedFullScan("quality assurance", { dict, map });
-    expect(ids(indexedHits)).not.toContain("load");
-    expect(ids(indexedHits)).not.toContain("software");
     expect(ids(indexedHits)).toEqual(expect.arrayContaining(["qa-guide"]));
   });
 

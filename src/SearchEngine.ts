@@ -10,7 +10,11 @@ import {
 } from "./lexicalIndex.js";
 import { extractFeatures } from "./features.js";
 import { retrievalSourcesForDocument } from "./retrieve.js";
-import { applyPhraseCohortPolicy } from "./phraseExclusivity.js";
+import { buildQueryPlan } from "./queryPlan.js";
+import {
+  applyCompleteInterpretationCollector,
+  COMPLETE_INTERPRETATION_COLLECTOR,
+} from "./completeInterpretationCollector.js";
 import {
   exhaustiveFeaturePruningStats,
   planExactFeaturePruning,
@@ -45,6 +49,7 @@ import type {
   FeaturedHit,
   FeatureVector,
   FinishTimings,
+  IndexedDocument,
   QueryAlternative,
   QueryConcept,
   RankedHit,
@@ -64,6 +69,30 @@ import type {
 } from "./types.js";
 
 export { RELATIONSHIP_STRATEGIES, DEFAULT_RELATIONSHIP_STRATEGY };
+
+function missingPhraseFeatured(query: AnalyzedQuery, doc: IndexedDocument): FeaturedHit {
+  return {
+    document: doc,
+    retrievalSources: retrievalSourcesForDocument(query, doc),
+    features: extractFeatures(query, doc, { relationship: null, retrievalScore: 0 }),
+  };
+}
+
+/** Executed PhraseQuery / PhrasePrefix hits are ranking candidates. Not result-set collapse. */
+function unionExecutedClauseHits(
+  featured: FeaturedHit[],
+  plan: { exactHits: Array<{ document: IndexedDocument }>; prefixHits: Array<{ document: IndexedDocument }> },
+  query: AnalyzedQuery
+): FeaturedHit[] {
+  const seen = new Set(featured.map((hit) => hit.document.id));
+  const extra: FeaturedHit[] = [];
+  for (const hit of [...plan.exactHits, ...plan.prefixHits]) {
+    if (seen.has(hit.document.id)) continue;
+    seen.add(hit.document.id);
+    extra.push(missingPhraseFeatured(query, hit.document));
+  }
+  return extra.length ? featured.concat(extra) : featured;
+}
 
 type TypoCompanionConcept = QueryConcept & {
   distance: number;
@@ -708,6 +737,7 @@ export class SearchEngine {
     const t0 = performance.now();
     const query = this._prepareQuery(rawQuery, { signal });
     const index = requireIndexed(this);
+    const plan = buildQueryPlan(query, index);
 
     const tRetrieve = performance.now();
     const publicDepth = Math.max(0, limit, relatedLimit);
@@ -737,19 +767,16 @@ export class SearchEngine {
       pruningMode,
       requiredDepth: initialRepresentativeDepth,
     });
-    let featured = expanded.featured;
+    let featured = unionExecutedClauseHits(expanded.featured, plan, query);
     const { applied, featureMs, relationshipMs, pruningStats, featureVectorsConstructed } = expanded;
-    featured = applyPhraseCohortPolicy(
-      featured,
-      query,
-      index,
-      (doc) => ({
-        document: doc,
-        retrievalSources: retrievalSourcesForDocument(query, doc),
-        features: extractFeatures(query, doc, { relationship: null, retrievalScore: 0 }),
-      }),
-      strategy
-    );
+    if (opts.resultCollector === COMPLETE_INTERPRETATION_COLLECTOR) {
+      featured = applyCompleteInterpretationCollector(
+        featured,
+        plan,
+        index,
+        (doc) => missingPhraseFeatured(query, doc)
+      ).featured;
+    }
 
     const constraints = constraintsForStrategy(strategy);
     let representativeStats: Record<string, unknown> | null = null;
@@ -836,6 +863,7 @@ export class SearchEngine {
     const t0 = performance.now();
     const query = this._prepareQuery(rawQuery, { signal });
     const index = requireIndexed(this);
+    const plan = buildQueryPlan(query, index);
     throwIfAborted(signal);
     await Promise.resolve();
     throwIfAborted(signal);
@@ -878,19 +906,16 @@ export class SearchEngine {
       pruningMode,
       requiredDepth: initialRepresentativeDepth,
     });
-    let featured = expanded.featured;
+    let featured = unionExecutedClauseHits(expanded.featured, plan, query);
     const { applied, featureMs, relationshipMs, pruningStats, featureVectorsConstructed } = expanded;
-    featured = applyPhraseCohortPolicy(
-      featured,
-      query,
-      index,
-      (doc) => ({
-        document: doc,
-        retrievalSources: retrievalSourcesForDocument(query, doc),
-        features: extractFeatures(query, doc, { relationship: null, retrievalScore: 0 }),
-      }),
-      strategy
-    );
+    if (opts.resultCollector === COMPLETE_INTERPRETATION_COLLECTOR) {
+      featured = applyCompleteInterpretationCollector(
+        featured,
+        plan,
+        index,
+        (doc) => missingPhraseFeatured(query, doc)
+      ).featured;
+    }
 
     throwIfAborted(signal);
     await Promise.resolve();

@@ -21,8 +21,11 @@ Invariant: `search(q, opts)` is semantically identical to `searchDetailed(q, opt
 | `relationshipStrategy` | engine default | `hybrid` \| `mixed` \| `separate` \| `none` |
 | `signal` | — | `AbortSignal`; abort throws `AbortError`, never `[]` |
 | `candidateLimit` | engine default | Compatibility/experimental-retriever budget; exact indexed retrieval does not truncate to it |
+| `resultCollector` | omitted | Optional built-in collector. `"complete-interpretation"` keeps documents that fully match an executed PhraseQuery or authored PhrasePrefixQuery. Occupancy and version queries skip it. Default search does not collapse. Enablement is the caller's (for example a product site), not Core policy. |
 
 Unknown `relationshipStrategy` values throw `InvalidConfigurationError`.
+
+`resultCollector` is a named built-in, not a plugin interface. It reads executed clause hits on the query plan. It does not re-parse the query, scan the corpus, or encode product activation rules.
 
 ## Result shape
 

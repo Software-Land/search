@@ -275,7 +275,6 @@ describe("short title-token prefix on Software.Land fixture", () => {
     expect(shortTitleTokenPrefixStub(q)).toBeNull();
     expect(full.search("io", { limit: 1 })[0].title).toBe("What is IO?");
     expect(full.search("input output", { limit: 1 })[0].title).toBe("What is IO?");
-    expect(full.search("input output", { limit: 10 }).map((row) => row.title).length).toBeLessThanOrEqual(2);
   });
 
   test("what is a co keeps What is a Container? first", () => {

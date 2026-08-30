@@ -17,7 +17,7 @@
       "reason": "classification C is obsolete; not enforced on V1 or V2 E2E"
     }
   ],
-  "sha256": "585c6e92f2d9efa10f7dc42d6c01fe7106b8ca6d97abc4df3700112e2c35bbf6",
+  "sha256": "fb1dc6c27d6f3b961e3c86954193267f9613d7403efff87f2a29cf426190c511",
   "rows": [
     {
       "index": 0,
@@ -287,10 +287,11 @@
       "index": 24,
       "query": "transport layer security",
       "expectedTop": [
-        "TLS 1.2 Vulnerability"
+        "TLS 1.2 Vulnerability",
+        "What is VPN?"
       ],
       "titlePrefix": null,
-      "topN": 1
+      "topN": 2
     },
     {
       "index": 25,
@@ -319,6 +320,8 @@
       "query": "role based access control",
       "expectedTop": [
         "RBAC (Role Based Access Control)",
+        "CockroachDB vs Postgres",
+        "React Authentication",
         "Authorization Middleware"
       ],
       "titlePrefix": null,
@@ -1704,10 +1707,13 @@
       "index": 153,
       "query": "internet of things",
       "expectedTop": [
-        "What is IoT?"
+        "What is IoT?",
+        "Edge Computing",
+        "Event Driven Architecture",
+        "TLS 1.2 Vulnerability"
       ],
       "titlePrefix": null,
-      "topN": 1
+      "topN": 5
     },
     {
       "index": 154,

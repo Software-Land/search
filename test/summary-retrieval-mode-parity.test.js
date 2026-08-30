@@ -1,8 +1,7 @@
 /**
- * Optional summary must have the same phrase cohort, support set, filter
- * decision, and public ordering across full-scan, indexed, and adaptive.
- * Indexed artifacts do not store summary postings; phrase evidence scans
- * hydrated index.documents in every mode.
+ * Optional summary must have the same phrase field identity and public
+ * ordering across full-scan, indexed, and adaptive. Indexed artifacts do
+ * not store summary postings; positional execution uses hydrated documents.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import { compileLexicalIndex } from "../dist/lexicalIndex.js";
@@ -65,10 +64,10 @@ function snapshot(engine, queryText) {
   const query = engine._prepareQuery(queryText);
   const plan = buildQueryPlan(query, engine._index);
   return {
-    phraseIds: [...(plan.phraseIds || [])].sort(),
-    supportIds: [...(plan.supportIds || [])].sort(),
-    filterToPhraseCohort: plan.filterToPhraseCohort,
-    filterReason: plan.filterReason,
+    exactIds: plan.exactHits.map((h) => h.document.id).sort(),
+    prefixIds: plan.prefixHits.map((h) => h.document.id).sort(),
+    occupancy: plan.structuredKey,
+    version: plan.versionIntent,
     titles: engine.search(queryText, { limit: docs.length }).map((hit) => hit.title),
   };
 }
@@ -153,39 +152,31 @@ describe("summary retrieval-mode parity", () => {
     }
   });
 
-  test("pinned phrase cases keep the accepted filter decisions", () => {
+  test("pinned phrase cases keep field identity across modes", () => {
     const full = engines["full-scan"];
     const summary = snapshot(full, QUERIES.summaryOnly);
-    expect(summary.phraseIds).toEqual(["summary-only"]);
-    expect(summary.supportIds).toEqual([]);
-    expect(summary.filterToPhraseCohort).toBe(true);
-    expect(summary.titles).toEqual(["CloudFront Signed Cookies"]);
+    expect(summary.exactIds).toEqual(["summary-only"]);
+    expect(summary.titles[0]).toBe("CloudFront Signed Cookies");
 
     const title = snapshot(full, QUERIES.titleOnly);
-    expect(title.phraseIds).toEqual(["title-only"]);
-    expect(title.filterToPhraseCohort).toBe(true);
+    expect(title.exactIds).toContain("title-only");
 
     const body = snapshot(full, QUERIES.bodyOnly);
-    expect(body.phraseIds).toEqual(["body-only"]);
-    expect(body.supportIds).toEqual([]);
-    expect(body.filterToPhraseCohort).toBe(false);
+    expect(body.exactIds).toEqual(["body-only"]);
     expect(body.titles).toContain("Build Time");
     expect(body.titles).toContain("Which Programming Language to Start?");
 
     const omitted = snapshot(full, QUERIES.omitted);
-    expect(omitted.phraseIds).toEqual(["omitted-summary"]);
-    expect(omitted.filterToPhraseCohort).toBe(true);
+    expect(omitted.exactIds).toEqual(["omitted-summary"]);
 
     const structured = snapshot(full, QUERIES.structuredVsBody);
-    expect(structured.phraseIds).toEqual(["body-only"]);
-    expect(structured.supportIds).toContain("title-only");
-    expect(structured.filterToPhraseCohort).toBe(false);
+    expect(structured.occupancy).toBe("rpc");
+    expect(structured.exactIds).toContain("body-only");
     expect(structured.titles).toContain("gRPC vs REST");
     expect(structured.titles).toContain("Build Time");
 
     const version = snapshot(full, QUERIES.version);
-    expect(version.filterToPhraseCohort).toBe(false);
-    expect(version.filterReason).toBe("version-clause-present");
+    expect(version.version).toBe(true);
     expect(version.titles[0]).toBe("TLS 1.2 Vulnerability");
   });
 });

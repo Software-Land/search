@@ -2,6 +2,7 @@ import { tokenize, firstSurfaceToken, DEFAULT_STOP } from "./text.js";
 import { canonicalDocumentId } from "./documentId.js";
 import { extractVersionCompactForms, extractDottedSpans, dottedSpanComponentIndexes } from "./versionForms.js";
 import { InvalidDocumentError } from "./errors.js";
+import { buildPositionalIndex } from "./positionalIndex.js";
 import type {
   IndexedDocument,
   ResolvedSchema,
@@ -190,5 +191,8 @@ export function buildIndex(
     for (const t of analyzed.bodyTokens) surfaceVocabulary.add(t);
     for (const t of analyzed.summaryTokens) surfaceVocabulary.add(t);
   }
-  return { schema: resolveSchema(schema), documents: docs, byId, titleTokenSet, surfaceVocabulary };
+  const index = { schema: resolveSchema(schema), documents: docs, byId, titleTokenSet, surfaceVocabulary };
+  (index as typeof index & { positional?: ReturnType<typeof buildPositionalIndex> }).positional =
+    buildPositionalIndex(docs);
+  return index;
 }

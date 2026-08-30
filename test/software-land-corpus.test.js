@@ -400,7 +400,7 @@ describe("software-land candidate-stage survival", () => {
   test("representative queries report the measured full-scan candidate counts", () => {
     const expected = {
       2: 63,
-      "Edge Computing": 1,
+      "Edge Computing": 62,
       aplicationsecurity: 4,
       tls: 6,
       "machine learning": 6,

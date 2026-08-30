@@ -158,6 +158,12 @@ export interface SearchOptions {
   relationshipStrategy?: RelationshipStrategy;
   signal?: AbortSignal;
   candidateLimit?: number;
+  /**
+   * Optional built-in result collector. Default omits it.
+   * `"complete-interpretation"` keeps documents that fully match a positional
+   * phrase or phrase-prefix clause. Occupancy and version queries skip it.
+   */
+  resultCollector?: "complete-interpretation";
 }
 
 export interface RelationshipInfo {

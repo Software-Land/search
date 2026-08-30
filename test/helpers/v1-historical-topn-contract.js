@@ -7,7 +7,7 @@
 import { createHash } from "node:crypto";
 
 export const V1_HISTORICAL_TOPN_CONTRACT_SHA256 =
-  "585c6e92f2d9efa10f7dc42d6c01fe7106b8ca6d97abc4df3700112e2c35bbf6";
+  "fb1dc6c27d6f3b961e3c86954193267f9613d7403efff87f2a29cf426190c511";
 export const V1_HISTORICAL_TOPN_INVENTORY_COUNT = 215;
 export const V1_HISTORICAL_TOPN_ENFORCED_COUNT = 214;
 export const V1_HISTORICAL_TOPN_OBSOLETE_QUERY = "open";

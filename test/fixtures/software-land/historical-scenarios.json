@@ -653,7 +653,7 @@
       "query": "transport layer security",
       "classification": "B",
       "disposition": "regression-b-intent",
-      "note": "0.6 phrase-cohort: spoken TLS expansion is a rare exact phrase whose configured title-grade support set is {TLS 1.2 Vulnerability}, so the public primary list collapses to that document. VPN remains equivalent-recall for the short key tls, not for this phrase query.",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
       "intent": {
         "requiredPrimary": [
           "TLS 1.2 Vulnerability"
@@ -669,9 +669,10 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "TLS 1.2 Vulnerability"
+          "TLS 1.2 Vulnerability",
+          "What is VPN?"
         ],
-        "topN": 1
+        "topN": 2
       }
     },
     {
@@ -752,6 +753,8 @@
       "v1": {
         "expectedTop": [
           "RBAC (Role Based Access Control)",
+          "CockroachDB vs Postgres",
+          "React Authentication",
           "Authorization Middleware"
         ],
         "topN": 8
@@ -4089,7 +4092,7 @@
       "query": "internet of things",
       "classification": "B",
       "disposition": "regression-b-intent",
-      "note": "0.6 phrase-cohort: spoken IoT expansion is a rare exact phrase whose configured title-grade support set is {What is IoT?}, so the public primary list collapses to that document.",
+      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
       "intent": {
         "requiredPrimary": [
           "What is IoT?"
@@ -4105,9 +4108,12 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "What is IoT?"
+          "What is IoT?",
+          "Edge Computing",
+          "Event Driven Architecture",
+          "TLS 1.2 Vulnerability"
         ],
-        "topN": 1
+        "topN": 5
       }
     },
     {
