@@ -706,7 +706,8 @@ export interface SearchOptions {
   sourcePolicy?: SourcePolicy;
   /**
    * Optional built-in result collector applied after query execution and
-   * before ranking. Default is ordinary ranked retrieval.
+   * before ranking. Default is ordinary ranked retrieval. When the typed
+   * phrase has no exact hit, all PhrasePrefix fields participate.
    */
   resultCollector?: "complete-interpretation";
 }

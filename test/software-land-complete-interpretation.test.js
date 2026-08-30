@@ -93,6 +93,12 @@ describe("Software.Land complete-interpretation collector", () => {
     ]);
   });
 
+  test("dfs backtracking exact and incomplete prefix share the contiguous phrase cohort", () => {
+    const expected = ["DFS Backtracking", "A-Star Pathfinding", "What is Recursion?"];
+    expect(engine.search("dfs backtracking", COLLECTOR).map((h) => h.title)).toEqual(expected);
+    expect(engine.search("dfs backtrackin", COLLECTOR).map((h) => h.title)).toEqual(expected);
+  });
+
   test("HFR exact and 1-char prefix collapse to 200FPS", () => {
     for (const q of [
       "a practical guide to building high-frame-rate",

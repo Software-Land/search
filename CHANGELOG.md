@@ -2,6 +2,10 @@
 
 ## 0.6.0
 
+### Fixed
+
+- Optional `complete-interpretation` collector: when the typed phrase has no exact PhraseQuery hit, keep all PhrasePrefix hits including body. Title/summary preference on prefix-only expansions applies only when an exact typed phrase already exists.
+
 ### Added
 
 - Optional schema role `summary` for a third searchable text field. Existing title/body callers are unchanged. Exact typed-phrase evidence records per-field `titleTf` / `summaryTf` / `bodyTf`.

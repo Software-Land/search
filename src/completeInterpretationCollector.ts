@@ -7,6 +7,11 @@
  * Does not tokenize, parse, scan the corpus, call analyzer rewrite, infer
  * semantic identity, or inspect ranking. Product enablement (whether to pass
  * `resultCollector: "complete-interpretation"`) is the caller's decision.
+ *
+ * Completion consistency: when the typed phrase has no exact PhraseQuery hit,
+ * every PhrasePrefix hit participates (title, summary, and body). Authored
+ * title/summary preference on prefix-only expansions applies only when an
+ * exact typed phrase hit already exists.
  */
 
 import type { FeaturedHit, IndexedDocument, SearchIndex } from "./types.js";
@@ -57,11 +62,12 @@ export function collectCompleteInterpretations(args: {
   const exactIds = exact.map((h) => h.document.id);
   const authoredPrefix = prefix.filter(authored);
   const bodyPrefixOnly = prefix.filter((h) => !authored(h) && h.bodyFrequency > 0);
-  const authoredComplete = exact.some(authored) || authoredPrefix.length > 0;
   const kept = new Map<string, IndexedDocument>();
   for (const hit of exact) kept.set(hit.document.id, hit.document);
   for (const hit of authoredPrefix) kept.set(hit.document.id, hit.document);
-  if (!authoredComplete) {
+  // CASE A: no exact typed phrase → PhrasePrefix is the interpretation; all fields.
+  // CASE B: exact typed phrase exists → body-only prefix expansions stay out.
+  if (exact.length === 0) {
     for (const hit of bodyPrefixOnly) kept.set(hit.document.id, hit.document);
   }
   if (!kept.size) {

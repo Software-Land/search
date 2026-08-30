@@ -161,7 +161,9 @@ export interface SearchOptions {
   /**
    * Optional built-in result collector. Default omits it.
    * `"complete-interpretation"` keeps documents that fully match a positional
-   * phrase or phrase-prefix clause. Occupancy and version queries skip it.
+   * phrase or phrase-prefix clause. If the typed phrase has no exact PhraseQuery
+   * hit, every PhrasePrefix field participates. If an exact hit exists, body-only
+   * PhrasePrefix expansions stay out. Occupancy and version queries skip it.
    */
   resultCollector?: "complete-interpretation";
 }

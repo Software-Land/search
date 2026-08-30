@@ -105,6 +105,7 @@ describe("positional PhraseQuery / PhrasePrefixQuery", () => {
     });
     await engine.index([
       { id: "exact", title: "Rate Limiting", summary: "", body: "other" },
+      { id: "algo", title: "Rate Limiting Algorithms", summary: "", body: "the exact rate limit phrase appears here" },
       { id: "body", title: "Hot Shards", summary: "", body: "token bucket rate limiting inside shards" },
       { id: "incidental", title: "Build Time", summary: "", body: "a remote procedure call happens during compile" },
       { id: "grpc", title: "gRPC vs REST", summary: "An RPC framework.", body: "streams" },
@@ -114,7 +115,10 @@ describe("positional PhraseQuery / PhrasePrefixQuery", () => {
     const complete = engine
       .search("rate limit", { limit: 10, resultCollector: COMPLETE_INTERPRETATION_COLLECTOR })
       .map((h) => h.id);
-    expect(complete).toEqual(["exact"]);
+    expect(complete).toContain("exact");
+    expect(complete).toContain("algo");
+    expect(complete).not.toContain("body");
+    expect(complete).toHaveLength(2);
     const rpcQuery = engine._prepareQuery("remote procedure call");
     const rpcPlan = buildQueryPlan(rpcQuery, engine._index);
     const decision = collectCompleteInterpretations({
@@ -131,6 +135,69 @@ describe("positional PhraseQuery / PhrasePrefixQuery", () => {
     const rpcDefault = engine.search("remote procedure call", { limit: 10 }).map((h) => h.id);
     expect(rpc).toEqual(rpcDefault);
     expect(rpc).toContain("incidental");
+  });
+
+  test("CASE A: no exact typed phrase keeps all PhrasePrefix fields", async () => {
+    const engine = SearchEngine.create({ schema, retriever: "full-scan" });
+    await engine.index([
+      { id: "title", title: "DFS Backtracking", summary: "", body: "dfs backtracking in the title article" },
+      { id: "astar", title: "A-Star Pathfinding", summary: "", body: "too large for simpler dfs backtracking methods" },
+      { id: "rec", title: "What is Recursion?", summary: "", body: "memoized dfs backtracking" },
+    ]);
+    const query = engine._prepareQuery("dfs backtrackin");
+    const plan = buildQueryPlan(query, engine._index);
+    expect(plan.exactHits).toEqual([]);
+    expect(plan.prefixHits.map((h) => h.document.id).sort()).toEqual(["astar", "rec", "title"]);
+    expect(plan.prefixHits.some((h) => h.document.id === "title" && h.titleFrequency > 0)).toBe(true);
+    expect(plan.prefixHits.filter((h) => h.titleFrequency + h.summaryFrequency === 0).map((h) => h.document.id).sort()).toEqual([
+      "astar",
+      "rec",
+    ]);
+    const ids = engine
+      .search("dfs backtrackin", { limit: 10, resultCollector: COMPLETE_INTERPRETATION_COLLECTOR })
+      .map((h) => h.id)
+      .sort();
+    expect(ids).toEqual(["astar", "rec", "title"]);
+  });
+
+  test("CASE B: exact typed phrase keeps authored prefix and drops body-only prefix", async () => {
+    const engine = SearchEngine.create({ schema, retriever: "full-scan" });
+    await engine.index([
+      { id: "title", title: "Rate Limiting", summary: "", body: "other" },
+      { id: "exact", title: "Algorithms Note", summary: "", body: "the exact rate limit phrase appears here" },
+      { id: "shards", title: "Hot Shards", summary: "", body: "token bucket rate limiting inside shards" },
+    ]);
+    const query = engine._prepareQuery("rate limit");
+    const plan = buildQueryPlan(query, engine._index);
+    expect(plan.exactHits.map((h) => h.document.id)).toEqual(["exact"]);
+    expect(plan.prefixHits.some((h) => h.document.id === "title" && h.titleFrequency > 0)).toBe(true);
+    expect(plan.prefixHits.some((h) => h.document.id === "shards" && h.bodyFrequency > 0 && h.titleFrequency === 0)).toBe(
+      true
+    );
+    const ids = engine
+      .search("rate limit", { limit: 10, resultCollector: COMPLETE_INTERPRETATION_COLLECTOR })
+      .map((h) => h.id);
+    expect(ids).toContain("title");
+    expect(ids).toContain("exact");
+    expect(ids).not.toContain("shards");
+    expect(ids).toHaveLength(2);
+  });
+
+  test("CASE A keeps the union of multiple PhrasePrefix completions", async () => {
+    const engine = SearchEngine.create({ schema, retriever: "full-scan" });
+    await engine.index([
+      { id: "bar", title: "foo bar", summary: "", body: "x" },
+      { id: "baz", title: "other", summary: "", body: "foo baz appears in body" },
+    ]);
+    const query = engine._prepareQuery("foo ba");
+    const plan = buildQueryPlan(query, engine._index);
+    expect(plan.exactHits).toEqual([]);
+    expect(plan.prefixHits.map((h) => h.document.id).sort()).toEqual(["bar", "baz"]);
+    const ids = engine
+      .search("foo ba", { limit: 10, resultCollector: COMPLETE_INTERPRETATION_COLLECTOR })
+      .map((h) => h.id)
+      .sort();
+    expect(ids).toEqual(["bar", "baz"]);
   });
 
   test("search-path phrase geometry is reused by features", async () => {
