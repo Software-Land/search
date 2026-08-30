@@ -102,8 +102,15 @@ function literalNumericOverWeakVersionConstraint(a: FeaturedHit, b: FeaturedHit)
 
 function shortLiteralConstraint(a: FeaturedHit, b: FeaturedHit) {
   if (a.features.shortLiteralLeadMatch === b.features.shortLiteralLeadMatch) return 0;
-  if (a.features.shortLiteralLeadMatch && !b.features.shortLiteralLeadMatch) return -1;
-  if (b.features.shortLiteralLeadMatch && !a.features.shortLiteralLeadMatch) return 1;
+  // Completing the typed title sequence outranks a stop-wrapped lead-token stub.
+  if (a.features.shortLiteralLeadMatch && !b.features.shortLiteralLeadMatch) {
+    if (b.features.contextualTitlePrefix) return 1;
+    return -1;
+  }
+  if (b.features.shortLiteralLeadMatch && !a.features.shortLiteralLeadMatch) {
+    if (a.features.contextualTitlePrefix) return -1;
+    return 1;
+  }
   return 0;
 }
 
@@ -214,14 +221,22 @@ function hybridDirectOverRelatedConstraint(a: FeaturedHit, b: FeaturedHit) {
 }
 
 /**
- * Related neighbors outrank weak/incidental directs that lack repeated compiled
- * body-phrase evidence or an ordinary equivalence-backed body match. When the
- * weak-direct already has either form of evidence, this constraint stays
- * unordered so ordinary score can prefer either side. Neither exemption
- * promotes the weak-direct to moderate.
+ * Related neighbors outrank weak/incidental directs. Exemptions stay unordered:
+ * - repeated compiled body-phrase evidence that is not a unigram configured mention
+ * - ordinary equivalence-backed body match
+ * - weak-direct whose query-anchored relationshipStrength is at least as strong
+ *   as the related candidate (orthogonal hybrid neighborhood)
+ * Neither exemption promotes the weak-direct to moderate.
  */
+function hasConfiguredMention(f: Partial<FeatureVector>) {
+  const evid = f.configuredConceptFieldEvidence;
+  return Boolean(evid?.summary || evid?.body);
+}
+
 function hasRepeatedBodyPhraseCount(f: Partial<FeatureVector>) {
-  return (f.bodyPhraseCount || 0) >= REPEATED_BODY_PHRASE_MIN;
+  if ((f.bodyPhraseCount || 0) < REPEATED_BODY_PHRASE_MIN) return false;
+  if ((f.queryTokenCount || 0) < 2 && hasConfiguredMention(f)) return false;
+  return true;
 }
 
 function hasEquivalenceBodyMatch(f: Partial<FeatureVector>) {
@@ -237,6 +252,9 @@ function relatedOverWeakDirectConstraint(a: FeaturedHit, b: FeaturedHit) {
     !hasRepeatedBodyPhraseCount(b.features) &&
     !hasEquivalenceBodyMatch(b.features)
   ) {
+    const weakRel = b.features.relationshipStrength || 0;
+    const relatedRel = a.features.relationshipStrength || 0;
+    if (weakRel > 0 && weakRel >= relatedRel) return 0;
     return -1;
   }
   if (
@@ -245,6 +263,9 @@ function relatedOverWeakDirectConstraint(a: FeaturedHit, b: FeaturedHit) {
     !hasRepeatedBodyPhraseCount(a.features) &&
     !hasEquivalenceBodyMatch(a.features)
   ) {
+    const weakRel = a.features.relationshipStrength || 0;
+    const relatedRel = b.features.relationshipStrength || 0;
+    if (weakRel > 0 && weakRel >= relatedRel) return 0;
     return 1;
   }
   return 0;

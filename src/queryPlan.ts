@@ -32,6 +32,7 @@ export interface QueryPlan {
   clauses: QueryPlanClauses;
   versionIntent: boolean;
   structuredKey: string | null;
+  configuredContentIdentity: string | null;
   structuredInterpretation: boolean;
   typedTokens: string[];
   tokenGraph: TokenGraph;
@@ -125,6 +126,7 @@ export function buildQueryPlan(query: AnalyzedQuery, index: SearchIndex): QueryP
   recordGeometry(query, exactHits, prefixHits);
   const versionIntent = Array.isArray(query.dottedSpans) && query.dottedSpans.length > 0;
   const structuredKey = query.configuredSequenceIntent?.key || null;
+  const configuredContentIdentity = query.configuredContentIdentity?.key || null;
   return {
     clauses: {
       lexical: typedTokens.length > 0,
@@ -141,6 +143,7 @@ export function buildQueryPlan(query: AnalyzedQuery, index: SearchIndex): QueryP
     },
     versionIntent,
     structuredKey,
+    configuredContentIdentity,
     structuredInterpretation: hasStructuredInterpretation(query),
     typedTokens,
     tokenGraph,

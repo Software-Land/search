@@ -17,8 +17,12 @@
  *   contextual-prefix    — contextualPrefixQuality only when both hits are contextual
  *   multi-concept body   — bodyLexicalMatch / lexicalConceptCoverage full bands
  *                          only when coverageConceptCount >= 2
+ *   related-over-weak    — relationshipStrength; unigram configured mentions
  * Those scalars are included in the key only when they can fire, so ordinary
  * non-exactish / non-contextual groups do not explode B toward C.
+ * `relationshipStrength` is present because related-over-weak-direct reads it.
+ * Summary vs body-only configured mentions are not a constraint signature band
+ * and are not consumed in ranking.
  */
 
 import {
@@ -115,6 +119,7 @@ export function constraintSignature(f: Partial<FeatureVector> | undefined) {
     multiConcept ? fullCoverageBand(feat.lexicalConceptCoverage || 0) : 0,
     feat.relevanceKind === "related" ? 1 : 0,
     String(feat.directClass || ""),
+    feat.relationshipStrength || 0,
     bit(feat.standaloneRecallMatch),
     bit(feat.topicalRecallMatch),
     bit(feat.topicalRecallTitleMatch),

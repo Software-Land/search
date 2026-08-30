@@ -235,7 +235,11 @@ describe("public API", () => {
     expect(() => JSON.stringify(detailed)).not.toThrow();
     const parsed = JSON.parse(JSON.stringify(detailed));
     expect(parsed.results[0].explanation.retrievalSources.length).toBeGreaterThan(0);
-    expect(parsed.related[0].relationship.type).toBe("editorial");
+    const companion = [...parsed.results, ...(parsed.related || [])].find((r) => r.id === "connected-devices");
+    expect(companion).toBeTruthy();
+    expect(companion.directClass).toBe("weak");
+    expect(companion.relevanceKind).toBe("direct");
+    expect(companion.relationship.type).toBe("editorial");
   });
 
   test("adaptive uses full-scan below threshold and indexed at or above", async () => {

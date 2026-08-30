@@ -1329,7 +1329,7 @@
       },
       "relationship": {
         "title": "What is VPN?",
-        "relevanceKind": "related",
+        "relevanceKind": "direct",
         "type": "editorial",
         "provenance": "manual",
         "sourceTitle": "TLS 1.2 Vulnerability"

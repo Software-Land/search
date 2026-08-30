@@ -25,6 +25,7 @@ import {
   resolveConfiguredPrefixSpans,
   resolveConfiguredSequence,
   resolveConfiguredSpans,
+  resolveConfiguredContentIdentity,
   tokenAlignsConfiguredKey,
   uniqueLongestFirstFormPrefix,
 } from "./configuredSequence.js";
@@ -1355,6 +1356,7 @@ export function analyzeQuery(
     configuredSequenceIntent,
     configuredSpans,
     configuredPrefixSpans,
+    configuredContentIdentity: resolveConfiguredContentIdentity(analyzedTokens, configuredSpans),
     standaloneRecall,
     topicalRecall,
     lexicalTokens,

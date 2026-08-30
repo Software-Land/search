@@ -197,7 +197,9 @@ describe("Software.Land non-occupied prefix classification", () => {
     expect(container.directClass).not.toBe("moderate");
     expect(container.directClass).not.toBe("strong");
     expect(related).toBeTruthy();
-    expect(related.relevanceKind).toBe("related");
+    expect(related.directClass).not.toBe("strong");
+    expect(related.directClass).not.toBe("moderate");
+    expect(related.relevanceKind).toBe("direct");
     expect(related.rank).toBeLessThan(container.rank);
   });
 
@@ -219,7 +221,9 @@ describe("Software.Land non-occupied prefix classification", () => {
     expect(container.directClass).not.toBe("moderate");
     expect(container.directClass).not.toBe("strong");
     expect(related).toBeTruthy();
-    expect(related.relevanceKind).toBe("related");
+    expect(related.directClass).not.toBe("strong");
+    expect(related.directClass).not.toBe("moderate");
+    expect(related.relevanceKind).toBe("direct");
     expect(related.rank).toBeLessThan(container.rank);
   });
 

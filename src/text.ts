@@ -3,6 +3,18 @@ const DEFAULT_STOP = new Set([
   "a", "and", "in", "to", "as", "vs",
 ]);
 
+/**
+ * WH / copula / determiner members of DEFAULT_STOP. These can wrap a unique
+ * complete configured span without changing query identity (`what is an api`,
+ * `the api`). Coordinators and prepositions in DEFAULT_STOP (`and`, `vs`,
+ * `of`, `with`, `for`, `in`, `to`, `as`) remain stops for occupancy/alignment
+ * but are compositional when they sit outside a configured span.
+ * Not a phrase-list parser: a token-class partition of the existing stop set.
+ */
+const STRUCTURAL_WRAPPER_STOP = new Set([
+  "what", "whats", "is", "an", "the", "a", "are", "which",
+]);
+
 export interface TokenRange {
   token: string;
   /** Inclusive start index in the original (pre-lowercase) string. */
@@ -200,4 +212,4 @@ export function firstSurfaceToken(title?: unknown): string {
   return tokens[0] || "";
 }
 
-export { DEFAULT_STOP };
+export { DEFAULT_STOP, STRUCTURAL_WRAPPER_STOP };

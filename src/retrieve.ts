@@ -1,5 +1,5 @@
 import { isOneTokenMemberOfLongerPeerForm, sequenceKey } from "./configuredAuthoring.js";
-import { isNearCompletePrefix, allowPrefixMatch, DEFAULT_STOP } from "./text.js";
+import { isNearCompletePrefix, allowPrefixMatch, DEFAULT_STOP, STRUCTURAL_WRAPPER_STOP } from "./text.js";
 import {
   isAllDigitToken,
   queryTokenMatchesVersionCompact,
@@ -142,11 +142,29 @@ function acronymFieldEvidence(
   lemmaSet: Set<string>,
   opts: { requireContiguous?: boolean } = {}
 ) {
-  if (tokenSet.has(concept.id) || lemmaSet.has(concept.id)) return true;
+  return configuredConceptFieldMatch(concept, tokens, lemmas, tokenSet, lemmaSet, opts) !== false;
+}
+
+export type ConfiguredFieldMatch = false | "key" | "form";
+
+/**
+ * Key vs complete peer form in one field. A single token that is a member of
+ * a longer peer form is never `form`. Lemma matching uses the field lemma set.
+ */
+export function configuredConceptFieldMatch(
+  concept: QueryConcept,
+  tokens: string[],
+  lemmas: string[],
+  tokenSet: Set<string>,
+  lemmaSet: Set<string>,
+  opts: { requireContiguous?: boolean } = {}
+): ConfiguredFieldMatch {
+  if (concept.kind !== "configured-concept") return false;
+  if (tokenSet.has(concept.id) || lemmaSet.has(concept.id)) return "key";
   const peerForms = configuredPeerForms(concept);
   for (const seq of peerForms) {
     if (isSingleFormWordAlias(seq, peerForms)) continue;
-    if (fieldHasFormEvidence(seq, tokens, lemmas, tokenSet, lemmaSet, opts)) return true;
+    if (fieldHasFormEvidence(seq, tokens, lemmas, tokenSet, lemmaSet, opts)) return "form";
   }
   return false;
 }
@@ -322,6 +340,26 @@ export function hasConfiguredSequenceIntent(query: AnalyzedQuery) {
   return Boolean(query.configuredSequenceIntent?.key);
 }
 
+export function hasConfiguredContentIdentity(query: AnalyzedQuery) {
+  return Boolean(query.configuredContentIdentity?.key);
+}
+
+/**
+ * Ranking may evaluate the configured concept and its authored peer forms.
+ * Occupancy and configured-content identity stay distinct query facts; this is
+ * their ranking-evidence union only. It does not set occupancy, rewrite
+ * tokens, or mint configured aliases as typed phrases.
+ */
+export function hasConfiguredRankingIntent(query: AnalyzedQuery) {
+  return hasConfiguredSequenceIntent(query) || hasConfiguredContentIdentity(query);
+}
+
+export function isStructuralWrapperTermConcept(concept: QueryConcept | null | undefined) {
+  if (!concept || concept.kind !== "term") return false;
+  if (STRUCTURAL_WRAPPER_STOP.has(String(concept.id || "").toLowerCase())) return true;
+  return (concept.forms || []).some((form) => STRUCTURAL_WRAPPER_STOP.has(String(form || "").toLowerCase()));
+}
+
 /**
  * Narrow 2-character title-token prefix admission.
  * Activates only when the final typed token is a non-stop, non-digit stub of
@@ -406,6 +444,17 @@ export function searchEquivalenceRecallConcepts(query: AnalyzedQuery | null | un
 
 export function coverageConcepts(query: AnalyzedQuery, concepts: QueryConcept[]) {
   return concepts.filter((concept) => !isSearchEquivalenceRecallConcept(query, concept));
+}
+
+/**
+ * Coverage concepts for ranking. Occupancy already has no wrapper terms.
+ * Identity-only queries may still carry WH/copula/determiner term concepts
+ * (especially length-2 wraps); those must not count as concept coverage.
+ */
+export function rankingCoverageConcepts(query: AnalyzedQuery, concepts: QueryConcept[]) {
+  const usable = coverageConcepts(query, concepts);
+  if (!hasConfiguredRankingIntent(query)) return usable;
+  return usable.filter((c) => !isStructuralWrapperTermConcept(c));
 }
 
 export function topicalRecallHint(query: AnalyzedQuery | null | undefined): TopicalRecall | null {

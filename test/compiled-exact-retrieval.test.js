@@ -518,7 +518,9 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
     const byId = new Map(expanded.featured.map((row) => [row.document.id, row]));
     expect(expanded.applied.primaries[0].document.id).toBe("primary");
     expect(byId.get("strong-existing").features.relevanceKind).toBe("direct");
-    expect(byId.get("weak-existing").features.relevanceKind).toBe("related");
+    expect(byId.get("weak-existing").features.relevanceKind).toBe("direct");
+    expect(byId.get("weak-existing").features.directClass).toBe("weak");
+    expect(byId.get("weak-existing").relationship).toBeTruthy();
     expect(byId.get("missing-neighbor").features.relevanceKind).toBe("related");
 
     expectExact(full, compiled, "primary", {

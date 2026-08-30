@@ -254,6 +254,7 @@ function serializeHit(c: RankedHit, query: AnalyzedQuery, explain?: boolean): Se
         prefixCompletion: query.prefixCompletion ?? null,
         contextualCompletion: query.contextualCompletion ?? null,
         configuredSequenceIntent: query.configuredSequenceIntent ?? null,
+        configuredContentIdentity: query.configuredContentIdentity ?? null,
         configuredSpans: (query.configuredSpans || []).map((span) => ({
           key: span.key,
           start: span.start,
@@ -774,7 +775,8 @@ export class SearchEngine {
         featured,
         plan,
         index,
-        (doc) => missingPhraseFeatured(query, doc)
+        (doc) => missingPhraseFeatured(query, doc),
+        query
       ).featured;
     }
 
@@ -913,7 +915,8 @@ export class SearchEngine {
         featured,
         plan,
         index,
-        (doc) => missingPhraseFeatured(query, doc)
+        (doc) => missingPhraseFeatured(query, doc),
+        query
       ).featured;
     }
 

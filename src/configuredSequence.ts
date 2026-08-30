@@ -1,5 +1,5 @@
 import { allConfiguredConceptForms, isOneTokenMemberOfLongerPeerForm, sequenceKey } from "./configuredAuthoring.js";
-import { allowPrefixMatch, DEFAULT_STOP } from "./text.js";
+import { allowPrefixMatch, DEFAULT_STOP, STRUCTURAL_WRAPPER_STOP } from "./text.js";
 import type {
   ConfiguredConcept,
   ConfiguredPrefixSpan,
@@ -24,6 +24,54 @@ export interface ConfiguredSequenceIntent {
   key: string;
   matchedForm: string[];
   matchedKinds: string[];
+}
+
+/**
+ * Unique complete configured concept whose leftover tokens are only
+ * structural wrappers (WH / copula / determiner). Exact configuredSpans
+ * only; prefix spans never qualify. Coordinators and prepositions outside
+ * the span are unmatched composition, not wrappers.
+ */
+export interface ConfiguredContentIdentity {
+  key: string;
+}
+
+/**
+ * One unique exact configured window occupying a suffix of the query, with
+ * only STRUCTURAL_WRAPPER_STOP tokens before it. Does not set occupancy.
+ * Does not consult search-equivalence concepts or prefix spans.
+ */
+export function resolveConfiguredContentIdentity(
+  tokens: QueryToken[],
+  exactSpans: ConfiguredSpan[] | null | undefined
+): ConfiguredContentIdentity | null {
+  if (!tokens.length || !exactSpans?.length) return null;
+  const keys = new Set<string>();
+  for (const span of exactSpans) {
+    if (span?.key) keys.add(span.key);
+  }
+  if (keys.size !== 1) return null;
+  const occupied = new Set<number>();
+  for (const span of exactSpans) {
+    if (!span?.key) continue;
+    for (let i = span.start; i < span.end; i++) occupied.add(i);
+  }
+  if (!occupied.size) return null;
+  let first = tokens.length;
+  let last = -1;
+  for (const i of occupied) {
+    if (i < first) first = i;
+    if (i > last) last = i;
+  }
+  if (last !== tokens.length - 1) return null;
+  for (let i = first; i <= last; i++) {
+    if (!occupied.has(i)) return null;
+  }
+  for (let i = 0; i < first; i++) {
+    const tok = String(tokens[i]?.normalized || "").toLowerCase();
+    if (!STRUCTURAL_WRAPPER_STOP.has(tok)) return null;
+  }
+  return { key: [...keys][0] };
 }
 
 export type ConfiguredAlignmentKind = "full" | "left-prefix" | "suffix";

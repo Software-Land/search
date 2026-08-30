@@ -33,7 +33,7 @@ The correctness proof is independent of serialization. With no artifact, `index(
 
 1. enumerate every legitimate lexical match;
 2. extract the unchanged complete feature vector, constraint signature, and rounded final score;
-3. preserve the complete featured candidate map while choosing relationship primaries and applying target reclassification/addition;
+3. preserve the complete featured candidate map while choosing relationship primaries and applying target addition (relationship support attaches without converting lexical directs to `related`);
 4. feature newly added neighbors;
 5. retain the exact required representatives per builtin signature;
 6. run the unchanged sparse ranker.

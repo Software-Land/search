@@ -150,4 +150,13 @@ describe("Software.Land complete-interpretation collector", () => {
       expect(on.length).toBeGreaterThan(1);
     }
   });
+
+  test("configured-content identity declines the collector for wrapper-complete keys", () => {
+    for (const q of ["what is an api", "what is rpc", "what is tls", "what is oauth", "an api", "the api"]) {
+      const off = engine.search(q, { limit: 10 }).map((h) => h.id);
+      const on = engine.search(q, COLLECTOR).map((h) => h.id);
+      expect(on).toEqual(off);
+      expect(on.length).toBeGreaterThan(1);
+    }
+  });
 });

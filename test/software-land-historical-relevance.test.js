@@ -288,22 +288,22 @@ describe("Software.Land historical relevance contracts", () => {
       "REST API vs GraphQL",
       "Working with APIs",
       "What is an Interface?",
-      "What is Refactoring?",
+      "Class vs Interface",
     ]);
     expect(whatAre.slice(0, 5)).toEqual([
       "What is an API?",
       "Working with APIs",
       "REST API vs GraphQL",
       "What is an Interface?",
-      "What is Refactoring?",
+      "Class vs Interface",
     ]);
     expect(occupied.slice(0, 6)).toEqual([
       "What is an API?",
       "REST API vs GraphQL",
       "Working with APIs",
       "What is an Interface?",
-      "What is Refactoring?",
       "Class vs Interface",
+      "What is Refactoring?",
     ]);
   });
 

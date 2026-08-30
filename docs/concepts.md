@@ -39,6 +39,8 @@ A concept is authored as `key` + `aliases`. Aliases are unordered semantic peers
 
 Once occupancy is unambiguous, key and alias spellings have identical search semantics and ranked results. Typed surface stays on the query for explain/provenance and must not leak into ranking. Occupied ranking evaluates each peer form independently; it does not concatenate aliases into one lexical query.
 
+Configured-content identity is not occupancy. When identity uniquely names a complete configured concept behind structural wrappers, ranking may accept an authored peer-form title for that concept (unioned with literal original-surface title equality). Occupancy resolution, collector apply/decline, typed phrase evidence, and occupancy's looser peer-form prefix reduction stay unchanged. Structural wrappers do not count as concept coverage.
+
 Occupancy is not matched-form completeness. A unique prefix may occupy a concept while query `formCoverage` remains the true prefix coverage (`application programming` is 2/3 of `application programming interface`). An unused extra alias must not dilute an existing form match.
 
 A non-occupied configured prefix may still appear in query analysis (`configuredPrefixSpans`, concept `formCoverage`) without becoming candidate evidence. Candidate `configuredFormCoverage` is 0 unless the query uniquely occupies.

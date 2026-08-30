@@ -2,18 +2,19 @@
 
 ## 0.6.0
 
-### Fixed
-
-- Optional `complete-interpretation` collector: when the typed phrase has no exact PhraseQuery hit, keep all PhrasePrefix hits including body. Title/summary preference on prefix-only expansions applies only when an exact typed phrase already exists.
-
 ### Added
 
+- Configured-content identity: a unique complete exact configured span occupying a query suffix, with only structural-wrapper stops (WH / copula / determiner) before it. Distinct from occupancy. Prefix spans and connector/preposition remainders (`and`, `vs`, `of`, …) do not qualify. The optional complete-interpretation collector declines on occupancy or this identity.
+- Structured `configuredConceptFieldEvidence` (`title` / `summary` / `body` each `false | "key" | "form"`). Title remains identity (`configuredConceptMatch`). Summary and body are weak mentions. A single token of a multi-token form is not `form`. Exact typed phrase evidence stays originalSurface-only.
 - Optional schema role `summary` for a third searchable text field. Existing title/body callers are unchanged. Exact typed-phrase evidence records per-field `titleTf` / `summaryTf` / `bodyTf`.
 - Query-plan result-set policy for rare exact phrases: collapse the public primary list only when the typed phrase identifies one or two documents and ranking-independent title-grade corroborating support (configured identity in title, equivalent-recall title, topical-recall title, dotted version) is a subset of that phrase cohort, or when that support set is empty and every phrase hit is in title or summary. Body-only rare phrases do not exclusive-collapse. Version/`dottedSpans` queries never phrase-filter. Token count is not a relevance primitive. Topical recall is corroborating support, not concept identity.
 - Title or summary exact phrase is strong lexical field evidence and outranks incidental one-token title overlap via the existing repeated-phrase-over-weak-direct constraint class. Markdown/body-only exact phrases stay weak lexical and do not beat title-grade structured/equivalent/topical/version support.
 
-### Changed
+### Fixed
 
+- Structural wrapping no longer erases configured-concept title evidence. When occupancy or configured-content identity uniquely names a concept, ranking may accept an authored peer-form title for that concept. Identity unions that fact with literal original-surface title equality; it does not occupy, mint typed alias phrases, or copy occupancy's looser peer-form prefix reduction. Structural-wrapper term concepts do not count as concept coverage.
+- Relationship support is orthogonal to `directClass`. `relevanceKind` is `related` only when there is no direct lexical/configured class. Weak/moderate/strong directs keep query-anchored relationship evidence.
+- Hybrid `related-over-weak-direct`: unigram configured summary/body mentions do not count as repeated-phrase exemptions. A weak-direct whose `relationshipStrength` is at least the related candidate's stays unordered.
 - 0.6.0 no longer activates phrase exclusivity at ≥4 typed tokens. `MIN_PHRASE_TOKENS` is removed.
 - Re-index after a consumed `search-v2-lexical-index` also checks a hydration fingerprint that includes optional `summary`. The v1 artifact corpus fingerprint remains `(id, title, body, lexicalFrequency)`.
 

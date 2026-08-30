@@ -164,6 +164,11 @@ export interface ConfiguredSpan {
   matchedKinds: string[];
 }
 
+/** Unique complete configured concept with only structural-wrapper remainder. */
+export interface ConfiguredContentIdentity {
+  key: string;
+}
+
 /**
  * Incomplete configured subspan aligned with sequenceAligns prefix rules,
  * plus unique 1-token first-form prefixes. Occupies configured-concept
@@ -251,6 +256,13 @@ export interface AnalyzedQuery {
    * Not exact configuredSpans and not topical recall.
    */
   configuredPrefixSpans?: ConfiguredPrefixSpan[];
+  /**
+   * Unique complete configured concept with only structural-wrapper remainder
+   * (WH / copula / determiner) before a suffix exact span. Not occupancy.
+   * Prefix spans never qualify. Coordinators/prepositions outside the span
+   * are unmatched composition.
+   */
+  configuredContentIdentity?: ConfiguredContentIdentity | null;
   /**
    * Reviewed exact-standalone recall hint. Absent unless the complete query is
    * one typed token that uniquely matches a `standaloneRecall` declaration.
@@ -440,6 +452,16 @@ export interface FeatureVector {
   titleSequenceTightness: number;
   contextualPrefixQuality: number;
   configuredConceptMatch: false | "key-in-title" | "form";
+  /**
+   * Resolved configured-concept evidence by field. `title` is authored
+   * identity (`key` / complete `form`). `summary` and `body` are mentions,
+   * never identity. A single token of a multi-token form is not `form`.
+   */
+  configuredConceptFieldEvidence: {
+    title: false | "key" | "form";
+    summary: false | "key" | "form";
+    body: false | "key" | "form";
+  };
   morphologyMatch: boolean;
   typoDistance: number;
   versionMatch: false | string;

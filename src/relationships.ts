@@ -102,8 +102,9 @@ function stripSources(rel: RelationshipInfo): RelationshipInfo {
 /**
  * Expand one hop from strong primaries.
  * Rank uses max strength; explanations keep every supporting source.
- * Weak existing directs may be reclassified as related when an edge exists.
- * Strong/moderate directs stay direct and are not converted to related.
+ * Relationship support is orthogonal to directClass: existing lexical
+ * candidates keep their class and stay `direct`. Newly admitted neighbors
+ * with no lexical/configured class are `related`.
  */
 export function applyRelationshipExpansion({
   featured,
@@ -150,11 +151,12 @@ export function applyRelationshipExpansion({
     const existing = byId.get(target);
     if (existing) {
       const cls = existing.features?.directClass || classifyDirect(existing.features || {});
-      if (cls === "strong" || cls === "moderate") continue;
       existing.relationship = relationship;
       existing.retrievalSources = [...new Set([...(existing.retrievalSources || []), "relationship"])];
+      if (cls === "strong" || cls === "moderate") {
+        continue;
+      }
       existing.features = extractFeatures(query, existing.document, { relationship });
-      existing.features.relevanceKind = "related";
       existing.score = scoreFeatures(existing.features);
       continue;
     }

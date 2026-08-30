@@ -92,6 +92,41 @@ describe("related-over-weak-direct repeated body exemption", () => {
     expect(relatedOverWeakFn(weak, rel)).toBe(0);
   });
 
+  test("unigram configured mentions do not exempt", () => {
+    const rel = related("rel", 0.4);
+    const weak = weakBody("weak", 16, {
+      queryTokenCount: 1,
+      configuredConceptFieldEvidence: { title: false, summary: false, body: "key" },
+    });
+    expect(relatedOverWeakFn(rel, weak)).toBe(-1);
+  });
+
+  test("related still outranks a weak summary configured mention", () => {
+    const rel = related("rel", 0.495);
+    const summary = weakBody("sum", 0, {
+      configuredConceptFieldEvidence: { title: false, summary: "key", body: "key" },
+      relationshipStrength: 0,
+    });
+    expect(relatedOverWeakFn(rel, summary)).toBe(-1);
+    const ranked = rankCandidates([summary, rel], { constraints: HYBRID_CONSTRAINTS });
+    expect(ranked.map((row) => row.document.id)).toEqual(["rel", "sum"]);
+  });
+
+  test("summary-over-body does not demote a related-attached body mention via transitivity", () => {
+    const iface = weakBody("iface", 1, {
+      configuredConceptFieldEvidence: { title: false, summary: false, body: "key" },
+      relationshipStrength: 0.512,
+    });
+    const refactor = weakBody("refactor", 0, {
+      configuredConceptFieldEvidence: { title: false, summary: "key", body: "key" },
+      relationshipStrength: 0.43,
+    });
+    const neighbor = related("class", 0.495);
+    expect(HYBRID_CONSTRAINTS.find((c) => c.id === "configured-summary-over-body-mention")).toBeUndefined();
+    const ranked = rankCandidates([refactor, neighbor, iface], { constraints: HYBRID_CONSTRAINTS });
+    expect(ranked.map((row) => row.document.id)).toEqual(["iface", "class", "refactor"]);
+  });
+
   test("argument orientation is symmetric", () => {
     const rel = related("rel", 0.2);
     const weakLow = weakBody("weak-low", 0);
@@ -158,5 +193,39 @@ describe("related-over-weak-direct repeated body exemption", () => {
     });
     expect(compareConstraint(repeatedTwoToken, incidental, DEFAULT_CONSTRAINTS).order).toBe(-1);
     expect(compareConstraint(repeatedTwoToken, incidental, HYBRID_CONSTRAINTS).order).toBe(-1);
+  });
+
+  test("contextual title completion outranks a stop-wrapped short-literal lead", () => {
+    const contextual = hit("api", {
+      contextualTitlePrefix: true,
+      contextualPrefixQuality: 0.75,
+      shortLiteralLeadMatch: false,
+      directClass: "moderate",
+      relevanceKind: "direct",
+    });
+    const lead = hit("appsec", {
+      shortLiteralLeadMatch: true,
+      contextualTitlePrefix: false,
+      directClass: "moderate",
+      relevanceKind: "direct",
+    });
+    expect(compareConstraint(contextual, lead, HYBRID_CONSTRAINTS).order).toBe(-1);
+    expect(compareConstraint(lead, contextual, HYBRID_CONSTRAINTS).order).toBe(1);
+  });
+
+  test("related-over-weak-direct still applies when the weak hit also has relationship support", () => {
+    const rel = related("class-vs-interface", 0.495);
+    const weakHybrid = weakBody("refactoring", 0, { relationshipStrength: 0.428 });
+    expect(weakHybrid.features.relevanceKind).toBe("direct");
+    expect(weakHybrid.features.directClass).toBe("weak");
+    expect(relatedOverWeakFn(rel, weakHybrid)).toBe(-1);
+    const ranked = rankCandidates([weakHybrid, rel], { constraints: HYBRID_CONSTRAINTS });
+    expect(ranked.map((row) => row.document.id)).toEqual(["class-vs-interface", "refactoring"]);
+  });
+
+  test("a weak-direct with equal-or-stronger relationship support stays unordered vs related", () => {
+    const rel = related("class-vs-interface", 0.495);
+    const weakHybrid = weakBody("interface", 0, { relationshipStrength: 0.512 });
+    expect(relatedOverWeakFn(rel, weakHybrid)).toBe(0);
   });
 });

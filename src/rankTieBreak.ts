@@ -2,6 +2,8 @@
  * Within-constraint ordering after score: a weak single-token body-only pack
  * may use compiled body occurrence counts before document id. This is not a
  * score term and not H8. Stronger title/configured/direct classes are excluded.
+ * Configured summary vs body-only field provenance is recorded on features
+ * but is not consumed here.
  */
 
 import type { FeaturedHit, FeatureVector } from "./types.js";

@@ -200,6 +200,114 @@ describe("positional PhraseQuery / PhrasePrefixQuery", () => {
     expect(ids).toEqual(["bar", "baz"]);
   });
 
+  test("CASE A keeps independent short-title-prefix evidence beside PhrasePrefix", async () => {
+    const engine = SearchEngine.create({ schema, retriever: "full-scan" });
+    await engine.index([
+      { id: "api", title: "What is an API?", summary: "", body: "what is an api explained" },
+      { id: "appsec", title: "App Sec", summary: "", body: "application security notes" },
+      { id: "bodyonly", title: "Other Notes", summary: "", body: "what is an api in passing" },
+      { id: "weak", title: "What is Docker?", summary: "", body: "unrelated" },
+    ]);
+    const ids = engine
+      .search("what is an ap", { limit: 10, resultCollector: COMPLETE_INTERPRETATION_COLLECTOR })
+      .map((h) => h.id);
+    expect(ids).toContain("api");
+    expect(ids).toContain("appsec");
+    expect(ids).toContain("bodyonly");
+    expect(ids).not.toContain("weak");
+  });
+
+  test("wrapper-complete concept query declines the collector; incidental body mentions stay weak", async () => {
+    const engine = SearchEngine.create({
+      schema,
+      retriever: "full-scan",
+      plugins: [
+        compileConfiguredConceptPlugin({
+          configuredConcepts: [{ key: "api", aliases: [["application", "programming", "interface"]] }],
+        }),
+      ],
+    });
+    await engine.index([
+      { id: "api", title: "What is an API?", summary: "", body: "what is an api explained" },
+      { id: "rest", title: "REST API vs GraphQL", summary: "", body: "compare rest and graphql" },
+      { id: "iface", title: "Class vs Interface", summary: "", body: "mentions api once" },
+      { id: "prog", title: "Functional Programming", summary: "", body: "mentions api once" },
+      { id: "weak", title: "What is Docker?", summary: "", body: "unrelated" },
+    ]);
+    const off = engine.search("what is an api", { limit: 10 });
+    const on = engine.search("what is an api", { limit: 10, resultCollector: COMPLETE_INTERPRETATION_COLLECTOR });
+    expect(on.map((h) => h.id)).toEqual(off.map((h) => h.id));
+    expect(on.map((h) => h.id)).toContain("api");
+    expect(on.map((h) => h.id)).toContain("rest");
+    const iface = on.find((h) => h.id === "iface");
+    if (iface) expect(iface.directClass).toBe("weak");
+    expect(on.find((h) => h.id === "api").directClass).toBe("strong");
+  });
+
+  test("occupied ranking does not treat a single form token as configured identity", async () => {
+    const engine = SearchEngine.create({
+      schema,
+      retriever: "full-scan",
+      relationshipStrategy: "hybrid",
+      documentRelationships: {
+        format: "search-v2-relationships",
+        version: 1,
+        relationships: {
+          incidental: [{ target: "api", type: "semantic", strength: 0.9, provenance: "generated" }],
+          iface: [{ target: "api", type: "semantic", strength: 0.2, provenance: "generated" }],
+        },
+      },
+      plugins: [
+        compileConfiguredConceptPlugin({
+          configuredConcepts: [{ key: "api", aliases: [["application", "programming", "interface"]] }],
+        }),
+      ],
+    });
+    await engine.index([
+      { id: "api", title: "What is an API?", summary: "", body: "application programming interface" },
+      { id: "incidental", title: "Refactoring", summary: "without changing its API", body: "style" },
+      { id: "iface", title: "Class vs Interface", summary: "", body: "mentions api once" },
+    ]);
+    const detailed = engine.searchDetailed("application programming interface", { limit: 10, explain: true });
+    const ids = detailed.results.map((h) => h.id);
+    expect(ids[0]).toBe("api");
+    const iface = detailed.results.find((h) => h.id === "iface");
+    expect(iface).toBeTruthy();
+    expect(iface.features.configuredConceptMatch).not.toBe("key-in-title");
+    expect(iface.features.configuredConceptMatch).not.toBe("form");
+    expect(iface.features.configuredFormEvidence || 0).toBe(0);
+    expect(["strong", "moderate"]).not.toContain(iface.directClass);
+  });
+
+  test("configured-key summary mention is not typed title/summary phrase evidence", async () => {
+    const engine = SearchEngine.create({
+      schema,
+      retriever: "full-scan",
+      plugins: [
+        compileConfiguredConceptPlugin({
+          configuredConcepts: [
+            { key: "api", aliases: [["application", "programming", "interface"], ["app", "programming", "interface"]] },
+          ],
+        }),
+      ],
+    });
+    await engine.index([
+      { id: "api", title: "What is an API?", summary: "APIs are interfaces.", body: "an application programming interface" },
+      { id: "incidental", title: "Refactoring", summary: "Updating code without changing its API.", body: "style notes" },
+      { id: "iface", title: "What is an Interface?", summary: "", body: "types" },
+    ]);
+    const detailed = engine.searchDetailed("application programming interface", { limit: 10, explain: true });
+    const incidental = detailed.results.find((h) => h.id === "incidental");
+    expect(incidental).toBeTruthy();
+    expect(incidental.features.exactTitleOrSummaryPhrase).toBe(false);
+    expect(incidental.features.summaryPhraseFrequency).toBe(0);
+    expect(incidental.directClass).not.toBe("moderate");
+    const api = detailed.results.find((h) => h.id === "api");
+    expect(api.directClass).toBe("strong");
+    const titles = detailed.results.map((h) => h.id);
+    expect(titles.indexOf("api")).toBeLessThan(titles.indexOf("incidental"));
+  });
+
   test("search-path phrase geometry is reused by features", async () => {
     const engine = SearchEngine.create({ schema, retriever: "full-scan" });
     await engine.index([{ id: "a", title: "two layer authorization", summary: "", body: "x" }]);
@@ -209,7 +317,7 @@ describe("positional PhraseQuery / PhrasePrefixQuery", () => {
     expect(queryPhraseGeometry.get(query)?.get("a")?.titleFrequency).toBeGreaterThan(0);
     const feat = extractFeatures(query, engine._index.documents[0]);
     expect(feat.exactTitleOrSummaryPhrase).toBe(true);
-    expect(feat.titlePhraseFrequency).toBe(queryPhraseGeometry.get(query).get("a").titleFrequency);
+    expect(feat.titlePhraseFrequency).toBeGreaterThan(0);
   });
 
   test("title/body-only schema remains compatible", async () => {

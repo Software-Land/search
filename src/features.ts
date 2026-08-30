@@ -1,11 +1,10 @@
 import { sequenceKey } from "./configuredAuthoring.js";
 import { isNearCompletePrefix, levenshteinAtMost, DEFAULT_STOP, allowPrefixMatch } from "./text.js";
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "./versionForms.js";
-import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall, topicalRecallHint, topicalFormEvidence, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts, coverageConcepts, formContentTokens, sequenceCount } from "./retrieve.js";
+import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, hasConfiguredRankingIntent, hasConfiguredContentIdentity, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall, topicalRecallHint, topicalFormEvidence, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts, rankingCoverageConcepts, formContentTokens, sequenceCount, shortTitleTokenPrefixStub, configuredConceptFieldMatch } from "./retrieve.js";
 import { scoreFeatures } from "./rank.js";
 import { saturatingFrequency } from "./saturatingFrequency.js";
 import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "./lexicalNormalize.js";
-import { queryPhraseGeometry } from "./queryPlan.js";
 import {
   asCompactStore,
   compactAdjacentTokens,
@@ -215,6 +214,11 @@ function exactTitle(query: AnalyzedQuery, doc: IndexedDocument) {
   if (hasConfiguredSequenceIntent(query) && prep.peerFormJoins.length) {
     return prep.peerFormJoins.includes(doc.normalizedTitle);
   }
+  // Identity is not occupancy. Literal original-surface title equality stays
+  // available; ranking may additionally accept an authored peer-form title.
+  if (hasConfiguredRankingIntent(query) && prep.peerFormJoins.length && prep.peerFormJoins.includes(doc.normalizedTitle)) {
+    return true;
+  }
   const q = prep.joinedNorm;
   return q.length > 0 && q === doc.normalizedTitle;
 }
@@ -333,16 +337,41 @@ function titlePrefixQuality(query: AnalyzedQuery, doc: IndexedDocument) {
   const last = query.tokens[query.tokens.length - 1];
   const skipLast = hasBoundContextualCompletion(query);
   const qToks = queryNonStop(query).filter((qt) => !(skipLast && qt === last));
-  return titlePrefixQualityForNorms(
+  const literal = titlePrefixQualityForNorms(
     qToks.map((qt) => qt.normalized),
     doc
   );
+  if (!hasConfiguredContentIdentity(query)) return literal;
+  // Identity may evaluate an authored peer form that is the document's title
+  // identity: full-title join, contiguous multi-token form, or a one-token
+  // form that is the entire non-stop title. Occupancy's looser 2-of-n
+  // query-shaped-title reduction is not copied.
+  const prep = getQueryFeatPrep(query);
+  let best = literal;
+  for (const form of prep.peerForms) {
+    const content = formContentTokens(form);
+    if (!content.length) continue;
+    const join = form.join(" ");
+    const fullTitle = join === doc.normalizedTitle;
+    const contiguous =
+      form.length >= 2 &&
+      (exactTokenSequence(form, doc.titleTokens) || exactTokenSequence(form, doc.titleLemmas));
+    const singletonTitle =
+      form.length === 1 &&
+      hasIndependentTitleTokenFast(doc, content[0]) &&
+      doc.nonStopTitle.length > 0 &&
+      doc.nonStopTitle.every((tok) => tok === content[0]);
+    if (!fullTitle && !contiguous && !singletonTitle) continue;
+    const v = titlePrefixQualityForNorms(content, doc);
+    if (v > best) best = v;
+  }
+  return best;
 }
 
 function queryCoverage(query: AnalyzedQuery, doc: IndexedDocument, v: ReturnType<typeof versionHit> = versionHit(query, doc)) {
   const unboundConcepts = query.concepts.filter((c) => !isBoundTrailingTermConcept(query, c));
   const concepts = unboundConcepts.filter((c) => c.kind !== "number" || unboundConcepts.length === 1);
-  const usable = coverageConcepts(query, concepts.length ? concepts : unboundConcepts);
+  const usable = rankingCoverageConcepts(query, concepts.length ? concepts : unboundConcepts);
   if (!usable.length) return 0;
   const vOk = Boolean(v);
   let hit = 0;
@@ -353,7 +382,7 @@ function queryCoverage(query: AnalyzedQuery, doc: IndexedDocument, v: ReturnType
   // Count number concepts via version hit once
   const hasNumber = unboundConcepts.some((c) => c.kind === "number");
   if (hasNumber && v) {
-    const withoutNum = coverageConcepts(query, unboundConcepts.filter((c) => c.kind !== "number"));
+    const withoutNum = rankingCoverageConcepts(query, unboundConcepts.filter((c) => c.kind !== "number"));
     const numOk = v.compactHit || v.dottedHit;
     const otherHits = withoutNum.filter((c) => conceptCoveredInTitle(c, doc)).length;
     const denom = withoutNum.length + 1;
@@ -392,11 +421,51 @@ function titleCoverage(query: AnalyzedQuery, doc: IndexedDocument) {
   return coverTitle(evidenceTokens(query));
 }
 
-function configuredConceptMatch(query: AnalyzedQuery, doc: IndexedDocument): ConfiguredConceptMatch {
+function emptyConfiguredFieldEvidence(): FeatureVector["configuredConceptFieldEvidence"] {
+  return { title: false, summary: false, body: false };
+}
+
+function configuredConceptFieldEvidence(
+  query: AnalyzedQuery,
+  doc: IndexedDocument
+): FeatureVector["configuredConceptFieldEvidence"] {
   const acr = getQueryFeatPrep(query).acronym;
-  if (!acr) return false;
-  if (doc.titleTokenSet.has(acr.id) || doc.titleLemmaSet.has(acr.id)) return "key-in-title";
-  if (conceptMatchesTitle(acr, doc)) return "form";
+  if (!acr) return emptyConfiguredFieldEvidence();
+  const summaryTokens = doc.summaryTokens || [];
+  const summaryLemmas = doc.summaryLemmas || summaryTokens;
+  return {
+    title: configuredConceptFieldMatch(
+      acr,
+      doc.titleTokens,
+      doc.titleLemmas,
+      doc.titleTokenSet,
+      doc.titleLemmaSet,
+      { requireContiguous: false }
+    ),
+    summary: configuredConceptFieldMatch(
+      acr,
+      summaryTokens,
+      summaryLemmas,
+      doc.summaryTokenSet || new Set(summaryTokens),
+      doc.summaryLemmaSet || new Set(summaryLemmas),
+      { requireContiguous: true }
+    ),
+    body: configuredConceptFieldMatch(
+      acr,
+      doc.bodyTokens,
+      doc.bodyLemmas,
+      doc.bodyTokenSet,
+      doc.bodyLemmaSet,
+      { requireContiguous: true }
+    ),
+  };
+}
+
+function configuredConceptMatchFromField(
+  evidence: FeatureVector["configuredConceptFieldEvidence"]
+): ConfiguredConceptMatch {
+  if (evidence.title === "key") return "key-in-title";
+  if (evidence.title === "form") return "form";
   return false;
 }
 
@@ -455,7 +524,7 @@ function versionMatch(query: AnalyzedQuery, doc: IndexedDocument, v: ReturnType<
 }
 
 function shortLiteralLeadMatch(query: AnalyzedQuery, doc: IndexedDocument) {
-  const tok = getQueryFeatPrep(query).shortLiteralTok;
+  const tok = getQueryFeatPrep(query).shortLiteralTok || shortTitleTokenPrefixStub(query);
   if (tok == null) return false;
   if (!doc.firstToken) return false;
   return doc.firstToken === tok || doc.firstToken.startsWith(tok);
@@ -723,19 +792,6 @@ function canonicalKeyTitle(query: AnalyzedQuery, doc: IndexedDocument) {
   return configuredFormEvidence(query, doc) >= 0.5;
 }
 
-function hasDirectTitleEvidence(f: Partial<FeatureVector>) {
-  if (f.exactTitleMatch || f.exactTitleTokenMatch) return true;
-  if ((f.queryCoverage || 0) > 0) return true;
-  if (f.configuredConceptMatch) return true;
-  if (f.morphologyMatch) return true;
-  if (f.versionMatch) return true;
-  if (f.dottedSpanComponentTitleMatch) return true;
-  if ((f.titlePrefixQuality || 0) > 0) return true;
-  if (f.canonicalKeyTitle) return true;
-  if (f.contextualTitlePrefix) return true;
-  return false;
-}
-
 /**
  * Body-only and title∪body coverage over typed/configured concepts.
  * queryCoverage stays title-only and is computed separately.
@@ -743,7 +799,7 @@ function hasDirectTitleEvidence(f: Partial<FeatureVector>) {
  * concept walk and count hits with two integer accumulators.
  */
 function lexicalCoverageFields(query: AnalyzedQuery, doc: IndexedDocument) {
-  const concepts = query.concepts || [];
+  const concepts = rankingCoverageConcepts(query, query.concepts || []);
   let coverageConceptCount = 0;
   let bodyHits = 0;
   let unionHits = 0;
@@ -853,15 +909,9 @@ function typedPhraseFieldFrequencies(query: AnalyzedQuery, doc: IndexedDocument)
   if (tokens.length < 2) {
     return { titlePhraseFrequency: 0, summaryPhraseFrequency: 0, exactTitleOrSummaryPhrase: false };
   }
-  const cached = queryPhraseGeometry.get(query)?.get(doc.id);
-  if (cached) {
-    return {
-      titlePhraseFrequency: cached.titleFrequency,
-      summaryPhraseFrequency: cached.summaryFrequency,
-      exactTitleOrSummaryPhrase: cached.titleFrequency > 0 || cached.summaryFrequency > 0,
-    };
-  }
-  // Fallback for extractFeatures callers that did not go through search planning.
+  // Typed originalSurface only. Token-graph hits (configured-key shortcuts)
+  // are not complete typed-phrase evidence — a summary mention of a 1-token
+  // key is not an exact title/summary phrase of a multi-token form.
   const titlePhraseFrequency = sequenceCount(tokens, doc.titleTokens);
   const summaryPhraseFrequency = sequenceCount(tokens, doc.summaryTokens || []);
   return {
@@ -1051,9 +1101,8 @@ function finishFeatures(
     relevanceKind: "direct",
     directClass: "none",
   };
-  const direct = hasDirectTitleEvidence(base);
   base.directClass = classifyDirect(base);
-  base.relevanceKind = relationship && !direct ? "related" : "direct";
+  base.relevanceKind = relationship && base.directClass === "none" ? "related" : "direct";
   return base;
 }
 
@@ -1062,6 +1111,7 @@ function computeFeatureFields(query: AnalyzedQuery, doc: IndexedDocument) {
   const vHit = versionHit(query, doc);
   const phrase = compiledPhraseLookup(query, doc);
   const contextual = hasConfiguredSequenceIntent(query) ? null : matchContextualTitlePrefix(query, doc);
+  const fieldEvidence = configuredConceptFieldEvidence(query, doc);
   return {
     exactTitleMatch: exactTitle(query, doc),
     exactTitleTokenMatch: exactTitleTokenMatch(query, doc),
@@ -1070,7 +1120,8 @@ function computeFeatureFields(query: AnalyzedQuery, doc: IndexedDocument) {
     queryCoverage: queryCoverage(query, doc, vHit),
     titlePrefixQuality: titlePrefixQuality(query, doc),
     ...contextualFeatureFields(contextual),
-    configuredConceptMatch: configuredConceptMatch(query, doc),
+    configuredConceptMatch: configuredConceptMatchFromField(fieldEvidence),
+    configuredConceptFieldEvidence: fieldEvidence,
     morphologyMatch: morphologyMatch(query, doc),
     typoDistance: typoDistance(query, doc),
     versionMatch: versionMatch(query, doc, vHit),
@@ -1115,6 +1166,9 @@ export function extractFeatures(
   const contextual = timeFeat("contextualTitlePrefix", () =>
     hasConfiguredSequenceIntent(query) ? null : matchContextualTitlePrefix(query, doc)
   );
+  const fieldEvidence = timeFeat("configuredConceptFieldEvidence", () =>
+    configuredConceptFieldEvidence(query, doc)
+  );
   return finishFeatures(
     relationship,
     retrievalScore,
@@ -1129,7 +1183,8 @@ export function extractFeatures(
     queryCoverage: timeFeat("queryCoverage", () => queryCoverage(query, doc, vHit)),
     titlePrefixQuality: timeFeat("titlePrefixQuality", () => titlePrefixQuality(query, doc)),
     ...contextualFeatureFields(contextual),
-    configuredConceptMatch: timeFeat("configuredConceptMatch", () => configuredConceptMatch(query, doc)),
+    configuredConceptMatch: configuredConceptMatchFromField(fieldEvidence),
+    configuredConceptFieldEvidence: fieldEvidence,
     morphologyMatch: timeFeat("morphologyMatch", () => morphologyMatch(query, doc)),
     typoDistance: timeFeat("typoDistance", () => typoDistance(query, doc)),
     versionMatch: timeFeat("versionMatch", () => versionMatch(query, doc, vHit)),
@@ -1196,7 +1251,9 @@ export function classifyDirect(f: Partial<FeatureVector>): DirectClass {
     (f.bodyLexicalMatch || 0) > 0 ||
     (f.queryCoverage || 0) > 0 ||
     (f.titlePrefixQuality || 0) > 0 ||
-    f.configuredConceptMatch
+    f.configuredConceptMatch ||
+    Boolean(f.configuredConceptFieldEvidence?.summary) ||
+    Boolean(f.configuredConceptFieldEvidence?.body)
   ) {
     return "weak";
   }
@@ -1204,12 +1261,12 @@ export function classifyDirect(f: Partial<FeatureVector>): DirectClass {
 }
 
 export const FEATURE_DEFINITIONS = {
-  exactTitleMatch: "True when normalized query equals the full normalized title.",
+  exactTitleMatch: "True when normalized query equals the full normalized title. Occupied ranking also accepts an authored peer-form join equal to the title. Configured-content identity unions that same peer-form title equality without replacing literal original-surface title equality.",
   exactTitleTokenMatch: "True when a non-stop canonical query token occurs as an independent title token (not a digit split from a dotted numeric span such as 1.2). Unique prefix completions and morphology use the lemma; typed stubs and completedToken are not exact surface evidence. A trailing stub bound by unique contextual form completion is not unbound exact-title-token evidence. Occupied multi-token peer forms contribute only when the title expresses the form (phrase or ≥2 content tokens).",
   typedSurfaceTitleMatch: "True when the typed/repaired surface (before lemma or unique-prefix rewrite) occurs as an independent title token or is a legitimate prefix of one. Digits produced by splitting a dotted span are not typed-surface evidence. Canonical retrieval lemmas are not typed-surface evidence. A trailing stub bound by unique contextual form completion is not unbound title-prefix evidence. Occupied multi-token peer forms contribute only when the title expresses the form.",
   titleCoverage: "Fraction of non-stop title tokens accounted for by the query. A trailing stub bound by unique contextual form completion is excluded. Occupied concepts take the max over peer forms that the title actually expresses.",
-  queryCoverage: "Fraction of typed/configured query concepts evidenced in the title (or via a legitimate version alias). Extra search-equivalence recall concepts attached after configured occupancy are excluded. A trailing term concept bound by unique contextual form completion is excluded. Synonym forms merged into an ordinary term concept still count with that concept.",
-  titlePrefixQuality: "How completely query tokens prefix title tokens, tightened by extra title tokens. A trailing stub bound by unique contextual form completion is excluded. Occupied concepts take the max over peer forms that the title actually expresses.",
+  queryCoverage: "Fraction of typed/configured query concepts evidenced in the title (or via a legitimate version alias). Extra search-equivalence recall concepts attached after configured occupancy are excluded. A trailing term concept bound by unique contextual form completion is excluded. Synonym forms merged into an ordinary term concept still count with that concept. Occupied or identity ranking intent excludes structural-wrapper term concepts (WH / copula / determiner) from the coverage set.",
+  titlePrefixQuality: "How completely query tokens prefix title tokens, tightened by extra title tokens. A trailing stub bound by unique contextual form completion is excluded. Occupied concepts take the max over peer forms that the title actually expresses. Configured-content identity may use an authored peer form when that form is the full title, a contiguous title phrase, or the entire non-stop title.",
   contextualTitlePrefix: "True when preceding query tokens align with the title start and only the final token is a proper prefix of the aligned title token.",
   matchedPrefixTokens: "Preceding query tokens that aligned exactly/canonically with the title start.",
   activeFinalPrefix: "Final query token used as a contextual title prefix, or null.",
@@ -1217,19 +1274,20 @@ export const FEATURE_DEFINITIONS = {
   unmatchedTitleTokensAfter: "Count of title tokens after the aligned final-token completion (0 when the title ends at the completed token).",
   titleSequenceTightness: "1 / (1 + unmatchedTitleTokensAfter). Prefer titles that complete the query and end there.",
   contextualPrefixQuality: "completeness * titleSequenceTightness, where completeness is finalPrefix.length / completedTitleToken.length.",
-  configuredConceptMatch: "Configured-concept title match: key-in-title | form | false. The value form means a peer form is in the title, not aliases[0].",
+  configuredConceptMatch: "Configured-concept title match: key-in-title | form | false. The value form means a peer form is in the title, not aliases[0]. Title identity only; summary/body mentions live on configuredConceptFieldEvidence.",
+  configuredConceptFieldEvidence: "Structured configured-concept evidence by field: title/summary/body each false | key | form. Title is authored identity. Summary is a weak authored mention. Body is a weak/incidental mention. Neither summary nor body becomes moderate/strong, and ranking does not consume summary vs body-only provenance. A single token of a multi-token form is not form.",
   morphologyMatch: "Query lemma matches a title token/lemma while surface may differ. A trailing stub bound by unique contextual form completion is excluded. Occupied concepts only use one-token peer forms.",
   typoDistance: "0–2 style evidence: 0 none, 1 repeat-collapse or edit-distance 2, 2 edit-distance 1.",
   versionMatch: "false | compact-weak | compact-dotted | dotted | dotted-weak.",
-  shortLiteralLeadMatch: "Short query (≤3) matches the first surface title token as exact or prefix.",
+  shortLiteralLeadMatch: "Short query (≤3 tokens, or a stop-wrapped 2-character title-token prefix stub) matches the first surface title token as exact or prefix.",
   dottedSpanComponentTitleMatch: "True when a typed all-digit query token equals a component of a dotted numeric title span (the 2 in 1.2). Not independent exact-title evidence and not a versionMatch.",
   phraseAdjacency: "1 title-adjacent query tokens, 0.5 body-adjacent, else 0.",
   bodyLexicalMatch: "Fraction of typed/configured query concepts evidenced in the body field. Extra search-equivalence recall concepts attached after configured occupancy are excluded from the numerator and denominator. Synonym forms merged into an ordinary term concept still count with that concept.",
   lexicalConceptCoverage: "Fraction of typed/configured coverage concepts with lexical evidence in the title OR the body. Each concept counts once. Not max(queryCoverage, bodyLexicalMatch) and not their sum.",
-  coverageConceptCount: "Count of typed/configured coverage concepts (search-equivalence recall concepts excluded). Distinct from queryTokenCount, which for occupied concepts is the max non-stop length of one peer form, not a concatenated alias stream.",
+  coverageConceptCount: "Count of typed/configured coverage concepts (search-equivalence recall concepts excluded; structural-wrapper term concepts excluded under occupied or identity ranking intent). Distinct from queryTokenCount, which for occupied concepts is the max non-stop length of one peer form, not a concatenated alias stream.",
   ordinaryEquivalenceBodyMatch: "True only when the candidate BODY matches a directed target form from an ordinary same-concept search equivalence. This is provenance, not additional lexical coverage or score.",
   titleTokenCount: "Non-stop title token count; used for tightness, not as a boost constant.",
-  configuredFormEvidence: "Max fraction of any configured peer form's non-stop tokens evidenced in the title. Denominator is per form. Stopwords are not independent title evidence.",
+  configuredFormEvidence: "Max fraction of any configured peer form's non-stop tokens evidenced in the title. Denominator is per form. Stopwords are not independent title evidence. A single content token from a multi-token form is not configured identity.",
   configuredFormCoverage: "Occupied matched-form completeness from query analysis (0 when the query does not uniquely occupy a configured concept). Unique occupancy does not imply 1. 2/3 is the existing form-prefix occupancy information bound.",
   configuredFormBodyMatch: "True when an unambiguous partial configured-form prefix (at least 2 tokens and 2/3 coverage, not a complete form) has any contiguous n≥3 peer form in the body.",
   canonicalKeyTitle: "True when the query is exactly a configured key and the title also states most of a peer form.",
@@ -1245,6 +1303,6 @@ export const FEATURE_DEFINITIONS = {
   relationshipType: "Relationship type (semantic, same-category, …) or null. Not a query equivalence.",
   relationshipSourceId: "Primary document id that licensed this related candidate, or null.",
   retrievalScore: "Optional 0–1 retrieval evidence (e.g. normalized BM25). Default 0; not a substitute for constraints.",
-  relevanceKind: "direct | related. Related never counts as direct-intent evidence.",
-  directClass: "strong | moderate | weak | none. Interpretable lexical evidence class, independent of relatedness.",
+  relevanceKind: "direct | related. Related only when directClass is none and query-anchored relationship evidence exists. Weak/moderate/strong lexical class stays direct even when a relationship is attached.",
+  directClass: "strong | moderate | weak | none. Interpretable lexical/configured evidence class, independent of relatedness.",
 };

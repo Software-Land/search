@@ -225,6 +225,9 @@ export interface SearchExplanation {
       matchedForm: string[];
       matchedKinds: string[];
     } | null;
+    configuredContentIdentity?: {
+      key: string;
+    } | null;
     configuredSpans?: Array<{
       key: string;
       start: number;
