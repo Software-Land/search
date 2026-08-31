@@ -18,6 +18,7 @@
 - Hybrid `related-over-weak-direct`: unigram configured summary/body mentions do not count as repeated-phrase exemptions. A weak-direct whose `relationshipStrength` is at least the related candidate's stays unordered.
 - Default `search()` no longer collapses to a rare-phrase exclusive set. Optional complete-interpretation collection is opt-in and is not gated on token count or phrase DF.
 - Re-index after a consumed `search-v2-lexical-index` also checks a hydration fingerprint that includes optional `summary`. The v1 artifact corpus fingerprint remains `(id, title, body, lexicalFrequency)`.
+- Compact / compiled-index hydration now applies the same lemma map to `summaryLemmas` / `summaryLemmaSet` as analyzed `IndexedDocument`. Summary still is not a unigram posting field.
 
 ## 0.5.0
 

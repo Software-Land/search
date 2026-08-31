@@ -73,7 +73,7 @@ type LexicalIndexPayload = {
   extensions: Record<string, unknown>;
 };
 
-type SourceRow = [string, string, string, Record<string, number> | null, string, string[]];
+type SourceRow = [string, string, string, Record<string, number> | null, string, string[], string[]];
 
 export type ExactPruningExtensionV1 = {
   revision: typeof EXACT_PRUNING_REVISION;
@@ -199,8 +199,17 @@ function hydrationRows(documents: unknown, schema?: Schema | null) {
   return [...byId.values()].sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
 }
 
-function compactSourceById(documents: unknown, schema?: Schema | null): Map<string, SourceRow> {
+function pluginLemmaFn(plugins: SearchPlugin[] = []) {
+  return plugins.find((p) => typeof p.lemma === "function")?.lemma || ((t: string) => t);
+}
+
+function compactSourceById(
+  documents: unknown,
+  schema?: Schema | null,
+  plugins: SearchPlugin[] = []
+): Map<string, SourceRow> {
   const { titleField, bodyField, summaryField } = resolveSchema(schema);
+  const lemma = pluginLemmaFn(plugins);
   const byId = new Map<string, SourceRow>();
   const rows = inputDocuments(documents);
   for (let i = 0; i < rows.length; i++) {
@@ -212,7 +221,9 @@ function compactSourceById(documents: unknown, schema?: Schema | null): Map<stri
     const title = doc[titleField] == null && doc.title == null ? "" : String(doc[titleField] ?? doc.title ?? "");
     const body = doc[bodyField] == null && doc.body == null ? "" : String(doc[bodyField] ?? doc.body ?? "");
     const summary = summaryField ? String(doc[summaryField] ?? doc.summary ?? "") : "";
-    byId.set(id, [id, title, body, sortedNumberRecord(doc.lexicalFrequency), summary, tokenize(summary)]);
+    const tokens = tokenize(summary);
+    const lemmas = tokens.map((t) => lemma(t) || t);
+    byId.set(id, [id, title, body, sortedNumberRecord(doc.lexicalFrequency), summary, tokens, lemmas]);
   }
   return byId;
 }
@@ -396,17 +407,22 @@ function envelope(
 
 function sourceRowsFromIndex(index: SearchIndex): Map<string, SourceRow> {
   return new Map(
-    index.documents.map((doc) => [
-      doc.id,
-      [
+    index.documents.map((doc) => {
+      const tokens = Array.isArray(doc.summaryTokens) ? [...doc.summaryTokens] : [];
+      const lemmas = Array.isArray(doc.summaryLemmas) ? [...doc.summaryLemmas] : tokens;
+      return [
         doc.id,
-        doc.title,
-        "",
-        doc.lexicalFrequency,
-        doc.summary || "",
-        Array.isArray(doc.summaryTokens) ? [...doc.summaryTokens] : [],
-      ],
-    ])
+        [
+          doc.id,
+          doc.title,
+          "",
+          doc.lexicalFrequency,
+          doc.summary || "",
+          tokens,
+          lemmas,
+        ],
+      ];
+    })
   );
 }
 
@@ -861,6 +877,7 @@ function compactStoreFromPayload(
   const lexicalFrequency = new Array<Record<string, number> | null>(n);
   const summaries = new Array<string>(n);
   const summaryTokenRows = new Array<string[]>(n);
+  const summaryLemmaRows = new Array<string[]>(n);
   for (let pos = 0; pos < n; pos++) {
     const row = payload.documents[pos];
     const source = sourceById.get(row[0]);
@@ -873,6 +890,7 @@ function compactStoreFromPayload(
     lexicalFrequency[pos] = source[3];
     summaries[pos] = source[4] || "";
     summaryTokenRows[pos] = source[5] && source[5].length ? source[5] : [];
+    summaryLemmaRows[pos] = source[6] && source[6].length ? source[6] : [];
     const marked = row[6];
     const dottedStart = dottedOff[pos];
     for (let i = 0; i < marked.length; i++) {
@@ -909,6 +927,7 @@ function compactStoreFromPayload(
     lexicalFrequency,
     summaries,
     summaryTokenRows,
+    summaryLemmaRows,
     titleTokenSet,
     surfaceVocabulary,
   };
@@ -1023,7 +1042,7 @@ export function loadLexicalIndex(
   if (stableFingerprint(rows) !== artifact.corpus.fingerprint) {
     fail("Lexical index corpus fingerprint does not match supplied searchable text", "corpus.fingerprint");
   }
-  return indexFromPayload(payload, artifact, compactSourceById(documents, schema), schema);
+  return indexFromPayload(payload, artifact, compactSourceById(documents, schema, plugins), schema);
 }
 
 export function ensureCompiledLexicalIndex(index: SearchIndex, plugins: SearchPlugin[] = []) {

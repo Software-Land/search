@@ -1,8 +1,8 @@
 /**
  * Indexed / adaptive retrieval must match current full-scan Software.Land
- * ordered results. The frozen query-result oracle remains the identity gate
- * on the explicit full-scan engine; this file additionally requires indexed
- * retrieval to reproduce that same public output on this 122-document corpus.
+ * ordered results, related rail, scores, and candidateCount (live, not the
+ * frozen 0.5 122-result oracle tails). The frozen query-result oracle remains
+ * the identity gate for #1 on the explicit full-scan engine.
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";

@@ -130,10 +130,6 @@ export function buildTokenGraph(query: AnalyzedQuery): TokenGraph {
   };
 }
 
-export function graphHasConfiguredAlternatives(graph: TokenGraph): boolean {
-  return graph.configuredEdgeCount > 0;
-}
-
 /** True when executing the DAG (not a plain PhraseQuery) would use configured edges. */
 export function queryHasTypedConfiguredGraph(query: AnalyzedQuery): boolean {
   const typed = typedSurfacePhraseTokens(query);

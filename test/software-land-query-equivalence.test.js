@@ -1,7 +1,17 @@
 /**
- * Fail-closed inventory of the 215 historical queries. Default Core search
- * (collector off) is not a complete-interpretation snapshot. Known #1 diffs
- * versus the frozen oracle are occupancy ranking, not collector policy.
+ * Fail-closed inventory of the 215 historical queries.
+ *
+ * The frozen query-result-oracle.json is the identity gate for default Core
+ * #1 under this fixture wiring. Known #1 diffs versus that freeze are
+ * occupancy ranking, not collector policy.
+ *
+ * Complete ordered lists, scores, relevanceKind, directClass, related rail,
+ * and candidateCount versus the 0.5 freeze are not restored: that snapshot
+ * encodes stale ranking tails, not accepted 0.6 architecture. Product 2–10
+ * membership is the V1 historical top-N contract and historical relevance
+ * (expectedTop within min(topN, 10)). Live full-scan vs indexed still pins
+ * complete ordered results, related, and candidateCount in
+ * retrieval-mode-equivalence.test.js.
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";

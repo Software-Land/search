@@ -366,34 +366,6 @@ export interface SearchIndex {
   positional?: unknown;
 }
 
-/**
- * Exact typed-surface phrase statistics. Facts only: no ranking policy
- * constants (minimum token count, maximum DF) live here.
- */
-export interface ExactPhraseHit {
-  document: IndexedDocument;
-  titleFrequency: number;
-  summaryFrequency: number;
-  bodyFrequency: number;
-}
-
-export interface ExactPhraseEvidence {
-  /** Typed `query.originalSurface` tokens (tokenizer identity). */
-  tokens: string[];
-  /** `tokens.length`; metadata only, not a policy branch. */
-  tokenCount: number;
-  corpusSize: number;
-  /** Documents with the exact contiguous sequence in title, summary, or body. */
-  phraseDf: number;
-  /** Documents containing every typed token, any order, title∪summary∪body. */
-  conjunctionDf: number;
-  /** `phraseDf / conjunctionDf` when `conjunctionDf > 0`, else null. */
-  selectivity: number | null;
-  /** Per unique typed token, first-seen order: documents containing that token. */
-  tokenDfs: Array<{ token: string; df: number }>;
-  hits: ExactPhraseHit[];
-}
-
 export interface RelationshipEdge {
   target: string;
   type?: string;

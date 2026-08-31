@@ -41,6 +41,8 @@ export type CompactDocumentStore = {
   lexicalFrequency: Array<Record<string, number> | null>;
   summaries?: string[];
   summaryTokenRows?: string[][];
+  /** Parallel to summaryTokenRows. Same lemma map as IndexedDocument.summaryLemmas. */
+  summaryLemmaRows?: string[][];
   titleTokenSet: Set<string>;
   surfaceVocabulary: Set<string>;
 };
@@ -548,6 +550,8 @@ export class CompactIndexedDocument {
   private _bodyTokenPositions: PackedPosMap | null = null;
   private _bodyLemmaPositions: PackedPosMap | null = null;
   private _raw: { id: string; title: string; body: string; summary?: string } | null = null;
+  private _summaryTokens: string[] | null = null;
+  private _summaryLemmas: string[] | null = null;
   private _summaryTokenSet: Set<string> | null = null;
   private _summaryLemmaSet: Set<string> | null = null;
 
@@ -573,10 +577,10 @@ export class CompactIndexedDocument {
     return this._store.summaries?.[this._ordinal] || "";
   }
   get summaryTokens() {
-    return this._store.summaryTokenRows?.[this._ordinal] || EMPTY_STRINGS;
+    return this._summaryTokens || (this._summaryTokens = this._store.summaryTokenRows?.[this._ordinal] || EMPTY_STRINGS);
   }
   get summaryLemmas() {
-    return this.summaryTokens;
+    return this._summaryLemmas || (this._summaryLemmas = this._store.summaryLemmaRows?.[this._ordinal] || EMPTY_STRINGS);
   }
   get summaryTokenSet() {
     return this._summaryTokenSet || (this._summaryTokenSet = new Set(this.summaryTokens));
@@ -681,6 +685,7 @@ export function emptyCompactStore(n: number): CompactDocumentStore {
     lexicalFrequency: new Array(n),
     summaries: new Array(n).fill(""),
     summaryTokenRows: new Array(n).fill(EMPTY_STRINGS),
+    summaryLemmaRows: new Array(n).fill(EMPTY_STRINGS),
     titleTokenSet: new Set(),
     surfaceVocabulary: new Set(),
   };

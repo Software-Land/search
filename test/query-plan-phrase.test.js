@@ -4,7 +4,8 @@
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import { extractFeatures } from "../dist/features.js";
-import { computeExactPhraseEvidence } from "../dist/phraseEvidence.js";
+import { typedSurfacePhraseTokens } from "../dist/phraseEvidence.js";
+import { executePhraseQuery } from "../dist/positionalQueries.js";
 import { buildQueryPlan, titleGradeSupportKinds } from "../dist/queryPlan.js";
 import { collectCompleteInterpretations, COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/completeInterpretationCollector.js";
 import { rankCandidates } from "../dist/rank.js";
@@ -86,6 +87,12 @@ function createEngine(relationshipMap) {
   });
 }
 
+function phraseHits(engine, raw) {
+  const tokens = typedSurfacePhraseTokens(engine._prepareQuery(raw));
+  if (tokens.length < 2) return [];
+  return executePhraseQuery({ kind: "phrase", tokens }, engine._index);
+}
+
 describe("optional summary field", () => {
   test("title/body-only schema ignores a summary property", async () => {
     const engine = SearchEngine.create({
@@ -99,8 +106,8 @@ describe("optional summary field", () => {
         body: "unrelated body",
       },
     ]);
-    const ev = computeExactPhraseEvidence(engine._prepareQuery("two-layer authorization"), engine._index);
-    expect(ev.phraseDf).toBe(0);
+    const found = phraseHits(engine, "two-layer authorization");
+    expect(found).toEqual([]);
     expect(engine._index.documents[0].summary).toBe("");
   });
 
@@ -116,12 +123,12 @@ describe("optional summary field", () => {
   test("indexed retriever hydrates summary phrase field identity", async () => {
     const engine = SearchEngine.create({ schema, retriever: "indexed" });
     await engine.index([docs[0]]);
-    const ev = computeExactPhraseEvidence(engine._prepareQuery("two-layer authorization"), engine._index);
+    const found = phraseHits(engine, "two-layer authorization");
     expect(engine._index.schema.summaryField).toBe("summary");
-    expect(ev.phraseDf).toBe(1);
-    expect(ev.hits[0].summaryFrequency).toBe(1);
-    expect(ev.hits[0].titleFrequency).toBe(0);
-    expect(ev.hits[0].bodyFrequency).toBe(0);
+    expect(found).toHaveLength(1);
+    expect(found[0].summaryFrequency).toBe(1);
+    expect(found[0].titleFrequency).toBe(0);
+    expect(found[0].bodyFrequency).toBe(0);
   });
 });
 
@@ -138,28 +145,28 @@ describe("exact phrase field evidence", () => {
   });
 
   test("one-token queries have no phrase evidence", () => {
-    expect(computeExactPhraseEvidence(engine._prepareQuery("rpc"), engine._index)).toBeNull();
+    expect(phraseHits(engine, "rpc")).toEqual([]);
   });
 
   test("per-field tf distinguishes title, summary, and body", () => {
-    const summaryEv = computeExactPhraseEvidence(engine._prepareQuery("two-layer authorization"), engine._index);
-    expect(summaryEv.phraseDf).toBe(1);
-    expect(summaryEv.hits[0].document.id).toBe("cloudfront");
-    expect(summaryEv.hits[0].titleFrequency).toBe(0);
-    expect(summaryEv.hits[0].summaryFrequency).toBe(1);
-    expect(summaryEv.hits[0].bodyFrequency).toBe(0);
+    const summaryHits = phraseHits(engine, "two-layer authorization");
+    expect(summaryHits).toHaveLength(1);
+    expect(summaryHits[0].document.id).toBe("cloudfront");
+    expect(summaryHits[0].titleFrequency).toBe(0);
+    expect(summaryHits[0].summaryFrequency).toBe(1);
+    expect(summaryHits[0].bodyFrequency).toBe(0);
 
-    const titleEv = computeExactPhraseEvidence(engine._prepareQuery("grpc vs rest"), engine._index);
-    const titleHit = titleEv.hits.find((hit) => hit.document.id === "grpc");
+    const titleHits = phraseHits(engine, "grpc vs rest");
+    const titleHit = titleHits.find((hit) => hit.document.id === "grpc");
     expect(titleHit.titleFrequency).toBe(1);
     expect(titleHit.summaryFrequency).toBe(0);
 
-    const bodyEv = computeExactPhraseEvidence(engine._prepareQuery("remote procedure call"), engine._index);
-    expect(bodyEv.phraseDf).toBe(1);
-    expect(bodyEv.hits[0].document.id).toBe("build");
-    expect(bodyEv.hits[0].bodyFrequency).toBe(1);
-    expect(bodyEv.hits[0].titleFrequency).toBe(0);
-    expect(bodyEv.hits[0].summaryFrequency).toBe(0);
+    const bodyHits = phraseHits(engine, "remote procedure call");
+    expect(bodyHits).toHaveLength(1);
+    expect(bodyHits[0].document.id).toBe("build");
+    expect(bodyHits[0].bodyFrequency).toBe(1);
+    expect(bodyHits[0].titleFrequency).toBe(0);
+    expect(bodyHits[0].summaryFrequency).toBe(0);
   });
 });
 
