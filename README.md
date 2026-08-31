@@ -2,7 +2,7 @@
 
 Deterministic, explainable document search with optional offline corpus and semantic compilation. Ranking uses named features and partial-order constraints. Relatedness is a **build-time artifact**, not a runtime embedding model.
 
-Copyright 2026 Software.Land. 0.5.0 is source-available under Business Source License 1.1.
+Copyright 2026 Software.Land. Versions 0.5.0 and later are source-available under Business Source License 1.1.
 
 Source: [github.com/Software-Land/search](https://github.com/Software-Land/search). This tree is **0.x**.
 
@@ -56,9 +56,26 @@ await engine.index([
 engine.search("wireless");
 ```
 
-Optional schema role `"summary"` is short authored summary or search-description text, distinct from `body`. Omit the role (and the field) to keep the existing title/body contract.
+Optional schema role `"summary"` is short authored summary or search-description text, distinct from `body`. Omit the role (and the field) to keep the existing title/body contract. Summary is **not** a third ordinary unigram/token posting field: ordinary lexical/unigram candidate generation remains title/body-only. Summary may contribute candidate hits through positional PhraseQuery / PhrasePrefixQuery evidence. It also participates in configured-concept field evidence, typed-phrase ranking features, and the optional complete-interpretation collector. Details: [docs/schema.md](docs/schema.md).
 
 `wifi` as a single token does not match the title `Wi-Fi` unless you configure an alias. That is corpus configuration, not a Core heuristic.
+
+## Positional queries
+
+Multi-token typed queries execute same-field positional clauses against runtime positional state for title, optional summary, and body. The serialized `search-v2-lexical-index` v1 artifact stores title/body positional postings only; optional summary positional state is hydrated from caller documents. Those clauses record field hits; they do not collapse the default public result list.
+
+- **PhraseQuery** matches an exact contiguous typed (`originalSurface`) token sequence in one field.
+- **PhrasePrefixQuery** matches that sequence's exact preceding tokens plus a trailing typed **proper prefix** of the next token in the same field: the document token is strictly longer and starts with the typed prefix.
+
+These are runtime query clauses, not separately imported constructors. See [docs/schema.md](docs/schema.md).
+
+Optional `resultCollector: "complete-interpretation"` keeps documents that fully match an executed PhraseQuery or PhrasePrefixQuery, plus already-featured independent authored title evidence. It reads that already-executed query evidence; it is not a new ranking algorithm. Core omits the collector by default. The collector declines to restrict results for occupancy, configured-content identity, and version queries. Enablement is the caller's, not Core policy.
+
+```js
+engine.search("rate lim", { resultCollector: "complete-interpretation" });
+```
+
+Details: [docs/api.md](docs/api.md).
 
 ## Morphology
 
@@ -150,7 +167,7 @@ client.dispose();
 `searchWorkerUrl()` resolves the bundled Worker **from this package** (`import.meta.url` of the browser entry). Consumers should not build a Worker URL against their own module; that would miss `searchWorker.js`. Omitting `workerUrl` uses the same default.
 
 Protocol is plain `postMessage`. Latest-wins: a new query replaces pending work and cancels stale running searches.
-Omit `lexicalIndex` to construct the exact fallback index once inside the Worker; a supplied invalid artifact rejects initialization. `relationshipMap` has the same authored meaning as in-process `compileAuthoredRelevance()`.
+Omit `lexicalIndex` to construct the exact fallback index once inside the Worker; a supplied invalid artifact rejects initialization. `relationshipMap` has the same authored meaning as in-process `compileAuthoredRelevance()`. Search options such as `resultCollector` belong on `setQuery`, not `init`.
 
 ## Corpus compiler
 
@@ -210,7 +227,7 @@ const engine = SearchEngine.create({
 await engine.index(documents);
 ```
 
-The artifact format is `search-v2-lexical-index` version 1. It is a unified analyzed-index representation: stable document metadata, a sorted surface dictionary, positional title/body streams, compact surface→lemma ownership, version/dotted-span metadata, and corpus statistics hydrate both exact lookup and compact query-time document views. Raw title/body text and per-document lexical-frequency maps are not duplicated; supplied documents remain fingerprint-validated owners of display titles and attached `lexicalFrequency` data, typically produced from the separate build artifact with `attachLexicalFrequency()`.
+The artifact format is `search-v2-lexical-index` version 1. It is a unified analyzed-index representation: stable document metadata, a sorted surface dictionary, positional title/body streams, compact surface→lemma ownership, version/dotted-span metadata, and corpus statistics hydrate both exact lookup and compact query-time document views. The v1 payload still stores title/body postings only. Optional `summary` is not serialized into that artifact; load hydrates it from the caller documents for positional phrase and configured evidence. Raw title/body text and per-document lexical-frequency maps are not duplicated; supplied documents remain fingerprint-validated owners of display titles, optional summary text, and attached `lexicalFrequency` data, typically produced from the separate build artifact with `attachLexicalFrequency()`.
 
 The default exact indexed path preserves exhaustive compiled-search results while reconstructing the same ranking features and keeping mathematically sufficient representatives per builtin constraint signature. Stage 2A's additive v1 pruning extension can skip full feature evaluation for blocks whose reachable signature and rounded score are proved exactly. Stage 3A may skip unread noncompetitive 1-of-k body postings on ordinary exact multi-token compiled `search()` using additive `exact-pruning-v2` presence masks; results stay identical to exhaustive compiled search. Uncertain, prefix, diagnostic, custom, and active-relationship cases fail closed to exhaustive retrieval. This is not WAND/MaxScore/early termination. A supplied incompatible or corrupt artifact throws. If the artifact is omitted, each `index()` call compiles equivalent state from `documents`; this performs raw lexical analysis during initialization but still performs zero query-time raw-document scans. `retriever: "full-scan"` remains the reference mode.
 
@@ -303,11 +320,11 @@ SearchEngine.create({ plugins: [plugin], retriever });
 
 ## API stability
 
-v0. The runtime facade, result shape, artifact `format`+`version`, `relationshipStrategy` values, and retriever names are intended to stabilize. Internal feature vectors, BM25 constants, and ranking modules are not public exports.
+v0. The runtime facade, result shape, artifact `format`+`version`, `relationshipStrategy` values, retriever names, and the optional search option `resultCollector: "complete-interpretation"` are intended to stabilize. Internal feature vectors, BM25 constants, and ranking modules are not public exports. PhraseQuery and PhrasePrefixQuery are runtime clauses, not root exports.
 
 Supported imports: `@software-land/search`, `@software-land/search/browser`, `@software-land/search/corpus`, `@software-land/search/lexical`, `@software-land/search/relationships`, `@software-land/search/semantic`. The last four are build-time compilers/helpers. Root and `./browser` do not import them.
 
-Root exports: `SearchEngine`, `morphology`, `compileAuthoredRelevance`, `migrateConfiguredEntry`, `mergeRelationships`, strategy/retriever constants, `parseRelationships`, abort helpers, public error classes, and types including `ConfiguredConcept`, `RelationshipMap`, `RelationshipArtifact`, `LexicalIndexArtifact`, `SearchPlugin`, and `EnglishPlugin`. Equivalent recall is authored as directional `relationshipMap` `equivalent` edges. Configured-concept corpus artifacts (`ConfiguredConceptArtifact`, `parseConfiguredConcepts`) live on `@software-land/search/corpus`. `searchWorkerUrl()` is exported only from `./browser`.
+Root exports: `SearchEngine`, `morphology`, `compileAuthoredRelevance`, `migrateConfiguredEntry`, `mergeRelationships`, strategy/retriever constants, `parseRelationships`, abort helpers, public error classes, and types including `ConfiguredConcept`, `RelationshipMap`, `RelationshipArtifact`, `LexicalIndexArtifact`, `SearchPlugin`, `EnglishPlugin`, and `SearchOptions`. Equivalent recall is authored as directional `relationshipMap` `equivalent` edges. Configured-concept corpus artifacts (`ConfiguredConceptArtifact`, `parseConfiguredConcepts`) live on `@software-land/search/corpus`. `searchWorkerUrl()` is exported only from `./browser`.
 
 ## Docs
 
@@ -338,7 +355,7 @@ The checked-in toy fixture is evaluation machinery, not a ranking-quality claim.
 
 ## License
 
-`@software-land/search` 0.5.0 is source-available under the Business Source License 1.1. Non-production use is free. Production use is also free for organizations with less than USD $10M in consolidated annual gross revenue. Organizations at or above that threshold require a commercial license from Software.Land.
+`@software-land/search` versions 0.5.0 and later are source-available under the Business Source License 1.1. Non-production use is free. Production use is also free for organizations with less than USD $10M in consolidated annual gross revenue. Organizations at or above that threshold require a commercial license from Software.Land.
 
 See [LICENSE](LICENSE), [COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md), and [CONTRIBUTING.md](CONTRIBUTING.md).
 

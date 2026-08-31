@@ -1,6 +1,6 @@
 {
   "name": "@software-land/search",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "private": false,
   "description": "Deterministic, explainable document search with optional offline corpus and semantic compilation.",
   "license": "BUSL-1.1",

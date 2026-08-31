@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.1
+
+### Changed
+
+- Documentation-only release. No runtime, search, ranking, or retrieval behavior changes.
+- README corrected for the 0.6 public contract: licensing wording now describes versions 0.5.0 and later; optional `summary` is not a unigram posting field, while ordinary lexical/unigram candidate generation remains title/body-only and summary may contribute candidates through positional PhraseQuery / PhrasePrefixQuery; runtime positional state is distinguished from serialized v1 title/body postings; optional `resultCollector: "complete-interpretation"` is documented, including that the collector declines to restrict results for occupancy, configured-content identity, and version queries.
+
 ## 0.6.0
 
 ### Added
