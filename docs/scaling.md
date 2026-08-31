@@ -61,7 +61,7 @@ Prefix expansion, classic WAND/BMW, and approximate top-K remain out of scope fo
 
 Deterministic mixed generator, seed `0x60d6e7ed`, 60-token articles, query `"virtual private network"`. Same engine/artifact, exhaustive vs Stage 3A auto. Absolute milliseconds and artifact bytes are one Node process on the acceptance machine, **not an SLA**.
 
-**Provenance.** These rows are `@software-land/search` **0.6.1**, git `d9aff6b` (tag `v0.6.1`), Node v22.22.1, 2026-08-31. Machine: Ubuntu 26.04.1 LTS, Linux 7.0.0-30-generic x86_64, 13th Gen Intel Core i9-13900K (32 threads). Warmup 2, iterations 7, statistic p50. Absolute milliseconds are that Node process on that machine and are **not an SLA**.
+**Provenance.** These rows are `@software-land/search` **0.6.1**, git `d9aff6b` (tag `v0.6.1`), Node v22.22.1, 2026-08-31. Machine: Linux x86_64, 13th Gen Intel Core i9-13900K (32 threads). Warmup 2, iterations 7, statistic p50. Absolute milliseconds are that Node process on that machine and are **not an SLA**.
 
 ```text
 node --expose-gc scripts/exact-block-skip-bench.mjs --sizes 25000,100000
