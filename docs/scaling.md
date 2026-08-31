@@ -54,6 +54,14 @@ Prefix expansion, classic WAND/BMW, and approximate top-K remain out of scope fo
 
 Deterministic mixed generator, seed `0x60d6e7ed`, 60-token articles, query `"virtual private network"`. Same engine/artifact, exhaustive vs Stage 3A auto. Absolute milliseconds and artifact bytes are one Node process on the acceptance machine, **not an SLA**.
 
+**Provenance.** These rows are `@software-land/search` **0.6.1**, git `d9aff6b` (tag `v0.6.1`), Node v22.22.1, 2026-08-31:
+
+```text
+node --expose-gc scripts/exact-block-skip-bench.mjs --sizes 25000,100000
+```
+
+That is `scripts/exact-block-skip-bench.mjs` with its default warmup 2 and iterations 7. Work counters, skip-block accounting, exactness, and artifact bytes match the original Stage 3A landing tables. Absolute p50 is higher than those earlier figures (~238.5 ms / ~46.3 ms at 25k; ~182 ms Stage 3A at 100k). Treat the millisecond delta as a **constant-factor latency refresh** of the same Θ(competitive/conjunction) path, not as a scaling-complexity regression.
+
 ### 25k documents
 
 | | exhaustive | Stage 3A |
@@ -62,7 +70,7 @@ Deterministic mixed generator, seed `0x60d6e7ed`, 60-token articles, query `"vir
 | posting entries decoded | 59,294 | 4,279 |
 | materialized documents | 10,041 | 1,954 |
 | FeatureVectors | 10,041 | 1,954 |
-| p50 | ~238.5 ms | ~46.3 ms |
+| p50 | ~309.6 ms | ~59.9 ms |
 
 Corrected Stage 3A body-presence block counters (unique 128-document ordinal blocks):
 
@@ -79,16 +87,19 @@ Lexical artifact ~13.1 MB; v2 metadata ~964 KB (~7.4%).
 
 ### 100k documents
 
-| | Stage 3A |
-| --- | ---: |
-| legitimate matches | 40,195 |
-| materialized documents | 7,792 |
-| posting entries decoded | 17,117 |
-| p50 | ~182 ms |
+| | exhaustive | Stage 3A |
+| --- | ---: | ---: |
+| legitimate matches | 40,195 | 40,195 (materialized 7,792) |
+| posting entries decoded | 237,434 | 17,117 |
+| materialized documents | 40,195 | 7,792 |
+| FeatureVectors | 40,195 | 7,792 |
+| p50 | ~1259 ms | ~250.9 ms |
+
+Stage 3A body-presence block counters at 100k: `postingBlocksTotal` 782, `decoded` 1, `classifiedFromMasks` 781, `skippedUnread` 781 (same invariant as 25k).
 
 Lexical artifact ~54.0 MB; v2 metadata ~3.89 MB (~7.2%). Output stayed exact vs exhaustive.
 
-Do not read these rows as “100k always searches in X ms.” They are that generator, seed, query, and machine.
+Do not read these rows as “100k always searches in X ms.” They are that generator, seed, query, package version, commit, and machine.
 
 ## Remaining linear bottleneck
 
