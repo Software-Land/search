@@ -108,6 +108,8 @@ Lexical artifact ~54.0 MB; v2 metadata ~3.89 MB (~7.2%). Output stayed exact vs 
 
 Do not read these rows as “100k always searches in X ms.” They are that generator, seed, query, package version, commit, and machine.
 
+A later rerun of the same command on the same host showed absolute-latency variation while reproducing identical work counters, artifact sizes, and exactness. The documented table retains the explicitly captured 0.6.1 measurement series.
+
 ## Remaining linear bottleneck
 
 25k → 100k: corpus size ≈ 4×, remaining competitive/conjunction work ≈ 4× (matches 10,041 → 40,195; materialized 1,954 → 7,792; posting entries 4,279 → 17,117).
