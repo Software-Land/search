@@ -10,7 +10,7 @@ Source: [github.com/Software-Land/search](https://github.com/Software-Land/searc
 
 A JavaScript **runtime** that indexes documents, searches them, explains hits, and can attach a related-document rail from a compiled graph. It does not download models, call an LLM, or depend on a CMS.
 
-Pairwise ranking used to be Θ(C²) in the candidate set C. Builtin ranking now groups constraint-equivalent candidates and compares signatures (B of them) instead of every pair; worst case remains Θ(C²) when B = C or constraints are custom. Default **indexed** retrieval is exact: it preserves the same result semantics as exhaustive compiled retrieval while retaining exact per-signature representatives for ranking. Stage 2A can avoid full feature work for proven single-token body-only blocks, and Stage 3A can skip unread noncompetitive 1-of-k body postings for supported exact multi-token queries. Unsupported or uncertain cases fail closed to exhaustive retrieval. Pass `retriever: "full-scan"` only as an explicit reference mode.
+Pairwise ranking used to be Θ(C²) in the candidate set C. Builtin ranking now groups constraint-equivalent candidates and compares signatures (B of them) instead of every pair; worst case remains Θ(C²) when B = C or constraints are custom. Default **indexed** retrieval is exact: it preserves the same result semantics as exhaustive compiled retrieval while retaining exact per-signature representatives for ranking. Stage 2A can avoid full feature work for proven single-token body-only blocks, and Stage 3A can skip unread noncompetitive 1-of-k body postings for supported exact multi-token queries. Unsupported or uncertain cases fail closed to exhaustive retrieval; see [docs/exact-pruning.md](docs/exact-pruning.md). Pass `retriever: "full-scan"` only as an explicit reference mode.
 
 **Zero production npm dependencies.** Node 18+.
 
@@ -171,11 +171,17 @@ Omit `lexicalIndex` to construct the exact fallback index once inside the Worker
 
 ## Corpus compiler
 
-Node CLI. Search Core never imports this tool.
+Node CLI. Search Core never imports this tool. From a git checkout of this repository:
 
 ```bash
 node tools/search-corpus/build.mjs analyze --input corpus.json --output dir
 node tools/search-corpus/build.mjs compile --input corpus.json --output dir --decisions decisions.json
+```
+
+After `npm install @software-land/search`, the same scripts live under `node_modules/@software-land/search/tools/search-corpus/` (there is no package `bin` entry). Example:
+
+```bash
+node node_modules/@software-land/search/tools/search-corpus/build.mjs analyze --input corpus.json --output dir
 ```
 
 ```js
@@ -229,17 +235,21 @@ await engine.index(documents);
 
 The artifact format is `search-v2-lexical-index` version 1. It is a unified analyzed-index representation: stable document metadata, a sorted surface dictionary, positional title/body streams, compact surface→lemma ownership, version/dotted-span metadata, and corpus statistics hydrate both exact lookup and compact query-time document views. The v1 payload still stores title/body postings only. Optional `summary` is not serialized into that artifact; load hydrates it from the caller documents for positional phrase and configured evidence. Raw title/body text and per-document lexical-frequency maps are not duplicated; supplied documents remain fingerprint-validated owners of display titles, optional summary text, and attached `lexicalFrequency` data, typically produced from the separate build artifact with `attachLexicalFrequency()`.
 
-The default exact indexed path preserves exhaustive compiled-search results while reconstructing the same ranking features and keeping mathematically sufficient representatives per builtin constraint signature. Stage 2A's additive v1 pruning extension can skip full feature evaluation for blocks whose reachable signature and rounded score are proved exactly. Stage 3A may skip unread noncompetitive 1-of-k body postings on ordinary exact multi-token compiled `search()` using additive `exact-pruning-v2` presence masks; results stay identical to exhaustive compiled search. Uncertain, prefix, diagnostic, custom, and active-relationship cases fail closed to exhaustive retrieval. This is not WAND/MaxScore/early termination. A supplied incompatible or corrupt artifact throws. If the artifact is omitted, each `index()` call compiles equivalent state from `documents`; this performs raw lexical analysis during initialization but still performs zero query-time raw-document scans. `retriever: "full-scan"` remains the reference mode.
+The default exact indexed path preserves exhaustive compiled-search results while reconstructing the same ranking features and keeping mathematically sufficient representatives per builtin constraint signature. Stage 2A's additive v1 pruning extension can skip full feature evaluation for blocks whose reachable signature and rounded score are proved exactly. Stage 3A may skip unread noncompetitive 1-of-k body postings on ordinary exact multi-token compiled `search()` using additive `exact-pruning-v2` presence masks; results stay identical to exhaustive compiled search. Unsupported or uncertain cases fail closed to exhaustive retrieval; the canonical list is in [docs/exact-pruning.md](docs/exact-pruning.md). This is not WAND/MaxScore/early termination. A supplied incompatible or corrupt artifact throws. If the artifact is omitted, each `index()` call compiles equivalent state from `documents`; this performs raw lexical analysis during initialization but still performs zero query-time raw-document scans. `retriever: "full-scan"` remains the reference mode.
 
 After successful initialization from a supplied artifact, the engine releases its reference to the artifact envelope and parsed document tuples. Callers still own their original artifact reference and can release it after `index()` resolves or a Worker reports `ready`. A subsequent identical `index()` reuses that hydrated artifact state; incompatible replacement documents reject.
 
 ## Relationship compiler
+
+From a git checkout:
 
 ```bash
 node tools/search-relationships/build.mjs compile \
   --input corpus.json --domain domain.json \
   --semantic relationships-from-builder.json --output dir
 ```
+
+From an npm install, the same CLI is `node_modules/@software-land/search/tools/search-relationships/build.mjs`.
 
 ```js
 import { compileRelationships } from "@software-land/search/relationships";
@@ -265,8 +275,12 @@ const { artifact } = await compileSemantic(corpusJson, {
 When `outputPath` is omitted, `compileSemantic()` still writes a unique file under the system temp directory and returns that path. The file survives the call. The caller owns it and may remove it when finished. Pass `outputPath` to choose a durable location.
 
 ```bash
+# Git checkout:
 node tools/search-semantic/build.mjs --input corpus.json --output graph.json --method embedding --precision-gate --mutual
 python3 tools/search-semantic/build.py --input corpus.json --method lexical --output graph.json
+
+# npm install: node_modules/@software-land/search/tools/search-semantic/build.mjs
+# (and the adjacent build.py)
 ```
 
 Default embedding model (when requested): `sentence-transformers/all-MiniLM-L6-v2`. Weights are downloaded into a builder cache and are not redistributed. See `tools/search-semantic/LICENSES.md`.

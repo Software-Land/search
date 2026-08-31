@@ -1,5 +1,5 @@
 /**
- * Pack the package, install it in isolation, and import all seven public specifiers.
+ * Pack the package, install it in isolation, and import all six public specifiers.
  */
 import { spawnSync } from "node:child_process";
 import {

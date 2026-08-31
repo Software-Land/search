@@ -51,6 +51,8 @@ Every record asserts that the relationship exists and must include `type`. Sourc
 
 ## CLI
 
+From a git checkout. After `npm install @software-land/search`, the same file is `node_modules/@software-land/search/tools/search-relationships/build.mjs`.
+
 ```bash
 node tools/search-relationships/build.mjs compile \
   --input corpus.json \

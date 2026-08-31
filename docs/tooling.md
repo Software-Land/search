@@ -17,9 +17,12 @@ corpus JSON → analyze → inspection + pending queue
 Generated candidates are **not** runtime truth. Only trusted decisions (`AUTO_ACCEPTED` / human accept / explicit manual) enter artifacts, per current compiler semantics. Directional one-hop recall is authored as `equivalent` edges on `relationshipMap` and compiled with `compileAuthoredRelevance()`.
 
 ```bash
+# Git checkout:
 node tools/search-corpus/build.mjs analyze --input corpus.json --output dir
 node tools/search-corpus/build.mjs compile --input corpus.json --output dir --decisions decisions.json
 node tools/search-corpus/build.mjs review --pending --output dir
+
+# npm install: node_modules/@software-land/search/tools/search-corpus/build.mjs
 ```
 
 Public entry: `compileCorpus` / `analyzeCorpus` / `reconcileExternalConfiguredConcepts` from `@software-land/search/corpus`. Internal miners are not a supported app API. Applications may generate untrusted configured-concept **candidate** rows outside the package (`key` plus candidate `expansion` and/or `aliases`, plus optional review fields such as `evidenceDocumentIds`). `reconcileExternalConfiguredConcepts` canonicalizes keys/forms, clusters compatible duplicates (including British/American suffix spelling and conservative short-form abbreviations such as tech/technical), rejects malformed rows, and records material same-key ambiguity or genuine conflict as unresolved inspection evidence instead of deleting the key. Successful identities project to `configuredConcepts` (`ConfiguredConcept[]`, aliases as unordered peers; any serialization sort is not a ranking signal) for `compileAuthoredRelevance()`. Candidate `expansion` is miner/review provenance and is not a privileged `ConfiguredConcept` field. Compact keys fold separator punctuation between alphanumeric groups (`CI/CD` → `cicd`, `TCP/IP` → `tcpip`) and refuse silent collapse of significant symbols (`A*`, `C++`, `C#`, `O(1)`). The package does not select, download, or run a model.
@@ -39,7 +42,10 @@ Optional Python builder, shipped in the npm package: documents → offline embed
 Merges semantic graph + explicit domain relationships. Stable relationship identity, direction, and provenance.
 
 ```bash
+# Git checkout:
 node tools/search-relationships/build.mjs compile \
   --input corpus.json --domain domain.json \
   --semantic relationships-from-builder.json --output dir
+
+# npm install: node_modules/@software-land/search/tools/search-relationships/build.mjs
 ```

@@ -17,7 +17,7 @@ SearchEngine.create({
 
 | name | when |
 | --- | --- |
-| `indexed` | Default. Enumerates every legitimate match from a compiled positional lexical index, applies exact feature-block rejection where the Stage-2A proof applies, and retains exact per-signature representatives. No posting-entry pruning in v1. |
+| `indexed` | Default. Exact compiled positional retrieval. Stage 2A may skip full feature evaluation for proven single-token body-only blocks. Stage 3A may skip unread noncompetitive 1-of-k body posting entries on the supported exact multi-token `search()` path using additive `exact-pruning-v2` presence masks. Results stay identical to exhaustive compiled search; unsupported classes fail closed. See [exact-pruning.md](exact-pruning.md). |
 | `full-scan` | Explicit small-corpus / reference / debug mode. Scans every document. Does not apply `candidateLimit`. |
 | `adaptive` | Full scan while `documentCount <= adaptive.documentThreshold`, else exact indexed retrieval. Deterministic. |
 
@@ -72,7 +72,7 @@ Identical inputs serialize byte-identically with `JSON.stringify`. A supplied ar
 
 If `lexicalIndex` is omitted, each `index()` call compiles equivalent state from the supplied documents and, for indexed/adaptive retrieval, hydrates the same compact runtime. This costs initialization time but not a second query implementation. `retriever: "full-scan"` remains the explicit object-based reference path.
 
-The v1 payload has an integrity-covered extension namespace keyed to stable term/document ordinals. Current compilers add `exact-pruning-v1` with revisioned 128-document boundaries. An old v1 artifact without it remains valid and exhaustive; malformed claimed metadata rejects. The extension supports the narrow Stage-2A feature-block proof and does not yet contain posting TF/evidence bounds.
+The v1 payload has an integrity-covered extension namespace keyed to stable term/document ordinals. Current compilers add `exact-pruning-v1` (128-document ordinal boundaries for Stage 2A) and `exact-pruning-v2` (per-term body presence masks on that same grid for Stage 3A). An old v1 artifact without those extensions remains valid and exhaustive; malformed claimed metadata rejects. Stage 2A does not skip posting entries. Stage 3A may skip unread 1-of-k body ordinals when v2 presence bits prove they cannot enter a saturated representative stream.
 
 The rejected alternatives are:
 
@@ -108,7 +108,7 @@ Unknown/custom `ConstraintDef.fn` semantics are not covered by builtin signature
 
 Stage 1 is the correctness oracle and remains available through the internal exhaustive compiled mode. Stage 2A still does Θ(matches) posting/membership work, but for a proven plain single-token, body-only class it derives the exact signature/rounded score cheaply and omits full feature extraction after that signature's required score/id prefix is secure. Multi-term, uncertain analyzer/evidence, custom ranking, nonzero retrieval-score weight, full diagnostics, `all-strong`, and active relationship expansion fail closed to exhaustive evaluation. The fixed candidate-200 architecture remains intentionally gone.
 
-The experimental counters distinguish the layers: `postingEntriesSkipped` / `duplicatePostingEntriesAvoided` count identical posting-array rewalks skipped at query time when `retrievalScoreWeight` is `0`. Unread prefix/term/block posting lists are not skipped. `documentsBoundRejected` and `documentsFullyEvaluated` expose Stage-2A savings, while `documentBlocksSkipped` counts blocks with no fully evaluated match and `boundedBlocksSkipped` counts blocks whose proven bounded subset was skipped. See [exact-pruning.md](exact-pruning.md) for the predicate and fallback proof.
+The experimental counters distinguish the layers: `postingEntriesSkipped` / `duplicatePostingEntriesAvoided` count Stage 2B identical posting-array rewalks skipped at query time when `retrievalScoreWeight` is `0`. Stage 2B itself does not skip unread prefix/term/block posting lists. Stage 3A may skip unread 1-of-k body blocks after stronger co-occurrence classes are evaluated. `documentsBoundRejected` and `documentsFullyEvaluated` expose Stage-2A savings, while `documentBlocksSkipped` counts blocks with no fully evaluated match and `boundedBlocksSkipped` counts blocks whose proven bounded subset was skipped. See [exact-pruning.md](exact-pruning.md) for the predicate, Stage 3A fail-closed list, and fallback proof.
 
 BM25-like retrieval scores are diagnostic/admission-era data; their default final-ranking weight remains `0`. Representative selection uses the current final score and `document.id`, never BM25 admission rank.
 

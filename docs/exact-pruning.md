@@ -160,9 +160,31 @@ Stage 3A is **shipped**. It is additive `exact-pruning-v2` metadata on the same 
 
 Supported `search()` path: builtin ranking, compiled indexed retriever, exact multi-token query with ≥2 unrepaired non-number term concepts, `retrievalScoreWeight === 0`, not `all-strong`, not diagnostics/explain-exhaustive. Title postings are always walked. Body  k-of-k and (k-1)..2-of-k ordinals are always evaluated so phrase adjacency / `bodyPhraseCount` can mint signatures. After those classes fill the weak representative stream to `representativeDepth`, remaining 1-of-k body-only ordinals are skipped without posting decode, materialization, provenance, or `extractFeatures`.
 
-Skip is exact: unread 1-of-k members cannot beat a full same-signature heap on rounded `scoreFeatures` then `document.id`. Document ordinals follow sorted ids, so later unread equal-score ids lose the tie. Missing, single-block-only, or malformed v2 metadata fails closed (omit extension → exhaustive; claimed malformed → load reject). `searchDetailed()` stays exhaustive.
+Skip is exact: unread 1-of-k members cannot beat a full same-signature heap on rounded `scoreFeatures` then `document.id`. Document ordinals follow sorted ids, so later unread equal-score ids lose the tie.
 
-Prefix expansion, classic WAND/BMW, and approximate top-K are out of scope. Stage 3A is shipped exact signature-aware unread-block skipping, not a global-threshold WAND/MaxScore walker. Corpus sharding is not the query-scaling plan; see [scaling.md](scaling.md).
+### Stage 3A fail-closed
+
+Fail closed means exhaustive compiled retrieval, not an error and not approximate top-K. This subsection is the canonical list; other docs should point here rather than keeping a shorter enumeration.
+
+Metadata:
+
+- omitted `exact-pruning-v2` → exhaustive query path
+- claimed malformed or unsupported v2 → load reject
+- single-block body lists **omit masks**. The query reconstructs presence by walking that list only while it still occupies one block. If reconstruction shows the list now spans more than one block, Stage 3A fails closed. Single-block-only is not itself a fail-closed class.
+
+Engine and query classes that do not take the skip path:
+
+- `searchDetailed()` / exact diagnostics (`search()` is the supported path)
+- explicit exhaustive mode
+- missing compiled pruning runtime, or a retriever that is not compiled indexed
+- nonzero `retrievalScoreWeight`
+- `all-strong` relationship expansion
+- custom constraint functions
+- any query `stage3AUnsupportedReason` rejects: fewer than two unrepaired non-number term concepts; prefix-completion; contextual-completion; repaired / typo / leet / configured token sources; numeric tokens; configured-concept occupancy; topical-recall; alternatives; dotted-spans
+
+Prefix *expansion* (enumerating every matching term) stays exhaustive and is out of Stage 3A scope. PhrasePrefixQuery on an otherwise supported exact multi-token `search()` is not independently a fail-closed class.
+
+Prefix expansion, classic WAND/BMW, and approximate top-K remain out of scope for Stage 3A. Stage 3A is shipped exact signature-aware unread-block skipping, not a global-threshold WAND/MaxScore walker. Corpus sharding is not the query-scaling plan; see [scaling.md](scaling.md).
 
 ### Stage 3A block counters
 

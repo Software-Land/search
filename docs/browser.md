@@ -23,10 +23,13 @@ await client.init({
 });
 client.setQuery("bluetooth");
 client.setQuery("");   // cancel, drop pending, clear
+client.setQuery("rate lim", { resultCollector: "complete-interpretation" });
 client.dispose();
 ```
 
 `searchWorkerUrl()` is resolved from this package so consumers do not construct a Worker URL against their own module. Omitting `workerUrl` uses the same default.
+
+Search options such as `limit`, `explain`, `relationshipStrategy`, and `resultCollector` belong on `setQuery` (protocol `search`), not `init`. `"complete-interpretation"` has the same meaning as in-process `SearchEngine.search()`: it keeps documents that fully match an executed PhraseQuery or PhrasePrefixQuery, plus already-featured independent authored title evidence, and declines occupancy, configured-content identity, and version queries. Core omits the collector by default.
 
 ## Latest-wins
 

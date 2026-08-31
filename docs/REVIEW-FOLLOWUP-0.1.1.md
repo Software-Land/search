@@ -1,5 +1,7 @@
 # Review follow-up (v0.1.1 patch, version not bumped)
 
+> **Historical.** This note records a static-review follow-up for public `@software-land/search@0.1.0`. It is not current API, ranking, or retrieval documentation. For the present 0.6 contract see [api.md](api.md), the package [README](../README.md), and [CHANGELOG.md](../CHANGELOG.md).
+
 External static review of public `@software-land/search@0.1.0`. Each finding was reproduced with a failing regression or by reading the shipped code before any patch. Version remains **0.1.0**. Tag `v0.1.0` was not moved.
 
 Regressions live in `test/search-regressions.test.js`.

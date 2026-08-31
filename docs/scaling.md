@@ -44,8 +44,9 @@ Properties:
 
 - results stay identical to exhaustive compiled `search()` on the supported path
 - no approximate top-K
-- missing, single-block-only, or malformed v2 metadata fails closed to exhaustive retrieval
-- `searchDetailed()` and unsupported query classes (prefix, repaired, configured-concept occupancy, numeric, custom constraints, nonzero `retrievalScoreWeight`) fail closed
+- omitted `exact-pruning-v2` fails closed to exhaustive retrieval; claimed malformed v2 rejects at load
+- single-block body lists omit masks and reconstruct presence from the list while it still occupies one block
+- `searchDetailed()` and other unsupported classes fail closed; the canonical list is in [exact-pruning.md](exact-pruning.md)
 - skipped 1-of-k body postings are genuinely not decoded or materialized
 
 Prefix expansion, classic WAND/BMW, and approximate top-K remain out of scope for Stage 3A. See [exact-pruning.md](exact-pruning.md).
@@ -54,13 +55,13 @@ Prefix expansion, classic WAND/BMW, and approximate top-K remain out of scope fo
 
 Deterministic mixed generator, seed `0x60d6e7ed`, 60-token articles, query `"virtual private network"`. Same engine/artifact, exhaustive vs Stage 3A auto. Absolute milliseconds and artifact bytes are one Node process on the acceptance machine, **not an SLA**.
 
-**Provenance.** These rows are `@software-land/search` **0.6.1**, git `d9aff6b` (tag `v0.6.1`), Node v22.22.1, 2026-08-31:
+**Provenance.** These rows are `@software-land/search` **0.6.1**, git `d9aff6b` (tag `v0.6.1`), Node v22.22.1, 2026-08-31. Machine: Ubuntu 26.04.1 LTS, Linux 7.0.0-30-generic x86_64, 13th Gen Intel Core i9-13900K (32 threads).
 
 ```text
 node --expose-gc scripts/exact-block-skip-bench.mjs --sizes 25000,100000
 ```
 
-That is `scripts/exact-block-skip-bench.mjs` with its default warmup 2 and iterations 7. Work counters, skip-block accounting, exactness, and artifact bytes match the original Stage 3A landing tables. Absolute p50 is higher than those earlier figures (~238.5 ms / ~46.3 ms at 25k; ~182 ms Stage 3A at 100k). Treat the millisecond delta as a **constant-factor latency refresh** of the same Θ(competitive/conjunction) path, not as a scaling-complexity regression.
+That is `scripts/exact-block-skip-bench.mjs` with its default warmup 2 and iterations 7. The script lives in the git tree under `scripts/` and is **not shipped in the npm tarball**; reproduce from a repository checkout, not from `node_modules/@software-land/search`. Work counters, skip-block accounting, exactness, and artifact bytes match the original Stage 3A landing tables. Absolute p50 is higher than those earlier figures (~238.5 ms / ~46.3 ms at 25k; ~182 ms Stage 3A at 100k). Treat the millisecond delta as a **constant-factor latency refresh** of the same Θ(competitive/conjunction) path, not as a scaling-complexity regression.
 
 ### 25k documents
 

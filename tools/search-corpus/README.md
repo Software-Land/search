@@ -34,6 +34,8 @@ tools/search-corpus/
 
 ## OSS workflow
 
+Paths below are from a git checkout of this repository. After `npm install @software-land/search`, use `node_modules/@software-land/search/tools/search-corpus/build.mjs`.
+
 ```bash
 node tools/search-corpus/build.mjs analyze --input corpus.json --output dir
 # inspect dir/inspection.json pending[] and delta.json

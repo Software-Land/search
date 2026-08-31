@@ -40,7 +40,7 @@ Open an issue first for public API changes, ranking/constraint changes, or retri
 Include tests for the behavior you change. Ranking and retrieval changes should not weaken:
 
 - exact-order SCC tests
-- the 98 strict V2 + 60 regression Software.Land cases
+- the 99 strict V2 + 60 regression Software.Land cases
 - the Software.Land historical relevance suite (`expectedTop` / `titlePrefix` membership). That suite may be red while known relevance gaps remain; do not skip or rewrite those contracts to go green.
 
 ## Development commands
