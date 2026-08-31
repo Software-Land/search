@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.2
+
+### Changed
+
+- Documentation-only patch. No runtime, search, ranking, retrieval, result, API, or artifact behavior changes. The 0.6.1 implementation is unchanged; 0.6.2 ships the same runtime with corrected documentation.
+- `docs/scaling.md` Stage 3A VPN-like p50s refreshed against published 0.6.1 (`d9aff6b`, tag `v0.6.1`, Node v22.22.1): ~309.6 / ~59.9 ms at 25k and ~1259 / ~250.9 ms at 100k. Work counters, exactness versus exhaustive, skip-block accounting, and artifact sizes match the original Stage 3A tables. The millisecond delta versus the 0.6.0/0.6.1 published figures (~238.5 / ~46.3 ms at 25k; ~182 ms Stage 3A at 100k) is a constant-factor measurement correction, not a scaling-complexity change.
+- Explicit benchmark provenance: package version, git SHA/tag, Node version, date, machine, command, warmup 2, iterations 7. Absolute milliseconds are machine-specific and not an SLA.
+- Demonstrated practical corpus range remains approximately 50k–100k documents, workload- and environment-dependent, not a correctness maximum. Million-document search and a ~50 ms ordinary-query figure at that scale are labeled as aspirational investigation targets, not current capability, and not a claim of 1M / 5 ms, O(1), or constant-time search.
+- Broader documentation consistency pass: Stage 3A fail-closed wording canonicalized in `docs/exact-pruning.md`; `docs/retrievers.md` describes Stage 3A / `exact-pruning-v2` posting skip; Worker `resultCollector` is documented on `setQuery`; npm-installed compiler CLI paths; commercial licensing heading covers 0.5.0 and later, including 0.6.x.
+
 ## 0.6.1
 
 ### Changed

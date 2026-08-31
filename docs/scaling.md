@@ -4,6 +4,12 @@ Indexed exact search has been **validated through about 100k documents** on a de
 
 That range is an engineering/performance observation. It is not a correctness limit, a quality cliff, a hard corpus maximum, or an SLA.
 
+Read this page as three different kinds of claim:
+
+1. **Measured current capability** — the 25k/100k tables below, on the named machine and package. Absolute milliseconds are not an SLA.
+2. **Architectural characterization** — what Stage 3A skips, what remaining work still scales with corpus size on that workload, which paths fail closed to exhaustive retrieval, and that ranking stays exact rather than approximate.
+3. **Long-term goals** — million-document search, and a ~50 ms ordinary-query figure at that scale, are aspirational investigation targets. They are not a current capability, promise, or SLA, and they do not imply 1M / 5 ms, O(1), or constant-time search.
+
 Stage 1 removed the old fixed-candidate quality failure. Larger N does not switch into a lower-quality retrieval mode. Exact compiled retrieval keeps exact per-signature representatives. Stage 2A may skip full feature work only for proven classes; it does not drop matches to stay under a budget. Stage 3A may skip unread noncompetitive 1-of-k body postings after stronger co-occurrence classes are evaluated; it does not approximate ranking.
 
 As N and workload grow, the current limits are:
@@ -55,7 +61,7 @@ Prefix expansion, classic WAND/BMW, and approximate top-K remain out of scope fo
 
 Deterministic mixed generator, seed `0x60d6e7ed`, 60-token articles, query `"virtual private network"`. Same engine/artifact, exhaustive vs Stage 3A auto. Absolute milliseconds and artifact bytes are one Node process on the acceptance machine, **not an SLA**.
 
-**Provenance.** These rows are `@software-land/search` **0.6.1**, git `d9aff6b` (tag `v0.6.1`), Node v22.22.1, 2026-08-31. Machine: Ubuntu 26.04.1 LTS, Linux 7.0.0-30-generic x86_64, 13th Gen Intel Core i9-13900K (32 threads).
+**Provenance.** These rows are `@software-land/search` **0.6.1**, git `d9aff6b` (tag `v0.6.1`), Node v22.22.1, 2026-08-31. Machine: Ubuntu 26.04.1 LTS, Linux 7.0.0-30-generic x86_64, 13th Gen Intel Core i9-13900K (32 threads). Warmup 2, iterations 7, statistic p50. Absolute milliseconds are that Node process on that machine and are **not an SLA**.
 
 ```text
 node --expose-gc scripts/exact-block-skip-bench.mjs --sizes 25000,100000
