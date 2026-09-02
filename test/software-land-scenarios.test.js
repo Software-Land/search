@@ -20,8 +20,8 @@ const OVERLAY = [
 ];
 
 function writeInputs(dir) {
-  writeFileSync(path.join(dir, "scenarios.js"), "export const scenarios = [];\n");
-  writeFileSync(path.join(dir, "contracts.js"), "export const SEARCH_V2_CONTRACTS = [];\n");
+  writeFileSync(path.join(dir, "scenarios.mjs"), "export const scenarios = [];\n");
+  writeFileSync(path.join(dir, "contracts.mjs"), "export const SEARCH_V2_CONTRACTS = [];\n");
 }
 
 function generate(dir) {
@@ -30,9 +30,9 @@ function generate(dir) {
     [
       SCRIPT,
       "--scenarios",
-      path.join(dir, "scenarios.js"),
+      path.join(dir, "scenarios.mjs"),
       "--contracts",
-      path.join(dir, "contracts.js"),
+      path.join(dir, "contracts.mjs"),
       "--dir",
       dir,
     ],
