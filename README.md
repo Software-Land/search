@@ -10,24 +10,54 @@ Source: [github.com/Software-Land/search](https://github.com/Software-Land/searc
 
 A JavaScript **runtime** that indexes documents, searches them, explains hits, and can attach a related-document rail from a compiled graph. It does not download models, call an LLM, or depend on a CMS.
 
-Pairwise ranking used to be Θ(C²) in the candidate set C. Builtin ranking now groups constraint-equivalent candidates and compares signatures (B of them) instead of every pair; worst case remains Θ(C²) when B = C or constraints are custom. Default **indexed** retrieval is exact: it preserves the same result semantics as exhaustive compiled retrieval while retaining exact per-signature representatives for ranking. Stage 2A can avoid full feature work for proven single-token body-only blocks, and Stage 3A can skip unread noncompetitive 1-of-k body postings for supported exact multi-token queries. Unsupported or uncertain cases fail closed to exhaustive retrieval; see [docs/exact-pruning.md](docs/exact-pruning.md). Pass `retriever: "full-scan"` only as an explicit reference mode.
+Default **indexed** retrieval is exact: it preserves the same result semantics as exhaustive compiled retrieval. Pass `retriever: "full-scan"` only as an explicit reference mode. Scaling, compact runtime, and fail-closed pruning are documented in [docs/retrievers.md](docs/retrievers.md), [docs/exact-pruning.md](docs/exact-pruning.md), and [docs/scaling.md](docs/scaling.md).
 
 **Zero production npm dependencies.** Node 18+.
 
-Optional **offline compilers** (not required to search; not imported by the runtime):
-
-- `search-corpus` — configured concepts and equivalent `relationshipMap` edges from a portable `{id,title,body}` corpus
-- `search-lexical` — lexical-frequency n-gram counts and the exact positional lexical index
-- `search-relationships` — editorial / semantic relationship graphs
-- Python `tools/search-semantic` — optional relatedness builder, shipped in the npm package and launched via `@software-land/search/semantic`
-
-Generated compiler candidates are review material. Only trusted compiled artifacts enter the runtime.
+Optional **build-time compilers** are not imported by the runtime. They live on package subpaths (`./lexical`, `./corpus`, `./relationships`, `./semantic`). Generated compiler candidates are review material. Only trusted compiled artifacts and authored configuration enter the runtime.
 
 ## Install
 
 ```bash
 npm install @software-land/search
 ```
+
+## Build time vs runtime
+
+Substantial corpus analysis can happen **offline**. Query-time search consumes a hydrated in-memory representation. Precompilation is not required; omitting a lexical index is a supported, exact path that does the same analysis during `index()`.
+
+```text
+documents
+   │
+   ├─ optional: compileLexicalFrequency(...)
+   │                ↓
+   │          attachLexicalFrequency(documents, artifact)
+   │
+   ├─ typical when avoiding init-time corpus analysis:
+   │          compileLexicalIndex(...)
+   │                ↓
+   │          persist JSON (search-v2-lexical-index v1)
+   │
+   ├─ optional authored JSON: configuredConcepts, relationshipMap
+   ├─ optional: compileCorpus / compileSemantic / compileRelationships
+   ▼
+deployment (artifacts + the same documents)
+   ▼
+SearchEngine.create({ schema, plugins, lexicalIndex?, documentRelationships? })
+await engine.index(documents)
+   ▼
+engine.search(...)
+```
+
+**Build time** may compile the positional lexical index, optionally compile lexical-frequency maps, optionally review corpus-mined concepts, and optionally build relationship graphs. Persist ordinary JSON; Search Core does not dictate files, bundlers, or object storage.
+
+**Runtime initialization** creates morphology and other plugins, compiles authored relevance from trusted JSON (`compileAuthoredRelevance` returns runtime plugin objects, not a second JSON format), creates the engine, and calls `index(documents)`. With a supplied `lexicalIndex`, that call validates and hydrates. With the artifact omitted, it constructs equivalent lexical state from the documents.
+
+**Query time** searches the already-hydrated compact/indexed representation. The indexed path does not rescan or retokenize raw title/body text. Details: [docs/compact-runtime.md](docs/compact-runtime.md).
+
+## Runtime construction
+
+Omitting `lexicalIndex` is supported and exact. `index(documents)` constructs equivalent lexical state during initialization. That is convenient for small catalogs, tests, and first integration. It performs title/body lexical analysis at init; it is not a different or approximate query algorithm.
 
 ```js
 import { SearchEngine, morphology, compileAuthoredRelevance } from "@software-land/search";
@@ -56,44 +86,132 @@ await engine.index([
 engine.search("wireless");
 ```
 
-Optional schema role `"summary"` is short authored summary or search-description text, distinct from `body`. Omit the role (and the field) to keep the existing title/body contract. Summary is **not** a third ordinary unigram/token posting field: ordinary lexical/unigram candidate generation remains title/body-only. Summary may contribute candidate hits through positional PhraseQuery / PhrasePrefixQuery evidence. It also participates in configured-concept field evidence, typed-phrase ranking features, and the optional complete-interpretation collector. Details: [docs/schema.md](docs/schema.md).
+Optional schema role `"summary"` is short authored summary or search-description text, distinct from `body`. Omit the role (and the field) to keep the title/body contract. Summary is **not** a third ordinary unigram posting field: candidate generation stays title/body-only. Summary may contribute positional phrase hits, configured-concept field evidence, typed-phrase ranking features, and the optional complete-interpretation collector. Details: [docs/schema.md](docs/schema.md).
 
 `wifi` as a single token does not match the title `Wi-Fi` unless you configure an alias. That is corpus configuration, not a Core heuristic.
 
-## Positional queries
+## Precompiled lexical index
 
-Multi-token typed queries execute same-field positional clauses against runtime positional state for title, optional summary, and body. The serialized `search-v2-lexical-index` v1 artifact stores title/body positional postings only; optional summary positional state is hydrated from caller documents. Those clauses record field hits; they do not collapse the default public result list.
+When init-time corpus analysis should be avoided, compile the positional index in a build step and pass it into `SearchEngine.create({ lexicalIndex })`. Default retrieval is already `"indexed"`; you do not need to set `retriever` for this path.
 
-- **PhraseQuery** matches an exact contiguous typed (`originalSurface`) token sequence in one field.
-- **PhrasePrefixQuery** matches that sequence's exact preceding tokens plus a trailing typed **proper prefix** of the next token in the same field: the document token is strictly longer and starts with the typed prefix.
+The artifact is ordinary JSON-serializable data (`search-v2-lexical-index` version 1). Search Core does not read the filesystem. `writeFile` / `readFile` below are illustrative; a static import, `fetch`, bundler asset, or object-storage read is equally valid.
 
-These are runtime query clauses, not separately imported constructors. See [docs/schema.md](docs/schema.md).
-
-Optional `resultCollector: "complete-interpretation"` keeps documents that fully match an executed PhraseQuery or PhrasePrefixQuery, plus already-featured independent authored title evidence. It reads that already-executed query evidence; it is not a new ranking algorithm. Core omits the collector by default. The collector declines to restrict results for occupancy, configured-content identity, and version queries. Enablement is the caller's, not Core policy.
+Use the same `schema` and the same `morphology({ lemmas })` (or `morphology()`) at compile time and at search time. `compileLexicalIndex` requires `analyzerId` whenever `lemma` is supplied; pass `morphology(...).indexIdentity`.
 
 ```js
-engine.search("rate lim", { resultCollector: "complete-interpretation" });
+import { writeFile } from "node:fs/promises";
+import { morphology } from "@software-land/search";
+import { compileLexicalIndex } from "@software-land/search/lexical";
+
+const schema = {
+  title: { type: "text", role: "title" },
+  body: { type: "text", role: "body" },
+};
+
+const lemmas = {}; // optional site map; must match search time
+const documents = [
+  { id: "wifi", title: "Wi-Fi", body: "Connect to wireless networks." },
+  { id: "bluetooth", title: "Bluetooth", body: "Connect wireless accessories." },
+];
+const english = morphology({ lemmas });
+const lexicalIndex = compileLexicalIndex(documents, {
+  schema,
+  lemma: english.lemma,
+  analyzerId: english.indexIdentity,
+});
+
+await writeFile("search-lexical-index.json", JSON.stringify(lexicalIndex));
 ```
-
-Details: [docs/api.md](docs/api.md).
-
-## Morphology
-
-Lemmatization is corpus-specific. Core owns the morphology mechanism, not every catalog's morphology policy. `morphology()` is the public factory; it is the current English implementation (suffix heuristics, a small built-in table, and optional `lemmas`). It does not run spaCy, WordNet, lemminflect, or a site lemma script.
-
-Pass generated or editorial maps as data:
 
 ```js
-morphology({ lemmas: { intercepting: "interceptor", recursive: "recursion", foobars: "foobaz" } })
+import { readFile } from "node:fs/promises";
+import { SearchEngine, morphology } from "@software-land/search";
+
+const schema = {
+  title: { type: "text", role: "title" },
+  body: { type: "text", role: "body" },
+};
+
+const lemmas = {}; // same map as compile time
+const documents = [
+  { id: "wifi", title: "Wi-Fi", body: "Connect to wireless networks." },
+  { id: "bluetooth", title: "Bluetooth", body: "Connect wireless accessories." },
+];
+const english = morphology({ lemmas });
+const lexicalIndex = JSON.parse(await readFile("search-lexical-index.json", "utf8"));
+
+const engine = SearchEngine.create({
+  schema,
+  plugins: [english],
+  lexicalIndex,
+});
+
+await engine.index(documents);
+engine.search("wireless");
 ```
 
-`intercepting` → `interceptor` and `recursive` → `recursion` are catalog-specific policy examples, not universal linguistic truth. Some of those mappings already live in Core's small default table. Site entries **augment** the defaults. Explicit built-in mappings win, so a generated table cannot replace stems the runtime already relies on (`computing` stays `compute`). The Worker takes the same map as `init({ englishOptions: { lemmas } })`. Compile lexical-frequency n-grams with the same `morphology({ lemmas }).lemma` used at search time.
+`documents` at runtime must be the same corpus the artifact was compiled from (stable ids, title/body text, and any attached lexical-frequency maps). Optional `summary` is not stored in the v1 title/body postings; `index()` hydrates summary state from the caller documents. See [docs/artifacts.md](docs/artifacts.md) and [docs/schema.md](docs/schema.md).
 
-Keep lemma generators, caches, and models in the site build. This package consumes a `Record<string, string>`, not the generator itself. Those Python/model dependencies do not enter Search Core or the browser/runtime package dependency graph.
+A supplied incompatible or corrupt artifact **throws**. The engine does not ignore it and rebuild from raw documents. If `lexicalIndex` is omitted instead, each `index()` call constructs equivalent state from `documents`.
+
+After `index()` resolves, the engine has released its reference to the artifact envelope. The caller may drop its own copy. A later identical `index()` reuses the hydrated state; incompatible replacement documents reject.
+
+### Why `index(documents)` is still required
+
+The lexical artifact is the compiled search representation. The documents remain the runtime source of document data and are used to validate and hydrate that representation.
+
+With a supplied `lexicalIndex`, `await engine.index(documents)` does **not** rebuild precompiled title/body postings. It:
+
+- validates artifact `format` / `version`, integrity, schema title/body field names, analyzer identity, and the corpus fingerprint
+- hydrates compact query-time state from the artifact
+- uses caller documents for display titles, optional summary text, and attached `lexicalFrequency` maps when present
+
+Searching before `index()` throws. Details: [docs/retrievers.md](docs/retrievers.md), [docs/artifacts.md](docs/artifacts.md).
+
+## Compatibility
+
+A supplied lexical index is tied to the data and analyzer used to build it. Rebuild it when document ids, title/body text, schema title/body roles, morphology / lemma identity, or attached lexical-frequency maps change. Mismatches fail closed.
+
+Optional `summary` is not part of the v1 serialized title/body corpus fingerprint, so a summary-only edit does not require rebuilding the lexical artifact. Summary state is hydrated from the documents on a new engine's first `index()`; after that, changing summary data requires creating a new engine with the same lexical artifact rather than re-indexing the existing engine. See [docs/artifacts.md](docs/artifacts.md).
+
+Rebuild authored configuration when `configuredConcepts` or `relationshipMap` change, and rebuild relationship graphs when semantic or editorial edges change. Those are separate artifacts from the lexical index.
+
+## Browser Worker
+
+Optional. Core does not import `Worker` or `window`. The same precompiled `lexicalIndex` JSON can be passed into the Worker.
+
+```js
+import { createSearchClient, searchWorkerUrl } from "@software-land/search/browser";
+
+const client = createSearchClient({
+  workerUrl: searchWorkerUrl(),
+  onResult({ query, result }) { /* render */ },
+});
+
+await client.init({
+  documents,
+  schema,
+  lexicalIndex,
+  configuredConcepts,
+  relationshipMap,
+  documentRelationships,
+  englishOptions: { lemmas }, // same map used at compileLexicalIndex, if any
+});
+client.setQuery("bluetooth");
+client.dispose();
+```
+
+`searchWorkerUrl()` resolves the bundled Worker **from this package** (`import.meta.url` of the browser entry). Consumers should not build a Worker URL against their own module; that would miss `searchWorker.js`. Omitting `workerUrl` uses the same default.
+
+Omit `lexicalIndex` to construct equivalent lexical state once during Worker initialization (the same runtime-construction path as in-process). A supplied invalid artifact rejects initialization.
+
+`configuredConcepts` and `relationshipMap` are JSON configuration. The Worker compiles authored relevance from them; do not send plugin functions. If the lexical index was compiled with a custom lemma map, pass that same map as `englishOptions.lemmas`.
+
+After the Worker reports ready, the page does not need to retain the lexical artifact solely for the Worker. Search options such as `resultCollector` belong on `setQuery`, not `init`. Protocol, latest-wins cancellation, and message shapes: [docs/browser.md](docs/browser.md).
 
 ## Authored relevance
 
-Applications author configured concepts and a directional `relationshipMap`, then compile them once:
+Applications author `configuredConcepts` and a directional `relationshipMap` as JSON (or equivalent in-memory objects). `compileAuthoredRelevance()` turns that trusted configuration into **runtime plugin objects** plus optional authored document relationships. Persist the JSON configuration; do not persist `authored.plugins`.
 
 ```js
 import { SearchEngine, morphology, compileAuthoredRelevance } from "@software-land/search";
@@ -122,6 +240,8 @@ const engine = SearchEngine.create({
 });
 ```
 
+Pass `documents` into `compileAuthoredRelevance` when `relationshipMap` has document endpoints that must resolve against ids or titles.
+
 Search data is four distinct layers:
 
 | Name | Meaning |
@@ -131,7 +251,7 @@ Search data is four distinct layers:
 | `relationshipMap` | authored form/concept/document relevance |
 | `documentRelationships` | compiled document-to-document graph |
 
-`configuredConcepts` is the authored concept list `{ key, aliases }`. It is not the corpus lexicon; term postings live in `lexicalIndex`.
+`configuredConcepts` is not the corpus lexicon; term postings live in `lexicalIndex`.
 
 `authored.plugins` is the compiler-owned plugin list: configured-concept recognition (including related standalone/topical recall) followed by compiled equivalent one-hop recall. Ordinary applications do not assemble those pieces by name. `equivalent` edges are directional and do not auto-reverse. `qa → testing` does not imply `testing → qa`. When equivalence is symmetric, author both directions. Trusted corpus-mined accepted groups do this automatically by compiling each group into a bidirectional equivalent clique. Phrase sources match as exact contiguous normalized phrases.
 
@@ -139,50 +259,34 @@ Search data is four distinct layers:
 
 Complete authored relevance — equivalent recall, related standalone/topical forms, and editorial document edges — uses `compileAuthoredRelevance()`.
 
-## Browser Worker
+## Optional lexical frequency
 
-Optional. Core does not import `Worker` or `window`.
+`compileLexicalFrequency` is **not** an alternative retrieval index and is not a `SearchEngine.create` option. It is optional body n-gram evidence used at ranking time (`bodyPhraseCount`). Search remains correct without it; missing maps score as zero phrase counts.
 
 ```js
-import { createSearchClient, searchWorkerUrl } from "@software-land/search/browser";
+import { morphology } from "@software-land/search";
+import { compileLexicalFrequency, attachLexicalFrequency } from "@software-land/search/lexical";
 
-const client = createSearchClient({
-  workerUrl: searchWorkerUrl(),
-  onResult({ query, result }) { /* render */ },
-});
-
-await client.init({
-  documents,
-  schema,
-  configuredConcepts,
-  relationshipMap,
-  documentRelationships,
-  lexicalIndex,
-  retriever: "indexed",
-});
-client.setQuery("bluetooth");
-client.dispose();
+const english = morphology(); // same lemma/analyzer as compileLexicalIndex
+const frequency = compileLexicalFrequency(documents, { lemma: english.lemma });
+const documentsWithFrequency = attachLexicalFrequency(documents, frequency);
 ```
 
-`searchWorkerUrl()` resolves the bundled Worker **from this package** (`import.meta.url` of the browser entry). Consumers should not build a Worker URL against their own module; that would miss `searchWorker.js`. Omitting `workerUrl` uses the same default.
-
-Protocol is plain `postMessage`. Latest-wins: a new query replaces pending work and cancels stale running searches.
-Omit `lexicalIndex` to construct the exact fallback index once inside the Worker; a supplied invalid artifact rejects initialization. `relationshipMap` has the same authored meaning as in-process `compileAuthoredRelevance()`. Search options such as `resultCollector` belong on `setQuery`, not `init`.
+If you use frequency maps, attach them **before** `compileLexicalIndex`, and attach the same maps to the documents passed to runtime `index()`, so the lexical-index fingerprint agrees. Policy details: [docs/tooling.md](docs/tooling.md).
 
 ## Corpus compiler
 
-Node CLI. Search Core never imports this tool. From a git checkout of this repository:
+Optional. Search Core never imports this tool. It mines **candidates** from `{id,title,body}` documents. Those candidates are not runtime policy until they pass the compiler’s trusted lifecycle (auto-accepted or human-accepted decisions).
 
-```bash
-node tools/search-corpus/build.mjs analyze --input corpus.json --output dir
-node tools/search-corpus/build.mjs compile --input corpus.json --output dir --decisions decisions.json
+```text
+corpus analysis
+  → generated candidates
+  → review / decisions
+  → trusted configuredConcepts + relationshipMap
+  → compileAuthoredRelevance(...)
 ```
 
-After `npm install @software-land/search`, the same scripts live under `node_modules/@software-land/search/tools/search-corpus/` (there is no package `bin` entry). Example:
-
-```bash
-node node_modules/@software-land/search/tools/search-corpus/build.mjs analyze --input corpus.json --output dir
-```
+Public JavaScript API:
 
 ```js
 import { compileCorpus, reconcileExternalConfiguredConcepts } from "@software-land/search/corpus";
@@ -197,69 +301,21 @@ const generated = reconcileExternalConfiguredConcepts([
 void generated.configuredConcepts;
 ```
 
-## Lexical compilers
-
-`@software-land/search/lexical` owns both optional build-time artifacts.
-
-Lexical-frequency n-gram counts:
-
-```js
-import { compileLexicalFrequency, attachLexicalFrequency } from "@software-land/search/lexical";
-
-const artifact = compileLexicalFrequency(documents, { lemma: morphology().lemma });
-await engine.index(attachLexicalFrequency(documents, artifact));
-```
-
-Default policy: unigrams plus bigrams (n=1–2), keep keys whose collection occurrence count is at least 2. Phrase keys are built in the shared tokenize → lemma → stop-word removal space used by runtime query lookup (`machine learning` → `machine learn`, `foo the bar` → `foo bar`). n=2 is the smallest default that keeps adjacent-term phrase evidence without materializing every longer substring.
-
-The exact positional retrieval index:
-
-```js
-import { compileLexicalIndex } from "@software-land/search/lexical";
-
-const english = morphology({ lemmas });
-const lexicalIndex = compileLexicalIndex(documents, {
-  schema,
-  lemma: english.lemma,
-  analyzerId: english.indexIdentity,
-});
-
-const engine = SearchEngine.create({
-  schema,
-  plugins: [english],
-  retriever: "indexed",
-  lexicalIndex,
-});
-await engine.index(documents);
-```
-
-The artifact format is `search-v2-lexical-index` version 1. It is a unified analyzed-index representation: stable document metadata, a sorted surface dictionary, positional title/body streams, compact surface→lemma ownership, version/dotted-span metadata, and corpus statistics hydrate both exact lookup and compact query-time document views. The v1 payload still stores title/body postings only. Optional `summary` is not serialized into that artifact; load hydrates it from the caller documents for positional phrase and configured evidence. Raw title/body text and per-document lexical-frequency maps are not duplicated; supplied documents remain fingerprint-validated owners of display titles, optional summary text, and attached `lexicalFrequency` data, typically produced from the separate build artifact with `attachLexicalFrequency()`.
-
-The default exact indexed path preserves exhaustive compiled-search results while reconstructing the same ranking features and keeping mathematically sufficient representatives per builtin constraint signature. Stage 2A's additive v1 pruning extension can skip full feature evaluation for blocks whose reachable signature and rounded score are proved exactly. Stage 3A may skip unread noncompetitive 1-of-k body postings on ordinary exact multi-token compiled `search()` using additive `exact-pruning-v2` presence masks; results stay identical to exhaustive compiled search. Unsupported or uncertain cases fail closed to exhaustive retrieval; the canonical list is in [docs/exact-pruning.md](docs/exact-pruning.md). This is not WAND/MaxScore/early termination. A supplied incompatible or corrupt artifact throws. If the artifact is omitted, each `index()` call compiles equivalent state from `documents`; this performs raw lexical analysis during initialization but still performs zero query-time raw-document scans. `retriever: "full-scan"` remains the reference mode.
-
-After successful initialization from a supplied artifact, the engine releases its reference to the artifact envelope and parsed document tuples. Callers still own their original artifact reference and can release it after `index()` resolves or a Worker reports `ready`. A subsequent identical `index()` reuses that hydrated artifact state; incompatible replacement documents reject.
-
-## Relationship compiler
-
-From a git checkout:
+`compileCorpus()` returns only currently trusted rows. Unreviewed synonym groups do not become `relationshipMap` equivalent edges. For analyze → durable `decisions.json` → compile, use the shipped CLI (there is no package `bin` entry):
 
 ```bash
-node tools/search-relationships/build.mjs compile \
-  --input corpus.json --domain domain.json \
-  --semantic relationships-from-builder.json --output dir
+node node_modules/@software-land/search/tools/search-corpus/build.mjs analyze --input corpus.json --output dir
+node node_modules/@software-land/search/tools/search-corpus/build.mjs compile --input corpus.json --output dir --decisions decisions.json
 ```
 
-From an npm install, the same CLI is `node_modules/@software-land/search/tools/search-relationships/build.mjs`.
+From a git checkout of this repository the same scripts are `tools/search-corpus/build.mjs`. Workflow: [docs/tooling.md](docs/tooling.md).
+
+## Relationship and semantic compilation
+
+Optional document-to-document graphs. Search Core never imports these tools.
 
 ```js
 import { compileRelationships } from "@software-land/search/relationships";
-```
-
-## Optional semantic compiler (Python)
-
-Shipped in the npm package. Search Core never imports it. Lexical relatedness uses the Python standard library. Embedding extras are installed into an isolated venv on first `combined` / `embedding` compile:
-
-```js
 import { compileSemantic } from "@software-land/search/semantic";
 
 const { artifact } = await compileSemantic(corpusJson, {
@@ -274,31 +330,47 @@ const { artifact } = await compileSemantic(corpusJson, {
 
 When `outputPath` is omitted, `compileSemantic()` still writes a unique file under the system temp directory and returns that path. The file survives the call. The caller owns it and may remove it when finished. Pass `outputPath` to choose a durable location.
 
+Lexical relatedness uses the Python standard library. Embedding extras are installed into an isolated venv on first `combined` / `embedding` compile. Default embedding model (when requested): `sentence-transformers/all-MiniLM-L6-v2`. Weights are downloaded into a builder cache and are not redistributed. See `tools/search-semantic/LICENSES.md`.
+
+Shipped CLIs (no package `bin`; from an npm install):
+
 ```bash
-# Git checkout:
-node tools/search-semantic/build.mjs --input corpus.json --output graph.json --method embedding --precision-gate --mutual
-python3 tools/search-semantic/build.py --input corpus.json --method lexical --output graph.json
+node node_modules/@software-land/search/tools/search-relationships/build.mjs compile \
+  --input corpus.json --domain domain.json \
+  --semantic relationships-from-builder.json --output dir
 
-# npm install: node_modules/@software-land/search/tools/search-semantic/build.mjs
-# (and the adjacent build.py)
+node node_modules/@software-land/search/tools/search-semantic/build.mjs \
+  --input corpus.json --output graph.json --method embedding --precision-gate --mutual
 ```
 
-Default embedding model (when requested): `sentence-transformers/all-MiniLM-L6-v2`. Weights are downloaded into a builder cache and are not redistributed. See `tools/search-semantic/LICENSES.md`.
+Merge generated semantic edges with authored editorial edges via `mergeRelationships(semantic, authored.documentRelationships)`. Details: [docs/relationships.md](docs/relationships.md).
 
-## Artifact flow
+## Positional queries
 
-```text
-corpus JSON
-  → search-corpus          → configured-concepts.json + relationship-map.json
-  → search-lexical         → search-v2-lexical-frequency v1
-                           → search-v2-lexical-index v1
-  → search-semantic (opt.) → relationships (semantic)
-  → search-relationships   → search-v2-relationships v1
-  → compileAuthoredRelevance({ configuredConcepts, relationshipMap, documents })
-  → SearchEngine.create({ lexicalIndex, documentRelationships, plugins })
+Multi-token typed queries execute same-field positional clauses against runtime positional state for title, optional summary, and body. The serialized `search-v2-lexical-index` v1 artifact stores title/body positional postings only; optional summary positional state is hydrated from caller documents. Those clauses record field hits; they do not collapse the default public result list.
+
+- **PhraseQuery** — exact contiguous typed (`originalSurface`) token sequence in one field.
+- **PhrasePrefixQuery** — that sequence’s exact preceding tokens plus a trailing typed **proper prefix** of the next token in the same field.
+
+These are runtime query clauses, not separately imported constructors. Optional `resultCollector: "complete-interpretation"` keeps documents that fully match an executed PhraseQuery or PhrasePrefixQuery, plus already-featured independent authored title evidence. It reads that already-executed query evidence; it is not a new ranking algorithm. Core omits the collector by default. The collector declines to restrict results for occupancy, configured-content identity, and version queries. Enablement is the caller’s, not Core policy.
+
+```js
+engine.search("rate lim", { resultCollector: "complete-interpretation" });
 ```
 
-Runtime parsers validate each artifact's `format` + `version`; lexical indexes additionally fail closed on integrity, analyzer, schema, or corpus mismatch.
+Details: [docs/schema.md](docs/schema.md), [docs/api.md](docs/api.md).
+
+## Morphology
+
+Lemmatization is corpus-specific. Core owns the morphology mechanism, not every catalog’s morphology policy. `morphology()` is the public factory; it is the current English implementation (suffix heuristics, a small built-in table, and optional `lemmas`). It does not run spaCy, WordNet, lemminflect, or a site lemma script.
+
+```js
+morphology({ lemmas: { intercepting: "interceptor", recursive: "recursion", foobars: "foobaz" } })
+```
+
+`intercepting` → `interceptor` and `recursive` → `recursion` are catalog-specific policy examples, not universal linguistic truth. Some of those mappings already live in Core's small default table. Site entries **augment** the defaults. Explicit built-in mappings win, so a generated table cannot replace stems the runtime already relies on (`computing` stays `compute`). Compile `compileLexicalIndex` / `compileLexicalFrequency` with the same `morphology({ lemmas }).lemma` used at search time, and pass that map to the Worker as `init({ englishOptions: { lemmas } })`.
+
+Keep lemma generators, caches, and models in the site build. This package consumes a `Record<string, string>`, not the generator itself.
 
 ## TypeScript
 
