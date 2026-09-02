@@ -3,10 +3,12 @@
   "notes": [
     "Software.Land compatibility coverage from recorded B-class independent intent.",
     "Not Core ranking policy. Not V1 expectedTop bags.",
-    "Empty-intent rows are excluded."
+    "Empty-intent rows are excluded.",
+    "overlayCases are OSS-owned ranking regressions that are not mined from the frozen scenario SHA. Not Core ranking policy."
   ],
   "counts": {
-    "cases": 60
+    "cases": 60,
+    "overlayCases": 1
   },
   "cases": [
     {
@@ -871,6 +873,22 @@
       ],
       "exactFirst": "What are Distributed Systems?",
       "name": "regression · scenario · distributed sys · #1:What are Distributed Systems? | What are Distributed Systems?@1"
+    }
+  ],
+  "overlayCases": [
+    {
+      "query": "integ",
+      "kind": "regression",
+      "origin": "overlay",
+      "requiredWithin": [
+        {
+          "title": "Integrity Is Not Obedience",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Integrity Is Not Obedience",
+      "exactFirstId": "cl",
+      "name": "regression · overlay · integ · #1:Integrity Is Not Obedience | Integrity Is Not Obedience@1"
     }
   ]
 }

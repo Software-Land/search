@@ -6,7 +6,8 @@
  *
  * Outputs:
  *   v2-contracts.json          strict accepted V2 (A-class intent + SEARCH_V2_CONTRACTS)
- *   regression-scenarios.json  B-class independent intent, compatibility coverage only
+ *   regression-scenarios.json  B-class independent intent, compatibility coverage only.
+ *                              Existing overlayCases are preserved.
  *   historical-scenarios.json  all 215 source rows; v1.expectedTop/titlePrefix are
  *                              executable historical relevance contracts (membership
  *                              within topN). disposition is V2-intent mining provenance.
@@ -16,6 +17,9 @@
  * contract and is not an exact-output oracle.
  * Empty-intent rows are not mined into V2 intent/regression cases; they still
  * participate in historical relevance when expectedTop/titlePrefix exist.
+ *
+ * Does not write corpusSourceCommit or searchPackageVersion. Those are corpus
+ * provenance from scripts/software-land-corpus-manifest.mjs.
  */
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -383,9 +387,38 @@ const paths = {
   historical: path.join(dir, "historical-scenarios.json"),
 };
 
+function readOverlayCases(filePath) {
+  try {
+    const existing = JSON.parse(readFileSync(filePath, "utf8"));
+    return Array.isArray(existing.overlayCases) ? existing.overlayCases : [];
+  } catch (err) {
+    if (err?.code === "ENOENT") return [];
+    throw err;
+  }
+}
+
+const contractOverlayCases = readOverlayCases(paths.contracts);
+const regressionOverlayCases = readOverlayCases(paths.regressions);
+
+function withOverlayCases(payload, overlayCases) {
+  if (!overlayCases.length) return payload;
+  const notes = payload.notes.some((note) => note.includes("overlayCases"))
+    ? payload.notes
+    : [
+        ...payload.notes,
+        "overlayCases are OSS-owned ranking regressions that are not mined from the frozen scenario SHA.",
+      ];
+  return {
+    ...payload,
+    notes,
+    counts: { ...payload.counts, overlayCases: overlayCases.length },
+    overlayCases,
+  };
+}
+
 writeJson(paths.index, indexPayload);
-writeJson(paths.contracts, contractPayload);
-writeJson(paths.regressions, regressionPayload);
+writeJson(paths.contracts, withOverlayCases(contractPayload, contractOverlayCases));
+writeJson(paths.regressions, withOverlayCases(regressionPayload, regressionOverlayCases));
 writeJson(paths.historical, historicalPayload);
 
 const omittedV1OnlyRows = scenarios.filter(

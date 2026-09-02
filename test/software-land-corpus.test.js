@@ -63,6 +63,10 @@ function titlesOf(engine, query, limit = SEARCH_LIMIT) {
   return engine.search(query, { limit }).map((hit) => hit.title);
 }
 
+function scenarioRows(payload) {
+  return [...(payload.cases || []), ...(payload.overlayCases || [])];
+}
+
 function indexOfTitle(titles, wanted) {
   return titles.findIndex((title) => title === wanted);
 }
@@ -126,9 +130,13 @@ function measureCandidateSurvival(engine, rows) {
 }
 
 function assertScenarioCase(engine, row) {
-  const titles = titlesOf(engine, row.query);
+  const hits = engine.search(row.query, { limit: SEARCH_LIMIT });
+  const titles = hits.map((hit) => hit.title);
   if (row.exactFirst) {
     expect(titles[0]).toBe(row.exactFirst);
+  }
+  if (row.exactFirstId) {
+    expect(hits[0]?.id).toBe(row.exactFirstId);
   }
   for (const req of row.requiredWithin || []) {
     const idx = indexOfTitle(titles, req.title);
@@ -191,7 +199,7 @@ describe("software-land corpus fixture", () => {
   test("manifest records source commit, package version, document count, and scenario provenance", () => {
     expect(manifest.format).toBe("software-land-search-fixture");
     expect(manifest.version).toBe(1);
-    expect(manifest.corpusSourceCommit).toBe("dff24cf606967cb50b24d28d9142747c9203e053");
+    expect(manifest.corpusSourceCommit).toBe("971012bf3d561a67ca8a20f03ec2128135d1fb87");
     expect(manifest.scenarioSourceCommit).toBe("3ad49e867f82db06aa06cd1c7f38dca8faecf246");
     expect(manifest.softwareLandCommit).toBeUndefined();
     expect(manifest.relevanceSoftwareLandCommit).toBe("db5a070dbc6ac112dfae403f38fdfd0fffbedbf6");
@@ -199,10 +207,10 @@ describe("software-land corpus fixture", () => {
       "df852eb4136dc5fb5b23cbf0bc22d45170e71423"
     );
     expect(manifest.historicalRelevanceApplicable).toBe(214);
-    expect(manifest.searchPackageVersion).toBe("0.3.1");
-    expect(manifest.documentCount).toBe(122);
+    expect(manifest.searchPackageVersion).toBe("0.6.0");
+    expect(manifest.documentCount).toBe(123);
     expect(manifest.configuredConceptCount).toBe(192);
-    expect(documents).toHaveLength(122);
+    expect(documents).toHaveLength(123);
     expect(manifest.description).toMatch(/not default package policy/i);
     expect(manifest.scenarioCount).toBe(215);
     expect(manifest.historicalScenarioCount).toBe(215);
@@ -217,6 +225,7 @@ describe("software-land corpus fixture", () => {
     ]);
     expect(contracts.cases).toHaveLength(99);
     expect(regressions.cases).toHaveLength(60);
+    expect(regressions.overlayCases).toHaveLength(1);
     expect(historical.rows).toHaveLength(215);
     expect(historical.kind).toBe("historical-relevance-contracts");
     expect(historical.counts.historicalRelevanceApplicable).toBe(214);
@@ -283,6 +292,7 @@ describe("software-land corpus fixture", () => {
     expect(historical.rows.filter((row) => row.historicalRelevance === false).map((row) => row.query)).toEqual(["open"]);
     expect(contracts.cases.every((row) => row.kind === "contract" && !row.v1)).toBe(true);
     expect(regressions.cases.every((row) => row.kind === "regression" && row.classification === "B" && !row.v1)).toBe(true);
+    expect(regressions.overlayCases.every((row) => row.kind === "regression" && row.origin === "overlay" && !row.v1 && !row.classification)).toBe(true);
   });
 
   test("recurse joins the frozen recursion result sequence", () => {
@@ -300,12 +310,12 @@ describe("software-land corpus fixture", () => {
     ]);
   });
 
-  test.each(contracts.cases.map((row) => [row.name, row]))("contract %s", (_name, row) => {
+  test.each(scenarioRows(contracts).map((row) => [row.name, row]))("contract %s", (_name, row) => {
     expect(row.kind).toBe("contract");
     assertScenarioCase(engine, row);
   });
 
-  test.each(regressions.cases.map((row) => [row.name, row]))("regression %s", (_name, row) => {
+  test.each(scenarioRows(regressions).map((row) => [row.name, row]))("regression %s", (_name, row) => {
     expect(row.kind).toBe("regression");
     assertScenarioCase(engine, row);
   });
@@ -355,7 +365,7 @@ describe("software-land candidate-stage survival", () => {
   });
 
   test("executable cases never depend on v1 expectedTop", () => {
-    for (const row of [...contracts.cases, ...regressions.cases]) {
+    for (const row of [...scenarioRows(contracts), ...scenarioRows(regressions)]) {
       expect(row.v1).toBeUndefined();
       expect(row.expectedTop).toBeUndefined();
     }
@@ -374,8 +384,8 @@ describe("software-land candidate-stage survival", () => {
     expect(regressionStats.prefixMiss).toEqual([]);
     expect(contractStats.maxC).toBeLessThanOrEqual(documents.length);
     expect(regressionStats.maxC).toBeLessThanOrEqual(documents.length);
-    expect(contractStats.maxC).toBe(116);
-    expect(regressionStats.maxC).toBe(98);
+    expect(contractStats.maxC).toBe(117);
+    expect(regressionStats.maxC).toBe(99);
   });
 
   test("indexed retains contract and regression targets before ranking", () => {
@@ -393,8 +403,8 @@ describe("software-land candidate-stage survival", () => {
     // required score/id representatives per builtin constraint signature.
     // The retained count is intentionally no longer the old BM25 candidate
     // envelope and is not a fixed product contract.
-    expect(contractStats.maxC).toBeLessThan(116);
-    expect(regressionStats.maxC).toBeLessThan(98);
+    expect(contractStats.maxC).toBeLessThan(117);
+    expect(regressionStats.maxC).toBeLessThan(99);
   });
 
   test("representative queries report the measured full-scan candidate counts", () => {
@@ -404,7 +414,7 @@ describe("software-land candidate-stage survival", () => {
       aplicationsecurity: 4,
       tls: 6,
       "machine learning": 6,
-      what: 79,
+      what: 80,
     };
     for (const [query, c] of Object.entries(expected)) {
       const detailed = fullScan.searchDetailed(query, { limit: SEARCH_LIMIT });
