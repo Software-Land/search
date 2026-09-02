@@ -62,12 +62,12 @@ describe("search-v2-lexical-index v1", () => {
     expect(JSON.stringify(publicArtifact)).toBe(JSON.stringify(artifact));
     expect(artifact.format).toBe("search-v2-lexical-index");
     expect(artifact.version).toBe(1);
-    expect(artifact.corpus.documentCount).toBe(122);
+    expect(artifact.corpus.documentCount).toBe(123);
     expect(artifact.data.extensions["exact-pruning-v1"]).toEqual({
       revision: 1,
       unit: "document-ordinal",
       blockSize: 128,
-      boundaries: [0, 122],
+      boundaries: [0, 123],
     });
     expect(artifact.data.documents.every((row) =>
       row.length === 7 &&
@@ -115,7 +115,7 @@ describe("search-v2-lexical-index v1", () => {
     await raw.index(documents);
     await compiled.index(documents);
     expect(compiled.lexicalIndex).toBeNull();
-    await expect(compiled.index(documents)).resolves.toMatchObject({ documentCount: 122 });
+    await expect(compiled.index(documents)).resolves.toMatchObject({ documentCount: 123 });
     await expect(compiled.index(
       documents.map((doc, i) => i === 0 ? { ...doc, body: `${doc.body} changed` } : doc)
     )).rejects.toThrow(/consumed lexical index/i);

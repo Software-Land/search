@@ -22,11 +22,11 @@ They must never become Core defaults.
 | Field | Value |
 | --- | --- |
 | Fixture format | `software-land-search-fixture` v1 (`manifest.json`) |
-| Corpus source commit | `dff24cf606967cb50b24d28d9142747c9203e053` |
+| Corpus source commit | `971012bf3d561a67ca8a20f03ec2128135d1fb87` (prior freeze `dff24cf606967cb50b24d28d9142747c9203e053`) |
 | Dictionary acronym-map overlay | `df852eb4136dc5fb5b23cbf0bc22d45170e71423` (`dictionaryAcronymMapSoftwareLandCommit`; `src/search/acronymMap.js`) |
 | Scenario source commit | `3ad49e867f82db06aa06cd1c7f38dca8faecf246` |
-| `@software-land/search` | `0.3.1` (package version at the original corpus export; not the 0.5.0 overlay) |
-| Documents | 122 |
+| `@software-land/search` | `0.6.0` (declared dependency at `corpusSourceCommit`; prior freeze `0.3.1` at `dff24cf`. Not the 0.5.0 relevance overlay, and not the current OSS package version.) |
+| Documents | 123 |
 | Configured concepts | 192 (`dff24cf` snapshot 180 including `testing`, plus 12 later `acronymMap.js` graphics/FPS concepts from Software.Land `df852eb4136dc5fb5b23cbf0bc22d45170e71423`) |
 | Source scenarios | `tests/search-scenarios.js` (215 rows) + `tests/search-v2-contracts.js` (16) |
 | Strict V2 contracts | 99 (`v2-contracts.json`) |
@@ -42,10 +42,12 @@ They must never become Core defaults.
 | Omitted historical relevance | 1 (`open`, classification C obsolete) |
 
 Corpus artifacts come from a clean Software.Land worktree at
-`dff24cf606967cb50b24d28d9142747c9203e053`. Scenario policy comes from the
-committed Software.Land tree at `3ad49e867f82db06aa06cd1c7f38dca8faecf246`
-(parent of that commit is the corpus SHA). Strict V2 contracts are A-class
-independent intent plus `SEARCH_V2_CONTRACTS`. Regression cases reuse recorded
+`971012bf3d561a67ca8a20f03ec2128135d1fb87`. Document/lemma/lexical-frequency
+files were regenerated from that tree after `search:artifacts:compile` using
+`loadSoftwareLandDocuments` + `normalizeSearchBody`. Relationships remain the
+`dff24cf` compiled graph (Integrity has no relationship edges yet). Scenario policy remains the
+committed Software.Land tree at `3ad49e867f82db06aa06cd1c7f38dca8faecf246`.
+Strict V2 contracts are A-class independent intent plus `SEARCH_V2_CONTRACTS`. Regression cases reuse recorded
 B-class independent intent as Software.Land compatibility coverage; they are
 **not Core ranking policy**. Historical `expectedTop` / `titlePrefix` / `topN`
 are executable Software.Land relevance contracts in
@@ -64,7 +66,8 @@ OSS 0.5 equal-alias additionally rebaselined 25 historical rows in
 `historical-contract-updates.json` `equalAliasAcceptedRebaselines` (not a
 Software.Land overlay). Candidate `configuredFormCoverage` is occupied-only;
 query-side prefix `formCoverage` may still be 1/3 without occupancy.
-Corpus document/lemma/relationship/lexical-frequency artifacts remain the
+Corpus document/lemma/lexical-frequency artifacts match
+`971012b`. Relationship artifacts remain the
 `dff24cf` snapshot. `configured-concepts.json` additionally merges missing keys from
 the later committed Software.Land `acronymMap.js` at
 `df852eb4136dc5fb5b23cbf0bc22d45170e71423` (`fps`, `webgl`, `webgpu`,
@@ -87,7 +90,7 @@ and `tests/search-v2-contracts.js` from the committed scenario SHA.
 - `relationships.json` — runtime relationship graph, including TLS ↔ VPN editorial edges (generated + domain editorial; not relationshipMap)
 - `lexical-frequency.json` — production lexical-frequency artifact
 - `v2-contracts.json` — strict accepted V2 cases (`kind: contract`)
-- `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy
+- `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy. Optional `overlayCases` are OSS-owned ranking regressions not mined from the scenario SHA.
 - `historical-scenarios.json` — full 215-row inventory; `v1.expectedTop`/`titlePrefix`/`topN` are executable historical relevance contracts
 - `historical-contract-updates.json` — old V1 vs accepted V2/product `expectedTop` for rows superseded by explicit product decisions
 - `relevance-config.json` — Software.Land 0.5 relevance-engine inputs (omit `testing`, patch NIST institute aliases, load relationshipMap)
@@ -126,6 +129,16 @@ after `search:artifacts:compile`:
    `wgsl`, `opengl`, `opengles`, `mdn`, `hz`, `raf`, `dpr`, `vrr`.
 3. Copy `site-lemmas.json` lemmas, `software-land-relationships.json`, and
    `lexical-frequency.json`.
+4. Refresh corpus provenance (`corpusSourceCommit`, `searchPackageVersion` from
+   that commit's declared `@software-land/search` dependency, document/lemma
+   counts, and corpus file hashes). Do not hand-edit `manifest.json`.
+
+   ```bash
+   node scripts/software-land-corpus-manifest.mjs \
+     --dir test/fixtures/software-land \
+     --software-land /path/to/software.land \
+     --corpus-source-commit 971012bf3d561a67ca8a20f03ec2128135d1fb87
+   ```
 
 Scenario files: extract policy sources from the committed scenario SHA (not a
 dirty worktree), then rebuild fixtures and provenance in `manifest.json` with

@@ -73,7 +73,7 @@ describe("search-corpus embedded acronyms", () => {
     );
   });
 
-  test("122-document Software.Land fixture stays near historical candidate volume", () => {
+  test("123-document Software.Land fixture stays near historical candidate volume", () => {
     const raw = JSON.parse(
       fs.readFileSync(path.join(__dirname, "fixtures", "software-land", "documents.json"), "utf8")
     );

@@ -91,7 +91,7 @@ describe("Software.Land retrieval-mode equivalence", () => {
     expect(changed).toEqual([]);
   });
 
-  test("adaptive matches full-scan on Software.Land (N=122 < threshold 1500)", () => {
+  test("adaptive matches full-scan on Software.Land (N=123 < threshold 1500)", () => {
     expect(adaptive.retriever.stats().active).toBe("full-scan");
     const changed = [];
     for (const frozen of oracle.rows) {
