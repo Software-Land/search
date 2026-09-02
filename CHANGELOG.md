@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.3
+
+### Fixed
+
+- One-token first-form configured-sequence occupancy no longer erases typed title-prefix evidence. Ranking still scores occupied peer forms; it now unions the typed stub's title-prefix match so a strong title-prefix document is not outranked by a weak configured-concept or body hit. Covered by `test/typed-prefix-under-occupancy.test.js` and the Software.Land `integ` overlay regression.
+
 ## 0.6.2
 
 ### Changed
