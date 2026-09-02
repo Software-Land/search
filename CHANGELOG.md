@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.4
+
+### Changed
+
+- Documentation-only patch. No runtime, search, ranking, retrieval, result, API, or artifact behavior changes.
+- README now introduces the build-time/runtime architecture before feature-reference material and documents the supplied lexical-index deployment flow: compile with `compileLexicalIndex()`, persist the JSON artifact, load it at runtime, pass it to `SearchEngine.create({ lexicalIndex })`, then call `index(documents)` to validate and hydrate the compiled representation.
+- README now distinguishes omitted-index runtime construction from supplied-index hydration, explains why documents are still passed after precompilation, separates the positional lexical index from optional lexical-frequency ranking data, and clarifies Browser Worker and authored-relevance artifact lifecycles.
+
 ## 0.6.3
 
 ### Fixed
