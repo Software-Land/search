@@ -133,9 +133,47 @@ function exactTitleTokenMatch(query: AnalyzedQuery, doc: IndexedDocument) {
  * Typed/repaired surface (pre-lemma, pre-unique-prefix rewrite) agrees with a
  * title token: exact token, or the typed stub prefixes a title token.
  * Canonical lemmas and completedToken are not typed-surface evidence.
+ * One-token first-form prefix occupancy unions this typed check with peer-form
+ * title evidence.
  */
+function typedContentLiterals(query: AnalyzedQuery) {
+  const stream = query.tokens || [];
+  if (!stream.length) return [];
+  const last = stream[stream.length - 1];
+  const skipLast = hasBoundContextualCompletion(query);
+  const out: string[] = [];
+  for (const t of stream) {
+    if (skipLast && t === last) continue;
+    const literal = String(tokenLiteral(t) || "").toLowerCase();
+    if (!literal || DEFAULT_STOP.has(literal)) continue;
+    out.push(literal);
+  }
+  return out;
+}
+
+function occupancyUnionsTypedTitleEvidence(query: AnalyzedQuery) {
+  if (!hasConfiguredSequenceIntent(query)) return false;
+  if ((query.tokens || []).length !== 1) return false;
+  const key = query.configuredSequenceIntent?.key;
+  const acr = query.concepts.find((c) => c.kind === "configured-concept" && c.id === key);
+  const coverage = acr?.formCoverage;
+  return typeof coverage === "number" && coverage > 0 && coverage < 1;
+}
+
+function typedTitleSurfaceHit(query: AnalyzedQuery, doc: IndexedDocument) {
+  return typedContentLiterals(query).some((literal) => {
+    if (hasIndependentTitleToken(doc, literal)) return true;
+    return doc.titleTokens.some(
+      (tok, i) =>
+        !isDottedSpanComponentIndex(doc, i) &&
+        (allowPrefixMatch(literal, tok) || isNearCompletePrefix(literal, tok))
+    );
+  });
+}
+
 function typedSurfaceTitleMatch(query: AnalyzedQuery, doc: IndexedDocument) {
   if (hasConfiguredSequenceIntent(query)) {
+    if (occupancyUnionsTypedTitleEvidence(query) && typedTitleSurfaceHit(query, doc)) return true;
     const acr = query.concepts.find((c) => c.kind === "configured-concept");
     for (const form of peerFormsOf(acr)) {
       if (!formContributesQueryShapedTitle(form, doc)) continue;
@@ -154,20 +192,7 @@ function typedSurfaceTitleMatch(query: AnalyzedQuery, doc: IndexedDocument) {
     }
     return false;
   }
-  const stream = query.tokens;
-  const last = stream[stream.length - 1];
-  const skipLast = hasBoundContextualCompletion(query);
-  return stream.some((t) => {
-    if (skipLast && t === last) return false;
-    const literal = tokenLiteral(t);
-    if (!literal || DEFAULT_STOP.has(literal)) return false;
-    if (hasIndependentTitleToken(doc, literal)) return true;
-    return doc.titleTokens.some(
-      (tok, i) =>
-        !isDottedSpanComponentIndex(doc, i) &&
-        (allowPrefixMatch(literal, tok) || isNearCompletePrefix(literal, tok))
-    );
-  });
+  return typedTitleSurfaceHit(query, doc);
 }
 
 function titlePrefixQuality(query: AnalyzedQuery, doc: IndexedDocument) {
@@ -201,6 +226,9 @@ function titlePrefixQuality(query: AnalyzedQuery, doc: IndexedDocument) {
       if (!formContributesQueryShapedTitle(form, doc)) continue;
       const v = scoreNorms(formContentTokens(form));
       if (v > best) best = v;
+    }
+    if (occupancyUnionsTypedTitleEvidence(query)) {
+      best = Math.max(best, scoreNorms(typedContentLiterals(query)));
     }
     return best;
   }
