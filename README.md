@@ -29,29 +29,40 @@ Substantial corpus analysis can happen **offline**. Query-time search consumes a
 ```text
 documents
    │
-   ├─ optional: compileLexicalFrequency(...)
+   ├─ optional ranking evidence (attach before lexical compile if used):
+   │          compileLexicalFrequency(...)
    │                ↓
    │          attachLexicalFrequency(documents, artifact)
+   │                ↓
+   │          those documents feed compileLexicalIndex and runtime index()
    │
    ├─ typical when avoiding init-time corpus analysis:
-   │          compileLexicalIndex(...)
+   │          compileLexicalIndex(documents, { schema, lemma, analyzerId })
    │                ↓
    │          persist JSON (search-v2-lexical-index v1)
    │
-   ├─ optional authored JSON: configuredConcepts, relationshipMap
-   ├─ optional: compileCorpus / compileSemantic / compileRelationships
+   ├─ optional concept/form layer:
+   │          authored JSON, and/or compileCorpus(...)
+   │                ↓
+   │          configuredConcepts, relationshipMap
+   │
+   ├─ optional document-graph layer:
+   │          compileSemantic(...) and/or compileRelationships(...)
+   │                ↓
+   │          documentRelationships (optionally mergeRelationships(...))
    ▼
-deployment (artifacts + the same documents)
+deployment (artifacts + fingerprint-matching documents)
    ▼
+compileAuthoredRelevance({ configuredConcepts, relationshipMap }) → plugins
 SearchEngine.create({ schema, plugins, lexicalIndex?, documentRelationships? })
 await engine.index(documents)
    ▼
 engine.search(...)
 ```
 
-**Build time** may compile the positional lexical index, optionally compile lexical-frequency maps, optionally review corpus-mined concepts, and optionally build relationship graphs. Persist ordinary JSON; Search Core does not dictate files, bundlers, or object storage.
+**Build time** may compile the positional lexical index with the same `schema` and morphology/lemma identity used at search time; optionally compile lexical-frequency maps and attach them to documents **before** that compile; optionally review corpus-mined concepts into `configuredConcepts` / `relationshipMap`; and optionally compile a document-to-document graph. Persist ordinary JSON; Search Core does not dictate files, bundlers, or object storage. Fingerprint-matching documents means stable ids, title/body text, and any attached `lexicalFrequency` maps.
 
-**Runtime initialization** creates morphology and other plugins, compiles authored relevance from trusted JSON (`compileAuthoredRelevance` returns runtime plugin objects, not a second JSON format), creates the engine, and calls `index(documents)`. With a supplied `lexicalIndex`, that call validates and hydrates. With the artifact omitted, it constructs equivalent lexical state from the documents.
+**Runtime initialization** creates morphology and other plugins, compiles authored relevance from trusted JSON (`compileAuthoredRelevance` returns runtime plugin objects, not a second JSON format; `configuredConcepts` and `relationshipMap` are not `SearchEngine.create` options), creates the engine, and calls `index(documents)`. With a supplied `lexicalIndex`, that call validates and hydrates. With the artifact omitted, it constructs equivalent lexical state from the documents.
 
 **Query time** searches the already-hydrated compact/indexed representation. The indexed path does not rescan or retokenize raw title/body text. Details: [docs/compact-runtime.md](docs/compact-runtime.md).
 
