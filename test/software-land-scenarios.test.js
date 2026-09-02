@@ -80,4 +80,14 @@ describe("software-land-scenarios overlay preservation", () => {
     expect(`${result.stderr}\n${result.stdout}`).toMatch(/JSON|SyntaxError|Unexpected/i);
     expect(readFileSync(broken, "utf8")).toBe("{");
   });
+
+  test("non-array overlayCases fails and leaves the original file untouched", () => {
+    const regressions = path.join(dir, "regression-scenarios.json");
+    const raw = `${JSON.stringify({ overlayCases: { query: "overlay-probe" } })}\n`;
+    writeFileSync(regressions, raw);
+    const result = generate(dir);
+    expect(result.status).not.toBe(0);
+    expect(`${result.stderr}\n${result.stdout}`).toMatch(/overlayCases must be an array/);
+    expect(readFileSync(regressions, "utf8")).toBe(raw);
+  });
 });

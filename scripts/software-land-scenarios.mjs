@@ -390,7 +390,12 @@ const paths = {
 function readOverlayCases(filePath) {
   try {
     const existing = JSON.parse(readFileSync(filePath, "utf8"));
-    return Array.isArray(existing.overlayCases) ? existing.overlayCases : [];
+    const overlays = existing.overlayCases;
+    if (overlays === undefined) return [];
+    if (!Array.isArray(overlays)) {
+      throw new Error(`${filePath} overlayCases must be an array`);
+    }
+    return overlays;
   } catch (err) {
     if (err?.code === "ENOENT") return [];
     throw err;
