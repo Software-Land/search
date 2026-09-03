@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.5
+
+### Changed
+
+- Eligible ordinary `SearchEngine.search()` / `searchAsync()` fuse exact ranking evidence into compiled retrieval and rank from packed numeric columns instead of constructing a `FeatureVector` for every retrieved direct. Public results, ranking semantics, default hybrid, `top1-strong`, `none`, `mixed`, `separate`, relationship payload, `directClass`, and `relevanceKind` are unchanged.
+- No public API, TypeScript, artifact-format, or Worker-protocol change. There is no public optimization toggle and no `compoundAcceleration` option. Unsupported query, retriever, constraint, diagnostic, and plugin shapes fail closed to the previous FeatureVector path with identical results. `searchDetailed()`, `explain: true`, exhaustive diagnostics, and complete-interpretation collection stay on that diagnostic path.
+
+### Performance
+
+- Same-machine interleaved comparison of untouched `@software-land/search` **v0.6.4** versus 0.6.5 default hybrid `SearchEngine.search()` (Linux x86_64, Intel i9-13900K, Node v22.22.1, warmup 6, 24 iterations, mixed generator seed `0x60d6e7ed`, limit 10). Geometric-mean p50 about **1.9×**; aggregate p50 about **2.1×**; six ordinary non-tiny queries about **2.2–2.3×**; individual ordinary rows up to about **2.9×**. Workload-dependent (`network` about 1.37–1.45×, `tls` about 1.9×). Tiny `integ` remains exact #1 with a sub-millisecond absolute setup cost. Not every query is 2× faster. See `docs/scaling.md`.
+
 ## 0.6.4
 
 ### Changed

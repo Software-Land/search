@@ -34,4 +34,4 @@ Not exposed: postings lists, BM25 internals, engine class instances.
 
 **Editorial related:** same rail, `type: "editorial"` / `manually-related`, provenance from explicit domain relationships.
 
-**Indexed candidate:** default production path, `retriever: "indexed"`; positional postings enumerate every legitimate matching document and `retrievalSourcesForDocument()` re-validates the same named provenance rules as full scan. There is no BM25-budgeted proposal slice on this path, and provenance remains the named source set rather than a lone retrieval score.
+**Indexed candidate:** default production path, `retriever: "indexed"`; positional postings enumerate legitimate matching documents (Stage 3A may skip unread noncompetitive 1-of-k body-only ordinals). `retrievalSourcesForDocument()` re-validates the same named provenance rules as full scan for materialized hits. Eligible ordinary `search()` ranks those hits from packed ranking-evidence views; explain/`searchDetailed` use FeatureVectors. There is no BM25-budgeted proposal slice on this path, and provenance remains the named source set rather than a lone retrieval score.

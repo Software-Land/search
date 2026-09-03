@@ -25,6 +25,15 @@ import {
   scoreFeatures,
   selectTopPerBuiltinSignature,
 } from "./rank.js";
+import { compileRankingEvidencePlan } from "./rankingEvidencePlan.js";
+import { RankingEvidenceSessionPool, rankingEvidenceStaticFor } from "./rankingEvidenceState.js";
+import { finalizeRankingEvidence } from "./rankingEvidenceFinalize.js";
+import { createPackedDirectHits, isPackedDirectFeatures } from "./rankingEvidencePacked.js";
+import { packedSearchFallbackReason } from "./rankingEvidenceSearch.js";
+import {
+  retrieveWithRankingEvidence,
+  retrieveWithRankingEvidenceAsync,
+} from "./retrievers.js";
 import { constraintsForStrategy } from "./constraints.js";
 import { morphology } from "./morphology.js";
 import { compileConfiguredConceptPlugin } from "./configuredConcepts.js";
@@ -69,6 +78,23 @@ import type {
 } from "./types.js";
 
 export { RELATIONSHIP_STRATEGIES, DEFAULT_RELATIONSHIP_STRATEGY };
+
+function packedFeatureStats(evaluated: number) {
+  return {
+    mode: "exhaustive" as const,
+    documentBlocksVisited: 0,
+    documentBlocksSkipped: 0,
+    boundedBlocksSkipped: 0,
+    postingBlocksVisited: 0,
+    postingBlocksSkipped: 0,
+    postingEntriesSkipped: 0,
+    documentsFullyEvaluated: evaluated,
+    documentsBoundRejected: 0,
+    signaturesEncountered: 0,
+    representativesRetained: 0,
+    pruningFallbackReason: null,
+  };
+}
 
 function missingPhraseFeatured(query: AnalyzedQuery, doc: IndexedDocument): FeaturedHit {
   return {
@@ -370,6 +396,7 @@ export class SearchEngine {
   declare _index: SearchIndex | null;
   declare indexBuildMs: number;
   declare lastSearchMeta: Record<string, unknown> | null;
+  declare _rankingEvidencePool: RankingEvidenceSessionPool;
 
   constructor(options: SearchEngineOptions = {}) {
     const cfg = validateCreateOptions(options);
@@ -386,6 +413,7 @@ export class SearchEngine {
     this._index = null;
     this.indexBuildMs = 0;
     this.lastSearchMeta = null;
+    this._rankingEvidencePool = new RankingEvidenceSessionPool();
   }
 
   static create(options?: SearchEngineOptions) {
@@ -433,6 +461,7 @@ export class SearchEngine {
             buildIndex(documents, this.schema, this.plugins),
             lexicalAnalyzerIdentity(this.plugins)
           );
+    this._rankingEvidencePool.reset();
     if (this.retriever && typeof this.retriever.prepare === "function") {
       this.retriever.prepare(this._index, { schema: this.schema, plugins: this.plugins });
     }
@@ -641,6 +670,355 @@ export class SearchEngine {
     return { featured, applied, featureMs, relationshipMs, pruningStats, featureVectorsConstructed };
   }
 
+  _expandPacked(
+    packedDirects: FeaturedHit[],
+    query: AnalyzedQuery,
+    strategy: string,
+    {
+      signal,
+      sourcePolicy,
+    }: {
+      signal?: AbortSignal;
+      sourcePolicy?: SourcePolicy;
+    } = {}
+  ) {
+    throwIfAborted(signal);
+    const tFeat = performance.now();
+    let directFeatureVectorsConstructed = 0;
+    let relationshipOnlyFeatureVectorsConstructed = 0;
+    let featured = packedDirects;
+    const featureMs = performance.now() - tFeat;
+    if (strategy === "none") {
+      return {
+        featured,
+        applied: { featured, relatedHits: [], primaries: [] },
+        featureMs,
+        relationshipMs: 0,
+        directFeatureVectorsConstructed,
+        relationshipOnlyFeatureVectorsConstructed,
+      };
+    }
+
+    throwIfAborted(signal);
+    const tRel = performance.now();
+    const extractDirectOverlay: import("./types.js").ExtractFeaturesFn = (
+      overlayQuery,
+      document,
+      extra
+    ) => {
+      directFeatureVectorsConstructed += 1;
+      return extractFeatures(overlayQuery, document, extra);
+    };
+    const applied = applyRelationshipExpansion({
+      featured,
+      query,
+      extractFeatures: extractDirectOverlay,
+      scoreFeatures,
+      index: requireIndexed(this),
+      graph: this.relationships,
+      sourcePolicy,
+      signal,
+      constraints: constraintsForStrategy(strategy),
+    });
+    featured = applied.featured;
+    for (const hit of applied.relatedHits) {
+      throwIfAborted(signal);
+      relationshipOnlyFeatureVectorsConstructed += 1;
+      const features = extractFeatures(query, hit.document, { relationship: hit.relationship });
+      featured.push({
+        ...hit,
+        features,
+        score: scoreFeatures(features),
+      });
+    }
+    const relationshipMs = performance.now() - tRel;
+    return {
+      featured,
+      applied,
+      featureMs,
+      relationshipMs,
+      directFeatureVectorsConstructed,
+      relationshipOnlyFeatureVectorsConstructed,
+    };
+  }
+
+  _finishPacked(
+    ranked: RankedHit[],
+    query: AnalyzedQuery,
+    strategy: string,
+    timings: FinishTimings & {
+      rankingEvidenceFallbackReason?: string | null;
+      optimizedDirectCandidates?: number;
+      directFeatureVectorsConstructed?: number;
+      relationshipOnlyFeatureVectorsConstructed?: number;
+    }
+  ) {
+    const finished = this._finish(ranked, query, false, strategy, timings);
+    const meta = finished.meta as Record<string, unknown>;
+    meta.rankingEvidence = "packed";
+    meta.rankingEvidenceFallbackReason = timings.rankingEvidenceFallbackReason ?? null;
+    meta.optimizedDirectCandidates = timings.optimizedDirectCandidates ?? 0;
+    meta.directFeatureVectorsConstructed = timings.directFeatureVectorsConstructed ?? 0;
+    meta.relationshipOnlyFeatureVectorsConstructed =
+      timings.relationshipOnlyFeatureVectorsConstructed ?? 0;
+    meta.explainOnlyFeatureVectorsConstructed = 0;
+    this.lastSearchMeta = meta;
+    return finished;
+  }
+
+  _rankPackedFeatured(
+    featured: FeaturedHit[],
+    query: AnalyzedQuery,
+    plan: ReturnType<typeof buildQueryPlan>,
+    strategy: string,
+    {
+      signal,
+      limit,
+      relatedLimit,
+    }: {
+      signal?: AbortSignal;
+      limit: number;
+      relatedLimit: number;
+    }
+  ) {
+    const seen = new Set(featured.map((hit) => hit.document.id));
+    let extraDirectFeatureVectors = 0;
+    for (const hit of [...plan.exactHits, ...plan.prefixHits]) {
+      if (seen.has(hit.document.id)) continue;
+      seen.add(hit.document.id);
+      extraDirectFeatureVectors += 1;
+      featured.push(missingPhraseFeatured(query, hit.document));
+    }
+
+    const constraints = constraintsForStrategy(strategy);
+    let representativeStats: Record<string, unknown> | null = null;
+    const fullRelatedCount = featured.filter((hit) => hit.features.relevanceKind === "related").length;
+    const tSelect = performance.now();
+    const publicDepth = Math.max(0, limit, relatedLimit);
+    if (this.retriever.exactSignatureSelection) {
+      let representativeDepth = publicDepth;
+      const hasRelated = fullRelatedCount > 0;
+      if (publicDepth > 0 && ((relatedLimit > 0 && hasRelated) || (strategy === "separate" && limit > 0 && hasRelated))) {
+        const planningRanked = rankCandidates(featured, { constraints, signal });
+        representativeDepth = Math.max(
+          representativeDepth,
+          representativeDepthForOutput(planningRanked, strategy, { limit, relatedLimit, explain: false })
+        );
+      }
+      const selected = selectTopPerBuiltinSignature(featured, representativeDepth, constraints);
+      featured = selected.candidates;
+      representativeStats = {
+        ...selected.stats,
+        outputDepth: representativeDepth,
+        plannedFullRanking: false,
+      };
+    }
+    const selectionMs = performance.now() - tSelect;
+    const tRank = performance.now();
+    const ranked = rankCandidates(featured, { constraints, signal });
+    const rankMs = performance.now() - tRank;
+    return {
+      featured,
+      ranked,
+      representativeStats,
+      fullRelatedCount,
+      selectionMs,
+      rankMs,
+      extraDirectFeatureVectors,
+    };
+  }
+
+  _searchPackedSync(
+    query: AnalyzedQuery,
+    plan: ReturnType<typeof buildQueryPlan>,
+    opts: SearchOptions,
+    strategy: string,
+    retrieveOpts: {
+      signal?: AbortSignal;
+      candidateLimit?: number | null;
+      skipDuplicatePostingLists?: boolean;
+      exactBlockSkip: false | { requiredDepth: number };
+    },
+    t0: number
+  ) {
+    const compiled = compileRankingEvidencePlan(rankingEvidenceStaticFor(requireIndexed(this)), query);
+    if (!compiled.eligible || !compiled.plan) return null;
+    const session = this._rankingEvidencePool.acquire(compiled.plan);
+    try {
+      const tRetrieve = performance.now();
+      const retrieved = retrieveWithRankingEvidence(
+        this.retriever as import("./types.js").Retriever,
+        query,
+        requireIndexed(this),
+        session,
+        retrieveOpts
+      );
+      const retrieveMs = performance.now() - tRetrieve;
+      if (!retrieved) {
+        session.abort();
+        return null;
+      }
+      const tFeat = performance.now();
+      const finalized = finalizeRankingEvidence(session, retrieved, plan);
+      const packedDirects = createPackedDirectHits(retrieved, finalized);
+      const packedMs = performance.now() - tFeat;
+      const {
+        limit = 10,
+        relatedLimit = 5,
+        sourcePolicy = "top1-strong",
+        signal,
+      } = opts;
+      const expanded = this._expandPacked(packedDirects, query, strategy, {
+        signal,
+        sourcePolicy,
+      });
+      const rankedPack = this._rankPackedFeatured(expanded.featured, query, plan, strategy, {
+        signal,
+        limit,
+        relatedLimit,
+      });
+      const finished = this._finishPacked(rankedPack.ranked, query, strategy, {
+        limit,
+        relatedLimit,
+        retrieveMs,
+        featureMs: packedMs + expanded.featureMs,
+        relationshipMs: expanded.relationshipMs,
+        selectionMs: rankedPack.selectionMs,
+        rankMs: rankedPack.rankMs,
+        totalMs: performance.now() - t0,
+        candidateCount: rankedPack.featured.length,
+        relationshipExpanded: expanded.applied.relatedHits.length,
+        relatedCount: rankedPack.fullRelatedCount,
+        primaryId: expanded.applied.primaries[0]?.document?.id || null,
+        primaryIds: expanded.applied.primaries.map((p) => p.document.id),
+        matchCount: retrieved.length,
+        representativeStats: rankedPack.representativeStats,
+        diagnosticRanked: null,
+        pruningStats: packedFeatureStats(
+          expanded.directFeatureVectorsConstructed +
+            expanded.relationshipOnlyFeatureVectorsConstructed +
+            rankedPack.extraDirectFeatureVectors
+        ),
+        featureVectorsConstructed:
+          expanded.directFeatureVectorsConstructed +
+          expanded.relationshipOnlyFeatureVectorsConstructed +
+          rankedPack.extraDirectFeatureVectors,
+        rankingEvidenceFallbackReason: null,
+        optimizedDirectCandidates: packedDirects.filter((hit) =>
+          isPackedDirectFeatures(hit.features)
+        ).length,
+        directFeatureVectorsConstructed:
+          expanded.directFeatureVectorsConstructed + rankedPack.extraDirectFeatureVectors,
+        relationshipOnlyFeatureVectorsConstructed:
+          expanded.relationshipOnlyFeatureVectorsConstructed,
+      });
+      session.release();
+      return finished;
+    } catch (error) {
+      session.abort();
+      throw error;
+    }
+  }
+
+  async _searchPackedAsync(
+    query: AnalyzedQuery,
+    plan: ReturnType<typeof buildQueryPlan>,
+    opts: SearchOptions,
+    strategy: string,
+    retrieveOpts: {
+      signal?: AbortSignal;
+      candidateLimit?: number | null;
+      skipDuplicatePostingLists?: boolean;
+      exactBlockSkip: false | { requiredDepth: number };
+    },
+    t0: number
+  ) {
+    const compiled = compileRankingEvidencePlan(rankingEvidenceStaticFor(requireIndexed(this)), query);
+    if (!compiled.eligible || !compiled.plan) return null;
+    const session = this._rankingEvidencePool.acquire(compiled.plan);
+    try {
+      const tRetrieve = performance.now();
+      const retrieved = await retrieveWithRankingEvidenceAsync(
+        this.retriever as import("./types.js").Retriever,
+        query,
+        requireIndexed(this),
+        session,
+        retrieveOpts
+      );
+      const retrieveMs = performance.now() - tRetrieve;
+      if (!retrieved) {
+        session.abort();
+        return null;
+      }
+      throwIfAborted(retrieveOpts.signal);
+      await Promise.resolve();
+      throwIfAborted(retrieveOpts.signal);
+      const tFeat = performance.now();
+      const finalized = finalizeRankingEvidence(session, retrieved, plan);
+      const packedDirects = createPackedDirectHits(retrieved, finalized);
+      const packedMs = performance.now() - tFeat;
+      const {
+        limit = 10,
+        relatedLimit = 5,
+        sourcePolicy = "top1-strong",
+        signal,
+      } = opts;
+      const expanded = this._expandPacked(packedDirects, query, strategy, {
+        signal,
+        sourcePolicy,
+      });
+      throwIfAborted(signal);
+      await Promise.resolve();
+      throwIfAborted(signal);
+      const rankedPack = this._rankPackedFeatured(expanded.featured, query, plan, strategy, {
+        signal,
+        limit,
+        relatedLimit,
+      });
+      const finished = this._finishPacked(rankedPack.ranked, query, strategy, {
+        limit,
+        relatedLimit,
+        retrieveMs,
+        featureMs: packedMs + expanded.featureMs,
+        relationshipMs: expanded.relationshipMs,
+        selectionMs: rankedPack.selectionMs,
+        rankMs: rankedPack.rankMs,
+        totalMs: performance.now() - t0,
+        candidateCount: rankedPack.featured.length,
+        relationshipExpanded: expanded.applied.relatedHits.length,
+        relatedCount: rankedPack.fullRelatedCount,
+        primaryId: expanded.applied.primaries[0]?.document?.id || null,
+        primaryIds: expanded.applied.primaries.map((p) => p.document.id),
+        matchCount: retrieved.length,
+        representativeStats: rankedPack.representativeStats,
+        diagnosticRanked: null,
+        pruningStats: packedFeatureStats(
+          expanded.directFeatureVectorsConstructed +
+            expanded.relationshipOnlyFeatureVectorsConstructed +
+            rankedPack.extraDirectFeatureVectors
+        ),
+        featureVectorsConstructed:
+          expanded.directFeatureVectorsConstructed +
+          expanded.relationshipOnlyFeatureVectorsConstructed +
+          rankedPack.extraDirectFeatureVectors,
+        rankingEvidenceFallbackReason: null,
+        optimizedDirectCandidates: packedDirects.filter((hit) =>
+          isPackedDirectFeatures(hit.features)
+        ).length,
+        directFeatureVectorsConstructed:
+          expanded.directFeatureVectorsConstructed + rankedPack.extraDirectFeatureVectors,
+        relationshipOnlyFeatureVectorsConstructed:
+          expanded.relationshipOnlyFeatureVectorsConstructed,
+      });
+      session.release();
+      return finished;
+    } catch (error) {
+      session.abort();
+      throw error;
+    }
+  }
+
+
   _finish(ranked: RankedHit[], query: AnalyzedQuery, explain: boolean, strategy: string, timings: FinishTimings) {
     const { sliced, relatedSliced, relatedRanked } = sliceResults(ranked, strategy, {
       limit: timings.limit,
@@ -740,11 +1118,10 @@ export class SearchEngine {
     const index = requireIndexed(this);
     const plan = buildQueryPlan(query, index);
 
-    const tRetrieve = performance.now();
     const publicDepth = Math.max(0, limit, relatedLimit);
     const initialRepresentativeDepth =
       publicDepth + (explain && publicDepth > 0 ? 1 : 0);
-    const retrieved = this.retriever.retrieve(query, index, {
+    const retrieveOpts = {
       signal,
       candidateLimit: opts.candidateLimit || this.candidateLimit,
       skipDuplicatePostingLists:
@@ -758,7 +1135,25 @@ export class SearchEngine {
           ? { requiredDepth: initialRepresentativeDepth }
           : false
       ) as false | { requiredDepth: number },
-    });
+    };
+    if (
+      !packedSearchFallbackReason({
+        exactDiagnostics,
+        pruningMode,
+        retrievalScoreWeight: this.retrievalScoreWeight,
+        sourcePolicy,
+        retriever: this.retriever as import("./types.js").Retriever,
+        opts,
+        query,
+        index,
+      })
+    ) {
+      const packed = this._searchPackedSync(query, plan, opts, strategy, retrieveOpts, t0);
+      if (packed) return packed;
+    }
+
+    const tRetrieve = performance.now();
+    const retrieved = this.retriever.retrieve(query, index, retrieveOpts);
     const retrieveMs = performance.now() - tRetrieve;
 
     const expanded = this._expandAndFeature(retrieved, query, strategy, {
@@ -870,8 +1265,6 @@ export class SearchEngine {
     await Promise.resolve();
     throwIfAborted(signal);
 
-    const tRetrieve = performance.now();
-    throwIfAborted(signal);
     const publicDepth = Math.max(0, limit, relatedLimit);
     const initialRepresentativeDepth =
       publicDepth + (explain && publicDepth > 0 ? 1 : 0);
@@ -890,6 +1283,22 @@ export class SearchEngine {
           : false
       ) as false | { requiredDepth: number },
     };
+    if (
+      !packedSearchFallbackReason({
+        exactDiagnostics,
+        pruningMode,
+        retrievalScoreWeight: this.retrievalScoreWeight,
+        sourcePolicy,
+        retriever: this.retriever as import("./types.js").Retriever,
+        opts,
+        query,
+        index,
+      })
+    ) {
+      const packed = await this._searchPackedAsync(query, plan, opts, strategy, retrieveOpts, t0);
+      if (packed) return packed;
+    }
+    const tRetrieve = performance.now();
     const retrieved =
       typeof this.retriever.retrieveAsync === "function"
         ? await this.retriever.retrieveAsync(query, index, retrieveOpts)

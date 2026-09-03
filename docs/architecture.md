@@ -34,6 +34,33 @@ Public: `SearchEngine` facade, result fields above, artifact v1 envelopes, strat
 
 Experimental / internal: custom Retriever objects, `retrievalScore` ranking weight, analyzed query objects, feature extraction, constraints module, `meta`, `lastSearchMeta`, `sourcePolicy`, BM25 constants, and lexical-index payload/posting internals. The opaque `search-v2-lexical-index` v1 envelope and compiler are public; its internal tuples and ordinals are not.
 
-Query-semantic / vector retrieval is not implemented. If it is added, union semantic `RetrievalHit`s after lexical candidate retrieval and before feature extraction, embed the **raw query string** (optionally repaired typed surfaces), and never embed analyzed `query.tokens`, `normalized`, post-prefix `lemma`, `completedToken`, or `concepts.forms`. See [retrievers.md](retrievers.md).
+Query-semantic / vector retrieval is not implemented. If it is added, union semantic `RetrievalHit`s after lexical candidate retrieval and before ranking-feature materialization, embed the **raw query string** (optionally repaired typed surfaces), and never embed analyzed `query.tokens`, `normalized`, post-prefix `lemma`, `completedToken`, or `concepts.forms`. See [retrievers.md](retrievers.md).
 
-Indexed search has been validated through about 100k documents on a VPN-like benchmark; roughly 50k–100k is the currently demonstrated practical range, not a correctness limit. Exact retrieval quality does not degrade with N, but query latency can still increase with competitive/conjunction cardinality, prefix expansion, feature work, artifact size, and browser memory. Stage 3A skips unread noncompetitive 1-of-k body postings on the supported exact multi-token path; remaining conjunction work is not flat with N. Stage 2C keeps compiled query state in packed token/offset views; see [compact-runtime.md](compact-runtime.md) and [scaling.md](scaling.md).
+## Query execution (0.6.5)
+
+Public ranking semantics are unchanged. FeatureVector is no longer the mandatory internal representation for every direct candidate.
+
+Eligible ordinary `search()` / `searchAsync()` (default hybrid included):
+
+```text
+analyze / query plan
+  → compiled retrieval + fused exact ranking evidence
+  → exact numeric finalization / packed direct views
+  → existing builtin selection / constraint ranking
+  → existing relationship expansion
+  → public results
+```
+
+Legacy / fallback (`searchDetailed()`, `explain: true`, exhaustive diagnostics, complete-interpretation, custom retrievers, unsupported query shapes):
+
+```text
+retrieve
+  → FeatureVector extraction
+  → existing builtin selection / constraint ranking
+  → existing relationship expansion
+  → public results
+```
+
+Fallback is exact, not a quality degradation. There is no public optimization toggle. Stage 3A retrieval pruning and 0.6.5 ranking-evidence fusion are separate layers; see [exact-pruning.md](exact-pruning.md) and [scaling.md](scaling.md).
+
+Indexed search has been validated through about 100k documents on mixed and VPN-like workloads; roughly 50k–100k is the currently demonstrated practical range, not a correctness limit. Exact retrieval quality does not degrade with N, but query latency can still increase with competitive/conjunction cardinality, prefix expansion, posting work, artifact size, and browser memory. Stage 3A skips unread noncompetitive 1-of-k body postings on the supported exact multi-token path; remaining conjunction work is not flat with N. Stage 2C keeps compiled query state in packed token/offset views. Million-document ordinary search under 50 ms is not current capability. See [compact-runtime.md](compact-runtime.md) and [scaling.md](scaling.md).

@@ -17,6 +17,7 @@ import { lexicalPhraseKeyFromQuery } from "./lexicalNormalize.js";
 import { allowPrefixMatch } from "./text.js";
 import type { AnalyzedQuery, IndexedDocument, QueryConcept } from "./types.js";
 import { isAllDigitToken } from "./versionForms.js";
+import type { RankingEvidenceSession } from "./rankingEvidenceState.js";
 
 export type Stage3AStats = {
   applied: boolean;
@@ -215,6 +216,7 @@ export function planStage3ABodyOrdinals({
   titleOrdinals,
   requiredDepth,
   signal,
+  evidenceWriter,
 }: {
   query: AnalyzedQuery;
   compiled: CompiledLexicalRuntime;
@@ -222,6 +224,7 @@ export function planStage3ABodyOrdinals({
   titleOrdinals: Set<number>;
   requiredDepth: number;
   signal?: AbortSignal;
+  evidenceWriter?: RankingEvidenceSession | null;
 }): Stage3APlan | null {
   const reason = stage3AUnsupportedReason(query);
   if (reason || !compiled.exactPruningV2) return null;
@@ -232,6 +235,7 @@ export function planStage3ABodyOrdinals({
   const depth = Math.max(0, requiredDepth | 0);
   const decodeStats = { postingEntriesDecoded: 0, decodedOrdinalBlocks: new Set<number>() };
   const conceptMasks: Uint32Array[] = [];
+  const evidenceConceptMasks: number[] = [];
 
   for (const concept of terms) {
     throwIfAborted(signal);
@@ -243,6 +247,7 @@ export function planStage3ABodyOrdinals({
     }
     if (!nonemptyBlockCount(mask, nBlocks)) return null;
     conceptMasks.push(mask);
+    evidenceConceptMasks.push(evidenceWriter?.conceptMaskFor(concept) || 0);
   }
 
   const classes: number[][] = Array.from({ length: k + 1 }, () => []);
@@ -294,6 +299,23 @@ export function planStage3ABodyOrdinals({
     (ordinal) => !evaluated.has(ordinal) && !titleOrdinals.has(ordinal)
   );
   const bodyOrdinals = [...evaluated].filter((ordinal) => !titleOrdinals.has(ordinal)).sort((a, b) => a - b);
+  if (evidenceWriter) {
+    const emit = (ordinal: number) => {
+      const block = Math.floor(ordinal / EXACT_PRUNING_BLOCK_SIZE);
+      const bit = ordinal - block * EXACT_PRUNING_BLOCK_SIZE;
+      const word = (bit / 32) | 0;
+      const maskBit = 1 << (bit % 32);
+      let evidenceMask = 0;
+      for (let conceptIndex = 0; conceptIndex < conceptMasks.length; conceptIndex++) {
+        if (conceptMasks[conceptIndex][block * MASK_WORDS + word] & maskBit) {
+          evidenceMask |= evidenceConceptMasks[conceptIndex];
+        }
+      }
+      evidenceWriter.writeStage3AConceptMask(ordinal, evidenceMask);
+    };
+    for (const ordinal of titleOrdinals) emit(ordinal);
+    for (const ordinal of bodyOrdinals) emit(ordinal);
+  }
   const presenceBlocks: number[] = [];
   for (let b = 0; b < nBlocks; b++) {
     let any = 0;

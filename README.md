@@ -10,7 +10,9 @@ Source: [github.com/Software-Land/search](https://github.com/Software-Land/searc
 
 A JavaScript **runtime** that indexes documents, searches them, explains hits, and can attach a related-document rail from a compiled graph. It does not download models, call an LLM, or depend on a CMS.
 
-Default **indexed** retrieval is exact: it preserves the same result semantics as exhaustive compiled retrieval. Pass `retriever: "full-scan"` only as an explicit reference mode. Scaling, compact runtime, and fail-closed pruning are documented in [docs/retrievers.md](docs/retrievers.md), [docs/exact-pruning.md](docs/exact-pruning.md), and [docs/scaling.md](docs/scaling.md).
+Default **indexed** retrieval is exact: it preserves the same result semantics as exhaustive compiled retrieval. Pass `retriever: "full-scan"` only as an explicit reference mode.
+
+0.6.5 improves eligible ordinary `search()` / `searchAsync()` by gathering exact ranking evidence during compiled retrieval instead of constructing a FeatureVector for every retrieved direct. Default hybrid uses that path. Unsupported shapes fall back to the previous exact path without changing results. Practical demonstrated range is workload-dependent; production measurements cover 25k / 50k / 100k documents. Million-document ordinary search under 50 ms is not current capability. Details: [docs/scaling.md](docs/scaling.md), [docs/retrievers.md](docs/retrievers.md), [docs/exact-pruning.md](docs/exact-pruning.md).
 
 **Zero production npm dependencies.** Node 18+.
 
@@ -64,7 +66,7 @@ engine.search(...)
 
 **Runtime initialization** creates morphology and other plugins, compiles authored relevance from trusted JSON (`compileAuthoredRelevance` returns runtime plugin objects, not a second JSON format; `configuredConcepts` and `relationshipMap` are not `SearchEngine.create` options), creates the engine, and calls `index(documents)`. With a supplied `lexicalIndex`, that call validates and hydrates. With the artifact omitted, it constructs equivalent lexical state from the documents.
 
-**Query time** searches the already-hydrated compact/indexed representation. The indexed path does not rescan or retokenize raw title/body text. Details: [docs/compact-runtime.md](docs/compact-runtime.md).
+**Query time** searches the already-hydrated compact/indexed representation. The indexed path does not rescan or retokenize raw title/body text. Eligible ordinary `search()` ranks from packed ranking-evidence views rather than per-direct FeatureVectors; `searchDetailed()` and unsupported shapes keep the diagnostic FeatureVector path. Details: [docs/compact-runtime.md](docs/compact-runtime.md), [docs/scaling.md](docs/scaling.md).
 
 ## Runtime construction
 

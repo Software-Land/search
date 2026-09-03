@@ -39,12 +39,15 @@ import {
   type CompiledTermRuntime,
 } from "./lexicalIndex.js";
 import { planStage3ABodyOrdinals, stage3AUnsupportedReason } from "./exactBlockSkip.js";
+import type { RankingEvidenceFieldCode } from "./rankingEvidencePlan.js";
+import type { RankingEvidenceSession } from "./rankingEvidenceState.js";
 import type {
   AdaptiveRetrieverOptions,
   AnalyzedQuery,
   IndexedLexicalOptions,
   IndexedLexicalState,
   Posting,
+  RetrievalHit,
   Retriever,
   RetrieveOptions,
   SearchIndex,
@@ -58,6 +61,61 @@ interface IndexedHit {
   pos: number;
   retrievalSources: string[];
   retrievalScore: number;
+}
+
+// Keep the legacy retriever graph independent of the evidence-plan runtime.
+// These codes are part of the private writer contract and are type-checked
+// against RankingEvidenceFieldCode at each call site.
+const RANKING_EVIDENCE_TITLE_FIELD: RankingEvidenceFieldCode = 0;
+const RANKING_EVIDENCE_BODY_FIELD: RankingEvidenceFieldCode = 1;
+const RANKING_EVIDENCE_NO_ACTION = 0;
+
+type RankingEvidenceRetrieverCapability = {
+  retrieve(
+    query: AnalyzedQuery,
+    index: SearchIndex,
+    options: RetrieveOptions,
+    writer: RankingEvidenceSession
+  ): RetrievalHit[] | null;
+  retrieveAsync(
+    query: AnalyzedQuery,
+    index: SearchIndex,
+    options: RetrieveOptions,
+    writer: RankingEvidenceSession
+  ): Promise<RetrievalHit[] | null>;
+};
+
+const rankingEvidenceCapabilities = new WeakMap<object, RankingEvidenceRetrieverCapability>();
+
+/** Internal capability lookup; does not alter Retriever or RetrieveOptions. */
+export function hasRankingEvidenceRetrieverCapability(retriever: Retriever) {
+  return rankingEvidenceCapabilities.has(retriever as object);
+}
+
+/** Internal sync evidence retrieval. Null means this retriever branch is unsupported. */
+export function retrieveWithRankingEvidence(
+  retriever: Retriever,
+  query: AnalyzedQuery,
+  index: SearchIndex,
+  writer: RankingEvidenceSession,
+  options: RetrieveOptions = {}
+): RetrievalHit[] | null {
+  const capability = rankingEvidenceCapabilities.get(retriever as object);
+  return capability ? capability.retrieve(query, index, options, writer) : null;
+}
+
+/** Internal async evidence retrieval. Null means this retriever branch is unsupported. */
+export async function retrieveWithRankingEvidenceAsync(
+  retriever: Retriever,
+  query: AnalyzedQuery,
+  index: SearchIndex,
+  writer: RankingEvidenceSession,
+  options: RetrieveOptions = {}
+): Promise<RetrievalHit[] | null> {
+  const capability = rankingEvidenceCapabilities.get(retriever as object);
+  return capability
+    ? capability.retrieveAsync(query, index, options, writer)
+    : null;
 }
 
 // Exact-title, configured-concept, and version bypass the BM25 budget
@@ -645,13 +703,56 @@ export function createCompiledLexicalRetriever(): Retriever {
     }
   }
 
+  function flatEachTitleEvidence(
+    flat: number[],
+    actionId: number,
+    visit: (doc: number, tf: number) => void,
+    writer: RankingEvidenceSession,
+    signal?: AbortSignal
+  ) {
+    let cursor = 0;
+    let row = 0;
+    while (cursor < flat.length) {
+      if ((row++ & 63) === 0) throwIfAborted(signal);
+      const doc = flat[cursor++];
+      const tf = flat[cursor++];
+      const positionsOffset = cursor;
+      cursor += tf;
+      last.postingEntriesVisited += 1;
+      writer.writeTitlePosting(actionId, doc, tf, flat, positionsOffset);
+      visit(doc, tf);
+    }
+  }
+
+  function flatEachBodyEvidence(
+    flat: number[],
+    actionId: number,
+    visit: (doc: number, tf: number) => void,
+    writer: RankingEvidenceSession,
+    signal?: AbortSignal
+  ) {
+    let cursor = 0;
+    let row = 0;
+    while (cursor < flat.length) {
+      if ((row++ & 63) === 0) throwIfAborted(signal);
+      const doc = flat[cursor++];
+      const tf = flat[cursor++];
+      cursor += tf;
+      last.postingEntriesVisited += 1;
+      writer.writeBodyPosting(actionId, doc);
+      visit(doc, tf);
+    }
+  }
+
   function walkPostings(
     flat: number[],
     df: number,
     visit: (doc: number, tf: number) => void,
     signal: AbortSignal | undefined,
     walked: WeakSet<number[]>,
-    skipDuplicate: boolean
+    skipDuplicate: boolean,
+    field: RankingEvidenceFieldCode,
+    evidenceWriter: RankingEvidenceSession | null
   ) {
     if (!flat.length) return;
     if (skipDuplicate && walked.has(flat)) {
@@ -668,18 +769,28 @@ export function createCompiledLexicalRetriever(): Retriever {
     }
     if (skipDuplicate) walked.add(flat);
     const before = last.postingEntriesVisited;
-    flatEach(flat, visit, signal);
+    const actionId = evidenceWriter
+      ? evidenceWriter.beginPostingList(field, flat, df)
+      : RANKING_EVIDENCE_NO_ACTION;
+    if (!actionId || !evidenceWriter) {
+      flatEach(flat, visit, signal);
+    } else if (field === RANKING_EVIDENCE_TITLE_FIELD) {
+      flatEachTitleEvidence(flat, actionId, visit, evidenceWriter, signal);
+    } else {
+      flatEachBodyEvidence(flat, actionId, visit, evidenceWriter, signal);
+    }
     const entries = last.postingEntriesVisited - before;
     last.postingBlocksVisited += postingBlockCount(entries);
     last.termsExpanded += 1;
   }
 
-  function retrieve(query: AnalyzedQuery, index: SearchIndex, {
+  function retrieveInternal(query: AnalyzedQuery, index: SearchIndex, {
     signal,
     skipDuplicatePostingLists = false,
     exactBlockSkip = false,
-  }: RetrieveOptions = {}) {
+  }: RetrieveOptions = {}, evidenceWriter: RankingEvidenceSession | null = null) {
     throwIfAborted(signal);
+    if (evidenceWriter) evidenceWriter.assertQuery(query, index);
     if (!state) prepare(index);
     const compiled = state as CompiledLexicalRuntime;
     const docs = index.documents || [];
@@ -737,7 +848,9 @@ export function createCompiledLexicalRetriever(): Retriever {
       const weight = idf(n, df) * boost;
       walkPostings(flat, df, (doc, tf) => {
         add(doc, source, skipScore ? 0 : weight * bm25Tf(tf, lengths[doc], avgdl));
-      }, signal, walked, skipDuplicate);
+      }, signal, walked, skipDuplicate,
+      field === "title" ? RANKING_EVIDENCE_TITLE_FIELD : RANKING_EVIDENCE_BODY_FIELD,
+      evidenceWriter);
     }
 
     function accumulateLemma(
@@ -753,7 +866,9 @@ export function createCompiledLexicalRetriever(): Retriever {
         const df = field === "title" ? term.titleDf : term.bodyDf;
         walkPostings(flat, df, (doc, tf) => {
           counts.set(doc, (counts.get(doc) || 0) + tf);
-        }, signal, walked, skipDuplicate);
+        }, signal, walked, skipDuplicate,
+        field === "title" ? RANKING_EVIDENCE_TITLE_FIELD : RANKING_EVIDENCE_BODY_FIELD,
+        evidenceWriter);
       }
       if (!counts.size) return;
       const avgdl = field === "title" ? compiled.avgTitleDl : compiled.avgBodyDl;
@@ -769,7 +884,12 @@ export function createCompiledLexicalRetriever(): Retriever {
     const occupied = hasConfiguredSequenceIntent(query);
     for (const qNorm of titleNormsForQuery(query)) {
       const exact = compiled.titleByNorm.get(qNorm);
-      if (exact) for (const pos of exact) add(pos, "exact-title", 50);
+      if (exact) {
+        for (const pos of exact) {
+          if (evidenceWriter) evidenceWriter.markExactTitle(pos);
+          add(pos, "exact-title", 50);
+        }
+      }
       let i = lowerBoundNorm(compiled.sortedTitles, qNorm);
       while (i < compiled.sortedTitles.length) {
         const row = compiled.sortedTitles[i++];
@@ -831,10 +951,28 @@ export function createCompiledLexicalRetriever(): Retriever {
       for (const key of keys) {
         const surface = compiled.bySurface.get(key);
         if (surface) {
-          walkPostings(surface.title, surface.titleDf, (doc) => positions.add(doc), signal, walked, skipDuplicate);
+          walkPostings(
+            surface.title,
+            surface.titleDf,
+            (doc) => positions.add(doc),
+            signal,
+            walked,
+            skipDuplicate,
+            RANKING_EVIDENCE_TITLE_FIELD,
+            evidenceWriter
+          );
         }
         for (const term of compiled.byLemma.get(key) || []) {
-          walkPostings(term.title, term.titleDf, (doc) => positions.add(doc), signal, walked, skipDuplicate);
+          walkPostings(
+            term.title,
+            term.titleDf,
+            (doc) => positions.add(doc),
+            signal,
+            walked,
+            skipDuplicate,
+            RANKING_EVIDENCE_TITLE_FIELD,
+            evidenceWriter
+          );
         }
       }
       for (const pos of [...positions].sort((a, b) => a - b)) {
@@ -852,6 +990,7 @@ export function createCompiledLexicalRetriever(): Retriever {
         titleOrdinals: new Set(byPos.keys()),
         requiredDepth: skipPlan ? skipPlan.requiredDepth : 0,
         signal,
+        evidenceWriter,
       });
       if (plan) {
         last.stage3A = "applied";
@@ -890,6 +1029,7 @@ export function createCompiledLexicalRetriever(): Retriever {
       const sources = retrievalSourcesForDocument(query, docs[pos]);
       last.provenanceDocumentsScanned += 1;
       if (!sources.length) continue;
+      if (evidenceWriter) evidenceWriter.admitCandidate(pos);
       hit.retrievalSources = sources;
       hits.push(hit);
     }
@@ -906,16 +1046,18 @@ export function createCompiledLexicalRetriever(): Retriever {
     }));
   }
 
-  return {
+  const retriever: Retriever = {
     name: "indexed-lexical",
     exactSignatureSelection: true,
     prepare,
-    retrieve,
+    retrieve(query: AnalyzedQuery, index: SearchIndex, opts: RetrieveOptions = {}) {
+      return retrieveInternal(query, index, opts, null);
+    },
     async retrieveAsync(query: AnalyzedQuery, index: SearchIndex, opts: RetrieveOptions = {}) {
       throwIfAborted(opts.signal);
       await Promise.resolve();
       throwIfAborted(opts.signal);
-      return retrieve(query, index, opts);
+      return retrieveInternal(query, index, opts, null);
     },
     stats() {
       return {
@@ -934,6 +1076,18 @@ export function createCompiledLexicalRetriever(): Retriever {
       };
     },
   };
+  rankingEvidenceCapabilities.set(retriever, {
+    retrieve(query, index, options, writer) {
+      return retrieveInternal(query, index, options, writer);
+    },
+    async retrieveAsync(query, index, options, writer) {
+      throwIfAborted(options.signal);
+      await Promise.resolve();
+      throwIfAborted(options.signal);
+      return retrieveInternal(query, index, options, writer);
+    },
+  });
+  return retriever;
 }
 
 export function createAdaptiveRetriever({ documentThreshold = 1500, smallLimit, indexedOptions }: AdaptiveRetrieverOptions = {}): Retriever {
@@ -944,7 +1098,7 @@ export function createAdaptiveRetriever({ documentThreshold = 1500, smallLimit, 
       ? smallLimit
       : documentThreshold || 1500;
   let active: AdaptiveActive = "full-scan";
-  return {
+  const retriever: Retriever = {
     name: "adaptive",
     get exactSignatureSelection() {
       return active === "indexed-lexical";
@@ -965,6 +1119,17 @@ export function createAdaptiveRetriever({ documentThreshold = 1500, smallLimit, 
       return { kind: "adaptive", active, documentThreshold: threshold, ...(extra || {}) };
     },
   };
+  rankingEvidenceCapabilities.set(retriever, {
+    retrieve(query, index, options, writer) {
+      if (active !== "indexed-lexical") return null;
+      return retrieveWithRankingEvidence(indexed, query, index, writer, options);
+    },
+    async retrieveAsync(query, index, options, writer) {
+      if (active !== "indexed-lexical") return null;
+      return retrieveWithRankingEvidenceAsync(indexed, query, index, writer, options);
+    },
+  });
+  return retriever;
 }
 
 export function resolveRetriever(spec: unknown): Retriever {

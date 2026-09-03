@@ -14,7 +14,7 @@ The mixed generator plants rare exact titles, version/dotted-span documents, a c
 
 Full-scan at N=25k is an explicit reference only. Do not describe it as scalable. Default `full-scan-max-n` is 5000; pass `--n 25000` without `--skip-full-scan` only when you intend to wait.
 
-Exact indexed retrieval enumerates all legitimate posting matches, reconstructs the frozen current features, and reduces final ranker input with exact per-signature representatives. `candidateLimit` remains accepted for compatibility but does not truncate this path. Stage 2A may reject full feature work for proven single-token body-only document blocks; it does not skip posting entries.
+Exact indexed retrieval enumerates all legitimate posting matches and reconstructs exact ranking state. Eligible ordinary `search()` uses packed ranking-evidence views; diagnostic and fallback paths reconstruct FeatureVectors. `candidateLimit` remains accepted for compatibility but does not truncate this path. Stage 2A may reject full FeatureVector work for proven single-token body-only document blocks; it does not skip posting entries.
 
 The permanent pressure harness also covers quality, artifact size, build/load cost, and posting instrumentation:
 

@@ -626,7 +626,7 @@ describe("Stage-2A exact document-feature block pruning", () => {
     expect(retained).toContain("z-new-phrase-signature");
   });
 
-  test("multi-term, retrieval-score, all-strong, and active relationships fail closed", async () => {
+  test("multi-term packed search, retrieval-score, all-strong, and active relationships fail closed", async () => {
     const documents = bodyFlood(500);
     const unsupported = await compiledEngine(documents);
     const multi = unsupported._searchDetailedSync(
@@ -634,8 +634,16 @@ describe("Stage-2A exact document-feature block pruning", () => {
       { limit: 5, relatedLimit: 0 },
       false
     );
+    const multiExhaustive = unsupported._searchDetailedSync(
+      "the body",
+      { limit: 5, relatedLimit: 0 },
+      false,
+      "exhaustive"
+    );
+    expect(publicSurface(multi)).toEqual(publicSurface(multiExhaustive));
+    expect(multi.meta.rankingEvidence).toBe("packed");
     expect(multi.meta.documentsBoundRejected).toBe(0);
-    expect(multi.meta.pruningFallbackReason).toBe("no-provable-candidates");
+    expect(multi.meta.pruningFallbackReason).toBeNull();
 
     const scored = await compiledEngine(documents, {
       retrievalScoreWeight: 0.1,

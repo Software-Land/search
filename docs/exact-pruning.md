@@ -221,4 +221,19 @@ Prefix expansion stays exhaustive. Historical prefix recall failures must not re
 
 Nonzero `retrievalScoreWeight` fail-closes to the exhaustive posting walk so BM25 reconstruction stays Stage-1 identical. Active relationships keep Stage-2A's fail-closed feature policy; duplicate-list skip still returns the full lexical membership set.
 
-Stage 2B itself still has no version bump: identical-array skip is query-time identity. Stage 3A adds the additive `exact-pruning-v2` extension described above; older artifacts without it remain exhaustive. Stage 2C replaces hydrated Sets/Maps/token arrays with compact/lazy views over the same v1 bytes; it does not change the Stage 2B proof. See [scaling.md](scaling.md) and [compact-runtime.md](compact-runtime.md).
+Stage 2B itself still has no version bump: identical-array skip is query-time identity. Stage 3A adds the additive `exact-pruning-v2` extension described above; older artifacts without it remain exhaustive. Stage 2C replaces hydrated Sets/Maps/token arrays with compact/lazy views over the same v1 bytes; it does not change the Stage 2B proof.
+
+## Ranking evidence vs retrieval pruning (0.6.5)
+
+Stage 2A / 2B / 3A omit retrieval or FeatureVector work that cannot change exact representatives. 0.6.5 ranking-evidence fusion is **not** a new pruning stage. On eligible ordinary `search()` / `searchAsync()`, the compiled retriever records exact ranking facts during the posting/mask walk already required by retrieval, then finalizes packed numeric columns for the existing builtin selector and constraint ranker.
+
+Properties:
+
+- same public ranking and result semantics
+- no second high-DF posting traversal
+- default hybrid uses this path
+- `searchDetailed()`, `explain: true`, exhaustive diagnostics, and complete-interpretation collection stay on the FeatureVector path
+- unsupported query/retriever/constraint shapes fail closed to that FeatureVector path without quality loss
+- no public API, artifact extension, or retriever option
+
+Retrieval pruning and ranking-evidence production can both apply on the same ordinary query. Do not describe Stage 3A alone as the 0.6.5 production architecture. See [scaling.md](scaling.md) and [compact-runtime.md](compact-runtime.md).

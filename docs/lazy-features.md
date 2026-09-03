@@ -2,11 +2,11 @@
 
 **Not implemented. Not a current runtime optimization.**
 
-Production indexed `search()` still calls `extractFeatures` for every legitimate match that Stage 2A does not already bound-reject and that Stage 3A does not skip as unread 1-of-k body-only. Stage 2A remains limited to proven plain single-token body-only candidates. Multi-token / phrase **conjunction** documents stay on that exhaustive Stage-2C feature path; Stage 3A only removes the noncompetitive 1-of-k body flood before feature construction.
+This note keeps the bound theorem and one mixed-corpus observation so future work does not rediscover why a **lazy FeatureVector skip** was not shipped. It is not a product feature, not a ranking change, and not a latency SLA.
 
-This note keeps the bound theorem and one mixed-corpus observation so future work does not rediscover why a skip was not shipped. It is not a product feature, not a ranking change, and not a latency SLA.
+0.6.5 ordinary eligible `search()` uses a different, shipped approach: retrieval-fused ranking evidence and packed direct views. That path does not construct a FeatureVector per retrieved direct. It is not the lazy evaluator described here. `searchDetailed()`, explain, exhaustive diagnostics, and ineligible shapes still call `extractFeatures` for matches that Stage 2A does not bound-reject and that Stage 3A does not skip as unread 1-of-k body-only. See [scaling.md](scaling.md) and [exact-pruning.md](exact-pruning.md).
 
-## Production path
+## FeatureVector path (diagnostic / fallback)
 
 ```text
 compiled match enumeration
@@ -15,9 +15,9 @@ compiled match enumeration
   → unchanged sparse ranker
 ```
 
-There is no lazy FeatureVector evaluator, no deferred-feature mask, and no score-bound rejection in `src/`.
+There is no lazy FeatureVector evaluator, no deferred-feature mask, and no score-bound rejection in `src/`. Stage 2A remains limited to proven plain single-token body-only candidates. On the FeatureVector path, multi-token / phrase **conjunction** documents stay on that exhaustive Stage-2C feature path; Stage 3A only removes the noncompetitive 1-of-k body flood before feature construction.
 
-## Why a skip is not current work
+## Why a FeatureVector skip is not current work
 
 Exact `directClass` and builtin `constraintSignature` membership can depend on **body** evidence:
 

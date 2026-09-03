@@ -6,8 +6,9 @@ The search runtime splits **query understanding**, **candidate retrieval**, **ra
 query
   → analysis (tokens, lemmas, configured concepts, typo alternatives)
   → retriever (indexed default; full-scan | adaptive explicit)
+  → ranking-state materialization (packed views on eligible ordinary search(); FeatureVector on diagnostic/fallback)
   → relationship expansion
-  → named features + constraints
+  → named features + constraints (same ranking semantics)
   → deterministic ranking on candidate set C
   → results (+ optional related rail)
 ```

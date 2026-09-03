@@ -17,7 +17,7 @@ SearchEngine.create({
 
 | name | when |
 | --- | --- |
-| `indexed` | Default. Exact compiled positional retrieval. Stage 2A may skip full feature evaluation for proven single-token body-only blocks. Stage 3A may skip unread noncompetitive 1-of-k body posting entries on the supported exact multi-token `search()` path using additive `exact-pruning-v2` presence masks. Results stay identical to exhaustive compiled search; unsupported classes fail closed. See [exact-pruning.md](exact-pruning.md). |
+| `indexed` | Default. Exact compiled positional retrieval. Stage 2A may skip full FeatureVector evaluation for proven single-token body-only blocks on the diagnostic path. Stage 3A may skip unread noncompetitive 1-of-k body posting entries on the supported exact multi-token `search()` path using additive `exact-pruning-v2` presence masks. Eligible ordinary `search()` / `searchAsync()` additionally record exact ranking evidence during that same posting/mask walk and rank from packed views; there is no public retriever option for that fusion. Results stay identical to exhaustive compiled search; unsupported classes fail closed. See [exact-pruning.md](exact-pruning.md) and [scaling.md](scaling.md). |
 | `full-scan` | Explicit small-corpus / reference / debug mode. Scans every document. Does not apply `candidateLimit`. |
 | `adaptive` | Full scan while `documentCount <= adaptive.documentThreshold`, else exact indexed retrieval. Deterministic. |
 
@@ -32,7 +32,7 @@ Default adaptive threshold **1500** is an adaptive-mode choice, not a correctnes
 The correctness proof is independent of serialization. With no artifact, `index()` first builds the existing `IndexedDocument` state and the exact retriever compiles its positional lookup once in memory. Query execution is:
 
 1. enumerate every legitimate lexical match;
-2. extract the unchanged complete feature vector, constraint signature, and rounded final score;
+2. materialize exact ranking state (complete FeatureVector on the diagnostic/fallback path; packed ranking-evidence views on eligible ordinary `search()`);
 3. preserve the complete featured candidate map while choosing relationship primaries and applying target addition (relationship support attaches without converting lexical directs to `related`);
 4. feature newly added neighbors;
 5. retain the exact required representatives per builtin signature;
@@ -82,7 +82,7 @@ The rejected alternatives are:
 
 ## Exact matching and feature reconstruction
 
-The compiled retriever performs exact surface, title/body, prefix, morphology, typo-alternative, configured-concept, version, dotted-span, and phrase-evidence behavior over the compiled statistics. It enumerates every legitimate matching document. v1 performs no WAND, MaxScore, posting-block skipping, posting early termination, or prefix truncation.
+The compiled retriever performs exact surface, title/body, prefix, morphology, typo-alternative, configured-concept, version, dotted-span, and phrase-evidence behavior over the compiled statistics. It enumerates every legitimate matching document. It is not classic WAND, MaxScore, approximate top-K, or prefix truncation. Stage 3A unread 1-of-k skip and 0.6.5 fused ranking evidence are additive exact paths on eligible ordinary `search()`; they are not a public retriever option.
 
 For exact indexed retrieval, `searchDetailed().meta.rawDocumentScans` is `0` with or without a supplied artifact. Query-time feature work reads indexed statistics rather than rescanning raw title/body strings. The supplied artifact hydrates those statistics without raw lexical analysis; the fallback constructs them from raw documents during each `index()`.
 
@@ -106,7 +106,9 @@ Unknown/custom `ConstraintDef.fn` semantics are not covered by builtin signature
 
 ## Scaling
 
-Stage 1 is the correctness oracle and remains available through the internal exhaustive compiled mode. Stage 2A still does Θ(matches) posting/membership work, but for a proven plain single-token, body-only class it derives the exact signature/rounded score cheaply and omits full feature extraction after that signature's required score/id prefix is secure. Multi-term, uncertain analyzer/evidence, custom ranking, nonzero retrieval-score weight, full diagnostics, `all-strong`, and active relationship expansion fail closed to exhaustive evaluation. The fixed candidate-200 architecture remains intentionally gone.
+Stage 1 is the correctness oracle and remains available through the internal exhaustive compiled mode. Stage 2A still does Θ(matches) posting/membership work, but for a proven plain single-token, body-only class it derives the exact signature/rounded score cheaply and omits full FeatureVector extraction after that signature's required score/id prefix is secure. Multi-term, uncertain analyzer/evidence, custom ranking, nonzero retrieval-score weight, full diagnostics, `all-strong`, and some relationship cases fail closed to exhaustive evaluation. The fixed candidate-200 architecture remains intentionally gone.
+
+On eligible ordinary `search()` / `searchAsync()`, compiled retrieval can additionally emit exact ranking evidence while walking postings and masks already required by retrieval. Ranking then uses packed direct views. That is not a public retriever option and not a second high-DF posting traversal. Unsupported shapes, including custom retrievers, fail closed to FeatureVector execution with identical public results.
 
 The experimental counters distinguish the layers: `postingEntriesSkipped` / `duplicatePostingEntriesAvoided` count Stage 2B identical posting-array rewalks skipped at query time when `retrievalScoreWeight` is `0`. Stage 2B itself does not skip unread prefix/term/block posting lists. Stage 3A may skip unread 1-of-k body blocks after stronger co-occurrence classes are evaluated. `documentsBoundRejected` and `documentsFullyEvaluated` expose Stage-2A savings, while `documentBlocksSkipped` counts blocks with no fully evaluated match and `boundedBlocksSkipped` counts blocks whose proven bounded subset was skipped. See [exact-pruning.md](exact-pruning.md) for the predicate, Stage 3A fail-closed list, and fallback proof.
 
@@ -118,7 +120,7 @@ Builtin ranking is O(C log C + B²F + E_b) in the common case after selection an
 
 Allocation and RSS for the checked-in generators: [memory benchmarks (GitHub tree; not in the npm tarball)](https://github.com/Software-Land/search/blob/main/benchmarks/memory/README.md). That harness is not a latency or search-quality claim.
 
-The compiled runtime hydrates compact document views over `search-v2-lexical-index` v1 bytes (Stage 2C). Indexed `search()` still runs `extractFeatures` for every match that Stage 2A does not bound-reject and that Stage 3A does not skip as unread 1-of-k body-only. Multi-token conjunction and partial-conjunction documents remain on that full path because exact `directClass` / constraint signatures can depend on body evidence. A lazy FeatureVector evaluator is not shipped. See [compact-runtime.md](compact-runtime.md), [exact-pruning.md](exact-pruning.md), and [lazy-features.md](lazy-features.md).
+The compiled runtime hydrates compact document views over `search-v2-lexical-index` v1 bytes (Stage 2C). Eligible ordinary indexed `search()` / `searchAsync()` record exact ranking evidence while walking the postings and masks already required by retrieval, then rank from packed numeric views. Direct candidate-wide `extractFeatures` is not required on that path. `searchDetailed()`, `explain: true`, exhaustive diagnostics, complete-interpretation collection, custom retrievers, and other ineligible shapes still run `extractFeatures` for matches that Stage 2A does not bound-reject and that Stage 3A does not skip as unread 1-of-k body-only. Custom retrievers remain experimental and use that FeatureVector fallback. A lazy FeatureVector evaluator is not shipped. See [compact-runtime.md](compact-runtime.md), [exact-pruning.md](exact-pruning.md), [lazy-features.md](lazy-features.md), and [scaling.md](scaling.md).
 
 See [limitations.md](limitations.md) and [scaling.md](scaling.md).
 
@@ -132,7 +134,7 @@ A semantic retriever returns ordinary `RetrievalHit`-shaped candidates:
 { document, retrievalSources: ["semantic"], retrievalScore?: number }
 ```
 
-Union point: **after candidate retrieval, before `extractFeatures` / ranking feature extraction**. Lexical and semantic hits are then featured and ranked together.
+Union point: **after candidate retrieval, before ranking-feature materialization**. Lexical and semantic hits are then featured and ranked together.
 
 Semantic query input:
 

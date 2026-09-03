@@ -190,6 +190,14 @@ function getQueryFeatPrep(query: AnalyzedQuery): QueryFeatPrep {
   return prep;
 }
 
+/** Cached query-only feature facts shared with internal ranking evidence. */
+export type RankingQueryFacts = QueryFeatPrep;
+
+/** Internal query-fact view; does not evaluate or mutate any document. */
+export function rankingQueryFacts(query: AnalyzedQuery): RankingQueryFacts {
+  return getQueryFeatPrep(query);
+}
+
 type ConfiguredConceptMatch = false | "key-in-title" | "form";
 type VersionMatch = false | "dotted" | "compact-dotted" | "compact-weak" | "dotted-weak";
 

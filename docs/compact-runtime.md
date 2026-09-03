@@ -112,6 +112,10 @@ Omitted artifact, indexed/adaptive: analyze once, compile, hydrate the compact r
 
 Typed arrays, term ordinals, offsets, packed stores, and document views are not exported from the root package.
 
+## Packed ranking representation (0.6.5)
+
+Stage 2C is the compact document view. Eligible ordinary `search()` / `searchAsync()` additionally keep compact ordinal-aligned ranking-evidence state: generation/slot session memory plus packed numeric columns used as ranking accessors. Those views are not public types and are not a lexical-artifact extension. Byte layouts are implementation details, not a package contract. `searchDetailed()` and ineligible shapes still construct FeatureVectors. See [scaling.md](scaling.md) and [exact-pruning.md](exact-pruning.md).
+
 ## Phrase adjacency fast path
 
 ### Exact `phraseAdjacency` semantics
@@ -135,6 +139,6 @@ Compiled positional postings are term-oriented and cheap to walk by document ord
 
 Stage 2C originally scanned `PackedTokenProxy` bodies and skipped the Stage-2B `Map` start index (`instanceof Map` failed). That was a compact-runtime regression, not an inherent phrase cost.
 
-The compact adapter now applies the shared `tokenAdjacencyMatch` predicate over packed `Uint32Array` token ids and interned strings (`compactAdjacentTokens`). Fat full-scan keeps the object/`Map` adapter. No persistent side index. Query-local work is existing per-search feature state plus a small interned-id `Set` during compact body-concept membership. Title/body concept helpers used by `queryCoverage` follow the same packed-id pattern; they do not change `extractFeatures` output.
+The compact adapter now applies the shared `tokenAdjacencyMatch` predicate over packed `Uint32Array` token ids and interned strings (`compactAdjacentTokens`). Fat full-scan keeps the object/`Map` adapter. No persistent side index. Query-local work is existing per-search feature state plus a small interned-id `Set` during compact body-concept membership. Title/body concept helpers used by `queryCoverage` follow the same packed-id pattern; they do not change `extractFeatures` output on the FeatureVector path.
 
-Indexed `search()` still fully extracts features for every legitimate match that Stage 2A does not bound-reject and that Stage 3A does not skip as unread 1-of-k body-only. Multi-token / phrase conjunction classes are not Stage-2A pruned: exact class and constraint-signature membership can depend on body evidence. A later lazy FeatureVector skip was investigated and not shipped; see [limitations.md](limitations.md) and [exact-pruning.md](exact-pruning.md).
+Eligible ordinary indexed `search()` / `searchAsync()` rank from compact ordinal-aligned ranking-evidence state (generation/slot session plus packed numeric columns) rather than allocating a FeatureVector per retrieved direct. `searchDetailed()`, explain, exhaustive diagnostics, and ineligible shapes still fully extract features for every legitimate match that Stage 2A does not bound-reject and that Stage 3A does not skip as unread 1-of-k body-only. Multi-token / phrase conjunction classes are not Stage-2A pruned: exact class and constraint-signature membership can depend on body evidence. A later lazy FeatureVector skip was investigated and not shipped; 0.6.5 uses fused ranking evidence instead. See [limitations.md](limitations.md), [exact-pruning.md](exact-pruning.md), and [scaling.md](scaling.md).
