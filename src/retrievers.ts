@@ -28,6 +28,7 @@ import {
   occupiedTitleJoins,
   configuredPeerForms,
   formContentTokens,
+  formAllowsOrdinaryLexicalPrefix,
 } from "./retrieve.js";
 import { querySemanticFacts } from "./querySemantics.js";
 import { allowPrefixMatch, DEFAULT_STOP } from "./text.js";
@@ -154,8 +155,8 @@ function titleNormsForQuery(query: AnalyzedQuery): string[] {
   return qNorm ? [qNorm] : [];
 }
 
-function formKindAllowsPrefix(kind: QueryFormKind) {
-  return retrievalFormKindAllowsPrefix(kind);
+function formKindAllowsPrefix(kind: QueryFormKind, query: AnalyzedQuery, form: string) {
+  return retrievalFormKindAllowsPrefix(kind) && formAllowsOrdinaryLexicalPrefix(query, form);
 }
 
 function pushSource(hit: { retrievalSources: string[] }, source: string) {
@@ -504,7 +505,7 @@ export function createIndexedLexicalRetriever({
 
       const skipOccupiedFormPrefix =
         occupied && (kind === "acronym-form" || kind === "acronym-key");
-      if (!skipOccupiedFormPrefix && formKindAllowsPrefix(kind) && !isAllDigitToken(form) && form.length >= 3) {
+      if (!skipOccupiedFormPrefix && formKindAllowsPrefix(kind, query, form) && !isAllDigitToken(form) && form.length >= 3) {
         for (const term of prefixTerms(form, (t) => allowPrefixMatch(form, t))) {
           if (term === form) continue;
           const tp = state.titlePostings.get(term);
@@ -936,7 +937,7 @@ export function createCompiledLexicalRetriever(): Retriever {
 
       const skipOccupiedFormPrefix =
         occupied && (kind === "acronym-form" || kind === "acronym-key");
-      if (!skipOccupiedFormPrefix && formKindAllowsPrefix(kind) && !isAllDigitToken(form) && form.length >= 3) {
+      if (!skipOccupiedFormPrefix && formKindAllowsPrefix(kind, query, form) && !isAllDigitToken(form) && form.length >= 3) {
         let i = lowerBoundTerm(compiled.sortedTerms, form);
         while (i < compiled.sortedTerms.length) {
           const term = compiled.sortedTerms[i++];
@@ -1040,7 +1041,7 @@ export function createCompiledLexicalRetriever(): Retriever {
             kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology",
             0.5
           );
-          if (formKindAllowsPrefix(kind) && !isAllDigitToken(form) && form.length >= 3) {
+          if (formKindAllowsPrefix(kind, query, form) && !isAllDigitToken(form) && form.length >= 3) {
             let i = lowerBoundTerm(compiled.sortedTerms, form);
             while (i < compiled.sortedTerms.length) {
               const term = compiled.sortedTerms[i++];

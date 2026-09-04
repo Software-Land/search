@@ -7,7 +7,7 @@
  * every posting entry.
  */
 import { queryForms } from "./retrievers.js";
-import { retrievalSourcesForDocument, identityTokens, shortTitleTokenPrefixStub, occupiedTitleJoins, hasConfiguredSequenceIntent } from "./retrieve.js";
+import { retrievalSourcesForDocument, identityTokens, shortTitleTokenPrefixStub, occupiedTitleJoins, hasConfiguredSequenceIntent, formAllowsOrdinaryLexicalPrefix } from "./retrieve.js";
 import { allowPrefixMatch } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
 import type { CompiledLexicalRuntime, CompiledTermRuntime } from "./lexicalIndex.js";
@@ -288,7 +288,8 @@ export function auditCompiledPostingWork(
     if (
       !(occupied && (kind === "acronym-form" || kind === "acronym-key")) &&
       !isAllDigitToken(form) &&
-      form.length >= 3
+      form.length >= 3 &&
+      formAllowsOrdinaryLexicalPrefix(query, form)
     ) {
       let i = lowerBound(compiled.sortedTerms, form);
       while (i < compiled.sortedTerms.length) {

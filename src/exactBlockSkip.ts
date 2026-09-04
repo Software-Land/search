@@ -15,6 +15,7 @@ import {
 } from "./lexicalIndex.js";
 import { lexicalPhraseKeyFromQuery } from "./lexicalNormalize.js";
 import { querySemanticFacts } from "./querySemantics.js";
+import { formAllowsOrdinaryLexicalPrefix } from "./lexicalPrefixForms.js";
 import { allowPrefixMatch } from "./text.js";
 import type { AnalyzedQuery, IndexedDocument, QueryConcept } from "./types.js";
 import { isAllDigitToken } from "./versionForms.js";
@@ -160,7 +161,11 @@ function orTermPresence(
   return Math.floor(minDoc / EXACT_PRUNING_BLOCK_SIZE) === Math.floor(maxDoc / EXACT_PRUNING_BLOCK_SIZE);
 }
 
-function collectConceptTerms(compiled: CompiledLexicalRuntime, concept: QueryConcept): CompiledTermRuntime[] {
+function collectConceptTerms(
+  compiled: CompiledLexicalRuntime,
+  concept: QueryConcept,
+  query: AnalyzedQuery
+): CompiledTermRuntime[] {
   const out: CompiledTermRuntime[] = [];
   const seen = new Set<string>();
   const add = (term: CompiledTermRuntime | undefined) => {
@@ -173,6 +178,7 @@ function collectConceptTerms(compiled: CompiledLexicalRuntime, concept: QueryCon
     add(compiled.bySurface.get(form));
     for (const term of compiled.byLemma.get(form) || []) add(term);
     if (isAllDigitToken(form) || form.length < 3) continue;
+    if (!formAllowsOrdinaryLexicalPrefix(query, form)) continue;
     let i = lowerBoundTerm(compiled.sortedTerms, form);
     while (i < compiled.sortedTerms.length) {
       const name = compiled.sortedTerms[i++];
@@ -242,7 +248,7 @@ export function planStage3ABodyOrdinals({
   for (const concept of terms) {
     throwIfAborted(signal);
     const mask = new Uint32Array(nBlocks * MASK_WORDS);
-    const contrib = collectConceptTerms(compiled, concept);
+    const contrib = collectConceptTerms(compiled, concept, query);
     if (!contrib.length) return null;
     for (const term of contrib) {
       if (!orTermPresence(mask, term, n, decodeStats)) return null;

@@ -9,7 +9,7 @@ import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { extractFeatures } from "../dist/features.js";
-import { conceptMatchesTitle } from "../dist/retrieve.js";
+import { conceptMatchesTitle, conceptMatchesBody } from "../dist/retrieve.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
@@ -113,6 +113,25 @@ describe("morphology-derived lemma prefix", () => {
     expect(q.tokens[0].lemma).toBe("port");
     expect(conceptMatchesTitle(q.concepts.find((c) => c.kind === "term"), index.documents[0])).toBeNull();
     expect(extractFeatures(q, index.documents[0]).queryCoverage).toBe(0);
+  });
+
+  test("derived lemma frame does not prefix body token framework", () => {
+    const morph = [morphology()];
+    const index = buildIndex([{ id: "fw", title: "Notes", body: "a software framework package" }], schema, morph);
+    const q = analyzeQuery("frames", { plugins: morph });
+    const term = q.concepts.find((c) => c.kind === "term");
+    expect(term.forms).toEqual(expect.arrayContaining(["frames", "frame"]));
+    expect(conceptMatchesBody(term, index.documents[0], q)).toBe(false);
+    expect(extractFeatures(q, index.documents[0]).bodyLexicalMatch).toBe(0);
+  });
+
+  test("frames still matches an independent frame body token", () => {
+    const morph = [morphology()];
+    const index = buildIndex([{ id: "frame", title: "Notes", body: "one frame timing sample" }], schema, morph);
+    const q = analyzeQuery("frames", { plugins: morph });
+    const term = q.concepts.find((c) => c.kind === "term");
+    expect(conceptMatchesBody(term, index.documents[0], q)).toBe(true);
+    expect(extractFeatures(q, index.documents[0]).bodyLexicalMatch).toBe(1);
   });
 
   test("literal typed frame retains existing unique-prefix completion of framework", () => {

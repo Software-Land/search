@@ -214,8 +214,8 @@ function queryNonStop(query: AnalyzedQuery) {
   return getQueryFeatPrep(query).nonStop;
 }
 
-function conceptCoveredInTitle(concept: QueryConcept, doc: IndexedDocument) {
-  return conceptMatchesTitle(concept, doc) != null;
+function conceptCoveredInTitle(concept: QueryConcept, doc: IndexedDocument, query: AnalyzedQuery) {
+  return conceptMatchesTitle(concept, doc, query) != null;
 }
 
 function exactTitle(query: AnalyzedQuery, doc: IndexedDocument) {
@@ -420,7 +420,7 @@ function queryCoverage(query: AnalyzedQuery, doc: IndexedDocument, v: ReturnType
   const vOk = Boolean(v);
   let hit = 0;
   for (const c of usable) {
-    if (conceptCoveredInTitle(c, doc) || vOk) hit += 1;
+    if (conceptCoveredInTitle(c, doc, query) || vOk) hit += 1;
     else if (c.kind === "number" && vOk) hit += 1;
   }
   // Count number concepts via version hit once
@@ -428,7 +428,7 @@ function queryCoverage(query: AnalyzedQuery, doc: IndexedDocument, v: ReturnType
   if (hasNumber && v) {
     const withoutNum = rankingCoverageConcepts(query, unboundConcepts.filter((c) => c.kind !== "number"));
     const numOk = v.compactHit || v.dottedHit;
-    const otherHits = withoutNum.filter((c) => conceptCoveredInTitle(c, doc)).length;
+    const otherHits = withoutNum.filter((c) => conceptCoveredInTitle(c, doc, query)).length;
     const denom = withoutNum.length + 1;
     return Number(((otherHits + (numOk ? 1 : 0)) / denom).toFixed(4));
   }
@@ -850,13 +850,13 @@ function lexicalCoverageFields(query: AnalyzedQuery, doc: IndexedDocument) {
   for (const c of concepts) {
     if (isSearchEquivalenceRecallConcept(query, c)) continue;
     coverageConceptCount += 1;
-    const body = conceptMatchesBody(c, doc);
+    const body = conceptMatchesBody(c, doc, query);
     if (body) {
       bodyHits += 1;
       unionHits += 1;
       continue;
     }
-    if (conceptMatchesTitle(c, doc) != null) unionHits += 1;
+    if (conceptMatchesTitle(c, doc, query) != null) unionHits += 1;
   }
   if (!coverageConceptCount) {
     return { coverageConceptCount: 0, bodyLexicalMatch: 0, lexicalConceptCoverage: 0 };
@@ -885,7 +885,7 @@ function ordinaryEquivalenceBodyMatch(query: AnalyzedQuery, doc: IndexedDocument
         candidate.forms.includes(pair.target)
     );
     if (!concept) continue;
-    if (conceptMatchesBody({ ...concept, forms: [pair.target] }, doc)) return true;
+    if (conceptMatchesBody({ ...concept, forms: [pair.target] }, doc, query)) return true;
   }
   return false;
 }
@@ -1103,8 +1103,8 @@ function withSynonymRecallFields(
   let titleCount = 0;
   let bodyCount = 0;
   for (const concept of extras) {
-    const title = conceptMatchesTitle(concept, doc) != null;
-    const body = conceptMatchesBody(concept, doc);
+    const title = conceptMatchesTitle(concept, doc, query) != null;
+    const body = conceptMatchesBody(concept, doc, query);
     if (!title && !body) continue;
     formCount += 1;
     if (title) titleCount += 1;

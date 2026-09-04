@@ -269,7 +269,12 @@ export function compactTitleHasLemma(store: CompactDocumentStore, ordinal: numbe
   return false;
 }
 
-export function compactBodyMatchesConcept(store: CompactDocumentStore, ordinal: number, forms: string[]) {
+export function compactBodyMatchesConcept(
+  store: CompactDocumentStore,
+  ordinal: number,
+  forms: string[],
+  allowPrefix?: (form: string) => boolean
+) {
   if (!forms.length) return false;
   const start = store.bodyOff[ordinal];
   const end = store.bodyOff[ordinal + 1];
@@ -283,7 +288,7 @@ export function compactBodyMatchesConcept(store: CompactDocumentStore, ordinal: 
     if (!form || /\s/.test(form)) continue;
     const id = idOf.get(form);
     if (id !== undefined) exact.add(id);
-    if (!/^\d+$/.test(form) && form.length >= 3) prefixes.push(form);
+    if (!/^\d+$/.test(form) && form.length >= 3 && (!allowPrefix || allowPrefix(form))) prefixes.push(form);
   }
   for (let i = start; i < end; i++) {
     const surface = ids[i];

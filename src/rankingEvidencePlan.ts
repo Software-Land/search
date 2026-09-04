@@ -15,6 +15,7 @@ import {
   shortTitleTokenPrefixStub,
 } from "./retrieve.js";
 import { querySemanticFacts } from "./querySemantics.js";
+import { formAllowsOrdinaryLexicalPrefix } from "./lexicalPrefixForms.js";
 import { allowPrefixMatch, DEFAULT_STOP, isNearCompletePrefix, levenshteinAtMost } from "./text.js";
 import type { AnalyzedQuery, QueryConcept } from "./types.js";
 import type { RankingEvidenceStatic } from "./rankingEvidenceState.js";
@@ -166,16 +167,17 @@ function uniqueForms(concept: QueryConcept) {
   return [...new Set((concept.forms || []).filter(Boolean))];
 }
 
-function titlePrefixableForms(forms: readonly string[]) {
+function titlePrefixableForms(forms: readonly string[], query?: AnalyzedQuery | null) {
   return forms.filter((form) => {
     if (!form || /^\d+$/.test(form) || /\s/.test(form)) return false;
+    if (!formAllowsOrdinaryLexicalPrefix(query, form)) return false;
     return !forms.some(
       (other) => other !== form && other.startsWith(form) && other.length > form.length
     );
   });
 }
 
-function titleConceptTermMasks(concept: QueryConcept, term: CompiledTermRuntime) {
+function titleConceptTermMasks(concept: QueryConcept, term: CompiledTermRuntime, query: AnalyzedQuery) {
   const forms = uniqueForms(concept);
   let anyPosition = false;
   let independent = false;
@@ -186,14 +188,14 @@ function titleConceptTermMasks(concept: QueryConcept, term: CompiledTermRuntime)
     // independence.
     if (term.lemma === form) anyPosition = true;
   }
-  for (const form of titlePrefixableForms(forms)) {
+  for (const form of titlePrefixableForms(forms, query)) {
     // Prefix matching scans all title positions, including dotted components.
     if (allowPrefixMatch(form, term.term)) anyPosition = true;
   }
   return { anyPosition, independent };
 }
 
-function bodyConceptTermMatch(concept: QueryConcept, term: CompiledTermRuntime) {
+function bodyConceptTermMatch(concept: QueryConcept, term: CompiledTermRuntime, query: AnalyzedQuery) {
   for (const form of uniqueForms(concept)) {
     if (/\s/.test(form)) continue;
     if (term.term === form || term.lemma === form) return true;
@@ -201,6 +203,7 @@ function bodyConceptTermMatch(concept: QueryConcept, term: CompiledTermRuntime) 
       !/^\d+$/.test(form) &&
       !/^\d+$/.test(term.term) &&
       form.length >= 3 &&
+      formAllowsOrdinaryLexicalPrefix(query, form) &&
       term.term.startsWith(form)
     ) {
       return true;
@@ -550,10 +553,10 @@ function semanticActions(
 
     for (const concept of ordinaryConcepts) {
       const bit = conceptBits.get(concept) || 0;
-      const titleMasks = titleConceptTermMasks(concept, term);
+      const titleMasks = titleConceptTermMasks(concept, term, query);
       if (titleMasks.anyPosition) title.conceptMask |= bit;
       if (titleMasks.independent) title.independentConceptMask |= bit;
-      if (bodyConceptTermMatch(concept, term)) body.conceptMask |= bit;
+      if (bodyConceptTermMatch(concept, term, query)) body.conceptMask |= bit;
     }
 
     if (ordinary) {

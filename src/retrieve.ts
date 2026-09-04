@@ -2,6 +2,7 @@ import { isOneTokenMemberOfLongerPeerForm, sequenceKey } from "./configuredAutho
 import { isNearCompletePrefix, allowPrefixMatch, DEFAULT_STOP, STRUCTURAL_WRAPPER_STOP } from "./text.js";
 import { dropConfiguredPrefixRecallTrailingStop } from "./configuredSequence.js";
 import { querySemanticFacts } from "./querySemantics.js";
+import { formAllowsOrdinaryLexicalPrefix } from "./lexicalPrefixForms.js";
 import {
   isAllDigitToken,
   queryTokenMatchesVersionCompact,
@@ -177,10 +178,11 @@ export function configuredConceptFieldMatch(
  * (`frame` of typed `frames`) must not prefix a longer different title token
  * (`framework`). Independent exact/lemma token matches still use the full bag.
  */
-function titlePrefixableForms(forms: string[] | undefined) {
+function titlePrefixableForms(forms: string[] | undefined, query?: AnalyzedQuery | null) {
   const list = forms || [];
   return list.filter((form) => {
     if (!form || /^\d+$/.test(form) || /\s/.test(form)) return false;
+    if (!formAllowsOrdinaryLexicalPrefix(query, form)) return false;
     return !list.some((other) => other !== form && other.startsWith(form) && other.length > form.length);
   });
 }
@@ -223,7 +225,11 @@ function conceptPhraseMatchesBody(concept: QueryConcept, doc: IndexedDocument): 
   return false;
 }
 
-function conceptMatchesTitle(concept: QueryConcept, doc: IndexedDocument): ConceptTitleMatch | null {
+function conceptMatchesTitle(
+  concept: QueryConcept,
+  doc: IndexedDocument,
+  query?: AnalyzedQuery | null
+): ConceptTitleMatch | null {
   if (concept.kind === "configured-concept") {
     if (doc.titleTokenSet.has(concept.id) || doc.titleLemmaSet.has(concept.id)) return "key";
     if (
@@ -250,7 +256,7 @@ function conceptMatchesTitle(concept: QueryConcept, doc: IndexedDocument): Conce
       if (compactHasIndependentTitleForm(store, ordinal, form)) return "exact";
       if (compactTitleHasLemma(store, ordinal, form)) return "lemma";
     }
-    for (const form of titlePrefixableForms(concept.forms)) {
+    for (const form of titlePrefixableForms(concept.forms, query)) {
       if (compactTitleHasPrefixForm(store, ordinal, form, allowPrefixMatch)) return "prefix";
     }
     return null;
@@ -262,7 +268,7 @@ function conceptMatchesTitle(concept: QueryConcept, doc: IndexedDocument): Conce
       if (form === tok) return "lemma";
     }
   }
-  for (const form of titlePrefixableForms(concept.forms)) {
+  for (const form of titlePrefixableForms(concept.forms, query)) {
     for (const tok of doc.titleTokens) {
       if (allowPrefixMatch(form, tok)) return "prefix";
     }
@@ -270,7 +276,7 @@ function conceptMatchesTitle(concept: QueryConcept, doc: IndexedDocument): Conce
   return null;
 }
 
-function conceptMatchesBody(concept: QueryConcept, doc: IndexedDocument) {
+function conceptMatchesBody(concept: QueryConcept, doc: IndexedDocument, query?: AnalyzedQuery | null) {
   if (concept.kind === "configured-concept") {
     return acronymFieldEvidence(
       concept,
@@ -287,13 +293,15 @@ function conceptMatchesBody(concept: QueryConcept, doc: IndexedDocument) {
     return compactBodyMatchesConcept(
       store,
       compactOrdinal(doc),
-      (concept.forms || []).filter((form) => !phraseFormTokens(form))
+      (concept.forms || []).filter((form) => !phraseFormTokens(form)),
+      (form) => formAllowsOrdinaryLexicalPrefix(query, form)
     );
   }
   for (const form of concept.forms) {
     if (phraseFormTokens(form)) continue;
     if (doc.bodyTokenSet.has(form) || doc.bodyLemmaSet.has(form)) return true;
     if (/^\d+$/.test(form)) continue;
+    if (!formAllowsOrdinaryLexicalPrefix(query, form)) continue;
     for (const tok of doc.bodyTokens) {
       if (/^\d+$/.test(tok)) continue;
       if (form.length >= 3 && tok.startsWith(form)) return true;
@@ -470,7 +478,7 @@ export function standaloneRecallConcept(query: AnalyzedQuery | null | undefined)
 export function documentMatchesStandaloneRecall(query: AnalyzedQuery, doc: IndexedDocument) {
   const concept = standaloneRecallConcept(query);
   if (!concept) return false;
-  return Boolean(conceptMatchesTitle(concept, doc) || conceptMatchesBody(concept, doc));
+  return Boolean(conceptMatchesTitle(concept, doc, query) || conceptMatchesBody(concept, doc, query));
 }
 
 /**
@@ -750,10 +758,10 @@ function scanDocument(
   for (const concept of query.concepts) {
     if (isBoundTrailingTermConcept(query, concept)) continue;
     if (isSearchEquivalenceRecallConcept(query, concept)) {
-      if (conceptMatchesTitle(concept, doc)) add(doc, "equivalent-recall");
+      if (conceptMatchesTitle(concept, doc, query)) add(doc, "equivalent-recall");
       continue;
     }
-    const kind = conceptMatchesTitle(concept, doc);
+    const kind = conceptMatchesTitle(concept, doc, query);
     if (concept.kind === "configured-concept") {
       if (kind) add(doc, "configured-concept");
       continue;
@@ -769,10 +777,10 @@ function scanDocument(
   for (const concept of query.concepts) {
     if (isBoundTrailingTermConcept(query, concept)) continue;
     if (isSearchEquivalenceRecallConcept(query, concept)) {
-      if (conceptMatchesBody(concept, doc)) add(doc, "equivalent-recall");
+      if (conceptMatchesBody(concept, doc, query)) add(doc, "equivalent-recall");
       continue;
     }
-    if (conceptMatchesBody(concept, doc)) add(doc, "body-lexical");
+    if (conceptMatchesBody(concept, doc, query)) add(doc, "body-lexical");
   }
 
   if (!hasConfiguredSequenceIntent(query) && matchContextualTitlePrefix(query, doc)) {
@@ -843,3 +851,4 @@ export function retrievalSourcesForDocument(query: AnalyzedQuery, doc: IndexedDo
 }
 
 export { versionHit, conceptMatchesTitle, conceptMatchesBody };
+export { formAllowsOrdinaryLexicalPrefix, heuristicLemmaOnlyForms } from "./lexicalPrefixForms.js";
