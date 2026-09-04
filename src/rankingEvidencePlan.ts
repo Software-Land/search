@@ -105,7 +105,6 @@ export type RankingEvidenceQueryFacts = {
   readonly typedLiterals: readonly string[];
   readonly occupied: boolean;
   readonly configuredContentIdentity: boolean;
-  readonly occupancyUnionsTyped: boolean;
   readonly configuredFormCoverage: number;
   readonly originalSurfaceTokens: readonly string[];
 };
@@ -225,17 +224,6 @@ function typedContentLiterals(query: AnalyzedQuery) {
     out.push(literal);
   }
   return out;
-}
-
-function occupancyUnionsTypedTitleEvidence(query: AnalyzedQuery) {
-  const key = querySemanticFacts(query).configured.occupiedKey;
-  if (!key) return false;
-  if ((query.tokens || []).length !== 1) return false;
-  const concept = (query.concepts || []).find(
-    (candidate) => candidate.kind === "configured-concept" && candidate.id === key
-  );
-  const coverage = concept?.formCoverage;
-  return typeof coverage === "number" && coverage > 0 && coverage < 1;
 }
 
 function configuredFormCoverage(query: AnalyzedQuery, facts: RankingQueryFacts) {
@@ -841,7 +829,6 @@ export function compileRankingEvidencePlan(
     typedLiterals: typedContentLiterals(query),
     occupied: Boolean(semantics.configured.occupiedKey),
     configuredContentIdentity: Boolean(semantics.configured.contentIdentityKey),
-    occupancyUnionsTyped: occupancyUnionsTypedTitleEvidence(query),
     configuredFormCoverage: configuredFormCoverage(query, feature),
     originalSurfaceTokens: (query.originalSurface || []).filter(Boolean),
   };

@@ -297,22 +297,6 @@ function typedContentLiterals(query: AnalyzedQuery) {
   return out;
 }
 
-/**
- * One-token first-form prefix occupancy uniquely binds a concept, but ranking
- * otherwise evaluates only peer-form tokens the user did not type. Union the
- * typed stub's title-prefix evidence so occupancy cannot erase it.
- * Full occupancy and multi-token form prefixes already score peer forms that
- * include the typed tokens.
- */
-function occupancyUnionsTypedTitleEvidence(query: AnalyzedQuery) {
-  if (!hasConfiguredSequenceIntent(query)) return false;
-  if ((query.tokens || []).length !== 1) return false;
-  const key = query.configuredSequenceIntent?.key;
-  const acr = query.concepts.find((c) => c.kind === "configured-concept" && c.id === key);
-  const coverage = acr?.formCoverage;
-  return typeof coverage === "number" && coverage > 0 && coverage < 1;
-}
-
 function typedTitleSurfaceHit(query: AnalyzedQuery, doc: IndexedDocument) {
   const independent = independentTitleTokensOf(doc);
   return typedContentLiterals(query).some((literal) => {
@@ -327,13 +311,11 @@ function typedTitleSurfaceHit(query: AnalyzedQuery, doc: IndexedDocument) {
  * Typed/repaired surface (pre-lemma, pre-unique-prefix rewrite) agrees with a
  * title token: exact token, or the typed stub prefixes a title token.
  * Canonical lemmas and completedToken are not typed-surface evidence.
- * One-token first-form prefix occupancy unions this typed check with peer-form
- * title evidence; it must not erase what the user typed.
+ * Occupied queries score peer-form title evidence instead of the typed stub.
  */
 function typedSurfaceTitleMatch(query: AnalyzedQuery, doc: IndexedDocument) {
   const independent = independentTitleTokensOf(doc);
   if (hasConfiguredSequenceIntent(query)) {
-    if (occupancyUnionsTypedTitleEvidence(query) && typedTitleSurfaceHit(query, doc)) return true;
     return anyOverPeerForms(query, (form) => {
       if (!formContributesQueryShapedTitle(form, doc)) return false;
       return formContentTokens(form).some((literal) => {
@@ -372,13 +354,11 @@ function titlePrefixQualityForNorms(qNorms: string[], doc: IndexedDocument) {
 
 function titlePrefixQuality(query: AnalyzedQuery, doc: IndexedDocument) {
   if (hasConfiguredSequenceIntent(query)) {
-    const peer = maxOverPeerFormsNumber(query, (form) =>
+    return maxOverPeerFormsNumber(query, (form) =>
       formContributesQueryShapedTitle(form, doc)
         ? titlePrefixQualityForNorms(formContentTokens(form), doc)
         : 0
     );
-    if (!occupancyUnionsTypedTitleEvidence(query)) return peer;
-    return Math.max(peer, titlePrefixQualityForNorms(typedContentLiterals(query), doc));
   }
   const last = query.tokens[query.tokens.length - 1];
   const skipLast = hasBoundContextualCompletion(query);
@@ -1438,7 +1418,7 @@ export function classifyDirect(f: Partial<FeatureVector>): DirectClass {
 export const FEATURE_DEFINITIONS = {
   exactTitleMatch: "True when normalized query equals the full normalized title. Occupied ranking also accepts an authored peer-form join equal to the title. Configured-content identity unions that same peer-form title equality without replacing literal original-surface title equality.",
   exactTitleTokenMatch: "True when a non-stop canonical query token occurs as an independent title token (not a digit split from a dotted numeric span such as 1.2). Unique prefix completions and morphology use the lemma; typed stubs and completedToken are not exact surface evidence. A trailing stub bound by unique contextual form completion is not unbound exact-title-token evidence. Occupied multi-token peer forms contribute only when the title expresses the form (phrase or ≥2 content tokens).",
-    typedSurfaceTitleMatch: "True when the typed/repaired surface (before lemma or unique-prefix rewrite) occurs as an independent title token or is a legitimate prefix of one. Digits produced by splitting a dotted span are not typed-surface evidence. Canonical retrieval lemmas are not typed-surface evidence. A trailing stub bound by unique contextual form completion is not unbound title-prefix evidence. Occupied ranking unions this typed-surface check with peer-form title evidence so occupancy does not erase the typed stub. Occupied multi-token peer forms contribute only when the title expresses the form.",
+    typedSurfaceTitleMatch: "True when the typed/repaired surface (before lemma or unique-prefix rewrite) occurs as an independent title token or is a legitimate prefix of one. Digits produced by splitting a dotted span are not typed-surface evidence. Canonical retrieval lemmas are not typed-surface evidence. A trailing stub bound by unique contextual form completion is not unbound title-prefix evidence. Occupied queries score peer-form title evidence instead of the typed stub. Occupied multi-token peer forms contribute only when the title expresses the form.",
   titleCoverage: "Fraction of non-stop title tokens accounted for by the query. A trailing stub bound by unique contextual form completion is excluded. Occupied concepts take the max over peer forms that the title actually expresses. Independently retrieved configured-prefix-recall keys also take the fraction of non-stop title tokens that are that key.",
   queryCoverage: "Fraction of typed/configured query concepts evidenced in the title (or via a legitimate version alias). Extra search-equivalence recall concepts attached after configured occupancy are excluded. A trailing term concept bound by unique contextual form completion is excluded. Synonym forms merged into an ordinary term concept still count with that concept. Occupied or identity ranking intent excludes structural-wrapper term concepts (WH / copula / determiner) from the coverage set.",
   titlePrefixQuality: "How completely query tokens prefix title tokens, tightened by extra title tokens. A trailing stub bound by unique contextual form completion is excluded. Occupied concepts take the max over peer forms that the title actually expresses. One-token first-form prefix occupancy also takes the max of that peer-form quality and literal typed-surface prefix quality. Configured-content identity may use an authored peer form when that form is the full title, a contiguous title phrase, or the entire non-stop title.",

@@ -804,17 +804,6 @@ function finalizeCandidate(
       titleCoverage = 0;
       titlePrefixQuality = 0;
     }
-    if (plan.facts.occupancyUnionsTyped) {
-      if (session.typedPrefixMask[slot]) typedSurfaceTitleMatch = true;
-      titlePrefixQuality = Math.max(
-        titlePrefixQuality,
-        prefixQuality(
-          session.typedPrefixMask[slot],
-          plan.facts.typedLiterals,
-          titleTokenCount
-        )
-      );
-    }
   }
 
   let titleConceptMask = session.titleConceptMask[slot];
