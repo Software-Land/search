@@ -212,4 +212,24 @@ export function firstSurfaceToken(title?: unknown): string {
   return tokens[0] || "";
 }
 
+/**
+ * True when `token` is a proper prefix of one or more DEFAULT_STOP words.
+ * Complete stops are not partial. Does not pick a stop by insertion order:
+ * every matching completion is skip-equivalent.
+ */
+export function isPartialStructuralStop(token?: unknown): boolean {
+  const n = String(token || "").toLowerCase();
+  if (!n || DEFAULT_STOP.has(n)) return false;
+  for (const stop of DEFAULT_STOP) {
+    if (stop.length > n.length && stop.startsWith(n)) return true;
+  }
+  return false;
+}
+
+/** Complete DEFAULT_STOP member or a proper prefix of one. */
+export function isSkippableConfiguredStop(token?: unknown): boolean {
+  const n = String(token || "").toLowerCase();
+  return DEFAULT_STOP.has(n) || isPartialStructuralStop(n);
+}
+
 export { DEFAULT_STOP, STRUCTURAL_WRAPPER_STOP };

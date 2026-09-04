@@ -1,5 +1,5 @@
 import { allConfiguredConceptForms, isOneTokenMemberOfLongerPeerForm, sequenceKey } from "./configuredAuthoring.js";
-import { allowPrefixMatch, DEFAULT_STOP, STRUCTURAL_WRAPPER_STOP } from "./text.js";
+import { allowPrefixMatch, DEFAULT_STOP, STRUCTURAL_WRAPPER_STOP, isPartialStructuralStop, isSkippableConfiguredStop } from "./text.js";
 import type {
   ConfiguredConcept,
   ConfiguredPrefixRecall,
@@ -190,9 +190,13 @@ function tokenIsStop(tok: QueryToken): boolean {
   return DEFAULT_STOP.has(String(tok.normalized || "").toLowerCase());
 }
 
+function tokenIsSkippableStop(tok: QueryToken): boolean {
+  return isSkippableConfiguredStop(tok.normalized);
+}
+
 function lastTypedContentIndex(tokens: QueryToken[]): number {
   for (let i = tokens.length - 1; i >= 0; i--) {
-    if (!tokenIsStop(tokens[i])) return i;
+    if (!tokenIsSkippableStop(tokens[i])) return i;
   }
   return -1;
 }
@@ -213,13 +217,15 @@ type SequentialAlign = {
   typedContentMatched: number;
   consumedAllTyped: boolean;
   consumedAllWant: boolean;
+  lastContentWant: string;
 };
 
 /**
- * Sequential content alignment. Typed stop tokens may be skipped after the
- * first token; expansion tokens are never skipped. Content order is exact.
- * Prefixes are allowed only under the same last/non-last rules as positional
- * `sequenceAligns`. No corpus scan.
+ * Sequential content alignment. Typed stop tokens, and proper prefixes of
+ * DEFAULT_STOP words, may be skipped after the first token when they do not
+ * already align with the next form token. Expansion tokens are never skipped.
+ * Content order is exact. Prefixes are allowed only under the same last/non-last
+ * rules as positional `sequenceAligns`. No corpus scan.
  */
 function alignSequential(
   tokens: QueryToken[],
@@ -234,6 +240,7 @@ function alignSequential(
     typedContentMatched: 0,
     consumedAllTyped: false,
     consumedAllWant: false,
+    lastContentWant: "",
   };
   if (!tokens.length || !want.length || startJ < 0 || startJ >= want.length) return fail;
   const lastContent = lastTypedContentIndex(tokens);
@@ -242,12 +249,16 @@ function alignSequential(
   let j = startJ;
   let usedPrefix = false;
   let typedContentMatched = 0;
+  let lastContentWant = "";
   while (i < tokens.length && j < want.length) {
     const tok = tokens[i];
     const target = want[j];
     const isLastTypedContent = i === lastContent;
     if (alignsExact(tok, target)) {
-      if (!tokenIsStop(tok)) typedContentMatched += 1;
+      if (!tokenIsStop(tok)) {
+        typedContentMatched += 1;
+        lastContentWant = target;
+      }
       i += 1;
       j += 1;
       continue;
@@ -255,24 +266,28 @@ function alignSequential(
     if (isLastTypedContent && alignsLast(tok, target)) {
       usedPrefix = true;
       typedContentMatched += 1;
+      lastContentWant = target;
       i += 1;
       j += 1;
       continue;
     }
     if (!isLastTypedContent && allowNonLastPrefix && alignsNonLast(tok, target)) {
       usedPrefix = true;
-      if (!tokenIsStop(tok)) typedContentMatched += 1;
+      if (!tokenIsStop(tok)) {
+        typedContentMatched += 1;
+        lastContentWant = target;
+      }
       i += 1;
       j += 1;
       continue;
     }
-    if (i > 0 && tokenIsStop(tok)) {
+    if (i > 0 && tokenIsSkippableStop(tok)) {
       i += 1;
       continue;
     }
     return fail;
   }
-  while (i < tokens.length && tokenIsStop(tokens[i])) i += 1;
+  while (i < tokens.length && tokenIsSkippableStop(tokens[i])) i += 1;
   const consumedAllTyped = i === tokens.length;
   const consumedAllWant = j === want.length;
   const matchedWant = j - startJ;
@@ -284,6 +299,7 @@ function alignSequential(
     typedContentMatched,
     consumedAllTyped,
     consumedAllWant,
+    lastContentWant,
   };
 }
 
@@ -380,7 +396,10 @@ function compareFormCandidates(a: ExpansionAlignCandidate, b: ExpansionAlignCand
  * analyze `matchFormPrefixes`). Unique exact left prefixes occupy only at
  * coverage ≥ 1/2 (so `national institute` 2/4 occupies and `basically
  * available` 2/6 stays graded recall). A stop as the last newly aligned
- * query token does not occupy; weak prefix recall handles that case.
+ * query token does not occupy on this positional path, including a proper
+ * prefix of an authored stop (`internet o` / `identity and`). Weak prefix
+ * recall handles those queries. Skipped trailing structural tokens are
+ * occupancy-transparent on the stop-tolerant path.
  * Distinct keys at the best coverage fail closed (`none`).
  */
 function uniqueFormLeftPrefix(
@@ -424,6 +443,8 @@ function uniqueFormLeftPrefix(
     }
     if (!ok) continue;
     const coverage = k / n;
+    const lastWant = seq.tokens[k - 1];
+    if (DEFAULT_STOP.has(lastWant)) continue;
     if (!lastExact) {
       if (coverage < MIN_FORM_PREFIX_COVERAGE) continue;
     } else if (tokenIsStop(tokens[k - 1])) {
@@ -462,10 +483,14 @@ function uniqueCandidateResolution(
 }
 
 /**
- * Left-prefix when typed stops inflate query length so n <= k and the
- * positional `n > k` path cannot run. Interior typed stops may be skipped.
- * Non-last content tokens must be exact; the last typed content token may use
- * existing last-token prefix rules. Unique best coverage else none.
+ * Left-prefix when typed stops inflate query length so the positional
+ * `n > k` path cannot run, or when skipped structural tokens sit after an
+ * already-aligned content prefix. Interior/trailing typed stops may be skipped.
+ * Occupancy coverage is content tokens only (`typedContentMatched / n`), using
+ * the same floors as `uniqueFormLeftPrefix`: exact last content ≥ 1/2,
+ * character-prefix last content ≥ 2/3. Skipped structural tokens cannot
+ * create occupancy (`identity and` stays recall) and cannot undo occupancy
+ * already earned by preceding content (`national institute of` keeps NIST).
  */
 function uniqueStopTolerantLeftPrefix(
   tokens: QueryToken[],
@@ -482,8 +507,15 @@ function uniqueStopTolerantLeftPrefix(
     const aligned = alignSequential(tokens, seq.tokens, 0, { allowNonLastPrefix: false });
     if (!aligned.ok || aligned.consumedAllWant) continue;
     if (aligned.typedContentMatched < MIN_FORM_PREFIX_TOKENS) continue;
-    const coverage = aligned.matchedWant / n;
-    if (coverage < MIN_FORM_PREFIX_COVERAGE) continue;
+    const lastContent = lastTypedContentIndex(tokens);
+    const lastExact =
+      lastContent >= 0 && Boolean(aligned.lastContentWant) && exactTypedToken(tokens[lastContent], aligned.lastContentWant);
+    const coverage = aligned.typedContentMatched / n;
+    if (!lastExact) {
+      if (coverage < MIN_FORM_PREFIX_COVERAGE) continue;
+    } else if (coverage < MIN_EXACT_LEFT_PREFIX_COVERAGE) {
+      continue;
+    }
     candidates.push({ seq, coverage, n, usedPrefix: aligned.usedPrefix });
   }
   return uniqueCandidateResolution(candidates, configured, "left-prefix");
@@ -710,7 +742,7 @@ function stopTolerantLeftPrefixRecall(
   const lastTok = tokens[lastContent];
   const lastQuery = tokens[tokens.length - 1];
   const lastAlignedStop = tokenIsStop(lastQuery) && alignsExact(lastQuery, lastWant);
-  if (tokenIsStop(lastQuery) && !lastAlignedStop && aligned.typedContentMatched < 2) {
+  if (tokenIsSkippableStop(lastQuery) && !lastAlignedStop && aligned.typedContentMatched < 2) {
     return null;
   }
   const lastExact = !aligned.usedPrefix;
@@ -725,6 +757,25 @@ function stopTolerantLeftPrefixRecall(
     partialCompleteness,
     evidence: prefixRecallEvidence(exactCount, partialCompleteness, n),
   };
+}
+
+/**
+ * Trailing complete stops, and trailing proper prefixes of DEFAULT_STOP that
+ * did not align as the next form token, are not independent lexical terms under
+ * configured-prefix recall. Content prefixes that happen to also prefix a
+ * stop (`national i` → institute) stay lexical.
+ */
+export function dropConfiguredPrefixRecallTrailingStop(
+  tok: QueryToken,
+  recall: ConfiguredPrefixRecall | null | undefined
+): boolean {
+  const n = String(tok.normalized || "").toLowerCase();
+  if (DEFAULT_STOP.has(n)) return true;
+  if (!recall || !isPartialStructuralStop(n)) return false;
+  if (recall.lastExact) return true;
+  const want = String(recall.form[recall.exactCount] || "");
+  if (want && want.startsWith(n) && n.length < want.length) return false;
+  return true;
 }
 
 /**

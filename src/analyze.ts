@@ -22,6 +22,7 @@ import {
   sequenceKey,
 } from "./configuredAuthoring.js";
 import {
+  dropConfiguredPrefixRecallTrailingStop,
   resolveConfiguredPrefixRecall,
   resolveConfiguredPrefixSpans,
   resolveConfiguredSequence,
@@ -34,6 +35,7 @@ import type {
   AnalyzedQuery,
   AnalyzeOptions,
   ConfiguredConcept,
+  ConfiguredPrefixRecall,
   ConfiguredPrefixSpan,
   ConfiguredSequenceIntent,
   ConfiguredSpan,
@@ -214,6 +216,20 @@ function uniqueConfiguredSearchEquivalenceSource(
   return null;
 }
 
+function skipStopTermMint(
+  tok: QueryToken,
+  i: number,
+  tokens: QueryToken[],
+  recall: ConfiguredPrefixRecall | null | undefined
+): boolean {
+  if (DEFAULT_STOP.has(tok.normalized)) {
+    if (tokens.length > 2) return true;
+    if (recall && i === tokens.length - 1) return true;
+    return false;
+  }
+  return Boolean(recall && i === tokens.length - 1 && dropConfiguredPrefixRecallTrailingStop(tok, recall));
+}
+
 function admitSearchEquivalenceTargets(
   syn: SearchPlugin,
   source: string,
@@ -239,7 +255,7 @@ function admitSearchEquivalenceTargets(
 function attachSearchEquivalenceRecall(
   query: {
     configuredSequenceIntent?: { key?: string } | null;
-    configuredPrefixRecall?: { key?: string } | null;
+    configuredPrefixRecall?: ConfiguredPrefixRecall | null;
     configuredSpans?: Array<{ key: string }>;
     configuredPrefixSpans?: Array<{ key: string }>;
     lexicalPhraseKey?: string;
@@ -265,10 +281,7 @@ function attachSearchEquivalenceRecall(
   for (let i = 0; i < analyzedTokens.length; i++) {
     if (covered.has(i)) continue;
     const tok = analyzedTokens[i];
-    if (DEFAULT_STOP.has(tok.normalized)) {
-      if (analyzedTokens.length > 2) continue;
-      if (query.configuredPrefixRecall && i === analyzedTokens.length - 1) continue;
-    }
+    if (skipStopTermMint(tok, i, analyzedTokens, query.configuredPrefixRecall)) continue;
     if (isAllDigitToken(tok.normalized)) continue;
     admitSearchEquivalenceTargets(syn, tok.normalized, seenPairs, pairs);
     if (tok.lemma && tok.lemma !== tok.normalized) {
@@ -1270,10 +1283,7 @@ export function analyzeQuery(
   for (let i = 0; i < analyzedTokens.length; i++) {
     if (covered.has(i)) continue;
     const tok = analyzedTokens[i];
-    if (DEFAULT_STOP.has(tok.normalized)) {
-      if (analyzedTokens.length > 2) continue;
-      if (configuredPrefixRecall && i === analyzedTokens.length - 1) continue;
-    }
+    if (skipStopTermMint(tok, i, analyzedTokens, configuredPrefixRecall)) continue;
     if (isAllDigitToken(tok.normalized)) {
       concepts.push({
         id: tok.normalized,

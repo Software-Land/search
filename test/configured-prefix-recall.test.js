@@ -168,11 +168,68 @@ describe("configured prefix recall vs occupancy", () => {
     expect(q.configuredPrefixRecall.coverage).toBe(0.5);
   });
 
-  test("national institute of is NIST recall; of stan remains occupancy", () => {
-    const ofQuery = analyze("national institute of");
-    expect(ofQuery.configuredSequenceIntent).toBeNull();
-    expect(ofQuery.configuredPrefixRecall?.key).toBe("nist");
+  test("national institute of preserves NIST occupancy", () => {
+    expect(analyze("national institute").configuredSequenceIntent?.key).toBe("nist");
+    expect(analyze("national institute o").configuredSequenceIntent?.key).toBe("nist");
+    expect(analyze("national institute of").configuredSequenceIntent?.key).toBe("nist");
+    expect(analyze("national institute of").configuredPrefixRecall).toBeNull();
     expect(analyze("national institute of stan").configuredSequenceIntent?.key).toBe("nist");
+  });
+
+  test("partial prefix of a skippable stop preserves NIST occupancy", () => {
+    const occupied = analyze("national institute");
+    const partial = analyze("national institute o");
+    const complete = analyze("national institute of");
+    expect(occupied.configuredSequenceIntent?.key).toBe("nist");
+    expect(partial.configuredSequenceIntent?.key).toBe("nist");
+    expect(complete.configuredSequenceIntent?.key).toBe("nist");
+    expect(partial.configuredPrefixRecall).toBeNull();
+    expect(complete.configuredPrefixRecall).toBeNull();
+    expect(analyze("national institute of s").configuredSequenceIntent?.key).toBe("nist");
+    expect(analyze("national institute of stan").configuredSequenceIntent?.key).toBe("nist");
+    expect(analyze("national institute o s").configuredSequenceIntent?.key).toBe("nist");
+    expect(analyze("national institute x").configuredSequenceIntent).toBeNull();
+    expect(analyze("national institute x").configuredPrefixRecall).toBeNull();
+    expect(analyze("o").configuredPrefixRecall).toBeNull();
+    expect(analyze("o national").configuredPrefixRecall).toBeNull();
+    expect(analyze("national o").configuredPrefixRecall).toBeNull();
+    expect(analyze("national of").configuredSequenceIntent).toBeNull();
+  });
+
+  test("structural stops cannot promote recall into occupancy", () => {
+    const iam = [{ key: "iam", aliases: [["identity", "and", "access", "management"]] }];
+    expect(analyze("identity", iam).configuredSequenceIntent).toBeNull();
+    expect(analyze("identity a", iam).configuredSequenceIntent).toBeNull();
+    expect(analyze("identity an", iam).configuredSequenceIntent).toBeNull();
+    expect(analyze("identity and", iam).configuredSequenceIntent).toBeNull();
+    expect(analyze("identity and", iam).configuredPrefixRecall?.key).toBe("iam");
+    const saas = [{ key: "saas", aliases: [["software", "as", "a", "service"]] }];
+    expect(analyze("software", saas).configuredPrefixRecall?.key).toBe("saas");
+    expect(analyze("software a", saas).configuredSequenceIntent).toBeNull();
+    expect(analyze("software as", saas).configuredSequenceIntent).toBeNull();
+    expect(analyze("software as", saas).configuredPrefixRecall?.key).toBe("saas");
+    expect(analyze("national of").configuredSequenceIntent).toBeNull();
+  });
+
+  test("partial skippable stop is generic, not NIST-specific", () => {
+    const api = [{ key: "api", aliases: [["application", "programming", "interface"]] }];
+    expect(analyze("application programming", api).configuredSequenceIntent?.key).toBe("api");
+    expect(analyze("application programming o", api).configuredSequenceIntent?.key).toBe("api");
+    expect(analyze("application programming of", api).configuredSequenceIntent?.key).toBe("api");
+    expect(analyze("application programming x", api).configuredSequenceIntent).toBeNull();
+    expect(analyze("application programming x", api).configuredPrefixRecall).toBeNull();
+  });
+
+  test("partial stop skip does not pick a concept by insertion order", () => {
+    const family = [
+      { key: "rtp", aliases: [["real", "time", "transport", "protocol"]] },
+      { key: "rtmp", aliases: [["real", "time", "messaging", "protocol"]] },
+      { key: "rtsp", aliases: [["real", "time", "streaming", "protocol"]] },
+    ];
+    expect(analyze("real time", family).configuredPrefixRecall).toBeNull();
+    expect(analyze("real time o", family).configuredPrefixRecall).toBeNull();
+    expect(analyze("real time of", family).configuredPrefixRecall).toBeNull();
+    expect(analyze("georgia institute o", nistFamily).configuredSequenceIntent?.key).toBe("gatech");
   });
 
   test("HTTP family sibling protections and one-token fail closed", () => {
@@ -489,6 +546,18 @@ describe("Software.Land frozen contracts after prefix recall", () => {
     }
     expect(sl.search("national institute", { limit: 10, relatedLimit: 0 })[0].title).toBe("TLS 1.2 Vulnerability");
     expect(ranks[2]).toBeLessThanOrEqual(ranks[1]);
+  });
+
+  test("national institute o keeps TLS via NIST occupancy on the real fixture", () => {
+    for (const raw of ["national institute", "national institute o", "national institute of"]) {
+      const q = sl._prepareQuery(raw);
+      expect(q.configuredSequenceIntent?.key).toBe("nist");
+      expect(q.configuredPrefixRecall).toBeNull();
+      expect(sl.search(raw, { limit: 10, relatedLimit: 0 })[0].title).toBe("TLS 1.2 Vulnerability");
+    }
+    expect(sl.search("national institute x", { limit: 10, relatedLimit: 0 }).map((row) => row.title)).not.toContain(
+      "TLS 1.2 Vulnerability"
+    );
   });
 });
 

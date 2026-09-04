@@ -10,6 +10,7 @@ import { loadSoftwareLandRelevanceInputs } from "./helpers/software-land-fixture
 
 const WATCH = [
   "national",
+  "national institute o",
   "basically",
   "amazon",
   "central",
@@ -204,5 +205,8 @@ describe("Software.Land configured-prefix blast", () => {
     expect(lexicalDisplaced).toEqual([]);
     expect(watch.national.recall?.key).toBe("nist");
     expect(watch.national.top).toContain("TLS 1.2 Vulnerability");
+    expect(watch["national institute o"].occupy).toBe("nist");
+    expect(watch["national institute o"].recall).toBeNull();
+    expect(watch["national institute o"].top[0]).toBe("TLS 1.2 Vulnerability");
   }, 180000);
 });

@@ -1,5 +1,6 @@
 import { isOneTokenMemberOfLongerPeerForm, sequenceKey } from "./configuredAuthoring.js";
 import { isNearCompletePrefix, allowPrefixMatch, DEFAULT_STOP, STRUCTURAL_WRAPPER_STOP } from "./text.js";
+import { dropConfiguredPrefixRecallTrailingStop } from "./configuredSequence.js";
 import {
   isAllDigitToken,
   queryTokenMatchesVersionCompact,
@@ -547,7 +548,7 @@ export function evidenceTokens(query: AnalyzedQuery): QueryToken[] {
   const tokens = unboundTypedTokens(query);
   if (!query.configuredPrefixRecall?.key || !tokens.length) return tokens;
   const last = tokens[tokens.length - 1];
-  if (DEFAULT_STOP.has(String(last.normalized || "").toLowerCase())) {
+  if (dropConfiguredPrefixRecallTrailingStop(last, query.configuredPrefixRecall)) {
     return tokens.slice(0, -1);
   }
   return tokens;
