@@ -3,6 +3,7 @@ import { isNearCompletePrefix, levenshteinAtMost, DEFAULT_STOP, allowPrefixMatch
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "./versionForms.js";
 import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, hasConfiguredRankingIntent, hasConfiguredContentIdentity, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall, topicalRecallHint, topicalFormEvidence, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts, rankingCoverageConcepts, formContentTokens, sequenceCount, shortTitleTokenPrefixStub, configuredConceptFieldMatch } from "./retrieve.js";
 import { queryPhraseGeometry, queryPhraseGeometryFromGraph } from "./queryPlan.js";
+import { querySemanticFacts } from "./querySemantics.js";
 import { scoreFeatures } from "./rank.js";
 import { saturatingFrequency } from "./saturatingFrequency.js";
 import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "./lexicalNormalize.js";
@@ -33,6 +34,7 @@ import type {
   QueryToken,
   RelationshipInfo,
 } from "./types.js";
+import type { WeakConfiguredRecall } from "./querySemantics.js";
 
 export { saturatingFrequency };
 
@@ -1172,9 +1174,10 @@ function withConfiguredPrefixRecallFields(
   fields: ReturnType<typeof computeFeatureFields>,
   retrievalSources?: string[]
 ) {
-  const recall = configuredPrefixRecallForDocument(query, doc, retrievalSources);
+  const weakRecall = querySemanticFacts(query).configured.weakRecall;
+  const recall = configuredPrefixRecallForDocument(doc, retrievalSources, weakRecall);
   const retrieved = Boolean(retrievalSources?.includes(CONFIGURED_PREFIX_RECALL_SOURCE));
-  const group = (query.configuredPrefixRecallGroup || []).length > 0;
+  const group = weakRecall?.ambiguity === "group";
   const keyInTitle = Boolean(
     group &&
       retrieved &&
@@ -1219,15 +1222,15 @@ function documentHasConfiguredKey(doc: IndexedDocument, key: string) {
 }
 
 function configuredPrefixRecallForDocument(
-  query: AnalyzedQuery,
   doc: IndexedDocument,
-  retrievalSources?: string[]
+  retrievalSources: string[] | undefined,
+  weakRecall: WeakConfiguredRecall | null
 ): AnalyzedQuery["configuredPrefixRecall"] {
-  if (query.configuredPrefixRecall?.key) return query.configuredPrefixRecall;
+  if (weakRecall?.ambiguity === "unique") return weakRecall.candidates[0] || null;
   if (!retrievalSources?.includes(CONFIGURED_PREFIX_RECALL_SOURCE)) return null;
-  const group = query.configuredPrefixRecallGroup || [];
+  if (weakRecall?.ambiguity !== "group") return null;
   let best: AnalyzedQuery["configuredPrefixRecall"] = null;
-  for (const row of group) {
+  for (const row of weakRecall.candidates) {
     if (!row?.key || !documentHasConfiguredKey(doc, row.key)) continue;
     if (!best || row.coverage > best.coverage) best = row;
   }
