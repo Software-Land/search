@@ -2,6 +2,7 @@ import { allConfiguredConceptForms, isOneTokenMemberOfLongerPeerForm, sequenceKe
 import { allowPrefixMatch, DEFAULT_STOP, STRUCTURAL_WRAPPER_STOP } from "./text.js";
 import type {
   ConfiguredConcept,
+  ConfiguredPrefixRecall,
   ConfiguredPrefixSpan,
   ConfiguredSpan,
   ConfiguredConceptSequence,
@@ -341,6 +342,8 @@ function sequenceAligns(
 
 const MIN_FORM_PREFIX_TOKENS = 2;
 const MIN_FORM_PREFIX_COVERAGE = 2 / 3;
+/** Exact left prefixes occupy only when at least half the form is present. */
+const MIN_EXACT_LEFT_PREFIX_COVERAGE = 1 / 2;
 
 function uniqueResolution(
   concept: ConfiguredConcept,
@@ -373,9 +376,12 @@ function compareFormCandidates(a: ExpansionAlignCandidate, b: ExpansionAlignCand
 
 /**
  * Unique left-prefix of a longer configured form (n > query length).
- * Same bounds as analyze `matchFormPrefixes`: ≥2 tokens, coverage ≥ 2/3,
- * unique best coverage. Distinct keys at that coverage fail closed (`none`),
- * so already-attached acronym concepts are not dropped.
+ * Character-prefix last tokens keep the 2/3 coverage floor (same bound as
+ * analyze `matchFormPrefixes`). Unique exact left prefixes occupy only at
+ * coverage ≥ 1/2 (so `national institute` 2/4 occupies and `basically
+ * available` 2/6 stays graded recall). A stop as the last newly aligned
+ * query token does not occupy; weak prefix recall handles that case.
+ * Distinct keys at the best coverage fail closed (`none`).
  */
 function uniqueFormLeftPrefix(
   tokens: QueryToken[],
@@ -391,17 +397,24 @@ function uniqueFormLeftPrefix(
     if (n <= k) continue;
     let usedPrefix = k < n;
     let ok = true;
+    let lastExact = false;
     for (let j = 0; j < k; j++) {
       const want = seq.tokens[j];
       const tok = tokens[j];
       const isLast = j === k - 1;
       if (isLast) {
-        if (alignsExact(tok, want)) continue;
-        if (!alignsLast(tok, want)) {
+        // Occupancy lastExact is typed surface. Prefix-completion rewrite of
+        // `normalized` must not skip the 2/3 floor (`national inst`).
+        if (exactTypedToken(tok, want)) {
+          lastExact = true;
+          continue;
+        }
+        if (!alignsLast(tok, want) && !alignsExact(tok, want)) {
           ok = false;
           break;
         }
         usedPrefix = true;
+        lastExact = false;
         continue;
       }
       if (!alignsExact(tok, want)) {
@@ -411,7 +424,13 @@ function uniqueFormLeftPrefix(
     }
     if (!ok) continue;
     const coverage = k / n;
-    if (coverage < MIN_FORM_PREFIX_COVERAGE) continue;
+    if (!lastExact) {
+      if (coverage < MIN_FORM_PREFIX_COVERAGE) continue;
+    } else if (tokenIsStop(tokens[k - 1])) {
+      continue;
+    } else if (coverage < MIN_EXACT_LEFT_PREFIX_COVERAGE) {
+      continue;
+    }
     candidates.push({ seq, coverage, n, usedPrefix });
   }
   return uniqueCandidateResolution(candidates, configured, "left-prefix");
@@ -532,6 +551,195 @@ function uniqueExactOneTokenAlias(
   if (keys.size > 1) return { status: "ambiguous", keys: [...keys].sort() };
   const concept = configured.byKey?.get(matches[0].concept.key) || matches[0].concept;
   return uniqueResolution(concept, ["form"], false, "full", [...(matches[0].tokens || [])]);
+}
+
+type PrefixRecallCandidate = {
+  seq: ConfiguredConceptSequence;
+  exactCount: number;
+  lastExact: boolean;
+  partialCompleteness: number;
+  evidence: number;
+};
+
+function typedPrefixOfWant(tok: QueryToken, want: string): string | null {
+  for (const form of tokenForms(tok)) {
+    if (form && form.length < want.length && want.startsWith(form)) return form;
+  }
+  return null;
+}
+
+function partialTokenCompleteness(tok: QueryToken, want: string): number {
+  const prefix = typedPrefixOfWant(tok, want);
+  if (!prefix || !want) return 0;
+  return prefix.length / want.length;
+}
+
+function prefixRecallEvidence(exactCount: number, partialCompleteness: number, n: number): number {
+  if (!(n > 0)) return 0;
+  return (exactCount + partialCompleteness) / n;
+}
+
+function toConfiguredPrefixRecall(
+  hit: PrefixRecallCandidate,
+  configured: SearchPlugin
+): ConfiguredPrefixRecall {
+  const concept = configured.byKey?.get(hit.seq.concept.key) || hit.seq.concept;
+  const form = [...(hit.seq.tokens || [])];
+  return {
+    key: concept.key,
+    form,
+    exactCount: hit.exactCount,
+    formLength: form.length,
+    coverage: Number(hit.evidence.toFixed(4)),
+    lastExact: hit.lastExact,
+    partialCompleteness: Number(hit.partialCompleteness.toFixed(4)),
+  };
+}
+
+function comparePrefixRecallCandidates(a: PrefixRecallCandidate, b: PrefixRecallCandidate) {
+  return (
+    b.evidence - a.evidence ||
+    a.seq.tokens.length - b.seq.tokens.length ||
+    sequenceKey(a.seq.tokens).localeCompare(sequenceKey(b.seq.tokens))
+  );
+}
+
+function bestPrefixRecallPerConcept(candidates: PrefixRecallCandidate[]): PrefixRecallCandidate[] {
+  const byKey = new Map<string, PrefixRecallCandidate[]>();
+  for (const hit of candidates) {
+    const key = hit.seq.concept.key;
+    const rows = byKey.get(key);
+    if (rows) rows.push(hit);
+    else byKey.set(key, [hit]);
+  }
+  const out: PrefixRecallCandidate[] = [];
+  for (const rows of byKey.values()) {
+    rows.sort(comparePrefixRecallCandidates);
+    out.push(rows[0]);
+  }
+  return out;
+}
+
+function uniquePrefixRecallResolution(
+  candidates: PrefixRecallCandidate[],
+  configured: SearchPlugin,
+  oneToken: boolean
+): ConfiguredPrefixRecall | null {
+  if (!candidates.length) return null;
+  if (oneToken) {
+    const keys = new Set(candidates.map((hit) => hit.seq.concept.key));
+    if (keys.size !== 1) return null;
+    const best = bestPrefixRecallPerConcept(candidates);
+    return best[0] ? toConfiguredPrefixRecall(best[0], configured) : null;
+  }
+  const perConcept = bestPrefixRecallPerConcept(candidates);
+  const rounded = (hit: PrefixRecallCandidate) => Number(hit.evidence.toFixed(4));
+  const bestEvidence = Math.max(...perConcept.map(rounded));
+  const top = perConcept.filter((hit) => rounded(hit) === bestEvidence);
+  const keys = new Set(top.map((hit) => hit.seq.concept.key));
+  if (keys.size !== 1) return null;
+  return toConfiguredPrefixRecall(top[0], configured);
+}
+
+function strictLeftPrefixRecall(
+  tokens: QueryToken[],
+  seq: ConfiguredConceptSequence
+): PrefixRecallCandidate | null {
+  const want = seq.tokens || [];
+  const n = want.length;
+  const k = tokens.length;
+  if (n < 2 || k < 1 || k >= n || tokenIsStop(tokens[0])) return null;
+  if (k === 1) {
+    if (!exactTypedToken(tokens[0], want[0])) return null;
+    const evidence = prefixRecallEvidence(1, 0, n);
+    return { seq, exactCount: 1, lastExact: true, partialCompleteness: 0, evidence };
+  }
+  let lastExact = true;
+  for (let j = 0; j < k; j++) {
+    const target = want[j];
+    const tok = tokens[j];
+    const isLast = j === k - 1;
+    if (isLast) {
+      if (exactTypedToken(tok, target)) {
+        lastExact = true;
+        continue;
+      }
+      if (!alignsLast(tok, target)) return null;
+      lastExact = false;
+      continue;
+    }
+    if (!alignsExact(tok, target)) return null;
+  }
+  const exactCount = lastExact ? k : k - 1;
+  const partialCompleteness = lastExact ? 0 : partialTokenCompleteness(tokens[k - 1], want[k - 1]);
+  return {
+    seq,
+    exactCount,
+    lastExact,
+    partialCompleteness,
+    evidence: prefixRecallEvidence(exactCount, partialCompleteness, n),
+  };
+}
+
+function stopTolerantLeftPrefixRecall(
+  tokens: QueryToken[],
+  seq: ConfiguredConceptSequence
+): PrefixRecallCandidate | null {
+  const want = seq.tokens || [];
+  const n = want.length;
+  if (n < 2 || tokenIsStop(tokens[0])) return null;
+  if (leadingTypedStopBlocks(tokens, want[0])) return null;
+  const aligned = alignSequential(tokens, want, 0, { allowNonLastPrefix: false });
+  if (!aligned.ok || aligned.consumedAllWant || aligned.matchedWant < 1) return null;
+  if (aligned.typedContentMatched < 1) return null;
+  const lastContent = lastTypedContentIndex(tokens);
+  if (lastContent < 0) return null;
+  const lastWant = want[aligned.matchedWant - 1];
+  const lastTok = tokens[lastContent];
+  const lastQuery = tokens[tokens.length - 1];
+  const lastAlignedStop = tokenIsStop(lastQuery) && alignsExact(lastQuery, lastWant);
+  if (tokenIsStop(lastQuery) && !lastAlignedStop && aligned.typedContentMatched < 2) {
+    return null;
+  }
+  const lastExact = !aligned.usedPrefix;
+  const exactCount = lastExact ? aligned.matchedWant : Math.max(aligned.matchedWant - 1, 0);
+  if (exactCount < 1) return null;
+  const partialCompleteness = lastExact ? 0 : partialTokenCompleteness(lastTok, lastWant);
+  if (!lastExact && !partialCompleteness) return null;
+  return {
+    seq,
+    exactCount,
+    lastExact,
+    partialCompleteness,
+    evidence: prefixRecallEvidence(exactCount, partialCompleteness, n),
+  };
+}
+
+/**
+ * Unoccupied unique configured-form prefix/completion evidence.
+ * Does not occupy, rewrite tokens, or attach a configured-concept.
+ * One-token queries fail closed when the exact first token belongs to more
+ * than one concept. Same-concept forms keep the strongest evidence (a longer
+ * authored form must not reduce a shorter matching form). Distinct concepts
+ * at the best evidence fail closed; insertion order is unused.
+ */
+export function resolveConfiguredPrefixRecall(
+  tokens: QueryToken[],
+  configured: SearchPlugin | null | undefined
+): ConfiguredPrefixRecall | null {
+  if (!configured?.sequences?.length || !tokens.length) return null;
+  const candidates: PrefixRecallCandidate[] = [];
+  const oneToken = tokens.length === 1;
+  for (const seq of configured.sequences) {
+    if (!isConfiguredFormKind(seq.kind) || isSingleFormWordAlias(seq) || !seq.concept?.key) continue;
+    const strict = strictLeftPrefixRecall(tokens, seq);
+    if (strict) candidates.push(strict);
+    else {
+      const tolerant = stopTolerantLeftPrefixRecall(tokens, seq);
+      if (tolerant) candidates.push(tolerant);
+    }
+  }
+  return uniquePrefixRecallResolution(candidates, configured, oneToken);
 }
 
 function configuredKeyPrefixKeys(tok: QueryToken, configured: SearchPlugin): string[] {

@@ -340,6 +340,24 @@ export function hasConfiguredSequenceIntent(query: AnalyzedQuery) {
   return Boolean(query.configuredSequenceIntent?.key);
 }
 
+export function configuredPrefixRecallKey(query: AnalyzedQuery): string | null {
+  if (hasConfiguredSequenceIntent(query)) return null;
+  const key = query.configuredPrefixRecall?.key;
+  return key || null;
+}
+
+/** Exact configured key in title or body. Peer forms are not weak-recall evidence. */
+export function documentMatchesConfiguredPrefixKey(query: AnalyzedQuery, doc: IndexedDocument) {
+  const key = configuredPrefixRecallKey(query);
+  if (!key) return false;
+  return (
+    doc.titleTokenSet.has(key) ||
+    doc.titleLemmaSet.has(key) ||
+    doc.bodyTokenSet.has(key) ||
+    doc.bodyLemmaSet.has(key)
+  );
+}
+
 export function hasConfiguredContentIdentity(query: AnalyzedQuery) {
   return Boolean(query.configuredContentIdentity?.key);
 }
@@ -494,7 +512,7 @@ export function topicalFormEvidence(doc: IndexedDocument, form: string[]): Topic
  * dropped by `retrievalSourcesForDocument` revalidation.
  */
 export function retrievalFormKindAllowsPrefix(kind: string) {
-  return kind !== "topical-recall";
+  return kind !== "topical-recall" && kind !== "configured-prefix-recall";
 }
 
 export function matchedTopicalForms(query: AnalyzedQuery, doc: IndexedDocument): string[][] {
@@ -526,7 +544,13 @@ export function unboundTypedTokens(query: AnalyzedQuery): QueryToken[] {
 
 export function evidenceTokens(query: AnalyzedQuery): QueryToken[] {
   if (hasConfiguredSequenceIntent(query)) return [];
-  return unboundTypedTokens(query);
+  const tokens = unboundTypedTokens(query);
+  if (!query.configuredPrefixRecall?.key || !tokens.length) return tokens;
+  const last = tokens[tokens.length - 1];
+  if (DEFAULT_STOP.has(String(last.normalized || "").toLowerCase())) {
+    return tokens.slice(0, -1);
+  }
+  return tokens;
 }
 
 export function isBoundTrailingTypedToken(query: AnalyzedQuery, token: QueryToken) {
@@ -725,6 +749,10 @@ function scanDocument(
 
   if (documentMatchesTopicalRecall(query, doc)) {
     add(doc, "topical-recall");
+  }
+
+  if (documentMatchesConfiguredPrefixKey(query, doc)) {
+    add(doc, "configured-prefix-recall");
   }
 }
 

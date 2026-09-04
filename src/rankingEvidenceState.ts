@@ -274,6 +274,7 @@ function createReusableScalar(): FeatureVector {
     relationshipType: null,
     relationshipSourceId: null,
     retrievalScore: 0,
+    configuredPrefixRecallScore: 0,
     relevanceKind: "direct",
     directClass: "none",
   };

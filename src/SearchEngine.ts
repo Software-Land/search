@@ -97,10 +97,11 @@ function packedFeatureStats(evaluated: number) {
 }
 
 function missingPhraseFeatured(query: AnalyzedQuery, doc: IndexedDocument): FeaturedHit {
+  const retrievalSources = retrievalSourcesForDocument(query, doc);
   return {
     document: doc,
-    retrievalSources: retrievalSourcesForDocument(query, doc),
-    features: extractFeatures(query, doc, { relationship: null, retrievalScore: 0 }),
+    retrievalSources,
+    features: extractFeatures(query, doc, { relationship: null, retrievalScore: 0, retrievalSources }),
   };
 }
 
@@ -303,6 +304,17 @@ function serializeHit(c: RankedHit, query: AnalyzedQuery, explain?: boolean): Se
         equivalentRecall: query.equivalentRecall?.length
           ? query.equivalentRecall.map((pair) => ({ source: pair.source, target: pair.target }))
           : undefined,
+        configuredPrefixRecall: query.configuredPrefixRecall
+          ? {
+              key: query.configuredPrefixRecall.key,
+              form: [...query.configuredPrefixRecall.form],
+              exactCount: query.configuredPrefixRecall.exactCount,
+              formLength: query.configuredPrefixRecall.formLength,
+              coverage: query.configuredPrefixRecall.coverage,
+              lastExact: query.configuredPrefixRecall.lastExact,
+              partialCompleteness: query.configuredPrefixRecall.partialCompleteness,
+            }
+          : null,
         lexicalTokens: query.lexicalTokens,
         lexicalPhraseKey: query.lexicalPhraseKey,
         normalizedQueryPhrase: f.normalizedQueryPhrase ?? "",
@@ -555,6 +567,7 @@ export class SearchEngine {
           features: extractFeatures(query, hit.document, {
             relationship: hit.relationship || null,
             retrievalScore: retrievalScoreOf(hit),
+            retrievalSources: hit.retrievalSources,
           }),
         };
       });
@@ -659,7 +672,10 @@ export class SearchEngine {
     featured = applied.featured;
     for (const hit of applied.relatedHits) {
       throwIfAborted(signal);
-      const features = extractFeatures(query, hit.document, { relationship: hit.relationship });
+      const features = extractFeatures(query, hit.document, {
+        relationship: hit.relationship,
+        retrievalSources: hit.retrievalSources,
+      });
       featured.push({
         ...hit,
         features,
@@ -724,7 +740,10 @@ export class SearchEngine {
     for (const hit of applied.relatedHits) {
       throwIfAborted(signal);
       relationshipOnlyFeatureVectorsConstructed += 1;
-      const features = extractFeatures(query, hit.document, { relationship: hit.relationship });
+      const features = extractFeatures(query, hit.document, {
+        relationship: hit.relationship,
+        retrievalSources: hit.retrievalSources,
+      });
       featured.push({
         ...hit,
         features,

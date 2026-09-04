@@ -22,6 +22,7 @@ import {
   sequenceKey,
 } from "./configuredAuthoring.js";
 import {
+  resolveConfiguredPrefixRecall,
   resolveConfiguredPrefixSpans,
   resolveConfiguredSequence,
   resolveConfiguredSpans,
@@ -238,6 +239,7 @@ function admitSearchEquivalenceTargets(
 function attachSearchEquivalenceRecall(
   query: {
     configuredSequenceIntent?: { key?: string } | null;
+    configuredPrefixRecall?: { key?: string } | null;
     configuredSpans?: Array<{ key: string }>;
     configuredPrefixSpans?: Array<{ key: string }>;
     lexicalPhraseKey?: string;
@@ -263,7 +265,10 @@ function attachSearchEquivalenceRecall(
   for (let i = 0; i < analyzedTokens.length; i++) {
     if (covered.has(i)) continue;
     const tok = analyzedTokens[i];
-    if (DEFAULT_STOP.has(tok.normalized) && analyzedTokens.length > 2) continue;
+    if (DEFAULT_STOP.has(tok.normalized)) {
+      if (analyzedTokens.length > 2) continue;
+      if (query.configuredPrefixRecall && i === analyzedTokens.length - 1) continue;
+    }
     if (isAllDigitToken(tok.normalized)) continue;
     admitSearchEquivalenceTargets(syn, tok.normalized, seenPairs, pairs);
     if (tok.lemma && tok.lemma !== tok.normalized) {
@@ -1258,11 +1263,17 @@ export function analyzeQuery(
     configuredSequenceIntent,
     configuredSpans
   );
+  const configuredPrefixRecall = configuredSequenceIntent
+    ? null
+    : resolveConfiguredPrefixRecall(analyzedTokens, configured);
 
   for (let i = 0; i < analyzedTokens.length; i++) {
     if (covered.has(i)) continue;
     const tok = analyzedTokens[i];
-    if (DEFAULT_STOP.has(tok.normalized) && analyzedTokens.length > 2) continue;
+    if (DEFAULT_STOP.has(tok.normalized)) {
+      if (analyzedTokens.length > 2) continue;
+      if (configuredPrefixRecall && i === analyzedTokens.length - 1) continue;
+    }
     if (isAllDigitToken(tok.normalized)) {
       concepts.push({
         id: tok.normalized,
@@ -1356,6 +1367,7 @@ export function analyzeQuery(
     configuredSequenceIntent,
     configuredSpans,
     configuredPrefixSpans,
+    configuredPrefixRecall,
     configuredContentIdentity: resolveConfiguredContentIdentity(analyzedTokens, configuredSpans),
     standaloneRecall,
     topicalRecall,

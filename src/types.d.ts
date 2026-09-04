@@ -183,6 +183,21 @@ export interface ConfiguredPrefixSpan {
   usedPrefix: true;
 }
 
+/**
+ * Unoccupied unique configured-form prefix/completion evidence.
+ * Does not set occupancy, attach a configured-concept, or rewrite tokens.
+ * `coverage` is (exactCount + partialCompleteness) / formLength.
+ */
+export interface ConfiguredPrefixRecall {
+  key: string;
+  form: string[];
+  exactCount: number;
+  formLength: number;
+  coverage: number;
+  lastExact: boolean;
+  partialCompleteness: number;
+}
+
 export interface ContextualTitlePrefix {
   matchedPrefixTokens: string[];
   activeFinalPrefix: string;
@@ -256,6 +271,12 @@ export interface AnalyzedQuery {
    * Not exact configuredSpans and not topical recall.
    */
   configuredPrefixSpans?: ConfiguredPrefixSpan[];
+  /**
+   * Unique unoccupied configured-form prefix/completion. Absent when the
+   * query occupies a concept, no unique prefix exists, or multiple concepts
+   * remain plausible. Does not rewrite tokens or attach a configured-concept.
+   */
+  configuredPrefixRecall?: ConfiguredPrefixRecall | null;
   /**
    * Unique complete configured concept with only structural-wrapper remainder
    * (WH / copula / determiner) before a suffix exact span. Not occupancy.
@@ -490,6 +511,12 @@ export interface FeatureVector {
   equivalentRecallTitleMatch?: boolean;
   equivalentRecallBodyMatch?: boolean;
   equivalentRecallScore?: number;
+  /**
+   * Query-side unique configured-form prefix completeness for a prefix-only
+   * key candidate. 0 when occupancy is present, the candidate also has typed
+   * lexical provenance, or no unique prefix recall exists.
+   */
+  configuredPrefixRecallScore?: number;
   relationshipStrength: number;
   relationshipType: string | null;
   relationshipSourceId: string | null;
@@ -603,7 +630,7 @@ export interface IndexedLexicalState {
 export type ExtractFeaturesFn = (
   query: AnalyzedQuery,
   doc: IndexedDocument,
-  extra?: { relationship?: RelationshipInfo | null; retrievalScore?: number }
+  extra?: { relationship?: RelationshipInfo | null; retrievalScore?: number; retrievalSources?: string[] }
 ) => FeatureVector;
 
 export type ScoreFeaturesFn = (features: Partial<FeatureVector>) => number;

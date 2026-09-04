@@ -156,7 +156,10 @@ export function applyRelationshipExpansion({
       if (cls === "strong" || cls === "moderate") {
         continue;
       }
-      existing.features = extractFeatures(query, existing.document, { relationship });
+      existing.features = extractFeatures(query, existing.document, {
+        relationship,
+        retrievalSources: existing.retrievalSources,
+      });
       existing.score = scoreFeatures(existing.features);
       continue;
     }

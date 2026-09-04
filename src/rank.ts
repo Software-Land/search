@@ -86,6 +86,7 @@ export function scoreFeatures(f: Partial<FeatureVector>) {
     (Number(f.standaloneRecallScore) || 0) +
     (Number(f.topicalRecallScore) || 0) +
     (Number(f.equivalentRecallScore) || 0) +
+    (Number(f.configuredPrefixRecallScore) || 0) * 0.25 +
     (f.relationshipStrength || 0) * 0.45 +
     (f.retrievalScore || 0)
   );

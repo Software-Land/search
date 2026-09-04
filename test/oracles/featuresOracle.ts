@@ -746,6 +746,7 @@ export function extractFeaturesOracle(
     bodyPhraseCount: phrase.bodyPhraseCount,
     bodyPhraseFrequency: phrase.bodyPhraseFrequency,
     ...typedPhraseFieldFrequencies(query, doc),
+    configuredPrefixRecallScore: 0,
     relationshipStrength: relationship?.strength || 0,
     relationshipType: relationship?.type ?? null,
     relationshipSourceId: relationship?.sourceId ?? null,

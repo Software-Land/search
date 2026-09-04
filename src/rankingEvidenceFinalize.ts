@@ -633,6 +633,7 @@ function resetScalarForCandidate(session: RankingEvidenceSession) {
   scalar.retrievalScore = 0;
   scalar.relevanceKind = "direct";
   scalar.directClass = "none";
+  scalar.configuredPrefixRecallScore = 0;
   return scalar;
 }
 

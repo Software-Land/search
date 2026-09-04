@@ -90,6 +90,7 @@ describe("retrieval form prefix policy", () => {
     expect(retrievalFormKindAllowsPrefix("concept")).toBe(true);
     expect(retrievalFormKindAllowsPrefix("token")).toBe(true);
     expect(retrievalFormKindAllowsPrefix("topical-recall")).toBe(false);
+    expect(retrievalFormKindAllowsPrefix("configured-prefix-recall")).toBe(false);
   });
 });
 

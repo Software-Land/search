@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.6
+
+### Fixed
+
+- Configured partial-form correctness: unoccupied unique configured-form prefixes now contribute key-only candidates instead of disappearing until occupancy. Occupancy (the query means concept C) remains distinct from weaker configured-prefix recall (C should contribute while ordinary lexical interpretation stays active). There is no NIST special case, no result-count gate, and no ranking-weight retune.
+- Unique exact left prefixes occupy only when coverage is at least 1/2 (`national institute` 2/4 occupies NIST; `basically available` 2/6 stays graded BASE recall). Character-prefix final tokens keep the older 2/3 floor. A stop as the last newly aligned query token does not occupy; unique weak recall is still allowed (`identity and`). Trailing stops under that recall are not independent lexical terms, so `national in` cannot crowd out TLS.
+- Unoccupied unique prefixes use graded evidence `(exactCount + partialCompleteness) / formLength`, reusing existing contextual prefix string-length completeness. `1/N` is nonzero; there is no hard minimum coverage cutoff. Ambiguous prefixes fail closed. Same-concept forms keep the strongest valid evidence so a longer authored form cannot reduce a shorter matching form.
+- Weak recall retrieves the concept key only (`configured-prefix-recall`). True prefix-only candidates (`directClass` none) receive `configuredPrefixRecallScore` converted with the existing 0.25 body-lexical coefficient. Key-only hits that already have ordinary lexical class, including feature-level body evidence without a lexical retrieval source, do not receive that addend. Ordinary lexical hits are unchanged, including their `directClass`. Packed ranking evidence fails closed for this query class and uses the FeatureVector path.
+
 ## 0.6.5
 
 ### Changed

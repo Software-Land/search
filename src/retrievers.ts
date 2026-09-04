@@ -25,6 +25,7 @@ import {
   shortTitleTokenPrefixStub,
   isSearchEquivalenceRecallConcept,
   hasConfiguredSequenceIntent,
+  configuredPrefixRecallKey,
   retrievalFormKindAllowsPrefix,
   occupiedTitleJoins,
   configuredPeerForms,
@@ -53,7 +54,7 @@ import type {
   SearchIndex,
 } from "./types.js";
 
-type QueryFormKind = "token" | "lemma" | "acronym-key" | "concept" | "acronym-form" | "standalone-recall" | "topical-recall" | "equivalent-recall";
+type QueryFormKind = "token" | "lemma" | "acronym-key" | "concept" | "acronym-form" | "standalone-recall" | "topical-recall" | "equivalent-recall" | "configured-prefix-recall";
 type QueryForm = { form: string; kind: QueryFormKind };
 type AdaptiveActive = "full-scan" | "indexed-lexical";
 
@@ -118,12 +119,12 @@ export async function retrieveWithRankingEvidenceAsync(
     : null;
 }
 
-// Exact-title, configured-concept, and version bypass the BM25 budget
-// without a cap. Contextual title-prefix and full-query title-prefix are
-// capped must-keeps: overflow stays eligible for the ordinary candidateLimit
-// pool. Title-prefix keeps short-literal / query-"2" winners from losing to
-// high-TF body floods.
-const UNBOUNDED_MUST_KEEP = new Set<string>(["exact-title", "configured-concept", "version"]);
+// Exact-title, configured-concept, version, and configured-prefix-recall
+// key identity bypass the BM25 budget without a cap. Contextual title-prefix
+// and full-query title-prefix are capped must-keeps: overflow stays eligible
+// for the ordinary candidateLimit pool. Title-prefix keeps short-literal /
+// query-"2" winners from losing to high-TF body floods.
+const UNBOUNDED_MUST_KEEP = new Set<string>(["exact-title", "configured-concept", "version", "configured-prefix-recall"]);
 const CONTEXTUAL_MUST_KEEP_SOURCE = "contextual-title-prefix";
 const TITLE_PREFIX_KEEP_SOURCE = "title-prefix";
 const K1 = 1.2;
@@ -135,6 +136,7 @@ function postingTitleSource(kind: QueryFormKind) {
   if (kind === "standalone-recall") return "standalone-recall";
   if (kind === "topical-recall") return "topical-recall";
   if (kind === "equivalent-recall") return "equivalent-recall";
+  if (kind === "configured-prefix-recall") return "configured-prefix-recall";
   return "title-token";
 }
 
@@ -142,6 +144,7 @@ function postingBodySource(kind: QueryFormKind) {
   if (kind === "standalone-recall") return "standalone-recall";
   if (kind === "topical-recall") return "topical-recall";
   if (kind === "equivalent-recall") return "equivalent-recall";
+  if (kind === "configured-prefix-recall") return "configured-prefix-recall";
   return "body-lexical";
 }
 
@@ -268,6 +271,8 @@ function queryForms(query: AnalyzedQuery) {
       for (const token of form) add(token, "topical-recall");
     }
   }
+  const prefixKey = configuredPrefixRecallKey(query);
+  if (prefixKey) add(prefixKey, "configured-prefix-recall");
   return forms;
 }
 
@@ -486,10 +491,10 @@ export function createIndexedLexicalRetriever({
       if (bodyP) accumulatePosting(byPos, bodyP, postingBodySource(kind), 1, state.avgBodyDl, state.bodyDl, { signal, n });
       const titleL = state.titleLemmaPostings.get(form);
       if (titleL && titleL !== titleP) {
-        accumulatePosting(byPos, titleL, "morphology", titleBoost * 0.6, state.avgTitleDl, state.titleDl, { signal, n });
+        accumulatePosting(byPos, titleL, kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology", titleBoost * 0.6, state.avgTitleDl, state.titleDl, { signal, n });
       }
       const bodyL = state.bodyLemmaPostings.get(form);
-      if (bodyL) accumulatePosting(byPos, bodyL, "morphology", 0.5, state.avgBodyDl, state.bodyDl, { signal, n });
+      if (bodyL) accumulatePosting(byPos, bodyL, kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology", 0.5, state.avgBodyDl, state.bodyDl, { signal, n });
 
       const skipOccupiedFormPrefix =
         occupied && (kind === "acronym-form" || kind === "acronym-key");
@@ -905,8 +910,20 @@ export function createCompiledLexicalRetriever(): Retriever {
       const surface = compiled.bySurface.get(form);
       accumulateSurface(surface, "title", postingTitleSource(kind), TITLE_BOOST);
       if (!skipBodyWalk) accumulateSurface(surface, "body", postingBodySource(kind), 1);
-      accumulateLemma(compiled.byLemma.get(form), "title", "morphology", TITLE_BOOST * 0.6);
-      if (!skipBodyWalk) accumulateLemma(compiled.byLemma.get(form), "body", "morphology", 0.5);
+      accumulateLemma(
+        compiled.byLemma.get(form),
+        "title",
+        kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology",
+        TITLE_BOOST * 0.6
+      );
+      if (!skipBodyWalk) {
+        accumulateLemma(
+          compiled.byLemma.get(form),
+          "body",
+          kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology",
+          0.5
+        );
+      }
 
       const skipOccupiedFormPrefix =
         occupied && (kind === "acronym-form" || kind === "acronym-key");
@@ -1007,7 +1024,12 @@ export function createCompiledLexicalRetriever(): Retriever {
           if ((step++ & 7) === 0) throwIfAborted(signal);
           const surface = compiled.bySurface.get(form);
           accumulateSurface(surface, "body", postingBodySource(kind), 1);
-          accumulateLemma(compiled.byLemma.get(form), "body", "morphology", 0.5);
+          accumulateLemma(
+            compiled.byLemma.get(form),
+            "body",
+            kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology",
+            0.5
+          );
           if (formKindAllowsPrefix(kind) && !isAllDigitToken(form) && form.length >= 3) {
             let i = lowerBoundTerm(compiled.sortedTerms, form);
             while (i < compiled.sortedTerms.length) {

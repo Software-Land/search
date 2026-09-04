@@ -254,6 +254,15 @@ export interface SearchExplanation {
       forms: string[][];
     } | null;
     equivalentRecall?: Array<{ source: string; target: string }>;
+    configuredPrefixRecall?: {
+      key: string;
+      form: string[];
+      exactCount: number;
+      formLength: number;
+      coverage: number;
+      lastExact: boolean;
+      partialCompleteness: number;
+    } | null;
     lexicalTokens?: unknown[];
     lexicalPhraseKey?: string;
     normalizedQueryPhrase?: string;

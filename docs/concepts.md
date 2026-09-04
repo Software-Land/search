@@ -40,6 +40,30 @@ A concept is authored as `key` + `aliases`. Aliases are unordered semantic peers
 
 Once occupancy is unambiguous, key and alias spellings have identical search semantics and ranked results. Typed surface stays on the query for explain/provenance and must not leak into ranking. Occupied ranking evaluates each peer form independently; it does not concatenate aliases into one lexical query.
 
+A unique configured-form prefix that is not strong enough to occupy still has configured evidence. Occupancy and weak configured-prefix recall are distinct:
+
+| State | Query interpretation | Retrieval | Ranking |
+| --- | --- | --- | --- |
+| Occupancy | the query means concept C | concept key plus peer forms | occupied configured ranking |
+| Configured-prefix recall | weaker evidence that C should contribute | keep ordinary lexical forms; add **C's key only** | numeric `configuredPrefixRecallScore` on prefix-only key candidates |
+
+Occupancy subsumes prefix recall. Weak recall does not set `configuredSequenceIntent`, attach a `configured-concept` to `query.concepts`, change `configuredFormCoverage`, or spray peer aliases.
+
+Graded unoccupied evidence for a uniquely resolved form prefix is:
+
+```text
+partialCompleteness = last token is a character prefix
+  ? typedNormalized.length / wantedNormalized.length
+  : 0
+evidence = (exactCount + partialCompleteness) / matchedForm.length
+```
+
+`1/N` is nonzero. There is no hard minimum coverage cutoff for recall. Occupancy is the strong state where enough of the form is present that replacing ordinary lexical interpretation is justified: a unique exact left prefix occupies at coverage ≥ 1/2 (`national institute` 2/4), while 2/6 stays graded recall. Character-prefix final tokens keep the older 2/3 floor. A stop as the last newly aligned query token does not occupy (`identity and` is recall, not IAM occupancy).
+
+One-token queries fail closed when the exact first token belongs to forms from more than one concept (`hypertext`, `real`, `software`). For two or more aligned tokens, each concept keeps its strongest matching form; only a unique winning concept contributes; ties fail closed. Same-concept multiple forms keep the **maximum** valid evidence; adding a longer authored form must not reduce a shorter matching form.
+
+Packed ranking evidence fails closed for this query class (`configured-prefix-recall`) and uses the existing FeatureVector path. Prefix-only candidates keep the `directClass` they would otherwise have; the new score applies only when that class is `none` and is not a discrete ranking-signature change.
+
 Configured-content identity is not occupancy. When identity uniquely names a complete configured concept behind structural wrappers, ranking may accept an authored peer-form title for that concept (unioned with literal original-surface title equality). Occupancy resolution, collector apply/decline, typed phrase evidence, and occupancy's looser peer-form prefix reduction stay unchanged. Structural wrappers do not count as concept coverage.
 
 Occupancy is not matched-form completeness. A unique prefix may occupy a concept while query `formCoverage` remains the true prefix coverage (`application programming` is 2/3 of `application programming interface`). An unused extra alias must not dilute an existing form match.

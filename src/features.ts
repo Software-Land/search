@@ -1141,6 +1141,35 @@ function withStandaloneRecallFields(
   };
 }
 
+const CONFIGURED_PREFIX_RECALL_SOURCE = "configured-prefix-recall";
+
+function isPrefixOnlyConfiguredRecall(retrievalSources: string[] | undefined) {
+  if (!retrievalSources?.includes(CONFIGURED_PREFIX_RECALL_SOURCE)) return false;
+  return retrievalSources.every(
+    (source) => source === CONFIGURED_PREFIX_RECALL_SOURCE || source === "relationship"
+  );
+}
+
+function withConfiguredPrefixRecallFields(
+  query: AnalyzedQuery,
+  fields: ReturnType<typeof computeFeatureFields>,
+  retrievalSources?: string[]
+) {
+  const recall = query.configuredPrefixRecall;
+  const prefixOnly =
+    Boolean(recall) &&
+    !hasConfiguredSequenceIntent(query) &&
+    isPrefixOnlyConfiguredRecall(retrievalSources);
+  // Feature-level typed lexical evidence (body prefix startsWith, bound trailing
+  // stubs, etc.) can exist without a lexical retrieval source. Do not stack the
+  // prefix addend on those candidates; they already have a non-none class.
+  const score = prefixOnly && recall && classifyDirect(fields) === "none" ? recall.coverage : 0;
+  return {
+    ...fields,
+    configuredPrefixRecallScore: Number(score.toFixed(4)),
+  };
+}
+
 function finishFeatures(
   relationship: RelationshipInfo | null,
   retrievalScore: number,
@@ -1201,16 +1230,24 @@ function computeFeatureFields(query: AnalyzedQuery, doc: IndexedDocument) {
 export function extractFeatures(
   query: AnalyzedQuery,
   doc: IndexedDocument,
-  { relationship = null, retrievalScore = 0 }: { relationship?: RelationshipInfo | null; retrievalScore?: number } = {}
+  {
+    relationship = null,
+    retrievalScore = 0,
+    retrievalSources,
+  }: { relationship?: RelationshipInfo | null; retrievalScore?: number; retrievalSources?: string[] } = {}
 ): FeatureVector {
   if (!featureProfile) {
     return finishFeatures(
       relationship,
       retrievalScore,
-      withSynonymRecallFields(
+      withConfiguredPrefixRecallFields(
         query,
-        doc,
-        withTopicalRecallFields(query, doc, withStandaloneRecallFields(query, doc, computeFeatureFields(query, doc)))
+        withSynonymRecallFields(
+          query,
+          doc,
+          withTopicalRecallFields(query, doc, withStandaloneRecallFields(query, doc, computeFeatureFields(query, doc)))
+        ),
+        retrievalSources
       )
     );
   }
@@ -1226,7 +1263,9 @@ export function extractFeatures(
   return finishFeatures(
     relationship,
     retrievalScore,
-    withSynonymRecallFields(
+    withConfiguredPrefixRecallFields(
+      query,
+      withSynonymRecallFields(
       query,
       doc,
       withTopicalRecallFields(query, doc, withStandaloneRecallFields(query, doc, {
@@ -1259,6 +1298,8 @@ export function extractFeatures(
     bodyPhraseFrequency: phrase.bodyPhraseFrequency,
     ...typedPhraseFieldFrequencies(query, doc),
       }))
+    ),
+      retrievalSources
     )
   );
 }
@@ -1357,6 +1398,7 @@ export const FEATURE_DEFINITIONS = {
   relationshipType: "Relationship type (semantic, same-category, …) or null. Not a query equivalence.",
   relationshipSourceId: "Primary document id that licensed this related candidate, or null.",
   retrievalScore: "Optional 0–1 retrieval evidence (e.g. normalized BM25). Default 0; not a substitute for constraints.",
+  configuredPrefixRecallScore: "Query-side unique configured-form prefix completeness for a prefix-only key candidate. 0 when occupancy is present, the candidate also has typed lexical provenance (a non-none directClass, including feature-level body/title evidence without a lexical retrieval source), or no unique prefix recall exists. Relationship overlay is not typed lexical provenance. Coverage is (exactCount + partialCompleteness) / formLength; partial completeness reuses contextual prefix string-length semantics.",
   relevanceKind: "direct | related. Related only when directClass is none and query-anchored relationship evidence exists. Weak/moderate/strong lexical class stays direct even when a relationship is attached.",
   directClass: "strong | moderate | weak | none. Interpretable lexical/configured evidence class, independent of relatedness.",
 };

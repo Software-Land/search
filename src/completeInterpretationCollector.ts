@@ -17,8 +17,9 @@
  * A complete phrase interpretation is a high-confidence cohort, not an
  * exclusive public set. Independently executed authored-title evidence already
  * featured for the query (short title-token prefix, configured title identity,
- * exact title, contextual title prefix) stays alongside the phrase cohort.
- * Generic body-only lexical neighbors and related-only hits are not re-admitted.
+ * exact title, contextual title prefix, configured-prefix-recall) stays
+ * alongside the phrase cohort. Generic body-only lexical neighbors and
+ * related-only hits are not re-admitted.
  */
 
 import type { AnalyzedQuery, FeaturedHit, IndexedDocument, SearchIndex } from "./types.js";
@@ -58,6 +59,10 @@ function hasIndependentAuthoredTitleEvidence(hit: FeaturedHit, query: AnalyzedQu
   if (f.exactTitleMatch || f.canonicalKeyTitle || f.contextualTitlePrefix) return true;
   if (f.configuredConceptMatch === "key-in-title" || f.configuredConceptMatch === "form") return true;
   return documentHasShortTitleTokenPrefix(query, hit.document);
+}
+
+function hasConfiguredPrefixRecallEvidence(hit: FeaturedHit): boolean {
+  return (hit.retrievalSources || []).includes("configured-prefix-recall");
 }
 
 export function collectCompleteInterpretations(args: {
@@ -146,7 +151,7 @@ export function applyCompleteInterpretationCollector(
   if (query) {
     for (const hit of featured) {
       if (seen.has(hit.document.id)) continue;
-      if (!hasIndependentAuthoredTitleEvidence(hit, query)) continue;
+      if (!hasIndependentAuthoredTitleEvidence(hit, query) && !hasConfiguredPrefixRecallEvidence(hit)) continue;
       next.push(hit);
       seen.add(hit.document.id);
     }

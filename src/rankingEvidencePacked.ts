@@ -203,6 +203,9 @@ export class PackedDirectFeatures {
   get retrievalScore() {
     return this.finalized.session.finalRetrievalScore[this.candidate];
   }
+  get configuredPrefixRecallScore() {
+    return 0;
+  }
   get relevanceKind() {
     return "direct" as const;
   }
