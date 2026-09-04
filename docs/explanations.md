@@ -30,8 +30,6 @@ Not exposed: postings lists, BM25 internals, engine class instances.
 
 **Equivalent recall:** query `qa` with `relationshipMap` `kind: "equivalent"` → `equivalent-recall`.
 
-**Equivalent recall:** query `qa` with `relationshipMap` `kind: "equivalent"` → `equivalent-recall`.
-
 **Typo / prefix:** query `blutooth` or `bluet` → analysis alternatives / prefix sources; still ranked by Core, not by edit-distance as a score.
 
 **Semantic related:** Bluetooth → Connected devices with `type: "semantic"` and builder provenance, typically on `related` when `relationshipStrategy: "separate"`.
