@@ -170,10 +170,10 @@ export interface ConfiguredContentIdentity {
 }
 
 /**
- * Incomplete configured subspan aligned with sequenceAligns prefix rules,
- * plus unique 1-token first-form prefixes. Occupies configured-concept
- * evidence only. Not exact configuredSpans, not whole-query
- * configuredSequenceIntent, and not topical recall.
+ * Incomplete configured subspan aligned with sequenceAligns prefix rules
+ * for n>=2 form windows. Occupies configured-concept evidence only. Not exact
+ * configuredSpans, not whole-query configuredSequenceIntent, and not topical
+ * recall. One-token proper first-form prefixes use configuredPrefixRecall.
  */
 export interface ConfiguredPrefixSpan {
   key: string;

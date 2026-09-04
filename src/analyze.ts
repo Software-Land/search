@@ -143,8 +143,8 @@ function uniqueStopRemainderSpanKey(
  * Occupy one unique incomplete configured window. Remainder tokens must
  * already be DEFAULT_STOP. Does not set configuredSequenceIntent or topical
  * recall. Exact spans and whole-query intent keep their existing paths.
- * One-token first-word prefixes may occupy when the longest matching form
- * is unique.
+ * One-token first-word prefixes are graded configured-prefix recall, not
+ * occupancy windows.
  */
 function attachConfiguredPrefixSpanConcept(
   concepts: QueryConcept[],

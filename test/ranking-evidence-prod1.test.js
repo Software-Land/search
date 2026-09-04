@@ -1,7 +1,6 @@
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { compileLexicalIndex } from "../dist/lexicalIndex.js";
-import { rankCandidates } from "../dist/rank.js";
 import { RankingEvidenceSessionPool } from "../dist/rankingEvidenceState.js";
 import {
   finalizeRankingEvidence,
@@ -208,7 +207,7 @@ test("configured summary-only inflection uses authoritative summary lemmas", asy
   }
 });
 
-test("integ occupancy-prefix remains exact and ranks Integrity first through oracle rank", async () => {
+test("integ first-form prefix fails packed closed and ranks Integrity first", async () => {
   const engine = await compiledEngine(
     [
       {
@@ -252,16 +251,9 @@ test("integ occupancy-prefix remains exact and ranks Integrity first through ora
   );
   const run = runEvidence(engine, "integ");
   try {
-    expectClean(run);
-    const featured = [];
-    for (let i = 0; i < run.hits.length; i++) {
-      const { features } = readRankingEvidenceFactsForTest(run.finalized, i);
-      featured.push({ ...run.hits[i], features });
-    }
-    const ranked = rankCandidates(featured);
-    expect(ranked[0].document.id).toBe("integrity");
-    expect(ranked[0].features.typedSurfaceTitleMatch).toBe(true);
-    expect(ranked[0].features.titlePrefixQuality).toBeGreaterThan(0.5);
+    expect(run.eligible).toBe(false);
+    expect(run.reason).toBe("configured-prefix-recall");
+    expect(engine.search("integ", { limit: 1 })[0].id).toBe("integrity");
   } finally {
     releaseEvidence(run);
   }

@@ -103,8 +103,10 @@ function stripSources(rel: RelationshipInfo): RelationshipInfo {
  * Expand one hop from strong primaries.
  * Rank uses max strength; explanations keep every supporting source.
  * Relationship support is orthogonal to directClass: existing lexical
- * candidates keep their class and stay `direct`. Newly admitted neighbors
- * with no lexical/configured class are `related`.
+ * candidates keep their class and stay `direct`. Independently retrieved
+ * configured-prefix-recall candidates also stay `direct` when an edge is
+ * attached. Newly admitted neighbors with no independent prefix-recall
+ * source and no lexical/configured class are `related`.
  */
 export function applyRelationshipExpansion({
   featured,

@@ -1150,6 +1150,10 @@ function isPrefixOnlyConfiguredRecall(retrievalSources: string[] | undefined) {
   );
 }
 
+function hasIndependentRetrievalSource(retrievalSources: string[] | undefined) {
+  return Boolean(retrievalSources?.includes(CONFIGURED_PREFIX_RECALL_SOURCE));
+}
+
 function withConfiguredPrefixRecallFields(
   query: AnalyzedQuery,
   fields: ReturnType<typeof computeFeatureFields>,
@@ -1173,7 +1177,8 @@ function withConfiguredPrefixRecallFields(
 function finishFeatures(
   relationship: RelationshipInfo | null,
   retrievalScore: number,
-  fields: ReturnType<typeof computeFeatureFields>
+  fields: ReturnType<typeof computeFeatureFields>,
+  retrievalSources?: string[]
 ): FeatureVector {
   const base: FeatureVector = {
     ...fields,
@@ -1185,7 +1190,15 @@ function finishFeatures(
     directClass: "none",
   };
   base.directClass = classifyDirect(base);
-  base.relevanceKind = relationship && base.directClass === "none" ? "related" : "direct";
+  // Configured-prefix recall is independent query-to-document evidence with
+  // `directClass` none by design. Relationship overlay is corroborating
+  // provenance, not a related-only channel. Other none-class neighbors with a
+  // relationship (including topical/standalone/equivalent overlay) keep the
+  // existing related classification. Pure relationship neighbors remain related.
+  base.relevanceKind =
+    relationship && base.directClass === "none" && !hasIndependentRetrievalSource(retrievalSources)
+      ? "related"
+      : "direct";
   return base;
 }
 
@@ -1248,7 +1261,8 @@ export function extractFeatures(
           withTopicalRecallFields(query, doc, withStandaloneRecallFields(query, doc, computeFeatureFields(query, doc)))
         ),
         retrievalSources
-      )
+      ),
+      retrievalSources
     );
   }
   timeFeat("queryPrep", () => getQueryFeatPrep(query));
@@ -1300,7 +1314,8 @@ export function extractFeatures(
       }))
     ),
       retrievalSources
-    )
+    ),
+    retrievalSources
   );
 }
 
@@ -1358,7 +1373,7 @@ export function classifyDirect(f: Partial<FeatureVector>): DirectClass {
 export const FEATURE_DEFINITIONS = {
   exactTitleMatch: "True when normalized query equals the full normalized title. Occupied ranking also accepts an authored peer-form join equal to the title. Configured-content identity unions that same peer-form title equality without replacing literal original-surface title equality.",
   exactTitleTokenMatch: "True when a non-stop canonical query token occurs as an independent title token (not a digit split from a dotted numeric span such as 1.2). Unique prefix completions and morphology use the lemma; typed stubs and completedToken are not exact surface evidence. A trailing stub bound by unique contextual form completion is not unbound exact-title-token evidence. Occupied multi-token peer forms contribute only when the title expresses the form (phrase or ≥2 content tokens).",
-  typedSurfaceTitleMatch: "True when the typed/repaired surface (before lemma or unique-prefix rewrite) occurs as an independent title token or is a legitimate prefix of one. Digits produced by splitting a dotted span are not typed-surface evidence. Canonical retrieval lemmas are not typed-surface evidence. A trailing stub bound by unique contextual form completion is not unbound title-prefix evidence. One-token first-form prefix occupancy unions this typed-surface check with peer-form title evidence so occupancy does not erase the typed stub. Occupied multi-token peer forms contribute only when the title expresses the form.",
+    typedSurfaceTitleMatch: "True when the typed/repaired surface (before lemma or unique-prefix rewrite) occurs as an independent title token or is a legitimate prefix of one. Digits produced by splitting a dotted span are not typed-surface evidence. Canonical retrieval lemmas are not typed-surface evidence. A trailing stub bound by unique contextual form completion is not unbound title-prefix evidence. Occupied ranking unions this typed-surface check with peer-form title evidence so occupancy does not erase the typed stub. Occupied multi-token peer forms contribute only when the title expresses the form.",
   titleCoverage: "Fraction of non-stop title tokens accounted for by the query. A trailing stub bound by unique contextual form completion is excluded. Occupied concepts take the max over peer forms that the title actually expresses.",
   queryCoverage: "Fraction of typed/configured query concepts evidenced in the title (or via a legitimate version alias). Extra search-equivalence recall concepts attached after configured occupancy are excluded. A trailing term concept bound by unique contextual form completion is excluded. Synonym forms merged into an ordinary term concept still count with that concept. Occupied or identity ranking intent excludes structural-wrapper term concepts (WH / copula / determiner) from the coverage set.",
   titlePrefixQuality: "How completely query tokens prefix title tokens, tightened by extra title tokens. A trailing stub bound by unique contextual form completion is excluded. Occupied concepts take the max over peer forms that the title actually expresses. One-token first-form prefix occupancy also takes the max of that peer-form quality and literal typed-surface prefix quality. Configured-content identity may use an authored peer form when that form is the full title, a contiguous title phrase, or the entire non-stop title.",
@@ -1399,6 +1414,6 @@ export const FEATURE_DEFINITIONS = {
   relationshipSourceId: "Primary document id that licensed this related candidate, or null.",
   retrievalScore: "Optional 0–1 retrieval evidence (e.g. normalized BM25). Default 0; not a substitute for constraints.",
   configuredPrefixRecallScore: "Query-side unique configured-form prefix completeness for a prefix-only key candidate. 0 when occupancy is present, the candidate also has typed lexical provenance (a non-none directClass, including feature-level body/title evidence without a lexical retrieval source), or no unique prefix recall exists. Relationship overlay is not typed lexical provenance. Coverage is (exactCount + partialCompleteness) / formLength; partial completeness reuses contextual prefix string-length semantics.",
-  relevanceKind: "direct | related. Related only when directClass is none and query-anchored relationship evidence exists. Weak/moderate/strong lexical class stays direct even when a relationship is attached.",
+  relevanceKind: "direct | related. Related only when directClass is none and query-anchored relationship evidence exists, except independently retrieved configured-prefix-recall candidates, which stay direct. Weak/moderate/strong lexical class stays direct even when a relationship is attached.",
   directClass: "strong | moderate | weak | none. Interpretable lexical/configured evidence class, independent of relatedness.",
 };

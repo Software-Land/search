@@ -200,7 +200,7 @@ describe("PROD-2 packed search() public differentials", () => {
     let mismatches = 0;
     const integ = compareSearch(engine, "integ", { limit: 10, relatedLimit: 5 });
     expect(engine.search("integ", { limit: 1 })[0].title).toBe("Integrity Is Not Obedience");
-    expect(integ.rankingEvidence).toBe("packed");
+    expect(integ.rankingEvidence).not.toBe("packed");
 
     for (const query of queries) {
       const meta = compareSearch(engine, query, { limit: 10, relatedLimit: 5 });

@@ -1,7 +1,8 @@
 /**
  * Generic configured-intent occupancy: morphology lemmas may occupy exact
  * keys, unique n≥2 expansion prefixes become whole-query intent, and
- * ambiguous first-expansion prefixes disambiguate by unique longest expansion.
+ * ambiguous first-form prefixes fail closed instead of occupying the longest
+ * matching form.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
@@ -111,13 +112,14 @@ describe("canonical lemma occupies exact configured key", () => {
 });
 
 describe("first-token configured prefix disambiguation", () => {
-  test("ambiguous first-token prefix occupies the unique longest expansion", () => {
+  test("ambiguous first-token prefixes fail closed instead of occupying the longest form", () => {
     for (const raw of ["appl", "appli", "applic", "applica"]) {
       const q = analyzeQuery(raw, { plugins: plugins(apiAppsecDict) });
       expect(q.tokens[0].surface).toBe(raw);
       expect(q.tokens[0].surfaceNormalized).toBe(raw);
-      expect(q.configuredSequenceIntent?.key).toBe("api");
-      expect(acronymIds(q)).toEqual(["api"]);
+      expect(q.configuredSequenceIntent).toBeNull();
+      expect(q.configuredPrefixRecall).toBeNull();
+      expect(acronymIds(q)).toEqual([]);
       expect(q.topicalRecall ?? null).toBeNull();
       expect(q.configuredPrefixSpans).toEqual([]);
     }
@@ -161,21 +163,20 @@ describe("first-token configured prefix disambiguation", () => {
     expect(q.topicalRecall?.key).toBe("appsec");
   });
 
-  test("wrapped stop remainder reuses the same first-token occupancy", () => {
+  test("wrapped stop remainder does not occupy a one-token first-form prefix", () => {
     const q = analyzeQuery("what is an appl", { plugins: plugins(apiAppsecDict) });
     expect(q.tokens.map((t) => t.surface)).toEqual(["what", "is", "an", "appl"]);
     expect(q.configuredSequenceIntent).toBeNull();
-    expect(q.configuredPrefixSpans).toEqual([
-      { key: "api", start: 3, end: 4, matchedKinds: ["form"], usedPrefix: true },
-    ]);
-    expect(acronymIds(q)).toEqual(["api"]);
+    expect(q.configuredPrefixSpans).toEqual([]);
+    expect(q.configuredPrefixRecall).toBeNull();
+    expect(acronymIds(q)).toEqual([]);
     expect(q.topicalRecall ?? null).toBeNull();
   });
 
   test("generic application prefix does not activate AppSec topical recall", () => {
     for (const raw of ["appl", "applic", "what is an applic"]) {
       const q = analyzeQuery(raw, { plugins: plugins(apiAppsecDict) });
-      expect(acronymIds(q)).toEqual(["api"]);
+      expect(acronymIds(q)).toEqual([]);
       expect(q.topicalRecall ?? null).toBeNull();
     }
   });
@@ -220,7 +221,8 @@ describe("unknown-token repair stays isolated from configured prefixes", () => {
     expect(q.tokens[0].surfaceNormalized).toBe("appl");
     expect(q.tokens[0].sources).not.toContain("typo-correction");
     expect(q.alternatives.some((a) => a.source === "compound-segment")).toBe(false);
-    expect(q.configuredSequenceIntent?.key).toBe("api");
+    expect(q.configuredSequenceIntent).toBeNull();
+    expect(q.configuredPrefixRecall).toBeNull();
   });
 });
 
@@ -247,11 +249,9 @@ describe("configured occupancy retrieval", () => {
     expect(e.search("what are widgets", { limit: 3 })[0].id).toBe("widget");
   });
 
-  test("API prefix ranks the canonical API document first", async () => {
+  test("API n>=2 prefix ranks the canonical API document first", async () => {
     const e = await engine();
-    for (const raw of ["appl", "what is an appl", "application programming"]) {
-      expect(e.search(raw, { limit: 3 })[0].id).toBe("api");
-    }
+    expect(e.search("application programming", { limit: 3 })[0].id).toBe("api");
   });
 
   test("AppSec specific forms still rank App Sec first", async () => {
@@ -264,7 +264,7 @@ describe("configured occupancy retrieval", () => {
   test("indexed and full-scan agree on occupancy queries", async () => {
     const full = await engine(apiAppsecDict, "full-scan");
     const indexed = await engine(apiAppsecDict, "indexed");
-    for (const raw of ["widgets", "what are apis", "appl", "application programming", "app sec", "application se"]) {
+    for (const raw of ["widgets", "what are apis", "application programming", "app sec", "application se"]) {
       expect(indexed.search(raw).map((row) => row.id)).toEqual(full.search(raw).map((row) => row.id));
     }
   });

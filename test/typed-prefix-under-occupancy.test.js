@@ -1,7 +1,7 @@
 /**
- * Occupied one-token first-form prefixes must not erase typed title-prefix
- * evidence. `integ` may still uniquely occupy IDE among configured forms;
- * a title that begins with Integrity must still rank first.
+ * One-token first-form prefixes are graded configured-prefix recall, not
+ * occupancy. Typed title-prefix evidence must still rank a strong title stub
+ * first; occupancy must not be required to preserve that ranking.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
@@ -56,12 +56,17 @@ function titles(e, query, limit = 6) {
   return e.search(query, { limit }).map((row) => row.title);
 }
 
-describe("typed title prefix under one-token first-form occupancy", () => {
-  test("integ still occupies IDE among configured forms", () => {
+describe("typed title prefix under one-token first-form recall", () => {
+  test("integ is unique IDE recall, not occupancy", () => {
     const q = analyzeQuery("integ", { plugins });
     expect(q.tokens.map((t) => t.surfaceNormalized || t.surface)).toEqual(["integ"]);
-    expect(q.configuredSequenceIntent?.key).toBe("ide");
-    expect(q.configuredSequenceIntent?.matchedForm).toEqual(["integrated", "development", "environment"]);
+    expect(q.configuredSequenceIntent).toBeNull();
+    expect(q.configuredPrefixRecall).toMatchObject({
+      key: "ide",
+      form: ["integrated", "development", "environment"],
+      exactCount: 0,
+      formLength: 3,
+    });
   });
 
   test("a title beginning with Integrity ranks #1 for integ", async () => {

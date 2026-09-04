@@ -113,24 +113,15 @@ describe("configured prefix span resolver", () => {
     }
   });
 
-  test("unique longest first-expansion prefix occupies the longer configured entry", () => {
+  test("one-token first-form prefixes fail closed instead of occupying the longest form", () => {
     for (const raw of ["appl", "appli", "applic", "applica", "what is an appl", "what is an applica"]) {
       const q = analyzeQuery(raw, { plugins: plugins() });
       const spans = resolveConfiguredPrefixSpans(q.tokens, plugins()[1]);
-      if (raw.split(/\s+/).length === 1) {
-        expect(resolveConfiguredSequence(q.tokens, plugins()[1])).toMatchObject({
-          status: "unique",
-          intent: { key: "api" },
-        });
-        expect(q.configuredSequenceIntent?.key).toBe("api");
-        expect(q.configuredPrefixSpans).toEqual([]);
-      } else {
-        expect(q.configuredSequenceIntent).toBeNull();
-        expect(spans).toEqual([
-          expect.objectContaining({ key: "api", usedPrefix: true }),
-        ]);
-        expect(q.configuredPrefixSpans).toEqual(spans);
-      }
+      expect(resolveConfiguredSequence(q.tokens, plugins()[1])).toEqual({ status: "none" });
+      expect(q.configuredSequenceIntent).toBeNull();
+      expect(spans).toEqual([]);
+      expect(q.configuredPrefixSpans).toEqual([]);
+      expect(q.configuredPrefixRecall).toBeNull();
       expect(q.topicalRecall ?? null).toBeNull();
       expect(q.tokens.map((t) => t.surface)).toEqual(raw.split(/\s+/));
     }

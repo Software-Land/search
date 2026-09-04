@@ -42,8 +42,8 @@
       "sha256": "3300d56207d48b5727c7027770391b6fb8545287adec11ab9bf75ca772ecb16c"
     },
     "historical-scenarios.json": {
-      "bytes": 145455,
-      "sha256": "4859b1771d71424f23e59aa60746f29b5cf5d07115a45fae920ab84b926e2863"
+      "bytes": 145049,
+      "sha256": "9c02c3322a7b63d189fd0a02780e695917356b4953f45602291039db39278e05"
     },
     "relevance-config.json": {
       "bytes": 1415,
@@ -54,8 +54,8 @@
       "sha256": "bf09dd75b7a7c02e2ab983d863c23606e34a06d7ad4ea3d07cd41302b5b37e7c"
     },
     "historical-contract-updates.json": {
-      "bytes": 30749,
-      "sha256": "64769779f440cafaa8a2dfa1865b70c209cd6389575c9e532648e4c9dc2cc90c"
+      "bytes": 36662,
+      "sha256": "846862c8925488d240cee81b9ed0e03324591f06e30a1f66bb6103b54ee5cf97"
     },
     "relationship-map.json": {
       "bytes": 19676,

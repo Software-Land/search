@@ -643,16 +643,28 @@ function uniquePrefixRecallResolution(
 
 function strictLeftPrefixRecall(
   tokens: QueryToken[],
-  seq: ConfiguredConceptSequence
+  seq: ConfiguredConceptSequence,
+  { allowProperFirstPrefix = true }: { allowProperFirstPrefix?: boolean } = {}
 ): PrefixRecallCandidate | null {
   const want = seq.tokens || [];
   const n = want.length;
   const k = tokens.length;
   if (n < 2 || k < 1 || k >= n || tokenIsStop(tokens[0])) return null;
   if (k === 1) {
-    if (!exactTypedToken(tokens[0], want[0])) return null;
-    const evidence = prefixRecallEvidence(1, 0, n);
-    return { seq, exactCount: 1, lastExact: true, partialCompleteness: 0, evidence };
+    if (exactTypedToken(tokens[0], want[0])) {
+      const evidence = prefixRecallEvidence(1, 0, n);
+      return { seq, exactCount: 1, lastExact: true, partialCompleteness: 0, evidence };
+    }
+    if (!allowProperFirstPrefix || !tokenProperPrefixOf(tokens[0], want[0])) return null;
+    const partialCompleteness = partialTokenCompleteness(tokens[0], want[0]);
+    if (!partialCompleteness) return null;
+    return {
+      seq,
+      exactCount: 0,
+      lastExact: false,
+      partialCompleteness,
+      evidence: prefixRecallEvidence(0, partialCompleteness, n),
+    };
   }
   let lastExact = true;
   for (let j = 0; j < k; j++) {
@@ -719,9 +731,12 @@ function stopTolerantLeftPrefixRecall(
  * Unoccupied unique configured-form prefix/completion evidence.
  * Does not occupy, rewrite tokens, or attach a configured-concept.
  * One-token queries fail closed when the exact first token belongs to more
- * than one concept. Same-concept forms keep the strongest evidence (a longer
+ * than one concept. A one-token proper prefix of a unique first form token is
+ * graded recall, never occupancy; its evidence is weaker than the completed
+ * exact first token. Same-concept forms keep the strongest evidence (a longer
  * authored form must not reduce a shorter matching form). Distinct concepts
- * at the best evidence fail closed; insertion order is unused.
+ * at the best evidence fail closed; insertion order is unused. Configured
+ * KEY prefixes stay on the existing key-prefix occupancy path.
  */
 export function resolveConfiguredPrefixRecall(
   tokens: QueryToken[],
@@ -730,9 +745,10 @@ export function resolveConfiguredPrefixRecall(
   if (!configured?.sequences?.length || !tokens.length) return null;
   const candidates: PrefixRecallCandidate[] = [];
   const oneToken = tokens.length === 1;
+  const allowProperFirstPrefix = !(oneToken && configuredKeyPrefixKeys(tokens[0], configured).length);
   for (const seq of configured.sequences) {
     if (!isConfiguredFormKind(seq.kind) || isSingleFormWordAlias(seq) || !seq.concept?.key) continue;
-    const strict = strictLeftPrefixRecall(tokens, seq);
+    const strict = strictLeftPrefixRecall(tokens, seq, { allowProperFirstPrefix });
     if (strict) candidates.push(strict);
     else {
       const tolerant = stopTolerantLeftPrefixRecall(tokens, seq);
@@ -768,8 +784,10 @@ function tokenProperPrefixOf(tok: QueryToken, want: string): boolean {
 /**
  * One-token proper prefix of a configured form's first word.
  * Unique key prefixes occupy through the existing key-prefix path instead.
- * Several keys: occupy the unique longest peer form; same-length ties fail closed.
- * Insertion order and lexicographic key order are not used.
+ * Whole-query occupancy no longer uses this path; graded prefix recall does.
+ * Prefix-span matching still uses longest unique form / same-length fail-closed
+ * only for leftover 1-token windows, not as a stronger occupancy than the
+ * completed first token.
  */
 export function uniqueLongestFirstFormPrefix(
   tok: QueryToken,
@@ -890,10 +908,6 @@ export function resolveConfiguredSequence(
   if (stopTolerantLeft.status !== "none") return stopTolerantLeft;
   const suffix = uniqueFormSuffix(tokens, configured);
   if (suffix.status !== "none") return suffix;
-  if (tokens.length === 1) {
-    const hit = uniqueLongestFirstFormPrefix(tokens[0], configured);
-    if (hit) return uniqueResolution(hit.concept, ["form"], true, "left-prefix", hit.matchedForm);
-  }
   return { status: "none" };
 }
 
@@ -975,12 +989,11 @@ function windowId(start: number, end: number) {
 }
 
 /**
- * Incomplete configured key/form/alias windows using the same
- * `sequenceAligns` prefix rules as whole-query resolution. n>=2 form/alias
- * windows plus unique 1-token first-form prefixes (longest matching form
- * wins; same-length ties fail closed). Exact windows stay on
- * `resolveConfiguredSpans`. Same-key forms at the same indexes collapse.
- * Distinct keys at the same indexes are dropped.
+ * Incomplete configured form windows using the same `sequenceAligns` prefix
+ * rules as whole-query resolution. n>=2 form windows only. One-token proper
+ * first-form prefixes are graded `configuredPrefixRecall`, not occupancy spans.
+ * Exact windows stay on `resolveConfiguredSpans`. Same-key forms at the same
+ * indexes collapse. Distinct keys at the same indexes are dropped.
  */
 export function resolveConfiguredPrefixSpans(
   tokens: QueryToken[],
@@ -1014,30 +1027,6 @@ export function resolveConfiguredPrefixSpans(
       row.keys.add(seq.concept.key);
       if (seq.kind) row.kinds.add(String(seq.kind));
     }
-  }
-  for (let start = 0; start < tokens.length; start++) {
-    const tok = tokens[start];
-    if (!tok || DEFAULT_STOP.has(String(tok.normalized || ""))) continue;
-    if (exactWindows.has(windowId(start, start + 1))) continue;
-    const end = start + 1;
-    let contained = false;
-    for (const row of grouped.values()) {
-      if (start < row.end && end > row.start) {
-        contained = true;
-        break;
-      }
-    }
-    if (contained) continue;
-    const hit = uniqueLongestFirstFormPrefix(tok, configured);
-    if (!hit?.concept?.key) continue;
-    const id = windowId(start, end);
-    let row = grouped.get(id);
-    if (!row) {
-      row = { start, end, kinds: new Set(), keys: new Set() };
-      grouped.set(id, row);
-    }
-    row.keys.add(hit.concept.key);
-    row.kinds.add("form");
   }
   return [...grouped.values()]
     .filter((row) => row.keys.size === 1)

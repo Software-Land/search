@@ -80,14 +80,12 @@ async function indexedEngine(extra = {}) {
 }
 
 describe("PROD-2 packed ordinary search()", () => {
-  test("integ keeps Integrity #1 on the default hybrid packed path", async () => {
+  test("integ keeps Integrity #1 on the FeatureVector prefix-recall path", async () => {
     const engine = await indexedEngine();
     const results = engine.search("integ", { limit: 6 });
     expect(results[0].id).toBe("integrity");
     expect(results[0].title).toBe("Integrity Is Not Obedience");
-    expect(engine.lastSearchMeta.rankingEvidence).toBe("packed");
-    expect(engine.lastSearchMeta.directFeatureVectorsConstructed).toBe(0);
-    expect(engine.lastSearchMeta.optimizedDirectCandidates).toBeGreaterThan(0);
+    expect(engine.lastSearchMeta.rankingEvidence).not.toBe("packed");
   });
 
   test("ordinary search matches searchDetailed public rows without candidate-wide FeatureVectors", async () => {
@@ -98,7 +96,7 @@ describe("PROD-2 packed ordinary search()", () => {
       const detailed = engine.searchDetailed(query, { limit: 10, relatedLimit: 5 });
       expect(publicRows(packed)).toEqual(publicRows(detailed.results));
       expect(publicRows(engine.lastSearchMeta.related)).toEqual(publicRows(detailed.related));
-      if (["network", "search index", "integ"].includes(query)) {
+      if (["network", "search index"].includes(query)) {
         expect(packedMeta.rankingEvidence).toBe("packed");
         expect(packedMeta.directFeatureVectorsConstructed).toBeLessThan(3);
         if (packedMeta.optimizedDirectCandidates > 3) {
@@ -106,6 +104,9 @@ describe("PROD-2 packed ordinary search()", () => {
             packedMeta.optimizedDirectCandidates
           );
         }
+      }
+      if (query === "integ") {
+        expect(packedMeta.rankingEvidence).not.toBe("packed");
       }
       expect(detailed.meta.rankingEvidence).not.toBe("packed");
     }

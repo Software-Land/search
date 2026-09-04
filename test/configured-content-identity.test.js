@@ -84,10 +84,11 @@ describe("configured content identity", () => {
     }
   });
 
-  test("prefix spans never qualify", () => {
+  test("one-token first-form prefixes never qualify as identity or occupancy spans", () => {
     const q = analyzeQuery("what is an applicatio", { plugins: plugins() });
-    expect(q.configuredPrefixSpans?.length).toBeGreaterThan(0);
+    expect(q.configuredPrefixSpans || []).toEqual([]);
     expect(q.configuredSpans || []).toEqual([]);
+    expect(q.configuredSequenceIntent).toBeNull();
     expect(q.configuredContentIdentity).toBeNull();
   });
 

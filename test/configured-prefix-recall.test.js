@@ -1,7 +1,7 @@
 /**
  * 0.6.6 configured partial-form correctness: occupancy vs weak prefix recall.
  */
-import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
+import { SearchEngine, morphology, compileAuthoredRelevance, ARTIFACT_FORMATS, ARTIFACT_VERSION } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { retrievalFormKindAllowsPrefix } from "../dist/retrieve.js";
@@ -82,11 +82,22 @@ describe("configured prefix recall vs occupancy", () => {
   });
 
   test("graded NIST prefix evidence is monotonic through occupancy", () => {
+    const nationa = analyze("nationa").configuredPrefixRecall;
     const national = analyze("national").configuredPrefixRecall.coverage;
     const nationalI = analyze("national i").configuredPrefixRecall.coverage;
     const nationalIn = analyze("national in").configuredPrefixRecall.coverage;
     const nationalInst = analyze("national inst").configuredPrefixRecall.coverage;
+    expect(analyze("nationa").configuredSequenceIntent).toBeNull();
+    expect(nationa).toMatchObject({
+      key: "nist",
+      exactCount: 0,
+      formLength: 4,
+      lastExact: false,
+      coverage: Number(((7 / 8) / 4).toFixed(4)),
+      partialCompleteness: Number((7 / 8).toFixed(4)),
+    });
     expect(national).toBe(0.25);
+    expect(nationa.coverage).toBeLessThan(national);
     expect(nationalI).toBe(Number(((1 + 1 / 9) / 4).toFixed(4)));
     expect(nationalIn).toBe(Number(((1 + 2 / 9) / 4).toFixed(4)));
     expect(nationalInst).toBe(Number(((1 + 4 / 9) / 4).toFixed(4)));
@@ -178,12 +189,23 @@ describe("configured prefix recall vs occupancy", () => {
     ];
     expect(analyze("hypertext", httpFamily).configuredPrefixRecall).toBeNull();
     expect(analyze("hypertext", httpFamily).configuredSequenceIntent).toBeNull();
+    expect(analyze("hypertex", httpFamily).configuredPrefixRecall).toBeNull();
+    expect(analyze("hypertex", httpFamily).configuredSequenceIntent).toBeNull();
     expect(analyze("hypertext t", httpFamily).configuredSequenceIntent?.key).toBe("http");
     expect(analyze("hypertext transfer", httpFamily).configuredSequenceIntent?.key).toBe("http");
     expect(analyze("hypertext transfer protocol", httpFamily).configuredSequenceIntent?.key).toBe("http");
     expect(analyze("continuous integration", httpFamily).configuredSequenceIntent?.key).toBe("ci");
     expect(analyze("internet protocol", httpFamily).configuredSequenceIntent?.key).toBe("ip");
     expect(analyze("open graphics", httpFamily).configuredSequenceIntent?.key).toBe("opengl");
+  });
+
+  test("configured KEY prefixes stay off the form-recall path", () => {
+    expect(analyze("nist").configuredSequenceIntent?.key).toBe("nist");
+    expect(analyze("nist").configuredPrefixRecall).toBeNull();
+    expect(analyze("nis").configuredPrefixRecall).toBeNull();
+    expect(analyze("nis").concepts.some((c) => c.kind === "configured-concept" && c.id === "nist")).toBe(true);
+    expect(analyze("nationa").configuredSequenceIntent).toBeNull();
+    expect(analyze("nationa").configuredPrefixRecall?.key).toBe("nist");
   });
 
   test("cross-concept ambiguous prefixes fail closed", () => {
@@ -420,15 +442,23 @@ describe("Software.Land frozen contracts after prefix recall", () => {
     await sl.index(inputs.documents);
   });
 
-  test("integ remains Integrity Is Not Obedience #1", () => {
+  test("integ remains Integrity Is Not Obedience #1 without first-token occupancy", () => {
     const q = sl._prepareQuery("integ");
-    expect(q.configuredSequenceIntent?.key).toBeTruthy();
-    expect(q.configuredPrefixRecall).toBeNull();
+    expect(q.configuredSequenceIntent).toBeNull();
+    expect(q.configuredPrefixRecall).toMatchObject({
+      key: "ide",
+      exactCount: 0,
+      formLength: 3,
+      lastExact: false,
+    });
+    expect(q.configuredPrefixRecall.coverage).toBe(Number(((5 / 10) / 3).toFixed(4)));
     expect(sl.search("integ", { limit: 10, relatedLimit: 0 })[0].title).toBe("Integrity Is Not Obedience");
   });
 
   test("watchlist queries keep fail-closed or unique-recall contracts", () => {
     expect(sl._prepareQuery("hypertext").configuredPrefixRecall).toBeNull();
+    expect(sl._prepareQuery("hypertex").configuredPrefixRecall).toBeNull();
+    expect(sl._prepareQuery("hypertex").configuredSequenceIntent).toBeNull();
     expect(sl._prepareQuery("real").configuredPrefixRecall).toBeNull();
     expect(sl._prepareQuery("software").configuredPrefixRecall).toBeNull();
     expect(sl._prepareQuery("identity and").configuredSequenceIntent).toBeNull();
@@ -459,5 +489,75 @@ describe("Software.Land frozen contracts after prefix recall", () => {
     }
     expect(sl.search("national institute", { limit: 10, relatedLimit: 0 })[0].title).toBe("TLS 1.2 Vulnerability");
     expect(ranks[2]).toBeLessThanOrEqual(ranks[1]);
+  });
+});
+
+describe("configured-prefix recall relationship overlay", () => {
+  const dict = [{ key: "nist", aliases: [["national", "institute", "standards", "technology"]] }];
+  const docs = [
+    { id: "A", title: "National Notes", body: "national news without the key" },
+    { id: "B", title: "TLS Advisory", body: "nist appears only as the key" },
+    { id: "C", title: "Unrelated", body: "nothing relevant here" },
+  ];
+  const graph = {
+    format: ARTIFACT_FORMATS.relationships,
+    version: ARTIFACT_VERSION,
+    relationships: {
+      A: [{ target: "B", type: "semantic", strength: 0.9, provenance: "test" }],
+    },
+  };
+
+  async function overlayEngine(strategy) {
+    const e = SearchEngine.create({
+      schema,
+      plugins: plugins(dict),
+      documentRelationships: graph,
+      relationshipStrategy: strategy,
+    });
+    await e.index(docs);
+    return e;
+  }
+
+  test("prefix-recall stays direct when a relationship is also present", async () => {
+    const e = await overlayEngine("hybrid");
+    const detailed = e.searchDetailed("national", { limit: 10, relatedLimit: 5, explain: true });
+    const b = detailed.results.find((row) => row.id === "B");
+    expect(b).toBeTruthy();
+    expect(b.retrievalSources).toEqual(expect.arrayContaining(["configured-prefix-recall", "relationship"]));
+    expect(b.directClass).toBe("none");
+    expect(b.relevanceKind).toBe("direct");
+    expect(b.features.configuredPrefixRecallScore).toBe(0.25);
+    expect(detailed.related.some((row) => row.id === "B")).toBe(false);
+  });
+
+  test("separate keeps an independently recalled hit in primary results", async () => {
+    const e = await overlayEngine("separate");
+    const detailed = e.searchDetailed("national", { limit: 10, relatedLimit: 5, explain: true });
+    expect(detailed.results.map((row) => row.id)).toContain("B");
+    expect(detailed.related.map((row) => row.id)).not.toContain("B");
+    const b = detailed.results.find((row) => row.id === "B");
+    expect(b.relevanceKind).toBe("direct");
+    expect(b.retrievalSources).toEqual(expect.arrayContaining(["configured-prefix-recall", "relationship"]));
+  });
+
+  test("pure relationship neighbors remain related", async () => {
+    const e = await overlayEngine("separate");
+    const detailed = e.searchDetailed("national notes", { limit: 10, relatedLimit: 5, explain: true });
+    const neighbor = detailed.related.find((row) => row.id === "B");
+    expect(neighbor).toBeTruthy();
+    expect(neighbor.retrievalSources).toEqual(["relationship"]);
+    expect(neighbor.relevanceKind).toBe("related");
+    expect(neighbor.directClass).toBe("none");
+    expect(detailed.results.map((row) => row.id)).not.toContain("B");
+  });
+
+  test("none leaves prefix-recall direct without relationship overlay", async () => {
+    const e = await overlayEngine("none");
+    const detailed = e.searchDetailed("national", { limit: 10, relatedLimit: 5, explain: true });
+    const b = detailed.results.find((row) => row.id === "B");
+    expect(b.retrievalSources).toEqual(["configured-prefix-recall"]);
+    expect(b.relevanceKind).toBe("direct");
+    expect(b.relationship).toBeFalsy();
+    expect(detailed.related).toEqual([]);
   });
 });

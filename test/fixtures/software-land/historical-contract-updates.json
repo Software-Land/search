@@ -1186,5 +1186,128 @@
         }
       }
     ]
+  },
+  "firstTokenOccupancyRetiredRebaselines": {
+    "description": "OSS 0.6.6 retires first-token proper-prefix occupancy. A one-token proper prefix of a unique first form token used to occupy the unique longest matching form (appl → API via application programming interface). Completing that token then fell to graded recall or fail-closed, which violated 0.6.6 monotonicity. Those stubs are now graded recall when unique and fail-closed when ambiguous. API #1 for ambiguous appl* was a consequence of that longest-form occupancy heuristic, not a trusted identity contract. Ranking weights are unchanged. Not a Software.Land product-commit overlay.",
+    "updates": [
+      {
+        "index": 40,
+        "query": "what is an applica",
+        "reason": "APPROVED_REBASELINE: first-token proper-prefix occupancy retired because it violated monotonicity (proper prefix of the first form token occupied the unique longest form; completing the token dropped to recall or fail-closed). Ambiguous appl* is fail-closed ordinary lexical ranking, not API identity. Keep remaining API-family lexical hits in top 5. Occupancy-era API identity and relationship neighbors are not required. Ranking weights unchanged.",
+        "oldV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "Working with APIs",
+            "gRPC vs REST"
+          ],
+          "topN": 5
+        },
+        "newV1": {
+          "expectedTop": [
+            "REST API vs GraphQL"
+          ],
+          "topN": 5
+        }
+      },
+      {
+        "index": 41,
+        "query": "what is an appl",
+        "reason": "APPROVED_REBASELINE: first-token proper-prefix occupancy retired because it violated monotonicity (proper prefix of the first form token occupied the unique longest form; completing the token dropped to recall or fail-closed). Ambiguous appl* is fail-closed ordinary lexical ranking, not API identity. Keep remaining API-family lexical hits in top 5. Occupancy-era API identity and relationship neighbors are not required. Ranking weights unchanged.",
+        "oldV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "Working with APIs",
+            "gRPC vs REST"
+          ],
+          "topN": 5
+        },
+        "newV1": {
+          "expectedTop": [
+            "REST API vs GraphQL"
+          ],
+          "topN": 5
+        }
+      },
+      {
+        "index": 42,
+        "query": "what is an appli",
+        "reason": "APPROVED_REBASELINE: first-token proper-prefix occupancy retired because it violated monotonicity (proper prefix of the first form token occupied the unique longest form; completing the token dropped to recall or fail-closed). Ambiguous appl* is fail-closed ordinary lexical ranking, not API identity. Keep remaining API-family lexical hits in top 5. Occupancy-era API identity and relationship neighbors are not required. Ranking weights unchanged.",
+        "oldV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "Working with APIs",
+            "gRPC vs REST"
+          ],
+          "topN": 5
+        },
+        "newV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL"
+          ],
+          "topN": 5
+        }
+      },
+      {
+        "index": 43,
+        "query": "what is an applic",
+        "reason": "APPROVED_REBASELINE: first-token proper-prefix occupancy retired because it violated monotonicity (proper prefix of the first form token occupied the unique longest form; completing the token dropped to recall or fail-closed). Ambiguous appl* is fail-closed ordinary lexical ranking, not API identity. Keep remaining API-family lexical hits in top 5. Occupancy-era API identity and relationship neighbors are not required. Ranking weights unchanged.",
+        "oldV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "Working with APIs",
+            "gRPC vs REST"
+          ],
+          "topN": 5
+        },
+        "newV1": {
+          "expectedTop": [
+            "REST API vs GraphQL"
+          ],
+          "topN": 5
+        }
+      },
+      {
+        "index": 44,
+        "query": "applic",
+        "reason": "APPROVED_REBASELINE: first-token proper-prefix occupancy retired because it violated monotonicity (proper prefix of the first form token occupied the unique longest form; completing the token dropped to recall or fail-closed). Ambiguous appl* is fail-closed ordinary lexical ranking, not API identity. Keep remaining API-family lexical hits in top 5. Occupancy-era API identity and relationship neighbors are not required. Ranking weights unchanged.",
+        "oldV1": {
+          "expectedTop": [
+            "What is an API?",
+            "REST API vs GraphQL",
+            "What is an Interface?",
+            "Working with APIs"
+          ],
+          "topN": 5
+        },
+        "newV1": {
+          "expectedTop": [
+            "REST API vs GraphQL"
+          ],
+          "topN": 5
+        }
+      },
+      {
+        "index": 46,
+        "query": "appl",
+        "reason": "APPROVED_REBASELINE: first-token proper-prefix occupancy retired because it violated monotonicity (proper prefix of the first form token occupied the unique longest form; completing the token dropped to recall or fail-closed). Ambiguous appl* is fail-closed ordinary lexical ranking, not API identity. Keep remaining API-family lexical hits in top 5. Occupancy-era API identity and relationship neighbors are not required. Ranking weights unchanged.",
+        "oldV1": {
+          "expectedTop": [
+            "What is an API?"
+          ],
+          "topN": 1
+        },
+        "newV1": {
+          "expectedTop": [
+            "REST API vs GraphQL"
+          ],
+          "topN": 5
+        }
+      }
+    ]
   }
 }
