@@ -61,8 +61,10 @@ function pluginLemma(plugins: SearchPlugin[], token: string) {
 }
 
 /**
- * Confident morphology only (explicit lemma table). Suffix-heuristic stems
- * stay on `lemma` and do not rewrite retrieval `normalized`.
+ * Authoritative morphology only (`canonicalLemma`). A `lemma()` result that is
+ * not also canonical stays on `lemma` and does not rewrite retrieval
+ * `normalized`. Built-in English suffix-heuristic stems are one producer of
+ * that lemma-only class.
  */
 function pluginCanonicalLemma(plugins: SearchPlugin[], token: string) {
   for (const plugin of plugins) {
@@ -1158,8 +1160,8 @@ export function analyzeQuery(
       sources.push("leet-decode");
       alternatives.push({ tokens: [leet], source: "leet-decode", confidence: 0.75 });
     }
-    // Explicit lemma-table identity is more confident than edit-distance.
-    // Suffix-heuristic stems stay on `lemma` and do not skip typo repair.
+    // Canonical lemma identity is more confident than edit-distance.
+    // Non-canonical lemma() stems stay on `lemma` and do not skip typo repair.
     const tableLemma = pluginCanonicalLemma(plugins, normalized);
     const exactExplicitIntent = explicitQueryIntentKeys.has(surfaceTok);
     const typoHits =

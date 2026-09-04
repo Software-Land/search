@@ -1,14 +1,17 @@
 /**
- * Policy C: suffix-heuristic lemmas are exact-equivalence only.
+ * Policy C: non-canonical lemmas are exact-equivalence only.
  * They must not generate ordinary lexical prefix evidence.
+ * Built-in English suffix-heuristic stems are one producer; custom
+ * SearchPlugin.lemma() without canonicalLemma is another.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { extractFeatures } from "../dist/features.js";
 import {
   conceptMatchesBody,
+  conceptMatchesTitle,
   formAllowsOrdinaryLexicalPrefix,
-  heuristicLemmaOnlyForms,
+  nonCanonicalLemmaOnlyForms,
 } from "../dist/retrieve.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { loadSoftwareLandRelevanceInputs } from "./helpers/software-land-fixture.js";
@@ -22,7 +25,7 @@ describe("heuristic lemma prefix capability", () => {
     expect(q.tokens[0].normalized).toBe("nation");
     expect(q.tokens[0].lemma).toBe("nat");
     expect(q.concepts.find((c) => c.kind === "term").forms).toEqual(expect.arrayContaining(["nation", "nat"]));
-    expect([...heuristicLemmaOnlyForms(q)]).toEqual(["nat"]);
+    expect([...nonCanonicalLemmaOnlyForms(q)]).toEqual(["nat"]);
     expect(formAllowsOrdinaryLexicalPrefix(q, "nation")).toBe(true);
     expect(formAllowsOrdinaryLexicalPrefix(q, "nat")).toBe(false);
   });
@@ -34,7 +37,7 @@ describe("heuristic lemma prefix capability", () => {
     expect(q.tokens[0].lemma).toBe("compute");
     expect(formAllowsOrdinaryLexicalPrefix(q, "computing")).toBe(true);
     expect(formAllowsOrdinaryLexicalPrefix(q, "compute")).toBe(true);
-    expect(heuristicLemmaOnlyForms(q).size).toBe(0);
+    expect(nonCanonicalLemmaOnlyForms(q).size).toBe(0);
   });
 
   test("heuristic stem does not retrieve an unrelated body prefix", async () => {
@@ -158,5 +161,99 @@ describe("Software.Land nation family after heuristic-prefix restriction", () =>
 
   test("indexed and full-scan nation results match", () => {
     expect(titles(engines.indexed, "nation")).toEqual(titles(engines.fullScan, "nation"));
+  });
+});
+
+function miceLemmaPlugin(canonical) {
+  return {
+    name: "mice-lemma",
+    indexIdentity: canonical ? "mice-lemma-canonical" : "mice-lemma-only",
+    lemma(token) {
+      return token === "mice" ? "mouse" : token;
+    },
+    ...(canonical
+      ? {
+          canonicalLemma(token) {
+            return token === "mice" ? "mouse" : null;
+          },
+        }
+      : {}),
+  };
+}
+
+const miceDocs = [
+  { id: "exact", title: "Field Mouse", body: "a mouse in the field" },
+  { id: "title-prefix", title: "Mousepad Guide", body: "unrelated desk copy" },
+  { id: "body-prefix", title: "Desk Notes", body: "a mousepad on the desk" },
+];
+
+describe("custom plugin lemma vs canonicalLemma prefix capability", () => {
+  test("non-canonical custom lemma is exact-only", async () => {
+    const plugins = [miceLemmaPlugin(false)];
+    const q = analyzeQuery("mice", { plugins });
+    const tok = q.tokens[0];
+    expect(tok.surface).toBe("mice");
+    expect(tok.surfaceNormalized).toBe("mice");
+    expect(tok.normalized).toBe("mice");
+    expect(tok.lemma).toBe("mouse");
+    expect([...nonCanonicalLemmaOnlyForms(q)]).toEqual(["mouse"]);
+    expect(formAllowsOrdinaryLexicalPrefix(q, "mice")).toBe(true);
+    expect(formAllowsOrdinaryLexicalPrefix(q, "mouse")).toBe(false);
+
+    for (const retriever of ["full-scan", "indexed"]) {
+      const e = SearchEngine.create({ schema, plugins, retriever });
+      await e.index(miceDocs);
+      const prepared = e._prepareQuery("mice");
+      expect(prepared.tokens[0].normalized).toBe("mice");
+      expect(prepared.tokens[0].lemma).toBe("mouse");
+      const exact = e._index.documents.find((d) => d.id === "exact");
+      const titlePrefix = e._index.documents.find((d) => d.id === "title-prefix");
+      const bodyPrefix = e._index.documents.find((d) => d.id === "body-prefix");
+      const term = prepared.concepts.find((c) => c.kind === "term");
+      expect(conceptMatchesTitle(term, exact, prepared)).toBeTruthy();
+      expect(conceptMatchesTitle(term, exact, prepared)).not.toBe("prefix");
+      expect(conceptMatchesTitle(term, titlePrefix, prepared)).toBeNull();
+      expect(conceptMatchesBody(term, exact, prepared)).toBe(true);
+      expect(conceptMatchesBody(term, bodyPrefix, prepared)).toBe(false);
+      expect(extractFeatures(prepared, titlePrefix).bodyLexicalMatch).toBe(0);
+      const ids = e.search("mice", { limit: 10, relatedLimit: 0 }).map((row) => row.id);
+      expect(ids).toContain("exact");
+      expect(ids).not.toContain("title-prefix");
+      expect(ids).not.toContain("body-prefix");
+    }
+  });
+
+  test("canonicalLemma remains prefix-capable via rewritten normalized", async () => {
+    const plugins = [miceLemmaPlugin(true)];
+    const q = analyzeQuery("mice", { plugins });
+    const tok = q.tokens[0];
+    expect(tok.surface).toBe("mice");
+    expect(tok.surfaceNormalized).toBe("mice");
+    expect(tok.normalized).toBe("mouse");
+    expect(tok.lemma).toBe("mouse");
+    expect(nonCanonicalLemmaOnlyForms(q).size).toBe(0);
+    expect(formAllowsOrdinaryLexicalPrefix(q, "mice")).toBe(true);
+    expect(formAllowsOrdinaryLexicalPrefix(q, "mouse")).toBe(true);
+
+    for (const retriever of ["full-scan", "indexed"]) {
+      const e = SearchEngine.create({ schema, plugins, retriever });
+      await e.index(miceDocs);
+      const prepared = e._prepareQuery("mice");
+      expect(prepared.tokens[0].surface).toBe("mice");
+      expect(prepared.tokens[0].surfaceNormalized).toBe("mice");
+      expect(prepared.tokens[0].normalized).toBe("mouse");
+      expect(prepared.tokens[0].lemma).toBe("mouse");
+      const exact = e._index.documents.find((d) => d.id === "exact");
+      const titlePrefix = e._index.documents.find((d) => d.id === "title-prefix");
+      const bodyPrefix = e._index.documents.find((d) => d.id === "body-prefix");
+      const term = prepared.concepts.find((c) => c.kind === "term");
+      expect(conceptMatchesTitle(term, exact, prepared)).toBeTruthy();
+      expect(conceptMatchesTitle(term, titlePrefix, prepared)).toBe("prefix");
+      expect(conceptMatchesBody(term, bodyPrefix, prepared)).toBe(true);
+      const ids = e.search("mice", { limit: 10, relatedLimit: 0 }).map((row) => row.id);
+      expect(ids).toContain("exact");
+      expect(ids).toContain("title-prefix");
+      expect(ids).toContain("body-prefix");
+    }
   });
 });

@@ -64,7 +64,7 @@ export interface SearchPlugin {
   /** Deterministic identity for document-index-affecting plugin behavior. */
   indexIdentity?: string;
   lemma?: (token: string) => string;
-  /** Explicit lemma-table identity only; omit suffix-heuristic stems. */
+  /** Authoritative normalization; omit lemma-only stems that must not rewrite `normalized`. */
   canonicalLemma?: (token: string) => string | null;
   lexicon?: () => Iterable<string>;
   /** Inflected lemma-table keys for typo vocabulary. Not a public root export. */

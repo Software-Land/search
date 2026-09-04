@@ -59,14 +59,20 @@ export interface AdaptiveOptions {
  *
  * Hooks are duck-typed at runtime. Provide only the hooks you implement.
  * Custom plugins may supply `lemma`, `canonicalLemma`, and `lexicon`.
- * Configured concepts are not a custom-plugin field set; author
- * `configuredConcepts` and compile with `compileAuthoredRelevance()`.
+ * `lemma` supplies morphological equivalence. A lemma that is not also the
+ * canonical normalized form is exact-only for ordinary lexical prefix matching.
+ * `canonicalLemma` identifies authoritative normalization; when supplied, that
+ * value becomes the query's normalized form and follows ordinary normalized
+ * prefix semantics. Configured concepts are not a custom-plugin field set;
+ * author `configuredConcepts` and compile with `compileAuthoredRelevance()`.
  */
 export interface SearchPlugin {
   name?: string;
   /** Deterministic identity for plugin behavior compiled into a lexical index. */
   indexIdentity?: string;
+  /** Morphological equivalence. Lemma-only rewrites are exact-only for ordinary lexical prefix matching. */
   lemma?(token: string): string;
+  /** Authoritative normalization. When supplied, becomes the query's normalized form and follows ordinary prefix semantics. */
   canonicalLemma?(token: string): string | null;
   lexicon?(): Iterable<string>;
 }

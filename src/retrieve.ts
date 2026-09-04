@@ -851,4 +851,4 @@ export function retrievalSourcesForDocument(query: AnalyzedQuery, doc: IndexedDo
 }
 
 export { versionHit, conceptMatchesTitle, conceptMatchesBody };
-export { formAllowsOrdinaryLexicalPrefix, heuristicLemmaOnlyForms } from "./lexicalPrefixForms.js";
+export { formAllowsOrdinaryLexicalPrefix, nonCanonicalLemmaOnlyForms } from "./lexicalPrefixForms.js";

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.7
+
+### Fixed
+
+- Non-canonical morphology lemmas no longer manufacture ordinary lexical prefix evidence. Exact lemma equality is preserved; authoritative `canonicalLemma()` normalization retains normal prefix semantics. This prevents false-friend expansion such as `nation` → heuristic `nat` matching `nature` / `native` / `naturally`.
+
+### Changed
+
+- Internal query-semantic fact consumption was centralized so downstream retrieval/ranking/relationship code no longer depends on separate unique/group configured-prefix-recall field representation.
+- Removed unreachable ranking logic for the retired one-token configured-form occupancy model.
+
 ## 0.6.6
 
 ### Fixed
