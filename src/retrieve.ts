@@ -1,6 +1,7 @@
 import { isOneTokenMemberOfLongerPeerForm, sequenceKey } from "./configuredAuthoring.js";
 import { isNearCompletePrefix, allowPrefixMatch, DEFAULT_STOP, STRUCTURAL_WRAPPER_STOP } from "./text.js";
 import { dropConfiguredPrefixRecallTrailingStop } from "./configuredSequence.js";
+import { querySemanticFacts } from "./querySemantics.js";
 import {
   isAllDigitToken,
   queryTokenMatchesVersionCompact,
@@ -320,7 +321,7 @@ export function typedForm(token: Pick<QueryToken, "surface" | "surfaceNormalized
  * `learning`). Short proper prefixes (`sec`, `prot`, `l`) are consumed.
  */
 export function hasBoundContextualCompletion(query: AnalyzedQuery) {
-  return Boolean(query.contextualCompletion?.completedToken);
+  return querySemanticFacts(query).completion.boundTrailing;
 }
 
 export function shouldConsumeBoundTrailingToken(query: AnalyzedQuery) {
@@ -338,21 +339,21 @@ export function shouldConsumeBoundTrailingToken(query: AnalyzedQuery) {
 }
 
 export function hasConfiguredSequenceIntent(query: AnalyzedQuery) {
-  return Boolean(query.configuredSequenceIntent?.key);
+  return Boolean(querySemanticFacts(query).configured.occupiedKey);
 }
 
 export function configuredPrefixRecallKey(query: AnalyzedQuery): string | null {
-  if (hasConfiguredSequenceIntent(query)) return null;
-  const key = query.configuredPrefixRecall?.key;
-  return key || null;
+  const weak = querySemanticFacts(query).configured.weakRecall;
+  if (weak?.ambiguity !== "unique") return null;
+  return weak.candidates[0]?.key || null;
 }
 
 export function configuredPrefixRecallGroupKeys(query: AnalyzedQuery): string[] {
-  if (hasConfiguredSequenceIntent(query) || query.configuredPrefixRecall?.key) return [];
-  const group = query.configuredPrefixRecallGroup || [];
+  const weak = querySemanticFacts(query).configured.weakRecall;
+  if (weak?.ambiguity !== "group") return [];
   const keys: string[] = [];
   const seen = new Set<string>();
-  for (const row of group) {
+  for (const row of weak.candidates) {
     const key = row?.key;
     if (!key || seen.has(key)) continue;
     seen.add(key);
@@ -362,10 +363,17 @@ export function configuredPrefixRecallGroupKeys(query: AnalyzedQuery): string[] 
 }
 
 export function configuredPrefixRecallKeys(query: AnalyzedQuery): string[] {
-  if (hasConfiguredSequenceIntent(query)) return [];
-  const unique = configuredPrefixRecallKey(query);
-  if (unique) return [unique];
-  return configuredPrefixRecallGroupKeys(query);
+  const weak = querySemanticFacts(query).configured.weakRecall;
+  if (!weak) return [];
+  const keys: string[] = [];
+  const seen = new Set<string>();
+  for (const row of weak.candidates) {
+    const key = row?.key;
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    keys.push(key);
+  }
+  return keys;
 }
 
 function documentHasConfiguredKey(doc: IndexedDocument, key: string, titleOnly: boolean) {
@@ -376,13 +384,17 @@ function documentHasConfiguredKey(doc: IndexedDocument, key: string, titleOnly: 
 
 /** Unique recall: key in title or body. Ambiguous group recall: title key only. */
 export function documentMatchesConfiguredPrefixKey(query: AnalyzedQuery, doc: IndexedDocument) {
-  const unique = configuredPrefixRecallKey(query);
-  if (unique) return documentHasConfiguredKey(doc, unique, false);
-  return configuredPrefixRecallGroupKeys(query).some((key) => documentHasConfiguredKey(doc, key, true));
+  const weak = querySemanticFacts(query).configured.weakRecall;
+  if (!weak) return false;
+  if (weak.ambiguity === "unique") {
+    const key = weak.candidates[0]?.key;
+    return key ? documentHasConfiguredKey(doc, key, false) : false;
+  }
+  return weak.candidates.some((row) => row.key && documentHasConfiguredKey(doc, row.key, true));
 }
 
 export function hasConfiguredContentIdentity(query: AnalyzedQuery) {
-  return Boolean(query.configuredContentIdentity?.key);
+  return Boolean(querySemanticFacts(query).configured.contentIdentityKey);
 }
 
 /**
@@ -568,9 +580,10 @@ export function unboundTypedTokens(query: AnalyzedQuery): QueryToken[] {
 export function evidenceTokens(query: AnalyzedQuery): QueryToken[] {
   if (hasConfiguredSequenceIntent(query)) return [];
   const tokens = unboundTypedTokens(query);
-  if (!query.configuredPrefixRecall?.key || !tokens.length) return tokens;
+  const weak = querySemanticFacts(query).configured.weakRecall;
+  if (weak?.ambiguity !== "unique" || !tokens.length) return tokens;
   const last = tokens[tokens.length - 1];
-  if (dropConfiguredPrefixRecallTrailingStop(last, query.configuredPrefixRecall)) {
+  if (dropConfiguredPrefixRecallTrailingStop(last, weak.candidates[0])) {
     return tokens.slice(0, -1);
   }
   return tokens;

@@ -9,15 +9,12 @@ import type { CompiledTermRuntime } from "./lexicalIndex.js";
 import {
   evidenceTokens,
   formContentTokens,
-  hasBoundContextualCompletion,
-  hasConfiguredContentIdentity,
-  hasConfiguredRankingIntent,
-  hasConfiguredSequenceIntent,
   isBoundTrailingTypedToken,
   isSearchEquivalenceRecallConcept,
   rankingCoverageConcepts,
   shortTitleTokenPrefixStub,
 } from "./retrieve.js";
+import { querySemanticFacts } from "./querySemantics.js";
 import { allowPrefixMatch, DEFAULT_STOP, isNearCompletePrefix, levenshteinAtMost } from "./text.js";
 import type { AnalyzedQuery, QueryConcept } from "./types.js";
 import type { RankingEvidenceStatic } from "./rankingEvidenceState.js";
@@ -216,7 +213,7 @@ function typedContentLiterals(query: AnalyzedQuery) {
   const stream = query.tokens || [];
   if (!stream.length) return [];
   const last = stream[stream.length - 1];
-  const skipLast = hasBoundContextualCompletion(query);
+  const skipLast = querySemanticFacts(query).completion.boundTrailing;
   const out: string[] = [];
   for (const token of stream) {
     if (skipLast && token === last) continue;
@@ -228,9 +225,9 @@ function typedContentLiterals(query: AnalyzedQuery) {
 }
 
 function occupancyUnionsTypedTitleEvidence(query: AnalyzedQuery) {
-  if (!hasConfiguredSequenceIntent(query)) return false;
+  const key = querySemanticFacts(query).configured.occupiedKey;
+  if (!key) return false;
   if ((query.tokens || []).length !== 1) return false;
-  const key = query.configuredSequenceIntent?.key;
   const concept = (query.concepts || []).find(
     (candidate) => candidate.kind === "configured-concept" && candidate.id === key
   );
@@ -239,7 +236,7 @@ function occupancyUnionsTypedTitleEvidence(query: AnalyzedQuery) {
 }
 
 function configuredFormCoverage(query: AnalyzedQuery, facts: RankingQueryFacts) {
-  if (!hasConfiguredSequenceIntent(query)) return 0;
+  if (!querySemanticFacts(query).configured.occupiedKey) return 0;
   const coverage = facts.acronym?.formCoverage;
   return typeof coverage === "number" && Number.isFinite(coverage) ? coverage : 0;
 }
@@ -331,7 +328,7 @@ function compileContextual(
   state: RankingEvidenceStatic,
   query: AnalyzedQuery
 ): RankingEvidenceContextualPlan | null {
-  if (hasConfiguredSequenceIntent(query)) return null;
+  if (querySemanticFacts(query).configured.occupiedKey) return null;
   const tokens = query.tokens || [];
   if (tokens.length < 2) return null;
   const preceding: string[][] = [];
@@ -396,13 +393,14 @@ function formPlans(
 }
 
 function exactTitleNorms(query: AnalyzedQuery, facts: RankingQueryFacts) {
+  const semantics = querySemanticFacts(query);
   const out = new Set<string>();
-  if (hasConfiguredSequenceIntent(query) && facts.peerFormJoins.length) {
+  if (semantics.configured.occupiedKey && facts.peerFormJoins.length) {
     for (const join of facts.peerFormJoins) if (join) out.add(join);
     return out;
   }
   if (facts.joinedNorm) out.add(facts.joinedNorm);
-  if (hasConfiguredRankingIntent(query)) {
+  if (semantics.configured.occupiedKey || semantics.configured.contentIdentityKey) {
     for (const join of facts.peerFormJoins) if (join) out.add(join);
   }
   return out;
@@ -771,18 +769,18 @@ export function rankingEvidenceEligibilityReason(
   state: RankingEvidenceStatic | null
 ): string | null {
   if (!state) return "compact-index-required";
-  if (query.standaloneRecall?.key) return "standalone-recall";
-  if ((query.topicalRecall?.forms || []).length) return "topical-recall";
-  if ((query.equivalentRecall || []).length) return "equivalent-recall";
-  if (query.configuredPrefixRecall?.key) return "configured-prefix-recall";
-  if ((query.configuredPrefixRecallGroup || []).length) return "configured-prefix-recall";
+  const semantics = querySemanticFacts(query);
+  if (semantics.relatedRecall.standalone) return "standalone-recall";
+  if (semantics.relatedRecall.topical) return "topical-recall";
+  if (semantics.relatedRecall.equivalent) return "equivalent-recall";
+  if (semantics.configured.weakRecall) return "configured-prefix-recall";
   if (
     (query.dottedSpans || []).length ||
     (query.concepts || []).some((concept) => concept.kind === "number")
   ) {
     return "version-number-dotted";
   }
-  if (query.contextualCompletion?.completedToken || hasBoundContextualCompletion(query)) {
+  if (semantics.completion.boundTrailing) {
     return "bound-contextual-completion";
   }
   const ranking = rankingCoverageConcepts(query, query.concepts || []).filter(
@@ -834,11 +832,12 @@ export function compileRankingEvidencePlan(
   if (reason || !state) return { eligible: false, reason: reason || "ineligible", plan: null };
 
   const feature = rankingQueryFacts(query);
+  const semantics = querySemanticFacts(query);
   const facts: RankingEvidenceQueryFacts = {
     feature,
     typedLiterals: typedContentLiterals(query),
-    occupied: hasConfiguredSequenceIntent(query),
-    configuredContentIdentity: hasConfiguredContentIdentity(query),
+    occupied: Boolean(semantics.configured.occupiedKey),
+    configuredContentIdentity: Boolean(semantics.configured.contentIdentityKey),
     occupancyUnionsTyped: occupancyUnionsTypedTitleEvidence(query),
     configuredFormCoverage: configuredFormCoverage(query, feature),
     originalSurfaceTokens: (query.originalSurface || []).filter(Boolean),

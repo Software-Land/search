@@ -7,6 +7,7 @@
 import { parseRelationships } from "./artifacts.js";
 import { classifyDirect } from "./features.js";
 import { throwIfAborted } from "./cancel.js";
+import { querySemanticFacts } from "./querySemantics.js";
 import { rankCandidates, selectTopPerBuiltinSignature } from "./rank.js";
 import type {
   ConstraintDef,
@@ -118,8 +119,7 @@ function unionAmbiguousPrefixRecallPrimaries(
   query: RelationshipExpansionArgs["query"],
   primaries: FeaturedHit[]
 ) {
-  if (!query?.configuredPrefixRecallGroup?.length) return primaries;
-  if (query.configuredPrefixRecall?.key) return primaries;
+  if (querySemanticFacts(query).configured.weakRecall?.ambiguity !== "group") return primaries;
   const seen = new Set(primaries.map((hit) => hit.document.id));
   const extra: FeaturedHit[] = [];
   for (const hit of featured) {

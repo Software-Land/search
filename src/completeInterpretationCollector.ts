@@ -33,6 +33,7 @@ import type { AnalyzedQuery, FeaturedHit, IndexedDocument, SearchIndex } from ".
 import type { QueryPlan } from "./queryPlan.js";
 import type { FieldPhraseHit } from "./positionalQueries.js";
 import { documentHasShortTitleTokenPrefix } from "./retrieve.js";
+import { querySemanticFacts } from "./querySemantics.js";
 import { DEFAULT_STOP } from "./text.js";
 
 export const COMPLETE_INTERPRETATION_COLLECTOR = "complete-interpretation" as const;
@@ -148,15 +149,16 @@ export function collectCompleteInterpretations(args: {
 
 function suppressAmbiguousUnigramBodyPrefix(query?: AnalyzedQuery): boolean {
   if (!query) return false;
-  if (query.configuredSequenceIntent?.key) return false;
-  if (query.configuredPrefixRecall?.key) return false;
+  const configured = querySemanticFacts(query).configured;
+  if (configured.occupiedKey) return false;
+  if (configured.weakRecall?.ambiguity === "unique") return false;
   const tokens = query.tokens || [];
   let content = 0;
   for (const tok of tokens) {
     if (!DEFAULT_STOP.has(String(tok.normalized || ""))) content += 1;
   }
   if (content !== 1) return false;
-  return (query.configuredPrefixRecallGroup || []).length > 0;
+  return configured.weakRecall?.ambiguity === "group";
 }
 
 export function applyCompleteInterpretationCollector(

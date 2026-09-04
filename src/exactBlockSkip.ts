@@ -14,6 +14,7 @@ import {
   type CompiledTermRuntime,
 } from "./lexicalIndex.js";
 import { lexicalPhraseKeyFromQuery } from "./lexicalNormalize.js";
+import { querySemanticFacts } from "./querySemantics.js";
 import { allowPrefixMatch } from "./text.js";
 import type { AnalyzedQuery, IndexedDocument, QueryConcept } from "./types.js";
 import { isAllDigitToken } from "./versionForms.js";
@@ -72,12 +73,11 @@ export function stage3AUnsupportedReason(query: AnalyzedQuery): string | null {
   if (tokens.length < 2) return "token-count";
   if (query.alternatives?.length) return "alternatives";
   if (query.dottedSpans?.length) return "dotted-spans";
-  const prefix = query.prefixCompletion;
-  if (prefix?.completedToken || prefix?.canonicalToken) return "prefix-completion";
-  if (query.contextualCompletion?.completedToken) return "contextual-completion";
-  if ((query.topicalRecall?.forms || []).length) return "topical-recall";
-  if (query.configuredPrefixRecall?.key) return "configured-prefix-recall";
-  if ((query.configuredPrefixRecallGroup || []).length) return "configured-prefix-recall";
+  const semantics = querySemanticFacts(query);
+  if (semantics.completion.vocabularyPrefix) return "prefix-completion";
+  if (semantics.completion.boundTrailing) return "contextual-completion";
+  if (semantics.relatedRecall.topical) return "topical-recall";
+  if (semantics.configured.weakRecall) return "configured-prefix-recall";
   const concepts = query.concepts || [];
   if (concepts.some((concept) => concept.kind === "configured-concept")) return "configured-concept";
   const terms = concepts.filter((concept) => concept.kind === "term");

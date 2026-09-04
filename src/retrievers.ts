@@ -24,14 +24,12 @@ import {
   topicalRecallHint,
   shortTitleTokenPrefixStub,
   isSearchEquivalenceRecallConcept,
-  hasConfiguredSequenceIntent,
-  configuredPrefixRecallKeys,
-  configuredPrefixRecallGroupKeys,
   retrievalFormKindAllowsPrefix,
   occupiedTitleJoins,
   configuredPeerForms,
   formContentTokens,
 } from "./retrieve.js";
+import { querySemanticFacts } from "./querySemantics.js";
 import { allowPrefixMatch, DEFAULT_STOP } from "./text.js";
 import { isAllDigitToken } from "./versionForms.js";
 import { throwIfAborted } from "./cancel.js";
@@ -215,7 +213,8 @@ function queryForms(query: AnalyzedQuery) {
     seen.add(`${kind}:${f}`);
     forms.push({ form: f, kind });
   }
-  const occupied = hasConfiguredSequenceIntent(query);
+  const semantics = querySemanticFacts(query);
+  const occupied = Boolean(semantics.configured.occupiedKey);
   if (!occupied) {
     for (const tok of evidenceTokens(query)) {
       add(tok.normalized, "token");
@@ -272,7 +271,9 @@ function queryForms(query: AnalyzedQuery) {
       for (const token of form) add(token, "topical-recall");
     }
   }
-  for (const key of configuredPrefixRecallKeys(query)) add(key, "configured-prefix-recall");
+  for (const row of semantics.configured.weakRecall?.candidates || []) {
+    if (row.key) add(row.key, "configured-prefix-recall");
+  }
   return forms;
 }
 
@@ -456,8 +457,9 @@ export function createIndexedLexicalRetriever({
     const byPos = new Map<number, IndexedHit>();
     const k = limitOverride || candidateLimit;
     const forms = queryForms(query);
-    const occupied = hasConfiguredSequenceIntent(query);
-    const prefixRecallTitleOnly = configuredPrefixRecallGroupKeys(query).length > 0;
+    const semantics = querySemanticFacts(query);
+    const occupied = Boolean(semantics.configured.occupiedKey);
+    const prefixRecallTitleOnly = semantics.configured.weakRecall?.ambiguity === "group";
     for (const qNorm of titleNormsForQuery(query)) {
       const exact = state.titleByNorm.get(qNorm);
       if (exact) {
@@ -538,7 +540,7 @@ export function createIndexedLexicalRetriever({
 
     const qToks = query.tokens || [];
     const contextualQuality = new Map<number, number>();
-    if (!hasConfiguredSequenceIntent(query) && qToks.length >= 2) {
+    if (!occupied && qToks.length >= 2) {
       const first = qToks[0];
       const keys = [...new Set([first?.normalized, first?.lemma].filter(Boolean))];
       const contextualPos = new Set<number>();
@@ -890,8 +892,9 @@ export function createCompiledLexicalRetriever(): Retriever {
 
     const forms = queryForms(query);
     last.queryFormsExpanded = forms.length;
-    const occupied = hasConfiguredSequenceIntent(query);
-    const prefixRecallTitleOnly = configuredPrefixRecallGroupKeys(query).length > 0;
+    const semantics = querySemanticFacts(query);
+    const occupied = Boolean(semantics.configured.occupiedKey);
+    const prefixRecallTitleOnly = semantics.configured.weakRecall?.ambiguity === "group";
     for (const qNorm of titleNormsForQuery(query)) {
       const exact = compiled.titleByNorm.get(qNorm);
       if (exact) {
@@ -967,7 +970,7 @@ export function createCompiledLexicalRetriever(): Retriever {
     }
 
     const qTokens = query.tokens || [];
-    if (!hasConfiguredSequenceIntent(query) && qTokens.length >= 2) {
+    if (!occupied && qTokens.length >= 2) {
       const first = qTokens[0];
       const keys = [...new Set([first?.normalized, first?.lemma].filter((value): value is string => Boolean(value)))];
       const positions = new Set<number>();
