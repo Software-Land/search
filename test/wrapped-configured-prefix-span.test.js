@@ -122,6 +122,7 @@ describe("configured prefix span resolver", () => {
       expect(spans).toEqual([]);
       expect(q.configuredPrefixSpans).toEqual([]);
       expect(q.configuredPrefixRecall).toBeNull();
+      expect((q.configuredPrefixRecallGroup || []).map((row) => row.key).sort()).toEqual(["api", "appsec"]);
       expect(q.topicalRecall ?? null).toBeNull();
       expect(q.tokens.map((t) => t.surface)).toEqual(raw.split(/\s+/));
     }

@@ -278,6 +278,12 @@ export interface AnalyzedQuery {
    */
   configuredPrefixRecall?: ConfiguredPrefixRecall | null;
   /**
+   * One-token proper prefixes that match more than one concept. Unique
+   * `configuredPrefixRecall` is absent. Occupancy stays fail-closed. Retrieval
+   * may still keep every key as weak key-only evidence.
+   */
+  configuredPrefixRecallGroup?: ConfiguredPrefixRecall[] | null;
+  /**
    * Unique complete configured concept with only structural-wrapper remainder
    * (WH / copula / determiner) before a suffix exact span. Not occupancy.
    * Prefix spans never qualify. Coordinators/prepositions outside the span

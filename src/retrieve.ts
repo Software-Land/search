@@ -347,16 +347,38 @@ export function configuredPrefixRecallKey(query: AnalyzedQuery): string | null {
   return key || null;
 }
 
-/** Exact configured key in title or body. Peer forms are not weak-recall evidence. */
+export function configuredPrefixRecallGroupKeys(query: AnalyzedQuery): string[] {
+  if (hasConfiguredSequenceIntent(query) || query.configuredPrefixRecall?.key) return [];
+  const group = query.configuredPrefixRecallGroup || [];
+  const keys: string[] = [];
+  const seen = new Set<string>();
+  for (const row of group) {
+    const key = row?.key;
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    keys.push(key);
+  }
+  return keys;
+}
+
+export function configuredPrefixRecallKeys(query: AnalyzedQuery): string[] {
+  if (hasConfiguredSequenceIntent(query)) return [];
+  const unique = configuredPrefixRecallKey(query);
+  if (unique) return [unique];
+  return configuredPrefixRecallGroupKeys(query);
+}
+
+function documentHasConfiguredKey(doc: IndexedDocument, key: string, titleOnly: boolean) {
+  if (doc.titleTokenSet.has(key) || doc.titleLemmaSet.has(key)) return true;
+  if (titleOnly) return false;
+  return doc.bodyTokenSet.has(key) || doc.bodyLemmaSet.has(key);
+}
+
+/** Unique recall: key in title or body. Ambiguous group recall: title key only. */
 export function documentMatchesConfiguredPrefixKey(query: AnalyzedQuery, doc: IndexedDocument) {
-  const key = configuredPrefixRecallKey(query);
-  if (!key) return false;
-  return (
-    doc.titleTokenSet.has(key) ||
-    doc.titleLemmaSet.has(key) ||
-    doc.bodyTokenSet.has(key) ||
-    doc.bodyLemmaSet.has(key)
-  );
+  const unique = configuredPrefixRecallKey(query);
+  if (unique) return documentHasConfiguredKey(doc, unique, false);
+  return configuredPrefixRecallGroupKeys(query).some((key) => documentHasConfiguredKey(doc, key, true));
 }
 
 export function hasConfiguredContentIdentity(query: AnalyzedQuery) {

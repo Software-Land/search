@@ -263,6 +263,15 @@ export interface SearchExplanation {
       lastExact: boolean;
       partialCompleteness: number;
     } | null;
+    configuredPrefixRecallGroup?: Array<{
+      key: string;
+      form: string[];
+      exactCount: number;
+      formLength: number;
+      coverage: number;
+      lastExact: boolean;
+      partialCompleteness: number;
+    }>;
     lexicalTokens?: unknown[];
     lexicalPhraseKey?: string;
     normalizedQueryPhrase?: string;

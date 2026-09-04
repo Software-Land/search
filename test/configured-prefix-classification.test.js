@@ -62,7 +62,7 @@ describe("non-occupied prefix classification (synthetic)", () => {
     const analyzed = analyzeQuery("what is an appli", { plugins: plug });
     expect(analyzed.configuredSequenceIntent?.key ?? null).toBeNull();
     expect((analyzed.configuredPrefixSpans || []).find((s) => s.key === "api")).toBeFalsy();
-    expect(analyzed.configuredPrefixRecall).toBeNull();
+    expect(analyzed.configuredPrefixRecall?.key).toBe("api");
 
     const detailed = engine.searchDetailed("what is an appli", { limit: 10, relatedLimit: 8, explain: true });
     const boilerplate = detailed.results.find((h) => h.id === "boilerplate");

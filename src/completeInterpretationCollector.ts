@@ -10,22 +10,30 @@
  * to pass `resultCollector: "complete-interpretation"`) is the caller's decision.
  *
  * Completion consistency: when the typed phrase has no exact PhraseQuery hit,
- * every PhrasePrefix hit participates (title, summary, and body). Authored
- * title/summary preference on prefix-only expansions applies only when an
- * exact typed phrase hit already exists.
+ * every PhrasePrefix hit participates (title, summary, and body) unless the
+ * query is an ambiguous one-content-token prefix. That stub is not a complete
+ * phrase interpretation; body-only prefix expansions stay out so independently
+ * retrieved configured-prefix-recall keys can rank. Authored title/summary
+ * preference on prefix-only expansions applies only when an exact typed phrase
+ * hit already exists.
  *
  * A complete phrase interpretation is a high-confidence cohort, not an
  * exclusive public set. Independently executed authored-title evidence already
  * featured for the query (short title-token prefix, configured title identity,
  * exact title, contextual title prefix, configured-prefix-recall) stays
- * alongside the phrase cohort. Generic body-only lexical neighbors and
- * related-only hits are not re-admitted.
+ * alongside the phrase cohort. For an ambiguous one-content-token prefix,
+ * relationship neighbors of those prefix-recall primaries also stay; a
+ * single typed token may keep ordinary title-prefix hits. If the group does
+ * not retrieve any title-key document, the collector does not apply an empty
+ * cohort. Generic body-only lexical neighbors are not re-admitted when
+ * prefix-recall keys did retrieve.
  */
 
 import type { AnalyzedQuery, FeaturedHit, IndexedDocument, SearchIndex } from "./types.js";
 import type { QueryPlan } from "./queryPlan.js";
 import type { FieldPhraseHit } from "./positionalQueries.js";
 import { documentHasShortTitleTokenPrefix } from "./retrieve.js";
+import { DEFAULT_STOP } from "./text.js";
 
 export const COMPLETE_INTERPRETATION_COLLECTOR = "complete-interpretation" as const;
 export type ResultCollectorName = typeof COMPLETE_INTERPRETATION_COLLECTOR;
@@ -61,6 +69,15 @@ function hasIndependentAuthoredTitleEvidence(hit: FeaturedHit, query: AnalyzedQu
   return documentHasShortTitleTokenPrefix(query, hit.document);
 }
 
+function hasTitlePrefixRetrievalEvidence(hit: FeaturedHit): boolean {
+  const sources = hit.retrievalSources || [];
+  return sources.includes("title-prefix") || sources.includes("title-token-prefix");
+}
+
+function hasRelationshipRetrievalEvidence(hit: FeaturedHit): boolean {
+  return (hit.retrievalSources || []).includes("relationship");
+}
+
 function hasConfiguredPrefixRecallEvidence(hit: FeaturedHit): boolean {
   return (hit.retrievalSources || []).includes("configured-prefix-recall");
 }
@@ -71,6 +88,7 @@ export function collectCompleteInterpretations(args: {
   exactHits: FieldPhraseHit[];
   prefixHits: FieldPhraseHit[];
   configuredContentIdentity?: boolean;
+  suppressBodyPrefix?: boolean;
 }): CompleteInterpretationResult {
   const empty = (reason: CollectorDecision): CompleteInterpretationResult => ({
     apply: false,
@@ -94,10 +112,21 @@ export function collectCompleteInterpretations(args: {
   for (const hit of authoredPrefix) kept.set(hit.document.id, hit.document);
   // CASE A: no exact typed phrase → PhrasePrefix is the interpretation; all fields.
   // CASE B: exact typed phrase exists → body-only prefix expansions stay out.
-  if (exact.length === 0) {
+  // Ambiguous unigram prefixes are not a complete interpretation.
+  if (exact.length === 0 && !args.suppressBodyPrefix) {
     for (const hit of bodyPrefixOnly) kept.set(hit.document.id, hit.document);
   }
   if (!kept.size) {
+    if (args.suppressBodyPrefix) {
+      return {
+        apply: true,
+        reason: "apply-complete-union",
+        documentIds: [],
+        exactIds,
+        authoredPrefixIds: [],
+        bodyPrefixOnlyIds: bodyPrefixOnly.map((h) => h.document.id),
+      };
+    }
     return {
       apply: false,
       reason: "no-complete-hit",
@@ -117,6 +146,19 @@ export function collectCompleteInterpretations(args: {
   };
 }
 
+function suppressAmbiguousUnigramBodyPrefix(query?: AnalyzedQuery): boolean {
+  if (!query) return false;
+  if (query.configuredSequenceIntent?.key) return false;
+  if (query.configuredPrefixRecall?.key) return false;
+  const tokens = query.tokens || [];
+  let content = 0;
+  for (const tok of tokens) {
+    if (!DEFAULT_STOP.has(String(tok.normalized || ""))) content += 1;
+  }
+  if (content !== 1) return false;
+  return (query.configuredPrefixRecallGroup || []).length > 0;
+}
+
 export function applyCompleteInterpretationCollector(
   featured: FeaturedHit[],
   plan: QueryPlan,
@@ -130,7 +172,29 @@ export function applyCompleteInterpretationCollector(
     version: plan.versionIntent,
     exactHits: plan.exactHits,
     prefixHits: plan.prefixHits,
+    suppressBodyPrefix: suppressAmbiguousUnigramBodyPrefix(query),
   });
+  const suppress = suppressAmbiguousUnigramBodyPrefix(query);
+  const keepTitlePrefix = Boolean(suppress && query && (query.tokens || []).length === 1);
+  if (
+    collector.apply &&
+    collector.documentIds.length === 0 &&
+    suppress &&
+    !featured.some(
+      (hit) =>
+        hasConfiguredPrefixRecallEvidence(hit) ||
+        (keepTitlePrefix && hasTitlePrefixRetrievalEvidence(hit))
+    )
+  ) {
+    return {
+      featured,
+      collector: {
+        ...collector,
+        apply: false,
+        reason: "no-complete-hit",
+      },
+    };
+  }
   if (!collector.apply) return { featured, collector };
   const byId = new Map(featured.map((hit) => [hit.document.id, hit]));
   const next: FeaturedHit[] = [];
@@ -149,9 +213,18 @@ export function applyCompleteInterpretationCollector(
     }
   }
   if (query) {
+    const suppress = suppressAmbiguousUnigramBodyPrefix(query);
+    const keepTitlePrefix = suppress && (query.tokens || []).length === 1;
     for (const hit of featured) {
       if (seen.has(hit.document.id)) continue;
-      if (!hasIndependentAuthoredTitleEvidence(hit, query) && !hasConfiguredPrefixRecallEvidence(hit)) continue;
+      if (
+        !hasIndependentAuthoredTitleEvidence(hit, query) &&
+        !hasConfiguredPrefixRecallEvidence(hit) &&
+        !(keepTitlePrefix && hasTitlePrefixRetrievalEvidence(hit)) &&
+        !(suppress && hasRelationshipRetrievalEvidence(hit))
+      ) {
+        continue;
+      }
       next.push(hit);
       seen.add(hit.document.id);
     }

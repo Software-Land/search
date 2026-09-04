@@ -119,6 +119,7 @@ describe("first-token configured prefix disambiguation", () => {
       expect(q.tokens[0].surfaceNormalized).toBe(raw);
       expect(q.configuredSequenceIntent).toBeNull();
       expect(q.configuredPrefixRecall).toBeNull();
+      expect((q.configuredPrefixRecallGroup || []).map((row) => row.key).sort()).toEqual(["api", "appsec"]);
       expect(acronymIds(q)).toEqual([]);
       expect(q.topicalRecall ?? null).toBeNull();
       expect(q.configuredPrefixSpans).toEqual([]);
@@ -142,6 +143,7 @@ describe("first-token configured prefix disambiguation", () => {
       expect(q.configuredSequenceIntent).toBeNull();
       expect(acronymIds(q)).toEqual([]);
       expect(q.topicalRecall ?? null).toBeNull();
+      expect((q.configuredPrefixRecallGroup || []).map((row) => row.key).sort()).toEqual(["appsec", "appsvr"]);
       expect(resolveConfiguredPrefixSpans(q.tokens, plugins(sameLengthDict)[1])).toEqual([]);
     }
   });
@@ -169,6 +171,7 @@ describe("first-token configured prefix disambiguation", () => {
     expect(q.configuredSequenceIntent).toBeNull();
     expect(q.configuredPrefixSpans).toEqual([]);
     expect(q.configuredPrefixRecall).toBeNull();
+    expect((q.configuredPrefixRecallGroup || []).map((row) => row.key).sort()).toEqual(["api", "appsec"]);
     expect(acronymIds(q)).toEqual([]);
     expect(q.topicalRecall ?? null).toBeNull();
   });

@@ -24,6 +24,7 @@ import {
 import {
   dropConfiguredPrefixRecallTrailingStop,
   resolveConfiguredPrefixRecall,
+  resolveConfiguredPrefixRecallGroup,
   resolveConfiguredPrefixSpans,
   resolveConfiguredSequence,
   resolveConfiguredSpans,
@@ -1279,6 +1280,9 @@ export function analyzeQuery(
   const configuredPrefixRecall = configuredSequenceIntent
     ? null
     : resolveConfiguredPrefixRecall(analyzedTokens, configured);
+  const configuredPrefixRecallGroup = configuredSequenceIntent || configuredPrefixRecall
+    ? []
+    : resolveConfiguredPrefixRecallGroup(analyzedTokens, configured);
 
   for (let i = 0; i < analyzedTokens.length; i++) {
     if (covered.has(i)) continue;
@@ -1378,6 +1382,7 @@ export function analyzeQuery(
     configuredSpans,
     configuredPrefixSpans,
     configuredPrefixRecall,
+    configuredPrefixRecallGroup: configuredPrefixRecallGroup.length ? configuredPrefixRecallGroup : null,
     configuredContentIdentity: resolveConfiguredContentIdentity(analyzedTokens, configuredSpans),
     standaloneRecall,
     topicalRecall,

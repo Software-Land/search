@@ -25,7 +25,8 @@ import {
   shortTitleTokenPrefixStub,
   isSearchEquivalenceRecallConcept,
   hasConfiguredSequenceIntent,
-  configuredPrefixRecallKey,
+  configuredPrefixRecallKeys,
+  configuredPrefixRecallGroupKeys,
   retrievalFormKindAllowsPrefix,
   occupiedTitleJoins,
   configuredPeerForms,
@@ -271,8 +272,7 @@ function queryForms(query: AnalyzedQuery) {
       for (const token of form) add(token, "topical-recall");
     }
   }
-  const prefixKey = configuredPrefixRecallKey(query);
-  if (prefixKey) add(prefixKey, "configured-prefix-recall");
+  for (const key of configuredPrefixRecallKeys(query)) add(key, "configured-prefix-recall");
   return forms;
 }
 
@@ -457,6 +457,7 @@ export function createIndexedLexicalRetriever({
     const k = limitOverride || candidateLimit;
     const forms = queryForms(query);
     const occupied = hasConfiguredSequenceIntent(query);
+    const prefixRecallTitleOnly = configuredPrefixRecallGroupKeys(query).length > 0;
     for (const qNorm of titleNormsForQuery(query)) {
       const exact = state.titleByNorm.get(qNorm);
       if (exact) {
@@ -487,14 +488,17 @@ export function createIndexedLexicalRetriever({
       if ((step++ & 7) === 0) throwIfAborted(signal);
       const titleP = state.titlePostings.get(form);
       if (titleP) accumulatePosting(byPos, titleP, postingTitleSource(kind), titleBoost, state.avgTitleDl, state.titleDl, { signal, n });
+      const skipPrefixBody = kind === "configured-prefix-recall" && prefixRecallTitleOnly;
       const bodyP = state.bodyPostings.get(form);
-      if (bodyP) accumulatePosting(byPos, bodyP, postingBodySource(kind), 1, state.avgBodyDl, state.bodyDl, { signal, n });
+      if (bodyP && !skipPrefixBody) accumulatePosting(byPos, bodyP, postingBodySource(kind), 1, state.avgBodyDl, state.bodyDl, { signal, n });
       const titleL = state.titleLemmaPostings.get(form);
       if (titleL && titleL !== titleP) {
         accumulatePosting(byPos, titleL, kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology", titleBoost * 0.6, state.avgTitleDl, state.titleDl, { signal, n });
       }
       const bodyL = state.bodyLemmaPostings.get(form);
-      if (bodyL) accumulatePosting(byPos, bodyL, kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology", 0.5, state.avgBodyDl, state.bodyDl, { signal, n });
+      if (bodyL && !skipPrefixBody) {
+        accumulatePosting(byPos, bodyL, kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology", 0.5, state.avgBodyDl, state.bodyDl, { signal, n });
+      }
 
       const skipOccupiedFormPrefix =
         occupied && (kind === "acronym-form" || kind === "acronym-key");
@@ -887,6 +891,7 @@ export function createCompiledLexicalRetriever(): Retriever {
     const forms = queryForms(query);
     last.queryFormsExpanded = forms.length;
     const occupied = hasConfiguredSequenceIntent(query);
+    const prefixRecallTitleOnly = configuredPrefixRecallGroupKeys(query).length > 0;
     for (const qNorm of titleNormsForQuery(query)) {
       const exact = compiled.titleByNorm.get(qNorm);
       if (exact) {
@@ -909,14 +914,15 @@ export function createCompiledLexicalRetriever(): Retriever {
       if ((step++ & 7) === 0) throwIfAborted(signal);
       const surface = compiled.bySurface.get(form);
       accumulateSurface(surface, "title", postingTitleSource(kind), TITLE_BOOST);
-      if (!skipBodyWalk) accumulateSurface(surface, "body", postingBodySource(kind), 1);
+      const skipPrefixBody = kind === "configured-prefix-recall" && prefixRecallTitleOnly;
+      if (!skipBodyWalk && !skipPrefixBody) accumulateSurface(surface, "body", postingBodySource(kind), 1);
       accumulateLemma(
         compiled.byLemma.get(form),
         "title",
         kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology",
         TITLE_BOOST * 0.6
       );
-      if (!skipBodyWalk) {
+      if (!skipBodyWalk && !skipPrefixBody) {
         accumulateLemma(
           compiled.byLemma.get(form),
           "body",
@@ -1022,6 +1028,7 @@ export function createCompiledLexicalRetriever(): Retriever {
         last.stage3AFallbackReason = stage3AUnsupportedReason(query) || "unbounded-presence";
         for (const { form, kind } of forms) {
           if ((step++ & 7) === 0) throwIfAborted(signal);
+          if (kind === "configured-prefix-recall" && prefixRecallTitleOnly) continue;
           const surface = compiled.bySurface.get(form);
           accumulateSurface(surface, "body", postingBodySource(kind), 1);
           accumulateLemma(

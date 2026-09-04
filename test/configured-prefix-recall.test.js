@@ -248,6 +248,11 @@ describe("configured prefix recall vs occupancy", () => {
     expect(analyze("hypertext", httpFamily).configuredSequenceIntent).toBeNull();
     expect(analyze("hypertex", httpFamily).configuredPrefixRecall).toBeNull();
     expect(analyze("hypertex", httpFamily).configuredSequenceIntent).toBeNull();
+    expect((analyze("hypertex", httpFamily).configuredPrefixRecallGroup || []).map((row) => row.key).sort()).toEqual([
+      "html",
+      "http",
+      "https",
+    ]);
     expect(analyze("hypertext t", httpFamily).configuredSequenceIntent?.key).toBe("http");
     expect(analyze("hypertext transfer", httpFamily).configuredSequenceIntent?.key).toBe("http");
     expect(analyze("hypertext transfer protocol", httpFamily).configuredSequenceIntent?.key).toBe("http");
@@ -419,6 +424,27 @@ describe("configured prefix recall retrieval and scoring", () => {
     expect(tlsHit(search)).toBeTruthy();
   });
 
+  test("ambiguous prefix-recall groups are packed-ineligible", async () => {
+    const family = [
+      { key: "api", aliases: [["application", "programming", "interface"]] },
+      { key: "appsec", aliases: [["application", "security"]] },
+    ];
+    const docs = [
+      { id: "api", title: "What is an API?", body: "clients talk to a service" },
+      { id: "rest", title: "REST API vs GraphQL", body: "notes" },
+    ];
+    const e = await compiledEngine(docs, family);
+    const query = e._prepareQuery("appl");
+    expect(query.configuredPrefixRecall).toBeNull();
+    expect((query.configuredPrefixRecallGroup || []).map((row) => row.key).sort()).toEqual(["api", "appsec"]);
+    expect(rankingEvidenceEligibilityReason(query, rankingEvidenceStaticFor(e._index))).toBe("configured-prefix-recall");
+    const search = e.search("appl", { limit: 10, relatedLimit: 0 });
+    const detailed = e.searchDetailed("appl", { limit: 10, relatedLimit: 0 }).results;
+    expect(e.lastSearchMeta.rankingEvidence).not.toBe("packed");
+    expect(search.map((row) => row.id)).toEqual(detailed.map((row) => row.id));
+    expect(search[0].title).toBe("What is an API?");
+  });
+
   test("indexed retrieval keeps exact key lemma identity without prefix-walking the key", async () => {
     const docs = [
       { id: "lemma-key", title: "React Data Fetching", body: "oops without the typed prefix tokens" },
@@ -446,6 +472,84 @@ describe("configured prefix recall retrieval and scoring", () => {
     const detailed = e.searchDetailed("object", { limit: 10, relatedLimit: 0, explain: true });
     expect(detailed.results.map((row) => row.id)).toEqual(expect.arrayContaining(["lemma-key", "surface-key"]));
     expect(detailed.results.find((row) => row.id === "lemma-key").retrievalSources).toEqual(["configured-prefix-recall"]);
+  });
+
+  test("ambiguous appl* retrieves matching keys without occupying or spraying body prefixes", async () => {
+    const family = [
+      { key: "api", aliases: [["application", "programming", "interface"]] },
+      { key: "appsec", aliases: [["application", "security"]] },
+    ];
+    const docs = [
+      { id: "api", title: "What is an API?", body: "clients talk to a service" },
+      { id: "rest", title: "REST API vs GraphQL", body: "notes" },
+      { id: "appsec", title: "App Sec", body: "notes" },
+      { id: "noise", title: "Process vs Thread", body: "application servers share memory with an api" },
+      { id: "container", title: "What is a Container?", body: "notes" },
+    ];
+    const e = await engine(docs, family, { retriever: "full-scan" });
+    for (const raw of ["appl", "what is an appl"]) {
+      const q = e._prepareQuery(raw);
+      expect(q.configuredSequenceIntent).toBeNull();
+      expect(q.configuredPrefixRecall).toBeNull();
+      expect((q.configuredPrefixRecallGroup || []).map((row) => row.key).sort()).toEqual(["api", "appsec"]);
+      const results = e.search(raw, {
+        limit: 10,
+        relatedLimit: 0,
+        resultCollector: COMPLETE_INTERPRETATION_COLLECTOR,
+      });
+      expect(results[0].title).toBe("What is an API?");
+      expect(results.map((row) => row.title)).toContain("REST API vs GraphQL");
+      expect(results.map((row) => row.title)).not.toContain("Process vs Thread");
+      expect(results.map((row) => row.title)).not.toContain("What is a Container?");
+      expect(results.map((row) => row.title)).toContain("What is an API?");
+    }
+  });
+
+  test("ambiguous group with no title-key hits keeps ordinary lexical", async () => {
+    const family = [
+      { key: "https", aliases: [["hypertext", "transfer", "protocol", "secure"]] },
+      { key: "html", aliases: [["hypertext", "markup", "language"]] },
+      { key: "http", aliases: [["hypertext", "transfer", "protocol"]] },
+    ];
+    const docs = [
+      { id: "tls", title: "TLS 1.2 Vulnerability", body: "hypertext notes without the keys" },
+      { id: "noise", title: "Process vs Thread", body: "unrelated" },
+    ];
+    const e = await engine(docs, family, { retriever: "full-scan" });
+    const q = e._prepareQuery("hypertex");
+    expect(q.configuredSequenceIntent).toBeNull();
+    expect(q.configuredPrefixRecall).toBeNull();
+    expect((q.configuredPrefixRecallGroup || []).map((row) => row.key).sort()).toEqual(["html", "http", "https"]);
+    const results = e.search("hypertex", {
+      limit: 10,
+      relatedLimit: 0,
+      resultCollector: COMPLETE_INTERPRETATION_COLLECTOR,
+    });
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0].title).toBe("TLS 1.2 Vulnerability");
+  });
+
+  test("ambiguous zer* title-prefix survives complete-interpretation", async () => {
+    const family = [
+      { key: "zkp", aliases: [["zero", "knowledge", "proof"]] },
+      { key: "zts", aliases: [["zero", "trust", "security"]] },
+    ];
+    const docs = [
+      { id: "zts", title: "Zero-Trust Security", body: "notes" },
+      { id: "noise", title: "Process vs Thread", body: "zero copy buffers" },
+    ];
+    const e = await engine(docs, family, { retriever: "full-scan" });
+    const q = e._prepareQuery("zer");
+    expect(q.configuredSequenceIntent).toBeNull();
+    expect(q.configuredPrefixRecall).toBeNull();
+    expect((q.configuredPrefixRecallGroup || []).map((row) => row.key).sort()).toEqual(["zkp", "zts"]);
+    const results = e.search("zer", {
+      limit: 10,
+      relatedLimit: 0,
+      resultCollector: COMPLETE_INTERPRETATION_COLLECTOR,
+    });
+    expect(results[0].title).toBe("Zero-Trust Security");
+    expect(results.map((row) => row.title)).not.toContain("Process vs Thread");
   });
 
   test("Worker loopback matches in-process TLS recall", async () => {
@@ -628,5 +732,44 @@ describe("configured-prefix recall relationship overlay", () => {
     expect(b.relevanceKind).toBe("direct");
     expect(b.relationship).toBeFalsy();
     expect(detailed.related).toEqual([]);
+  });
+
+  test("ambiguous group prefix-recall keeps relationship neighbors under complete-interpretation", async () => {
+    const family = [
+      { key: "api", aliases: [["application", "programming", "interface"]] },
+      { key: "appsec", aliases: [["application", "security"]] },
+    ];
+    const docs = [
+      { id: "api", title: "What is an API?", body: "clients talk to a service" },
+      { id: "rest", title: "REST API vs GraphQL", body: "notes" },
+      { id: "iface", title: "What is an Interface?", body: "notes" },
+      { id: "grpc", title: "gRPC vs REST", body: "notes" },
+      { id: "noise", title: "Process vs Thread", body: "application servers share memory with an api" },
+    ];
+    const graph = {
+      format: ARTIFACT_FORMATS.relationships,
+      version: ARTIFACT_VERSION,
+      relationships: {
+        api: [{ target: "iface", type: "semantic", strength: 0.9, provenance: "test" }],
+        rest: [{ target: "grpc", type: "semantic", strength: 0.9, provenance: "test" }],
+      },
+    };
+    const e = SearchEngine.create({
+      schema,
+      plugins: plugins(family),
+      documentRelationships: graph,
+      relationshipStrategy: "hybrid",
+      retriever: "full-scan",
+    });
+    await e.index(docs);
+    const results = e.search("appl", {
+      limit: 10,
+      relatedLimit: 5,
+      resultCollector: COMPLETE_INTERPRETATION_COLLECTOR,
+    });
+    expect(results[0].title).toBe("What is an API?");
+    expect(results.map((row) => row.title)).toContain("What is an Interface?");
+    expect(results.map((row) => row.title)).toContain("gRPC vs REST");
+    expect(results.map((row) => row.title)).not.toContain("Process vs Thread");
   });
 });

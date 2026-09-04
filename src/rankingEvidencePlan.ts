@@ -775,6 +775,7 @@ export function rankingEvidenceEligibilityReason(
   if ((query.topicalRecall?.forms || []).length) return "topical-recall";
   if ((query.equivalentRecall || []).length) return "equivalent-recall";
   if (query.configuredPrefixRecall?.key) return "configured-prefix-recall";
+  if ((query.configuredPrefixRecallGroup || []).length) return "configured-prefix-recall";
   if (
     (query.dottedSpans || []).length ||
     (query.concepts || []).some((concept) => concept.kind === "number")

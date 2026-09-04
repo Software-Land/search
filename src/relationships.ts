@@ -108,6 +108,30 @@ function stripSources(rel: RelationshipInfo): RelationshipInfo {
  * attached. Newly admitted neighbors with no independent prefix-recall
  * source and no lexical/configured class are `related`.
  */
+/**
+ * Ambiguous configured-prefix groups independently retrieve every matching
+ * key. top1-strong would expand only from the tightest title, dropping
+ * neighbors of the other matching keys. Unique recall stays top1-strong.
+ */
+function unionAmbiguousPrefixRecallPrimaries(
+  featured: FeaturedHit[],
+  query: RelationshipExpansionArgs["query"],
+  primaries: FeaturedHit[]
+) {
+  if (!query?.configuredPrefixRecallGroup?.length) return primaries;
+  if (query.configuredPrefixRecall?.key) return primaries;
+  const seen = new Set(primaries.map((hit) => hit.document.id));
+  const extra: FeaturedHit[] = [];
+  for (const hit of featured) {
+    if (seen.has(hit.document.id)) continue;
+    if (!isStrongPrimary(hit)) continue;
+    if (!(hit.retrievalSources || []).includes("configured-prefix-recall")) continue;
+    extra.push(hit);
+    seen.add(hit.document.id);
+  }
+  return extra.length ? [...primaries, ...extra] : primaries;
+}
+
 export function applyRelationshipExpansion({
   featured,
   query,
@@ -123,7 +147,11 @@ export function applyRelationshipExpansion({
   if (!graph || graph.empty || !featured || !query || !extractFeatures || !scoreFeatures || !index) {
     return { featured: featured || [], relatedHits: [], primaries: [] };
   }
-  const primaries = pickPrimariesForExpansion(featured, { sourcePolicy, constraints, signal });
+  const primaries = unionAmbiguousPrefixRecallPrimaries(
+    featured,
+    query,
+    pickPrimariesForExpansion(featured, { sourcePolicy, constraints, signal })
+  );
   if (!primaries.length) return { featured, relatedHits: [], primaries: [] };
 
   const byId = new Map(featured.map((h) => [h.document.id, h]));

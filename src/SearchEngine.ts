@@ -315,6 +315,15 @@ function serializeHit(c: RankedHit, query: AnalyzedQuery, explain?: boolean): Se
               partialCompleteness: query.configuredPrefixRecall.partialCompleteness,
             }
           : null,
+        configuredPrefixRecallGroup: (query.configuredPrefixRecallGroup || []).map((row) => ({
+          key: row.key,
+          form: [...row.form],
+          exactCount: row.exactCount,
+          formLength: row.formLength,
+          coverage: row.coverage,
+          lastExact: row.lastExact,
+          partialCompleteness: row.partialCompleteness,
+        })),
         lexicalTokens: query.lexicalTokens,
         lexicalPhraseKey: query.lexicalPhraseKey,
         normalizedQueryPhrase: f.normalizedQueryPhrase ?? "",

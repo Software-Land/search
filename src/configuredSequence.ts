@@ -673,6 +673,53 @@ function uniquePrefixRecallResolution(
   return toConfiguredPrefixRecall(top[0], configured);
 }
 
+function skipLeadingStops(tokens: QueryToken[]): QueryToken[] {
+  let i = 0;
+  while (i < tokens.length && tokenIsStop(tokens[i])) i++;
+  return tokens.slice(i);
+}
+
+function collectPrefixRecallCandidates(
+  tokens: QueryToken[],
+  configured: SearchPlugin
+): { content: QueryToken[]; oneToken: boolean; candidates: PrefixRecallCandidate[] } {
+  const content = skipLeadingStops(tokens);
+  const candidates: PrefixRecallCandidate[] = [];
+  if (!content.length || !configured.sequences?.length) return { content, oneToken: false, candidates };
+  const oneToken = content.length === 1;
+  const allowProperFirstPrefix = !(oneToken && configuredKeyPrefixKeys(content[0], configured).length);
+  for (const seq of configured.sequences) {
+    if (!isConfiguredFormKind(seq.kind) || isSingleFormWordAlias(seq) || !seq.concept?.key) continue;
+    const strict = strictLeftPrefixRecall(content, seq, { allowProperFirstPrefix });
+    if (strict) candidates.push(strict);
+    else {
+      const tolerant = stopTolerantLeftPrefixRecall(content, seq);
+      if (tolerant) candidates.push(tolerant);
+    }
+  }
+  return { content, oneToken, candidates };
+}
+
+/**
+ * When a one-token proper prefix matches several concepts, unique recall stays
+ * fail-closed (no occupancy, no single `configuredPrefixRecall`). Retrieval may
+ * still keep every matching key as weak key-only evidence so the query does
+ * not fall through to untyped body-prefix spray.
+ */
+export function resolveConfiguredPrefixRecallGroup(
+  tokens: QueryToken[],
+  configured: SearchPlugin | null | undefined
+): ConfiguredPrefixRecall[] {
+  if (!configured?.sequences?.length || !tokens.length) return [];
+  const { oneToken, candidates } = collectPrefixRecallCandidates(tokens, configured);
+  if (!oneToken || !candidates.length) return [];
+  if (uniquePrefixRecallResolution(candidates, configured, true)) return [];
+  const proper = candidates.filter((hit) => hit.exactCount === 0 && !hit.lastExact);
+  const perConcept = bestPrefixRecallPerConcept(proper);
+  if (perConcept.length < 2) return [];
+  return perConcept.map((hit) => toConfiguredPrefixRecall(hit, configured));
+}
+
 function strictLeftPrefixRecall(
   tokens: QueryToken[],
   seq: ConfiguredConceptSequence,
@@ -786,26 +833,17 @@ export function dropConfiguredPrefixRecallTrailingStop(
  * graded recall, never occupancy; its evidence is weaker than the completed
  * exact first token. Same-concept forms keep the strongest evidence (a longer
  * authored form must not reduce a shorter matching form). Distinct concepts
- * at the best evidence fail closed; insertion order is unused. Configured
- * KEY prefixes stay on the existing key-prefix occupancy path.
+ * at the best evidence fail closed; insertion order is unused. Leading
+ * wrapper stops are not occupancy, but they also must not hide an otherwise
+ * unique first-token prefix (`what is an nationa` is still NIST recall).
+ * Configured KEY prefixes stay on the existing key-prefix occupancy path.
  */
 export function resolveConfiguredPrefixRecall(
   tokens: QueryToken[],
   configured: SearchPlugin | null | undefined
 ): ConfiguredPrefixRecall | null {
   if (!configured?.sequences?.length || !tokens.length) return null;
-  const candidates: PrefixRecallCandidate[] = [];
-  const oneToken = tokens.length === 1;
-  const allowProperFirstPrefix = !(oneToken && configuredKeyPrefixKeys(tokens[0], configured).length);
-  for (const seq of configured.sequences) {
-    if (!isConfiguredFormKind(seq.kind) || isSingleFormWordAlias(seq) || !seq.concept?.key) continue;
-    const strict = strictLeftPrefixRecall(tokens, seq, { allowProperFirstPrefix });
-    if (strict) candidates.push(strict);
-    else {
-      const tolerant = stopTolerantLeftPrefixRecall(tokens, seq);
-      if (tolerant) candidates.push(tolerant);
-    }
-  }
+  const { oneToken, candidates } = collectPrefixRecallCandidates(tokens, configured);
   return uniquePrefixRecallResolution(candidates, configured, oneToken);
 }
 

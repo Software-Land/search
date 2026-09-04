@@ -1154,12 +1154,47 @@ function hasIndependentRetrievalSource(retrievalSources: string[] | undefined) {
   return Boolean(retrievalSources?.includes(CONFIGURED_PREFIX_RECALL_SOURCE));
 }
 
+function keyTitleCoverage(doc: IndexedDocument, key: string) {
+  if (!doc.nonStopTitle.length) return 0;
+  let hit = 0;
+  for (let i = 0; i < doc.titleTokens.length; i++) {
+    const tok = doc.titleTokens[i];
+    if (DEFAULT_STOP.has(tok)) continue;
+    if (isDottedSpanComponentIndex(doc, i)) continue;
+    if (tok === key || (doc.titleLemmas[i] || "") === key) hit += 1;
+  }
+  return Number((hit / doc.nonStopTitle.length).toFixed(4));
+}
+
 function withConfiguredPrefixRecallFields(
   query: AnalyzedQuery,
+  doc: IndexedDocument,
   fields: ReturnType<typeof computeFeatureFields>,
   retrievalSources?: string[]
 ) {
-  const recall = query.configuredPrefixRecall;
+  const recall = configuredPrefixRecallForDocument(query, doc, retrievalSources);
+  const retrieved = Boolean(retrievalSources?.includes(CONFIGURED_PREFIX_RECALL_SOURCE));
+  const group = (query.configuredPrefixRecallGroup || []).length > 0;
+  const keyInTitle = Boolean(
+    group &&
+      retrieved &&
+      recall?.key &&
+      (doc.titleTokenSet.has(recall.key) || doc.titleLemmaSet.has(recall.key))
+  );
+  let configuredConceptMatch: ConfiguredConceptMatch = fields.configuredConceptMatch;
+  if (!configuredConceptMatch && keyInTitle) configuredConceptMatch = "key-in-title";
+  const fieldEvidence = keyInTitle
+    ? { ...fields.configuredConceptFieldEvidence, title: fields.configuredConceptFieldEvidence.title || "key" }
+    : fields.configuredConceptFieldEvidence;
+  const next = {
+    ...fields,
+    configuredConceptMatch,
+    configuredConceptFieldEvidence: fieldEvidence,
+    titleCoverage:
+      keyInTitle && recall?.key
+        ? Math.max(fields.titleCoverage || 0, keyTitleCoverage(doc, recall.key))
+        : fields.titleCoverage,
+  };
   const prefixOnly =
     Boolean(recall) &&
     !hasConfiguredSequenceIntent(query) &&
@@ -1167,11 +1202,36 @@ function withConfiguredPrefixRecallFields(
   // Feature-level typed lexical evidence (body prefix startsWith, bound trailing
   // stubs, etc.) can exist without a lexical retrieval source. Do not stack the
   // prefix addend on those candidates; they already have a non-none class.
-  const score = prefixOnly && recall && classifyDirect(fields) === "none" ? recall.coverage : 0;
+  const score = prefixOnly && recall && classifyDirect(next) === "none" ? recall.coverage : 0;
   return {
-    ...fields,
+    ...next,
     configuredPrefixRecallScore: Number(score.toFixed(4)),
   };
+}
+
+function documentHasConfiguredKey(doc: IndexedDocument, key: string) {
+  return (
+    doc.titleTokenSet.has(key) ||
+    doc.titleLemmaSet.has(key) ||
+    doc.bodyTokenSet.has(key) ||
+    doc.bodyLemmaSet.has(key)
+  );
+}
+
+function configuredPrefixRecallForDocument(
+  query: AnalyzedQuery,
+  doc: IndexedDocument,
+  retrievalSources?: string[]
+): AnalyzedQuery["configuredPrefixRecall"] {
+  if (query.configuredPrefixRecall?.key) return query.configuredPrefixRecall;
+  if (!retrievalSources?.includes(CONFIGURED_PREFIX_RECALL_SOURCE)) return null;
+  const group = query.configuredPrefixRecallGroup || [];
+  let best: AnalyzedQuery["configuredPrefixRecall"] = null;
+  for (const row of group) {
+    if (!row?.key || !documentHasConfiguredKey(doc, row.key)) continue;
+    if (!best || row.coverage > best.coverage) best = row;
+  }
+  return best;
 }
 
 function finishFeatures(
@@ -1255,6 +1315,7 @@ export function extractFeatures(
       retrievalScore,
       withConfiguredPrefixRecallFields(
         query,
+        doc,
         withSynonymRecallFields(
           query,
           doc,
@@ -1279,6 +1340,7 @@ export function extractFeatures(
     retrievalScore,
     withConfiguredPrefixRecallFields(
       query,
+      doc,
       withSynonymRecallFields(
       query,
       doc,
@@ -1374,7 +1436,7 @@ export const FEATURE_DEFINITIONS = {
   exactTitleMatch: "True when normalized query equals the full normalized title. Occupied ranking also accepts an authored peer-form join equal to the title. Configured-content identity unions that same peer-form title equality without replacing literal original-surface title equality.",
   exactTitleTokenMatch: "True when a non-stop canonical query token occurs as an independent title token (not a digit split from a dotted numeric span such as 1.2). Unique prefix completions and morphology use the lemma; typed stubs and completedToken are not exact surface evidence. A trailing stub bound by unique contextual form completion is not unbound exact-title-token evidence. Occupied multi-token peer forms contribute only when the title expresses the form (phrase or ≥2 content tokens).",
     typedSurfaceTitleMatch: "True when the typed/repaired surface (before lemma or unique-prefix rewrite) occurs as an independent title token or is a legitimate prefix of one. Digits produced by splitting a dotted span are not typed-surface evidence. Canonical retrieval lemmas are not typed-surface evidence. A trailing stub bound by unique contextual form completion is not unbound title-prefix evidence. Occupied ranking unions this typed-surface check with peer-form title evidence so occupancy does not erase the typed stub. Occupied multi-token peer forms contribute only when the title expresses the form.",
-  titleCoverage: "Fraction of non-stop title tokens accounted for by the query. A trailing stub bound by unique contextual form completion is excluded. Occupied concepts take the max over peer forms that the title actually expresses.",
+  titleCoverage: "Fraction of non-stop title tokens accounted for by the query. A trailing stub bound by unique contextual form completion is excluded. Occupied concepts take the max over peer forms that the title actually expresses. Independently retrieved configured-prefix-recall keys also take the fraction of non-stop title tokens that are that key.",
   queryCoverage: "Fraction of typed/configured query concepts evidenced in the title (or via a legitimate version alias). Extra search-equivalence recall concepts attached after configured occupancy are excluded. A trailing term concept bound by unique contextual form completion is excluded. Synonym forms merged into an ordinary term concept still count with that concept. Occupied or identity ranking intent excludes structural-wrapper term concepts (WH / copula / determiner) from the coverage set.",
   titlePrefixQuality: "How completely query tokens prefix title tokens, tightened by extra title tokens. A trailing stub bound by unique contextual form completion is excluded. Occupied concepts take the max over peer forms that the title actually expresses. One-token first-form prefix occupancy also takes the max of that peer-form quality and literal typed-surface prefix quality. Configured-content identity may use an authored peer form when that form is the full title, a contiguous title phrase, or the entire non-stop title.",
   contextualTitlePrefix: "True when preceding query tokens align with the title start and only the final token is a proper prefix of the aligned title token.",
@@ -1384,7 +1446,7 @@ export const FEATURE_DEFINITIONS = {
   unmatchedTitleTokensAfter: "Count of title tokens after the aligned final-token completion (0 when the title ends at the completed token).",
   titleSequenceTightness: "1 / (1 + unmatchedTitleTokensAfter). Prefer titles that complete the query and end there.",
   contextualPrefixQuality: "completeness * titleSequenceTightness, where completeness is finalPrefix.length / completedTitleToken.length.",
-  configuredConceptMatch: "Configured-concept title match: key-in-title | form | false. The value form means a peer form is in the title, not aliases[0]. Title identity only; summary/body mentions live on configuredConceptFieldEvidence.",
+  configuredConceptMatch: "Configured-concept title match: key-in-title | form | false. The value form means a peer form is in the title, not aliases[0]. Title identity only; summary/body mentions live on configuredConceptFieldEvidence. Independently retrieved configured-prefix-recall keys also contribute key-in-title when that key is in the title; this is not occupancy.",
   configuredConceptFieldEvidence: "Structured configured-concept evidence by field: title/summary/body each false | key | form. Title is authored identity. Summary is a weak authored mention. Body is a weak/incidental mention. Neither summary nor body becomes moderate/strong, and ranking does not consume summary vs body-only provenance. A single token of a multi-token form is not form.",
   morphologyMatch: "Query lemma matches a title token/lemma while surface may differ. A trailing stub bound by unique contextual form completion is excluded. Occupied concepts only use one-token peer forms.",
   typoDistance: "0–2 style evidence: 0 none, 1 repeat-collapse or edit-distance 2, 2 edit-distance 1.",

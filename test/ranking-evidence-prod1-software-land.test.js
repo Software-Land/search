@@ -154,9 +154,9 @@ test("Software.Land historical, v1, v2, and regression fused eligibility/exactne
   expect(aggregate.scoreMismatches).toBe(0);
   expect(totals.unique).toMatchObject({
     queries: 189,
-    eligible: 94,
-    ineligible: 95,
-    candidates: 2011,
+    eligible: 87,
+    ineligible: 102,
+    candidates: 1553,
     primitiveMismatches: 0,
     scoreMismatches: 0,
   });
