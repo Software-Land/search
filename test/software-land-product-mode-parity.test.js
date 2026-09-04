@@ -216,11 +216,11 @@ describe("Software.Land product retrieval-mode parity", () => {
     expect(compareQueries(family, documents.length, { features: true })).toEqual([]);
   });
 
-  test("184 applicable historical queries match at top-10 and complete list", () => {
+  test("192 applicable historical queries match at top-10 and complete list", () => {
     const queries = [
       ...new Set(loadJson("historical-scenarios.json").rows.filter(isHistoricalRelevanceApplicable).map((row) => row.query)),
     ];
-    expect(queries).toHaveLength(184);
+    expect(queries).toHaveLength(192);
     expect(compareQueries(queries, 10)).toEqual([]);
     expect(compareQueries(queries, documents.length)).toEqual([]);
   });

@@ -1,5 +1,5 @@
 {
-  "description": "Complete Software.Land V1 E2E historical query/expectedTop/topN contract, executed against V2 SearchEngine. Not a V1 engine test. Assertion is membership-within-topN (normalized title identity), matching tests/search-e2e-result-helpers.js. titlePrefix rows require every title in the first topN to start with the prefix. Classification C is inventory-only and is not enforced (obsolete). Duplicate query strings are distinct rows keyed by index.",
+  "description": "Complete 223-row OSS historical mirror of the Software.Land V1 historical contract (excluding overlay-owned queries), executed against V2 SearchEngine. Software.Land source has 224 scenario rows; OSS historical inventory is 223 because `integ` is overlay-owned. Enforced count is 222. Not a V1 engine test. Assertion is membership-within-topN (normalized title identity), matching tests/search-e2e-result-helpers.js. titlePrefix rows require every title in the first topN to start with the prefix. Classification C is inventory-only and is not enforced (obsolete). Duplicate query strings are distinct rows keyed by index.",
   "contractName": "V2 against V1 historical top-N contract",
   "engineUnderTest": "v2",
   "source": {
@@ -7,8 +7,8 @@
     "ossMirror": "test/fixtures/software-land/historical-scenarios.json"
   },
   "assertion": "every expectedTop title must appear as normalized exact title identity within the first min(topN, 10) results; order inside that window is not required. titlePrefix: every rendered title in the first topN must start with the prefix.",
-  "inventoryCount": 215,
-  "enforcedCount": 214,
+  "inventoryCount": 223,
+  "enforcedCount": 222,
   "obsolete": [
     {
       "index": 115,
@@ -17,7 +17,7 @@
       "reason": "classification C is obsolete; not enforced on V1 or V2 E2E"
     }
   ],
-  "sha256": "fa7d100ee08dcc523a00b395ee05f93a1052a207049462e789f1faccd48b4ba7",
+  "sha256": "435f0dd66b4e32806e6c5d515538e52338cfb1cb2a32f2f72f9b9d205a39429e",
   "rows": [
     {
       "index": 0,
@@ -489,7 +489,10 @@
       "index": 40,
       "query": "what is an applica",
       "expectedTop": [
-        "REST API vs GraphQL"
+        "What is an API?",
+        "REST API vs GraphQL",
+        "Working with APIs",
+        "gRPC vs REST"
       ],
       "titlePrefix": null,
       "topN": 5
@@ -498,7 +501,10 @@
       "index": 41,
       "query": "what is an appl",
       "expectedTop": [
-        "REST API vs GraphQL"
+        "What is an API?",
+        "REST API vs GraphQL",
+        "Working with APIs",
+        "gRPC vs REST"
       ],
       "titlePrefix": null,
       "topN": 5
@@ -508,7 +514,9 @@
       "query": "what is an appli",
       "expectedTop": [
         "What is an API?",
-        "REST API vs GraphQL"
+        "REST API vs GraphQL",
+        "Working with APIs",
+        "gRPC vs REST"
       ],
       "titlePrefix": null,
       "topN": 5
@@ -517,7 +525,10 @@
       "index": 43,
       "query": "what is an applic",
       "expectedTop": [
-        "REST API vs GraphQL"
+        "What is an API?",
+        "REST API vs GraphQL",
+        "Working with APIs",
+        "gRPC vs REST"
       ],
       "titlePrefix": null,
       "topN": 5
@@ -526,7 +537,10 @@
       "index": 44,
       "query": "applic",
       "expectedTop": [
-        "REST API vs GraphQL"
+        "What is an API?",
+        "REST API vs GraphQL",
+        "What is an Interface?",
+        "Working with APIs"
       ],
       "titlePrefix": null,
       "topN": 5
@@ -544,10 +558,10 @@
       "index": 46,
       "query": "appl",
       "expectedTop": [
-        "REST API vs GraphQL"
+        "What is an API?"
       ],
       "titlePrefix": null,
-      "topN": 5
+      "topN": 1
     },
     {
       "index": 47,
@@ -2302,6 +2316,78 @@
     {
       "index": 214,
       "query": "12",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 215,
+      "query": "national",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 216,
+      "query": "national i",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 217,
+      "query": "national in",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 2
+    },
+    {
+      "index": 218,
+      "query": "national institute",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 219,
+      "query": "national institute o",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 220,
+      "query": "national institute of",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 221,
+      "query": "national institute o s",
+      "expectedTop": [
+        "TLS 1.2 Vulnerability"
+      ],
+      "titlePrefix": null,
+      "topN": 1
+    },
+    {
+      "index": 222,
+      "query": "national institute of s",
       "expectedTop": [
         "TLS 1.2 Vulnerability"
       ],

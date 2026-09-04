@@ -648,12 +648,21 @@ describe("Software.Land frozen contracts after prefix recall", () => {
       expect(tls).toBeTruthy();
       ranks.push(tls.rank);
     }
+    expect(ranks[0]).toBeLessThanOrEqual(2);
+    expect(ranks[1]).toBeLessThanOrEqual(2);
+    expect(ranks[2]).toBeLessThanOrEqual(2);
     expect(sl.search("national institute", { limit: 10, relatedLimit: 0 })[0].title).toBe("TLS 1.2 Vulnerability");
     expect(ranks[2]).toBeLessThanOrEqual(ranks[1]);
   });
 
   test("national institute o keeps TLS via NIST occupancy on the real fixture", () => {
-    for (const raw of ["national institute", "national institute o", "national institute of"]) {
+    for (const raw of [
+      "national institute",
+      "national institute o",
+      "national institute of",
+      "national institute o s",
+      "national institute of s",
+    ]) {
       const q = sl._prepareQuery(raw);
       expect(q.configuredSequenceIntent?.key).toBe("nist");
       expect(q.configuredPrefixRecall).toBeNull();

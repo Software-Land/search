@@ -3,7 +3,7 @@
   "version": 1,
   "description": "Software.Land-derived realistic integration test data. It is not default package policy.",
   "corpusSourceCommit": "971012bf3d561a67ca8a20f03ec2128135d1fb87",
-  "scenarioSourceCommit": "3ad49e867f82db06aa06cd1c7f38dca8faecf246",
+  "scenarioSourceCommit": "e4507c54451814fcafb9598640bd2323faacefa5",
   "searchPackageVersion": "0.6.0",
   "documentCount": 123,
   "configuredConceptCount": 192,
@@ -30,20 +30,20 @@
       "sha256": "1eeb512956c908c9fe8b7d856e386ff8b5d5ded0db1ac069b819870697ef1c9a"
     },
     "scenarios.json": {
-      "bytes": 2059,
-      "sha256": "04b57f5bae05c4439687bbdefa4f315e53c08bbb8240de83601568effcfbee68"
+      "bytes": 2267,
+      "sha256": "3e5d7d782b70c9528313be695647519420aa3c47c7131cd0aeaa561eedb9af5e"
     },
     "v2-contracts.json": {
-      "bytes": 38369,
-      "sha256": "7c8c230a76d4961511d6ebc4f2681b1f6dddc7f05f8acee64e23e695a68d7df8"
+      "bytes": 38368,
+      "sha256": "758508d528757774c802ebea4c44fc32035d22f08b49b99ef11a79be4abfe2ab"
     },
     "regression-scenarios.json": {
       "bytes": 24688,
       "sha256": "3300d56207d48b5727c7027770391b6fb8545287adec11ab9bf75ca772ecb16c"
     },
     "historical-scenarios.json": {
-      "bytes": 145049,
-      "sha256": "9c02c3322a7b63d189fd0a02780e695917356b4953f45602291039db39278e05"
+      "bytes": 149959,
+      "sha256": "44b122ad96a53549f50fe1553b74ff8e0374cb482a4137c2d420c0930c40d6b6"
     },
     "relevance-config.json": {
       "bytes": 1415,
@@ -54,27 +54,27 @@
       "sha256": "bf09dd75b7a7c02e2ab983d863c23606e34a06d7ad4ea3d07cd41302b5b37e7c"
     },
     "historical-contract-updates.json": {
-      "bytes": 36662,
-      "sha256": "846862c8925488d240cee81b9ed0e03324591f06e30a1f66bb6103b54ee5cf97"
+      "bytes": 30749,
+      "sha256": "64769779f440cafaa8a2dfa1865b70c209cd6389575c9e532648e4c9dc2cc90c"
     },
     "relationship-map.json": {
       "bytes": 19676,
       "sha256": "8ad40d22d3de4f7d44993337c1c07174a9f490ff89599de0081a8d30c5dcd0db"
     }
   },
-  "scenarioCount": 215,
+  "scenarioCount": 224,
   "executableV2ScenarioCount": 99,
-  "historicalRelevanceApplicable": 214,
+  "historicalRelevanceApplicable": 222,
   "relevanceSoftwareLandCommit": "db5a070dbc6ac112dfae403f38fdfd0fffbedbf6",
   "historicalContractSoftwareLandCommit": "3ad49e867f82db06aa06cd1c7f38dca8faecf246",
   "dictionaryAcronymMapSoftwareLandCommit": "df852eb4136dc5fb5b23cbf0bc22d45170e71423",
-  "omittedV1OnlyCount": 125,
+  "omittedV1OnlyCount": 133,
   "omittedBrowserUiOnlyCount": 1,
   "sourceScenarioFiles": [
     "tests/search-scenarios.js",
     "tests/search-v2-contracts.js"
   ],
   "executableRegressionCount": 60,
-  "historicalScenarioCount": 215,
-  "omittedEmptyIntentCount": 43
+  "historicalScenarioCount": 223,
+  "omittedEmptyIntentCount": 51
 }

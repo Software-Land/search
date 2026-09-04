@@ -7,10 +7,15 @@
  * Outputs:
  *   v2-contracts.json          strict accepted V2 (A-class intent + SEARCH_V2_CONTRACTS)
  *   regression-scenarios.json  B-class independent intent, compatibility coverage only.
- *                              Existing overlayCases are preserved.
- *   historical-scenarios.json  all 215 source rows; v1.expectedTop/titlePrefix are
- *                              executable historical relevance contracts (membership
- *                              within topN). disposition is V2-intent mining provenance.
+ *                              Existing overlayCases are preserved and are not
+ *                              mined from the source SHA.
+ *   historical-scenarios.json  source rows except overlay-owned queries;
+ *                              v1.expectedTop/titlePrefix are executable historical
+ *                              relevance contracts (membership within topN).
+ *                              disposition is V2-intent mining provenance.
+ *                              overlayCases queries (currently `integ`) stay
+ *                              OSS-owned because the frozen corpus still has the
+ *                              old Integrity title.
  *   scenarios.json             index + counts
  *
  * V1 expectedTop is the historical relevance contract. It is not a V2 intent
@@ -207,11 +212,46 @@ if (!Array.isArray(scenarios) || !Array.isArray(contracts)) {
 }
 
 const dir = path.resolve(args.dir);
+const paths = {
+  index: path.join(dir, "scenarios.json"),
+  contracts: path.join(dir, "v2-contracts.json"),
+  regressions: path.join(dir, "regression-scenarios.json"),
+  historical: path.join(dir, "historical-scenarios.json"),
+};
+
+function readOverlayCases(filePath) {
+  try {
+    const existing = JSON.parse(readFileSync(filePath, "utf8"));
+    const overlays = existing.overlayCases;
+    if (overlays === undefined) return [];
+    if (!Array.isArray(overlays)) {
+      throw new Error(`${filePath} overlayCases must be an array`);
+    }
+    return overlays;
+  } catch (err) {
+    if (err?.code === "ENOENT") return [];
+    throw err;
+  }
+}
+
+const contractOverlayCases = readOverlayCases(paths.contracts);
+const regressionOverlayCases = readOverlayCases(paths.regressions);
+const overlayOwnedQueries = new Set(
+  [...contractOverlayCases, ...regressionOverlayCases]
+    .map((row) => String(row?.query || "").trim())
+    .filter(Boolean)
+);
+
+function isOverlayOwnedQuery(query) {
+  return overlayOwnedQueries.has(String(query || "").trim());
+}
+
 const usedNames = new Set();
 
 const contractCases = [];
 const seenContract = new Set();
 for (const scenario of scenarios.filter(isV2ApplicableScenario)) {
+  if (isOverlayOwnedQuery(scenario.query)) continue;
   const row = fromIntent(scenario, "contract", "scenario");
   const key = executableKey(row);
   if (seenContract.has(key)) continue;
@@ -232,6 +272,7 @@ for (const scenario of scenarios) {
   if (scenarioClassification(scenario) !== "B") continue;
   if (!hasEngineIndependentIntent(scenario)) continue;
   if (contractQueries.has(scenario.query)) continue;
+  if (isOverlayOwnedQuery(scenario.query)) continue;
   if (B_INTENT_NOT_CURRENT_V2.has(scenario.query)) continue;
   const row = fromIntent(scenario, "regression", "scenario");
   const key = executableKey(row);
@@ -243,7 +284,9 @@ for (const scenario of scenarios) {
 
 const seenAIntent = new Set();
 const seenBIntent = new Set();
-const historical = scenarios.map((scenario, index) => {
+const historical = scenarios
+  .filter((scenario) => !isOverlayOwnedQuery(scenario.query))
+  .map((scenario, index) => {
   const classification = scenarioClassification(scenario);
   const independent = hasEngineIndependentIntent(scenario);
   const key = intentKey(scenario);
@@ -316,6 +359,7 @@ const counts = {
   omittedDuplicateA: dispositionCounts["omitted-duplicate-a-intent"] || 0,
   omittedDuplicateB: dispositionCounts["omitted-duplicate-b-intent"] || 0,
   omittedBrowserUiOnly: 1,
+  omittedOverlayOwned: scenarios.filter((scenario) => isOverlayOwnedQuery(scenario.query)).length,
 };
 
 const indexPayload = {
@@ -323,10 +367,11 @@ const indexPayload = {
     "Software.Land-derived realistic integration test data. It is not default package policy.",
     "v2-contracts.json is the strict accepted V2 contract set.",
     "regression-scenarios.json is B-class independent-intent compatibility coverage, not Core ranking policy.",
-    "historical-scenarios.json is the full 215-row inventory. v1.expectedTop/titlePrefix/topN are executable historical relevance contracts (membership within topN).",
+    "historical-scenarios.json is the OSS historical inventory (source rows minus overlay-owned queries). v1.expectedTop/titlePrefix/topN are executable historical relevance contracts (membership within topN).",
     "disposition describes V2-intent mining, not relevance-suite inclusion. Classification C is omitted from relevance.",
     "V2 intent contracts do not replace historical expectedTop.",
     "Empty-intent rows are not mined into V2 intent/regression cases.",
+    "overlayCases queries are OSS-owned and are not mined into historical or V2 contracts.",
   ],
   source: {
     files: ["tests/search-scenarios.js", "tests/search-v2-contracts.js"],
@@ -337,7 +382,7 @@ const indexPayload = {
   files: {
     "v2-contracts.json": "Strict accepted V2 cases (kind: contract).",
     "regression-scenarios.json": "B-intent regression/reference cases (kind: regression).",
-    "historical-scenarios.json": "215-row inventory; expectedTop/titlePrefix are executable historical relevance contracts.",
+    "historical-scenarios.json": "OSS historical inventory; expectedTop/titlePrefix are executable historical relevance contracts. overlayCases queries are omitted.",
   },
 };
 
@@ -370,6 +415,7 @@ const historicalPayload = {
     "v1.expectedTop / titlePrefix / topN are executable historical relevance contracts (membership within topN, not exact order).",
     "classification C is omitted from the relevance suite (obsolete).",
     "All other rows with expectedTop or titlePrefix participate. Failures are not silently excluded.",
+    "Queries owned by overlayCases are omitted; they are OSS ranking regressions for frozen-corpus titles and are not mined from the source SHA.",
     "disposition describes V2-intent mining into v2-contracts.json / regression-scenarios.json, not relevance-suite inclusion.",
   ],
   counts: {
@@ -379,31 +425,6 @@ const historicalPayload = {
   },
   rows: historical,
 };
-
-const paths = {
-  index: path.join(dir, "scenarios.json"),
-  contracts: path.join(dir, "v2-contracts.json"),
-  regressions: path.join(dir, "regression-scenarios.json"),
-  historical: path.join(dir, "historical-scenarios.json"),
-};
-
-function readOverlayCases(filePath) {
-  try {
-    const existing = JSON.parse(readFileSync(filePath, "utf8"));
-    const overlays = existing.overlayCases;
-    if (overlays === undefined) return [];
-    if (!Array.isArray(overlays)) {
-      throw new Error(`${filePath} overlayCases must be an array`);
-    }
-    return overlays;
-  } catch (err) {
-    if (err?.code === "ENOENT") return [];
-    throw err;
-  }
-}
-
-const contractOverlayCases = readOverlayCases(paths.contracts);
-const regressionOverlayCases = readOverlayCases(paths.regressions);
 
 function withOverlayCases(payload, overlayCases) {
   if (!overlayCases.length) return payload;

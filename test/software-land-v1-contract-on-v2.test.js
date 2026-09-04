@@ -1,8 +1,9 @@
 /**
- * V2 against V1 historical top-N contract.
+ * V2 against the OSS-mirrored Software.Land V1 historical top-N contract.
  *
- * Runs the current OSS V2 SearchEngine against every enforced Software.Land
- * V1 E2E historical expectedTop/topN (and titlePrefix) row.
+ * Runs the current OSS V2 SearchEngine against every enforced row in the
+ * complete 223-row OSS historical mirror (Software.Land source has 224 rows;
+ * overlay-owned `integ` is excluded). Enforced count is 222.
  * This is not a V1 engine test and not the broader Software.Land 320 suite.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
@@ -73,7 +74,7 @@ describe("V2 against V1 historical top-N contract", () => {
     }
   });
 
-  test("inventory is the complete 215-row V1 E2E corpus with exactly one obsolete C row", () => {
+  test("inventory is the complete 223-row OSS historical mirror with exactly one obsolete C row", () => {
     expect(historical.rows).toHaveLength(V1_HISTORICAL_TOPN_INVENTORY_COUNT);
     expect(contract.inventoryCount).toBe(V1_HISTORICAL_TOPN_INVENTORY_COUNT);
     expect(contract.enforcedCount).toBe(V1_HISTORICAL_TOPN_ENFORCED_COUNT);
@@ -95,7 +96,7 @@ describe("V2 against V1 historical top-N contract", () => {
     ).toBe(true);
   });
 
-  test("canonical contract hash matches the Software.Land V1 E2E expectedTop/topN freeze", () => {
+  test("canonical contract hash matches the OSS-mirrored Software.Land V1 historical contract", () => {
     const derived = enforcedV1HistoricalTopNRows(historical.rows);
     expect(derived).toEqual(contract.rows);
     expect(hashV1HistoricalTopNRows(derived)).toBe(V1_HISTORICAL_TOPN_CONTRACT_SHA256);
@@ -124,6 +125,36 @@ describe("V2 against V1 historical top-N contract", () => {
     expect(detailed.results[0].explanation?.query).toBeTruthy();
     expect(detailed.results[0].explanation.query.configuredSequenceIntent?.key).toBe("paas");
     expect(detailed.results.map((hit) => hit.title)).not.toEqual(contract.rows.find((row) => row.query === "paas")?.expectedTop);
+  });
+
+  test("NIST prefix family mirrors Software.Land v1 expectedTop/topN", () => {
+    const nist = [
+      ["national", 2],
+      ["national i", 2],
+      ["national in", 2],
+      ["national institute", 1],
+      ["national institute o", 1],
+      ["national institute of", 1],
+      ["national institute o s", 1],
+      ["national institute of s", 1],
+    ];
+    for (const [query, topN] of nist) {
+      const historicalRow = historical.rows.find((row) => row.query === query);
+      const contractRow = contract.rows.find((row) => row.query === query);
+      expect(historicalRow?.v1).toEqual({
+        expectedTop: ["TLS 1.2 Vulnerability"],
+        topN,
+      });
+      expect(contractRow).toEqual({
+        index: historicalRow.index,
+        query,
+        expectedTop: ["TLS 1.2 Vulnerability"],
+        titlePrefix: null,
+        topN,
+      });
+    }
+    expect(historical.rows.some((row) => row.query === "national institute x")).toBe(false);
+    expect(contract.rows.some((row) => row.query === "national institute x")).toBe(false);
   });
 
   test.each(contract.rows.map((row) => [row.index, row.query, row]))(

@@ -5,15 +5,16 @@
     "v1.expectedTop / titlePrefix / topN are executable historical relevance contracts (membership within topN, not exact order).",
     "classification C is omitted from the relevance suite (obsolete).",
     "All other rows with expectedTop or titlePrefix participate. Failures are not silently excluded.",
+    "Queries owned by overlayCases are omitted; they are OSS ranking regressions for frozen-corpus titles and are not mined from the source SHA.",
     "disposition describes V2-intent mining into v2-contracts.json / regression-scenarios.json, not relevance-suite inclusion."
   ],
   "counts": {
-    "rows": 215,
-    "historicalRelevanceApplicable": 214,
+    "rows": 223,
+    "historicalRelevanceApplicable": 222,
     "omitted-covered-by-v2-contract": 16,
     "contract-a-intent": 83,
     "regression-b-intent": 60,
-    "omitted-empty-intent-observational-v1": 43,
+    "omitted-empty-intent-observational-v1": 51,
     "omitted-duplicate-b-intent": 5,
     "omitted-duplicate-a-intent": 6,
     "omitted-b-intent-not-current-v2": 1,
@@ -1136,7 +1137,10 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "REST API vs GraphQL"
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "gRPC vs REST"
         ],
         "topN": 5
       }
@@ -1155,7 +1159,10 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "REST API vs GraphQL"
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "gRPC vs REST"
         ],
         "topN": 5
       }
@@ -1182,7 +1189,9 @@
       "v1": {
         "expectedTop": [
           "What is an API?",
-          "REST API vs GraphQL"
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "gRPC vs REST"
         ],
         "topN": 5
       }
@@ -1201,7 +1210,10 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "REST API vs GraphQL"
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "gRPC vs REST"
         ],
         "topN": 5
       }
@@ -1220,7 +1232,10 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "REST API vs GraphQL"
+          "What is an API?",
+          "REST API vs GraphQL",
+          "What is an Interface?",
+          "Working with APIs"
         ],
         "topN": 5
       }
@@ -1265,9 +1280,9 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "REST API vs GraphQL"
+          "What is an API?"
         ],
-        "topN": 5
+        "topN": 1
       }
     },
     {
@@ -5694,6 +5709,158 @@
             "topN": 1
           }
         ],
+        "requiredAnyWithin": []
+      },
+      "historicalRelevance": true,
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 215,
+      "query": "national",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "historicalRelevance": true,
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 216,
+      "query": "national i",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "historicalRelevance": true,
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 217,
+      "query": "national in",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "historicalRelevance": true,
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 2
+      }
+    },
+    {
+      "index": 218,
+      "query": "national institute",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "historicalRelevance": true,
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 219,
+      "query": "national institute o",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "historicalRelevance": true,
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 220,
+      "query": "national institute of",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "historicalRelevance": true,
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 221,
+      "query": "national institute o s",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
+        "requiredAnyWithin": []
+      },
+      "historicalRelevance": true,
+      "v1": {
+        "expectedTop": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 1
+      }
+    },
+    {
+      "index": 222,
+      "query": "national institute of s",
+      "classification": "B",
+      "disposition": "omitted-empty-intent-observational-v1",
+      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
+      "intent": {
+        "requiredPrimary": [],
+        "requiredWithin": [],
         "requiredAnyWithin": []
       },
       "historicalRelevance": true,

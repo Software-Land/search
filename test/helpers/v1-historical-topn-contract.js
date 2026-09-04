@@ -1,15 +1,17 @@
 /**
- * V2 against V1 historical top-N contract (query / expectedTop / topN).
- * Software.Land tests/search-scenarios.js scenario.v1 is the source of truth.
- * This helper freezes the OSS mirror and hashes it so the two repos cannot
- * silently diverge. It does not run search.
+ * V2 against the OSS-mirrored Software.Land V1 historical top-N contract
+ * (query / expectedTop / topN). Software.Land tests/search-scenarios.js
+ * scenario.v1 is the product source (224 rows). The OSS historical mirror is
+ * the complete 223-row freeze excluding overlay-owned queries (currently `integ`).
+ * This helper hashes that mirror so the two repos cannot silently diverge.
+ * It does not run search.
  */
 import { createHash } from "node:crypto";
 
 export const V1_HISTORICAL_TOPN_CONTRACT_SHA256 =
-  "fa7d100ee08dcc523a00b395ee05f93a1052a207049462e789f1faccd48b4ba7";
-export const V1_HISTORICAL_TOPN_INVENTORY_COUNT = 215;
-export const V1_HISTORICAL_TOPN_ENFORCED_COUNT = 214;
+  "435f0dd66b4e32806e6c5d515538e52338cfb1cb2a32f2f72f9b9d205a39429e";
+export const V1_HISTORICAL_TOPN_INVENTORY_COUNT = 223;
+export const V1_HISTORICAL_TOPN_ENFORCED_COUNT = 222;
 export const V1_HISTORICAL_TOPN_OBSOLETE_QUERY = "open";
 
 export function historicalV1Fields(row) {

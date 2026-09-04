@@ -1,8 +1,10 @@
 /**
- * Fail-closed inventory of the 215 historical queries.
+ * Fail-closed inventory of the 215-query result oracle.
  *
  * The frozen query-result-oracle.json is the identity gate for default Core
- * #1 under this fixture wiring. Known #1 diffs versus that freeze are
+ * #1 under this fixture wiring. Historical scenarios may be a strict
+ * superset; the oracle freeze stays the original 215-row prefix.
+ * Known #1 diffs versus that freeze are
  * occupancy ranking, not collector policy.
  *
  * Complete ordered lists, scores, relevanceKind, directClass, related rail,
@@ -57,11 +59,13 @@ describe("Software.Land 215-query result oracle", () => {
     expect(oracle.format).toBe("software-land-query-result-oracle");
     expect(oracle.rowCount).toBe(215);
     expect(oracle.rows).toHaveLength(215);
-    expect(historical.rows).toHaveLength(215);
+    expect(historical.rows.length).toBeGreaterThanOrEqual(215);
     expect(oracle.documentCount).toBe(documents.length);
     expect(oracle.resultLimit).toBe(RESULT_LIMIT);
     expect(oracle.relatedLimit).toBe(RELATED_LIMIT);
-    expect(oracle.rows.map((row) => row.query)).toEqual(historical.rows.map((row) => row.query));
+    expect(oracle.rows.map((row) => row.query)).toEqual(
+      historical.rows.slice(0, 215).map((row) => row.query)
+    );
     expect(oracle.rows.filter((row) => row.results.length === 0).map((row) => row.query).sort()).toEqual([]);
   });
 

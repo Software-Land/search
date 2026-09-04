@@ -24,20 +24,20 @@ They must never become Core defaults.
 | Fixture format | `software-land-search-fixture` v1 (`manifest.json`) |
 | Corpus source commit | `971012bf3d561a67ca8a20f03ec2128135d1fb87` (prior freeze `dff24cf606967cb50b24d28d9142747c9203e053`) |
 | Dictionary acronym-map overlay | `df852eb4136dc5fb5b23cbf0bc22d45170e71423` (`dictionaryAcronymMapSoftwareLandCommit`; `src/search/acronymMap.js`) |
-| Scenario source commit | `3ad49e867f82db06aa06cd1c7f38dca8faecf246` |
+| Scenario source commit | `e4507c54451814fcafb9598640bd2323faacefa5` |
 | `@software-land/search` | `0.6.0` (declared dependency at `corpusSourceCommit`; prior freeze `0.3.1` at `dff24cf`. Not the 0.5.0 relevance overlay, and not the current OSS package version.) |
 | Documents | 123 |
 | Configured concepts | 192 (`dff24cf` snapshot 180 including `testing`, plus 12 later `acronymMap.js` graphics/FPS concepts from Software.Land `df852eb4136dc5fb5b23cbf0bc22d45170e71423`) |
-| Source scenarios | `tests/search-scenarios.js` (215 rows) + `tests/search-v2-contracts.js` (16) |
+| Source scenarios | `tests/search-scenarios.js` (224 product rows; OSS historical mirror is 223, excluding overlay-owned `integ`) + `tests/search-v2-contracts.js` (16) |
 | Strict V2 contracts | 99 (`v2-contracts.json`) |
 | B-intent regressions | 60 (`regression-scenarios.json`, compatibility coverage, not Core policy) |
-| Historical inventory | 215 rows (`historical-scenarios.json`); 214 executable relevance contracts |
-| V2 vs V1 historical top-N | `v1-historical-topn-contract.json` — complete V1 E2E `expectedTop`/`titlePrefix`/`topN` freeze executed on V2 (`test/software-land-v1-contract-on-v2.test.js`). Not the 320-suite mix and not a V1 engine test. |
+| Historical inventory | complete 223-row OSS historical mirror (`historical-scenarios.json`, excluding overlay-owned `integ`); 222 executable relevance contracts |
+| V2 vs V1 historical top-N | `v1-historical-topn-contract.json` — OSS-mirrored Software.Land V1 historical contract (`expectedTop`/`titlePrefix`/`topN`) executed on V2 (`test/software-land-v1-contract-on-v2.test.js`). Not the 320-suite mix and not a V1 engine test. |
 | Historical contract updates | `historical-contract-updates.json` (Software.Land `3ad49e867f82db06aa06cd1c7f38dca8faecf246`) |
 | Historical relevance config | `relevance-config.json` + `relationship-map.json` (authored equivalent + AppSec related; synonym-map.json remains the db5a070 provenance snapshot) |
 | `relevanceSoftwareLandCommit` | `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6` — live `LIVE_SEARCH_EQUIVALENCE_MAP` / `synonym-map.json` snapshot only. Not the NIST alias pin (`relevance-config.json` `7628a85`), not the later relationshipMap/editorial/semantic-rejection commits, and not HEAD. |
-| Omitted empty-intent rows | 43 (not mined into V2 intent/regression; still in historical relevance) |
-| Omitted V1-only source rows | 125 (B + A without intent; some re-enter as regressions; still in historical relevance when `expectedTop` exists) |
+| Omitted empty-intent rows | 51 (not mined into V2 intent/regression; still in historical relevance) |
+| Omitted V1-only source rows | 133 (B + A without intent; some re-enter as regressions; still in historical relevance when `expectedTop` exists) |
 | Omitted browser/UI-only | 1 (`zzz-no-hit` no-results copy) |
 | Omitted historical relevance | 1 (`open`, classification C obsolete) |
 
@@ -46,7 +46,7 @@ Corpus artifacts come from a clean Software.Land worktree at
 files were regenerated from that tree after `search:artifacts:compile` using
 `loadSoftwareLandDocuments` + `normalizeSearchBody`. Relationships remain the
 `dff24cf` compiled graph (Integrity has no relationship edges yet). Scenario policy remains the
-committed Software.Land tree at `3ad49e867f82db06aa06cd1c7f38dca8faecf246`.
+committed Software.Land tree at `e4507c54451814fcafb9598640bd2323faacefa5`.
 Strict V2 contracts are A-class independent intent plus `SEARCH_V2_CONTRACTS`. Regression cases reuse recorded
 B-class independent intent as Software.Land compatibility coverage; they are
 **not Core ranking policy**. Historical `expectedTop` / `titlePrefix` / `topN`
@@ -91,7 +91,7 @@ and `tests/search-v2-contracts.js` from the committed scenario SHA.
 - `lexical-frequency.json` — production lexical-frequency artifact
 - `v2-contracts.json` — strict accepted V2 cases (`kind: contract`)
 - `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy. Optional `overlayCases` are OSS-owned ranking regressions not mined from the scenario SHA.
-- `historical-scenarios.json` — full 215-row inventory; `v1.expectedTop`/`titlePrefix`/`topN` are executable historical relevance contracts
+- `historical-scenarios.json` — complete 223-row OSS historical mirror (excluding overlay-owned queries); `v1.expectedTop`/`titlePrefix`/`topN` are executable historical relevance contracts
 - `historical-contract-updates.json` — old V1 vs accepted V2/product `expectedTop` for rows superseded by explicit product decisions
 - `relevance-config.json` — Software.Land 0.5 relevance-engine inputs (omit `testing`, patch NIST institute aliases, load relationshipMap)
 - `relationship-map.json` — authored directional `equivalent` / `related` edges for the historical engine
@@ -146,10 +146,10 @@ the repo-only transform (no Gatsby, UI, or network):
 
 ```bash
 git -C /path/to/software.land show \
-  08e1b735ae01a3815964360ef3b9141466176dc4:tests/search-scenarios.js \
+  e4507c54451814fcafb9598640bd2323faacefa5:tests/search-scenarios.js \
   > /tmp/search-scenarios.js
 git -C /path/to/software.land show \
-  08e1b735ae01a3815964360ef3b9141466176dc4:tests/search-v2-contracts.js \
+  e4507c54451814fcafb9598640bd2323faacefa5:tests/search-v2-contracts.js \
   > /tmp/search-v2-contracts.js
 
 node scripts/software-land-scenarios.mjs \

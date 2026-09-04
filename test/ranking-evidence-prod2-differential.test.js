@@ -193,7 +193,7 @@ describe("PROD-2 packed search() public differentials", () => {
           .filter(Boolean)
       ),
     ];
-    expect(queries.length).toBe(189);
+    expect(queries.length).toBe(197);
 
     let packed = 0;
     let fallback = 0;
@@ -216,7 +216,7 @@ describe("PROD-2 packed search() public differentials", () => {
     expect(publicRows(asyncRows)).toEqual(publicRows(syncRows));
 
     expect(mismatches).toBe(0);
-    expect(packed + fallback).toBe(189);
+    expect(packed + fallback).toBe(197);
 
     const adversarial = generatedQueries(indexedDocuments, 200, SEED ^ 0x51);
     expect(adversarial).toHaveLength(200);
@@ -230,7 +230,7 @@ describe("PROD-2 packed search() public differentials", () => {
 
     // eslint-disable-next-line no-console
     console.log(JSON.stringify({
-      packedSearchSoftwareLand: { queries: 189, packed, fallback, mismatches: 0 },
+      packedSearchSoftwareLand: { queries: 197, packed, fallback, mismatches: 0 },
       packedSearchSoftwareLandGenerated: {
         queries: 200,
         packed: generatedPacked,
