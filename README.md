@@ -12,7 +12,7 @@ A JavaScript **runtime** that indexes documents, searches them, explains hits, a
 
 Default **indexed** retrieval is exact: it preserves the same result semantics as exhaustive compiled retrieval. Pass `retriever: "full-scan"` only as an explicit reference mode.
 
-0.6.5 improves eligible ordinary `search()` / `searchAsync()` by gathering exact ranking evidence during compiled retrieval instead of constructing a FeatureVector for every retrieved direct. Default hybrid uses that path. Unsupported shapes fall back to the previous exact path without changing results. Practical demonstrated range is workload-dependent; production measurements cover 25k / 50k / 100k documents. Million-document ordinary search under 50 ms is not current capability. Details: [docs/scaling.md](docs/scaling.md), [docs/retrievers.md](docs/retrievers.md), [docs/exact-pruning.md](docs/exact-pruning.md).
+Eligible ordinary `search()` / `searchAsync()` gather exact ranking evidence during compiled retrieval instead of constructing a FeatureVector for every retrieved direct. Default hybrid uses that path. Unsupported shapes fall back to the exact FeatureVector path without changing results. Practical demonstrated range is workload-dependent; production measurements cover 25k / 50k / 100k documents. Million-document ordinary search under 50 ms is not current capability. Details: [docs/scaling.md](docs/scaling.md), [docs/retrievers.md](docs/retrievers.md), [docs/exact-pruning.md](docs/exact-pruning.md).
 
 **Zero production npm dependencies.** Node 18+.
 
@@ -266,7 +266,9 @@ Search data is four distinct layers:
 
 `configuredConcepts` is not the corpus lexicon; term postings live in `lexicalIndex`.
 
-`authored.plugins` is the compiler-owned plugin list: configured-concept recognition (including related standalone/topical recall) followed by compiled equivalent one-hop recall. Ordinary applications do not assemble those pieces by name. `equivalent` edges are directional and do not auto-reverse. `qa → testing` does not imply `testing → qa`. When equivalence is symmetric, author both directions. Trusted corpus-mined accepted groups do this automatically by compiling each group into a bidirectional equivalent clique. Phrase sources match as exact contiguous normalized phrases.
+Configured aliases also support incomplete typed forms. A sufficiently strong, unambiguous form prefix may identify the configured concept; weaker prefixes can contribute the concept key as recall evidence without replacing the query's ordinary lexical interpretation. Ambiguous prefixes fail closed for concept identity. See [docs/concepts.md](docs/concepts.md) for occupancy, prefix-recall, and ambiguity rules.
+
+`authored.plugins` is the compiler-owned runtime plugin list for configured-concept recognition and authored relevance. Ordinary applications do not assemble those pieces by name. `equivalent` edges are directional and do not auto-reverse. `qa → testing` does not imply `testing → qa`. When equivalence is symmetric, author both directions. Trusted corpus-mined accepted groups do this automatically by compiling each group into a bidirectional equivalent clique. Phrase sources match as exact contiguous normalized phrases.
 
 `authored.documentRelationships` is the editorial document→document artifact, or `null` when none were authored. Combine it with a generated semantic artifact using `mergeRelationships(semantic, authored.documentRelationships)`.
 
