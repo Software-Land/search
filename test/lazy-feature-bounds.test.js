@@ -6,9 +6,9 @@
  * exhaustive.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
-import { extractFeatures, classifyDirect } from "../dist/features.js";
-import { scoreFeatures, selectTopPerBuiltinSignature } from "../dist/rank.js";
-import { constraintSignature } from "../dist/rankSignature.js";
+import { extractFeatures, classifyDirect } from "../dist/features/features.js";
+import { scoreFeatures, selectTopPerBuiltinSignature } from "../dist/ranking/rank.js";
+import { constraintSignature } from "../dist/ranking/rankSignature.js";
 import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 
 const schema = {

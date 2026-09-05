@@ -1,12 +1,12 @@
 import {
   rankCandidates,
   selectTopPerBuiltinSignature,
-} from "../dist/rank.js";
+} from "../dist/ranking/rank.js";
 import {
   compareConstraint,
   DEFAULT_CONSTRAINTS,
   HYBRID_CONSTRAINTS,
-} from "../dist/constraints.js";
+} from "../dist/ranking/constraints.js";
 import { pickPrimariesForExpansion } from "../dist/relationships.js";
 
 function features(over = {}) {

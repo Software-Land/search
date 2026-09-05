@@ -8,11 +8,11 @@ import { synonyms } from "../dist/query/synonyms.js";
 import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { querySemanticFacts } from "../dist/query/querySemantics.js";
 import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
-import { rankingEvidenceEligibilityReason } from "../dist/rankingEvidencePlan.js";
-import { rankingEvidenceStaticFor } from "../dist/rankingEvidenceState.js";
-import { packedSearchFallbackReason } from "../dist/rankingEvidenceSearch.js";
+import { rankingEvidenceEligibilityReason } from "../dist/ranking/evidence/rankingEvidencePlan.js";
+import { rankingEvidenceStaticFor } from "../dist/ranking/evidence/rankingEvidenceState.js";
+import { packedSearchFallbackReason } from "../dist/ranking/evidence/rankingEvidenceSearch.js";
 import { searchSessionCapabilities } from "../dist/executionSession.js";
-import { featureBlockPruningFallbackReason } from "../dist/exactPruning.js";
+import { featureBlockPruningFallbackReason } from "../dist/ranking/exactPruning.js";
 import {
   collectCompleteInterpretations,
   COMPLETE_INTERPRETATION_COLLECTOR,

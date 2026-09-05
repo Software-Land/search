@@ -7,8 +7,8 @@ import {
   detectConstraintCycles,
   diagnoseConstraintGraph,
   stronglyConnectedComponents,
-} from "../dist/constraints.js";
-import { rankCandidates, rankCandidatesAsync } from "../dist/rank.js";
+} from "../dist/ranking/constraints.js";
+import { rankCandidates, rankCandidatesAsync } from "../dist/ranking/rank.js";
 
 function blankFeatures(over = {}) {
   return {

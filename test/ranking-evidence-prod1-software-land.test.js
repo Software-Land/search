@@ -10,7 +10,7 @@ import {
   loadSoftwareLandRelevanceInputs,
 } from "./helpers/software-land-fixture.js";
 import { enforcedV1HistoricalTopNRows } from "./helpers/v1-historical-topn-contract.js";
-import { RankingEvidenceSessionPool } from "../dist/rankingEvidenceState.js";
+import { RankingEvidenceSessionPool } from "../dist/ranking/evidence/rankingEvidenceState.js";
 import {
   releaseEvidence,
   runEvidence,

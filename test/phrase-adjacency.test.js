@@ -1,5 +1,5 @@
 import { SearchEngine, morphology } from "../dist/index.js";
-import { extractFeatures } from "../dist/features.js";
+import { extractFeatures } from "../dist/features/features.js";
 import { compileLexicalIndex, loadLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 
 const schema = {

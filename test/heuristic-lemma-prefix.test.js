@@ -6,7 +6,7 @@
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
-import { extractFeatures } from "../dist/features.js";
+import { extractFeatures } from "../dist/features/features.js";
 import {
   conceptMatchesBody,
   conceptMatchesTitle,

@@ -3,14 +3,14 @@
  * Result-set collapse is not QueryPlan policy.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
-import { extractFeatures } from "../dist/features.js";
+import { extractFeatures } from "../dist/features/features.js";
 import { typedSurfacePhraseTokens } from "../dist/query/phraseEvidence.js";
 import { executePhraseQuery } from "../dist/retrieval/positionalQueries.js";
 import { buildQueryPlan, hasStructuredInterpretation, titleGradeSupportKinds } from "../dist/query/queryPlan.js";
 import { collectCompleteInterpretations, COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/completeInterpretationCollector.js";
 import { querySemanticFacts } from "../dist/query/querySemantics.js";
-import { rankCandidates } from "../dist/rank.js";
-import { constraintsForStrategy } from "../dist/constraints.js";
+import { rankCandidates } from "../dist/ranking/rank.js";
+import { constraintsForStrategy } from "../dist/ranking/constraints.js";
 import { retrievalSourcesForDocument } from "../dist/retrieval/retrieve.js";
 
 const schema = {

@@ -8,19 +8,19 @@ import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { buildQueryPlan } from "../dist/query/queryPlan.js";
 import {
   compileRankingEvidencePlan,
-} from "../dist/rankingEvidencePlan.js";
+} from "../dist/ranking/evidence/rankingEvidencePlan.js";
 import {
   RankingEvidenceSessionPool,
   rankingEvidenceStaticFor,
-} from "../dist/rankingEvidenceState.js";
+} from "../dist/ranking/evidence/rankingEvidenceState.js";
 import {
   finalizeRankingEvidence,
-} from "../dist/rankingEvidenceFinalize.js";
+} from "../dist/ranking/evidence/rankingEvidenceFinalize.js";
 import {
   retrieveWithRankingEvidence,
 } from "../dist/retrieval/retrievers.js";
-import { extractFeatures } from "../dist/features.js";
-import { scoreFeatures } from "../dist/rank.js";
+import { extractFeatures } from "../dist/features/features.js";
+import { scoreFeatures } from "../dist/ranking/rank.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";
 import {
   diffFinalized,

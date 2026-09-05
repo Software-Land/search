@@ -19,10 +19,10 @@ import {
   forEachOutgoingComponent,
   advanceConstraintStamp,
   DEFAULT_CONSTRAINTS,
-} from "../../src/constraints.js";
+} from "../../src/ranking/constraints.js";
 import { throwIfAborted } from "../../src/cancel.js";
-import { scoreFeatures } from "../../src/rank.js";
-import { compareScoreThenWeakBodyThenId } from "../../src/rankTieBreak.js";
+import { scoreFeatures } from "../../src/ranking/rank.js";
+import { compareScoreThenWeakBodyThenId } from "../../src/ranking/rankTieBreak.js";
 import type { ConstraintDef, ConstraintGraph, FeaturedHit, RankedHit } from "../../src/types.js";
 
 function orderComponentsRepeatedSort(decorated: FeaturedHit[], graph: ConstraintGraph) {

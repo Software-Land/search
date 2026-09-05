@@ -9,10 +9,10 @@ import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
-import { DEFAULT_CONSTRAINTS, HYBRID_CONSTRAINTS, compareConstraint } from "../dist/constraints.js";
-import { rankCandidates, rankCandidatesAsync, lastRankStats } from "../dist/rank.js";
+import { DEFAULT_CONSTRAINTS, HYBRID_CONSTRAINTS, compareConstraint } from "../dist/ranking/constraints.js";
+import { rankCandidates, rankCandidatesAsync, lastRankStats } from "../dist/ranking/rank.js";
 import { rankCandidatesPairwise, rankCandidatesPairwiseAsync } from "../build/test/oracles/rankOracle.js";
-import { constraintSignature } from "../dist/rankSignature.js";
+import { constraintSignature } from "../dist/ranking/rankSignature.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = path.join(ROOT, "fixtures", "software-land");

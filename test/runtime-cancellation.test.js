@@ -2,7 +2,7 @@ import { morphology, SearchEngine, isAbortError } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { retrieveCandidates } from "../dist/retrieval/retrieve.js";
-import { rankCandidates } from "../dist/rank.js";
+import { rankCandidates } from "../dist/ranking/rank.js";
 import { buildIndex } from "../dist/indexing/indexDocuments.js";
 import { leftoverLooksLikeJunk } from "../dist/query/analyzeRepair.js";
 import {

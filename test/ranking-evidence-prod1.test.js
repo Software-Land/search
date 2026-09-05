@@ -1,11 +1,11 @@
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
-import { RankingEvidenceSessionPool } from "../dist/rankingEvidenceState.js";
+import { RankingEvidenceSessionPool } from "../dist/ranking/evidence/rankingEvidenceState.js";
 import {
   finalizeRankingEvidence,
   readRankingEvidenceFactsForTest,
-} from "../dist/rankingEvidenceFinalize.js";
+} from "../dist/ranking/evidence/rankingEvidenceFinalize.js";
 import { retrieveWithRankingEvidence } from "../dist/retrieval/retrievers.js";
 import {
   prepareEvidence,

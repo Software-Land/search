@@ -7,7 +7,7 @@ import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import {
   createPackedDirectHits,
   isPackedDirectFeatures,
-} from "../dist/rankingEvidencePacked.js";
+} from "../dist/ranking/evidence/rankingEvidencePacked.js";
 import { runEvidence, releaseEvidence } from "./helpers/ranking-evidence-prod1.js";
 import {
   DEFAULT_CONFIGURED_FIELD_EVIDENCE,
@@ -15,7 +15,7 @@ import {
   EMPTY_MATCHED_PREFIX_TOKENS,
   createReusableFeatureScalar,
   resetReusableFeatureScalar,
-} from "../dist/featureDefaults.js";
+} from "../dist/features/featureDefaults.js";
 import {
   decodeConfiguredConceptMatch,
   decodeConfiguredFieldEvidenceAtom,
@@ -25,7 +25,7 @@ import {
   encodeDirectClass,
   packConfiguredFieldEvidence,
   unpackConfiguredFieldEvidence,
-} from "../dist/rankingEvidenceCodec.js";
+} from "../dist/ranking/evidence/rankingEvidenceCodec.js";
 
 const schema = {
   title: { type: "text", role: "title" },

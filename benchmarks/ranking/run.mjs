@@ -21,9 +21,9 @@ import { parseArgs } from "node:util";
 import { SearchEngine, morphology } from "../../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../../dist/configuredConcepts.js";
 import { attachLexicalFrequency } from "../../tools/search-lexical/index.js";
-import { lastRankStats, rankCandidates } from "../../dist/rank.js";
+import { lastRankStats, rankCandidates } from "../../dist/ranking/rank.js";
 import { rankCandidatesPairwise } from "../../build/test/oracles/rankOracle.js";
-import { HYBRID_CONSTRAINTS, DEFAULT_CONSTRAINTS } from "../../dist/constraints.js";
+import { HYBRID_CONSTRAINTS, DEFAULT_CONSTRAINTS } from "../../dist/ranking/constraints.js";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SCHEMA = {

@@ -4,8 +4,8 @@
  * This module deliberately compiles semantic posting actions before retrieval:
  * the posting hot path receives only a field code and numeric action id.
  */
-import { rankingQueryFacts, type RankingQueryFacts } from "./features.js";
-import type { CompiledTermRuntime } from "./indexing/lexicalIndex.js";
+import { rankingQueryFacts, type RankingQueryFacts } from "../../features/features.js";
+import type { CompiledTermRuntime } from "../../indexing/lexicalIndex.js";
 import {
   evidenceTokens,
   formContentTokens,
@@ -13,11 +13,11 @@ import {
   isSearchEquivalenceRecallConcept,
   rankingCoverageConcepts,
   shortTitleTokenPrefixStub,
-} from "./retrieval/retrieve.js";
-import { querySemanticFacts } from "./query/querySemantics.js";
-import { formAllowsOrdinaryLexicalPrefix } from "./query/lexicalPrefixForms.js";
-import { allowPrefixMatch, DEFAULT_STOP, isNearCompletePrefix, levenshteinAtMost } from "./text/text.js";
-import type { AnalyzedQuery, QueryConcept } from "./types.js";
+} from "../../retrieval/retrieve.js";
+import { querySemanticFacts } from "../../query/querySemantics.js";
+import { formAllowsOrdinaryLexicalPrefix } from "../../query/lexicalPrefixForms.js";
+import { allowPrefixMatch, DEFAULT_STOP, isNearCompletePrefix, levenshteinAtMost } from "../../text/text.js";
+import type { AnalyzedQuery, QueryConcept } from "../../types.js";
 import type { RankingEvidenceStatic } from "./rankingEvidenceState.js";
 
 export const RANKING_EVIDENCE_TITLE_FIELD = 0 as const;

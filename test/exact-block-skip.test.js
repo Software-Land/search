@@ -6,7 +6,7 @@ import {
 } from "../dist/indexing/lexicalIndex.js";
 import { stableFingerprint } from "../dist/stableHash.js";
 import { oneOfKBodyOnlyMaxRoundedScore } from "../dist/retrieval/exactBlockSkip.js";
-import { scoreFeatures } from "../dist/rank.js";
+import { scoreFeatures } from "../dist/ranking/rank.js";
 
 const schema = {
   title: { type: "text", role: "title" },

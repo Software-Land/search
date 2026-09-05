@@ -14,7 +14,7 @@
  * empty prefix-token array.
  */
 
-import type { FeatureVector } from "./types.js";
+import type { FeatureVector } from "../types.js";
 
 export const DEFAULT_CONFIGURED_FIELD_EVIDENCE = {
   title: false as const,

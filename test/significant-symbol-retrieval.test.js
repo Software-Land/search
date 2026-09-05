@@ -5,7 +5,7 @@
 import { SearchEngine, morphology } from "../dist/index.js";
 import { synonyms } from "../dist/query/synonyms.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
-import { extractFeatures } from "../dist/features.js";
+import { extractFeatures } from "../dist/features/features.js";
 import { coverageConcepts, conceptMatchesTitle } from "../dist/retrieval/retrieve.js";
 import { buildIndex } from "../dist/indexing/indexDocuments.js";
 import {

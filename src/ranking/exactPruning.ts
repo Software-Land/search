@@ -1,18 +1,18 @@
-import { canonicalLexicalTokensFromQuery } from "./text/lexicalNormalize.js";
-import { querySemanticFacts } from "./query/querySemantics.js";
+import { canonicalLexicalTokensFromQuery } from "../text/lexicalNormalize.js";
+import { querySemanticFacts } from "../query/querySemantics.js";
 import { scoreFeatures } from "./rank.js";
 import { constraintSignature } from "./rankSignature.js";
-import { levenshteinAtMost } from "./text/text.js";
+import { levenshteinAtMost } from "../text/text.js";
 import type {
   OptimizationSessionReason,
   SearchSessionCapabilities,
-} from "./executionSession.js";
+} from "../executionSession.js";
 import type {
   AnalyzedQuery,
   FeatureVector,
   RetrievalHit,
-} from "./types.js";
-import type { ExactPruningExtensionV1 } from "./indexing/lexicalIndex.js";
+} from "../types.js";
+import type { ExactPruningExtensionV1 } from "../indexing/lexicalIndex.js";
 
 export type ExactCandidateBound = {
   hit: RetrievalHit;

@@ -20,12 +20,12 @@ import {
   advanceConstraintStamp,
   DEFAULT_CONSTRAINTS,
 } from "./constraints.js";
-import { throwIfAborted } from "./cancel.js";
+import { throwIfAborted } from "../cancel.js";
 import { BinaryMaxHeap } from "./rankHeap.js";
 import { constraintsAreBuiltin, rankSparse, rankSparseAsync, type RankerStats } from "./rankSparse.js";
 import { constraintSignature } from "./rankSignature.js";
 import { compareScoreThenWeakBodyThenId, scoreThenWeakBodyThenIdBetter } from "./rankTieBreak.js";
-import type { ConstraintDef, ConstraintGraph, FeaturedHit, FeatureVector, RankedHit } from "./types.js";
+import type { ConstraintDef, ConstraintGraph, FeaturedHit, FeatureVector, RankedHit } from "../types.js";
 
 let lastStats: RankerStats | null = null;
 

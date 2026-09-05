@@ -1,4 +1,4 @@
-import { compareConstraint, detectConstraintCycles, DEFAULT_CONSTRAINTS } from "../dist/constraints.js";
+import { compareConstraint, detectConstraintCycles, DEFAULT_CONSTRAINTS } from "../dist/ranking/constraints.js";
 import {
   TWO_THIRDS_QUERY_COVERAGE,
   REPEATED_BODY_PHRASE_MIN,

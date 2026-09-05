@@ -4,7 +4,7 @@
  */
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { extractFeatures } from "../dist/features.js";
+import { extractFeatures } from "../dist/features/features.js";
 
 const schema = {
   title: { type: "text", role: "title" },

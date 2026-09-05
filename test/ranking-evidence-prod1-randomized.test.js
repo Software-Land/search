@@ -7,7 +7,7 @@ import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";
-import { RankingEvidenceSessionPool } from "../dist/rankingEvidenceState.js";
+import { RankingEvidenceSessionPool } from "../dist/ranking/evidence/rankingEvidenceState.js";
 import { loadSoftwareLandRelevanceInputs } from "./helpers/software-land-fixture.js";
 import {
   releaseEvidence,

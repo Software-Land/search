@@ -40,8 +40,8 @@ import {
   type CompiledTermRuntime,
 } from "../indexing/lexicalIndex.js";
 import { planStage3ABodyOrdinals, stage3AUnsupportedReason } from "./exactBlockSkip.js";
-import type { RankingEvidenceFieldCode } from "../rankingEvidencePlan.js";
-import type { RankingEvidenceSession } from "../rankingEvidenceState.js";
+import type { RankingEvidenceFieldCode } from "../ranking/evidence/rankingEvidencePlan.js";
+import type { RankingEvidenceSession } from "../ranking/evidence/rankingEvidenceState.js";
 import type {
   AdaptiveRetrieverOptions,
   AnalyzedQuery,

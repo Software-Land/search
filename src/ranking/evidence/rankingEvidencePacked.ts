@@ -20,14 +20,14 @@ import {
   decodeDirectClass,
   unpackConfiguredFieldEvidence,
 } from "./rankingEvidenceCodec.js";
-import { EMPTY_MATCHED_PREFIX_TOKENS } from "./featureDefaults.js";
+import { EMPTY_MATCHED_PREFIX_TOKENS } from "../../features/featureDefaults.js";
 import type { RankingEvidenceFinalized } from "./rankingEvidenceFinalize.js";
 import type {
   DirectClass,
   FeaturedHit,
   FeatureVector,
   RetrievalHit,
-} from "./types.js";
+} from "../../types.js";
 
 /**
  * Packed column view. Getters are the production ranking adapter; they are not

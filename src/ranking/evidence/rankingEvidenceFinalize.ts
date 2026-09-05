@@ -5,11 +5,11 @@
  * then delegates direct classification and scoring to the authoritative
  * implementations. It never allocates a FeatureVector per candidate.
  */
-import { compactOrdinal } from "./indexing/compactDocuments.js";
-import { queryHasTypedConfiguredGraph } from "./query/configuredFormGraph.js";
-import { resetReusableFeatureScalar, DEFAULT_FEATURE_VALUES } from "./featureDefaults.js";
-import { classifyDirect } from "./features.js";
-import { scoreFeatures } from "./rank.js";
+import { compactOrdinal } from "../../indexing/compactDocuments.js";
+import { queryHasTypedConfiguredGraph } from "../../query/configuredFormGraph.js";
+import { resetReusableFeatureScalar, DEFAULT_FEATURE_VALUES } from "../../features/featureDefaults.js";
+import { classifyDirect } from "../../features/features.js";
+import { scoreFeatures } from "../rank.js";
 import {
   decodeConfiguredConceptMatch,
   decodeDirectClass,
@@ -40,14 +40,14 @@ import {
   type RankingEvidenceCounters,
   type RankingEvidenceMemory,
 } from "./rankingEvidenceState.js";
-import { saturatingFrequency } from "./saturatingFrequency.js";
-import { DEFAULT_STOP } from "./text/text.js";
+import { saturatingFrequency } from "../../saturatingFrequency.js";
+import { DEFAULT_STOP } from "../../text/text.js";
 import type {
   FeatureVector,
   RetrievalHit,
-} from "./types.js";
-import type { PhraseField } from "./indexing/positionalIndex.js";
-import type { QueryPlan } from "./query/queryPlan.js";
+} from "../../types.js";
+import type { PhraseField } from "../../indexing/positionalIndex.js";
+import type { QueryPlan } from "../../query/queryPlan.js";
 
 const TWO_THIRDS = 2 / 3;
 

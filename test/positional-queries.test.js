@@ -6,7 +6,7 @@ import { SearchEngine } from "../dist/index.js";
 import { tokenize, allowPrefixMatch } from "../dist/text/text.js";
 import { executePhrasePrefixQuery, executePhraseQuery, emptyExecutionStats } from "../dist/retrieval/positionalQueries.js";
 import { buildQueryPlan, queryPhraseGeometry } from "../dist/query/queryPlan.js";
-import { extractFeatures } from "../dist/features.js";
+import { extractFeatures } from "../dist/features/features.js";
 import { collectCompleteInterpretations, COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/completeInterpretationCollector.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { buildTokenGraph } from "../dist/query/configuredFormGraph.js";

@@ -4,7 +4,7 @@ Latency at a **fixed candidate count C**. Builtin ranking groups candidates by c
 
 These files are **not** packed in the npm tarball (`package.json` `files` omits `benchmarks/`).
 
-Requires a built runtime (`npm run build && npm run build:oracles`). Public `SearchEngine` plus internal `dist/rank.js` and test-only `build/test/oracles/rankOracle.js` for old-vs-new rank-only timing. `test/oracles/*.ts` is the frozen oracle source; the JS emit is test-only and is not packed.
+Requires a built runtime (`npm run build && npm run build:oracles`). Public `SearchEngine` plus internal `dist/ranking/rank.js` and test-only `build/test/oracles/rankOracle.js` for old-vs-new rank-only timing. `test/oracles/*.ts` is the frozen oracle source; the JS emit is test-only and is not packed.
 
 ```bash
 node benchmarks/ranking/run.mjs

@@ -8,7 +8,7 @@ import {
   lexicalHydrationFingerprint,
   loadLexicalIndex,
 } from "./indexing/lexicalIndex.js";
-import { extractFeatures } from "./features.js";
+import { extractFeatures } from "./features/features.js";
 import { retrievalSourcesForDocument } from "./retrieval/retrieve.js";
 import { buildQueryPlan } from "./query/queryPlan.js";
 import {
@@ -20,25 +20,25 @@ import {
   exhaustiveFeaturePruningStats,
   featureBlockPruningFallbackReason,
   planExactFeaturePruning,
-} from "./exactPruning.js";
+} from "./ranking/exactPruning.js";
 import {
   rankCandidates,
   rankCandidatesAsync,
   scoreFeatures,
   selectTopPerBuiltinSignature,
-} from "./rank.js";
-import { compileRankingEvidencePlan } from "./rankingEvidencePlan.js";
-import { RankingEvidenceSessionPool, rankingEvidenceStaticFor } from "./rankingEvidenceState.js";
-import { finalizeRankingEvidence } from "./rankingEvidenceFinalize.js";
-import { createPackedDirectHits, isPackedDirectFeatures } from "./rankingEvidencePacked.js";
-import { packedSearchFallbackReason } from "./rankingEvidenceSearch.js";
+} from "./ranking/rank.js";
+import { compileRankingEvidencePlan } from "./ranking/evidence/rankingEvidencePlan.js";
+import { RankingEvidenceSessionPool, rankingEvidenceStaticFor } from "./ranking/evidence/rankingEvidenceState.js";
+import { finalizeRankingEvidence } from "./ranking/evidence/rankingEvidenceFinalize.js";
+import { createPackedDirectHits, isPackedDirectFeatures } from "./ranking/evidence/rankingEvidencePacked.js";
+import { packedSearchFallbackReason } from "./ranking/evidence/rankingEvidenceSearch.js";
 import { assembleDetailedResult, withPackedSearchMeta } from "./resultAssembly.js";
 import {
   hasRankingEvidenceRetrieverCapability,
   retrieveWithRankingEvidence,
   retrieveWithRankingEvidenceAsync,
 } from "./retrieval/retrievers.js";
-import { constraintsForStrategy } from "./constraints.js";
+import { constraintsForStrategy } from "./ranking/constraints.js";
 import { morphology } from "./morphology.js";
 import { compileConfiguredConceptPlugin } from "./configuredConcepts.js";
 import { bindMorphologyDerivedEquivalences } from "./query/synonyms.js";

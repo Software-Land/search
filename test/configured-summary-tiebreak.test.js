@@ -2,9 +2,9 @@
  * Configured summary vs body-only is recorded on features, not consumed in
  * ranking. The rejected H8 categorical constraint stays gone.
  */
-import { HYBRID_CONSTRAINTS, compareConstraint, DEFAULT_CONSTRAINTS } from "../dist/constraints.js";
-import { rankCandidates, scoreFeatures } from "../dist/rank.js";
-import { compareScoreThenWeakBodyThenId } from "../dist/rankTieBreak.js";
+import { HYBRID_CONSTRAINTS, compareConstraint, DEFAULT_CONSTRAINTS } from "../dist/ranking/constraints.js";
+import { rankCandidates, scoreFeatures } from "../dist/ranking/rank.js";
+import { compareScoreThenWeakBodyThenId } from "../dist/ranking/rankTieBreak.js";
 
 function hit(id, over = {}) {
   return {

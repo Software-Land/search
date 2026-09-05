@@ -30,8 +30,8 @@ import {
   TWO_THIRDS_QUERY_COVERAGE,
   MODERATE_TITLE_PREFIX_QUALITY,
   REPEATED_BODY_PHRASE_MIN,
-} from "./evidencePolicy.js";
-import type { FeatureVector } from "./types.js";
+} from "../evidencePolicy.js";
+import type { FeatureVector } from "../types.js";
 
 function coverageBand(q: number) {
   if (!(q > 0)) return 0;

@@ -16,13 +16,13 @@
  * components scored deterministically. Conflicts/cycles are always observable.
  */
 
-import { throwIfAborted } from "./cancel.js";
+import { throwIfAborted } from "../cancel.js";
 import {
   FULL_QUERY_COVERAGE,
   TWO_THIRDS_QUERY_COVERAGE,
   MODERATE_TITLE_PREFIX_QUALITY,
   REPEATED_BODY_PHRASE_MIN,
-} from "./evidencePolicy.js";
+} from "../evidencePolicy.js";
 import type {
   ConstraintCompareResult,
   ConstraintCsr,
@@ -33,7 +33,7 @@ import type {
   FeaturedHit,
   FeatureVector,
   RelationshipStrategy,
-} from "./types.js";
+} from "../types.js";
 
 type AppliedRow = { id: string; invariant: string; class: string; result: string };
 

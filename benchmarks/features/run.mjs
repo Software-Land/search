@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../../dist/configuredConcepts.js";
 import { attachLexicalFrequency } from "../../tools/search-lexical/index.js";
-import { startFeatureProfile, lastFeatureProfile, stopFeatureProfile, extractFeatures } from "../../dist/features.js";
+import { startFeatureProfile, lastFeatureProfile, stopFeatureProfile, extractFeatures } from "../../dist/features/features.js";
 import { extractFeaturesOracle } from "../../build/test/oracles/featuresOracle.js";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..");

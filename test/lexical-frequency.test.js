@@ -2,7 +2,7 @@ import { compileLexicalFrequency, attachLexicalFrequency, saturatingFrequency, r
 import { morphology, SearchEngine } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
-import { extractFeatures, saturatingFrequency as runtimeSaturatingFrequency } from "../dist/features.js";
+import { extractFeatures, saturatingFrequency as runtimeSaturatingFrequency } from "../dist/features/features.js";
 import { saturatingFrequency as sharedSaturatingFrequency } from "../dist/saturatingFrequency.js";
 import {
   canonicalLexicalTokens,
@@ -11,7 +11,7 @@ import {
 } from "../dist/text/lexicalNormalize.js";
 import { DEFAULT_STOP } from "../dist/text/text.js";
 import { buildIndex } from "../dist/indexing/indexDocuments.js";
-import { compareConstraint, HYBRID_CONSTRAINTS } from "../dist/constraints.js";
+import { compareConstraint, HYBRID_CONSTRAINTS } from "../dist/ranking/constraints.js";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 

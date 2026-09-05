@@ -10,9 +10,9 @@ import { parseArgs } from "node:util";
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
-import { extractFeatures, classifyDirect } from "../dist/features.js";
-import { scoreFeatures, selectTopPerBuiltinSignature } from "../dist/rank.js";
-import { constraintSignature } from "../dist/rankSignature.js";
+import { extractFeatures, classifyDirect } from "../dist/features/features.js";
+import { scoreFeatures, selectTopPerBuiltinSignature } from "../dist/ranking/rank.js";
+import { constraintSignature } from "../dist/ranking/rankSignature.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";
 import { REPEATED_BODY_PHRASE_MIN } from "../dist/evidencePolicy.js";
 

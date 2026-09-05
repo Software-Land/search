@@ -9,8 +9,8 @@ import {
   detectConstraintCycles,
   diagnoseConstraintGraph,
   HYBRID_CONSTRAINTS,
-} from "../dist/constraints.js";
-import { rankCandidates, rankCandidatesAsync } from "../dist/rank.js";
+} from "../dist/ranking/constraints.js";
+import { rankCandidates, rankCandidatesAsync } from "../dist/ranking/rank.js";
 
 function edgePairs(edges) {
   return [...edges];

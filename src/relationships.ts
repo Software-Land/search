@@ -5,10 +5,10 @@
  */
 
 import { parseRelationships } from "./artifacts.js";
-import { classifyDirect } from "./features.js";
+import { classifyDirect } from "./features/features.js";
 import { throwIfAborted } from "./cancel.js";
 import { querySemanticFacts } from "./query/querySemantics.js";
-import { rankCandidates, selectTopPerBuiltinSignature } from "./rank.js";
+import { rankCandidates, selectTopPerBuiltinSignature } from "./ranking/rank.js";
 import type {
   ConstraintDef,
   FeaturedHit,

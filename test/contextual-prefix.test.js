@@ -1,7 +1,7 @@
 import { morphology, SearchEngine } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
-import { extractFeatures } from "../dist/features.js";
+import { extractFeatures } from "../dist/features/features.js";
 import { matchContextualTitlePrefix } from "../dist/retrieval/retrieve.js";
 import { buildIndex } from "../dist/indexing/indexDocuments.js";
 

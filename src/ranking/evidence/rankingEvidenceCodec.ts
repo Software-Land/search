@@ -8,7 +8,7 @@
  * codes are "none"; unknown field-evidence / configured-match codes are false.
  */
 
-import type { DirectClass, FeatureVector } from "./types.js";
+import type { DirectClass, FeatureVector } from "../../types.js";
 
 export type ConfiguredFieldEvidenceAtom = false | "key" | "form";
 

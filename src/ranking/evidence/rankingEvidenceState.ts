@@ -8,9 +8,9 @@ import {
   asCompactStore,
   compactOrdinal,
   type CompactDocumentStore,
-} from "./indexing/compactDocuments.js";
-import { ensureCompiledLexicalIndex, type CompiledLexicalRuntime } from "./indexing/lexicalIndex.js";
-import { positionalIndexOf, type PositionalIndex } from "./indexing/positionalIndex.js";
+} from "../../indexing/compactDocuments.js";
+import { ensureCompiledLexicalIndex, type CompiledLexicalRuntime } from "../../indexing/lexicalIndex.js";
+import { positionalIndexOf, type PositionalIndex } from "../../indexing/positionalIndex.js";
 import {
   RANKING_ACTION_CONFIGURED_KEY,
   RANKING_ACTION_EXACT_TITLE_TOKEN,
@@ -23,13 +23,13 @@ import {
   type RankingEvidenceFieldCode,
   type RankingEvidencePlan,
 } from "./rankingEvidencePlan.js";
-import { DEFAULT_STOP } from "./text/text.js";
-import { createReusableFeatureScalar } from "./featureDefaults.js";
+import { DEFAULT_STOP } from "../../text/text.js";
+import { createReusableFeatureScalar } from "../../features/featureDefaults.js";
 import type {
   FeatureVector,
   QueryConcept,
   SearchIndex,
-} from "./types.js";
+} from "../../types.js";
 
 type EvidenceTypedArray =
   | Uint8Array

@@ -2,21 +2,21 @@ import { buildQueryPlan } from "../../dist/query/queryPlan.js";
 import {
   compileRankingEvidencePlan,
   rankingEvidenceEligibilityReason,
-} from "../../dist/rankingEvidencePlan.js";
+} from "../../dist/ranking/evidence/rankingEvidencePlan.js";
 import {
   RankingEvidenceSessionPool,
   rankingEvidenceStaticFor,
-} from "../../dist/rankingEvidenceState.js";
+} from "../../dist/ranking/evidence/rankingEvidenceState.js";
 import {
   finalizeRankingEvidence,
   readRankingEvidenceFactsForTest,
-} from "../../dist/rankingEvidenceFinalize.js";
+} from "../../dist/ranking/evidence/rankingEvidenceFinalize.js";
 import {
   retrieveWithRankingEvidence,
   retrieveWithRankingEvidenceAsync,
 } from "../../dist/retrieval/retrievers.js";
-import { extractFeatures } from "../../dist/features.js";
-import { scoreFeatures } from "../../dist/rank.js";
+import { extractFeatures } from "../../dist/features/features.js";
+import { scoreFeatures } from "../../dist/ranking/rank.js";
 
 export const REPRESENTED_FIELDS = [
   "exactTitleMatch",

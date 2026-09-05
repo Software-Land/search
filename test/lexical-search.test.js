@@ -4,8 +4,8 @@ import {
 } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
-import { extractFeatures, FEATURE_DEFINITIONS } from "../dist/features.js";
-import { compareConstraint, constraintCatalog } from "../dist/constraints.js";
+import { extractFeatures, FEATURE_DEFINITIONS } from "../dist/features/features.js";
+import { compareConstraint, constraintCatalog } from "../dist/ranking/constraints.js";
 import { retrieveCandidates, versionHit, typedForm } from "../dist/retrieval/retrieve.js";
 import {
   extractVersionCompactForms,
@@ -16,7 +16,7 @@ import {
 } from "../dist/text/versionForms.js";
 import { tokenize, tokenizeWithRanges } from "../dist/text/text.js";
 import { buildIndex } from "../dist/indexing/indexDocuments.js";
-import { scoreFeatures, rankCandidates } from "../dist/rank.js";
+import { scoreFeatures, rankCandidates } from "../dist/ranking/rank.js";
 
 function engine(docs, dictEntries = []) {
   const e = SearchEngine.create({

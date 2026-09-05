@@ -19,7 +19,7 @@ import { formAllowsOrdinaryLexicalPrefix } from "../query/lexicalPrefixForms.js"
 import { allowPrefixMatch } from "../text/text.js";
 import type { AnalyzedQuery, IndexedDocument, QueryConcept } from "../types.js";
 import { isAllDigitToken } from "../text/versionForms.js";
-import type { RankingEvidenceSession } from "../rankingEvidenceState.js";
+import type { RankingEvidenceSession } from "../ranking/evidence/rankingEvidenceState.js";
 
 export type Stage3AStats = {
   applied: boolean;

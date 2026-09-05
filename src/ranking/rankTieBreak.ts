@@ -6,7 +6,7 @@
  * but is not consumed here.
  */
 
-import type { FeaturedHit, FeatureVector } from "./types.js";
+import type { FeaturedHit, FeatureVector } from "../types.js";
 
 /**
  * Eligible pack: one-token query, weak/none direct class, body-lexical evidence

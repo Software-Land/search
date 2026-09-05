@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { extractFeatures } from "../dist/features.js";
+import { extractFeatures } from "../dist/features/features.js";
 import {
   compileLexicalIndex,
   documentBlockBoundaries,
@@ -13,9 +13,9 @@ import {
 import {
   exactBodyOnlySingleTokenBound,
   planExactFeaturePruning,
-} from "../dist/exactPruning.js";
-import { constraintSignature } from "../dist/rankSignature.js";
-import { scoreFeatures } from "../dist/rank.js";
+} from "../dist/ranking/exactPruning.js";
+import { constraintSignature } from "../dist/ranking/rankSignature.js";
+import { scoreFeatures } from "../dist/ranking/rank.js";
 import { retrieveCandidates } from "../dist/retrieval/retrieve.js";
 import { stableFingerprint } from "../dist/stableHash.js";
 import {

@@ -1,12 +1,12 @@
-import { sequenceKey } from "./query/configuredAuthoring.js";
-import { isNearCompletePrefix, levenshteinAtMost, DEFAULT_STOP, allowPrefixMatch } from "./text/text.js";
-import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "./text/versionForms.js";
-import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, hasConfiguredContentIdentity, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall, topicalRecallHint, topicalFormEvidence, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts, rankingCoverageConcepts, formContentTokens, sequenceCount, shortTitleTokenPrefixStub, configuredConceptFieldMatch } from "./retrieval/retrieve.js";
-import { queryPhraseGeometry, queryPhraseGeometryFromGraph } from "./query/queryPlan.js";
-import { querySemanticFacts } from "./query/querySemantics.js";
-import { scoreFeatures } from "./rank.js";
-import { saturatingFrequency } from "./saturatingFrequency.js";
-import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "./text/lexicalNormalize.js";
+import { sequenceKey } from "../query/configuredAuthoring.js";
+import { isNearCompletePrefix, levenshteinAtMost, DEFAULT_STOP, allowPrefixMatch } from "../text/text.js";
+import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "../text/versionForms.js";
+import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, hasConfiguredContentIdentity, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall, topicalRecallHint, topicalFormEvidence, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts, rankingCoverageConcepts, formContentTokens, sequenceCount, shortTitleTokenPrefixStub, configuredConceptFieldMatch } from "../retrieval/retrieve.js";
+import { queryPhraseGeometry, queryPhraseGeometryFromGraph } from "../query/queryPlan.js";
+import { querySemanticFacts } from "../query/querySemantics.js";
+import { scoreFeatures } from "../ranking/rank.js";
+import { saturatingFrequency } from "../saturatingFrequency.js";
+import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "../text/lexicalNormalize.js";
 import {
   asCompactStore,
   compactAdjacentTokens,
@@ -16,14 +16,14 @@ import {
   KIND_BODY_LEMMA,
   KIND_TITLE,
   KIND_TITLE_LEMMA,
-} from "./indexing/compactDocuments.js";
+} from "../indexing/compactDocuments.js";
 import {
   FULL_QUERY_COVERAGE,
   TWO_THIRDS_QUERY_COVERAGE,
   MODERATE_TITLE_PREFIX_QUALITY,
   STRONG_WITH_FULL_COVERAGE_TITLE_PREFIX_QUALITY,
   REPEATED_BODY_PHRASE_MIN,
-} from "./evidencePolicy.js";
+} from "../evidencePolicy.js";
 import { DEFAULT_FEATURE_VALUES } from "./featureDefaults.js";
 import type {
   AnalyzedQuery,
@@ -34,8 +34,8 @@ import type {
   QueryConcept,
   QueryToken,
   RelationshipInfo,
-} from "./types.js";
-import type { WeakConfiguredRecall } from "./query/querySemantics.js";
+} from "../types.js";
+import type { WeakConfiguredRecall } from "../query/querySemantics.js";
 
 export { saturatingFrequency };
 

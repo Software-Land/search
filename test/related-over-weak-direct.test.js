@@ -3,8 +3,8 @@
  * unordered so score can prefer either side. Not a public ranking policy change
  * beyond that exemption. Synthetic features only.
  */
-import { HYBRID_CONSTRAINTS, compareConstraint, DEFAULT_CONSTRAINTS } from "../dist/constraints.js";
-import { rankCandidates, lastRankStats, scoreFeatures } from "../dist/rank.js";
+import { HYBRID_CONSTRAINTS, compareConstraint, DEFAULT_CONSTRAINTS } from "../dist/ranking/constraints.js";
+import { rankCandidates, lastRankStats, scoreFeatures } from "../dist/ranking/rank.js";
 import { REPEATED_BODY_PHRASE_MIN } from "../dist/evidencePolicy.js";
 
 function hit(id, over = {}) {

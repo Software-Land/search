@@ -25,11 +25,11 @@ import {
   forEachOutgoingComponent,
   advanceConstraintStamp,
 } from "./constraints.js";
-import { throwIfAborted } from "./cancel.js";
+import { throwIfAborted } from "../cancel.js";
 import { BinaryMaxHeap } from "./rankHeap.js";
 import { constraintSignature } from "./rankSignature.js";
 import { compareScoreThenWeakBodyThenId, scoreThenWeakBodyThenIdBetter } from "./rankTieBreak.js";
-import type { ConstraintDef, FeaturedHit, RankedHit } from "./types.js";
+import type { ConstraintDef, FeaturedHit, RankedHit } from "../types.js";
 
 const BUILTIN_FNS = new Set<(a: FeaturedHit, b: FeaturedHit) => number>();
 for (const d of DEFAULT_CONSTRAINTS) BUILTIN_FNS.add(d.fn);

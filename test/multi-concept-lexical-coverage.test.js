@@ -4,12 +4,12 @@
  * lexicalConceptCoverage is the true title∪body union. Synthetic ranking
  * plus one complementary-evidence extractFeatures case.
  */
-import { HYBRID_CONSTRAINTS, compareConstraint, DEFAULT_CONSTRAINTS } from "../dist/constraints.js";
-import { rankCandidates, lastRankStats } from "../dist/rank.js";
+import { HYBRID_CONSTRAINTS, compareConstraint, DEFAULT_CONSTRAINTS } from "../dist/ranking/constraints.js";
+import { rankCandidates, lastRankStats } from "../dist/ranking/rank.js";
 import { rankCandidatesPairwise } from "../build/test/oracles/rankOracle.js";
 import { FULL_QUERY_COVERAGE } from "../dist/evidencePolicy.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
-import { extractFeatures } from "../dist/features.js";
+import { extractFeatures } from "../dist/features/features.js";
 import { buildIndex } from "../dist/indexing/indexDocuments.js";
 import { morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";

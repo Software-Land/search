@@ -16,9 +16,9 @@ import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 import { coverageConcepts, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts } from "../dist/retrieval/retrieve.js";
-import { compareConstraint } from "../dist/constraints.js";
+import { compareConstraint } from "../dist/ranking/constraints.js";
 import { synonyms, deriveMorphologyEquivalenceLookup } from "../dist/query/synonyms.js";
-import { extractFeatures } from "../dist/features.js";
+import { extractFeatures } from "../dist/features/features.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));

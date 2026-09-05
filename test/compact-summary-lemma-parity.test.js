@@ -8,7 +8,7 @@
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
-import { extractFeatures } from "../dist/features.js";
+import { extractFeatures } from "../dist/features/features.js";
 
 const schema = {
   title: { type: "text", role: "title" },

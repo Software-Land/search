@@ -4,7 +4,7 @@ import { analyzeQuery } from "../dist/query/analyze.js";
 import { buildIndex } from "../dist/indexing/indexDocuments.js";
 import { retrieveCandidates, matchContextualTitlePrefix } from "../dist/retrieval/retrieve.js";
 import { createIndexedLexicalRetriever } from "../dist/retrieval/retrievers.js";
-import { extractFeatures } from "../dist/features.js";
+import { extractFeatures } from "../dist/features/features.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 
