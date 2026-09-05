@@ -4,7 +4,7 @@
  */
 import { SearchEngine } from "../dist/index.js";
 import { tokenize, allowPrefixMatch } from "../dist/text/text.js";
-import { executePhrasePrefixQuery, executePhraseQuery, emptyExecutionStats } from "../dist/positionalQueries.js";
+import { executePhrasePrefixQuery, executePhraseQuery, emptyExecutionStats } from "../dist/retrieval/positionalQueries.js";
 import { buildQueryPlan, queryPhraseGeometry } from "../dist/query/queryPlan.js";
 import { extractFeatures } from "../dist/features.js";
 import { collectCompleteInterpretations, COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/completeInterpretationCollector.js";
@@ -460,7 +460,7 @@ describe("configured-form token DAG", () => {
 
 describe("PhrasePrefixQuery source boundary", () => {
   test("executePhrasePrefixQuery does not call allowPrefixMatch or prefixCompletion", () => {
-    const src = readFileSync(new URL("../src/positionalQueries.ts", import.meta.url), "utf8");
+    const src = readFileSync(new URL("../src/retrieval/positionalQueries.ts", import.meta.url), "utf8");
     const start = src.indexOf("export function executePhrasePrefixQuery");
     const end = src.indexOf("function matchTokensAt");
     const body = src.slice(start, end);

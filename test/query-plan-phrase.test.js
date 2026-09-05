@@ -5,13 +5,13 @@
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import { extractFeatures } from "../dist/features.js";
 import { typedSurfacePhraseTokens } from "../dist/query/phraseEvidence.js";
-import { executePhraseQuery } from "../dist/positionalQueries.js";
+import { executePhraseQuery } from "../dist/retrieval/positionalQueries.js";
 import { buildQueryPlan, hasStructuredInterpretation, titleGradeSupportKinds } from "../dist/query/queryPlan.js";
 import { collectCompleteInterpretations, COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/completeInterpretationCollector.js";
 import { querySemanticFacts } from "../dist/query/querySemantics.js";
 import { rankCandidates } from "../dist/rank.js";
 import { constraintsForStrategy } from "../dist/constraints.js";
-import { retrievalSourcesForDocument } from "../dist/retrieve.js";
+import { retrievalSourcesForDocument } from "../dist/retrieval/retrieve.js";
 
 const schema = {
   title: { type: "text", role: "title" },

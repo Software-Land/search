@@ -5,7 +5,7 @@
  */
 import { SearchEngine, morphology, ARTIFACT_FORMATS, ARTIFACT_VERSION } from "../dist/index.js";
 import { synonyms } from "../dist/query/synonyms.js";
-import { compileLexicalIndex } from "../dist/lexicalIndex.js";
+import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const schema = {

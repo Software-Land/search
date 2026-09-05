@@ -7,8 +7,8 @@ import { analyzeQuery } from "../dist/query/analyze.js";
 import {
   retrieveCandidates,
   shortTitleTokenPrefixStub,
-} from "../dist/retrieve.js";
-import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
+} from "../dist/retrieval/retrieve.js";
+import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 import { allowPrefixMatch, DEFAULT_STOP } from "../dist/text/text.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";

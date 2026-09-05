@@ -4,7 +4,7 @@
  */
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { compileLexicalIndex } from "../dist/lexicalIndex.js";
+import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { buildQueryPlan } from "../dist/query/queryPlan.js";
 import {
   compileRankingEvidencePlan,
@@ -18,7 +18,7 @@ import {
 } from "../dist/rankingEvidenceFinalize.js";
 import {
   retrieveWithRankingEvidence,
-} from "../dist/retrievers.js";
+} from "../dist/retrieval/retrievers.js";
 import { extractFeatures } from "../dist/features.js";
 import { scoreFeatures } from "../dist/rank.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";

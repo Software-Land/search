@@ -5,8 +5,8 @@
  * IndexedDocument views decode through accessors instead of owning Sets,
  * Maps, and duplicate string arrays.
  */
-import { DEFAULT_STOP } from "./text/text.js";
-import type { IndexedDocument } from "./types.js";
+import { DEFAULT_STOP } from "../text/text.js";
+import type { IndexedDocument } from "../types.js";
 
 export const KIND_TITLE = 0;
 export const KIND_BODY = 1;

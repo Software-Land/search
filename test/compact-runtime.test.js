@@ -15,7 +15,7 @@ import { extractFeatures } from "../dist/features.js";
 import {
   compileLexicalIndex,
   loadLexicalIndex,
-} from "../dist/lexicalIndex.js";
+} from "../dist/indexing/lexicalIndex.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));

@@ -12,7 +12,7 @@ import {
   compileLexicalIndex,
   loadLexicalIndex,
   parseLexicalIndex,
-} from "../dist/lexicalIndex.js";
+} from "../dist/indexing/lexicalIndex.js";
 import { stableFingerprint } from "../dist/stableHash.js";
 import {
   attachLexicalFrequency,

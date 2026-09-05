@@ -1,9 +1,9 @@
 import { morphology, SearchEngine, isAbortError } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery, suggestTypoForms } from "../dist/query/analyze.js";
-import { buildIndex } from "../dist/indexDocuments.js";
+import { buildIndex } from "../dist/indexing/indexDocuments.js";
 import { pickPrimariesForExpansion } from "../dist/relationships.js";
-import { retrieveCandidates } from "../dist/retrieve.js";
+import { retrieveCandidates } from "../dist/retrieval/retrieve.js";
 
 const schema = {
   title: { type: "text", role: "title" },

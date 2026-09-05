@@ -13,12 +13,12 @@
  * so a summary-only edit cannot keep stale search-relevant state.
  */
 
-import { tokenize } from "./text/text.js";
-import { assertArtifact } from "./artifacts.js";
-import { canonicalDocumentId } from "./documentId.js";
-import { ArtifactValidationError } from "./errors.js";
+import { tokenize } from "../text/text.js";
+import { assertArtifact } from "../artifacts.js";
+import { canonicalDocumentId } from "../documentId.js";
+import { ArtifactValidationError } from "../errors.js";
 import { buildIndex, resolveSchema } from "./indexDocuments.js";
-import { stableFingerprint } from "./stableHash.js";
+import { stableFingerprint } from "../stableHash.js";
 import {
   compactDocuments,
   internTerm,
@@ -31,7 +31,7 @@ import type {
   SearchDocument,
   SearchIndex,
   SearchPlugin,
-} from "./types.js";
+} from "../types.js";
 
 export const LEXICAL_INDEX_FORMAT = "search-v2-lexical-index" as const;
 export const LEXICAL_INDEX_VERSION = 1 as const;

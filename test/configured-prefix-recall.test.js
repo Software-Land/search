@@ -4,13 +4,13 @@
 import { SearchEngine, morphology, compileAuthoredRelevance, ARTIFACT_FORMATS, ARTIFACT_VERSION } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
-import { retrievalFormKindAllowsPrefix } from "../dist/retrieve.js";
+import { retrievalFormKindAllowsPrefix } from "../dist/retrieval/retrieve.js";
 import { COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/completeInterpretationCollector.js";
-import { compileLexicalIndex } from "../dist/lexicalIndex.js";
+import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { packedSearchFallbackReason } from "../dist/rankingEvidenceSearch.js";
 import { rankingEvidenceEligibilityReason } from "../dist/rankingEvidencePlan.js";
 import { rankingEvidenceStaticFor } from "../dist/rankingEvidenceState.js";
-import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
+import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 import { createSearchClient, createWorkerRuntime, createLoopbackTransport } from "../dist/browser/index.js";
 import { loadSoftwareLandRelevanceInputs } from "./helpers/software-land-fixture.js";
 

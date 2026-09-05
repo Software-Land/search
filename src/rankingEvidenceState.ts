@@ -8,9 +8,9 @@ import {
   asCompactStore,
   compactOrdinal,
   type CompactDocumentStore,
-} from "./compactDocuments.js";
-import { ensureCompiledLexicalIndex, type CompiledLexicalRuntime } from "./lexicalIndex.js";
-import { positionalIndexOf, type PositionalIndex } from "./positionalIndex.js";
+} from "./indexing/compactDocuments.js";
+import { ensureCompiledLexicalIndex, type CompiledLexicalRuntime } from "./indexing/lexicalIndex.js";
+import { positionalIndexOf, type PositionalIndex } from "./indexing/positionalIndex.js";
 import {
   RANKING_ACTION_CONFIGURED_KEY,
   RANKING_ACTION_EXACT_TITLE_TOKEN,

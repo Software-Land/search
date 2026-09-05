@@ -10,7 +10,7 @@ import {
   lexicalPhraseKeyFromQuery,
 } from "../dist/text/lexicalNormalize.js";
 import { DEFAULT_STOP } from "../dist/text/text.js";
-import { buildIndex } from "../dist/indexDocuments.js";
+import { buildIndex } from "../dist/indexing/indexDocuments.js";
 import { compareConstraint, HYBRID_CONSTRAINTS } from "../dist/constraints.js";
 import { readFileSync } from "node:fs";
 import path from "node:path";

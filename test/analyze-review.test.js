@@ -4,8 +4,8 @@ import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { synonyms } from "../dist/query/synonyms.js";
 import { extractFeatures } from "../dist/features.js";
 import { compoundSpellSegment, MAX_COMPOUND_REPAIR_TOKEN_LENGTH } from "../dist/query/analyzeRepair.js";
-import { conceptMatchesBody, conceptMatchesTitle } from "../dist/retrieve.js";
-import { buildIndex } from "../dist/indexDocuments.js";
+import { conceptMatchesBody, conceptMatchesTitle } from "../dist/retrieval/retrieve.js";
+import { buildIndex } from "../dist/indexing/indexDocuments.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 

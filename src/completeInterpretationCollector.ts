@@ -31,8 +31,8 @@
 
 import type { AnalyzedQuery, FeaturedHit, IndexedDocument, SearchIndex } from "./types.js";
 import type { QueryPlan } from "./query/queryPlan.js";
-import type { FieldPhraseHit } from "./positionalQueries.js";
-import { documentHasShortTitleTokenPrefix } from "./retrieve.js";
+import type { FieldPhraseHit } from "./retrieval/positionalQueries.js";
+import { documentHasShortTitleTokenPrefix } from "./retrieval/retrieve.js";
 import { querySemanticFacts } from "./query/querySemantics.js";
 import { DEFAULT_STOP } from "./text/text.js";
 

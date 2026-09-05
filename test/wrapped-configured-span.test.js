@@ -1,8 +1,8 @@
 import { SearchEngine, morphology } from "../dist/index.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
-import { retrieveCandidates } from "../dist/retrieve.js";
+import { retrieveCandidates } from "../dist/retrieval/retrieve.js";
 import { resolveConfiguredSequence, resolveConfiguredSpans } from "../dist/query/configuredSequence.js";
-import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
+import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const dict = [

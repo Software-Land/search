@@ -6,7 +6,7 @@ import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { extractFeatures, FEATURE_DEFINITIONS } from "../dist/features.js";
 import { compareConstraint, constraintCatalog } from "../dist/constraints.js";
-import { retrieveCandidates, versionHit, typedForm } from "../dist/retrieve.js";
+import { retrieveCandidates, versionHit, typedForm } from "../dist/retrieval/retrieve.js";
 import {
   extractVersionCompactForms,
   queryTokenMatchesVersionCompact,
@@ -15,7 +15,7 @@ import {
   queryTokenMatchesDottedSpanComponent,
 } from "../dist/text/versionForms.js";
 import { tokenize, tokenizeWithRanges } from "../dist/text/text.js";
-import { buildIndex } from "../dist/indexDocuments.js";
+import { buildIndex } from "../dist/indexing/indexDocuments.js";
 import { scoreFeatures, rankCandidates } from "../dist/rank.js";
 
 function engine(docs, dictEntries = []) {

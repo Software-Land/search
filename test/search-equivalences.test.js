@@ -14,8 +14,8 @@ import {
 import { normalizeSearchEquivalences, MAX_SEARCH_EQUIVALENCE_TARGETS } from "../dist/query/synonyms.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
-import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
-import { coverageConcepts, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts } from "../dist/retrieve.js";
+import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
+import { coverageConcepts, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts } from "../dist/retrieval/retrieve.js";
 import { compareConstraint } from "../dist/constraints.js";
 import { synonyms, deriveMorphologyEquivalenceLookup } from "../dist/query/synonyms.js";
 import { extractFeatures } from "../dist/features.js";

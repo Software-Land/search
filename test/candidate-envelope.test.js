@@ -12,9 +12,9 @@
 import { morphology, SearchEngine } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
-import { buildIndex } from "../dist/indexDocuments.js";
-import { retrieveCandidates } from "../dist/retrieve.js";
-import { createIndexedLexicalRetriever, createAdaptiveRetriever } from "../dist/retrievers.js";
+import { buildIndex } from "../dist/indexing/indexDocuments.js";
+import { retrieveCandidates } from "../dist/retrieval/retrieve.js";
+import { createIndexedLexicalRetriever, createAdaptiveRetriever } from "../dist/retrieval/retrievers.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 

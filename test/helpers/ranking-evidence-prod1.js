@@ -14,7 +14,7 @@ import {
 import {
   retrieveWithRankingEvidence,
   retrieveWithRankingEvidenceAsync,
-} from "../../dist/retrievers.js";
+} from "../../dist/retrieval/retrievers.js";
 import { extractFeatures } from "../../dist/features.js";
 import { scoreFeatures } from "../../dist/rank.js";
 

@@ -3,7 +3,7 @@ import {
   compileAuthoredRelevance,
   morphology,
 } from "../dist/index.js";
-import { compileLexicalIndex } from "../dist/lexicalIndex.js";
+import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import {
   loadSoftwareLandJson,

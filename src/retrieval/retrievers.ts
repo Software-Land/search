@@ -30,18 +30,18 @@ import {
   formContentTokens,
   formAllowsOrdinaryLexicalPrefix,
 } from "./retrieve.js";
-import { querySemanticFacts } from "./query/querySemantics.js";
-import { allowPrefixMatch, DEFAULT_STOP } from "./text/text.js";
-import { isAllDigitToken } from "./text/versionForms.js";
-import { throwIfAborted } from "./cancel.js";
+import { querySemanticFacts } from "../query/querySemantics.js";
+import { allowPrefixMatch, DEFAULT_STOP } from "../text/text.js";
+import { isAllDigitToken } from "../text/versionForms.js";
+import { throwIfAborted } from "../cancel.js";
 import {
   ensureCompiledLexicalIndex,
   type CompiledLexicalRuntime,
   type CompiledTermRuntime,
-} from "./lexicalIndex.js";
+} from "../indexing/lexicalIndex.js";
 import { planStage3ABodyOrdinals, stage3AUnsupportedReason } from "./exactBlockSkip.js";
-import type { RankingEvidenceFieldCode } from "./rankingEvidencePlan.js";
-import type { RankingEvidenceSession } from "./rankingEvidenceState.js";
+import type { RankingEvidenceFieldCode } from "../rankingEvidencePlan.js";
+import type { RankingEvidenceSession } from "../rankingEvidenceState.js";
 import type {
   AdaptiveRetrieverOptions,
   AnalyzedQuery,
@@ -52,7 +52,7 @@ import type {
   Retriever,
   RetrieveOptions,
   SearchIndex,
-} from "./types.js";
+} from "../types.js";
 
 type QueryFormKind = "token" | "lemma" | "acronym-key" | "concept" | "acronym-form" | "standalone-recall" | "topical-recall" | "equivalent-recall" | "configured-prefix-recall";
 type QueryForm = { form: string; kind: QueryFormKind };
@@ -690,7 +690,7 @@ export function createCompiledLexicalRetriever(): Retriever {
     stage3AFallbackReason: null as string | null,
   };
 
-  function prepare(index: SearchIndex, extra?: { plugins?: import("./types.js").SearchPlugin[] }) {
+  function prepare(index: SearchIndex, extra?: { plugins?: import("../types.js").SearchPlugin[] }) {
     state = ensureCompiledLexicalIndex(index, extra?.plugins || []);
   }
 
@@ -1136,7 +1136,7 @@ export function createAdaptiveRetriever({ documentThreshold = 1500, smallLimit, 
     get exactSignatureSelection() {
       return active === "indexed-lexical";
     },
-    prepare(index: SearchIndex, extra?: { plugins?: import("./types.js").SearchPlugin[] }) {
+    prepare(index: SearchIndex, extra?: { plugins?: import("../types.js").SearchPlugin[] }) {
       const n = index.documents?.length || 0;
       active = n <= threshold ? "full-scan" : "indexed-lexical";
       if (active === "indexed-lexical") indexed.prepare(index, extra);

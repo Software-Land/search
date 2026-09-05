@@ -5,7 +5,7 @@
  * then delegates direct classification and scoring to the authoritative
  * implementations. It never allocates a FeatureVector per candidate.
  */
-import { compactOrdinal } from "./compactDocuments.js";
+import { compactOrdinal } from "./indexing/compactDocuments.js";
 import { queryHasTypedConfiguredGraph } from "./query/configuredFormGraph.js";
 import { resetReusableFeatureScalar, DEFAULT_FEATURE_VALUES } from "./featureDefaults.js";
 import { classifyDirect } from "./features.js";
@@ -46,7 +46,7 @@ import type {
   FeatureVector,
   RetrievalHit,
 } from "./types.js";
-import type { PhraseField } from "./positionalIndex.js";
+import type { PhraseField } from "./indexing/positionalIndex.js";
 import type { QueryPlan } from "./query/queryPlan.js";
 
 const TWO_THIRDS = 2 / 3;

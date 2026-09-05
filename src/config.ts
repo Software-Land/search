@@ -8,7 +8,7 @@ import {
   createFullScanRetriever,
   createCompiledLexicalRetriever,
   createAdaptiveRetriever,
-} from "./retrievers.js";
+} from "./retrieval/retrievers.js";
 import type {
   AdaptiveOptions,
   LexicalIndexArtifact,

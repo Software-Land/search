@@ -15,7 +15,7 @@ import { SearchEngine } from "../dist/index.js";
 import {
   compileLexicalIndex,
   documentBlockBoundaries,
-} from "../dist/lexicalIndex.js";
+} from "../dist/indexing/lexicalIndex.js";
 
 const { values } = parseArgs({
   options: {

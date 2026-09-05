@@ -1,7 +1,7 @@
 /**
  * Token-DAG execution is automaton-style: O(V * L * E), not O(paths).
  */
-import { emptyExecutionStats, matchTokenGraphFrequency } from "../dist/positionalQueries.js";
+import { emptyExecutionStats, matchTokenGraphFrequency } from "../dist/retrieval/positionalQueries.js";
 
 function diamondGraph(diamonds, { deadEnd = false } = {}) {
   let length = diamonds * 2;

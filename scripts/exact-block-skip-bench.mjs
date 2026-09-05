@@ -11,8 +11,8 @@
 import { parseArgs } from "node:util";
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { compileLexicalIndex } from "../dist/lexicalIndex.js";
-import { EXACT_PRUNING_V2_EXTENSION } from "../dist/lexicalIndex.js";
+import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
+import { EXACT_PRUNING_V2_EXTENSION } from "../dist/indexing/lexicalIndex.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";
 
 const SEED = 0x60d6e7ed;

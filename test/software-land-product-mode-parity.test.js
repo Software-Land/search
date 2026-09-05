@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
-import { createIndexedLexicalRetriever } from "../dist/retrievers.js";
+import { createIndexedLexicalRetriever } from "../dist/retrieval/retrievers.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { isHistoricalRelevanceApplicable } from "./historical-relevance.js";
 

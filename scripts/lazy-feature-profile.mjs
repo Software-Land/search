@@ -9,7 +9,7 @@
 import { parseArgs } from "node:util";
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { compileLexicalIndex } from "../dist/lexicalIndex.js";
+import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { extractFeatures, classifyDirect } from "../dist/features.js";
 import { scoreFeatures, selectTopPerBuiltinSignature } from "../dist/rank.js";
 import { constraintSignature } from "../dist/rankSignature.js";

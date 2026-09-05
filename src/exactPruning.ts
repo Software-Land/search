@@ -12,7 +12,7 @@ import type {
   FeatureVector,
   RetrievalHit,
 } from "./types.js";
-import type { ExactPruningExtensionV1 } from "./lexicalIndex.js";
+import type { ExactPruningExtensionV1 } from "./indexing/lexicalIndex.js";
 
 export type ExactCandidateBound = {
   hit: RetrievalHit;

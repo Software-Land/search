@@ -6,8 +6,8 @@
  * contiguous exact preceding match.
  */
 
-import { PHRASE_FIELDS, positionalIndexOf, tokensOf, type PhraseField, type PositionalIndex } from "./positionalIndex.js";
-import type { IndexedDocument, SearchIndex } from "./types.js";
+import { PHRASE_FIELDS, positionalIndexOf, tokensOf, type PhraseField, type PositionalIndex } from "../indexing/positionalIndex.js";
+import type { IndexedDocument, SearchIndex } from "../types.js";
 
 export interface PhraseQuery {
   kind: "phrase";

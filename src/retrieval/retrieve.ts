@@ -1,14 +1,14 @@
-import { isOneTokenMemberOfLongerPeerForm, sequenceKey } from "./query/configuredAuthoring.js";
-import { isNearCompletePrefix, allowPrefixMatch, DEFAULT_STOP, STRUCTURAL_WRAPPER_STOP } from "./text/text.js";
-import { dropConfiguredPrefixRecallTrailingStop } from "./query/configuredSequence.js";
-import { querySemanticFacts } from "./query/querySemantics.js";
-import { formAllowsOrdinaryLexicalPrefix } from "./query/lexicalPrefixForms.js";
+import { isOneTokenMemberOfLongerPeerForm, sequenceKey } from "../query/configuredAuthoring.js";
+import { isNearCompletePrefix, allowPrefixMatch, DEFAULT_STOP, STRUCTURAL_WRAPPER_STOP } from "../text/text.js";
+import { dropConfiguredPrefixRecallTrailingStop } from "../query/configuredSequence.js";
+import { querySemanticFacts } from "../query/querySemantics.js";
+import { formAllowsOrdinaryLexicalPrefix } from "../query/lexicalPrefixForms.js";
 import {
   isAllDigitToken,
   queryTokenMatchesVersionCompact,
   hasIndependentTitleForm,
-} from "./text/versionForms.js";
-import { throwIfAborted } from "./cancel.js";
+} from "../text/versionForms.js";
+import { throwIfAborted } from "../cancel.js";
 import {
   asCompactStore,
   compactAdjacentTokens,
@@ -21,7 +21,7 @@ import {
   KIND_BODY_LEMMA,
   KIND_TITLE,
   KIND_TITLE_LEMMA,
-} from "./compactDocuments.js";
+} from "../indexing/compactDocuments.js";
 import type {
   AnalyzedQuery,
   ContextualTitlePrefix,
@@ -33,7 +33,7 @@ import type {
   SearchIndex,
   StandaloneRecall,
   TopicalRecall,
-} from "./types.js";
+} from "../types.js";
 
 type ConceptTitleMatch = "key" | "form" | "exact" | "prefix" | "lemma";
 type VersionCompanion = "none" | "absent" | "covered" | "weak";
@@ -811,4 +811,4 @@ export function retrievalSourcesForDocument(query: AnalyzedQuery, doc: IndexedDo
 }
 
 export { versionHit, conceptMatchesTitle, conceptMatchesBody };
-export { formAllowsOrdinaryLexicalPrefix, nonCanonicalLemmaOnlyForms } from "./query/lexicalPrefixForms.js";
+export { formAllowsOrdinaryLexicalPrefix, nonCanonicalLemmaOnlyForms } from "../query/lexicalPrefixForms.js";

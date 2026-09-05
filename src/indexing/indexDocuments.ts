@@ -1,7 +1,7 @@
-import { tokenize, firstSurfaceToken, DEFAULT_STOP } from "./text/text.js";
-import { canonicalDocumentId } from "./documentId.js";
-import { extractVersionCompactForms, extractDottedSpans, dottedSpanComponentIndexes } from "./text/versionForms.js";
-import { InvalidDocumentError } from "./errors.js";
+import { tokenize, firstSurfaceToken, DEFAULT_STOP } from "../text/text.js";
+import { canonicalDocumentId } from "../documentId.js";
+import { extractVersionCompactForms, extractDottedSpans, dottedSpanComponentIndexes } from "../text/versionForms.js";
+import { InvalidDocumentError } from "../errors.js";
 import { buildPositionalIndex } from "./positionalIndex.js";
 import type {
   IndexedDocument,
@@ -10,7 +10,7 @@ import type {
   SearchDocument,
   SearchIndex,
   SearchPlugin,
-} from "./types.js";
+} from "../types.js";
 
 function fieldRole(schema: Schema | null | undefined, name: string) {
   const spec = schema?.[name];

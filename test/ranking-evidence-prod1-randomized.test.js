@@ -4,7 +4,7 @@ import {
   morphology,
 } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { compileLexicalIndex } from "../dist/lexicalIndex.js";
+import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";
 import { RankingEvidenceSessionPool } from "../dist/rankingEvidenceState.js";

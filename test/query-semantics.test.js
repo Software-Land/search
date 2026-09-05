@@ -5,7 +5,7 @@
 import { morphology } from "../dist/index.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { querySemanticFacts } from "../dist/query/querySemantics.js";
-import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
+import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const nistFamily = [

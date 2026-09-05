@@ -8,7 +8,7 @@
  * configured-form token-graph matching.
  */
 
-import type { IndexedDocument, SearchIndex } from "./types.js";
+import type { IndexedDocument, SearchIndex } from "../types.js";
 
 export type PhraseField = "title" | "summary" | "body";
 

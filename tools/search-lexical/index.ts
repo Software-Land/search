@@ -13,7 +13,7 @@ import {
   resolveLexicalPolicy as resolveLexicalPolicyImpl,
   saturatingFrequency as saturatingFrequencyImpl,
 } from "./lib/compile.js";
-import * as lexicalIndexRuntime from "../../dist/lexicalIndex.js";
+import * as lexicalIndexRuntime from "../../dist/indexing/lexicalIndex.js";
 
 const compileLexicalIndexImpl = lexicalIndexRuntime.compileLexicalIndex;
 const lexicalIndexFormat = lexicalIndexRuntime.LEXICAL_INDEX_FORMAT;

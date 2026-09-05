@@ -4,7 +4,7 @@
  * not store summary postings; positional execution uses hydrated documents.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
-import { compileLexicalIndex } from "../dist/lexicalIndex.js";
+import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { buildQueryPlan } from "../dist/query/queryPlan.js";
 
 const schema = {

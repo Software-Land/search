@@ -2,8 +2,8 @@ import { morphology, SearchEngine } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { extractFeatures } from "../dist/features.js";
-import { matchContextualTitlePrefix } from "../dist/retrieve.js";
-import { buildIndex } from "../dist/indexDocuments.js";
+import { matchContextualTitlePrefix } from "../dist/retrieval/retrieve.js";
+import { buildIndex } from "../dist/indexing/indexDocuments.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 

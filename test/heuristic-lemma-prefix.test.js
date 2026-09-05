@@ -12,7 +12,7 @@ import {
   conceptMatchesTitle,
   formAllowsOrdinaryLexicalPrefix,
   nonCanonicalLemmaOnlyForms,
-} from "../dist/retrieve.js";
+} from "../dist/retrieval/retrieve.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { loadSoftwareLandRelevanceInputs } from "./helpers/software-land-fixture.js";
 

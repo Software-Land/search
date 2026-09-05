@@ -5,9 +5,9 @@
  */
 import { SearchEngine, morphology } from "../dist/index.js";
 import { synonyms } from "../dist/query/synonyms.js";
-import { compileLexicalIndex } from "../dist/lexicalIndex.js";
+import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { querySemanticFacts } from "../dist/query/querySemantics.js";
-import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
+import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 import { rankingEvidenceEligibilityReason } from "../dist/rankingEvidencePlan.js";
 import { rankingEvidenceStaticFor } from "../dist/rankingEvidenceState.js";
 import { packedSearchFallbackReason } from "../dist/rankingEvidenceSearch.js";

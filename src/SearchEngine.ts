@@ -1,5 +1,5 @@
 import { analyzeQuery, exactExplicitQueryIntentKeys, suggestTypoForms } from "./query/analyze.js";
-import { buildIndex, resolveSchema } from "./indexDocuments.js";
+import { buildIndex, resolveSchema } from "./indexing/indexDocuments.js";
 import {
   compactIndexFromAnalyzed,
   exactPruningRuntime,
@@ -7,9 +7,9 @@ import {
   lexicalCorpusFingerprint,
   lexicalHydrationFingerprint,
   loadLexicalIndex,
-} from "./lexicalIndex.js";
+} from "./indexing/lexicalIndex.js";
 import { extractFeatures } from "./features.js";
-import { retrievalSourcesForDocument } from "./retrieve.js";
+import { retrievalSourcesForDocument } from "./retrieval/retrieve.js";
 import { buildQueryPlan } from "./query/queryPlan.js";
 import {
   applyCompleteInterpretationCollector,
@@ -37,7 +37,7 @@ import {
   hasRankingEvidenceRetrieverCapability,
   retrieveWithRankingEvidence,
   retrieveWithRankingEvidenceAsync,
-} from "./retrievers.js";
+} from "./retrieval/retrievers.js";
 import { constraintsForStrategy } from "./constraints.js";
 import { morphology } from "./morphology.js";
 import { compileConfiguredConceptPlugin } from "./configuredConcepts.js";

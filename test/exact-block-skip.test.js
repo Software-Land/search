@@ -3,9 +3,9 @@ import {
   compileLexicalIndex,
   loadLexicalIndex,
   EXACT_PRUNING_V2_EXTENSION,
-} from "../dist/lexicalIndex.js";
+} from "../dist/indexing/lexicalIndex.js";
 import { stableFingerprint } from "../dist/stableHash.js";
-import { oneOfKBodyOnlyMaxRoundedScore } from "../dist/exactBlockSkip.js";
+import { oneOfKBodyOnlyMaxRoundedScore } from "../dist/retrieval/exactBlockSkip.js";
 import { scoreFeatures } from "../dist/rank.js";
 
 const schema = {

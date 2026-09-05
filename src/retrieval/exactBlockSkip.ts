@@ -6,20 +6,20 @@
  * fails closed to exhaustive retrieval.
  */
 
-import { throwIfAborted } from "./cancel.js";
-import { REPEATED_BODY_PHRASE_MIN } from "./evidencePolicy.js";
+import { throwIfAborted } from "../cancel.js";
+import { REPEATED_BODY_PHRASE_MIN } from "../evidencePolicy.js";
 import {
   EXACT_PRUNING_BLOCK_SIZE,
   type CompiledLexicalRuntime,
   type CompiledTermRuntime,
-} from "./lexicalIndex.js";
-import { lexicalPhraseKeyFromQuery } from "./text/lexicalNormalize.js";
-import { querySemanticFacts } from "./query/querySemantics.js";
-import { formAllowsOrdinaryLexicalPrefix } from "./query/lexicalPrefixForms.js";
-import { allowPrefixMatch } from "./text/text.js";
-import type { AnalyzedQuery, IndexedDocument, QueryConcept } from "./types.js";
-import { isAllDigitToken } from "./text/versionForms.js";
-import type { RankingEvidenceSession } from "./rankingEvidenceState.js";
+} from "../indexing/lexicalIndex.js";
+import { lexicalPhraseKeyFromQuery } from "../text/lexicalNormalize.js";
+import { querySemanticFacts } from "../query/querySemantics.js";
+import { formAllowsOrdinaryLexicalPrefix } from "../query/lexicalPrefixForms.js";
+import { allowPrefixMatch } from "../text/text.js";
+import type { AnalyzedQuery, IndexedDocument, QueryConcept } from "../types.js";
+import { isAllDigitToken } from "../text/versionForms.js";
+import type { RankingEvidenceSession } from "../rankingEvidenceState.js";
 
 export type Stage3AStats = {
   applied: boolean;

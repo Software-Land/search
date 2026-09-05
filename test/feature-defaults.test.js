@@ -3,7 +3,7 @@
  * Does not couple packed and diagnostic evaluators.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
-import { compileLexicalIndex } from "../dist/lexicalIndex.js";
+import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import {
   createPackedDirectHits,
   isPackedDirectFeatures,

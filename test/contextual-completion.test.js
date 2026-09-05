@@ -1,9 +1,9 @@
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
-import { typedForm } from "../dist/retrieve.js";
-import { buildIndex } from "../dist/indexDocuments.js";
-import { versionHit } from "../dist/retrieve.js";
+import { typedForm } from "../dist/retrieval/retrieve.js";
+import { buildIndex } from "../dist/indexing/indexDocuments.js";
+import { versionHit } from "../dist/retrieval/retrieve.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 

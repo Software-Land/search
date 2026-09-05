@@ -8,7 +8,7 @@
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
-import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
+import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 

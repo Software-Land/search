@@ -9,14 +9,14 @@ import {
   compileLexicalIndex,
   documentBlockBoundaries,
   loadLexicalIndex,
-} from "../dist/lexicalIndex.js";
+} from "../dist/indexing/lexicalIndex.js";
 import {
   exactBodyOnlySingleTokenBound,
   planExactFeaturePruning,
 } from "../dist/exactPruning.js";
 import { constraintSignature } from "../dist/rankSignature.js";
 import { scoreFeatures } from "../dist/rank.js";
-import { retrieveCandidates } from "../dist/retrieve.js";
+import { retrieveCandidates } from "../dist/retrieval/retrieve.js";
 import { stableFingerprint } from "../dist/stableHash.js";
 import {
   createLoopbackTransport,

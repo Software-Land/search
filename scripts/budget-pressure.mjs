@@ -22,12 +22,12 @@ import { gzipSync } from "node:zlib";
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { attachLexicalFrequency, compileLexicalIndex } from "../tools/search-lexical/index.js";
-import { retrieveCandidates } from "../dist/retrieve.js";
+import { retrieveCandidates } from "../dist/retrieval/retrieve.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";
 import { rankCandidates } from "../dist/rank.js";
 import { constraintSignature } from "../dist/rankSignature.js";
 import { compareConstraint, constraintsForStrategy } from "../dist/constraints.js";
-import { queryForms } from "../dist/retrievers.js";
+import { queryForms } from "../dist/retrieval/retrievers.js";
 import { allowPrefixMatch } from "../dist/text/text.js";
 import { isAllDigitToken } from "../dist/text/versionForms.js";
 

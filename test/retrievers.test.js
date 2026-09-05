@@ -3,10 +3,10 @@ import {
   morphology,
 } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { createIndexedLexicalRetriever } from "../dist/retrievers.js";
-import { retrieveCandidates } from "../dist/retrieve.js";
+import { createIndexedLexicalRetriever } from "../dist/retrieval/retrievers.js";
+import { retrieveCandidates } from "../dist/retrieval/retrieve.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
-import { buildIndex } from "../dist/indexDocuments.js";
+import { buildIndex } from "../dist/indexing/indexDocuments.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 

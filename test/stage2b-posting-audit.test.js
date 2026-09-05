@@ -4,12 +4,12 @@ import { fileURLToPath } from "node:url";
 
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { compileLexicalIndex } from "../dist/lexicalIndex.js";
+import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import {
   auditCompiledPostingWork,
   postingAuditSummary,
   POSTING_AUDIT_BLOCK_SIZE,
-} from "../dist/exactPostingAudit.js";
+} from "../dist/retrieval/exactPostingAudit.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 
 const schema = {

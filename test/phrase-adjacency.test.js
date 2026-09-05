@@ -1,6 +1,6 @@
 import { SearchEngine, morphology } from "../dist/index.js";
 import { extractFeatures } from "../dist/features.js";
-import { compileLexicalIndex, loadLexicalIndex } from "../dist/lexicalIndex.js";
+import { compileLexicalIndex, loadLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 
 const schema = {
   title: { type: "text", role: "title" },

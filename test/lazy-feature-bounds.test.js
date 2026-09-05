@@ -9,7 +9,7 @@ import { SearchEngine, morphology } from "../dist/index.js";
 import { extractFeatures, classifyDirect } from "../dist/features.js";
 import { scoreFeatures, selectTopPerBuiltinSignature } from "../dist/rank.js";
 import { constraintSignature } from "../dist/rankSignature.js";
-import { compileLexicalIndex } from "../dist/lexicalIndex.js";
+import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 
 const schema = {
   title: { type: "text", role: "title" },

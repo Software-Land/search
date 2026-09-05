@@ -17,7 +17,7 @@ import {
   type RankingEvidenceEligibilityReason,
 } from "./rankingEvidencePlan.js";
 import { rankingEvidenceStaticFor } from "./rankingEvidenceState.js";
-import { hasRankingEvidenceRetrieverCapability } from "./retrievers.js";
+import { hasRankingEvidenceRetrieverCapability } from "./retrieval/retrievers.js";
 import type { AnalyzedQuery, Retriever, SearchIndex, SearchOptions, SourcePolicy } from "./types.js";
 
 export type PackedSearchGateInput = {

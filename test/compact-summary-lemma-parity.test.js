@@ -7,7 +7,7 @@
  * (DEFAULT_LEMMAS and Software.Land lemmas.json).
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
-import { compileLexicalIndex } from "../dist/lexicalIndex.js";
+import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { extractFeatures } from "../dist/features.js";
 
 const schema = {

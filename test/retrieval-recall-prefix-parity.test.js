@@ -10,8 +10,8 @@ import {
 } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { synonyms } from "../dist/query/synonyms.js";
-import { createIndexedLexicalRetriever } from "../dist/retrievers.js";
-import { retrievalFormKindAllowsPrefix } from "../dist/retrieve.js";
+import { createIndexedLexicalRetriever } from "../dist/retrieval/retrievers.js";
+import { retrievalFormKindAllowsPrefix } from "../dist/retrieval/retrieve.js";
 
 const schema = {
   title: { type: "text", role: "title" },

@@ -7,7 +7,7 @@
 
 import { isNearCompletePrefix, levenshtein, DEFAULT_STOP, allowPrefixMatch } from "../../src/text/text.js";
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "../../src/text/versionForms.js";
-import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, hasConfiguredContentIdentity, identityTokens, evidenceTokens, isSearchEquivalenceRecallConcept, formContentTokens, sequenceCount, shortTitleTokenPrefixStub, configuredConceptFieldMatch, rankingCoverageConcepts } from "../../src/retrieve.js";
+import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, hasConfiguredContentIdentity, identityTokens, evidenceTokens, isSearchEquivalenceRecallConcept, formContentTokens, sequenceCount, shortTitleTokenPrefixStub, configuredConceptFieldMatch, rankingCoverageConcepts } from "../../src/retrieval/retrieve.js";
 import { querySemanticFacts } from "../../src/query/querySemantics.js";
 import { saturatingFrequency } from "../../src/saturatingFrequency.js";
 import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "../../src/text/lexicalNormalize.js";

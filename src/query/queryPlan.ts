@@ -13,7 +13,7 @@ import {
   executeTokenGraph,
   type ExecutionStats,
   type FieldPhraseHit,
-} from "../positionalQueries.js";
+} from "../retrieval/positionalQueries.js";
 import { querySemanticFacts } from "./querySemantics.js";
 import type { AnalyzedQuery, FeatureVector, SearchIndex } from "../types.js";
 
