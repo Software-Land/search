@@ -34,8 +34,8 @@
     "src/browser/api.ts",
     "src/documentId.ts",
     "src/saturatingFrequency.ts",
-    "src/text.ts",
-    "src/lexicalNormalize.ts",
+    "src/text/text.ts",
+    "src/text/lexicalNormalize.ts",
     "src/**/*.d.ts"
   ],
   "exclude": ["examples/**", "src/ambient-core.d.ts", "src/browser/types.d.ts"]

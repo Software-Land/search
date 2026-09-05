@@ -1,13 +1,13 @@
-import { isOneTokenMemberOfLongerPeerForm, sequenceKey } from "./configuredAuthoring.js";
-import { isNearCompletePrefix, allowPrefixMatch, DEFAULT_STOP, STRUCTURAL_WRAPPER_STOP } from "./text.js";
-import { dropConfiguredPrefixRecallTrailingStop } from "./configuredSequence.js";
-import { querySemanticFacts } from "./querySemantics.js";
-import { formAllowsOrdinaryLexicalPrefix } from "./lexicalPrefixForms.js";
+import { isOneTokenMemberOfLongerPeerForm, sequenceKey } from "./query/configuredAuthoring.js";
+import { isNearCompletePrefix, allowPrefixMatch, DEFAULT_STOP, STRUCTURAL_WRAPPER_STOP } from "./text/text.js";
+import { dropConfiguredPrefixRecallTrailingStop } from "./query/configuredSequence.js";
+import { querySemanticFacts } from "./query/querySemantics.js";
+import { formAllowsOrdinaryLexicalPrefix } from "./query/lexicalPrefixForms.js";
 import {
   isAllDigitToken,
   queryTokenMatchesVersionCompact,
   hasIndependentTitleForm,
-} from "./versionForms.js";
+} from "./text/versionForms.js";
 import { throwIfAborted } from "./cancel.js";
 import {
   asCompactStore,
@@ -811,4 +811,4 @@ export function retrievalSourcesForDocument(query: AnalyzedQuery, doc: IndexedDo
 }
 
 export { versionHit, conceptMatchesTitle, conceptMatchesBody };
-export { formAllowsOrdinaryLexicalPrefix, nonCanonicalLemmaOnlyForms } from "./lexicalPrefixForms.js";
+export { formAllowsOrdinaryLexicalPrefix, nonCanonicalLemmaOnlyForms } from "./query/lexicalPrefixForms.js";

@@ -1,11 +1,11 @@
 import { SearchEngine, morphology } from "../dist/index.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import { retrieveCandidates, unboundTypedTokens } from "../dist/retrieve.js";
 import {
   resolveConfiguredPrefixSpans,
   resolveConfiguredSequence,
   resolveConfiguredSpans,
-} from "../dist/configuredSequence.js";
+} from "../dist/query/configuredSequence.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 

@@ -1,6 +1,6 @@
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import { typedForm } from "../dist/retrieve.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 import { versionHit } from "../dist/retrieve.js";

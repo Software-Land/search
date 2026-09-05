@@ -13,7 +13,7 @@
  * Internal. Not a public API and not a QueryConcept redesign.
  */
 
-import type { AnalyzedQuery, QueryToken } from "./types.js";
+import type { AnalyzedQuery, QueryToken } from "../types.js";
 
 const EMPTY = new Set<string>();
 const nonCanonicalOnlyByQuery = new WeakMap<AnalyzedQuery, Set<string>>();

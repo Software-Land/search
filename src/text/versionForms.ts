@@ -9,7 +9,7 @@
  */
 
 import { tokenizeWithRanges } from "./text.js";
-import type { IndexedDocument } from "./types.js";
+import type { IndexedDocument } from "../types.js";
 
 const DOTTED_NUMERIC_SPAN_RE = /(?:^|[^0-9])(\d+(?:\.\d+)+)(?![0-9])/g;
 

@@ -3,7 +3,7 @@
  * Currently the English implementation (suffix heuristics plus an optional lemma map).
  */
 
-import { createEnglishPlugin, type EnglishPlugin } from "./english.js";
+import { createEnglishPlugin, type EnglishPlugin } from "./text/english.js";
 import type { MorphologyOptions } from "./api.js";
 
 /**

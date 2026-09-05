@@ -18,12 +18,12 @@ if (!SL) {
 
 const { SearchEngine, morphology, compileAuthoredRelevance } = await import(pathToFileURL(path.join(ROOT, "dist/index.js")).href);
 const { attachLexicalFrequency } = await import(pathToFileURL(path.join(ROOT, "tools/search-lexical/index.js")).href);
-const { buildQueryPlan } = await import(pathToFileURL(path.join(ROOT, "dist/queryPlan.js")).href);
+const { buildQueryPlan } = await import(pathToFileURL(path.join(ROOT, "dist/query/queryPlan.js")).href);
 const { collectCompleteInterpretations, COMPLETE_INTERPRETATION_COLLECTOR } = await import(
   pathToFileURL(path.join(ROOT, "dist/completeInterpretationCollector.js")).href
 );
-const { tokenize, allowPrefixMatch } = await import(pathToFileURL(path.join(ROOT, "dist/text.js")).href);
-const { buildTokenGraph } = await import(pathToFileURL(path.join(ROOT, "dist/configuredFormGraph.js")).href);
+const { tokenize, allowPrefixMatch } = await import(pathToFileURL(path.join(ROOT, "dist/text/text.js")).href);
+const { buildTokenGraph } = await import(pathToFileURL(path.join(ROOT, "dist/query/configuredFormGraph.js")).href);
 const { loadSoftwareLandRelevanceInputs } = await import(
   pathToFileURL(path.join(ROOT, "test/helpers/software-land-fixture.js")).href
 );

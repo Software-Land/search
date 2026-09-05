@@ -11,7 +11,7 @@ import {
   mergeRelationships,
 } from "../dist/index.js";
 import { compileRelationshipMap } from "../dist/relationshipMap.js";
-import { synonyms as synonymsPrimitive } from "../dist/synonyms.js";
+import { synonyms as synonymsPrimitive } from "../dist/query/synonyms.js";
 
 const schema = {
   title: { type: "text", role: "title" },

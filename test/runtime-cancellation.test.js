@@ -1,10 +1,10 @@
 import { morphology, SearchEngine, isAbortError } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import { retrieveCandidates } from "../dist/retrieve.js";
 import { rankCandidates } from "../dist/rank.js";
 import { buildIndex } from "../dist/indexDocuments.js";
-import { leftoverLooksLikeJunk } from "../dist/analyzeRepair.js";
+import { leftoverLooksLikeJunk } from "../dist/query/analyzeRepair.js";
 import {
   createLatestWinsSession,
   createWorkerRuntime,

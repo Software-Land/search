@@ -6,7 +6,7 @@
  */
 
 import { collapseTrailingRepeats } from "./text.js";
-import { stableFingerprint } from "./stableHash.js";
+import { stableFingerprint } from "../stableHash.js";
 
 const DEFAULT_LEMMAS: Record<string, string> = {
   libraries: "library",

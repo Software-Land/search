@@ -1,5 +1,5 @@
 import { SearchEngine, morphology } from "../dist/index.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import { retrieveCandidates } from "../dist/retrieve.js";
 import { normalizeTopicalRecall } from "../dist/configuredConcepts.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";

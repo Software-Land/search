@@ -1,7 +1,7 @@
 import { morphology, SearchEngine } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { classifyDirect } from "../dist/features.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 
 const schema = {
   title: { type: "text", role: "title" },

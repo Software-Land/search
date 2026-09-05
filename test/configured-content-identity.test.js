@@ -4,7 +4,7 @@
  * and prefix spans do not qualify.
  */
 import { morphology } from "../dist/index.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 

@@ -1,5 +1,5 @@
 import { allConfiguredConceptForms, isOneTokenMemberOfLongerPeerForm, sequenceKey } from "./configuredAuthoring.js";
-import { allowPrefixMatch, DEFAULT_STOP, STRUCTURAL_WRAPPER_STOP, isPartialStructuralStop, isSkippableConfiguredStop } from "./text.js";
+import { allowPrefixMatch, DEFAULT_STOP, STRUCTURAL_WRAPPER_STOP, isPartialStructuralStop, isSkippableConfiguredStop } from "../text/text.js";
 import type {
   ConfiguredConcept,
   ConfiguredPrefixRecall,
@@ -8,7 +8,7 @@ import type {
   ConfiguredConceptSequence,
   QueryToken,
   SearchPlugin,
-} from "./types.js";
+} from "../types.js";
 
 export type { ConfiguredPrefixSpan, ConfiguredSpan };
 

@@ -1,9 +1,9 @@
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import { morphology, SearchEngine } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { synonyms } from "../dist/synonyms.js";
+import { synonyms } from "../dist/query/synonyms.js";
 import { extractFeatures } from "../dist/features.js";
-import { compoundSpellSegment, MAX_COMPOUND_REPAIR_TOKEN_LENGTH } from "../dist/analyzeRepair.js";
+import { compoundSpellSegment, MAX_COMPOUND_REPAIR_TOKEN_LENGTH } from "../dist/query/analyzeRepair.js";
 import { conceptMatchesBody, conceptMatchesTitle } from "../dist/retrieve.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 

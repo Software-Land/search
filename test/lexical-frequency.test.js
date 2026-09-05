@@ -1,15 +1,15 @@
 import { compileLexicalFrequency, attachLexicalFrequency, saturatingFrequency, resolveLexicalPolicy } from "../tools/search-lexical/index.js";
 import { morphology, SearchEngine } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import { extractFeatures, saturatingFrequency as runtimeSaturatingFrequency } from "../dist/features.js";
 import { saturatingFrequency as sharedSaturatingFrequency } from "../dist/saturatingFrequency.js";
 import {
   canonicalLexicalTokens,
   extractCanonicalNgrams,
   lexicalPhraseKeyFromQuery,
-} from "../dist/lexicalNormalize.js";
-import { DEFAULT_STOP } from "../dist/text.js";
+} from "../dist/text/lexicalNormalize.js";
+import { DEFAULT_STOP } from "../dist/text/text.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 import { compareConstraint, HYBRID_CONSTRAINTS } from "../dist/constraints.js";
 import { readFileSync } from "node:fs";

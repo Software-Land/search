@@ -13,12 +13,12 @@ import {
   type CompiledLexicalRuntime,
   type CompiledTermRuntime,
 } from "./lexicalIndex.js";
-import { lexicalPhraseKeyFromQuery } from "./lexicalNormalize.js";
-import { querySemanticFacts } from "./querySemantics.js";
-import { formAllowsOrdinaryLexicalPrefix } from "./lexicalPrefixForms.js";
-import { allowPrefixMatch } from "./text.js";
+import { lexicalPhraseKeyFromQuery } from "./text/lexicalNormalize.js";
+import { querySemanticFacts } from "./query/querySemantics.js";
+import { formAllowsOrdinaryLexicalPrefix } from "./query/lexicalPrefixForms.js";
+import { allowPrefixMatch } from "./text/text.js";
 import type { AnalyzedQuery, IndexedDocument, QueryConcept } from "./types.js";
-import { isAllDigitToken } from "./versionForms.js";
+import { isAllDigitToken } from "./text/versionForms.js";
 import type { RankingEvidenceSession } from "./rankingEvidenceState.js";
 
 export type Stage3AStats = {

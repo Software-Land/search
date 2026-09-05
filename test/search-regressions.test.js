@@ -1,6 +1,6 @@
 import { morphology, SearchEngine, isAbortError } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { analyzeQuery, suggestTypoForms } from "../dist/analyze.js";
+import { analyzeQuery, suggestTypoForms } from "../dist/query/analyze.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 import { pickPrimariesForExpansion } from "../dist/relationships.js";
 import { retrieveCandidates } from "../dist/retrieve.js";

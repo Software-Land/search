@@ -8,7 +8,7 @@ import { HYBRID_CONSTRAINTS, compareConstraint, DEFAULT_CONSTRAINTS } from "../d
 import { rankCandidates, lastRankStats } from "../dist/rank.js";
 import { rankCandidatesPairwise } from "../build/test/oracles/rankOracle.js";
 import { FULL_QUERY_COVERAGE } from "../dist/evidencePolicy.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import { extractFeatures } from "../dist/features.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 import { morphology } from "../dist/index.js";

@@ -6,7 +6,7 @@
  * implementations. It never allocates a FeatureVector per candidate.
  */
 import { compactOrdinal } from "./compactDocuments.js";
-import { queryHasTypedConfiguredGraph } from "./configuredFormGraph.js";
+import { queryHasTypedConfiguredGraph } from "./query/configuredFormGraph.js";
 import { resetReusableFeatureScalar, DEFAULT_FEATURE_VALUES } from "./featureDefaults.js";
 import { classifyDirect } from "./features.js";
 import { scoreFeatures } from "./rank.js";
@@ -41,13 +41,13 @@ import {
   type RankingEvidenceMemory,
 } from "./rankingEvidenceState.js";
 import { saturatingFrequency } from "./saturatingFrequency.js";
-import { DEFAULT_STOP } from "./text.js";
+import { DEFAULT_STOP } from "./text/text.js";
 import type {
   FeatureVector,
   RetrievalHit,
 } from "./types.js";
 import type { PhraseField } from "./positionalIndex.js";
-import type { QueryPlan } from "./queryPlan.js";
+import type { QueryPlan } from "./query/queryPlan.js";
 
 const TWO_THIRDS = 2 / 3;
 

@@ -13,7 +13,7 @@ import { RelationshipError as ImplementationRelationshipError } from "../tools/s
 import { filterRelationships as filterRelationshipsImpl } from "../tools/search-relationships/lib/compile.js";
 import { morphology, SearchEngine } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 
 import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

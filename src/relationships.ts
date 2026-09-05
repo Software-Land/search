@@ -7,7 +7,7 @@
 import { parseRelationships } from "./artifacts.js";
 import { classifyDirect } from "./features.js";
 import { throwIfAborted } from "./cancel.js";
-import { querySemanticFacts } from "./querySemantics.js";
+import { querySemanticFacts } from "./query/querySemantics.js";
 import { rankCandidates, selectTopPerBuiltinSignature } from "./rank.js";
 import type {
   ConstraintDef,

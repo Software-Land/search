@@ -9,8 +9,8 @@
  * with no ranking privilege.
  */
 
-import { InvalidConfigurationError } from "./errors.js";
-import type { ConfiguredConcept } from "./types.js";
+import { InvalidConfigurationError } from "../errors.js";
+import type { ConfiguredConcept } from "../types.js";
 
 const FORBIDDEN_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 const REMOVED_AUTHORED_FIELDS = [

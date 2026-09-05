@@ -12,7 +12,7 @@ import { saturatingFrequency } from "../../../dist/saturatingFrequency.js";
 import {
   canonicalLexicalTokens,
   extractCanonicalNgrams,
-} from "../../../dist/lexicalNormalize.js";
+} from "../../../dist/text/lexicalNormalize.js";
 import type {
   LexicalCompileOptions,
   LexicalFrequencyArtifact,

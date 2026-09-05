@@ -9,7 +9,7 @@ import {
   DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD,
 } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { synonyms } from "../dist/synonyms.js";
+import { synonyms } from "../dist/query/synonyms.js";
 import { createIndexedLexicalRetriever } from "../dist/retrievers.js";
 import { retrievalFormKindAllowsPrefix } from "../dist/retrieve.js";
 

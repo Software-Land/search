@@ -5,7 +5,7 @@
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import { compileLexicalIndex } from "../dist/lexicalIndex.js";
-import { buildQueryPlan } from "../dist/queryPlan.js";
+import { buildQueryPlan } from "../dist/query/queryPlan.js";
 
 const schema = {
   title: { type: "text", role: "title" },

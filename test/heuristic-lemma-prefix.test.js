@@ -5,7 +5,7 @@
  * SearchPlugin.lemma() without canonicalLemma is another.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import { extractFeatures } from "../dist/features.js";
 import {
   conceptMatchesBody,

@@ -1,4 +1,4 @@
-import { analyzeQuery, exactExplicitQueryIntentKeys, suggestTypoForms } from "./analyze.js";
+import { analyzeQuery, exactExplicitQueryIntentKeys, suggestTypoForms } from "./query/analyze.js";
 import { buildIndex, resolveSchema } from "./indexDocuments.js";
 import {
   compactIndexFromAnalyzed,
@@ -10,7 +10,7 @@ import {
 } from "./lexicalIndex.js";
 import { extractFeatures } from "./features.js";
 import { retrievalSourcesForDocument } from "./retrieve.js";
-import { buildQueryPlan } from "./queryPlan.js";
+import { buildQueryPlan } from "./query/queryPlan.js";
 import {
   applyCompleteInterpretationCollector,
   COMPLETE_INTERPRETATION_COLLECTOR,
@@ -41,7 +41,7 @@ import {
 import { constraintsForStrategy } from "./constraints.js";
 import { morphology } from "./morphology.js";
 import { compileConfiguredConceptPlugin } from "./configuredConcepts.js";
-import { bindMorphologyDerivedEquivalences } from "./synonyms.js";
+import { bindMorphologyDerivedEquivalences } from "./query/synonyms.js";
 import {
   RelationshipGraph,
   applyRelationshipExpansion,

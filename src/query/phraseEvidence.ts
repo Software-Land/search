@@ -5,7 +5,7 @@
  * the rejected rare-phrase exclusivity experiments and are not computed here.
  */
 
-import type { AnalyzedQuery } from "./types.js";
+import type { AnalyzedQuery } from "../types.js";
 
 export function typedSurfacePhraseTokens(query: AnalyzedQuery): string[] {
   return (query.originalSurface || []).filter(Boolean);

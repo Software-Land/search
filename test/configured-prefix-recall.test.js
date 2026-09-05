@@ -3,7 +3,7 @@
  */
 import { SearchEngine, morphology, compileAuthoredRelevance, ARTIFACT_FORMATS, ARTIFACT_VERSION } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import { retrievalFormKindAllowsPrefix } from "../dist/retrieve.js";
 import { COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/completeInterpretationCollector.js";
 import { compileLexicalIndex } from "../dist/lexicalIndex.js";

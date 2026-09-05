@@ -4,8 +4,8 @@
  */
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { analyzeQuery } from "../dist/analyze.js";
-import { resolveConfiguredSequence } from "../dist/configuredSequence.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
+import { resolveConfiguredSequence } from "../dist/query/configuredSequence.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 

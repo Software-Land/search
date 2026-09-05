@@ -11,13 +11,13 @@ import {
   compileAuthoredRelevance,
   InvalidConfigurationError,
 } from "../dist/index.js";
-import { normalizeSearchEquivalences, MAX_SEARCH_EQUIVALENCE_TARGETS } from "../dist/synonyms.js";
+import { normalizeSearchEquivalences, MAX_SEARCH_EQUIVALENCE_TARGETS } from "../dist/query/synonyms.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
 import { coverageConcepts, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts } from "../dist/retrieve.js";
 import { compareConstraint } from "../dist/constraints.js";
-import { synonyms, deriveMorphologyEquivalenceLookup } from "../dist/synonyms.js";
+import { synonyms, deriveMorphologyEquivalenceLookup } from "../dist/query/synonyms.js";
 import { extractFeatures } from "../dist/features.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 

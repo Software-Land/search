@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));

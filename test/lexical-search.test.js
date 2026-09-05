@@ -3,7 +3,7 @@ import {
   morphology,
 } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import { extractFeatures, FEATURE_DEFINITIONS } from "../dist/features.js";
 import { compareConstraint, constraintCatalog } from "../dist/constraints.js";
 import { retrieveCandidates, versionHit, typedForm } from "../dist/retrieve.js";
@@ -13,8 +13,8 @@ import {
   dottedSpanComponentIndexes,
   hasIndependentTitleToken,
   queryTokenMatchesDottedSpanComponent,
-} from "../dist/versionForms.js";
-import { tokenize, tokenizeWithRanges } from "../dist/text.js";
+} from "../dist/text/versionForms.js";
+import { tokenize, tokenizeWithRanges } from "../dist/text/text.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 import { scoreFeatures, rankCandidates } from "../dist/rank.js";
 

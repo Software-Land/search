@@ -3,13 +3,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import {
   retrieveCandidates,
   shortTitleTokenPrefixStub,
 } from "../dist/retrieve.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
-import { allowPrefixMatch, DEFAULT_STOP } from "../dist/text.js";
+import { allowPrefixMatch, DEFAULT_STOP } from "../dist/text/text.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 

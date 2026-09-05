@@ -4,9 +4,9 @@
  * precedence). It does not unify the policies.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
-import { synonyms } from "../dist/synonyms.js";
+import { synonyms } from "../dist/query/synonyms.js";
 import { compileLexicalIndex } from "../dist/lexicalIndex.js";
-import { querySemanticFacts } from "../dist/querySemantics.js";
+import { querySemanticFacts } from "../dist/query/querySemantics.js";
 import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
 import { rankingEvidenceEligibilityReason } from "../dist/rankingEvidencePlan.js";
 import { rankingEvidenceStaticFor } from "../dist/rankingEvidenceState.js";

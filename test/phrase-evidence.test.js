@@ -5,10 +5,10 @@
  * exclusivity diagnostics).
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
-import { typedSurfacePhraseTokens } from "../dist/phraseEvidence.js";
+import { typedSurfacePhraseTokens } from "../dist/query/phraseEvidence.js";
 import { executePhraseQuery } from "../dist/positionalQueries.js";
 import { sequenceCount, sequencePresent } from "../dist/retrieve.js";
-import { tokenize } from "../dist/text.js";
+import { tokenize } from "../dist/text/text.js";
 
 const schema = {
   title: { type: "text", role: "title" },

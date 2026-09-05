@@ -1,8 +1,8 @@
-import { canonicalLexicalTokensFromQuery } from "./lexicalNormalize.js";
-import { querySemanticFacts } from "./querySemantics.js";
+import { canonicalLexicalTokensFromQuery } from "./text/lexicalNormalize.js";
+import { querySemanticFacts } from "./query/querySemantics.js";
 import { scoreFeatures } from "./rank.js";
 import { constraintSignature } from "./rankSignature.js";
-import { levenshteinAtMost } from "./text.js";
+import { levenshteinAtMost } from "./text/text.js";
 import type {
   OptimizationSessionReason,
   SearchSessionCapabilities,

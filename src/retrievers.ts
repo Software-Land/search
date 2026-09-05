@@ -30,9 +30,9 @@ import {
   formContentTokens,
   formAllowsOrdinaryLexicalPrefix,
 } from "./retrieve.js";
-import { querySemanticFacts } from "./querySemantics.js";
-import { allowPrefixMatch, DEFAULT_STOP } from "./text.js";
-import { isAllDigitToken } from "./versionForms.js";
+import { querySemanticFacts } from "./query/querySemantics.js";
+import { allowPrefixMatch, DEFAULT_STOP } from "./text/text.js";
+import { isAllDigitToken } from "./text/versionForms.js";
 import { throwIfAborted } from "./cancel.js";
 import {
   ensureCompiledLexicalIndex,

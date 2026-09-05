@@ -135,7 +135,7 @@ export interface SearchClientOptions {
 
 export interface WorkerRuntimeFactories {
   SearchEngine?: typeof import("../SearchEngine.js").SearchEngine;
-  english?: typeof import("../english.js").english;
+  english?: typeof import("../text/english.js").english;
   /** Full authored-relevance compiler. Takes precedence over `compileConfiguredConceptPlugin`. */
   compileAuthoredRelevance?: typeof import("../configuredConcepts.js").compileAuthoredRelevance;
   /**

@@ -12,7 +12,7 @@ import {
 import { compileRelationshipMap } from "../dist/relationshipMap.js";
 import { parseConfiguredConcepts } from "../tools/search-corpus/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { synonyms as synonymsPrimitive } from "../dist/synonyms.js";
+import { synonyms as synonymsPrimitive } from "../dist/query/synonyms.js";
 import { pluginByName } from "./helpers/authored.js";
 
 const schema = {

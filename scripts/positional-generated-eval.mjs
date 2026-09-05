@@ -3,12 +3,12 @@
 import { pathToFileURL } from "node:url";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { tokenize } from "../dist/text.js";
+import { tokenize } from "../dist/text/text.js";
 import { COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/completeInterpretationCollector.js";
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { loadSoftwareLandRelevanceInputs, loadSoftwareLandJson } from "../test/helpers/software-land-fixture.js";
-import { buildQueryPlan } from "../dist/queryPlan.js";
+import { buildQueryPlan } from "../dist/query/queryPlan.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const inputs = loadSoftwareLandRelevanceInputs();

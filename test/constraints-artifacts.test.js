@@ -6,7 +6,7 @@ import {
 } from "../dist/index.js";
 import { parseConfiguredConcepts } from "../tools/search-corpus/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import { compareConstraint, detectConstraintCycles, DEFAULT_CONSTRAINTS } from "../dist/constraints.js";
 import { RelationshipGraph } from "../dist/relationships.js";
 import { rankCandidates } from "../dist/rank.js";

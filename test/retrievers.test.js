@@ -5,7 +5,7 @@ import {
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
 import { createIndexedLexicalRetriever } from "../dist/retrievers.js";
 import { retrieveCandidates } from "../dist/retrieve.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import { buildIndex } from "../dist/indexDocuments.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };

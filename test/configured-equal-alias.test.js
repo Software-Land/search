@@ -7,8 +7,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { analyzeQuery } from "../dist/analyze.js";
-import { resolveConfiguredSequence } from "../dist/configuredSequence.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
+import { resolveConfiguredSequence } from "../dist/query/configuredSequence.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };

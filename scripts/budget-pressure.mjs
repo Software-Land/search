@@ -28,8 +28,8 @@ import { rankCandidates } from "../dist/rank.js";
 import { constraintSignature } from "../dist/rankSignature.js";
 import { compareConstraint, constraintsForStrategy } from "../dist/constraints.js";
 import { queryForms } from "../dist/retrievers.js";
-import { allowPrefixMatch } from "../dist/text.js";
-import { isAllDigitToken } from "../dist/versionForms.js";
+import { allowPrefixMatch } from "../dist/text/text.js";
+import { isAllDigitToken } from "../dist/text/versionForms.js";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FIXTURE = path.join(ROOT, "test", "fixtures", "software-land");

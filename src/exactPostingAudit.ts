@@ -8,8 +8,8 @@
  */
 import { queryForms } from "./retrievers.js";
 import { retrievalSourcesForDocument, identityTokens, shortTitleTokenPrefixStub, occupiedTitleJoins, hasConfiguredSequenceIntent, formAllowsOrdinaryLexicalPrefix } from "./retrieve.js";
-import { allowPrefixMatch } from "./text.js";
-import { isAllDigitToken } from "./versionForms.js";
+import { allowPrefixMatch } from "./text/text.js";
+import { isAllDigitToken } from "./text/versionForms.js";
 import type { CompiledLexicalRuntime, CompiledTermRuntime } from "./lexicalIndex.js";
 import type { AnalyzedQuery, IndexedDocument } from "./types.js";
 

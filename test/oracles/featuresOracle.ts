@@ -5,13 +5,13 @@
  * production dist and the npm tarball.
  */
 
-import { isNearCompletePrefix, levenshtein, DEFAULT_STOP, allowPrefixMatch } from "../../src/text.js";
-import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "../../src/versionForms.js";
+import { isNearCompletePrefix, levenshtein, DEFAULT_STOP, allowPrefixMatch } from "../../src/text/text.js";
+import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "../../src/text/versionForms.js";
 import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, hasConfiguredContentIdentity, identityTokens, evidenceTokens, isSearchEquivalenceRecallConcept, formContentTokens, sequenceCount, shortTitleTokenPrefixStub, configuredConceptFieldMatch, rankingCoverageConcepts } from "../../src/retrieve.js";
-import { querySemanticFacts } from "../../src/querySemantics.js";
+import { querySemanticFacts } from "../../src/query/querySemantics.js";
 import { saturatingFrequency } from "../../src/saturatingFrequency.js";
-import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "../../src/lexicalNormalize.js";
-import { sequenceKey } from "../../src/configuredAuthoring.js";
+import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "../../src/text/lexicalNormalize.js";
+import { sequenceKey } from "../../src/query/configuredAuthoring.js";
 import {
   FULL_QUERY_COVERAGE,
   TWO_THIRDS_QUERY_COVERAGE,

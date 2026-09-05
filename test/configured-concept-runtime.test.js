@@ -4,7 +4,7 @@
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import { compileConfiguredConceptPlugin, compileStandaloneRecallLookup } from "../dist/configuredConcepts.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };

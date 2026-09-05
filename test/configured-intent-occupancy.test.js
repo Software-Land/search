@@ -6,13 +6,13 @@
  */
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import {
   resolveConfiguredPrefixSpans,
   resolveConfiguredSequence,
   resolveConfiguredSpans,
   tokenAlignsConfiguredKey,
-} from "../dist/configuredSequence.js";
+} from "../dist/query/configuredSequence.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };

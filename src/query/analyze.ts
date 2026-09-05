@@ -5,16 +5,16 @@ import {
   DEFAULT_STOP,
   allowPrefixMatch,
   spokenSignificantSymbolTokens,
-} from "./text.js";
-import { isAllDigitToken, extractDottedSpans } from "./versionForms.js";
-import { throwIfAborted } from "./cancel.js";
+} from "../text/text.js";
+import { isAllDigitToken, extractDottedSpans } from "../text/versionForms.js";
+import { throwIfAborted } from "../cancel.js";
 import {
   compoundSpellSegment,
   decodeLeet,
   salvageContainedTerm,
   MAX_COMPOUND_REPAIR_TOKEN_LENGTH,
 } from "./analyzeRepair.js";
-import { canonicalLexicalTokensFromQuery } from "./lexicalNormalize.js";
+import { canonicalLexicalTokensFromQuery } from "../text/lexicalNormalize.js";
 import { bindMorphologyDerivedEquivalences } from "./synonyms.js";
 import {
   allConfiguredConceptForms,
@@ -49,7 +49,7 @@ import type {
   StandaloneRecall,
   TopicalRecall,
   TypoSuggestion,
-} from "./types.js";
+} from "../types.js";
 
 function pluginLemma(plugins: SearchPlugin[], token: string) {
   for (const plugin of plugins) {

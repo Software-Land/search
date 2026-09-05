@@ -3,8 +3,8 @@
  * carry provenance. No query-specific hard-coded maps.
  */
 
-import { levenshtein } from "./text.js";
-import { throwIfAborted } from "./cancel.js";
+import { levenshtein } from "../text/text.js";
+import { throwIfAborted } from "../cancel.js";
 
 /** Bound expensive compound repair of a user-controlled token. Same ceiling as exact segmentation. */
 export const MAX_COMPOUND_REPAIR_TOKEN_LENGTH = 64;

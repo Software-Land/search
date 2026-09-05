@@ -17,7 +17,7 @@
  */
 
 import { typedSurfacePhraseTokens } from "./phraseEvidence.js";
-import type { AnalyzedQuery, ConfiguredSpan, QueryToken } from "./types.js";
+import type { AnalyzedQuery, ConfiguredSpan, QueryToken } from "../types.js";
 
 export interface GraphEdge {
   from: number;

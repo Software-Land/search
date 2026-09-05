@@ -12,13 +12,13 @@
  * lookup stays authoritative. Multi-token morphology folding is out of scope.
  */
 
-import { InvalidConfigurationError } from "./errors.js";
+import { InvalidConfigurationError } from "../errors.js";
 import {
   tokenize,
   leftoverAfterFoldable,
   hasUnsafeSymbolicSurface,
   FOLDABLE_EXPANSION_PUNCTUATION,
-} from "./text.js";
+} from "../text/text.js";
 
 type SynonymEntry = {
   terms?: string[];

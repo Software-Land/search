@@ -5,7 +5,7 @@
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import { COMPLETE_INTERPRETATION_COLLECTOR, collectCompleteInterpretations } from "../dist/completeInterpretationCollector.js";
-import { buildQueryPlan } from "../dist/queryPlan.js";
+import { buildQueryPlan } from "../dist/query/queryPlan.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { loadSoftwareLandRelevanceInputs } from "./helpers/software-land-fixture.js";
 import { readdirSync, readFileSync } from "node:fs";

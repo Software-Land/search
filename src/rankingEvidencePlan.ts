@@ -14,9 +14,9 @@ import {
   rankingCoverageConcepts,
   shortTitleTokenPrefixStub,
 } from "./retrieve.js";
-import { querySemanticFacts } from "./querySemantics.js";
-import { formAllowsOrdinaryLexicalPrefix } from "./lexicalPrefixForms.js";
-import { allowPrefixMatch, DEFAULT_STOP, isNearCompletePrefix, levenshteinAtMost } from "./text.js";
+import { querySemanticFacts } from "./query/querySemantics.js";
+import { formAllowsOrdinaryLexicalPrefix } from "./query/lexicalPrefixForms.js";
+import { allowPrefixMatch, DEFAULT_STOP, isNearCompletePrefix, levenshteinAtMost } from "./text/text.js";
 import type { AnalyzedQuery, QueryConcept } from "./types.js";
 import type { RankingEvidenceStatic } from "./rankingEvidenceState.js";
 

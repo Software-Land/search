@@ -1,12 +1,12 @@
-import { sequenceKey } from "./configuredAuthoring.js";
-import { isNearCompletePrefix, levenshteinAtMost, DEFAULT_STOP, allowPrefixMatch } from "./text.js";
-import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "./versionForms.js";
+import { sequenceKey } from "./query/configuredAuthoring.js";
+import { isNearCompletePrefix, levenshteinAtMost, DEFAULT_STOP, allowPrefixMatch } from "./text/text.js";
+import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "./text/versionForms.js";
 import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, hasConfiguredContentIdentity, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall, topicalRecallHint, topicalFormEvidence, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts, rankingCoverageConcepts, formContentTokens, sequenceCount, shortTitleTokenPrefixStub, configuredConceptFieldMatch } from "./retrieve.js";
-import { queryPhraseGeometry, queryPhraseGeometryFromGraph } from "./queryPlan.js";
-import { querySemanticFacts } from "./querySemantics.js";
+import { queryPhraseGeometry, queryPhraseGeometryFromGraph } from "./query/queryPlan.js";
+import { querySemanticFacts } from "./query/querySemantics.js";
 import { scoreFeatures } from "./rank.js";
 import { saturatingFrequency } from "./saturatingFrequency.js";
-import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "./lexicalNormalize.js";
+import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "./text/lexicalNormalize.js";
 import {
   asCompactStore,
   compactAdjacentTokens,
@@ -35,7 +35,7 @@ import type {
   QueryToken,
   RelationshipInfo,
 } from "./types.js";
-import type { WeakConfiguredRecall } from "./querySemantics.js";
+import type { WeakConfiguredRecall } from "./query/querySemantics.js";
 
 export { saturatingFrequency };
 

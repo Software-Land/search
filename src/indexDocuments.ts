@@ -1,6 +1,6 @@
-import { tokenize, firstSurfaceToken, DEFAULT_STOP } from "./text.js";
+import { tokenize, firstSurfaceToken, DEFAULT_STOP } from "./text/text.js";
 import { canonicalDocumentId } from "./documentId.js";
-import { extractVersionCompactForms, extractDottedSpans, dottedSpanComponentIndexes } from "./versionForms.js";
+import { extractVersionCompactForms, extractDottedSpans, dottedSpanComponentIndexes } from "./text/versionForms.js";
 import { InvalidDocumentError } from "./errors.js";
 import { buildPositionalIndex } from "./positionalIndex.js";
 import type {

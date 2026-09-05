@@ -13,7 +13,7 @@
  * so a summary-only edit cannot keep stale search-relevant state.
  */
 
-import { tokenize } from "./text.js";
+import { tokenize } from "./text/text.js";
 import { assertArtifact } from "./artifacts.js";
 import { canonicalDocumentId } from "./documentId.js";
 import { ArtifactValidationError } from "./errors.js";

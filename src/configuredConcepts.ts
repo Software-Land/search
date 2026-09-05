@@ -16,14 +16,14 @@ import {
   allConfiguredConceptForms,
   compileAuthoredConcept,
   sequenceKey,
-} from "./configuredAuthoring.js";
+} from "./query/configuredAuthoring.js";
 import { ARTIFACT_FORMATS, ARTIFACT_VERSION } from "./artifacts.js";
 import {
   compileRelationshipMapInternal,
   mergeRelationships,
   type RelationshipDocumentRef,
 } from "./relationshipMap.js";
-import { synonyms as synonymsPlugin } from "./synonyms.js";
+import { synonyms as synonymsPlugin } from "./query/synonyms.js";
 
 export interface ConfiguredConceptPlugin {
   name: "configured-concepts";

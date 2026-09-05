@@ -23,7 +23,7 @@ import {
   type RankingEvidenceFieldCode,
   type RankingEvidencePlan,
 } from "./rankingEvidencePlan.js";
-import { DEFAULT_STOP } from "./text.js";
+import { DEFAULT_STOP } from "./text/text.js";
 import { createReusableFeatureScalar } from "./featureDefaults.js";
 import type {
   FeatureVector,

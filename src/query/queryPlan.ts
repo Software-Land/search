@@ -13,9 +13,9 @@ import {
   executeTokenGraph,
   type ExecutionStats,
   type FieldPhraseHit,
-} from "./positionalQueries.js";
+} from "../positionalQueries.js";
 import { querySemanticFacts } from "./querySemantics.js";
-import type { AnalyzedQuery, FeatureVector, SearchIndex } from "./types.js";
+import type { AnalyzedQuery, FeatureVector, SearchIndex } from "../types.js";
 
 export interface QueryPlanClauses {
   lexical: boolean;

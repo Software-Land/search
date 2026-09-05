@@ -1,4 +1,4 @@
-import { buildQueryPlan } from "../../dist/queryPlan.js";
+import { buildQueryPlan } from "../../dist/query/queryPlan.js";
 import {
   compileRankingEvidencePlan,
   rankingEvidenceEligibilityReason,

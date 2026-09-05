@@ -6,7 +6,7 @@
  * prefix-walk policy stay in their owning modules.
  */
 
-import type { AnalyzedQuery, ConfiguredPrefixRecall } from "./types.js";
+import type { AnalyzedQuery, ConfiguredPrefixRecall } from "../types.js";
 
 export type WeakConfiguredRecallAmbiguity = "unique" | "group";
 

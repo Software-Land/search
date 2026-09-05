@@ -1,5 +1,5 @@
 import { SearchEngine, morphology } from "../dist/index.js";
-import { english as internalEnglish } from "../dist/english.js";
+import { english as internalEnglish } from "../dist/text/english.js";
 import * as publicApi from "../dist/index.js";
 
 const schema = {

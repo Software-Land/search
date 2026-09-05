@@ -8,7 +8,7 @@
  */
 
 import { InvalidConfigurationError } from "./errors.js";
-import { sequenceKey } from "./configuredAuthoring.js";
+import { sequenceKey } from "./query/configuredAuthoring.js";
 import { ARTIFACT_FORMATS, ARTIFACT_VERSION, parseRelationships } from "./artifacts.js";
 import type { ConfiguredConcept, RelationshipArtifact, RelationshipEdge } from "./types.js";
 

@@ -1,6 +1,6 @@
 import { compileCorpus, analyzeCorpus, LIFECYCLE, equivalenceId, synonymId, hashJson } from "../tools/search-corpus/index.js";
 import { compileAuthoredRelevance, morphology } from "../dist/index.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 
 const cpuDocs = {
   documents: [

@@ -3,8 +3,8 @@
  * Reuses the existing + / # / * operator map; does not add synonyms.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
-import { synonyms } from "../dist/synonyms.js";
-import { analyzeQuery } from "../dist/analyze.js";
+import { synonyms } from "../dist/query/synonyms.js";
+import { analyzeQuery } from "../dist/query/analyze.js";
 import { extractFeatures } from "../dist/features.js";
 import { coverageConcepts, conceptMatchesTitle } from "../dist/retrieve.js";
 import { buildIndex } from "../dist/indexDocuments.js";
@@ -12,7 +12,7 @@ import {
   tokenize,
   spokenSignificantSymbolTokens,
   speakSignificantSymbols,
-} from "../dist/text.js";
+} from "../dist/text/text.js";
 
 const schema = {
   title: { type: "text", role: "title" },
