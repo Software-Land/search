@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.9
+
+### Changed
+
+- Reorganized internal Core modules into architecture-aligned source directories for improved feature locality and maintainability. Public API, search semantics, artifact formats, and runtime behavior are unchanged.
+
 ## 0.6.8
 
 ### Changed
