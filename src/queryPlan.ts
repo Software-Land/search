@@ -14,6 +14,7 @@ import {
   type ExecutionStats,
   type FieldPhraseHit,
 } from "./positionalQueries.js";
+import { querySemanticFacts } from "./querySemantics.js";
 import type { AnalyzedQuery, FeatureVector, SearchIndex } from "./types.js";
 
 export interface QueryPlanClauses {
@@ -81,7 +82,7 @@ function recordGeometry(query: AnalyzedQuery, exact: FieldPhraseHit[], prefix: F
 }
 
 export function hasStructuredInterpretation(query: AnalyzedQuery): boolean {
-  if (query.configuredSequenceIntent?.key) return true;
+  if (querySemanticFacts(query).configured.occupiedKey) return true;
   return Array.isArray(query.configuredPrefixSpans) && query.configuredPrefixSpans.length > 0;
 }
 
@@ -127,9 +128,10 @@ export function buildQueryPlan(query: AnalyzedQuery, index: SearchIndex): QueryP
     );
   }
   recordGeometry(query, exactHits, prefixHits);
+  const semantics = querySemanticFacts(query);
   const versionIntent = Array.isArray(query.dottedSpans) && query.dottedSpans.length > 0;
-  const structuredKey = query.configuredSequenceIntent?.key || null;
-  const configuredContentIdentity = query.configuredContentIdentity?.key || null;
+  const structuredKey = semantics.configured.occupiedKey;
+  const configuredContentIdentity = semantics.configured.contentIdentityKey;
   return {
     clauses: {
       lexical: typedTokens.length > 0,
@@ -137,8 +139,8 @@ export function buildQueryPlan(query: AnalyzedQuery, index: SearchIndex): QueryP
       phrasePrefix: prefixHits.length > 0,
       configuredFormGraph: useGraph,
       structuredIntent: Boolean(structuredKey),
-      equivalentRecall: Array.isArray(query.equivalentRecall) && query.equivalentRecall.length > 0,
-      topicalRecall: Boolean(query.topicalRecall),
+      equivalentRecall: semantics.relatedRecall.equivalent,
+      topicalRecall: semantics.relatedRecall.topical,
       versionIntent,
       prefixEvidence: Boolean(
         query.prefixCompletion || (Array.isArray(query.configuredPrefixSpans) && query.configuredPrefixSpans.length > 0)

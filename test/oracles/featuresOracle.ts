@@ -7,7 +7,8 @@
 
 import { isNearCompletePrefix, levenshtein, DEFAULT_STOP, allowPrefixMatch } from "../../src/text.js";
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "../../src/versionForms.js";
-import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, hasConfiguredRankingIntent, hasConfiguredContentIdentity, identityTokens, evidenceTokens, isSearchEquivalenceRecallConcept, formContentTokens, sequenceCount, shortTitleTokenPrefixStub, configuredConceptFieldMatch, rankingCoverageConcepts } from "../../src/retrieve.js";
+import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, hasConfiguredContentIdentity, identityTokens, evidenceTokens, isSearchEquivalenceRecallConcept, formContentTokens, sequenceCount, shortTitleTokenPrefixStub, configuredConceptFieldMatch, rankingCoverageConcepts } from "../../src/retrieve.js";
+import { querySemanticFacts } from "../../src/querySemantics.js";
 import { saturatingFrequency } from "../../src/saturatingFrequency.js";
 import { canonicalLexicalTokensFromQuery, extractCanonicalNgrams } from "../../src/lexicalNormalize.js";
 import { sequenceKey } from "../../src/configuredAuthoring.js";
@@ -102,7 +103,13 @@ function exactTitle(query: AnalyzedQuery, doc: IndexedDocument) {
   const acr = query.concepts.find((c) => c.kind === "configured-concept") || null;
   const joins = peerFormJoinsOf(acr);
   if (hasConfiguredSequenceIntent(query) && joins.length) return joins.includes(doc.normalizedTitle);
-  if (hasConfiguredRankingIntent(query) && joins.length && joins.includes(doc.normalizedTitle)) return true;
+  if (
+    querySemanticFacts(query).configured.hasRankingIdentity &&
+    joins.length &&
+    joins.includes(doc.normalizedTitle)
+  ) {
+    return true;
+  }
   const q = identityTokens(query).map((t) => t.normalized).join(" ");
   return q.length > 0 && q === doc.normalizedTitle;
 }
@@ -112,7 +119,7 @@ function tokenLiteral(t: QueryToken) {
 }
 
 function hasBoundContextualCompletion(query: AnalyzedQuery) {
-  return Boolean(query.contextualCompletion?.completedToken);
+  return querySemanticFacts(query).completion.boundTrailing;
 }
 
 function exactTitleTokenMatch(query: AnalyzedQuery, doc: IndexedDocument) {

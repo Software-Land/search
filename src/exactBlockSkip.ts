@@ -69,7 +69,24 @@ export function oneOfKBodyOnlyMaxRoundedScore(conceptCount: number) {
   return Number((bodyLexicalMatch * 0.25).toFixed(6));
 }
 
-export function stage3AUnsupportedReason(query: AnalyzedQuery): string | null {
+export type Stage3AUnsupportedReason =
+  | "token-count"
+  | "alternatives"
+  | "dotted-spans"
+  | "prefix-completion"
+  | "contextual-completion"
+  | "topical-recall"
+  | "configured-prefix-recall"
+  | "configured-concept"
+  | "term-concept-count"
+  | "concept-expansion"
+  | "concept-provenance"
+  | "empty-token"
+  | "numeric-token"
+  | "completed-token"
+  | "token-sources";
+
+export function stage3AUnsupportedReason(query: AnalyzedQuery): Stage3AUnsupportedReason | null {
   const tokens = query.tokens || [];
   if (tokens.length < 2) return "token-count";
   if (query.alternatives?.length) return "alternatives";

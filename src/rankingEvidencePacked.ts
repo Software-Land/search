@@ -15,6 +15,12 @@ import {
   RANKING_FINAL_MORPHOLOGY,
   RANKING_FINAL_TYPED_SURFACE,
 } from "./rankingEvidenceState.js";
+import {
+  decodeConfiguredConceptMatch,
+  decodeDirectClass,
+  unpackConfiguredFieldEvidence,
+} from "./rankingEvidenceCodec.js";
+import { EMPTY_MATCHED_PREFIX_TOKENS } from "./featureDefaults.js";
 import type { RankingEvidenceFinalized } from "./rankingEvidenceFinalize.js";
 import type {
   DirectClass,
@@ -22,29 +28,6 @@ import type {
   FeatureVector,
   RetrievalHit,
 } from "./types.js";
-
-const EMPTY_MATCHED_PREFIX_TOKENS: string[] = [];
-
-function fieldEvidenceFromCode(code: number): false | "key" | "form" {
-  if (code === 2) return "key";
-  if (code === 1) return "form";
-  return false;
-}
-
-function directClassFromCode(code: number): DirectClass {
-  if (code === 3) return "strong";
-  if (code === 2) return "moderate";
-  if (code === 1) return "weak";
-  return "none";
-}
-
-function configuredClassValue(
-  code: number
-): FeatureVector["configuredConceptMatch"] {
-  if (code === 2) return "key-in-title";
-  if (code === 1) return "form";
-  return false;
-}
 
 /**
  * Packed column view. Getters are the production ranking adapter; they are not
@@ -67,15 +50,11 @@ export class PackedDirectFeatures {
     const session = finalized.session;
     const plan = finalized.plan;
     const fieldEvidence = session.finalFieldEvidence[candidate];
-    this.configuredConceptFieldEvidence = {
-      title: fieldEvidenceFromCode(fieldEvidence & 3),
-      summary: fieldEvidenceFromCode((fieldEvidence >> 2) & 3),
-      body: fieldEvidenceFromCode((fieldEvidence >> 4) & 3),
-    };
-    this.configuredConceptMatch = configuredClassValue(
+    this.configuredConceptFieldEvidence = unpackConfiguredFieldEvidence(fieldEvidence);
+    this.configuredConceptMatch = decodeConfiguredConceptMatch(
       session.finalConfiguredClass[candidate]
     );
-    this.directClass = directClassFromCode(session.finalDirectClass[candidate]);
+    this.directClass = decodeDirectClass(session.finalDirectClass[candidate]);
     const matchingPhraseCode = session.finalMatchingPhrase[candidate];
     this.matchingPhraseKey =
       matchingPhraseCode > 0
@@ -135,6 +114,7 @@ export class PackedDirectFeatures {
     return this.finalized.session.finalTypoDistance[this.candidate];
   }
   get versionMatch() {
+    // Packed eligibility rejects version queries. Not a DEFAULT_FEATURE_VALUES lookup.
     return false as const;
   }
   get shortLiteralLeadMatch() {
@@ -156,6 +136,7 @@ export class PackedDirectFeatures {
     return this.finalized.session.finalCoverageConceptCount[this.candidate];
   }
   get ordinaryEquivalenceBodyMatch() {
+    // Packed eligibility rejects equivalent-recall queries.
     return false;
   }
   get titleTokenCount() {
@@ -192,6 +173,7 @@ export class PackedDirectFeatures {
     return Boolean(this.flags & RANKING_FINAL_EXACT_TITLE_OR_SUMMARY_PHRASE);
   }
   get relationshipStrength() {
+    // Packed path is direct-only; relationships are a FeatureVector overlay.
     return 0;
   }
   get relationshipType() {
@@ -204,6 +186,7 @@ export class PackedDirectFeatures {
     return this.finalized.session.finalRetrievalScore[this.candidate];
   }
   get configuredPrefixRecallScore() {
+    // Packed eligibility rejects weak configured-prefix recall.
     return 0;
   }
   get relevanceKind() {

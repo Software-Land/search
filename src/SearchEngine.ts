@@ -15,8 +15,10 @@ import {
   applyCompleteInterpretationCollector,
   COMPLETE_INTERPRETATION_COLLECTOR,
 } from "./completeInterpretationCollector.js";
+import { searchSessionCapabilities } from "./executionSession.js";
 import {
   exhaustiveFeaturePruningStats,
+  featureBlockPruningFallbackReason,
   planExactFeaturePruning,
 } from "./exactPruning.js";
 import {
@@ -30,7 +32,9 @@ import { RankingEvidenceSessionPool, rankingEvidenceStaticFor } from "./rankingE
 import { finalizeRankingEvidence } from "./rankingEvidenceFinalize.js";
 import { createPackedDirectHits, isPackedDirectFeatures } from "./rankingEvidencePacked.js";
 import { packedSearchFallbackReason } from "./rankingEvidenceSearch.js";
+import { assembleDetailedResult, withPackedSearchMeta } from "./resultAssembly.js";
 import {
+  hasRankingEvidenceRetrieverCapability,
   retrieveWithRankingEvidence,
   retrieveWithRankingEvidenceAsync,
 } from "./retrievers.js";
@@ -56,7 +60,6 @@ import type {
   AdaptiveOptions,
   AnalyzedQuery,
   FeaturedHit,
-  FeatureVector,
   FinishTimings,
   IndexedDocument,
   QueryAlternative,
@@ -73,7 +76,6 @@ import type {
   LexicalIndexArtifact,
   SearchOptions,
   SearchPlugin,
-  SearchResultRow,
   SourcePolicy,
 } from "./types.js";
 
@@ -207,151 +209,6 @@ function resolveGraph(
     return relationships;
   }
   return RelationshipGraph(relationships);
-}
-
-function jsonSafe(value: unknown): unknown {
-  return JSON.parse(
-    JSON.stringify(value, (_key, v) => {
-      if (v instanceof Map) return Object.fromEntries(v);
-      if (v instanceof Set) return [...v];
-      if (typeof v === "function") return undefined;
-      return v;
-    })
-  );
-}
-
-function explainLexical(f: FeatureVector) {
-  if ((f.queryTokenCount ?? 0) < 2 && (f.bodyPhraseCount ?? 0) <= 0) return undefined;
-  return {
-    normalizedQueryPhrase: f.normalizedQueryPhrase ?? "",
-    matchingPhraseKey: f.matchingPhraseKey ?? null,
-    bodyPhraseCount: f.bodyPhraseCount ?? 0,
-    bodyPhraseFrequency: f.bodyPhraseFrequency ?? 0,
-  };
-}
-
-function explainContextualPrefix(f: FeatureVector) {
-  if (!f.contextualTitlePrefix) return undefined;
-  return {
-    matchedPrefixTokens: f.matchedPrefixTokens ?? [],
-    activeFinalPrefix: f.activeFinalPrefix ?? null,
-    completedTitleToken: f.completedTitleToken ?? null,
-    unmatchedTitleTokensAfter: f.unmatchedTitleTokensAfter ?? 0,
-    titleSequenceTightness: f.titleSequenceTightness ?? 0,
-    contextualPrefixQuality: f.contextualPrefixQuality ?? 0,
-  };
-}
-
-function serializeHit(c: RankedHit, query: AnalyzedQuery, explain?: boolean): SearchResultRow {
-  const f = c.features;
-  const row: SearchResultRow = {
-    id: c.document.id,
-    title: c.document.title,
-    rank: c.rank,
-    score: c.score,
-    relevanceKind: f.relevanceKind,
-    directClass: f.directClass,
-  };
-  if (c.relationship) {
-    row.relationship = {
-      sourceId: c.relationship.sourceId,
-      sourceTitle: c.relationship.sourceTitle,
-      type: c.relationship.type,
-      strength: c.relationship.strength,
-      provenance: c.relationship.provenance,
-      rank: c.relationship.rank,
-      sources: c.relationship.sources || undefined,
-    };
-  }
-  if (explain) {
-    row.retrievalSources = [...(c.retrievalSources || [])];
-    row.features = { ...f };
-    row.constraints = c.constraintVsNext?.applied || [];
-    row.explanation = jsonSafe({
-      query: {
-        raw: query.raw,
-        originalSurface: query.originalSurface,
-        tokens: query.tokens,
-        concepts: (query.concepts || []).map((concept) =>
-          concept && concept.provenance === "synonym"
-            ? { ...concept, provenance: "equivalent-recall" }
-            : concept
-        ),
-        alternatives: query.alternatives || [],
-        prefixCompletion: query.prefixCompletion ?? null,
-        contextualCompletion: query.contextualCompletion ?? null,
-        configuredSequenceIntent: query.configuredSequenceIntent ?? null,
-        configuredContentIdentity: query.configuredContentIdentity ?? null,
-        configuredSpans: (query.configuredSpans || []).map((span) => ({
-          key: span.key,
-          start: span.start,
-          end: span.end,
-          matchedKinds: [...(span.matchedKinds || [])],
-        })),
-        configuredPrefixSpans: (query.configuredPrefixSpans || []).map((span) => ({
-          key: span.key,
-          start: span.start,
-          end: span.end,
-          matchedKinds: [...(span.matchedKinds || [])],
-          usedPrefix: true as const,
-        })),
-        standaloneRecall: query.standaloneRecall
-          ? { key: query.standaloneRecall.key, sourceToken: query.standaloneRecall.sourceToken }
-          : null,
-        topicalRecall: query.topicalRecall
-          ? { key: query.topicalRecall.key, forms: query.topicalRecall.forms.map((form) => [...form]) }
-          : null,
-        equivalentRecall: query.equivalentRecall?.length
-          ? query.equivalentRecall.map((pair) => ({ source: pair.source, target: pair.target }))
-          : undefined,
-        configuredPrefixRecall: query.configuredPrefixRecall
-          ? {
-              key: query.configuredPrefixRecall.key,
-              form: [...query.configuredPrefixRecall.form],
-              exactCount: query.configuredPrefixRecall.exactCount,
-              formLength: query.configuredPrefixRecall.formLength,
-              coverage: query.configuredPrefixRecall.coverage,
-              lastExact: query.configuredPrefixRecall.lastExact,
-              partialCompleteness: query.configuredPrefixRecall.partialCompleteness,
-            }
-          : null,
-        configuredPrefixRecallGroup: (query.configuredPrefixRecallGroup || []).map((row) => ({
-          key: row.key,
-          form: [...row.form],
-          exactCount: row.exactCount,
-          formLength: row.formLength,
-          coverage: row.coverage,
-          lastExact: row.lastExact,
-          partialCompleteness: row.partialCompleteness,
-        })),
-        lexicalTokens: query.lexicalTokens,
-        lexicalPhraseKey: query.lexicalPhraseKey,
-        normalizedQueryPhrase: f.normalizedQueryPhrase ?? "",
-      },
-      retrievalSources: row.retrievalSources,
-      relevanceKind: f.relevanceKind,
-      directClass: f.directClass,
-      features: row.features,
-      lexical: explainLexical(f),
-      contextualPrefix: explainContextualPrefix(f),
-      relationship: c.relationship ?? null,
-      constraintsVsNext: c.constraintVsNext,
-      constraintMeta: c.constraintMeta ?? null,
-    });
-  }
-  return row;
-}
-
-function sliceResults(ranked: RankedHit[], strategy: string, { limit, relatedLimit }: { limit: number; relatedLimit: number }) {
-  const relatedRanked = ranked.filter((c) => c.features.relevanceKind === "related");
-  const directRanked = ranked.filter((c) => c.features.relevanceKind !== "related");
-  const primaryPool = strategy === "separate" || strategy === "none" ? directRanked : ranked;
-  return {
-    sliced: primaryPool.slice(0, Math.max(0, limit)),
-    relatedSliced: relatedRanked.slice(0, Math.max(0, relatedLimit)),
-    relatedRanked,
-    directRanked,
-  };
 }
 
 function representativeDepthForOutput(
@@ -594,16 +451,21 @@ export class SearchEngine {
     let featured: FeaturedHit[];
     const compiledRuntime = exactPruningRuntime(index);
     const retrieverKind = this.retriever.stats?.().kind;
-    let fallbackReason: string | null = null;
-    if (exactDiagnostics) fallbackReason = "exact-diagnostics";
-    else if (pruningMode === "exhaustive") fallbackReason = "explicit-exhaustive";
-    else if (!this.retriever.exactSignatureSelection || retrieverKind !== "compiled-indexed") {
-      fallbackReason = "unsupported-retriever";
-    } else if (!compiledRuntime) fallbackReason = "missing-pruning-extension";
-    else if (weight) fallbackReason = "retrieval-score-weight";
-    else if (strategy !== "none" && sourcePolicy === "all-strong") {
-      fallbackReason = "all-strong-relationships";
-    }
+    const fallbackReason = featureBlockPruningFallbackReason({
+      session: searchSessionCapabilities({
+        exactDiagnostics,
+        pruningMode,
+        retrievalScoreWeight: weight,
+        sourcePolicy,
+        rankingEvidenceRetriever: hasRankingEvidenceRetrieverCapability(
+          this.retriever as import("./types.js").Retriever
+        ),
+      }),
+      compiledIndexedRetriever:
+        Boolean(this.retriever.exactSignatureSelection) && retrieverKind === "compiled-indexed",
+      hasExactPruningRuntime: Boolean(compiledRuntime),
+      relationshipStrategy: strategy,
+    });
 
     if (fallbackReason || !compiledRuntime) {
       featured = featureHits(retrieved);
@@ -782,14 +644,7 @@ export class SearchEngine {
     }
   ) {
     const finished = this._finish(ranked, query, false, strategy, timings);
-    const meta = finished.meta as Record<string, unknown>;
-    meta.rankingEvidence = "packed";
-    meta.rankingEvidenceFallbackReason = timings.rankingEvidenceFallbackReason ?? null;
-    meta.optimizedDirectCandidates = timings.optimizedDirectCandidates ?? 0;
-    meta.directFeatureVectorsConstructed = timings.directFeatureVectorsConstructed ?? 0;
-    meta.relationshipOnlyFeatureVectorsConstructed =
-      timings.relationshipOnlyFeatureVectorsConstructed ?? 0;
-    meta.explainOnlyFeatureVectorsConstructed = 0;
+    const meta = withPackedSearchMeta(finished.meta as Record<string, unknown>, timings);
     this.lastSearchMeta = meta;
     return finished;
   }
@@ -1048,77 +903,18 @@ export class SearchEngine {
 
 
   _finish(ranked: RankedHit[], query: AnalyzedQuery, explain: boolean, strategy: string, timings: FinishTimings) {
-    const { sliced, relatedSliced, relatedRanked } = sliceResults(ranked, strategy, {
-      limit: timings.limit,
-      relatedLimit: timings.relatedLimit,
-    });
-    const results = sliced.map((c) => serializeHit(c, query, explain));
-    const related = relatedSliced.map((c) => serializeHit(c, query, explain));
-    const retrievalStats = this.retriever?.stats?.() || {};
-    const diagnosticRanked = timings.diagnosticRanked || ranked;
-    const meta = {
-      candidateCount: timings.diagnosticRanked?.length ?? timings.candidateCount,
-      candidateTitles: diagnosticRanked.map((c) => c.document.title),
-      retrieveMs: timings.retrieveMs,
-      featureMs: timings.featureMs,
-      relationshipMs: timings.relationshipMs,
-      selectionMs: timings.selectionMs || 0,
-      rankMs: timings.rankMs,
-      totalMs: timings.totalMs,
+    const finished = assembleDetailedResult({
+      ranked,
+      query,
+      explain,
+      strategy,
+      timings,
+      retrievalStats: this.retriever?.stats?.() || {},
       indexBuildMs: this.indexBuildMs || 0,
-      relationshipExpanded: timings.relationshipExpanded,
-      matchCount: timings.matchCount ?? timings.candidateCount,
-      representativeSelection: timings.representativeStats || null,
-      retrievalStats,
-      postingEntriesVisited: retrievalStats.postingEntriesVisited ?? null,
-      distinctDocumentsExamined: retrievalStats.distinctDocumentsExamined ?? null,
-      rawDocumentScans: retrievalStats.rawDocumentScans ?? null,
-      postingBlocksVisited: retrievalStats.postingBlocksVisited ?? timings.pruningStats?.postingBlocksVisited ?? 0,
-      postingBlocksSkipped: retrievalStats.postingBlocksSkipped ?? timings.pruningStats?.postingBlocksSkipped ?? 0,
-      duplicatePostingBlocksAvoided: retrievalStats.duplicatePostingBlocksAvoided ?? retrievalStats.postingBlocksSkipped ?? 0,
-      postingEntriesSkipped:
-        (Number(retrievalStats.postingEntriesSkipped) || 0) +
-        (timings.pruningStats?.postingEntriesSkipped ?? 0),
-      duplicatePostingEntriesAvoided: retrievalStats.duplicatePostingEntriesAvoided ?? 0,
-      queryFormsExpanded: retrievalStats.queryFormsExpanded ?? 0,
-      termsExpanded: retrievalStats.termsExpanded ?? 0,
-      documentBlocksVisited: timings.pruningStats?.documentBlocksVisited ?? 0,
-      documentBlocksSkipped: timings.pruningStats?.documentBlocksSkipped ?? 0,
-      boundedBlocksSkipped: timings.pruningStats?.boundedBlocksSkipped ?? 0,
-      documentsFullyEvaluated: timings.pruningStats?.documentsFullyEvaluated ?? timings.matchCount ?? 0,
-      documentsBoundRejected: timings.pruningStats?.documentsBoundRejected ?? 0,
-      pruningSignaturesEncountered: timings.pruningStats?.signaturesEncountered ?? 0,
-      pruningRepresentativesRetained: timings.pruningStats?.representativesRetained ?? 0,
-      pruningFallbackReason: timings.pruningStats?.pruningFallbackReason ?? null,
-      postingBlocksTotal: retrievalStats.postingBlocksTotal ?? 0,
-      postingBlocksDecoded: retrievalStats.postingBlocksDecoded ?? 0,
-      postingBlocksClassifiedFromMasks: retrievalStats.postingBlocksClassifiedFromMasks ?? 0,
-      postingBlocksSkippedUnread: retrievalStats.postingBlocksSkippedUnread ?? 0,
-      postingEntriesDecoded: retrievalStats.postingEntriesDecoded ?? retrievalStats.postingEntriesVisited ?? 0,
-      candidateDocumentsMaterialized: retrievalStats.candidateDocumentsMaterialized ?? timings.matchCount ?? 0,
-      provenanceDocumentsScanned: retrievalStats.provenanceDocumentsScanned ?? 0,
-      featureVectorsConstructed: timings.featureVectorsConstructed ?? 0,
-      signaturesDiscovered: (timings.representativeStats as { signatures?: number } | null)?.signatures ?? 0,
-      representativesInserted: (timings.representativeStats as { retained?: number } | null)?.retained ?? 0,
-      representativesReplaced: 0,
-      stage3A: retrievalStats.stage3A ?? "off",
-      stage3AFallbackReason: retrievalStats.stage3AFallbackReason ?? null,
-      relatedCount: timings.relatedCount ?? relatedRanked.length,
-      primaryId: timings.primaryId,
-      primaryIds: timings.primaryIds,
-      relationshipStrategy: strategy,
-      retriever: this.retriever?.name || "indexed-lexical",
-      related,
-      constraintCycles: diagnosticRanked[0]?.constraintMeta?.cycles || [],
-      constraintConflicts: diagnosticRanked[0]?.constraintMeta?.conflictCount || 0,
-      query: {
-        raw: query.raw,
-        originalSurface: query.originalSurface,
-        alternatives: query.alternatives || [],
-      },
-    };
-    this.lastSearchMeta = meta;
-    return { results, related, meta };
+      retrieverName: this.retriever?.name || "indexed-lexical",
+    });
+    this.lastSearchMeta = finished.meta;
+    return finished;
   }
 
   _searchDetailedSync(

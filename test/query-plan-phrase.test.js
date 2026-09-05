@@ -6,8 +6,9 @@ import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/inde
 import { extractFeatures } from "../dist/features.js";
 import { typedSurfacePhraseTokens } from "../dist/phraseEvidence.js";
 import { executePhraseQuery } from "../dist/positionalQueries.js";
-import { buildQueryPlan, titleGradeSupportKinds } from "../dist/queryPlan.js";
+import { buildQueryPlan, hasStructuredInterpretation, titleGradeSupportKinds } from "../dist/queryPlan.js";
 import { collectCompleteInterpretations, COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/completeInterpretationCollector.js";
+import { querySemanticFacts } from "../dist/querySemantics.js";
 import { rankCandidates } from "../dist/rank.js";
 import { constraintsForStrategy } from "../dist/constraints.js";
 import { retrievalSourcesForDocument } from "../dist/retrieve.js";
@@ -229,6 +230,79 @@ describe("query-plan facts", () => {
         prefixHits: tls.prefixHits,
       }).reason
     ).toBe("version");
+  });
+
+  test("content identity fills plan identity without occupancy", () => {
+    const query = engine._prepareQuery("what is rpc");
+    const facts = querySemanticFacts(query);
+    const plan = buildQueryPlan(query, engine._index);
+    expect(facts.configured.occupiedKey).toBeNull();
+    expect(facts.configured.contentIdentityKey).toBe("rpc");
+    expect(facts.configured.hasRankingIdentity).toBe(true);
+    expect(plan.structuredKey).toBeNull();
+    expect(plan.configuredContentIdentity).toBe("rpc");
+    expect(plan.clauses.structuredIntent).toBe(false);
+    expect(
+      collectCompleteInterpretations({
+        occupancy: Boolean(plan.structuredKey),
+        configuredContentIdentity: Boolean(plan.configuredContentIdentity),
+        version: plan.versionIntent,
+        exactHits: plan.exactHits,
+        prefixHits: plan.prefixHits,
+      }).reason
+    ).toBe("configured-content-identity");
+  });
+
+  test("prefixEvidence is not vocabularyPrefix", () => {
+    const query = engine._prepareQuery("rpc");
+    const ambiguous = {
+      ...query,
+      prefixCompletion: {
+        activePrefix: "lear",
+        completedToken: null,
+        canonicalToken: null,
+        completedTokens: ["learn", "learning"],
+        canonicalTokens: ["learn"],
+        source: "final-token-prefix",
+        ambiguous: true,
+      },
+      configuredPrefixSpans: [],
+    };
+    expect(querySemanticFacts(ambiguous).completion.vocabularyPrefix).toBe(false);
+    expect(buildQueryPlan(ambiguous, engine._index).clauses.prefixEvidence).toBe(true);
+
+    const spansOnly = {
+      ...query,
+      prefixCompletion: null,
+      configuredSequenceIntent: null,
+      configuredPrefixSpans: [
+        { key: "rpc", start: 0, end: 1, matchedKinds: ["key"], usedPrefix: true },
+      ],
+    };
+    expect(querySemanticFacts(spansOnly).completion.vocabularyPrefix).toBe(false);
+    expect(querySemanticFacts(spansOnly).configured.occupiedKey).toBeNull();
+    expect(hasStructuredInterpretation(spansOnly)).toBe(true);
+    expect(buildQueryPlan(spansOnly, engine._index).clauses.prefixEvidence).toBe(true);
+  });
+
+  test("topical and equivalent plan clauses follow relatedRecall facts", () => {
+    const equivalent = buildQueryPlan(engine._prepareQuery("remote procedure call"), engine._index);
+    expect(querySemanticFacts(engine._prepareQuery("remote procedure call")).relatedRecall.equivalent).toBe(true);
+    expect(equivalent.clauses.equivalentRecall).toBe(true);
+
+    const withTopical = {
+      ...engine._prepareQuery("rpc"),
+      topicalRecall: { key: "rpc", forms: [["grpc"]] },
+    };
+    expect(querySemanticFacts(withTopical).relatedRecall.topical).toBe(true);
+    expect(buildQueryPlan(withTopical, engine._index).clauses.topicalRecall).toBe(true);
+
+    const emptyForms = {
+      ...engine._prepareQuery("rpc"),
+      topicalRecall: { key: "rpc", forms: [] },
+    };
+    expect(querySemanticFacts(emptyForms).relatedRecall.topical).toBe(false);
+    expect(buildQueryPlan(emptyForms, engine._index).clauses.topicalRecall).toBe(false);
   });
 });
 

@@ -5,6 +5,7 @@
 import { morphology } from "../dist/index.js";
 import { analyzeQuery } from "../dist/analyze.js";
 import { querySemanticFacts } from "../dist/querySemantics.js";
+import { stage3AUnsupportedReason } from "../dist/exactBlockSkip.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const nistFamily = [
@@ -36,7 +37,12 @@ function analyze(raw, entries) {
 describe("querySemanticFacts", () => {
   test("null query is empty", () => {
     expect(querySemanticFacts(null)).toEqual({
-      configured: { occupiedKey: null, contentIdentityKey: null, weakRecall: null },
+      configured: {
+        occupiedKey: null,
+        contentIdentityKey: null,
+        hasRankingIdentity: false,
+        weakRecall: null,
+      },
       completion: { vocabularyPrefix: false, boundTrailing: false },
       relatedRecall: { standalone: false, topical: false, equivalent: false },
     });
@@ -48,6 +54,7 @@ describe("querySemanticFacts", () => {
     expect(q.configuredPrefixRecall?.key).toBe("nist");
     const facts = querySemanticFacts(q);
     expect(facts.configured.occupiedKey).toBeNull();
+    expect(facts.configured.hasRankingIdentity).toBe(false);
     expect(facts.configured.weakRecall?.ambiguity).toBe("unique");
     expect(facts.configured.weakRecall.candidates).toEqual([q.configuredPrefixRecall]);
     expect(facts.configured.weakRecall.candidates[0]).toBe(q.configuredPrefixRecall);
@@ -69,6 +76,7 @@ describe("querySemanticFacts", () => {
     expect(q.configuredPrefixRecall).toBeNull();
     expect(querySemanticFacts(q).configured).toMatchObject({
       occupiedKey: "nist",
+      hasRankingIdentity: true,
       weakRecall: null,
     });
   });
@@ -98,6 +106,7 @@ describe("querySemanticFacts", () => {
       ],
     });
     expect(facts.configured.occupiedKey).toBe("api");
+    expect(facts.configured.hasRankingIdentity).toBe(true);
     expect(facts.configured.weakRecall).toBeNull();
   });
 
@@ -108,8 +117,31 @@ describe("querySemanticFacts", () => {
     expect(querySemanticFacts(q).configured).toMatchObject({
       occupiedKey: null,
       contentIdentityKey: "rpc",
+      hasRankingIdentity: true,
       weakRecall: null,
     });
+  });
+
+  test("hasRankingIdentity is occupancy OR content identity", () => {
+    const occupied = analyze("national institute", nistFamily);
+    const identity = analyze("what is rpc", identityDict);
+    const neither = analyze("nationa", nistFamily);
+    expect(querySemanticFacts(occupied).configured).toMatchObject({
+      occupiedKey: "nist",
+      hasRankingIdentity: true,
+    });
+    expect(querySemanticFacts(identity).configured).toMatchObject({
+      occupiedKey: null,
+      contentIdentityKey: "rpc",
+      hasRankingIdentity: true,
+    });
+    expect(querySemanticFacts(neither).configured.hasRankingIdentity).toBe(false);
+    expect(
+      querySemanticFacts({
+        configuredSequenceIntent: { key: "api", matchedForm: ["application"], matchedKinds: ["form"] },
+        configuredContentIdentity: { key: "api", matchedForm: ["application"], matchedKinds: ["form"] },
+      }).configured.hasRankingIdentity
+    ).toBe(true);
   });
 
   test("related-recall presence follows compiled activation", () => {
@@ -170,5 +202,22 @@ describe("querySemanticFacts", () => {
         },
       }).completion
     ).toEqual({ vocabularyPrefix: false, boundTrailing: true });
+  });
+
+  test("Stage 3A completion reasons follow vocabularyPrefix and boundTrailing facts", () => {
+    const prefix = analyzeQuery("open interfa", {
+      plugins: [morphology()],
+      prefixLexicon: ["open", "interface", "interceptor", "internet"],
+    });
+    expect(querySemanticFacts(prefix).completion.vocabularyPrefix).toBe(true);
+    expect(prefix.alternatives.length).toBeGreaterThan(0);
+    expect(stage3AUnsupportedReason(prefix)).toBe("alternatives");
+    expect(stage3AUnsupportedReason({ ...prefix, alternatives: [] })).toBe("prefix-completion");
+
+    const bound = analyze("machine l", [
+      { key: "ml", aliases: [["machine", "learning"]] },
+    ]);
+    expect(querySemanticFacts(bound).completion.boundTrailing).toBe(true);
+    expect(stage3AUnsupportedReason(bound)).toBe("contextual-completion");
   });
 });

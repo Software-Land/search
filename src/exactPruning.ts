@@ -1,7 +1,12 @@
 import { canonicalLexicalTokensFromQuery } from "./lexicalNormalize.js";
+import { querySemanticFacts } from "./querySemantics.js";
 import { scoreFeatures } from "./rank.js";
 import { constraintSignature } from "./rankSignature.js";
 import { levenshteinAtMost } from "./text.js";
+import type {
+  OptimizationSessionReason,
+  SearchSessionCapabilities,
+} from "./executionSession.js";
 import type {
   AnalyzedQuery,
   FeatureVector,
@@ -56,11 +61,8 @@ function bodyOnlySingleTokenContext(query: AnalyzedQuery): BoundContext | null {
   const concept = query.concepts?.[0];
   const literal = token?.surfaceNormalized || token?.surface || "";
   const normalized = token?.normalized || "";
-  const unsupportedCompletion = Boolean(
-    query.prefixCompletion?.completedToken ||
-    query.prefixCompletion?.canonicalToken ||
-    query.contextualCompletion?.completedToken
-  );
+  const completion = querySemanticFacts(query).completion;
+  const unsupportedCompletion = completion.vocabularyPrefix || completion.boundTrailing;
   const supported = Boolean(
     token &&
     query.tokens.length === 1 &&
@@ -286,6 +288,37 @@ export function planExactFeaturePruning({
       pruningFallbackReason: bounded.length ? null : "no-provable-candidates",
     },
   };
+}
+
+export type FeatureBlockPruningFallbackReason =
+  | OptimizationSessionReason
+  | "missing-pruning-extension";
+
+/**
+ * Stage-2A feature-block session gate. Packed search has a different retriever
+ * check, a different all-strong guard, and extra explain/collector reasons.
+ * Do not reuse packedSearchFallbackReason here.
+ */
+export function featureBlockPruningFallbackReason({
+  session,
+  compiledIndexedRetriever,
+  hasExactPruningRuntime,
+  relationshipStrategy,
+}: {
+  session: SearchSessionCapabilities;
+  compiledIndexedRetriever: boolean;
+  hasExactPruningRuntime: boolean;
+  relationshipStrategy: string;
+}): FeatureBlockPruningFallbackReason | null {
+  if (session.exactDiagnostics) return "exact-diagnostics";
+  if (session.exhaustivePruning) return "explicit-exhaustive";
+  if (!compiledIndexedRetriever) return "unsupported-retriever";
+  if (!hasExactPruningRuntime) return "missing-pruning-extension";
+  if (session.retrievalScoreWeighted) return "retrieval-score-weight";
+  if (relationshipStrategy !== "none" && session.allStrongRelationships) {
+    return "all-strong-relationships";
+  }
+  return null;
 }
 
 export function exhaustiveFeaturePruningStats(

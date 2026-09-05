@@ -3,9 +3,19 @@
  *
  * Unsupported query, retriever, diagnostic, or plugin shapes keep the current
  * FeatureVector path. A fallback is success.
+ *
+ * Session capability facts come from executionSession. Query-semantic
+ * ineligibility stays in rankingEvidenceEligibilityReason. This function is
+ * packed-search policy, not a global eligibility oracle.
  */
-import { COMPLETE_INTERPRETATION_COLLECTOR } from "./completeInterpretationCollector.js";
-import { rankingEvidenceEligibilityReason } from "./rankingEvidencePlan.js";
+import {
+  searchSessionCapabilities,
+  type OptimizationSessionReason,
+} from "./executionSession.js";
+import {
+  rankingEvidenceEligibilityReason,
+  type RankingEvidenceEligibilityReason,
+} from "./rankingEvidencePlan.js";
 import { rankingEvidenceStaticFor } from "./rankingEvidenceState.js";
 import { hasRankingEvidenceRetrieverCapability } from "./retrievers.js";
 import type { AnalyzedQuery, Retriever, SearchIndex, SearchOptions, SourcePolicy } from "./types.js";
@@ -21,6 +31,12 @@ export type PackedSearchGateInput = {
   index: SearchIndex;
 };
 
+export type PackedSearchFallbackReason =
+  | OptimizationSessionReason
+  | "explain"
+  | "complete-interpretation"
+  | RankingEvidenceEligibilityReason;
+
 export function packedSearchFallbackReason({
   exactDiagnostics,
   pruningMode,
@@ -30,17 +46,22 @@ export function packedSearchFallbackReason({
   opts,
   query,
   index,
-}: PackedSearchGateInput): string | null {
-  if (exactDiagnostics) return "exact-diagnostics";
-  if (opts.explain) return "explain";
-  if (opts.resultCollector === COMPLETE_INTERPRETATION_COLLECTOR) {
-    return "complete-interpretation";
-  }
-  if (pruningMode === "exhaustive") return "explicit-exhaustive";
-  if (retrievalScoreWeight) return "retrieval-score-weight";
-  if (sourcePolicy === "all-strong") return "all-strong-relationships";
-  if (!hasRankingEvidenceRetrieverCapability(retriever as Retriever)) {
-    return "unsupported-retriever";
-  }
+}: PackedSearchGateInput): PackedSearchFallbackReason | null {
+  const session = searchSessionCapabilities({
+    exactDiagnostics,
+    pruningMode,
+    retrievalScoreWeight,
+    sourcePolicy,
+    explain: opts.explain,
+    resultCollector: opts.resultCollector,
+    rankingEvidenceRetriever: hasRankingEvidenceRetrieverCapability(retriever as Retriever),
+  });
+  if (session.exactDiagnostics) return "exact-diagnostics";
+  if (session.explain) return "explain";
+  if (session.completeInterpretation) return "complete-interpretation";
+  if (session.exhaustivePruning) return "explicit-exhaustive";
+  if (session.retrievalScoreWeighted) return "retrieval-score-weight";
+  if (session.allStrongRelationships) return "all-strong-relationships";
+  if (!session.rankingEvidenceRetriever) return "unsupported-retriever";
   return rankingEvidenceEligibilityReason(query, rankingEvidenceStaticFor(index));
 }

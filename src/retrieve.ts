@@ -350,40 +350,6 @@ export function hasConfiguredSequenceIntent(query: AnalyzedQuery) {
   return Boolean(querySemanticFacts(query).configured.occupiedKey);
 }
 
-export function configuredPrefixRecallKey(query: AnalyzedQuery): string | null {
-  const weak = querySemanticFacts(query).configured.weakRecall;
-  if (weak?.ambiguity !== "unique") return null;
-  return weak.candidates[0]?.key || null;
-}
-
-export function configuredPrefixRecallGroupKeys(query: AnalyzedQuery): string[] {
-  const weak = querySemanticFacts(query).configured.weakRecall;
-  if (weak?.ambiguity !== "group") return [];
-  const keys: string[] = [];
-  const seen = new Set<string>();
-  for (const row of weak.candidates) {
-    const key = row?.key;
-    if (!key || seen.has(key)) continue;
-    seen.add(key);
-    keys.push(key);
-  }
-  return keys;
-}
-
-export function configuredPrefixRecallKeys(query: AnalyzedQuery): string[] {
-  const weak = querySemanticFacts(query).configured.weakRecall;
-  if (!weak) return [];
-  const keys: string[] = [];
-  const seen = new Set<string>();
-  for (const row of weak.candidates) {
-    const key = row?.key;
-    if (!key || seen.has(key)) continue;
-    seen.add(key);
-    keys.push(key);
-  }
-  return keys;
-}
-
 function documentHasConfiguredKey(doc: IndexedDocument, key: string, titleOnly: boolean) {
   if (doc.titleTokenSet.has(key) || doc.titleLemmaSet.has(key)) return true;
   if (titleOnly) return false;
@@ -401,18 +367,12 @@ export function documentMatchesConfiguredPrefixKey(query: AnalyzedQuery, doc: In
   return weak.candidates.some((row) => row.key && documentHasConfiguredKey(doc, row.key, true));
 }
 
+/**
+ * Occupancy and configured-content identity stay distinct named domain
+ * questions. Ranking-evidence union is `querySemanticFacts().configured.hasRankingIdentity`.
+ */
 export function hasConfiguredContentIdentity(query: AnalyzedQuery) {
   return Boolean(querySemanticFacts(query).configured.contentIdentityKey);
-}
-
-/**
- * Ranking may evaluate the configured concept and its authored peer forms.
- * Occupancy and configured-content identity stay distinct query facts; this is
- * their ranking-evidence union only. It does not set occupancy, rewrite
- * tokens, or mint configured aliases as typed phrases.
- */
-export function hasConfiguredRankingIntent(query: AnalyzedQuery) {
-  return hasConfiguredSequenceIntent(query) || hasConfiguredContentIdentity(query);
 }
 
 export function isStructuralWrapperTermConcept(concept: QueryConcept | null | undefined) {
@@ -514,7 +474,7 @@ export function coverageConcepts(query: AnalyzedQuery, concepts: QueryConcept[])
  */
 export function rankingCoverageConcepts(query: AnalyzedQuery, concepts: QueryConcept[]) {
   const usable = coverageConcepts(query, concepts);
-  if (!hasConfiguredRankingIntent(query)) return usable;
+  if (!querySemanticFacts(query).configured.hasRankingIdentity) return usable;
   return usable.filter((c) => !isStructuralWrapperTermConcept(c));
 }
 

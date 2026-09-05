@@ -19,6 +19,12 @@ export type QuerySemanticFacts = {
   configured: {
     occupiedKey: string | null;
     contentIdentityKey: string | null;
+    /**
+     * Occupancy or configured-content identity. Ranking may evaluate the
+     * configured concept and authored peer forms. Occupancy and identity stay
+     * distinct keys; this is their ranking-evidence union only.
+     */
+    hasRankingIdentity: boolean;
     weakRecall: WeakConfiguredRecall | null;
   };
   completion: {
@@ -36,6 +42,7 @@ const EMPTY_FACTS: QuerySemanticFacts = {
   configured: {
     occupiedKey: null,
     contentIdentityKey: null,
+    hasRankingIdentity: false,
     weakRecall: null,
   },
   completion: {
@@ -76,10 +83,13 @@ function weakConfiguredRecallOf(query: AnalyzedQuery): WeakConfiguredRecall | nu
 
 function projectQuerySemanticFacts(query: AnalyzedQuery): QuerySemanticFacts {
   const prefix = query.prefixCompletion;
+  const occupiedKey = occupiedKeyOf(query);
+  const contentIdentityKey = contentIdentityKeyOf(query);
   return {
     configured: {
-      occupiedKey: occupiedKeyOf(query),
-      contentIdentityKey: contentIdentityKeyOf(query),
+      occupiedKey,
+      contentIdentityKey,
+      hasRankingIdentity: Boolean(occupiedKey || contentIdentityKey),
       weakRecall: weakConfiguredRecallOf(query),
     },
     completion: {

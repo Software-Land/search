@@ -1,7 +1,7 @@
 import { sequenceKey } from "./configuredAuthoring.js";
 import { isNearCompletePrefix, levenshteinAtMost, DEFAULT_STOP, allowPrefixMatch } from "./text.js";
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "./versionForms.js";
-import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, hasConfiguredRankingIntent, hasConfiguredContentIdentity, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall, topicalRecallHint, topicalFormEvidence, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts, rankingCoverageConcepts, formContentTokens, sequenceCount, shortTitleTokenPrefixStub, configuredConceptFieldMatch } from "./retrieve.js";
+import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, hasConfiguredContentIdentity, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall, topicalRecallHint, topicalFormEvidence, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts, rankingCoverageConcepts, formContentTokens, sequenceCount, shortTitleTokenPrefixStub, configuredConceptFieldMatch } from "./retrieve.js";
 import { queryPhraseGeometry, queryPhraseGeometryFromGraph } from "./queryPlan.js";
 import { querySemanticFacts } from "./querySemantics.js";
 import { scoreFeatures } from "./rank.js";
@@ -24,6 +24,7 @@ import {
   STRONG_WITH_FULL_COVERAGE_TITLE_PREFIX_QUALITY,
   REPEATED_BODY_PHRASE_MIN,
 } from "./evidencePolicy.js";
+import { DEFAULT_FEATURE_VALUES } from "./featureDefaults.js";
 import type {
   AnalyzedQuery,
   ContextualTitlePrefix,
@@ -227,7 +228,11 @@ function exactTitle(query: AnalyzedQuery, doc: IndexedDocument) {
   }
   // Identity is not occupancy. Literal original-surface title equality stays
   // available; ranking may additionally accept an authored peer-form title.
-  if (hasConfiguredRankingIntent(query) && prep.peerFormJoins.length && prep.peerFormJoins.includes(doc.normalizedTitle)) {
+  if (
+    querySemanticFacts(query).configured.hasRankingIdentity &&
+    prep.peerFormJoins.length &&
+    prep.peerFormJoins.includes(doc.normalizedTitle)
+  ) {
     return true;
   }
   const q = prep.joinedNorm;
@@ -990,14 +995,15 @@ function compiledPhraseLookup(query: AnalyzedQuery, doc: IndexedDocument) {
 
 function contextualFeatureFields(contextual: ContextualTitlePrefix | null) {
   if (!contextual) {
+    const d = DEFAULT_FEATURE_VALUES;
     return {
-      contextualTitlePrefix: false,
-      matchedPrefixTokens: [],
-      activeFinalPrefix: null,
-      completedTitleToken: null,
-      unmatchedTitleTokensAfter: 0,
-      titleSequenceTightness: 0,
-      contextualPrefixQuality: 0,
+      contextualTitlePrefix: d.contextualTitlePrefix,
+      matchedPrefixTokens: [] as string[],
+      activeFinalPrefix: d.activeFinalPrefix,
+      completedTitleToken: d.completedTitleToken,
+      unmatchedTitleTokensAfter: d.unmatchedTitleTokensAfter,
+      titleSequenceTightness: d.titleSequenceTightness,
+      contextualPrefixQuality: d.contextualPrefixQuality,
     };
   }
   return {
@@ -1223,14 +1229,15 @@ function finishFeatures(
   fields: ReturnType<typeof computeFeatureFields>,
   retrievalSources?: string[]
 ): FeatureVector {
+  const d = DEFAULT_FEATURE_VALUES;
   const base: FeatureVector = {
     ...fields,
-    relationshipStrength: relationship?.strength || 0,
-    relationshipType: relationship?.type ?? null,
-    relationshipSourceId: relationship?.sourceId ?? null,
-    retrievalScore: retrievalScore || 0,
-    relevanceKind: "direct",
-    directClass: "none",
+    relationshipStrength: relationship?.strength || d.relationshipStrength,
+    relationshipType: relationship?.type ?? d.relationshipType,
+    relationshipSourceId: relationship?.sourceId ?? d.relationshipSourceId,
+    retrievalScore: retrievalScore || d.retrievalScore,
+    relevanceKind: d.relevanceKind,
+    directClass: d.directClass,
   };
   base.directClass = classifyDirect(base);
   // Configured-prefix recall is independent query-to-document evidence with

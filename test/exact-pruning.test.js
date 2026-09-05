@@ -228,6 +228,49 @@ describe("Stage-2A exact document-feature block pruning", () => {
     expect(extractFeatures(searchQuery, typoHit.document).typoDistance).toBeGreaterThan(0);
   });
 
+  test("body-only single-token bound fails closed on vocabulary prefix or bound trailing completion", async () => {
+    const documents = [
+      {
+        id: "body-mesh",
+        title: "Unrelated Notes",
+        body: "mesh mesh",
+        lexicalFrequency: { mesh: 2 },
+      },
+    ];
+    const engine = await compiledEngine(documents);
+    const query = engine._prepareQuery("mesh");
+    const hit = engine.retriever
+      .retrieve(query, engine._index)
+      .find((row) => row.document.id === "body-mesh");
+    expect(hit.retrievalSources).toEqual(["body-lexical"]);
+    expect(exactBodyOnlySingleTokenBound(query, hit, hit.documentOrdinal)).not.toBeNull();
+
+    const withPrefix = {
+      ...query,
+      prefixCompletion: {
+        activePrefix: "mes",
+        completedToken: "mesh",
+        canonicalToken: "mesh",
+        completedTokens: ["mesh"],
+        canonicalTokens: ["mesh"],
+        source: "final-token-prefix",
+        ambiguous: false,
+      },
+    };
+    expect(exactBodyOnlySingleTokenBound(withPrefix, hit, hit.documentOrdinal)).toBeNull();
+
+    const withBound = {
+      ...query,
+      contextualCompletion: {
+        activePrefix: "mes",
+        completedToken: "mesh",
+        canonicalToken: "mesh",
+        source: "configured-form-prefix",
+      },
+    };
+    expect(exactBodyOnlySingleTokenBound(withBound, hit, hit.documentOrdinal)).toBeNull();
+  });
+
   test("all Software.Land queries satisfy every admitted signature/score bound", async () => {
     const documents = attachLexicalFrequency(
       load("documents.json"),

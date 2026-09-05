@@ -24,8 +24,8 @@ import {
   type RankingEvidencePlan,
 } from "./rankingEvidencePlan.js";
 import { DEFAULT_STOP } from "./text.js";
+import { createReusableFeatureScalar } from "./featureDefaults.js";
 import type {
-  DirectClass,
   FeatureVector,
   QueryConcept,
   SearchIndex,
@@ -226,60 +226,6 @@ function emptyCounters(plan: RankingEvidencePlan): RankingEvidenceCounters {
   };
 }
 
-function createReusableScalar(): FeatureVector {
-  return {
-    exactTitleMatch: false,
-    exactTitleTokenMatch: false,
-    typedSurfaceTitleMatch: false,
-    titleCoverage: 0,
-    queryCoverage: 0,
-    titlePrefixQuality: 0,
-    contextualTitlePrefix: false,
-    matchedPrefixTokens: [],
-    activeFinalPrefix: null,
-    completedTitleToken: null,
-    unmatchedTitleTokensAfter: 0,
-    titleSequenceTightness: 0,
-    contextualPrefixQuality: 0,
-    configuredConceptMatch: false,
-    configuredConceptFieldEvidence: {
-      title: false,
-      summary: false,
-      body: false,
-    },
-    morphologyMatch: false,
-    typoDistance: 0,
-    versionMatch: false,
-    shortLiteralLeadMatch: false,
-    dottedSpanComponentTitleMatch: false,
-    phraseAdjacency: 0,
-    bodyLexicalMatch: 0,
-    lexicalConceptCoverage: 0,
-    coverageConceptCount: 0,
-    ordinaryEquivalenceBodyMatch: false,
-    titleTokenCount: 0,
-    configuredFormEvidence: 0,
-    configuredFormCoverage: 0,
-    configuredFormBodyMatch: false,
-    canonicalKeyTitle: false,
-    queryTokenCount: 0,
-    normalizedQueryPhrase: "",
-    matchingPhraseKey: null,
-    bodyPhraseCount: 0,
-    bodyPhraseFrequency: 0,
-    titlePhraseFrequency: 0,
-    summaryPhraseFrequency: 0,
-    exactTitleOrSummaryPhrase: false,
-    relationshipStrength: 0,
-    relationshipType: null,
-    relationshipSourceId: null,
-    retrievalScore: 0,
-    configuredPrefixRecallScore: 0,
-    relevanceKind: "direct",
-    directClass: "none",
-  };
-}
-
 export class RankingEvidenceSession {
   readonly static: RankingEvidenceStatic;
   readonly stampByOrdinal: Uint32Array;
@@ -356,7 +302,7 @@ export class RankingEvidenceSession {
     this.static = state;
     this.stampByOrdinal = new Uint32Array(state.documentCount);
     this.slotByOrdinal = new Uint32Array(state.documentCount);
-    this.scalar = createReusableScalar();
+    this.scalar = createReusableFeatureScalar();
     this.counters = {
       actionTerms: 0,
       actions: 0,
@@ -762,13 +708,6 @@ export class RankingEvidenceSession {
       throw new Error("ranking evidence finalization version exhausted");
     }
     this.finalizedCount = candidateCount;
-  }
-
-  directClassCode(value: DirectClass) {
-    if (value === "strong") return 3;
-    if (value === "moderate") return 2;
-    if (value === "weak") return 1;
-    return 0;
   }
 
   memory(): RankingEvidenceMemory {

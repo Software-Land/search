@@ -7,8 +7,17 @@
  */
 import { compactOrdinal } from "./compactDocuments.js";
 import { queryHasTypedConfiguredGraph } from "./configuredFormGraph.js";
+import { resetReusableFeatureScalar, DEFAULT_FEATURE_VALUES } from "./featureDefaults.js";
 import { classifyDirect } from "./features.js";
 import { scoreFeatures } from "./rank.js";
+import {
+  decodeConfiguredConceptMatch,
+  decodeDirectClass,
+  encodeConfiguredConceptMatch,
+  encodeDirectClass,
+  packConfiguredFieldEvidence,
+  unpackConfiguredFieldEvidence,
+} from "./rankingEvidenceCodec.js";
 import {
   type RankingEvidencePlan,
   type RankingEvidenceSequencePlan,
@@ -34,7 +43,6 @@ import {
 import { saturatingFrequency } from "./saturatingFrequency.js";
 import { DEFAULT_STOP } from "./text.js";
 import type {
-  DirectClass,
   FeatureVector,
   RetrievalHit,
 } from "./types.js";
@@ -42,7 +50,6 @@ import type { PhraseField } from "./positionalIndex.js";
 import type { QueryPlan } from "./queryPlan.js";
 
 const TWO_THIRDS = 2 / 3;
-const EMPTY_MATCHED_PREFIX_TOKENS: string[] = [];
 
 function popcount32(value: number) {
   let v = value >>> 0;
@@ -353,41 +360,6 @@ function contextualChoice(session: RankingEvidenceSession, ordinal: number) {
   return 0;
 }
 
-function configuredClassCode(value: FeatureVector["configuredConceptMatch"]) {
-  if (value === "key-in-title") return 2;
-  if (value === "form") return 1;
-  return 0;
-}
-
-function evidenceCode(value: false | "key" | "form") {
-  if (value === "key") return 2;
-  if (value === "form") return 1;
-  return 0;
-}
-
-function packFieldEvidence(
-  evidence: FeatureVector["configuredConceptFieldEvidence"]
-) {
-  return (
-    evidenceCode(evidence.title) |
-    (evidenceCode(evidence.summary) << 2) |
-    (evidenceCode(evidence.body) << 4)
-  );
-}
-
-function fieldEvidenceFromCode(code: number): false | "key" | "form" {
-  if (code === 2) return "key";
-  if (code === 1) return "form";
-  return false;
-}
-
-function directClassFromCode(code: number): DirectClass {
-  if (code === 3) return "strong";
-  if (code === 2) return "moderate";
-  if (code === 1) return "weak";
-  return "none";
-}
-
 function configuredFields(
   session: RankingEvidenceSession,
   slot: number,
@@ -584,59 +556,6 @@ function writeCompiledPhrase(
   return matching;
 }
 
-function resetScalarForCandidate(session: RankingEvidenceSession) {
-  const scalar = session.scalar;
-  scalar.exactTitleMatch = false;
-  scalar.exactTitleTokenMatch = false;
-  scalar.typedSurfaceTitleMatch = false;
-  scalar.titleCoverage = 0;
-  scalar.queryCoverage = 0;
-  scalar.titlePrefixQuality = 0;
-  scalar.contextualTitlePrefix = false;
-  scalar.matchedPrefixTokens = EMPTY_MATCHED_PREFIX_TOKENS;
-  scalar.activeFinalPrefix = null;
-  scalar.completedTitleToken = null;
-  scalar.unmatchedTitleTokensAfter = 0;
-  scalar.titleSequenceTightness = 0;
-  scalar.contextualPrefixQuality = 0;
-  scalar.configuredConceptMatch = false;
-  scalar.configuredConceptFieldEvidence.title = false;
-  scalar.configuredConceptFieldEvidence.summary = false;
-  scalar.configuredConceptFieldEvidence.body = false;
-  scalar.morphologyMatch = false;
-  scalar.typoDistance = 0;
-  scalar.versionMatch = false;
-  scalar.shortLiteralLeadMatch = false;
-  scalar.dottedSpanComponentTitleMatch = false;
-  scalar.phraseAdjacency = 0;
-  scalar.bodyLexicalMatch = 0;
-  scalar.lexicalConceptCoverage = 0;
-  scalar.coverageConceptCount = 0;
-  scalar.ordinaryEquivalenceBodyMatch = false;
-  scalar.titleTokenCount = 0;
-  scalar.configuredFormEvidence = 0;
-  scalar.configuredFormCoverage = 0;
-  scalar.configuredFormBodyMatch = false;
-  scalar.canonicalKeyTitle = false;
-  scalar.queryTokenCount = 0;
-  scalar.normalizedQueryPhrase = "";
-  scalar.matchingPhraseKey = null;
-  scalar.bodyPhraseCount = 0;
-  scalar.bodyPhraseFrequency = 0;
-  scalar.titlePhraseFrequency = 0;
-  scalar.summaryPhraseFrequency = 0;
-  scalar.exactTitleOrSummaryPhrase = false;
-  scalar.relationshipStrength = 0;
-  scalar.relationshipType = null;
-  scalar.relationshipSourceId = null;
-  // PROD-1 is the exact zero-retrieval-weight evidence path.
-  scalar.retrievalScore = 0;
-  scalar.relevanceKind = "direct";
-  scalar.directClass = "none";
-  scalar.configuredPrefixRecallScore = 0;
-  return scalar;
-}
-
 function encodeFinal(
   session: RankingEvidenceSession,
   candidate: number,
@@ -681,13 +600,13 @@ function encodeFinal(
   session.finalUnmatchedTitleTokensAfter[candidate] =
     scalar.unmatchedTitleTokensAfter;
   session.finalTypoDistance[candidate] = scalar.typoDistance;
-  session.finalConfiguredClass[candidate] = configuredClassCode(
+  session.finalConfiguredClass[candidate] = encodeConfiguredConceptMatch(
     scalar.configuredConceptMatch
   );
-  session.finalFieldEvidence[candidate] = packFieldEvidence(
+  session.finalFieldEvidence[candidate] = packConfiguredFieldEvidence(
     scalar.configuredConceptFieldEvidence
   );
-  session.finalDirectClass[candidate] = session.directClassCode(scalar.directClass);
+  session.finalDirectClass[candidate] = encodeDirectClass(scalar.directClass);
   session.finalContextualChoice[candidate] = contextualCode;
   session.finalMatchingPhrase[candidate] = matchingPhraseCode;
 }
@@ -705,7 +624,7 @@ function finalizeCandidate(
   const plan = session.plan as RankingEvidencePlan;
   const slot = session.existingSlot(ordinal);
   if (slot < 0) throw new Error(`ranking evidence missing candidate ordinal ${ordinal}`);
-  const scalar = resetScalarForCandidate(session);
+  const scalar = resetReusableFeatureScalar(session.scalar);
   const titleTokenCount = session.static.nonStopTitleLength[ordinal];
   const evidenceFlags = session.evidenceFlags[slot];
 
@@ -1034,19 +953,11 @@ export function readRankingEvidenceFactsForTest(
       session.finalTitleSequenceTightness[candidate],
     contextualPrefixQuality:
       session.finalContextualPrefixQuality[candidate],
-    configuredConceptMatch:
-      configuredClass === 2
-        ? "key-in-title"
-        : configuredClass === 1
-          ? "form"
-          : false,
-    configuredConceptFieldEvidence: {
-      title: fieldEvidenceFromCode(fieldEvidence & 3),
-      summary: fieldEvidenceFromCode((fieldEvidence >> 2) & 3),
-      body: fieldEvidenceFromCode((fieldEvidence >> 4) & 3),
-    },
+    configuredConceptMatch: decodeConfiguredConceptMatch(configuredClass),
+    configuredConceptFieldEvidence: unpackConfiguredFieldEvidence(fieldEvidence),
     morphologyMatch: Boolean(flags & RANKING_FINAL_MORPHOLOGY),
     typoDistance: session.finalTypoDistance[candidate],
+    // Packed eligibility rejects these classes; empty is not a DEFAULT lookup.
     versionMatch: false,
     shortLiteralLeadMatch: false,
     dottedSpanComponentTitleMatch: false,
@@ -1079,12 +990,12 @@ export function readRankingEvidenceFactsForTest(
     exactTitleOrSummaryPhrase: Boolean(
       flags & RANKING_FINAL_EXACT_TITLE_OR_SUMMARY_PHRASE
     ),
-    relationshipStrength: 0,
-    relationshipType: null,
-    relationshipSourceId: null,
+    relationshipStrength: DEFAULT_FEATURE_VALUES.relationshipStrength,
+    relationshipType: DEFAULT_FEATURE_VALUES.relationshipType,
+    relationshipSourceId: DEFAULT_FEATURE_VALUES.relationshipSourceId,
     retrievalScore: session.finalRetrievalScore[candidate],
-    relevanceKind: "direct",
-    directClass: directClassFromCode(session.finalDirectClass[candidate]),
+    relevanceKind: DEFAULT_FEATURE_VALUES.relevanceKind,
+    directClass: decodeDirectClass(session.finalDirectClass[candidate]),
   };
   return {
     ordinal: session.finalOrdinals[candidate],

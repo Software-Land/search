@@ -132,9 +132,24 @@ export type RankingEvidencePlan = {
   readonly actionBytes: number;
 };
 
+export type RankingEvidenceEligibilityReason =
+  | "compact-index-required"
+  | "standalone-recall"
+  | "topical-recall"
+  | "equivalent-recall"
+  | "configured-prefix-recall"
+  | "version-number-dotted"
+  | "bound-contextual-completion"
+  | "concept-count"
+  | "multiple-configured-concepts"
+  | "ordinary-phrase-concept"
+  | "short-literal"
+  | "token-shape"
+  | "configured-form-shape";
+
 export type RankingEvidencePlanResult =
   | { eligible: true; reason: null; plan: RankingEvidencePlan }
-  | { eligible: false; reason: string; plan: null };
+  | { eligible: false; reason: RankingEvidenceEligibilityReason | "ineligible"; plan: null };
 
 type MutableAction = {
   field: RankingEvidenceFieldCode;
@@ -391,7 +406,7 @@ function exactTitleNorms(query: AnalyzedQuery, facts: RankingQueryFacts) {
     return out;
   }
   if (facts.joinedNorm) out.add(facts.joinedNorm);
-  if (semantics.configured.occupiedKey || semantics.configured.contentIdentityKey) {
+  if (semantics.configured.hasRankingIdentity) {
     for (const join of facts.peerFormJoins) if (join) out.add(join);
   }
   return out;
@@ -758,7 +773,7 @@ function semanticActions(
 export function rankingEvidenceEligibilityReason(
   query: AnalyzedQuery,
   state: RankingEvidenceStatic | null
-): string | null {
+): RankingEvidenceEligibilityReason | null {
   if (!state) return "compact-index-required";
   const semantics = querySemanticFacts(query);
   if (semantics.relatedRecall.standalone) return "standalone-recall";
@@ -820,6 +835,8 @@ export function compileRankingEvidencePlan(
   query: AnalyzedQuery
 ): RankingEvidencePlanResult {
   const reason = rankingEvidenceEligibilityReason(query, state);
+  // `ineligible` is only a compile-time fallback. Live `!state` already returns
+  // `compact-index-required` from rankingEvidenceEligibilityReason.
   if (reason || !state) return { eligible: false, reason: reason || "ineligible", plan: null };
 
   const feature = rankingQueryFacts(query);
