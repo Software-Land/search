@@ -9,7 +9,27 @@ search-semantic        tools/search-semantic    optional Python relatedness buil
 search-relationships   tools/search-relationships
 ```
 
-Distribution: **one npm package** (`@software-land/search`) with subpath exports `.`, `./browser`, `./corpus`, `./relationships`, `./semantic`, and `./lexical`. Runtime and browser execute from emitted `dist/` JavaScript; root and browser public types are generated into `dist/*.d.ts`. Corpus, relationships, lexical, and Python semantic tooling remain source-shipped under `tools/`. Search Core and the browser Worker do not import `./semantic`, `./corpus`, `./relationships`, or `./lexical`. Application-owned model generation may supply externally generated configured-concept rows; the corpus compiler consumes them. The package does not own model execution.
+Search Core source layout:
+
+```text
+src/
+  index.ts  api.ts  SearchEngine.ts  config.ts  morphology.ts
+  types.d.ts  ambient-core.d.ts
+  cancel.ts  errors.ts  artifacts.ts  evidencePolicy.ts
+  documentId.ts  saturatingFrequency.ts  stableHash.ts
+  text/            tokenize / lexical normalize / version forms / english
+  query/           analyze, query semantics, configured sequence, query plan
+  indexing/        documents, compact store, lexical index, positional index
+  retrieval/       retrieve, retrievers, positional queries, Stage 3A
+  features/        FeatureVector extraction and empty-feature defaults
+  ranking/         constraint ranker; evidence/ is packed ranking evidence
+  execution/       session capability facts, complete-interpretation collector
+  results/         explanation and public result assembly
+  relationships/   runtime graph, authored map, configured-concept compiler
+  browser/         Worker + latest-wins
+```
+
+Distribution: **one npm package** (`@software-land/search`) with subpath exports `.`, `./browser`, `./corpus`, `./relationships`, `./semantic`, and `./lexical`. Runtime and browser execute from emitted `dist/` JavaScript; root and browser public types are generated into `dist/*.d.ts`. Internal `dist/` module paths are not a public API; they follow the `src/` tree and may move. Corpus, relationships, lexical, and Python semantic tooling remain source-shipped under `tools/`. Search Core and the browser Worker do not import `./semantic`, `./corpus`, `./relationships`, or `./lexical`. Application-owned model generation may supply externally generated configured-concept rows; the corpus compiler consumes them. The package does not own model execution.
 
 Application relevance authoring is two primitives plus a separate generated graph. See [concepts.md](concepts.md):
 
