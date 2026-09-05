@@ -1,12 +1,12 @@
 # Scaling
 
-This page describes **current package behavior** in 0.6.5, then historical shipped measurements, then unshipped research. Absolute milliseconds are machine-specific and are **not an SLA**.
+This page describes **current package behavior**, then historical shipped measurements, then unshipped research. Absolute milliseconds are machine-specific and are **not an SLA**.
 
-## Current production capability — 0.6.5
+## Current production capability
 
-`@software-land/search` 0.6.5 is exact in-memory indexed search. Eligible ordinary `SearchEngine.search()` / `searchAsync()` fuse exact ranking evidence into compiled retrieval, finalize it into packed numeric columns, and run the existing builtin selection / constraint ranking / default hybrid relationship path. Public results, ranking semantics, artifact format, and Worker protocol are unchanged.
+`@software-land/search` is exact in-memory indexed search. The fused ranking-evidence path shipped in 0.6.5. Eligible ordinary `SearchEngine.search()` / `searchAsync()` fuse exact ranking evidence into compiled retrieval, finalize it into packed numeric columns, and run the existing builtin selection / constraint ranking / default hybrid relationship path. Public results, ranking semantics, artifact format, and Worker protocol are unchanged.
 
-Direct candidate-wide `FeatureVector` construction is eliminated on that eligible ordinary path. Default hybrid uses the optimized path. Unsupported shapes fail closed to the previous exact FeatureVector execution. That fallback is success: same public results, not a quality degradation.
+Direct candidate-wide `FeatureVector` construction is eliminated on that eligible ordinary path. Default hybrid uses the optimized path. Unsupported shapes fail closed to the exact FeatureVector execution path. That fallback is success: same public results, not a quality degradation.
 
 `searchDetailed()`, `explain: true`, exhaustive diagnostics, and complete-interpretation collection may still use the FeatureVector path.
 
@@ -124,7 +124,7 @@ analyze → query plan
   → public results
 ```
 
-Legacy / fallback path (`searchDetailed()`, explain, exhaustive diagnostics, unsupported shapes, custom retrievers):
+Diagnostic / fallback path (`searchDetailed()`, explain, exhaustive diagnostics, unsupported shapes, custom retrievers):
 
 ```text
 retrieve

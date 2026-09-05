@@ -36,7 +36,7 @@ Experimental / internal: custom Retriever objects, `retrievalScore` ranking weig
 
 Query-semantic / vector retrieval is not implemented. If it is added, union semantic `RetrievalHit`s after lexical candidate retrieval and before ranking-feature materialization, embed the **raw query string** (optionally repaired typed surfaces), and never embed analyzed `query.tokens`, `normalized`, post-prefix `lemma`, `completedToken`, or `concepts.forms`. See [retrievers.md](retrievers.md).
 
-## Query execution (0.6.5)
+## Query execution
 
 Public ranking semantics are unchanged. FeatureVector is no longer the mandatory internal representation for every direct candidate.
 
@@ -51,7 +51,7 @@ analyze / query plan
   → public results
 ```
 
-Legacy / fallback (`searchDetailed()`, `explain: true`, exhaustive diagnostics, complete-interpretation, custom retrievers, unsupported query shapes):
+Diagnostic / fallback (`searchDetailed()`, `explain: true`, exhaustive diagnostics, complete-interpretation, custom retrievers, unsupported query shapes):
 
 ```text
 retrieve
@@ -61,6 +61,14 @@ retrieve
   → public results
 ```
 
-Fallback is exact, not a quality degradation. There is no public optimization toggle. Stage 3A retrieval pruning and 0.6.5 ranking-evidence fusion are separate layers; see [exact-pruning.md](exact-pruning.md) and [scaling.md](scaling.md).
+Fallback is exact, not a quality degradation. There is no public optimization toggle. Stage 3A retrieval pruning and ranking-evidence fusion (shipped in 0.6.5) are separate layers; see [exact-pruning.md](exact-pruning.md) and [scaling.md](scaling.md).
 
 Indexed search has been validated through about 100k documents on mixed and VPN-like workloads; roughly 50k–100k is the currently demonstrated practical range, not a correctness limit. Exact retrieval quality does not degrade with N, but query latency can still increase with competitive/conjunction cardinality, prefix expansion, posting work, artifact size, and browser memory. Stage 3A skips unread noncompetitive 1-of-k body postings on the supported exact multi-token path; remaining conjunction work is not flat with N. Stage 2C keeps compiled query state in packed token/offset views. Million-document ordinary search under 50 ms is not current capability. See [compact-runtime.md](compact-runtime.md) and [scaling.md](scaling.md).
+
+## Internal ownership
+
+Downstream presence/identity questions consume a canonical query-semantic fact projection. Analyzer payloads such as spans, completion, recall pairs/forms, phrase keys, and diagnostic representation remain on the analyzed query.
+
+Session/capability facts are projected separately from eligibility policy. Stage 3A, Stage 2A feature-block pruning, packed ranking-evidence eligibility, packed-search fallback, and complete-interpretation remain independent policies.
+
+`SearchEngine` prepares the query, chooses packed or FeatureVector execution, retrieves/evaluates, ranks/selects, expands relationships, and captures timings. Packed and FeatureVector evaluators remain distinct. Shared empty/default semantics and packed encodings are not a second ranking model.
