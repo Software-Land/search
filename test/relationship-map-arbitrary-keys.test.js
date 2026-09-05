@@ -9,7 +9,7 @@ import { InvalidConfigurationError } from "../dist/index.js";
 import { compileRelationshipMap } from "../dist/relationships/relationshipMap.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const DIST = path.join(ROOT, "..", "dist", "relationshipMap.js");
+const DIST = path.join(ROOT, "..", "dist", "relationships", "relationshipMap.js");
 
 function mapFromJson(obj) {
   return JSON.parse(JSON.stringify(obj));

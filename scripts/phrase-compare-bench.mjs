@@ -72,8 +72,8 @@ function quantiles(values) {
 async function loadDist() {
   const href = (name) => pathToFileURL(path.join(distDir, name)).href;
   const root = await import(href("index.js"));
-  const lexical = await import(href("lexicalIndex.js"));
-  const dictMod = await import(href("configuredConcepts.js"));
+  const lexical = await import(href("indexing/lexicalIndex.js"));
+  const dictMod = await import(href("relationships/configuredConcepts.js"));
   return {
     SearchEngine: root.SearchEngine,
     morphology: root.morphology,

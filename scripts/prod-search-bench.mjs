@@ -103,8 +103,8 @@ async function loadPackage(root) {
   const require = createRequire(path.join(root, "package.json"));
   const pkg = require("./package.json");
   const indexUrl = pathToFileURL(path.join(root, "dist", "index.js")).href;
-  const conceptsUrl = pathToFileURL(path.join(root, "dist", "configuredConcepts.js")).href;
-  const lexicalUrl = pathToFileURL(path.join(root, "dist", "lexicalIndex.js")).href;
+  const conceptsUrl = pathToFileURL(path.join(root, "dist", "relationships", "configuredConcepts.js")).href;
+  const lexicalUrl = pathToFileURL(path.join(root, "dist", "indexing", "lexicalIndex.js")).href;
   const [{ SearchEngine, morphology }, { compileConfiguredConceptPlugin }, { compileLexicalIndex }] =
     await Promise.all([import(indexUrl), import(conceptsUrl), import(lexicalUrl)]);
   return { root, version: pkg.version, SearchEngine, morphology, compileConfiguredConceptPlugin, compileLexicalIndex };
