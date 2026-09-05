@@ -75,57 +75,60 @@ export const DEFAULT_FEATURE_VALUES = {
  * Restore reusable packed scalar state to canonical empty semantics.
  * Mutates the existing nested field-evidence object so held references stay
  * valid. Replaces matchedPrefixTokens with the shared empty array.
+ *
+ * Keep immediate literals here: this runs once per packed candidate and
+ * table-property reads caused a measurable constant-factor regression.
+ * Tests keep these literals aligned with DEFAULT_FEATURE_VALUES.
  */
 export function resetReusableFeatureScalar(scalar: FeatureVector): FeatureVector {
-  const d = DEFAULT_FEATURE_VALUES;
-  scalar.exactTitleMatch = d.exactTitleMatch;
-  scalar.exactTitleTokenMatch = d.exactTitleTokenMatch;
-  scalar.typedSurfaceTitleMatch = d.typedSurfaceTitleMatch;
-  scalar.titleCoverage = d.titleCoverage;
-  scalar.queryCoverage = d.queryCoverage;
-  scalar.titlePrefixQuality = d.titlePrefixQuality;
-  scalar.contextualTitlePrefix = d.contextualTitlePrefix;
+  scalar.exactTitleMatch = false;
+  scalar.exactTitleTokenMatch = false;
+  scalar.typedSurfaceTitleMatch = false;
+  scalar.titleCoverage = 0;
+  scalar.queryCoverage = 0;
+  scalar.titlePrefixQuality = 0;
+  scalar.contextualTitlePrefix = false;
   scalar.matchedPrefixTokens = EMPTY_MATCHED_PREFIX_TOKENS;
-  scalar.activeFinalPrefix = d.activeFinalPrefix;
-  scalar.completedTitleToken = d.completedTitleToken;
-  scalar.unmatchedTitleTokensAfter = d.unmatchedTitleTokensAfter;
-  scalar.titleSequenceTightness = d.titleSequenceTightness;
-  scalar.contextualPrefixQuality = d.contextualPrefixQuality;
-  scalar.configuredConceptMatch = d.configuredConceptMatch;
+  scalar.activeFinalPrefix = null;
+  scalar.completedTitleToken = null;
+  scalar.unmatchedTitleTokensAfter = 0;
+  scalar.titleSequenceTightness = 0;
+  scalar.contextualPrefixQuality = 0;
+  scalar.configuredConceptMatch = false;
   const evidence = scalar.configuredConceptFieldEvidence;
-  evidence.title = DEFAULT_CONFIGURED_FIELD_EVIDENCE.title;
-  evidence.summary = DEFAULT_CONFIGURED_FIELD_EVIDENCE.summary;
-  evidence.body = DEFAULT_CONFIGURED_FIELD_EVIDENCE.body;
-  scalar.morphologyMatch = d.morphologyMatch;
-  scalar.typoDistance = d.typoDistance;
-  scalar.versionMatch = d.versionMatch;
-  scalar.shortLiteralLeadMatch = d.shortLiteralLeadMatch;
-  scalar.dottedSpanComponentTitleMatch = d.dottedSpanComponentTitleMatch;
-  scalar.phraseAdjacency = d.phraseAdjacency;
-  scalar.bodyLexicalMatch = d.bodyLexicalMatch;
-  scalar.lexicalConceptCoverage = d.lexicalConceptCoverage;
-  scalar.coverageConceptCount = d.coverageConceptCount;
-  scalar.ordinaryEquivalenceBodyMatch = d.ordinaryEquivalenceBodyMatch;
-  scalar.titleTokenCount = d.titleTokenCount;
-  scalar.configuredFormEvidence = d.configuredFormEvidence;
-  scalar.configuredFormCoverage = d.configuredFormCoverage;
-  scalar.configuredFormBodyMatch = d.configuredFormBodyMatch;
-  scalar.canonicalKeyTitle = d.canonicalKeyTitle;
-  scalar.queryTokenCount = d.queryTokenCount;
-  scalar.normalizedQueryPhrase = d.normalizedQueryPhrase;
-  scalar.matchingPhraseKey = d.matchingPhraseKey;
-  scalar.bodyPhraseCount = d.bodyPhraseCount;
-  scalar.bodyPhraseFrequency = d.bodyPhraseFrequency;
-  scalar.titlePhraseFrequency = d.titlePhraseFrequency;
-  scalar.summaryPhraseFrequency = d.summaryPhraseFrequency;
-  scalar.exactTitleOrSummaryPhrase = d.exactTitleOrSummaryPhrase;
-  scalar.relationshipStrength = d.relationshipStrength;
-  scalar.relationshipType = d.relationshipType;
-  scalar.relationshipSourceId = d.relationshipSourceId;
-  scalar.retrievalScore = d.retrievalScore;
-  scalar.relevanceKind = d.relevanceKind;
-  scalar.directClass = d.directClass;
-  scalar.configuredPrefixRecallScore = d.configuredPrefixRecallScore;
+  evidence.title = false;
+  evidence.summary = false;
+  evidence.body = false;
+  scalar.morphologyMatch = false;
+  scalar.typoDistance = 0;
+  scalar.versionMatch = false;
+  scalar.shortLiteralLeadMatch = false;
+  scalar.dottedSpanComponentTitleMatch = false;
+  scalar.phraseAdjacency = 0;
+  scalar.bodyLexicalMatch = 0;
+  scalar.lexicalConceptCoverage = 0;
+  scalar.coverageConceptCount = 0;
+  scalar.ordinaryEquivalenceBodyMatch = false;
+  scalar.titleTokenCount = 0;
+  scalar.configuredFormEvidence = 0;
+  scalar.configuredFormCoverage = 0;
+  scalar.configuredFormBodyMatch = false;
+  scalar.canonicalKeyTitle = false;
+  scalar.queryTokenCount = 0;
+  scalar.normalizedQueryPhrase = "";
+  scalar.matchingPhraseKey = null;
+  scalar.bodyPhraseCount = 0;
+  scalar.bodyPhraseFrequency = 0;
+  scalar.titlePhraseFrequency = 0;
+  scalar.summaryPhraseFrequency = 0;
+  scalar.exactTitleOrSummaryPhrase = false;
+  scalar.relationshipStrength = 0;
+  scalar.relationshipType = null;
+  scalar.relationshipSourceId = null;
+  scalar.retrievalScore = 0;
+  scalar.relevanceKind = "direct";
+  scalar.directClass = "none";
+  scalar.configuredPrefixRecallScore = 0;
   return scalar;
 }
 
