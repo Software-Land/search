@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { compileCorpus, spellingLexiconPlugin } from "../tools/search-corpus/index.js";
 import { morphology, SearchEngine } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 
 import { fileURLToPath } from "node:url";

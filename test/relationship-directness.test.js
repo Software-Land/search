@@ -3,7 +3,7 @@
  * keep relevanceKind=direct when an edge is attached.
  */
 import { SearchEngine, morphology, ARTIFACT_FORMATS, ARTIFACT_VERSION } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 
 const schema = {
   title: { type: "text", role: "title" },

@@ -9,9 +9,9 @@ import {
   compileAuthoredRelevance,
   InvalidConfigurationError,
 } from "../dist/index.js";
-import { compileRelationshipMap } from "../dist/relationshipMap.js";
+import { compileRelationshipMap } from "../dist/relationships/relationshipMap.js";
 import { parseConfiguredConcepts } from "../tools/search-corpus/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { synonyms as synonymsPrimitive } from "../dist/query/synonyms.js";
 import { pluginByName } from "./helpers/authored.js";
 

@@ -6,8 +6,8 @@
 import { MSG } from "./protocol.js";
 import { isAbortError } from "../cancel.js";
 import { InvalidConfigurationError } from "../errors.js";
-import { compileAuthoredRelevance as defaultCompileAuthoredRelevance } from "../configuredConcepts.js";
-import { mergeRelationships } from "../relationshipMap.js";
+import { compileAuthoredRelevance as defaultCompileAuthoredRelevance } from "../relationships/configuredConcepts.js";
+import { mergeRelationships } from "../relationships/relationshipMap.js";
 import type { SearchEngine } from "../SearchEngine.js";
 import type { SearchEngineOptions, SearchOptions } from "../types.js";
 import type {

@@ -6,7 +6,7 @@
  */
 import { parseArgs } from "node:util";
 import { SearchEngine, morphology } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { startFeatureProfile, lastFeatureProfile, stopFeatureProfile } from "../dist/features/features.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";

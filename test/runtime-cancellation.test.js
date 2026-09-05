@@ -1,5 +1,5 @@
 import { morphology, SearchEngine, isAbortError } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { retrieveCandidates } from "../dist/retrieval/retrieve.js";
 import { rankCandidates } from "../dist/ranking/rank.js";

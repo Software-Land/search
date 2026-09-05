@@ -10,7 +10,7 @@
  */
 import { parseArgs } from "node:util";
 import { SearchEngine, morphology } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { compileLexicalIndex, loadLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { buildIndex } from "../dist/indexing/indexDocuments.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";

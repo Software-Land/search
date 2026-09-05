@@ -7,7 +7,7 @@
  */
 
 import { COMPLETE_INTERPRETATION_COLLECTOR } from "./completeInterpretationCollector.js";
-import type { SearchOptions, SourcePolicy } from "./types.js";
+import type { SearchOptions, SourcePolicy } from "../types.js";
 
 export type SearchSessionCapabilities = {
   exactDiagnostics: boolean;

@@ -3,7 +3,7 @@
  * searchDetailed/explain stay on the legacy FeatureVector path.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 
 const schema = {

@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { tokenize } from "../dist/text/text.js";
-import { COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/completeInterpretationCollector.js";
+import { COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/execution/completeInterpretationCollector.js";
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { loadSoftwareLandRelevanceInputs, loadSoftwareLandJson } from "../test/helpers/software-land-fixture.js";

@@ -11,12 +11,12 @@ import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 import { rankingEvidenceEligibilityReason } from "../dist/ranking/evidence/rankingEvidencePlan.js";
 import { rankingEvidenceStaticFor } from "../dist/ranking/evidence/rankingEvidenceState.js";
 import { packedSearchFallbackReason } from "../dist/ranking/evidence/rankingEvidenceSearch.js";
-import { searchSessionCapabilities } from "../dist/executionSession.js";
+import { searchSessionCapabilities } from "../dist/execution/executionSession.js";
 import { featureBlockPruningFallbackReason } from "../dist/ranking/exactPruning.js";
 import {
   collectCompleteInterpretations,
   COMPLETE_INTERPRETATION_COLLECTOR,
-} from "../dist/completeInterpretationCollector.js";
+} from "../dist/execution/completeInterpretationCollector.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const schema = {

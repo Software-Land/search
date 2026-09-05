@@ -3,7 +3,7 @@
  * mentions. One token of a multi-token form is not form evidence.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { extractFeatures } from "../dist/features/features.js";
 
 const schema = {

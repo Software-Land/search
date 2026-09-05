@@ -14,8 +14,8 @@ import { buildQueryPlan } from "./query/queryPlan.js";
 import {
   applyCompleteInterpretationCollector,
   COMPLETE_INTERPRETATION_COLLECTOR,
-} from "./completeInterpretationCollector.js";
-import { searchSessionCapabilities } from "./executionSession.js";
+} from "./execution/completeInterpretationCollector.js";
+import { searchSessionCapabilities } from "./execution/executionSession.js";
 import {
   exhaustiveFeaturePruningStats,
   featureBlockPruningFallbackReason,
@@ -32,7 +32,7 @@ import { RankingEvidenceSessionPool, rankingEvidenceStaticFor } from "./ranking/
 import { finalizeRankingEvidence } from "./ranking/evidence/rankingEvidenceFinalize.js";
 import { createPackedDirectHits, isPackedDirectFeatures } from "./ranking/evidence/rankingEvidencePacked.js";
 import { packedSearchFallbackReason } from "./ranking/evidence/rankingEvidenceSearch.js";
-import { assembleDetailedResult, withPackedSearchMeta } from "./resultAssembly.js";
+import { assembleDetailedResult, withPackedSearchMeta } from "./results/resultAssembly.js";
 import {
   hasRankingEvidenceRetrieverCapability,
   retrieveWithRankingEvidence,
@@ -40,13 +40,13 @@ import {
 } from "./retrieval/retrievers.js";
 import { constraintsForStrategy } from "./ranking/constraints.js";
 import { morphology } from "./morphology.js";
-import { compileConfiguredConceptPlugin } from "./configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "./relationships/configuredConcepts.js";
 import { bindMorphologyDerivedEquivalences } from "./query/synonyms.js";
 import {
   RelationshipGraph,
   applyRelationshipExpansion,
   pickPrimariesForExpansion,
-} from "./relationships.js";
+} from "./relationships/relationships.js";
 import { throwIfAborted } from "./cancel.js";
 import {
   RELATIONSHIP_STRATEGIES,

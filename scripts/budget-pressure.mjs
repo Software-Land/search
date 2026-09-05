@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { gzipSync } from "node:zlib";
 import { SearchEngine, morphology } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { attachLexicalFrequency, compileLexicalIndex } from "../tools/search-lexical/index.js";
 import { retrieveCandidates } from "../dist/retrieval/retrieve.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";

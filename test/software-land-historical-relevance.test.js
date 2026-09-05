@@ -4,7 +4,7 @@
  * Separate from query-result-oracle.json exact-output identity.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
-import { compileRelationshipMap } from "../dist/relationshipMap.js";
+import { compileRelationshipMap } from "../dist/relationships/relationshipMap.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import {
   evaluateHistoricalRelevance,

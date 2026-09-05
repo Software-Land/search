@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { isWeakSingleTokenBodyPack } from "../dist/ranking/rankTieBreak.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";

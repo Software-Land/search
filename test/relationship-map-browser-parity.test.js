@@ -9,7 +9,7 @@ import {
   mergeRelationships,
   InvalidConfigurationError,
 } from "../dist/index.js";
-import { compileRelationshipMap } from "../dist/relationshipMap.js";
+import { compileRelationshipMap } from "../dist/relationships/relationshipMap.js";
 import { createSearchClient, createWorkerRuntime, createLoopbackTransport } from "../dist/browser/index.js";
 
 const schema = {

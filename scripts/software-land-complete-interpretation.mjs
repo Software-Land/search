@@ -20,7 +20,7 @@ const { SearchEngine, morphology, compileAuthoredRelevance } = await import(path
 const { attachLexicalFrequency } = await import(pathToFileURL(path.join(ROOT, "tools/search-lexical/index.js")).href);
 const { buildQueryPlan } = await import(pathToFileURL(path.join(ROOT, "dist/query/queryPlan.js")).href);
 const { collectCompleteInterpretations, COMPLETE_INTERPRETATION_COLLECTOR } = await import(
-  pathToFileURL(path.join(ROOT, "dist/completeInterpretationCollector.js")).href
+  pathToFileURL(path.join(ROOT, "dist/execution/completeInterpretationCollector.js")).href
 );
 const { tokenize, allowPrefixMatch } = await import(pathToFileURL(path.join(ROOT, "dist/text/text.js")).href);
 const { buildTokenGraph } = await import(pathToFileURL(path.join(ROOT, "dist/query/configuredFormGraph.js")).href);

@@ -1,7 +1,7 @@
 import { SearchEngine, morphology } from "../dist/index.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { retrieveCandidates } from "../dist/retrieval/retrieve.js";
-import { compileStandaloneRecallLookup } from "../dist/configuredConcepts.js";
+import { compileStandaloneRecallLookup } from "../dist/relationships/configuredConcepts.js";
 import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 

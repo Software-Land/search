@@ -1,8 +1,8 @@
 import { morphology, SearchEngine, isAbortError } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { analyzeQuery, suggestTypoForms } from "../dist/query/analyze.js";
 import { buildIndex } from "../dist/indexing/indexDocuments.js";
-import { pickPrimariesForExpansion } from "../dist/relationships.js";
+import { pickPrimariesForExpansion } from "../dist/relationships/relationships.js";
 import { retrieveCandidates } from "../dist/retrieval/retrieve.js";
 
 const schema = {

@@ -7,10 +7,10 @@
  * Generated MiniLM / semantic edges are not authored here.
  */
 
-import { InvalidConfigurationError } from "./errors.js";
-import { sequenceKey } from "./query/configuredAuthoring.js";
-import { ARTIFACT_FORMATS, ARTIFACT_VERSION, parseRelationships } from "./artifacts.js";
-import type { ConfiguredConcept, RelationshipArtifact, RelationshipEdge } from "./types.js";
+import { InvalidConfigurationError } from "../errors.js";
+import { sequenceKey } from "../query/configuredAuthoring.js";
+import { ARTIFACT_FORMATS, ARTIFACT_VERSION, parseRelationships } from "../artifacts.js";
+import type { ConfiguredConcept, RelationshipArtifact, RelationshipEdge } from "../types.js";
 
 const FORBIDDEN_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 const KINDS = new Set(["equivalent", "related"]);

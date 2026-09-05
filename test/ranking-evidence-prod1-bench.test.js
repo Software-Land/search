@@ -3,7 +3,7 @@
  * SearchEngine.search() latency.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { buildQueryPlan } from "../dist/query/queryPlan.js";
 import {

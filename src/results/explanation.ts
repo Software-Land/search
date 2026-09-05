@@ -4,7 +4,7 @@
  * Execution consumes querySemanticFacts. This module may expose raw
  * AnalyzedQuery representation so diagnostics keep analyzer payloads.
  */
-import type { AnalyzedQuery, FeatureVector, RankedHit } from "./types.js";
+import type { AnalyzedQuery, FeatureVector, RankedHit } from "../types.js";
 
 function jsonSafe(value: unknown): unknown {
   return JSON.parse(

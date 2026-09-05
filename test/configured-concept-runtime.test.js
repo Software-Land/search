@@ -3,7 +3,7 @@
  * configured-concept representation. Diagnostic-only internal plugin fields.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
-import { compileConfiguredConceptPlugin, compileStandaloneRecallLookup } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin, compileStandaloneRecallLookup } from "../dist/relationships/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 

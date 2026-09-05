@@ -11,19 +11,19 @@
  * standaloneRecall / topicalRecall are compiled from relationshipMap, not stored on the concept.
  */
 
-import type { ConfiguredConcept, ConfiguredConceptSequence, RelationshipArtifact } from "./types.js";
+import type { ConfiguredConcept, ConfiguredConceptSequence, RelationshipArtifact } from "../types.js";
 import {
   allConfiguredConceptForms,
   compileAuthoredConcept,
   sequenceKey,
-} from "./query/configuredAuthoring.js";
-import { ARTIFACT_FORMATS, ARTIFACT_VERSION } from "./artifacts.js";
+} from "../query/configuredAuthoring.js";
+import { ARTIFACT_FORMATS, ARTIFACT_VERSION } from "../artifacts.js";
 import {
   compileRelationshipMapInternal,
   mergeRelationships,
   type RelationshipDocumentRef,
 } from "./relationshipMap.js";
-import { synonyms as synonymsPlugin } from "./query/synonyms.js";
+import { synonyms as synonymsPlugin } from "../query/synonyms.js";
 
 export interface ConfiguredConceptPlugin {
   name: "configured-concepts";

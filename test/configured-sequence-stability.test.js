@@ -6,7 +6,7 @@
  * desired generic property, not an appsec-specific exception.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 

@@ -12,7 +12,7 @@ import { analyzeQuery } from "../dist/query/analyze.js";
 import { extractFeatures } from "../dist/features/features.js";
 import { buildIndex } from "../dist/indexing/indexDocuments.js";
 import { morphology } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 
 function hit(id, over = {}) {
   return {

@@ -3,7 +3,7 @@
  * scattered lexical overlap. Neutral synthetic tokens. Not a product fixture.
  */
 import { SearchEngine } from "../dist/index.js";
-import { COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/completeInterpretationCollector.js";
+import { COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/execution/completeInterpretationCollector.js";
 
 const schema = {
   title: { type: "text", role: "title" },

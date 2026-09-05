@@ -8,9 +8,9 @@
 
 import { SearchEngine as searchEngineImpl } from "./SearchEngine.js";
 import { morphology as morphologyImpl } from "./morphology.js";
-import { compileAuthoredRelevance as compileAuthoredRelevanceImpl } from "./configuredConcepts.js";
+import { compileAuthoredRelevance as compileAuthoredRelevanceImpl } from "./relationships/configuredConcepts.js";
 import { migrateConfiguredEntry as migrateConfiguredEntryImpl } from "./query/configuredAuthoring.js";
-import { mergeRelationships as mergeRelationshipsImpl } from "./relationshipMap.js";
+import { mergeRelationships as mergeRelationshipsImpl } from "./relationships/relationshipMap.js";
 import {
   RELATIONSHIP_STRATEGIES as relationshipStrategiesImpl,
   DEFAULT_RELATIONSHIP_STRATEGY as defaultRelationshipStrategyImpl,

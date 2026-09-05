@@ -12,7 +12,7 @@ import {
   InvalidConfigurationError,
 } from "../dist/index.js";
 import { normalizeSearchEquivalences, MAX_SEARCH_EQUIVALENCE_TARGETS } from "../dist/query/synonyms.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 import { coverageConcepts, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts } from "../dist/retrieval/retrieve.js";

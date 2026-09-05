@@ -5,7 +5,7 @@
  */
 import { morphology } from "../dist/index.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const dict = [

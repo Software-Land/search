@@ -12,7 +12,7 @@ import { normalizePath } from "../tools/search-relationships/lib/ids.js";
 import { RelationshipError as ImplementationRelationshipError } from "../tools/search-relationships/lib/domain.js";
 import { filterRelationships as filterRelationshipsImpl } from "../tools/search-relationships/lib/compile.js";
 import { morphology, SearchEngine } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 
 import { fileURLToPath } from "node:url";

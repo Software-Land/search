@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { DEFAULT_CONSTRAINTS, HYBRID_CONSTRAINTS, compareConstraint } from "../dist/ranking/constraints.js";
 import { rankCandidates, rankCandidatesAsync, lastRankStats } from "../dist/ranking/rank.js";

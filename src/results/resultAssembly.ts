@@ -11,7 +11,7 @@ import type {
   FinishTimings,
   RankedHit,
   SearchResultRow,
-} from "./types.js";
+} from "../types.js";
 
 function serializeSearchHit(
   hit: RankedHit,

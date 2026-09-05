@@ -6,7 +6,7 @@
  * one-token fps expansion-prefix recall or contextual completion.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { extractFeatures } from "../dist/features/features.js";
 import { conceptMatchesTitle, conceptMatchesBody } from "../dist/retrieval/retrieve.js";

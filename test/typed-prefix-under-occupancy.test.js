@@ -4,7 +4,7 @@
  * first; occupancy must not be required to preserve that ranking.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };

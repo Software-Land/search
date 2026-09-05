@@ -3,7 +3,7 @@
  * third unigram posting field.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
-import { COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/completeInterpretationCollector.js";
+import { COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/execution/completeInterpretationCollector.js";
 import { buildQueryPlan } from "../dist/query/queryPlan.js";
 
 const schema = {

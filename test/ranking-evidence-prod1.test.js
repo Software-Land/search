@@ -1,5 +1,5 @@
 import { SearchEngine, morphology } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { RankingEvidenceSessionPool } from "../dist/ranking/evidence/rankingEvidenceState.js";
 import {

@@ -4,11 +4,11 @@
  * taxonomy, hand authoring, or usage. Vectors do not belong here.
  */
 
-import { parseRelationships } from "./artifacts.js";
-import { classifyDirect } from "./features/features.js";
-import { throwIfAborted } from "./cancel.js";
-import { querySemanticFacts } from "./query/querySemantics.js";
-import { rankCandidates, selectTopPerBuiltinSignature } from "./ranking/rank.js";
+import { parseRelationships } from "../artifacts.js";
+import { classifyDirect } from "../features/features.js";
+import { throwIfAborted } from "../cancel.js";
+import { querySemanticFacts } from "../query/querySemantics.js";
+import { rankCandidates, selectTopPerBuiltinSignature } from "../ranking/rank.js";
 import type {
   ConstraintDef,
   FeaturedHit,
@@ -21,7 +21,7 @@ import type {
   SearchIndex,
   SourcePolicy,
   ExpansionResult,
-} from "./types.js";
+} from "../types.js";
 
 export function RelationshipGraph(artifact: unknown): RelationshipGraphApi {
   const parsed = parseRelationships(artifact);

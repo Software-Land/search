@@ -1,6 +1,6 @@
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { morphology, SearchEngine } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { synonyms } from "../dist/query/synonyms.js";
 import { extractFeatures } from "../dist/features/features.js";
 import { compoundSpellSegment, MAX_COMPOUND_REPAIR_TOKEN_LENGTH } from "../dist/query/analyzeRepair.js";

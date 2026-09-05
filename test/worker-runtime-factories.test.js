@@ -3,7 +3,7 @@
  * Packed searchWorker.js uses compileAuthoredRelevance, not compileConfiguredConceptPlugin.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { createSearchClient, createWorkerRuntime, createLoopbackTransport } from "../dist/browser/index.js";
 
 const schema = {

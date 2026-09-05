@@ -6,7 +6,7 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { InvalidConfigurationError } from "../dist/index.js";
-import { compileRelationshipMap } from "../dist/relationshipMap.js";
+import { compileRelationshipMap } from "../dist/relationships/relationshipMap.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(ROOT, "..", "dist", "relationshipMap.js");

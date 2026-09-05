@@ -137,12 +137,12 @@ export interface WorkerRuntimeFactories {
   SearchEngine?: typeof import("../SearchEngine.js").SearchEngine;
   english?: typeof import("../text/english.js").english;
   /** Full authored-relevance compiler. Takes precedence over `compileConfiguredConceptPlugin`. */
-  compileAuthoredRelevance?: typeof import("../configuredConcepts.js").compileAuthoredRelevance;
+  compileAuthoredRelevance?: typeof import("../relationships/configuredConcepts.js").compileAuthoredRelevance;
   /**
    * Custom-host configured-concept compiler. Invoked only when init has no
    * `relationshipMap`. `relationshipMap` requires `compileAuthoredRelevance`.
    */
-  compileConfiguredConceptPlugin?: typeof import("../configuredConcepts.js").compileConfiguredConceptPlugin;
+  compileConfiguredConceptPlugin?: typeof import("../relationships/configuredConcepts.js").compileConfiguredConceptPlugin;
 }
 
 export interface EngineLike {

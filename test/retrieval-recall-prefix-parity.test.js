@@ -8,7 +8,7 @@ import {
   compileAuthoredRelevance,
   DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD,
 } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { synonyms } from "../dist/query/synonyms.js";
 import { createIndexedLexicalRetriever } from "../dist/retrieval/retrievers.js";
 import { retrievalFormKindAllowsPrefix } from "../dist/retrieval/retrieve.js";

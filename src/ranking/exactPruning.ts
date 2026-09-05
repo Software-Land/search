@@ -6,7 +6,7 @@ import { levenshteinAtMost } from "../text/text.js";
 import type {
   OptimizationSessionReason,
   SearchSessionCapabilities,
-} from "../executionSession.js";
+} from "../execution/executionSession.js";
 import type {
   AnalyzedQuery,
   FeatureVector,

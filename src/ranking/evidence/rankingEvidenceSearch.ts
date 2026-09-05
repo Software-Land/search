@@ -11,7 +11,7 @@
 import {
   searchSessionCapabilities,
   type OptimizationSessionReason,
-} from "../../executionSession.js";
+} from "../../execution/executionSession.js";
 import {
   rankingEvidenceEligibilityReason,
   type RankingEvidenceEligibilityReason,

@@ -2,10 +2,10 @@
  * 0.6.6 configured partial-form correctness: occupancy vs weak prefix recall.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance, ARTIFACT_FORMATS, ARTIFACT_VERSION } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { retrievalFormKindAllowsPrefix } from "../dist/retrieval/retrieve.js";
-import { COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/completeInterpretationCollector.js";
+import { COMPLETE_INTERPRETATION_COLLECTOR } from "../dist/execution/completeInterpretationCollector.js";
 import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { packedSearchFallbackReason } from "../dist/ranking/evidence/rankingEvidenceSearch.js";
 import { rankingEvidenceEligibilityReason } from "../dist/ranking/evidence/rankingEvidencePlan.js";

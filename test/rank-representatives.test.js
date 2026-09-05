@@ -7,7 +7,7 @@ import {
   DEFAULT_CONSTRAINTS,
   HYBRID_CONSTRAINTS,
 } from "../dist/ranking/constraints.js";
-import { pickPrimariesForExpansion } from "../dist/relationships.js";
+import { pickPrimariesForExpansion } from "../dist/relationships/relationships.js";
 
 function features(over = {}) {
   return {

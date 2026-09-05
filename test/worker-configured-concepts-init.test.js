@@ -44,7 +44,7 @@ describe("Worker configuredConcepts / relationshipMap init contract", () => {
     assertAuthoredRelevanceContract(
       {
         workerRuntime: readFileSync(path.join(ROOT, "dist/browser/workerRuntime.js"), "utf8"),
-        configuredConceptsModule: readFileSync(path.join(ROOT, "dist/configuredConcepts.js"), "utf8"),
+        configuredConceptsModule: readFileSync(path.join(ROOT, "dist/relationships/configuredConcepts.js"), "utf8"),
       },
       "dist"
     );

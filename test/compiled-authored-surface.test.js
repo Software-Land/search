@@ -10,7 +10,7 @@ import {
   compileAuthoredRelevance,
   mergeRelationships,
 } from "../dist/index.js";
-import { compileRelationshipMap } from "../dist/relationshipMap.js";
+import { compileRelationshipMap } from "../dist/relationships/relationshipMap.js";
 import { synonyms as synonymsPrimitive } from "../dist/query/synonyms.js";
 
 const schema = {

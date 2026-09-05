@@ -6,7 +6,7 @@ import {
   SearchEngine,
   morphology,
 } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import {
   attachLexicalFrequency,
   compileLexicalIndex,

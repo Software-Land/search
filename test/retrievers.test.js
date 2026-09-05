@@ -2,7 +2,7 @@ import {
   SearchEngine,
   morphology,
 } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { createIndexedLexicalRetriever } from "../dist/retrieval/retrievers.js";
 import { retrieveCandidates } from "../dist/retrieval/retrieve.js";
 import { analyzeQuery } from "../dist/query/analyze.js";

@@ -79,7 +79,7 @@ try {
   if (packedRel.includes("dist/dictionary.js")) {
     throw new Error("tarball must not include stale dist/dictionary.js");
   }
-  const packedConfiguredConcepts = readFileSync(path.join(packedRoot, "dist/configuredConcepts.js"), "utf8");
+  const packedConfiguredConcepts = readFileSync(path.join(packedRoot, "dist/relationships/configuredConcepts.js"), "utf8");
   if (packedConfiguredConcepts.includes("configuredConceptsFromAcronymMap")) {
     throw new Error("packed configuredConcepts must not export configuredConceptsFromAcronymMap");
   }

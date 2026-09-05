@@ -19,7 +19,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { SearchEngine, morphology } from "../../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../../dist/relationships/configuredConcepts.js";
 import { attachLexicalFrequency } from "../../tools/search-lexical/index.js";
 import { lastRankStats, rankCandidates } from "../../dist/ranking/rank.js";
 import { rankCandidatesPairwise } from "../../build/test/oracles/rankOracle.js";

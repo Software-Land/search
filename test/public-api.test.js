@@ -1,5 +1,5 @@
 import * as publicApi from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/configuredConcepts.js";
+import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import {
   SearchEngine,
   morphology,
