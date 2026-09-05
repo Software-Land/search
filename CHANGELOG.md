@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.8
+
+### Changed
+
+- Consolidated internal search architecture ownership across query semantics, execution capabilities, feature defaults, packed ranking codecs, and result/explanation assembly. Public API and search semantics are unchanged.
+
 ## 0.6.7
 
 ### Fixed
