@@ -26,7 +26,9 @@ node scripts/prod-search-bench.mjs \
   --iterations 24 --warmup 6
 ```
 
-The script lives in the git tree under `scripts/` and is **not shipped in the npm tarball**. Result identity (ids, order, six-decimal score, `directClass`, `relevanceKind`, relationship payload) matched on every measured row. Eligible ordinary non-explain `search()` constructed **0** direct FeatureVectors on these queries. Lexical artifact format did not change.
+The script lives in the git tree under `scripts/` and is **not shipped in the npm tarball**. These 0.6.4-to-0.6.5 measurements were produced with the harness from that release era. To reproduce them, run `scripts/prod-search-bench.mjs` from the corresponding historical revision together with the matching baseline and candidate checkouts. Repository benchmark scripts are versioned with the source tree and are not intended to stay compatible with arbitrary historical internal `dist/` layouts. Internal `dist/` paths are not a public API.
+
+Result identity (ids, order, six-decimal score, `directClass`, `relevanceKind`, relationship payload) matched on every measured row. Eligible ordinary non-explain `search()` constructed **0** direct FeatureVectors on these queries. Lexical artifact format did not change.
 
 Headline speedups on this suite:
 
