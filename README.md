@@ -16,7 +16,7 @@ Eligible ordinary `search()` / `searchAsync()` gather exact ranking evidence dur
 
 **Zero production npm dependencies.** Node 18+.
 
-Optional **build-time compilers** are not imported by the runtime. They live on package subpaths (`./lexical`, `./corpus`, `./relationships`, `./semantic`). Generated compiler candidates are review material. Only trusted compiled artifacts and authored configuration enter the runtime.
+Optional **build-time compilers** are not imported by the runtime. They are exposed through package import subpaths (`./lexical`, `./corpus`, `./relationships`, `./semantic`). Generated compiler candidates are review material. Only trusted compiled artifacts and authored configuration enter the runtime.
 
 ## Install
 
