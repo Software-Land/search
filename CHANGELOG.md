@@ -1,11 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.6.10 - 2026-10-08
 
 ### Changed
 
-- License parameters: the Additional Use Grant now permits production use without a commercial license when the consolidated annual gross revenue of you and your Affiliates for the most recently completed fiscal year is less than USD $100,000. At or above USD $100,000, production use requires a separate commercial agreement unless that version's Change License already permits it. Non-production use remains free. Change Date remains 2030-08-28, and the Change License remains Apache License, Version 2.0. The reduced threshold applies prospectively to source revisions and future releases carrying this `LICENSE`. Earlier distributions retain their accompanying grants, including the previous USD $10,000,000 threshold where applicable. Versions through 0.4.0 remain Apache-2.0.
-- Commercial pricing: `COMMERCIAL-LICENSING.md` states fixed annual prices for new commercial license quotes. Below USD $100,000, production use is free under the Additional Use Grant. From $100,000 to below $1,000,000 the annual price is $250; from $1,000,000 to below $10,000,000 it is $1,000; from $10,000,000 to below $100,000,000 it is $5,000; and at $100,000,000 and above it is $10,000. One consolidated group pays one fee. The pricing document does not grant commercial rights or impose an automatic royalty. Existing agreements continue to govern their own pricing and renewal terms.
+- Licensing and documentation only. Runtime behavior and the public API are unchanged.
+- Free production use requires consolidated annual gross revenue of you and your Affiliates for the most recently completed fiscal year below USD $100,000. At or above USD $100,000, production use requires a separate commercial agreement unless that version's Change License already permits it. Non-production use remains free. Change Date remains 2030-08-28, and the Change License remains Apache License, Version 2.0. The reduced threshold applies prospectively to source revisions and future releases carrying this `LICENSE`.
+- Fixed annual prices for new commercial license quotes are $250 for $100,000 to below $1,000,000; $1,000 for $1,000,000 to below $10,000,000; $5,000 for $10,000,000 to below $100,000,000; and $10,000 for $100,000,000 and above. One fee covers the purchasing organization and its Affiliates. `COMMERCIAL-LICENSING.md` does not grant commercial rights or impose an automatic royalty.
+- Earlier distributions retain their accompanying grants, including the previous USD $10,000,000 threshold where applicable. Versions through 0.4.0 remain Apache-2.0. Existing commercial agreements remain unchanged and continue to govern their own pricing and renewal terms.
 
 ## 0.6.9
 
