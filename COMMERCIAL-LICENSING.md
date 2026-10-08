@@ -19,9 +19,9 @@ For source revisions and future releases carrying the revised
 - Production use is permitted without a commercial license when the
   consolidated annual gross revenue of you and your Affiliates for the most
   recently completed fiscal year is less than USD $100,000.
-- At exactly USD $100,000, production use is outside that Additional Use Grant.
-  A separate commercial agreement is required, even though the marginal pricing
-  formula below produces a $0 annual fee.
+- At or above USD $100,000, production use is outside that Additional Use Grant.
+  A separate commercial agreement is required unless that version’s Change
+  License already permits production use.
 - Change Date: 2030-08-28.
 - Change License: Apache License, Version 2.0.
 
@@ -67,112 +67,48 @@ Using the software does not by itself create an automatic royalty. Commercial
 rights, when required, come from a separate agreement with Software.Land,
 unless that version’s Change License has already taken effect.
 
-Existing agreements continue to govern their own pricing, renewals, and other
-terms.
+Existing agreements continue to govern their own pricing and renewal terms.
 
-The measured amount is the same consolidated annual gross revenue used by the
-Additional Use Grant: you and your Affiliates, for the most recently completed
-fiscal year. There is no minimum fee, no cap, and no allocation limited to
-revenue from products using the software.
+### Fixed annual tiers
 
-### Marginal rates
+Apply exactly one fixed annual price. The tier is chosen from consolidated
+annual gross revenue of you and your Affiliates for the most recently completed
+fiscal year. Affiliate and consolidation definitions are those in
+[LICENSE](LICENSE).
 
-Each percentage applies only to the revenue inside its band. Do not apply the
-highest applicable band’s percentage to all revenue.
+The annual fee covers the purchasing organization and its Affiliates as one
+consolidated group. It is not charged separately per Affiliate, developer,
+application, customer, or end user.
 
-| Portion of consolidated annual gross revenue (USD) | Annual marginal rate |
+These are fixed tiers. Do not add charges across tiers or calculate a
+percentage of revenue.
+
+| Consolidated annual gross revenue (USD) | Annual license price (USD) |
 | --- | ---: |
-| First $100,000 | 0% |
-| Above $100,000 up to $1,000,000 | 0.05% |
-| Above $1,000,000 up to $10,000,000 | 0.02% |
-| Above $10,000,000 up to $100,000,000 | 0.01% |
-| Above $100,000,000 up to $1,000,000,000 | 0.005% |
-| Above $1,000,000,000 up to $10,000,000,000 | 0.002% |
-| Above $10,000,000,000 up to $100,000,000,000 | 0.001% |
-| Above $100,000,000,000 up to $1,000,000,000,000 | 0.0005% |
-| Above $1,000,000,000,000 ($1T+ tier) | 0.0001% |
+| Below $100,000 | Free |
+| $100,000 to below $1,000,000 | $250 |
+| $1,000,000 to below $10,000,000 | $1,000 |
+| $10,000,000 to below $100,000,000 | $5,000 |
+| $100,000,000 and above | $10,000 |
 
-A stated percentage converts to the decimal rate in the formula by dividing by
-100:
+“Below $100,000” is free because the Additional Use Grant already permits
+production use at that revenue. This table does not itself grant that right.
+From $100,000 upward, the amount is the standard annual price for a new
+commercial quote:
 
-| Stated rate | Decimal rate |
-| --- | ---: |
-| 0% | 0 |
-| 0.05% | 0.0005 |
-| 0.02% | 0.0002 |
-| 0.01% | 0.0001 |
-| 0.005% | 0.00005 |
-| 0.002% | 0.00002 |
-| 0.001% | 0.00001 |
-| 0.0005% | 0.000005 |
-| 0.0001% | 0.000001 |
+- At exactly $100,000, the annual fee is $250. Revenue from $100,000 to below
+  $1,000,000 stays in that tier.
+- At exactly $1,000,000, the annual fee is $1,000. Revenue from $1,000,000 to
+  below $10,000,000 stays in that tier.
+- At exactly $10,000,000, the annual fee is $5,000. Revenue from $10,000,000
+  to below $100,000,000 stays in that tier.
+- At exactly $100,000,000, the annual fee is $10,000. The highest standard
+  annual license price is $10,000, regardless of additional revenue.
 
-### Calculation
-
-For annual revenue `R`, each bounded band contributes:
-
-`max(0, min(R, upper_bound) - lower_bound) × decimal_rate`
-
-The final band contributes:
-
-`max(0, R - 1,000,000,000,000) × 0.000001`
-
-The commas in `1,000,000,000,000` are thousands separators. That bound is one
-trillion US dollars, and `0.000001` is the decimal form of 0.0001%.
-
-Bounded bands use these bounds. The first lower bound is 0. Each following
-lower bound equals the previous upper bound. Revenue equal to a boundary is
-included only in the earlier band, and the next band starts above that
-boundary, so the bands have no gap and no overlap.
-
-| Portion | lower_bound | upper_bound | decimal_rate |
-| --- | ---: | ---: | ---: |
-| First $100,000 | 0 | 100,000 | 0 |
-| Above $100,000 up to $1,000,000 | 100,000 | 1,000,000 | 0.0005 |
-| Above $1,000,000 up to $10,000,000 | 1,000,000 | 10,000,000 | 0.0002 |
-| Above $10,000,000 up to $100,000,000 | 10,000,000 | 100,000,000 | 0.0001 |
-| Above $100,000,000 up to $1,000,000,000 | 100,000,000 | 1,000,000,000 | 0.00005 |
-| Above $1,000,000,000 up to $10,000,000,000 | 1,000,000,000 | 10,000,000,000 | 0.00002 |
-| Above $10,000,000,000 up to $100,000,000,000 | 10,000,000,000 | 100,000,000,000 | 0.00001 |
-| Above $100,000,000,000 up to $1,000,000,000,000 | 100,000,000,000 | 1,000,000,000,000 | 0.000005 |
-
-The $1T+ tier has lower bound 1,000,000,000,000, no upper bound, and decimal
-rate 0.000001.
-
-Sum every band contribution, then round that final total to the nearest US
-cent. A remainder of exactly half a cent rounds up.
-
-Every marginal rate is zero or positive, so higher revenue never reduces the
-total fee. Crossing a band boundary does not reprice revenue in earlier bands.
-Only the revenue inside the newly entered band uses that band’s rate.
-
-### Worked example: USD $2,000,000
-
-- The first $100,000 at 0% contributes $0.
-- The next $900,000 at 0.05% contributes $450.
-- The remaining $1,000,000 at 0.02% contributes $200.
-- The annual total is $650.
-
-### Examples
-
-These annual prices are the rounded results of the calculation above. The
-USD $100,000 row is a $0 formula result. Production use at that revenue still
-requires a separate commercial agreement, because the Additional Use Grant
-covers production use only below USD $100,000.
-
-| Consolidated annual revenue | Annual license price |
-| --- | ---: |
-| $100,000 | $0 |
-| $500,000 | $200 |
-| $1,000,000 | $450 |
-| $2,000,000 | $650 |
-| $10,000,000 | $2,250 |
-| $100,000,000 | $11,250 |
-| $1,000,000,000 | $56,250 |
-| $10,000,000,000 | $236,250 |
-| $100,000,000,000 | $1,136,250 |
-| $1,000,000,000,000 | $5,636,250 |
-| $2,000,000,000,000 | $6,636,250 |
+Each revenue amount falls in exactly one tier. The tiers meet at these bounds
+and do not overlap: below $100,000; $100,000 inclusive to below $1,000,000;
+$1,000,000 inclusive to below $10,000,000; $10,000,000 inclusive to below
+$100,000,000; and $100,000,000 and above.
 
 ## Obtaining a commercial license
 
