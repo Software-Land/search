@@ -456,8 +456,10 @@ The checked-in toy fixture is evaluation machinery, not a ranking-quality claim.
 
 ## License
 
-`@software-land/search` versions 0.5.0 and later are source-available under the Business Source License 1.1. Non-production use is free. Production use is also free for organizations with less than USD $10M in consolidated annual gross revenue. Organizations at or above that threshold require a commercial license from Software.Land.
+`@software-land/search` versions 0.5.0 and later are source-available under the Business Source License 1.1. Non-production use is free.
+
+Source revisions and future releases that carry the revised `LICENSE` permit production use without a commercial license when the consolidated annual gross revenue of you and your Affiliates for the most recently completed fiscal year is less than USD $100,000. At USD $100,000, production use requires a separate commercial agreement, even though the public marginal-price formula is $0. New commercial quotes use the marginal schedule in [COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md).
+
+Earlier distributions retain their accompanying license grants, including the previous USD $10,000,000 production threshold where applicable. Versions through 0.4.0 remain Apache-2.0. Existing commercial agreements continue to govern their own pricing, renewals, and other terms.
 
 See [LICENSE](LICENSE), [COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md), and [CONTRIBUTING.md](CONTRIBUTING.md).
-
-Versions through 0.4.0 remain Apache-2.0.

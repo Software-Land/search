@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- License parameters: the Additional Use Grant now permits production use without a commercial license when the consolidated annual gross revenue of you and your Affiliates for the most recently completed fiscal year is less than USD $100,000. At exactly USD $100,000, production use requires a separate commercial agreement even though the public marginal-price formula is $0. Non-production use remains free. Change Date remains 2030-08-28, and the Change License remains Apache License, Version 2.0. The reduced threshold applies prospectively to source revisions and future releases carrying this `LICENSE`. Earlier distributions retain their accompanying grants, including the previous USD $10,000,000 threshold where applicable. Versions through 0.4.0 remain Apache-2.0.
+- Commercial pricing: `COMMERCIAL-LICENSING.md` replaces the flat 0.01% annual price with a decreasing marginal-rate schedule for new commercial license quotes. The pricing document does not grant commercial rights or impose an automatic royalty. Existing agreements continue to govern their own pricing, renewals, and other terms.
+
 ## 0.6.9
 
 ### Changed
