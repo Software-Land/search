@@ -8,7 +8,7 @@
   ],
   "counts": {
     "cases": 60,
-    "overlayCases": 1
+    "overlayCases": 4
   },
   "cases": [
     {
@@ -889,6 +889,50 @@
       "exactFirst": "Integrity Is Not Obedience",
       "exactFirstId": "cl",
       "name": "regression · overlay · integ · #1:Integrity Is Not Obedience | Integrity Is Not Obedience@1"
+    },
+    {
+      "query": "open",
+      "kind": "regression",
+      "origin": "overlay",
+      "requiredWithin": [
+        {
+          "id": "7",
+          "title": "SAML vs OAuth",
+          "topN": 10
+        }
+      ],
+      "ambiguousExactFirstKeys": ["oauth", "osi", "oci", "opengl", "opengles"],
+      "name": "regression · overlay · open · SAML vs OAuth within 10"
+    },
+    {
+      "query": "oauth",
+      "kind": "regression",
+      "origin": "overlay",
+      "requiredWithin": [
+        {
+          "id": "7",
+          "title": "SAML vs OAuth",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "SAML vs OAuth",
+      "exactFirstId": "7",
+      "name": "regression · overlay · oauth · #1:SAML vs OAuth"
+    },
+    {
+      "query": "open authorization",
+      "kind": "regression",
+      "origin": "overlay",
+      "requiredWithin": [
+        {
+          "id": "7",
+          "title": "SAML vs OAuth",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "SAML vs OAuth",
+      "exactFirstId": "7",
+      "name": "regression · overlay · open authorization · #1:SAML vs OAuth"
     }
   ]
 }

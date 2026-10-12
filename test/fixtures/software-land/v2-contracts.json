@@ -6,7 +6,7 @@
     "V1 expectedTop is not asserted."
   ],
   "counts": {
-    "cases": 99
+    "cases": 102
   },
   "cases": [
     {
@@ -1383,6 +1383,32 @@
       "origin": "v2-contract",
       "exactFirst": "App Sec",
       "name": "contract · v2-contract · appsecurity · #1:App Sec"
+    },
+    {
+      "query": "open",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "SAML vs OAuth"
+        ],
+        "topN": 10
+      },
+      "name": "contract · v2-contract · open · anyTop:SAML vs OAuth@10"
+    },
+    {
+      "query": "oauth",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "SAML vs OAuth",
+      "name": "contract · v2-contract · oauth · #1:SAML vs OAuth"
+    },
+    {
+      "query": "open authorization",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "SAML vs OAuth",
+      "name": "contract · v2-contract · open authorization · #1:SAML vs OAuth"
     }
   ]
 }

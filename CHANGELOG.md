@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.0 - 2026-10-12
+
+### Changed
+
+- An exact first token shared by several configured expansions (`open`, `hypertext`, `real`, `software`) is ambiguous partial evidence. It recalls title occurrences of each matching key and does not occupy a concept, rewrite the query, or activate that concept's equivalent or topical expansion. Title evidence is ranked from expansion coverage above a weak body hit of the typed word. When a title matches one group key and the body matches another, that boost uses the strongest title key; a body-only key does not replace it. A direct title match of the typed word and a complete acronym or alias match keep their existing priority. Incomplete proper prefixes such as `appl` are unchanged. Unique incomplete key prefixes stay on the existing key-prefix path.
+
+### Added
+
+- Software.Land scenario regression for this recall. `open`, searched at the blog's normal limit of 10 against the fixture that includes both `opengl` and `opengles`, must include SAML vs OAuth (document id `7`). The assertion does not require that post to rank first. Companion regressions keep `oauth` and `open authorization` ranking that same document first. The same three checks are in the V2 contract fixture and the Chromium corpus run. The historical V1 expectation that bare `open` ranks it first stays obsolete.
+
 ## 0.6.10 - 2026-10-08
 
 ### Changed

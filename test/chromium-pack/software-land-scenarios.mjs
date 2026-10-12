@@ -55,6 +55,44 @@ const CRITICAL_CONTROLS = [
   "a*",
 ];
 
+const EXPANSION_CONTRACTS = [
+  {
+    query: "open",
+    within: { id: "7", title: "SAML vs OAuth", topN: 10 },
+  },
+  {
+    query: "oauth",
+    first: { id: "7", title: "SAML vs OAuth" },
+  },
+  {
+    query: "open authorization",
+    first: { id: "7", title: "SAML vs OAuth" },
+  },
+];
+
+function assertExpansionContract(actual, spec) {
+  const titles = actual?.titles || [];
+  const ids = actual?.ids || [];
+  if (spec.first) {
+    if (titles[0] !== spec.first.title || ids[0] !== spec.first.id) {
+      throw new Error(
+        `${JSON.stringify(spec.query)} expected first ${spec.first.id} ${JSON.stringify(spec.first.title)}\n` +
+          `actual ${JSON.stringify(ids[0])} ${JSON.stringify(titles[0])}`
+      );
+    }
+  }
+  if (spec.within) {
+    const windowTitles = titles.slice(0, spec.within.topN);
+    const windowIds = ids.slice(0, spec.within.topN);
+    if (!windowIds.includes(spec.within.id) || !windowTitles.includes(spec.within.title)) {
+      throw new Error(
+        `${JSON.stringify(spec.query)} missing ${spec.within.id} ${JSON.stringify(spec.within.title)} within ${spec.within.topN}\n` +
+          `ids ${JSON.stringify(windowIds)}\ntitles ${JSON.stringify(windowTitles)}`
+      );
+    }
+  }
+}
+
 const ADJUDICATED = {
   recurse: [
     "What is Recursion?",
@@ -268,6 +306,12 @@ async function main() {
       );
     }
 
+    const expansion = {};
+    for (const spec of EXPANSION_CONTRACTS) {
+      expansion[spec.query] = await runQuery(full.page, spec.query, { limit: 10, explain: true });
+      assertExpansionContract(expansion[spec.query], spec);
+    }
+
     full.diag.assertClean("software-land full-scan");
     await full.page.evaluate(() => window.__dispose());
 
@@ -280,6 +324,17 @@ async function main() {
       if (JSON.stringify(indexedTitles) !== JSON.stringify(fullTitles)) {
         throw new Error(
           `indexed/full-scan title mismatch for ${JSON.stringify(query)}\nfull ${JSON.stringify(fullTitles)}\nindexed ${JSON.stringify(indexedTitles)}`
+        );
+      }
+    }
+    for (const spec of EXPANSION_CONTRACTS) {
+      const indexedResult = await runQuery(indexed.page, spec.query, { limit: 10, explain: true });
+      assertExpansionContract(indexedResult, spec);
+      const fullTitles = (expansion[spec.query]?.titles || []).slice(0, 10);
+      const indexedTitles = (indexedResult?.titles || []).slice(0, 10);
+      if (JSON.stringify(indexedTitles) !== JSON.stringify(fullTitles)) {
+        throw new Error(
+          `indexed/full-scan title mismatch for ${JSON.stringify(spec.query)}\nfull ${JSON.stringify(fullTitles)}\nindexed ${JSON.stringify(indexedTitles)}`
         );
       }
     }
@@ -297,7 +352,7 @@ async function main() {
       worker: "searchWorkerUrl()/searchWorker.js",
       retrievers: {
         historical: "full-scan",
-        indexedSmoke: ["recurse", "sharde", "frames per"],
+        indexedSmoke: ["recurse", "sharde", "frames per", ...EXPANSION_CONTRACTS.map((spec) => spec.query)],
       },
       fixture: {
         dir: "test/fixtures/software-land",
@@ -315,7 +370,7 @@ async function main() {
         assertions: applicable.length,
       },
       v2Contracts: {
-        browser: "not duplicated; Node Jest compileAuthoredRelevance() stack in software-land-corpus.test.js remains source for 99 V2 + 60 regression cases",
+        browser: "open, oauth, and open authorization run here; remaining V2 contracts stay on the Node Jest stack in software-land-corpus.test.js (102 V2 + 60 regression cases)",
       },
       controls: Object.fromEntries(
         CRITICAL_CONTROLS.map((query) => [

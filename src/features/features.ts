@@ -1130,6 +1130,16 @@ function withStandaloneRecallFields(
 }
 
 const CONFIGURED_PREFIX_RECALL_SOURCE = "configured-prefix-recall";
+/**
+ * Added to expansion coverage before the 0.25 body-lexical coefficient.
+ * `0.35 + coverage` is above a weak body hit (0.25) for every form of at
+ * least two tokens, and stays below direct title-token evidence.
+ */
+const EXACT_FIRST_TITLE_RANK_FLOOR = 0.35;
+
+function isExactFirstTokenRecall(recall: AnalyzedQuery["configuredPrefixRecall"]) {
+  return Boolean(recall && (recall.exactCount || 0) > 0 && recall.lastExact);
+}
 
 function isPrefixOnlyConfiguredRecall(retrievalSources: string[] | undefined) {
   if (!retrievalSources?.includes(CONFIGURED_PREFIX_RECALL_SOURCE)) return false;
@@ -1164,12 +1174,13 @@ function withConfiguredPrefixRecallFields(
   const recall = configuredPrefixRecallForDocument(doc, retrievalSources, weakRecall);
   const retrieved = Boolean(retrievalSources?.includes(CONFIGURED_PREFIX_RECALL_SOURCE));
   const group = weakRecall?.ambiguity === "group";
-  const keyInTitle = Boolean(
-    group &&
-      retrieved &&
-      recall?.key &&
-      (doc.titleTokenSet.has(recall.key) || doc.titleLemmaSet.has(recall.key))
+  const titleHasKey = Boolean(
+    recall?.key && (doc.titleTokenSet.has(recall.key) || doc.titleLemmaSet.has(recall.key))
   );
+  // Exact shared first tokens stay partial. key-in-title would mark them strong
+  // and expand document neighbors as if one concept were occupied.
+  const exactFirstTitle = Boolean(group && retrieved && titleHasKey && isExactFirstTokenRecall(recall));
+  const keyInTitle = Boolean(group && !exactFirstTitle && retrieved && titleHasKey);
   let configuredConceptMatch: ConfiguredConceptMatch = fields.configuredConceptMatch;
   if (!configuredConceptMatch && keyInTitle) configuredConceptMatch = "key-in-title";
   const fieldEvidence = keyInTitle
@@ -1191,20 +1202,22 @@ function withConfiguredPrefixRecallFields(
   // Feature-level typed lexical evidence (body prefix startsWith, bound trailing
   // stubs, etc.) can exist without a lexical retrieval source. Do not stack the
   // prefix addend on those candidates; they already have a non-none class.
-  const score = prefixOnly && recall && classifyDirect(next) === "none" ? recall.coverage : 0;
+  // Exact-first title keys are the exception: coverage alone (then × 0.25) stays
+  // under every weak body hit, so the stored score is scaled back to
+  // `(floor + coverage) / 0.25`. Group selection ignores body-only keys.
+  const score = exactFirstTitle && recall
+    ? (EXACT_FIRST_TITLE_RANK_FLOOR + recall.coverage) / 0.25
+    : prefixOnly && recall && classifyDirect(next) === "none"
+      ? recall.coverage
+      : 0;
   return {
     ...next,
     configuredPrefixRecallScore: Number(score.toFixed(4)),
   };
 }
 
-function documentHasConfiguredKey(doc: IndexedDocument, key: string) {
-  return (
-    doc.titleTokenSet.has(key) ||
-    doc.titleLemmaSet.has(key) ||
-    doc.bodyTokenSet.has(key) ||
-    doc.bodyLemmaSet.has(key)
-  );
+function documentHasConfiguredTitleKey(doc: IndexedDocument, key: string) {
+  return doc.titleTokenSet.has(key) || doc.titleLemmaSet.has(key);
 }
 
 function configuredPrefixRecallForDocument(
@@ -1215,9 +1228,11 @@ function configuredPrefixRecallForDocument(
   if (weakRecall?.ambiguity === "unique") return weakRecall.candidates[0] || null;
   if (!retrievalSources?.includes(CONFIGURED_PREFIX_RECALL_SOURCE)) return null;
   if (weakRecall?.ambiguity !== "group") return null;
+  // Title evidence is chosen only among keys retrieval would accept in the
+  // title. A higher-coverage body key must not replace that title key.
   let best: AnalyzedQuery["configuredPrefixRecall"] = null;
   for (const row of weakRecall.candidates) {
-    if (!row?.key || !documentHasConfiguredKey(doc, row.key)) continue;
+    if (!row?.key || !documentHasConfiguredTitleKey(doc, row.key)) continue;
     if (!best || row.coverage > best.coverage) best = row;
   }
   return best;
@@ -1465,7 +1480,7 @@ export const FEATURE_DEFINITIONS = {
   relationshipType: "Relationship type (semantic, same-category, …) or null. Not a query equivalence.",
   relationshipSourceId: "Primary document id that licensed this related candidate, or null.",
   retrievalScore: "Optional 0–1 retrieval evidence (e.g. normalized BM25). Default 0; not a substitute for constraints.",
-  configuredPrefixRecallScore: "Query-side unique configured-form prefix completeness for a prefix-only key candidate. 0 when occupancy is present, the candidate also has typed lexical provenance (a non-none directClass, including feature-level body/title evidence without a lexical retrieval source), or no unique prefix recall exists. Relationship overlay is not typed lexical provenance. Coverage is (exactCount + partialCompleteness) / formLength; partial completeness reuses contextual prefix string-length semantics.",
+  configuredPrefixRecallScore: "Query-side configured-form prefix evidence for a matching key. Unique prefix-only candidates store coverage, and ranking multiplies that by 0.25. 0 when occupancy is present, the candidate has typed lexical provenance (a non-none directClass, including feature-level body/title evidence without a lexical retrieval source), or the document is not a prefix-recall key. Relationship overlay is not typed lexical provenance. An exact first token shared by several concepts stores (0.35 + coverage) / 0.25 for a title key, so the same coefficient ranks that title above a weak body hit of the typed word. That addend may stack on ordinary lexical evidence and does not set key-in-title. Coverage is (exactCount + partialCompleteness) / formLength; partial completeness reuses contextual prefix string-length semantics.",
   relevanceKind: "direct | related. Related only when directClass is none and query-anchored relationship evidence exists, except independently retrieved configured-prefix-recall candidates, which stay direct. Weak/moderate/strong lexical class stays direct even when a relationship is attached.",
   directClass: "strong | moderate | weak | none. Interpretable lexical/configured evidence class, independent of relatedness.",
 };

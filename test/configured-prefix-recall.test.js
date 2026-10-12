@@ -246,6 +246,14 @@ describe("configured prefix recall vs occupancy", () => {
     ];
     expect(analyze("hypertext", httpFamily).configuredPrefixRecall).toBeNull();
     expect(analyze("hypertext", httpFamily).configuredSequenceIntent).toBeNull();
+    expect((analyze("hypertext", httpFamily).configuredPrefixRecallGroup || []).map((row) => row.key).sort()).toEqual([
+      "html",
+      "http",
+      "https",
+    ]);
+    expect((analyze("hypertext", httpFamily).configuredPrefixRecallGroup || []).every((row) => row.exactCount === 1 && row.lastExact)).toBe(
+      true
+    );
     expect(analyze("hypertex", httpFamily).configuredPrefixRecall).toBeNull();
     expect(analyze("hypertex", httpFamily).configuredSequenceIntent).toBeNull();
     expect((analyze("hypertex", httpFamily).configuredPrefixRecallGroup || []).map((row) => row.key).sort()).toEqual([
@@ -286,6 +294,20 @@ describe("configured prefix recall vs occupancy", () => {
       expect(q.configuredSequenceIntent).toBeNull();
       expect(q.configuredPrefixRecall).toBeNull();
     }
+    expect((analyze("real", family).configuredPrefixRecallGroup || []).map((row) => row.key).sort()).toEqual([
+      "rtmp",
+      "rtp",
+      "rtsp",
+    ]);
+    expect((analyze("software", family).configuredPrefixRecallGroup || []).map((row) => row.key).sort()).toEqual([
+      "saas",
+      "swd",
+      "swe",
+    ]);
+    expect((analyze("service", family).configuredPrefixRecallGroup || []).map((row) => row.key).sort()).toEqual([
+      "sla",
+      "slo",
+    ]);
     expect(analyze("software a", family).configuredPrefixRecall?.key).toBe("saas");
     expect(analyze("software as", family).configuredSequenceIntent).toBeNull();
     expect(analyze("software as", family).configuredPrefixRecall?.key).toBe("saas");
@@ -503,6 +525,210 @@ describe("configured prefix recall retrieval and scoring", () => {
       expect(results.map((row) => row.title)).not.toContain("What is a Container?");
       expect(results.map((row) => row.title)).toContain("What is an API?");
     }
+  });
+
+  test("exact shared first tokens recall title keys without occupancy or body spray", async () => {
+    const family = [
+      { key: "oauth", aliases: [["open", "authorization"]] },
+      { key: "osi", aliases: [["open", "systems", "interconnection"]] },
+      { key: "opengl", aliases: [["open", "graphics", "library"]] },
+      { key: "opengles", aliases: [["opengl", "embedded", "systems"], ["open", "graphics", "library", "embedded", "systems"]] },
+    ];
+    const docs = [
+      { id: "title-word", title: "Open Standards", body: "formats" },
+      { id: "oauth-title", title: "SAML vs OAuth", body: "opens the door to token replay" },
+      { id: "osi-title", title: "OSI Model", body: "seven layers" },
+      { id: "oauth-body", title: "Bearer Token", body: "associated with oauth access tokens" },
+      { id: "body-word", title: "Knowledge Graph", body: "open source data in an open world" },
+      { id: "neighbor", title: "Unrelated Neighbor", body: "no shared vocabulary" },
+    ];
+    const authored = compileAuthoredRelevance({
+      configuredConcepts: family,
+      relationshipMap: {
+        oauth: [{ kind: "equivalent", to: { form: "saml" } }],
+      },
+    });
+    const e = SearchEngine.create({
+      schema,
+      plugins: [morphology(), ...authored.plugins],
+      documentRelationships: {
+        format: ARTIFACT_FORMATS.relationships,
+        version: ARTIFACT_VERSION,
+        relationships: {
+          "oauth-title": [{ target: "neighbor", type: "semantic", strength: 0.9, provenance: "test" }],
+        },
+      },
+      relationshipStrategy: "hybrid",
+    });
+    await e.index(docs);
+
+    const open = e._prepareQuery("open");
+    expect(open.configuredSequenceIntent).toBeNull();
+    expect(open.configuredPrefixRecall).toBeNull();
+    expect(open.equivalentRecall || []).toEqual([]);
+    expect(open.topicalRecall ?? null).toBeNull();
+    expect((open.configuredPrefixRecallGroup || []).map((row) => row.key).sort()).toEqual([
+      "oauth",
+      "opengl",
+      "opengles",
+      "osi",
+    ]);
+    expect(open.configuredPrefixRecallGroup.find((row) => row.key === "oauth").coverage).toBe(0.5);
+
+    const detailed = e.searchDetailed("open", {
+      limit: 10,
+      relatedLimit: 0,
+      explain: true,
+      resultCollector: COMPLETE_INTERPRETATION_COLLECTOR,
+    });
+    const ids = detailed.results.map((row) => row.id);
+    expect(ids).toContain("title-word");
+    expect(ids).toContain("oauth-title");
+    expect(ids).toContain("osi-title");
+    expect(ids).toContain("body-word");
+    expect(ids).not.toContain("oauth-body");
+    expect(ids).not.toContain("neighbor");
+    expect(detailed.results[0].id).toBe("title-word");
+    const oauthTitle = detailed.results.find((row) => row.id === "oauth-title");
+    const osiTitle = detailed.results.find((row) => row.id === "osi-title");
+    const bodyWord = detailed.results.find((row) => row.id === "body-word");
+    expect(oauthTitle.retrievalSources).toEqual(expect.arrayContaining(["configured-prefix-recall", "body-lexical"]));
+    expect(oauthTitle.directClass).not.toBe("strong");
+    expect(oauthTitle.features.configuredConceptMatch).not.toBe("key-in-title");
+    expect(oauthTitle.rank).toBeLessThan(bodyWord.rank);
+    expect(osiTitle.rank).toBeLessThan(bodyWord.rank);
+    expect(oauthTitle.score).toBeGreaterThan(osiTitle.score);
+    expect(oauthTitle.features.configuredPrefixRecallScore * 0.25).toBeCloseTo(0.35 + 0.5, 5);
+    expect(detailed.results.find((row) => row.id === "title-word").rank).toBeLessThan(oauthTitle.rank);
+
+    const phrase = e._prepareQuery("open authorization");
+    expect(phrase.configuredSequenceIntent?.key).toBe("oauth");
+    expect(phrase.configuredPrefixRecallGroup || []).toEqual([]);
+    expect((phrase.equivalentRecall || []).map((row) => row.target)).toEqual(["saml"]);
+    const occupied = e.searchDetailed("oauth", { limit: 10, relatedLimit: 0, explain: true });
+    const phraseHits = e.searchDetailed("open authorization", { limit: 10, relatedLimit: 0, explain: true });
+    expect(phraseHits.results.map((row) => row.id)).toEqual(occupied.results.map((row) => row.id));
+    expect(phraseHits.results[0].id).toBe("oauth-title");
+  });
+
+  test.each(["full-scan", "indexed"])(
+    "ambiguous group title evidence ignores a body key on %s",
+    async (retriever) => {
+      const graphics = [
+        { key: "opengl", aliases: [["open", "graphics", "library"]] },
+        {
+          key: "opengles",
+          aliases: [
+            ["opengl", "embedded", "systems"],
+            ["open", "graphics", "library", "embedded", "systems"],
+          ],
+        },
+      ];
+      const family = [
+        { key: "oauth", aliases: [["open", "authorization"]] },
+        { key: "osi", aliases: [["open", "systems", "interconnection"]] },
+        ...graphics,
+      ];
+      const docs = [
+        { id: "osi-title", title: "OSI Model", body: "seven layers" },
+        { id: "osi-mixed", title: "OSI Model", body: "seven layers compared to oauth" },
+        { id: "body-word", title: "Knowledge Graph", body: "open source data" },
+        { id: "body-only", title: "Notes", body: "open commentary about oauth" },
+      ];
+      const build = retriever === "indexed" ? compiledEngine : (rows, entries) => engine(rows, entries, { retriever });
+      const e = await build(docs, family);
+      const open = e._prepareQuery("open");
+      expect(open.configuredSequenceIntent).toBeNull();
+      expect(open.configuredPrefixRecall).toBeNull();
+      expect(open.equivalentRecall || []).toEqual([]);
+      expect(open.concepts.some((row) => row.kind === "configured-concept")).toBe(false);
+
+      const detailed = e.searchDetailed("open", { limit: 10, relatedLimit: 0, explain: true });
+      const byId = Object.fromEntries(detailed.results.map((row) => [row.id, row]));
+      const title = byId["osi-title"];
+      const mixed = byId["osi-mixed"];
+      const bodyWord = byId["body-word"];
+      const bodyOnly = byId["body-only"];
+      expect(title).toBeTruthy();
+      expect(mixed).toBeTruthy();
+      expect(bodyWord).toBeTruthy();
+      expect(bodyOnly).toBeTruthy();
+      expect(mixed.score).toBe(title.score);
+      expect(mixed.features.configuredPrefixRecallScore).toBe(title.features.configuredPrefixRecallScore);
+      expect(title.score).toBeGreaterThan(bodyWord.score);
+      expect(title.rank).toBeLessThan(bodyWord.rank);
+      expect(title.features.configuredConceptMatch).not.toBe("key-in-title");
+      expect(mixed.features.configuredConceptMatch).not.toBe("key-in-title");
+      expect(mixed.directClass).not.toBe("strong");
+      expect(bodyOnly.features.configuredPrefixRecallScore).toBe(0);
+      expect(bodyOnly.features.configuredConceptMatch).not.toBe("key-in-title");
+      expect(bodyOnly.score).toBeLessThan(title.score);
+      const searched = e.search("open", { limit: 10, relatedLimit: 0 }).map((row) => row.id);
+      expect(searched.indexOf("osi-mixed")).toBe(detailed.results.findIndex((row) => row.id === "osi-mixed"));
+
+      const titleConcept = { key: "oaa", aliases: [["open", "alpha"]] };
+      const bodyConcept = { key: "obb", aliases: [["open", "beta"]] };
+      const equalDocs = [
+        { id: "title-only", title: "OAA Protocol", body: "plain notes" },
+        { id: "mixed", title: "OAA Protocol", body: "compared with obb" },
+        { id: "body-word", title: "Knowledge Graph", body: "open source data" },
+        { id: "body-only", title: "Notes", body: "open commentary about obb" },
+      ];
+      const scores = [];
+      for (const order of [
+        [titleConcept, bodyConcept],
+        [bodyConcept, titleConcept],
+      ]) {
+        const ordered = await build(equalDocs, [...order, ...graphics]);
+        const result = ordered.searchDetailed("open", { limit: 10, relatedLimit: 0, explain: true });
+        const row = Object.fromEntries(result.results.map((hit) => [hit.id, hit]));
+        expect(row.mixed.score).toBe(row["title-only"].score);
+        expect(row.mixed.score).toBeGreaterThan(row["body-word"].score);
+        expect(row["body-only"].features.configuredPrefixRecallScore).toBe(0);
+        expect(row["body-only"].features.configuredConceptMatch).not.toBe("key-in-title");
+        expect(row.mixed.features.configuredConceptMatch).not.toBe("key-in-title");
+        scores.push(row.mixed.score);
+      }
+      expect(scores[0]).toBe(scores[1]);
+    }
+  );
+
+  test("unique key prefix of open consumes the term and drops ordinary body matches", async () => {
+    // Diagnostic for the original three-concept fixture, where `open` is a
+    // unique incomplete prefix of the key `opengl`. Unmodified 0.6.9 already
+    // attaches that key as partial-form and does not mint the term `open`, so
+    // a body occurrence of the word is not retrieved. A title that prefixes
+    // the typed token still matches. Ambiguous key prefixes stay in the test above.
+    const family = [
+      { key: "oauth", aliases: [["open", "authorization"]] },
+      { key: "osi", aliases: [["open", "systems", "interconnection"]] },
+      { key: "opengl", aliases: [["open", "graphics", "library"]] },
+    ];
+    const docs = [
+      { id: "title-word", title: "Open Standards", body: "formats" },
+      { id: "oauth-title", title: "SAML vs OAuth", body: "opens the door to token replay" },
+      { id: "osi-title", title: "OSI Model", body: "seven layers" },
+      { id: "oauth-body", title: "Bearer Token", body: "associated with oauth access tokens" },
+      { id: "body-word", title: "Knowledge Graph", body: "open source data in an open world" },
+    ];
+    const e = await engine(docs, family);
+    const open = e._prepareQuery("open");
+    expect(open.concepts.map((row) => ({ id: row.id, kind: row.kind, provenance: row.provenance }))).toEqual([
+      { id: "opengl", kind: "configured-concept", provenance: "partial-form" },
+    ]);
+    expect(open.concepts[0].formCoverage).toBe(0.6667);
+    expect(open.configuredSequenceIntent).toBeNull();
+    expect(open.configuredPrefixRecall).toBeNull();
+
+    const detailed = e.searchDetailed("open", { limit: 10, relatedLimit: 0, explain: true });
+    const ids = detailed.results.map((row) => row.id);
+    expect(ids).not.toContain("body-word");
+    expect(ids).not.toContain("oauth-body");
+    expect(ids[0]).toBe("title-word");
+    const title = detailed.results[0];
+    expect(title.retrievalSources).toEqual(expect.arrayContaining(["title-prefix", "title-token-prefix"]));
+    expect(title.directClass).toBe("moderate");
+    for (const row of detailed.results.slice(1)) expect(row.rank).toBeGreaterThan(title.rank);
   });
 
   test("ambiguous group with no title-key hits keeps ordinary lexical", async () => {

@@ -139,9 +139,20 @@ function assertScenarioCase(engine, row) {
     expect(hits[0]?.id).toBe(row.exactFirstId);
   }
   for (const req of row.requiredWithin || []) {
-    const idx = indexOfTitle(titles, req.title);
+    const idx = req.id
+      ? hits.findIndex((hit) => hit.id === req.id)
+      : indexOfTitle(titles, req.title);
     expect(idx).toBeGreaterThanOrEqual(0);
     expect(idx + 1).toBeLessThanOrEqual(req.topN);
+    if (req.id && req.title) expect(hits[idx].title).toBe(req.title);
+  }
+  if (row.ambiguousExactFirstKeys) {
+    const prepared = engine._prepareQuery(row.query);
+    expect(prepared.configuredSequenceIntent).toBeNull();
+    expect(prepared.configuredPrefixRecall ?? null).toBeNull();
+    expect(prepared.concepts.some((concept) => concept.kind === "configured-concept")).toBe(false);
+    const keys = (prepared.configuredPrefixRecallGroup || []).map((group) => group.key);
+    for (const key of row.ambiguousExactFirstKeys) expect(keys).toContain(key);
   }
   for (const req of row.requiredAnyWithin || []) {
     const idx = indexOfTitle(titles, req.title);
@@ -214,7 +225,7 @@ describe("software-land corpus fixture", () => {
     expect(manifest.description).toMatch(/not default package policy/i);
     expect(manifest.scenarioCount).toBe(224);
     expect(manifest.historicalScenarioCount).toBe(223);
-    expect(manifest.executableV2ScenarioCount).toBe(99);
+    expect(manifest.executableV2ScenarioCount).toBe(102);
     expect(manifest.executableRegressionCount).toBe(60);
     expect(manifest.omittedV1OnlyCount).toBe(133);
     expect(manifest.omittedEmptyIntentCount).toBe(51);
@@ -223,21 +234,33 @@ describe("software-land corpus fixture", () => {
       "tests/search-scenarios.js",
       "tests/search-v2-contracts.js",
     ]);
-    expect(contracts.cases).toHaveLength(99);
+    expect(contracts.cases).toHaveLength(102);
     expect(regressions.cases).toHaveLength(60);
-    expect(regressions.overlayCases).toHaveLength(1);
+    expect(regressions.overlayCases).toHaveLength(4);
     expect(historical.rows).toHaveLength(223);
     expect(historical.kind).toBe("historical-relevance-contracts");
     expect(historical.counts.historicalRelevanceApplicable).toBe(222);
-    expect(index.counts.executableContracts).toBe(99);
+    expect(index.counts.executableContracts).toBe(102);
     expect(index.counts.executableRegressions).toBe(60);
     expect(index.counts.sourceScenarioRows).toBe(224);
     expect(index.counts.historicalRows).toBe(223);
     expect(index.counts.omittedOverlayOwned).toBe(1);
     expect(historical.rows.some((row) => row.query === "integ")).toBe(false);
     expect(contracts.cases.some((row) => row.query === "integ")).toBe(false);
-    expect(regressions.overlayCases.map((row) => row.query)).toEqual(["integ"]);
+    expect(regressions.overlayCases.map((row) => row.query)).toEqual([
+      "integ",
+      "open",
+      "oauth",
+      "open authorization",
+    ]);
     expect(regressions.overlayCases[0].exactFirst).toBe("Integrity Is Not Obedience");
+    const open = regressions.overlayCases.find((row) => row.query === "open");
+    expect(open.exactFirst).toBeUndefined();
+    expect(open.requiredWithin).toEqual([{ id: "7", title: "SAML vs OAuth", topN: SEARCH_LIMIT }]);
+    expect(open.ambiguousExactFirstKeys).toEqual(expect.arrayContaining(["opengl", "opengles"]));
+    expect(configuredConcepts.filter((row) => open.ambiguousExactFirstKeys.includes(row.key)).map((row) => row.key).sort()).toEqual(
+      [...open.ambiguousExactFirstKeys].sort()
+    );
   });
 
   test("fixture README states site data is not Core policy", () => {
@@ -382,7 +405,7 @@ describe("software-land candidate-stage survival", () => {
   test("full-scan retains contract and regression targets before ranking", () => {
     const contractStats = measureCandidateSurvival(fullScan, contracts.cases);
     const regressionStats = measureCandidateSurvival(fullScan, regressions.cases);
-    expect(contractStats.n).toBe(99);
+    expect(contractStats.n).toBe(102);
     expect(regressionStats.n).toBe(60);
     expect(contractStats.missing).toEqual([]);
     expect(regressionStats.missing).toEqual([]);

@@ -705,6 +705,8 @@ function collectPrefixRecallCandidates(
  * fail-closed (no occupancy, no single `configuredPrefixRecall`). Retrieval may
  * still keep every matching key as weak key-only evidence so the query does
  * not fall through to untyped body-prefix spray.
+ * An exact first token shared by several concepts is the same kind of group:
+ * partial key evidence, not occupancy and not a single configured concept.
  */
 export function resolveConfiguredPrefixRecallGroup(
   tokens: QueryToken[],
@@ -714,6 +716,14 @@ export function resolveConfiguredPrefixRecallGroup(
   const { oneToken, candidates } = collectPrefixRecallCandidates(tokens, configured);
   if (!oneToken || !candidates.length) return [];
   if (uniquePrefixRecallResolution(candidates, configured, true)) return [];
+  // A completed first word shared by several expansions is partial evidence for
+  // every matching concept. It does not occupy, and it does not compete with
+  // the proper-prefix group used for incomplete stubs (`appl`, `hypertex`).
+  const exactFirst = candidates.filter((hit) => hit.exactCount > 0 && hit.lastExact);
+  const exactPerConcept = bestPrefixRecallPerConcept(exactFirst);
+  if (exactPerConcept.length >= 2) {
+    return exactPerConcept.map((hit) => toConfiguredPrefixRecall(hit, configured));
+  }
   const proper = candidates.filter((hit) => hit.exactCount === 0 && !hit.lastExact);
   const perConcept = bestPrefixRecallPerConcept(proper);
   if (perConcept.length < 2) return [];
@@ -828,8 +838,9 @@ export function dropConfiguredPrefixRecallTrailingStop(
 /**
  * Unoccupied unique configured-form prefix/completion evidence.
  * Does not occupy, rewrite tokens, or attach a configured-concept.
- * One-token queries fail closed when the exact first token belongs to more
- * than one concept. A one-token proper prefix of a unique first form token is
+ * One-token queries do not occupy when the exact first token belongs to more
+ * than one concept; that case is an ambiguous prefix-recall group, not a
+ * unique concept. A one-token proper prefix of a unique first form token is
  * graded recall, never occupancy; its evidence is weaker than the completed
  * exact first token. Same-concept forms keep the strongest evidence (a longer
  * authored form must not reduce a shorter matching form). Distinct concepts

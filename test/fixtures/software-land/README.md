@@ -28,8 +28,8 @@ They must never become Core defaults.
 | `@software-land/search` | `0.6.0` (declared dependency at `corpusSourceCommit`; prior freeze `0.3.1` at `dff24cf`. Not the 0.5.0 relevance overlay, and not the current OSS package version.) |
 | Documents | 123 |
 | Configured concepts | 192 (`dff24cf` snapshot 180 including `testing`, plus 12 later `acronymMap.js` graphics/FPS concepts from Software.Land `df852eb4136dc5fb5b23cbf0bc22d45170e71423`) |
-| Source scenarios | `tests/search-scenarios.js` (224 product rows; OSS historical mirror is 223, excluding overlay-owned `integ`) + `tests/search-v2-contracts.js` (16) |
-| Strict V2 contracts | 99 (`v2-contracts.json`) |
+| Source scenarios | `tests/search-scenarios.js` (224 product rows; OSS historical mirror is 223, excluding overlay-owned `integ`) + `tests/search-v2-contracts.js` (19) |
+| Strict V2 contracts | 102 (`v2-contracts.json`) |
 | B-intent regressions | 60 (`regression-scenarios.json`, compatibility coverage, not Core policy) |
 | Historical inventory | complete 223-row OSS historical mirror (`historical-scenarios.json`, excluding overlay-owned `integ`); 222 executable relevance contracts |
 | V2 vs V1 historical top-N | `v1-historical-topn-contract.json` — OSS-mirrored Software.Land V1 historical contract (`expectedTop`/`titlePrefix`/`topN`) executed on V2 (`test/software-land-v1-contract-on-v2.test.js`). Not the 320-suite mix and not a V1 engine test. |

@@ -153,14 +153,14 @@ test("Software.Land historical, v1, v2, and regression fused eligibility/exactne
   expect(aggregate.primitiveMismatches).toBe(0);
   expect(aggregate.scoreMismatches).toBe(0);
   expect(totals.unique).toMatchObject({
-    queries: 197,
-    eligible: 92,
-    ineligible: 105,
-    candidates: 1558,
+    queries: 199,
+    eligible: 90,
+    ineligible: 109,
+    candidates: 1511,
     primitiveMismatches: 0,
     scoreMismatches: 0,
   });
-  expect(queryAudit.size).toBe(197);
+  expect(queryAudit.size).toBe(199);
   // eslint-disable-next-line no-console
   console.log(JSON.stringify({ rankingEvidenceSoftwareLand: { totals, aggregate } }));
 }, 300_000);

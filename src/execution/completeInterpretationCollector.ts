@@ -158,7 +158,10 @@ function suppressAmbiguousUnigramBodyPrefix(query?: AnalyzedQuery): boolean {
     if (!DEFAULT_STOP.has(String(tok.normalized || ""))) content += 1;
   }
   if (content !== 1) return false;
-  return configured.weakRecall?.ambiguity === "group";
+  if (configured.weakRecall?.ambiguity !== "group") return false;
+  // Exact shared first tokens (`open`, `hypertext`) keep ordinary lexical hits.
+  // Incomplete stubs (`appl`, `hypertex`) still suppress body-prefix spray.
+  return configured.weakRecall.candidates.every((row) => (row.exactCount || 0) === 0 && !row.lastExact);
 }
 
 export function applyCompleteInterpretationCollector(

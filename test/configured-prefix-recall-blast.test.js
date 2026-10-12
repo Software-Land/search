@@ -135,10 +135,13 @@ describe("Software.Land configured-prefix blast", () => {
         const prefixOnlyHit =
           sources.length === 1 && sources[0] === "configured-prefix-recall";
         const prefixScore = Number(row.features?.configuredPrefixRecallScore) || 0;
-        if (!prefixOnlyHit && prefixScore) {
+        const exactFirstTitle =
+          (q.configuredPrefixRecallGroup || []).some((row) => (row.exactCount || 0) > 0 && row.lastExact) &&
+          sources.includes("configured-prefix-recall");
+        if (!prefixOnlyHit && prefixScore && !exactFirstTitle) {
           throw new Error(`prefix score leaked onto lexical hit for ${JSON.stringify(raw)} id=${row.id}`);
         }
-        if (prefixOnlyHit && row.directClass !== "none" && prefixScore) {
+        if (prefixOnlyHit && row.directClass !== "none" && prefixScore && !exactFirstTitle) {
           throw new Error(`prefix score stacked on classed key-only hit for ${JSON.stringify(raw)} id=${row.id} class=${row.directClass}`);
         }
       }
