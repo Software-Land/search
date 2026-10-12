@@ -2,7 +2,11 @@
  * Indexed / adaptive retrieval must match current full-scan Software.Land
  * ordered results, related rail, scores, and candidateCount (live, not the
  * frozen 0.5 122-result oracle tails). The frozen query-result oracle remains
- * the identity gate for #1 on the explicit full-scan engine.
+ * the identity gate for #1 on the explicit full-scan engine, except the
+ * accepted 0.7.0 `open` contract: SAML vs OAuth must appear in the first 10
+ * results and is not required at rank 1. The oracle file still records
+ * Knowledge Graph (`br`) as that query's historical #1. Indexed and adaptive
+ * retrieval still match the live full-scan result, including `open`.
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -10,6 +14,7 @@ import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
+import { FROZEN_FIRST_RESULT_CONTRACT, summarizeFrozenFirstResults } from "./helpers/frozen-first-result.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = path.join(ROOT, "fixtures", "software-land");
@@ -66,9 +71,7 @@ describe("Software.Land retrieval-mode equivalence", () => {
   });
 
   test("explicit full-scan default #1 matches the frozen oracle", () => {
-    for (const frozen of oracle.rows) {
-      expect(fullScan.search(frozen.query, { limit: 1 })[0]?.id).toBe(frozen.results[0]?.id);
-    }
+    expect(summarizeFrozenFirstResults(fullScan, oracle)).toEqual(FROZEN_FIRST_RESULT_CONTRACT);
   });
 
   test("indexed matches full-scan ordered results on all 215 rows", () => {

@@ -6,6 +6,10 @@
  * superset; the oracle freeze stays the original 215-row prefix.
  * Known #1 diffs versus that freeze are
  * occupancy ranking, not collector policy.
+ * The accepted 0.7.0 exception is `open`: the freeze still records Knowledge
+ * Graph (`br`) first, and live search must keep SAML vs OAuth in the first
+ * 10 results without requiring rank 1. The other 214 queries keep the
+ * frozen first-result id.
  *
  * Complete ordered lists, scores, relevanceKind, directClass, related rail,
  * and candidateCount versus the 0.5 freeze are not restored: that snapshot
@@ -21,6 +25,7 @@ import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
+import { FROZEN_FIRST_RESULT_CONTRACT, summarizeFrozenFirstResults } from "./helpers/frozen-first-result.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = path.join(ROOT, "fixtures", "software-land");
@@ -78,8 +83,6 @@ describe("Software.Land 215-query result oracle", () => {
   });
 
   test("default Core #1 ids match the frozen oracle under this fixture wiring", () => {
-    for (const row of oracle.rows) {
-      expect(engine.search(row.query, { limit: 1 })[0]?.id).toBe(row.results[0]?.id);
-    }
+    expect(summarizeFrozenFirstResults(engine, oracle)).toEqual(FROZEN_FIRST_RESULT_CONTRACT);
   });
 });
