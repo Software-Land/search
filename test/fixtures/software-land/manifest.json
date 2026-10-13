@@ -30,24 +30,24 @@
       "sha256": "1eeb512956c908c9fe8b7d856e386ff8b5d5ded0db1ac069b819870697ef1c9a"
     },
     "scenarios.json": {
-      "bytes": 2267,
-      "sha256": "3e5d7d782b70c9528313be695647519420aa3c47c7131cd0aeaa561eedb9af5e"
+      "bytes": 2385,
+      "sha256": "f1f8e543bda6455786edd76aac139f79966eae0e126c39c2b8ed65fe93f902ee"
     },
     "v2-contracts.json": {
-      "bytes": 38368,
-      "sha256": "758508d528757774c802ebea4c44fc32035d22f08b49b99ef11a79be4abfe2ab"
+      "bytes": 39074,
+      "sha256": "1560d8ba3fe2951b4ed438ba7f777b24ddc35abdc4077d4a938346c96fc6260d"
     },
     "regression-scenarios.json": {
-      "bytes": 24688,
-      "sha256": "3300d56207d48b5727c7027770391b6fb8545287adec11ab9bf75ca772ecb16c"
+      "bytes": 25849,
+      "sha256": "7cbfe66e51f9336911e81da6da9c08ef8428cb9525c624bc35629e5f57cc0754"
     },
     "historical-scenarios.json": {
-      "bytes": 149959,
-      "sha256": "44b122ad96a53549f50fe1553b74ff8e0374cb482a4137c2d420c0930c40d6b6"
+      "bytes": 150016,
+      "sha256": "0099f83d339f163735a7ed14778ee178f96f9a64756d17d0a756a623aef577dd"
     },
     "relevance-config.json": {
-      "bytes": 1415,
-      "sha256": "ace7bb5d09b1f51377d8f02517aee934a5b63c8f2c4dc6448024e3e921474c57"
+      "bytes": 1446,
+      "sha256": "abfc2710777e76514114e136e41af729c1d33519f78ab2258b432baeadb64b11"
     },
     "synonym-map.json": {
       "bytes": 6165,
@@ -76,5 +76,6 @@
   ],
   "executableRegressionCount": 60,
   "historicalScenarioCount": 223,
-  "omittedEmptyIntentCount": 51
+  "omittedEmptyIntentCount": 51,
+  "strictV2ContractSupplementCommit": "0a8b33b7604b61e75e03a55b9c1e59d8571a3e19"
 }

@@ -212,6 +212,7 @@ describe("software-land corpus fixture", () => {
     expect(manifest.version).toBe(1);
     expect(manifest.corpusSourceCommit).toBe("971012bf3d561a67ca8a20f03ec2128135d1fb87");
     expect(manifest.scenarioSourceCommit).toBe("e4507c54451814fcafb9598640bd2323faacefa5");
+    expect(manifest.strictV2ContractSupplementCommit).toBe("0a8b33b7604b61e75e03a55b9c1e59d8571a3e19");
     expect(manifest.softwareLandCommit).toBeUndefined();
     expect(manifest.relevanceSoftwareLandCommit).toBe("db5a070dbc6ac112dfae403f38fdfd0fffbedbf6");
     expect(manifest.dictionaryAcronymMapSoftwareLandCommit).toBe(
@@ -271,6 +272,8 @@ describe("software-land corpus fixture", () => {
     expect(readme).toContain("dff24cf606967cb50b24d28d9142747c9203e053");
     expect(readme).toContain("3ad49e867f82db06aa06cd1c7f38dca8faecf246");
     expect(readme).toContain("e4507c54451814fcafb9598640bd2323faacefa5");
+    expect(readme).toContain("0a8b33b7604b61e75e03a55b9c1e59d8571a3e19");
+    expect(readme).toContain("62c51bad060fea9627f06c752341ea7434f86e46");
     expect(readme).toContain("eac7a90a15d772f0f0626a0fa9481eb9efa55521");
     expect(readme).toContain("db5a070dbc6ac112dfae403f38fdfd0fffbedbf6");
     expect(readme).toContain("df852eb4136dc5fb5b23cbf0bc22d45170e71423");
@@ -284,6 +287,17 @@ describe("software-land corpus fixture", () => {
     expect(buf.byteLength).toBe(rec.bytes);
     expect(createHash("sha256").update(buf).digest("hex")).toBe(rec.sha256);
     expect(rec.sha256).toBe("d0a4e72b54d7431233d5ebc7c9608c88922ddbeeabc52bfdb0a6015fef2f85f5");
+  });
+
+  test("every recorded fixture file matches its manifest size and checksum", () => {
+    const names = Object.keys(manifest.files);
+    expect(names.length).toBeGreaterThan(0);
+    for (const name of names) {
+      const rec = manifest.files[name];
+      const buf = readFileSync(path.join(FIXTURE, name));
+      expect(buf.byteLength).toBe(rec.bytes);
+      expect(createHash("sha256").update(buf).digest("hex")).toBe(rec.sha256);
+    }
   });
 
   test("historical inventory keeps intent-mining dispositions and marks relevance applicability", () => {

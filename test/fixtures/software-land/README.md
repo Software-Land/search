@@ -24,14 +24,15 @@ They must never become Core defaults.
 | Fixture format | `software-land-search-fixture` v1 (`manifest.json`) |
 | Corpus source commit | `971012bf3d561a67ca8a20f03ec2128135d1fb87` (prior freeze `dff24cf606967cb50b24d28d9142747c9203e053`) |
 | Dictionary acronym-map overlay | `df852eb4136dc5fb5b23cbf0bc22d45170e71423` (`dictionaryAcronymMapSoftwareLandCommit`; `src/search/acronymMap.js`) |
-| Scenario source commit | `e4507c54451814fcafb9598640bd2323faacefa5` |
+| Scenario source commit | `e4507c54451814fcafb9598640bd2323faacefa5` (`tests/search-scenarios.js`, 224 product rows; `tests/search-v2-contracts.js` then had 16 queries) |
+| Strict V2 contract supplement | `0a8b33b7604b61e75e03a55b9c1e59d8571a3e19` (`strictV2ContractSupplementCommit`; `tests/search-v2-contracts.js` grew from 16 to 19 by adding `open`, `oauth`, and `open authorization`. Do not mine historical scenarios from this commit.) |
 | `@software-land/search` | `0.6.0` (declared dependency at `corpusSourceCommit`; prior freeze `0.3.1` at `dff24cf`. Not the 0.5.0 relevance overlay, and not the current OSS package version.) |
 | Documents | 123 |
 | Configured concepts | 192 (`dff24cf` snapshot 180 including `testing`, plus 12 later `acronymMap.js` graphics/FPS concepts from Software.Land `df852eb4136dc5fb5b23cbf0bc22d45170e71423`) |
-| Source scenarios | `tests/search-scenarios.js` (224 product rows; OSS historical mirror is 223, excluding overlay-owned `integ`) + `tests/search-v2-contracts.js` (19) |
+| Source scenarios | `tests/search-scenarios.js` at the scenario SHA (224 product rows; OSS historical mirror is 223, excluding historical exclusion `integ`) + `tests/search-v2-contracts.js` at the supplement SHA (19) |
 | Strict V2 contracts | 102 (`v2-contracts.json`) |
 | B-intent regressions | 60 (`regression-scenarios.json`, compatibility coverage, not Core policy) |
-| Historical inventory | complete 223-row OSS historical mirror (`historical-scenarios.json`, excluding overlay-owned `integ`); 222 executable relevance contracts |
+| Historical inventory | complete 223-row OSS historical mirror (`historical-scenarios.json`, excluding historical exclusion `integ`, including obsolete `open`); 222 executable relevance contracts |
 | V2 vs V1 historical top-N | `v1-historical-topn-contract.json` — OSS-mirrored Software.Land V1 historical contract (`expectedTop`/`titlePrefix`/`topN`) executed on V2 (`test/software-land-v1-contract-on-v2.test.js`). Not the 320-suite mix and not a V1 engine test. |
 | Historical contract updates | `historical-contract-updates.json` (Software.Land `3ad49e867f82db06aa06cd1c7f38dca8faecf246`) |
 | Historical relevance config | `relevance-config.json` + `relationship-map.json` (authored equivalent + AppSec related; synonym-map.json remains the db5a070 provenance snapshot) |
@@ -45,8 +46,11 @@ Corpus artifacts come from a clean Software.Land worktree at
 `971012bf3d561a67ca8a20f03ec2128135d1fb87`. Document/lemma/lexical-frequency
 files were regenerated from that tree after `search:artifacts:compile` using
 `loadSoftwareLandDocuments` + `normalizeSearchBody`. Relationships remain the
-`dff24cf` compiled graph (Integrity has no relationship edges yet). Scenario policy remains the
+`dff24cf` compiled graph (Integrity has no relationship edges yet). Historical scenario policy remains the
 committed Software.Land tree at `e4507c54451814fcafb9598640bd2323faacefa5`.
+The three strict contracts `open`, `oauth`, and `open authorization` come from
+`0a8b33b7604b61e75e03a55b9c1e59d8571a3e19`, which also changes `tests/search-scenarios.js`;
+do not regenerate the historical inventory from that commit.
 Strict V2 contracts are A-class independent intent plus `SEARCH_V2_CONTRACTS`. Regression cases reuse recorded
 B-class independent intent as Software.Land compatibility coverage; they are
 **not Core ranking policy**. Historical `expectedTop` / `titlePrefix` / `topN`
@@ -79,8 +83,9 @@ are not mined into V2 intent/regression cases; they still participate in
 historical relevance when `expectedTop` or `titlePrefix` exist.
 
 Do not snapshot corpus artifacts from a dirty Software.Land worktree. Do not
-generate scenario fixtures from a dirty worktree; extract `tests/search-scenarios.js`
-and `tests/search-v2-contracts.js` from the committed scenario SHA.
+generate scenario fixtures from a dirty worktree. Extract `tests/search-scenarios.js`
+from the scenario SHA and `tests/search-v2-contracts.js` from the strict V2
+contract supplement SHA.
 
 ## Files
 
@@ -91,7 +96,7 @@ and `tests/search-v2-contracts.js` from the committed scenario SHA.
 - `lexical-frequency.json` — production lexical-frequency artifact
 - `v2-contracts.json` — strict accepted V2 cases (`kind: contract`)
 - `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy. Optional `overlayCases` are OSS-owned ranking regressions not mined from the scenario SHA.
-- `historical-scenarios.json` — complete 223-row OSS historical mirror (excluding overlay-owned queries); `v1.expectedTop`/`titlePrefix`/`topN` are executable historical relevance contracts
+- `historical-scenarios.json` — complete 223-row OSS historical mirror (excluding historical exclusion `integ`, including obsolete `open`); `v1.expectedTop`/`titlePrefix`/`topN` are executable historical relevance contracts
 - `historical-contract-updates.json` — old V1 vs accepted V2/product `expectedTop` for rows superseded by explicit product decisions
 - `relevance-config.json` — Software.Land 0.5 relevance-engine inputs (omit `testing`, patch NIST institute aliases, load relationshipMap)
 - `relationship-map.json` — authored directional `equivalent` / `related` edges for the historical engine
@@ -140,23 +145,29 @@ after `search:artifacts:compile`:
      --corpus-source-commit 971012bf3d561a67ca8a20f03ec2128135d1fb87
    ```
 
-Scenario files: extract policy sources from the committed scenario SHA (not a
-dirty worktree), then rebuild fixtures and provenance in `manifest.json` with
-the repo-only transform (no Gatsby, UI, or network):
+Scenario files: extract historical scenarios from the scenario SHA and strict
+V2 contracts from the supplement SHA (not a dirty worktree), then rebuild
+fixtures and provenance in `manifest.json` with the repo-only transform (no
+Gatsby, UI, or network). The replay keeps the 223-row inventory, including
+obsolete `open`, excludes only `integ`, preserves existing `overlayCases`, and
+keeps the accepted `what are apis` regression from
+`62c51bad060fea9627f06c752341ea7434f86e46` plus the TLS relationship
+`relevanceKind` `direct`:
 
 ```bash
 git -C /path/to/software.land show \
   e4507c54451814fcafb9598640bd2323faacefa5:tests/search-scenarios.js \
   > /tmp/search-scenarios.js
 git -C /path/to/software.land show \
-  e4507c54451814fcafb9598640bd2323faacefa5:tests/search-v2-contracts.js \
+  0a8b33b7604b61e75e03a55b9c1e59d8571a3e19:tests/search-v2-contracts.js \
   > /tmp/search-v2-contracts.js
 
 node scripts/software-land-scenarios.mjs \
   --scenarios /tmp/search-scenarios.js \
   --contracts /tmp/search-v2-contracts.js \
   --dir test/fixtures/software-land \
-  --manifest test/fixtures/software-land/manifest.json
+  --manifest test/fixtures/software-land/manifest.json \
+  --strict-v2-contract-supplement-commit 0a8b33b7604b61e75e03a55b9c1e59d8571a3e19
 ```
 
 Copy `synonym-map.json` from Software.Land live `LIVE_SEARCH_EQUIVALENCE_MAP` at the recorded

@@ -3,11 +3,11 @@
     "Software.Land-derived realistic integration test data. It is not default package policy.",
     "v2-contracts.json is the strict accepted V2 contract set.",
     "regression-scenarios.json is B-class independent-intent compatibility coverage, not Core ranking policy.",
-    "historical-scenarios.json is the OSS historical inventory (source rows minus overlay-owned queries). v1.expectedTop/titlePrefix/topN are executable historical relevance contracts (membership within topN).",
+    "historical-scenarios.json is the OSS historical inventory (source rows minus historical exclusions; currently integ). v1.expectedTop/titlePrefix/topN are executable historical relevance contracts (membership within topN).",
     "disposition describes V2-intent mining, not relevance-suite inclusion. Classification C is omitted from relevance.",
     "V2 intent contracts do not replace historical expectedTop.",
     "Empty-intent rows are not mined into V2 intent/regression cases.",
-    "overlayCases queries are OSS-owned and are not mined into historical or V2 contracts."
+    "integ is the historical exclusion and is not mined into V2 contracts. Supplementary regression overlays stay in the historical inventory."
   ],
   "source": {
     "files": [
@@ -47,6 +47,6 @@
   "files": {
     "v2-contracts.json": "Strict accepted V2 cases (kind: contract).",
     "regression-scenarios.json": "B-intent regression/reference cases (kind: regression).",
-    "historical-scenarios.json": "OSS historical inventory; expectedTop/titlePrefix are executable historical relevance contracts. overlayCases queries are omitted."
+    "historical-scenarios.json": "OSS historical inventory; expectedTop/titlePrefix are executable historical relevance contracts. Historical exclusion integ is omitted. Supplementary regression overlays are not."
   }
 }

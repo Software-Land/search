@@ -9,13 +9,15 @@
  *   regression-scenarios.json  B-class independent intent, compatibility coverage only.
  *                              Existing overlayCases are preserved and are not
  *                              mined from the source SHA.
- *   historical-scenarios.json  source rows except overlay-owned queries;
+ *   historical-scenarios.json  source rows except historical exclusions;
  *                              v1.expectedTop/titlePrefix are executable historical
  *                              relevance contracts (membership within topN).
  *                              disposition is V2-intent mining provenance.
- *                              overlayCases queries (currently `integ`) stay
- *                              OSS-owned because the frozen corpus still has the
- *                              old Integrity title.
+ *                              `integ` is the historical exclusion: the frozen
+ *                              corpus still has the old Integrity title.
+ *                              Supplementary regression overlays (`open`,
+ *                              `oauth`, `open authorization`) stay in the
+ *                              inventory and are not historical exclusions.
  *   scenarios.json             index + counts
  *
  * V1 expectedTop is the historical relevance contract. It is not a V2 intent
@@ -27,13 +29,13 @@
  * provenance from scripts/software-land-corpus-manifest.mjs.
  */
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const TLS_RELATIONSHIP_EVIDENCE = {
   title: "What is VPN?",
-  relevanceKind: "related",
+  relevanceKind: "direct",
   type: "editorial",
   provenance: "manual",
   sourceTitle: "TLS 1.2 Vulnerability",
@@ -41,6 +43,31 @@ const TLS_RELATIONSHIP_EVIDENCE = {
 
 /** Recorded B intent that current fixture V2 does not satisfy as #1. */
 const B_INTENT_NOT_CURRENT_V2 = new Set(["what is an appli"]);
+
+/**
+ * Accepted regression bodies that the historical scenario SHA does not contain.
+ * `what are apis` was reconciled in 62c51bad060fea9627f06c752341ea7434f86e46:
+ * the scenario SHA only requires "Working with APIs" at top 1.
+ */
+const ACCEPTED_REGRESSION_RECONCILIATIONS = new Map([
+  [
+    "what are apis",
+    {
+      requiredWithin: [
+        { title: "What is an API?", topN: 1 },
+        { title: "Working with APIs", topN: 2 },
+        { title: "REST API vs GraphQL", topN: 3 },
+      ],
+      exactFirst: "What is an API?",
+    },
+  ],
+]);
+
+/**
+ * Queries omitted from the historical inventory. Supplementary regression
+ * overlays are extra OSS coverage and must not drop historical rows.
+ */
+const HISTORICAL_EXCLUSION_QUERIES = new Set(["integ"]);
 
 function parseArgs(argv) {
   const out = {};
@@ -193,7 +220,8 @@ function usage() {
     --scenarios /path/to/tests/search-scenarios.js \\
     --contracts /path/to/tests/search-v2-contracts.js \\
     --dir test/fixtures/software-land \\
-    [--manifest test/fixtures/software-land/manifest.json]`;
+    [--manifest test/fixtures/software-land/manifest.json] \\
+    [--strict-v2-contract-supplement-commit <sha>]`;
 }
 
 const args = parseArgs(process.argv.slice(2));
@@ -246,6 +274,10 @@ function isOverlayOwnedQuery(query) {
   return overlayOwnedQueries.has(String(query || "").trim());
 }
 
+function isHistoricalExclusion(query) {
+  return HISTORICAL_EXCLUSION_QUERIES.has(String(query || "").trim());
+}
+
 const usedNames = new Set();
 
 const contractCases = [];
@@ -275,6 +307,8 @@ for (const scenario of scenarios) {
   if (isOverlayOwnedQuery(scenario.query)) continue;
   if (B_INTENT_NOT_CURRENT_V2.has(scenario.query)) continue;
   const row = fromIntent(scenario, "regression", "scenario");
+  const reconciled = ACCEPTED_REGRESSION_RECONCILIATIONS.get(row.query);
+  if (reconciled) Object.assign(row, reconciled);
   const key = executableKey(row);
   if (seenRegression.has(key)) continue;
   seenRegression.add(key);
@@ -285,7 +319,7 @@ for (const scenario of scenarios) {
 const seenAIntent = new Set();
 const seenBIntent = new Set();
 const historical = scenarios
-  .filter((scenario) => !isOverlayOwnedQuery(scenario.query))
+  .filter((scenario) => !isHistoricalExclusion(scenario.query))
   .map((scenario, index) => {
   const classification = scenarioClassification(scenario);
   const independent = hasEngineIndependentIntent(scenario);
@@ -359,7 +393,7 @@ const counts = {
   omittedDuplicateA: dispositionCounts["omitted-duplicate-a-intent"] || 0,
   omittedDuplicateB: dispositionCounts["omitted-duplicate-b-intent"] || 0,
   omittedBrowserUiOnly: 1,
-  omittedOverlayOwned: scenarios.filter((scenario) => isOverlayOwnedQuery(scenario.query)).length,
+  omittedOverlayOwned: scenarios.filter((scenario) => isHistoricalExclusion(scenario.query)).length,
 };
 
 const indexPayload = {
@@ -367,11 +401,11 @@ const indexPayload = {
     "Software.Land-derived realistic integration test data. It is not default package policy.",
     "v2-contracts.json is the strict accepted V2 contract set.",
     "regression-scenarios.json is B-class independent-intent compatibility coverage, not Core ranking policy.",
-    "historical-scenarios.json is the OSS historical inventory (source rows minus overlay-owned queries). v1.expectedTop/titlePrefix/topN are executable historical relevance contracts (membership within topN).",
+    "historical-scenarios.json is the OSS historical inventory (source rows minus historical exclusions; currently integ). v1.expectedTop/titlePrefix/topN are executable historical relevance contracts (membership within topN).",
     "disposition describes V2-intent mining, not relevance-suite inclusion. Classification C is omitted from relevance.",
     "V2 intent contracts do not replace historical expectedTop.",
     "Empty-intent rows are not mined into V2 intent/regression cases.",
-    "overlayCases queries are OSS-owned and are not mined into historical or V2 contracts.",
+    "integ is the historical exclusion and is not mined into V2 contracts. Supplementary regression overlays stay in the historical inventory.",
   ],
   source: {
     files: ["tests/search-scenarios.js", "tests/search-v2-contracts.js"],
@@ -382,7 +416,7 @@ const indexPayload = {
   files: {
     "v2-contracts.json": "Strict accepted V2 cases (kind: contract).",
     "regression-scenarios.json": "B-intent regression/reference cases (kind: regression).",
-    "historical-scenarios.json": "OSS historical inventory; expectedTop/titlePrefix are executable historical relevance contracts. overlayCases queries are omitted.",
+    "historical-scenarios.json": "OSS historical inventory; expectedTop/titlePrefix are executable historical relevance contracts. Historical exclusion integ is omitted. Supplementary regression overlays are not.",
   },
 };
 
@@ -415,7 +449,7 @@ const historicalPayload = {
     "v1.expectedTop / titlePrefix / topN are executable historical relevance contracts (membership within topN, not exact order).",
     "classification C is omitted from the relevance suite (obsolete).",
     "All other rows with expectedTop or titlePrefix participate. Failures are not silently excluded.",
-    "Queries owned by overlayCases are omitted; they are OSS ranking regressions for frozen-corpus titles and are not mined from the source SHA.",
+    "integ is omitted: it is an OSS ranking regression for the frozen-corpus Integrity title and is not mined from the source SHA. Supplementary regression overlays such as open stay in this inventory.",
     "disposition describes V2-intent mining into v2-contracts.json / regression-scenarios.json, not relevance-suite inclusion.",
   ],
   counts: {
@@ -432,7 +466,7 @@ function withOverlayCases(payload, overlayCases) {
     ? payload.notes
     : [
         ...payload.notes,
-        "overlayCases are OSS-owned ranking regressions that are not mined from the frozen scenario SHA.",
+        "overlayCases are OSS-owned ranking regressions that are not mined from the frozen scenario SHA. Not Core ranking policy.",
       ];
   return {
     ...payload,
@@ -462,6 +496,9 @@ if (args.manifest) {
   manifest.omittedEmptyIntentCount = counts.omittedEmptyIntent;
   manifest.omittedBrowserUiOnlyCount = 1;
   manifest.sourceScenarioFiles = ["tests/search-scenarios.js", "tests/search-v2-contracts.js"];
+  if (args["strict-v2-contract-supplement-commit"]) {
+    manifest.strictV2ContractSupplementCommit = args["strict-v2-contract-supplement-commit"];
+  }
   manifest.files = manifest.files || {};
   for (const [name, filePath] of Object.entries({
     "scenarios.json": paths.index,
@@ -469,6 +506,11 @@ if (args.manifest) {
     "regression-scenarios.json": paths.regressions,
     "historical-scenarios.json": paths.historical,
   })) {
+    manifest.files[name] = sha256Bytes(filePath);
+  }
+  for (const name of Object.keys(manifest.files)) {
+    const filePath = path.join(dir, name);
+    if (!existsSync(filePath)) continue;
     manifest.files[name] = sha256Bytes(filePath);
   }
   writeJson(args.manifest, manifest);

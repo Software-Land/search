@@ -901,7 +901,13 @@
           "topN": 10
         }
       ],
-      "ambiguousExactFirstKeys": ["oauth", "osi", "oci", "opengl", "opengles"],
+      "ambiguousExactFirstKeys": [
+        "oauth",
+        "osi",
+        "oci",
+        "opengl",
+        "opengles"
+      ],
       "name": "regression · overlay · open · SAML vs OAuth within 10"
     },
     {
