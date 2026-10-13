@@ -106,15 +106,8 @@
       "disposition": "contract-a-intent",
       "note": "Executable strict V2 contract from A-class independent intent.",
       "intent": {
-        "requiredPrimary": [
-          "Testing in Software Engineering"
-        ],
-        "requiredWithin": [
-          {
-            "title": "Testing in Software Engineering",
-            "topN": 3
-          }
-        ],
+        "requiredPrimary": [],
+        "requiredWithin": [],
         "requiredAnyWithin": [
           {
             "title": "Load vs Stress Testing",
@@ -125,7 +118,6 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "Testing in Software Engineering",
           "Load vs Stress Testing"
         ],
         "topN": 2
@@ -2598,8 +2590,7 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "Load vs Stress Testing",
-          "Testing in Software Engineering"
+          "Load vs Stress Testing"
         ],
         "topN": 2
       }

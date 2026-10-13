@@ -17,7 +17,7 @@
       "reason": "classification C is obsolete; not enforced on V1 or V2 E2E"
     }
   ],
-  "sha256": "435f0dd66b4e32806e6c5d515538e52338cfb1cb2a32f2f72f9b9d205a39429e",
+  "sha256": "4a195cd6149c4fc680ad855ec59d94170b9397931ebfd378b67530e974cbb7de",
   "rows": [
     {
       "index": 0,
@@ -52,7 +52,6 @@
       "index": 3,
       "query": "testing",
       "expectedTop": [
-        "Testing in Software Engineering",
         "Load vs Stress Testing"
       ],
       "titlePrefix": null,
@@ -1076,8 +1075,7 @@
       "index": 96,
       "query": "quality ass",
       "expectedTop": [
-        "Load vs Stress Testing",
-        "Testing in Software Engineering"
+        "Load vs Stress Testing"
       ],
       "titlePrefix": null,
       "topN": 2

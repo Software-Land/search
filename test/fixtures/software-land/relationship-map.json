@@ -1,133 +1,1186 @@
 {
   "kind": "software-land-authored-relationship-map",
   "notes": [
-    "Lossless 0.5.0 authoring of the historical relevance config.",
-    "equivalent edges are the db5a070 live search-equivalence map (kind equivalent, not reclassified).",
-    "appsec related forms are the eac7a90 topicalRecall phrases compiled onto existing topical-recall semantics.",
-    "interface related token→concept api is product standalone-recall for the historical engine.",
-    "paas related forms kubernetes / the cloud compile onto existing topical-recall semantics.",
-    "Generated MiniLM document relationships remain in relationships.json.",
-    "No HTTP standalone related edge: frozen dictionary never authored it."
+    "Runtime relationship map consumed by Software.Land Search V2 at the corpus snapshot.",
+    "Base map is src/search/relationshipMap.js. LIVE_SEARCH_EQUIVALENCE_MAP is composed onto it the same way compileSoftwareLandAuthoredRelevance does before SearchEngine.create.",
+    "The four generated equivalent pairs (access control middleware, asymmetric information, free code camp review, i o) come from the snapshot generated-search-equivalences artifact. synonym-map.json remains the older db5a070 provenance snapshot and is not this map.",
+    "hypertext → http related is an authored relationshipMap.js edge included with this refresh.",
+    "Explicit fixture input. Not a Search Core default. Generated MiniLM document relationships remain in relationships.json."
   ],
   "map": {
     "a*": [
       {
+        "kind": "equivalent",
         "to": {
           "form": "astar"
-        },
-        "kind": "equivalent"
+        }
+      }
+    ],
+    "agile": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "kanban"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "scrum"
+        }
+      }
+    ],
+    "analytical": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "olap"
+        }
+      }
+    ],
+    "analytics": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "olap"
+        }
+      }
+    ],
+    "appsec": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "oath"
+        }
+      },
+      {
+        "kind": "related",
+        "to": {
+          "form": "authentication"
+        }
+      },
+      {
+        "kind": "related",
+        "to": {
+          "form": "authorization"
+        }
+      },
+      {
+        "kind": "related",
+        "to": {
+          "form": "rbac"
+        }
+      },
+      {
+        "kind": "related",
+        "to": {
+          "form": "saml"
+        }
+      },
+      {
+        "kind": "related",
+        "to": {
+          "form": "oauth"
+        }
+      },
+      {
+        "kind": "related",
+        "to": {
+          "form": [
+            "bearer",
+            "token"
+          ]
+        }
+      },
+      {
+        "kind": "related",
+        "to": {
+          "form": "vulnerability"
+        }
+      },
+      {
+        "kind": "related",
+        "to": {
+          "form": [
+            "signed",
+            "cookies"
+          ]
+        }
+      }
+    ],
+    "astar": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "a*"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "pathfinding"
+        }
+      }
+    ],
+    "async": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "asynchronous"
+        }
+      }
+    ],
+    "asynchronous": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "async"
+        }
+      }
+    ],
+    "authentication": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "authn"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "vulnerability"
+        }
+      }
+    ],
+    "authn": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "authentication"
+        }
+      }
+    ],
+    "authorization": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "authz"
+        }
+      }
+    ],
+    "authz": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "authorization"
+        }
+      }
+    ],
+    "bandwidth": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "throughput"
+        }
+      }
+    ],
+    "bearer": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "token"
+        }
+      }
+    ],
+    "cd": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "devops"
+        }
+      }
+    ],
+    "ci": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "devops"
+        }
+      }
+    ],
+    "cicd": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "devops"
+        }
+      }
+    ],
+    "cipher": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "encryption"
+        }
+      }
+    ],
+    "clean": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "cleancode"
+        }
+      }
+    ],
+    "cleancode": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "clean"
+        }
+      }
+    ],
+    "cloud": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "cloudcomputing"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "thecloud"
+        }
+      }
+    ],
+    "cloudcomputing": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "cloud"
+        }
+      }
+    ],
+    "cockroach": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "cockroachdb"
+        }
+      }
+    ],
+    "cockroachdb": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "cockroach"
+        }
+      }
+    ],
+    "codeacademy": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "codecademy"
+        }
+      }
+    ],
+    "codecademy": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "codeacademy"
+        }
+      }
+    ],
+    "compute": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "computing"
+        }
+      }
+    ],
+    "computing": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "compute"
+        }
+      }
+    ],
+    "concurrency": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "multithreading"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "parallelism"
+        }
+      }
+    ],
+    "container": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "docker"
+        }
+      }
+    ],
+    "containers": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "docker"
+        }
+      }
+    ],
+    "crypto": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "encryption"
+        }
+      }
+    ],
+    "ddb": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "dynamodb"
+        }
+      }
+    ],
+    "devops": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "cd"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "ci"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "cicd"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "devsecops"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "sre"
+        }
+      }
+    ],
+    "devsecops": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "devops"
+        }
+      }
+    ],
+    "docker": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "container"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "containers"
+        }
+      }
+    ],
+    "dynamodb": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "ddb"
+        }
+      }
+    ],
+    "edex": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "edx"
+        }
+      }
+    ],
+    "edx": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "edex"
+        }
+      }
+    ],
+    "egress": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "ingress"
+        }
+      }
+    ],
+    "encryption": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "cipher"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "crypto"
+        }
+      }
+    ],
+    "faas": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "serverless"
+        }
+      }
+    ],
+    "fcc": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "freecodecamp"
+        }
+      }
+    ],
+    "fp": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "functional"
+        }
+      }
+    ],
+    "freecodecamp": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "fcc"
+        }
+      }
+    ],
+    "functional": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "fp"
+        }
+      }
+    ],
+    "grpc": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "rpc"
+        }
+      }
+    ],
+    "imperative": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "procedural"
+        }
+      }
+    ],
+    "infra": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "infrastructure"
+        }
+      }
+    ],
+    "infrastructure": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "infra"
+        }
+      }
+    ],
+    "ingress": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "egress"
+        }
+      }
+    ],
+    "interface": [
+      {
+        "kind": "related",
+        "to": {
+          "concept": "api"
+        }
+      }
+    ],
+    "interceptor": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "middleware"
+        }
+      }
+    ],
+    "k8s": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "kubernetes"
+        }
+      }
+    ],
+    "kanban": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "agile"
+        }
+      }
+    ],
+    "kubernetes": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "k8s"
+        }
+      }
+    ],
+    "lambda": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "serverless"
+        }
+      }
+    ],
+    "limiting": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "throttling"
+        }
+      }
+    ],
+    "load": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "stress"
+        }
+      }
+    ],
+    "longtail": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "tail"
+        }
+      }
+    ],
+    "metrics": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "monitoring"
+        }
+      }
+    ],
+    "middleware": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "interceptor"
+        }
+      }
+    ],
+    "minimax": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "minmax"
+        }
+      }
+    ],
+    "minmax": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "minimax"
+        }
+      }
+    ],
+    "monolith": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "monolithic"
+        }
+      }
+    ],
+    "monolithic": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "monolith"
+        }
+      }
+    ],
+    "multithreading": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "concurrency"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "parallelism"
+        }
+      }
+    ],
+    "nonrelational": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "nosql"
+        }
+      }
+    ],
+    "nosql": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "nonrelational"
+        }
+      }
+    ],
+    "oauth": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "saml"
+        }
+      }
+    ],
+    "observability": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "metrics"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "monitoring"
+        }
+      }
+    ],
+    "olap": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "analytical"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "analytics"
+        }
+      }
+    ],
+    "oltp": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "transactional"
+        }
+      }
+    ],
+    "p99": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "tail"
+        }
+      }
+    ],
+    "paas": [
+      {
+        "kind": "related",
+        "to": {
+          "form": "kubernetes"
+        }
+      },
+      {
+        "kind": "related",
+        "to": {
+          "form": [
+            "the",
+            "cloud"
+          ]
+        }
+      }
+    ],
+    "parallelism": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "concurrency"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "multithreading"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "parallelization"
+        }
+      }
+    ],
+    "parallelization": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "parallelism"
+        }
+      }
+    ],
+    "partitioning": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "sharding"
+        }
+      }
+    ],
+    "pathfinding": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "astar"
+        }
+      }
+    ],
+    "performance": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "bandwidth"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "latency"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "throughput"
+        }
+      }
+    ],
+    "pg": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "postgres"
+        }
+      }
+    ],
+    "pluralsight": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "pluralsite"
+        }
+      }
+    ],
+    "pluralsite": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "pluralsight"
+        }
+      }
+    ],
+    "postgres": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "pg"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "postgresql"
+        }
+      }
+    ],
+    "postgresql": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "postgres"
+        }
+      }
+    ],
+    "procedural": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "imperative"
+        }
+      }
+    ],
+    "qa": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "testing"
+        }
+      }
+    ],
+    "refactoring": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "cleanup"
+        }
+      }
+    ],
+    "relational": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "sql"
+        }
+      }
+    ],
+    "rest": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "restful"
+        }
+      }
+    ],
+    "restful": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "rest"
+        }
+      }
+    ],
+    "rpc": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "grpc"
+        }
+      }
+    ],
+    "saml": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "oauth"
+        }
+      }
+    ],
+    "scrum": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "agile"
+        }
+      }
+    ],
+    "serverless": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "faas"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "lambda"
+        }
+      }
+    ],
+    "sharding": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "partitioning"
+        }
+      }
+    ],
+    "sql": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "relational"
+        }
+      }
+    ],
+    "sre": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "devops"
+        }
+      }
+    ],
+    "ssl": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "tls"
+        }
+      }
+    ],
+    "stress": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "load"
+        }
+      }
+    ],
+    "sync": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "synchronous"
+        }
+      }
+    ],
+    "synchronous": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "sync"
+        }
+      }
+    ],
+    "tail": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "longtail"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "p99"
+        }
+      }
+    ],
+    "teamtreehouse": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "treehouse"
+        }
+      }
+    ],
+    "thecloud": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "cloud"
+        }
+      }
+    ],
+    "throttling": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "limiting"
+        }
+      }
+    ],
+    "throughput": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "bandwidth"
+        }
+      }
+    ],
+    "tls": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "ssl"
+        }
+      }
+    ],
+    "transactional": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "oltp"
+        }
+      }
+    ],
+    "treehouse": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "teamtreehouse"
+        }
+      }
+    ],
+    "udaciti": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "udacity"
+        }
+      }
+    ],
+    "udacity": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "udaciti"
+        }
+      }
+    ],
+    "udemy": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "udami"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "udemmy"
+        }
+      }
+    ],
+    "versus": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "vs"
+        }
+      }
+    ],
+    "vpn": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "tls"
+        }
+      }
+    ],
+    "vs": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "versus"
+        }
+      }
+    ],
+    "vulnerability": [
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "authentication"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "authorization"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "bearer"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "oauth"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "rbac"
+        }
+      },
+      {
+        "kind": "equivalent",
+        "to": {
+          "form": "saml"
+        }
+      }
+    ],
+    "hypertext": [
+      {
+        "kind": "related",
+        "to": {
+          "concept": "http"
+        }
       }
     ],
     "access control middleware": [
       {
         "to": {
           "form": "authorization middleware"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "agile": [
-      {
-        "to": {
-          "form": "kanban"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "scrum"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "analytical": [
-      {
-        "to": {
-          "form": "olap"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "analytics": [
-      {
-        "to": {
-          "form": "olap"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "appsec": [
-      {
-        "to": {
-          "form": "oath"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "authentication"
-        },
-        "kind": "related"
-      },
-      {
-        "to": {
-          "form": "authorization"
-        },
-        "kind": "related"
-      },
-      {
-        "to": {
-          "form": "rbac"
-        },
-        "kind": "related"
-      },
-      {
-        "to": {
-          "form": "saml"
-        },
-        "kind": "related"
-      },
-      {
-        "to": {
-          "form": "oauth"
-        },
-        "kind": "related"
-      },
-      {
-        "to": {
-          "form": [
-            "bearer",
-            "token"
-          ]
-        },
-        "kind": "related"
-      },
-      {
-        "to": {
-          "form": "vulnerability"
-        },
-        "kind": "related"
-      },
-      {
-        "to": {
-          "form": [
-            "signed",
-            "cookies"
-          ]
-        },
-        "kind": "related"
-      }
-    ],
-    "astar": [
-      {
-        "to": {
-          "form": "a*"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "pathfinding"
         },
         "kind": "equivalent"
       }
@@ -140,364 +1193,6 @@
         "kind": "equivalent"
       }
     ],
-    "async": [
-      {
-        "to": {
-          "form": "asynchronous"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "asynchronous": [
-      {
-        "to": {
-          "form": "async"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "authentication": [
-      {
-        "to": {
-          "form": "authn"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "vulnerability"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "authn": [
-      {
-        "to": {
-          "form": "authentication"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "authorization": [
-      {
-        "to": {
-          "form": "authz"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "authz": [
-      {
-        "to": {
-          "form": "authorization"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "bandwidth": [
-      {
-        "to": {
-          "form": "throughput"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "bearer": [
-      {
-        "to": {
-          "form": "token"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "cd": [
-      {
-        "to": {
-          "form": "devops"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "ci": [
-      {
-        "to": {
-          "form": "devops"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "cicd": [
-      {
-        "to": {
-          "form": "devops"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "cipher": [
-      {
-        "to": {
-          "form": "encryption"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "clean": [
-      {
-        "to": {
-          "form": "cleancode"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "cleancode": [
-      {
-        "to": {
-          "form": "clean"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "cloud": [
-      {
-        "to": {
-          "form": "cloudcomputing"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "thecloud"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "cloudcomputing": [
-      {
-        "to": {
-          "form": "cloud"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "cockroach": [
-      {
-        "to": {
-          "form": "cockroachdb"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "cockroachdb": [
-      {
-        "to": {
-          "form": "cockroach"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "codeacademy": [
-      {
-        "to": {
-          "form": "codecademy"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "codecademy": [
-      {
-        "to": {
-          "form": "codeacademy"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "compute": [
-      {
-        "to": {
-          "form": "computing"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "computing": [
-      {
-        "to": {
-          "form": "compute"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "concurrency": [
-      {
-        "to": {
-          "form": "multithreading"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "parallelism"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "container": [
-      {
-        "to": {
-          "form": "docker"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "containers": [
-      {
-        "to": {
-          "form": "docker"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "crypto": [
-      {
-        "to": {
-          "form": "encryption"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "ddb": [
-      {
-        "to": {
-          "form": "dynamodb"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "devops": [
-      {
-        "to": {
-          "form": "cd"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "ci"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "cicd"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "devsecops"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "sre"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "devsecops": [
-      {
-        "to": {
-          "form": "devops"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "docker": [
-      {
-        "to": {
-          "form": "container"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "containers"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "dynamodb": [
-      {
-        "to": {
-          "form": "ddb"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "edex": [
-      {
-        "to": {
-          "form": "edx"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "edx": [
-      {
-        "to": {
-          "form": "edex"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "egress": [
-      {
-        "to": {
-          "form": "ingress"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "encryption": [
-      {
-        "to": {
-          "form": "cipher"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "crypto"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "faas": [
-      {
-        "to": {
-          "form": "serverless"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "fcc": [
-      {
-        "to": {
-          "form": "freecodecamp"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "fp": [
-      {
-        "to": {
-          "form": "functional"
-        },
-        "kind": "equivalent"
-      }
-    ],
     "free code camp review": [
       {
         "to": {
@@ -506,699 +1201,10 @@
         "kind": "equivalent"
       }
     ],
-    "freecodecamp": [
-      {
-        "to": {
-          "form": "fcc"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "functional": [
-      {
-        "to": {
-          "form": "fp"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "grpc": [
-      {
-        "to": {
-          "form": "rpc"
-        },
-        "kind": "equivalent"
-      }
-    ],
     "i o": [
       {
         "to": {
           "form": "io"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "imperative": [
-      {
-        "to": {
-          "form": "procedural"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "infra": [
-      {
-        "to": {
-          "form": "infrastructure"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "infrastructure": [
-      {
-        "to": {
-          "form": "infra"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "ingress": [
-      {
-        "to": {
-          "form": "egress"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "interface": [
-      {
-        "to": {
-          "concept": "api"
-        },
-        "kind": "related"
-      }
-    ],
-    "interceptor": [
-      {
-        "to": {
-          "form": "middleware"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "k8s": [
-      {
-        "to": {
-          "form": "kubernetes"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "kanban": [
-      {
-        "to": {
-          "form": "agile"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "kubernetes": [
-      {
-        "to": {
-          "form": "k8s"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "lambda": [
-      {
-        "to": {
-          "form": "serverless"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "limiting": [
-      {
-        "to": {
-          "form": "throttling"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "load": [
-      {
-        "to": {
-          "form": "stress"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "longtail": [
-      {
-        "to": {
-          "form": "tail"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "metrics": [
-      {
-        "to": {
-          "form": "monitoring"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "middleware": [
-      {
-        "to": {
-          "form": "interceptor"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "minimax": [
-      {
-        "to": {
-          "form": "minmax"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "minmax": [
-      {
-        "to": {
-          "form": "minimax"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "monolith": [
-      {
-        "to": {
-          "form": "monolithic"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "monolithic": [
-      {
-        "to": {
-          "form": "monolith"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "multithreading": [
-      {
-        "to": {
-          "form": "concurrency"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "parallelism"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "nonrelational": [
-      {
-        "to": {
-          "form": "nosql"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "nosql": [
-      {
-        "to": {
-          "form": "nonrelational"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "oauth": [
-      {
-        "to": {
-          "form": "saml"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "observability": [
-      {
-        "to": {
-          "form": "metrics"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "monitoring"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "olap": [
-      {
-        "to": {
-          "form": "analytical"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "analytics"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "oltp": [
-      {
-        "to": {
-          "form": "transactional"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "p99": [
-      {
-        "to": {
-          "form": "tail"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "paas": [
-      {
-        "to": {
-          "form": "kubernetes"
-        },
-        "kind": "related"
-      },
-      {
-        "to": {
-          "form": [
-            "the",
-            "cloud"
-          ]
-        },
-        "kind": "related"
-      }
-    ],
-    "parallelism": [
-      {
-        "to": {
-          "form": "concurrency"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "multithreading"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "parallelization"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "parallelization": [
-      {
-        "to": {
-          "form": "parallelism"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "partitioning": [
-      {
-        "to": {
-          "form": "sharding"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "pathfinding": [
-      {
-        "to": {
-          "form": "astar"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "performance": [
-      {
-        "to": {
-          "form": "bandwidth"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "latency"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "throughput"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "pg": [
-      {
-        "to": {
-          "form": "postgres"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "pluralsight": [
-      {
-        "to": {
-          "form": "pluralsite"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "pluralsite": [
-      {
-        "to": {
-          "form": "pluralsight"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "postgres": [
-      {
-        "to": {
-          "form": "pg"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "postgresql"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "postgresql": [
-      {
-        "to": {
-          "form": "postgres"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "procedural": [
-      {
-        "to": {
-          "form": "imperative"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "qa": [
-      {
-        "to": {
-          "form": "testing"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "refactoring": [
-      {
-        "to": {
-          "form": "cleanup"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "relational": [
-      {
-        "to": {
-          "form": "sql"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "rest": [
-      {
-        "to": {
-          "form": "restful"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "restful": [
-      {
-        "to": {
-          "form": "rest"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "rpc": [
-      {
-        "to": {
-          "form": "grpc"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "saml": [
-      {
-        "to": {
-          "form": "oauth"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "scrum": [
-      {
-        "to": {
-          "form": "agile"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "serverless": [
-      {
-        "to": {
-          "form": "faas"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "lambda"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "sharding": [
-      {
-        "to": {
-          "form": "partitioning"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "sql": [
-      {
-        "to": {
-          "form": "relational"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "sre": [
-      {
-        "to": {
-          "form": "devops"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "ssl": [
-      {
-        "to": {
-          "form": "tls"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "stress": [
-      {
-        "to": {
-          "form": "load"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "sync": [
-      {
-        "to": {
-          "form": "synchronous"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "synchronous": [
-      {
-        "to": {
-          "form": "sync"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "tail": [
-      {
-        "to": {
-          "form": "longtail"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "p99"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "teamtreehouse": [
-      {
-        "to": {
-          "form": "treehouse"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "thecloud": [
-      {
-        "to": {
-          "form": "cloud"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "throttling": [
-      {
-        "to": {
-          "form": "limiting"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "throughput": [
-      {
-        "to": {
-          "form": "bandwidth"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "tls": [
-      {
-        "to": {
-          "form": "ssl"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "transactional": [
-      {
-        "to": {
-          "form": "oltp"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "treehouse": [
-      {
-        "to": {
-          "form": "teamtreehouse"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "udaciti": [
-      {
-        "to": {
-          "form": "udacity"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "udacity": [
-      {
-        "to": {
-          "form": "udaciti"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "udemy": [
-      {
-        "to": {
-          "form": "udami"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "udemmy"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "versus": [
-      {
-        "to": {
-          "form": "vs"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "vpn": [
-      {
-        "to": {
-          "form": "tls"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "vs": [
-      {
-        "to": {
-          "form": "versus"
-        },
-        "kind": "equivalent"
-      }
-    ],
-    "vulnerability": [
-      {
-        "to": {
-          "form": "authentication"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "authorization"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "bearer"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "oauth"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "rbac"
-        },
-        "kind": "equivalent"
-      },
-      {
-        "to": {
-          "form": "saml"
         },
         "kind": "equivalent"
       }

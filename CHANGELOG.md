@@ -5,6 +5,8 @@
 ### Fixed
 
 - Edit-distance typo repair no longer rewrites a token that is a corpus surface term or a proper prefix of one. Title and configured-concept keys remain the suggestion vocabulary. A body-only prefix such as `index` → `indexed` stays a prefix instead of occupying a nearer key such as `ide`. Ordinary prefix recall and exact configured keys are unchanged.
+- Corpus manifest exports record `uncommittedDiffAlgorithm`. The captured Software.Land digest stays `git-diff-text-v1` (SHA-256 of `git diff HEAD`). New exports use `worktree-bytes-v1`, which hashes dirty paths, statuses, and bytes.
+- An exact first token shared by several configured concepts no longer adds a score bonus. A title key stores the same coverage as unique prefix recall. That coverage remains when a body hit is a different token from the concept key, and it is omitted when configured title identity or the title-coverage matcher already accounts for the key, including an authored equivalent and a title lemma of that key. Adding another concept that shares the first token does not raise an existing document. The title key stays weak: it does not become `key-in-title` or a completed alias. Incomplete stubs, completed aliases, ordinary lexical hits, and retention of those lexical hits by the complete-interpretation collector are unchanged.
 
 ## 0.7.0 - 2026-10-12
 

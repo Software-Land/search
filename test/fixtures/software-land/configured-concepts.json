@@ -362,15 +362,6 @@
     ]
   },
   {
-    "key": "testing",
-    "aliases": [
-      [
-        "quality",
-        "assurance"
-      ]
-    ]
-  },
-  {
     "key": "sre",
     "aliases": [
       [
@@ -610,9 +601,6 @@
       [
         "application",
         "sec"
-      ],
-      [
-        "security"
       ]
     ]
   },
@@ -1503,6 +1491,13 @@
         "institute",
         "standards",
         "technology"
+      ],
+      [
+        "institute"
+      ],
+      [
+        "institute",
+        "standards"
       ]
     ]
   },

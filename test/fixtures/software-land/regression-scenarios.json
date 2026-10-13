@@ -882,13 +882,13 @@
       "origin": "overlay",
       "requiredWithin": [
         {
-          "title": "Integrity Is Not Obedience",
+          "title": "Integrity",
           "topN": 1
         }
       ],
-      "exactFirst": "Integrity Is Not Obedience",
+      "exactFirst": "Integrity",
       "exactFirstId": "cl",
-      "name": "regression · overlay · integ · #1:Integrity Is Not Obedience | Integrity Is Not Obedience@1"
+      "name": "regression · overlay · integ · #1:Integrity | Integrity@1"
     },
     {
       "query": "open",

@@ -41,19 +41,13 @@
       "kind": "contract",
       "origin": "scenario",
       "classification": "A",
-      "requiredWithin": [
-        {
-          "title": "Testing in Software Engineering",
-          "topN": 3
-        }
-      ],
       "requiredAnyWithin": [
         {
           "title": "Load vs Stress Testing",
           "topN": 5
         }
       ],
-      "name": "contract · scenario · testing · Testing in Software Engineering@3 | any:Load vs Stress Testing@5"
+      "name": "contract · scenario · testing · any:Load vs Stress Testing@5"
     },
     {
       "query": "wha",
@@ -1270,12 +1264,11 @@
       "origin": "v2-contract",
       "requiredAnyTop": {
         "titles": [
-          "Load vs Stress Testing",
-          "Testing in Software Engineering"
+          "Load vs Stress Testing"
         ],
         "topN": 2
       },
-      "name": "contract · v2-contract · testing · anyTop:Load vs Stress Testing, Testing in Software Engineering@2"
+      "name": "contract · v2-contract · testing · anyTop:Load vs Stress Testing@2"
     },
     {
       "query": "library",
@@ -1416,105 +1409,129 @@
       "query": "binary index",
       "kind": "contract",
       "origin": "overlay",
-      "documentOverlay": true,
       "resultCollector": "complete-interpretation",
       "requiredAnyTop": {
-        "titles": ["Fenwick Tree"],
-        "ids": ["cm"],
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "ids": [
+          "cm"
+        ],
         "topN": 10
       },
-      "name": "contract · overlay · binary index · Fenwick Tree within 10"
+      "name": "contract · corpus · binary index · Fenwick Tree within 10"
     },
     {
       "query": "binary index ",
       "kind": "contract",
       "origin": "overlay",
-      "documentOverlay": true,
       "resultCollector": "complete-interpretation",
       "requiredAnyTop": {
-        "titles": ["Fenwick Tree"],
-        "ids": ["cm"],
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "ids": [
+          "cm"
+        ],
         "topN": 10
       },
-      "name": "contract · overlay · binary index [trailing space] · Fenwick Tree within 10"
+      "name": "contract · corpus · binary index [trailing space] · Fenwick Tree within 10"
     },
     {
       "query": "binary index t",
       "kind": "contract",
       "origin": "overlay",
-      "documentOverlay": true,
       "resultCollector": "complete-interpretation",
       "requiredAnyTop": {
-        "titles": ["Fenwick Tree"],
-        "ids": ["cm"],
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "ids": [
+          "cm"
+        ],
         "topN": 10
       },
-      "name": "contract · overlay · binary index t · Fenwick Tree within 10"
+      "name": "contract · corpus · binary index t · Fenwick Tree within 10"
     },
     {
       "query": "binary index tr",
       "kind": "contract",
       "origin": "overlay",
-      "documentOverlay": true,
       "resultCollector": "complete-interpretation",
       "requiredAnyTop": {
-        "titles": ["Fenwick Tree"],
-        "ids": ["cm"],
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "ids": [
+          "cm"
+        ],
         "topN": 10
       },
-      "name": "contract · overlay · binary index tr · Fenwick Tree within 10"
+      "name": "contract · corpus · binary index tr · Fenwick Tree within 10"
     },
     {
       "query": "binary index tre",
       "kind": "contract",
       "origin": "overlay",
-      "documentOverlay": true,
       "resultCollector": "complete-interpretation",
       "requiredAnyTop": {
-        "titles": ["Fenwick Tree"],
-        "ids": ["cm"],
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "ids": [
+          "cm"
+        ],
         "topN": 10
       },
-      "name": "contract · overlay · binary index tre · Fenwick Tree within 10"
+      "name": "contract · corpus · binary index tre · Fenwick Tree within 10"
     },
     {
       "query": "binary index tree",
       "kind": "contract",
       "origin": "overlay",
-      "documentOverlay": true,
       "resultCollector": "complete-interpretation",
       "requiredAnyTop": {
-        "titles": ["Fenwick Tree"],
-        "ids": ["cm"],
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "ids": [
+          "cm"
+        ],
         "topN": 10
       },
-      "name": "contract · overlay · binary index tree · Fenwick Tree within 10"
+      "name": "contract · corpus · binary index tree · Fenwick Tree within 10"
     },
     {
       "query": "binary indexed t",
       "kind": "contract",
       "origin": "overlay",
-      "documentOverlay": true,
       "resultCollector": "complete-interpretation",
       "requiredAnyTop": {
-        "titles": ["Fenwick Tree"],
-        "ids": ["cm"],
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "ids": [
+          "cm"
+        ],
         "topN": 10
       },
-      "name": "contract · overlay · binary indexed t · Fenwick Tree within 10"
+      "name": "contract · corpus · binary indexed t · Fenwick Tree within 10"
     },
     {
       "query": "binary indexed tree",
       "kind": "contract",
       "origin": "overlay",
-      "documentOverlay": true,
       "resultCollector": "complete-interpretation",
       "requiredAnyTop": {
-        "titles": ["Fenwick Tree"],
-        "ids": ["cm"],
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "ids": [
+          "cm"
+        ],
         "topN": 10
       },
-      "name": "contract · overlay · binary indexed tree · Fenwick Tree within 10"
+      "name": "contract · corpus · binary indexed tree · Fenwick Tree within 10"
     }
   ]
 }

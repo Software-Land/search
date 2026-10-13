@@ -42,7 +42,15 @@ export interface EnglishPlugin {
 }
 
 export function createEnglishPlugin({ lemmas = {} }: { lemmas?: Record<string, string> } = {}): EnglishPlugin {
-  const table: Record<string, string> = { ...lemmas };
+  // Null prototype: a normal object makes `table.constructor` the Object function,
+  // so a document token "constructor" is not a string lemma.
+  const table = Object.create(null) as Record<string, string>;
+  if (lemmas && typeof lemmas === "object") {
+    for (const key of Object.keys(lemmas)) {
+      const value = lemmas[key];
+      if (typeof value === "string" && value) table[key] = value;
+    }
+  }
   const indexIdentity = `english-v1:${stableFingerprint(table)}`;
   function exactTableLemma(token: string): string | null {
     const t = String(token || "").toLowerCase();

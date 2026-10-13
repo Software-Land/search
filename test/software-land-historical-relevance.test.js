@@ -87,12 +87,12 @@ describe("Software.Land historical relevance contracts", () => {
   test("quality ass membership-within-topN does not require expectedTop array order", () => {
     const row = historical.rows.find((item) => item.query === "quality ass");
     expect(row.v1).toEqual({
-      expectedTop: ["Load vs Stress Testing", "Testing in Software Engineering"],
+      expectedTop: ["Load vs Stress Testing"],
       topN: 2,
     });
     expect(
       evaluateHistoricalRelevance(row, [
-        "Testing in Software Engineering",
+        "What is an API?",
         "Load vs Stress Testing",
       ]).ok
     ).toBe(true);
@@ -182,18 +182,22 @@ describe("Software.Land historical relevance contracts", () => {
     expect(relevanceConfig.synonymMapKind).toBe("explicit-directional-curated-plus-generated");
     expect(omitKeys.has("testing")).toBe(true);
     expect(configuredConcepts.some((entry) => entry.key === "testing")).toBe(false);
-    expect(loadSoftwareLandJson("configured-concepts.json").some((entry) => entry.key === "testing")).toBe(true);
+    expect(loadSoftwareLandJson("configured-concepts.json").some((entry) => entry.key === "testing")).toBe(false);
     expect(loadSoftwareLandJson("configured-concepts.json").some((entry) => entry.key === "fps")).toBe(true);
     expect(configuredConcepts.find((entry) => entry.key === "fps")?.aliases).toEqual([["frames", "per", "second"]]);
     const frozenAppsec = loadSoftwareLandJson("configured-concepts.json").find((entry) => entry.key === "appsec");
     expect(frozenAppsec.aliases[0]).toEqual(["application", "security"]);
-    expect(frozenAppsec.aliases).toEqual(expect.arrayContaining([["security"]]));
+    expect(frozenAppsec.aliases).not.toEqual(expect.arrayContaining([["security"]]));
     expect(frozenAppsec.expansion).toBeUndefined();
     expect(frozenAppsec.primary).toBeUndefined();
     expect(frozenAppsec.topicalRecall).toBeUndefined();
     expect(frozenAppsec.standaloneRecall).toBeUndefined();
     const frozenNist = loadSoftwareLandJson("configured-concepts.json").find((entry) => entry.key === "nist");
-    expect(frozenNist.aliases).toEqual([["national", "institute", "standards", "technology"]]);
+    expect(frozenNist.aliases).toEqual([
+      ["national", "institute", "standards", "technology"],
+      ["institute"],
+      ["institute", "standards"],
+    ]);
     const nist = configuredConcepts.find((entry) => entry.key === "nist");
     expect(nist.aliases).toEqual([
       ["national", "institute", "standards", "technology"],

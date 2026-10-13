@@ -593,12 +593,18 @@ describe("configured prefix recall retrieval and scoring", () => {
     const osiTitle = detailed.results.find((row) => row.id === "osi-title");
     const bodyWord = detailed.results.find((row) => row.id === "body-word");
     expect(oauthTitle.retrievalSources).toEqual(expect.arrayContaining(["configured-prefix-recall", "body-lexical"]));
-    expect(oauthTitle.directClass).not.toBe("strong");
+    expect(oauthTitle.directClass).toBe("weak");
     expect(oauthTitle.features.configuredConceptMatch).not.toBe("key-in-title");
+    // The title key is a different token from the body occurrence of "open".
+    // body-word sorts ahead of oauth-title, so this order is the score.
+    expect(oauthTitle.features.configuredPrefixRecallScore).toBe(0.5);
+    expect(oauthTitle.features.bodyLexicalMatch).toBe(1);
+    expect(oauthTitle.score).toBeCloseTo(0.25 + 0.5 * 0.25, 5);
     expect(oauthTitle.rank).toBeLessThan(bodyWord.rank);
-    expect(osiTitle.rank).toBeLessThan(bodyWord.rank);
-    expect(oauthTitle.score).toBeGreaterThan(osiTitle.score);
-    expect(oauthTitle.features.configuredPrefixRecallScore * 0.25).toBeCloseTo(0.35 + 0.5, 5);
+    const osiCoverage = open.configuredPrefixRecallGroup.find((row) => row.key === "osi").coverage;
+    expect(osiTitle.features.configuredPrefixRecallScore).toBe(osiCoverage);
+    expect(osiTitle.directClass).toBe("none");
+    expect(osiTitle.score).toBeLessThan(bodyWord.score);
     expect(detailed.results.find((row) => row.id === "title-word").rank).toBeLessThan(oauthTitle.rank);
 
     const phrase = e._prepareQuery("open authorization");
@@ -655,14 +661,16 @@ describe("configured prefix recall retrieval and scoring", () => {
       expect(bodyOnly).toBeTruthy();
       expect(mixed.score).toBe(title.score);
       expect(mixed.features.configuredPrefixRecallScore).toBe(title.features.configuredPrefixRecallScore);
-      expect(title.score).toBeGreaterThan(bodyWord.score);
-      expect(title.rank).toBeLessThan(bodyWord.rank);
+      expect(title.features.configuredPrefixRecallScore).toBe(
+        open.configuredPrefixRecallGroup.find((row) => row.key === "osi").coverage
+      );
+      expect(title.score).toBeLessThan(bodyWord.score);
       expect(title.features.configuredConceptMatch).not.toBe("key-in-title");
       expect(mixed.features.configuredConceptMatch).not.toBe("key-in-title");
       expect(mixed.directClass).not.toBe("strong");
       expect(bodyOnly.features.configuredPrefixRecallScore).toBe(0);
       expect(bodyOnly.features.configuredConceptMatch).not.toBe("key-in-title");
-      expect(bodyOnly.score).toBeLessThan(title.score);
+      expect(bodyOnly.score).toBeGreaterThan(title.score);
       const searched = e.search("open", { limit: 10, relatedLimit: 0 }).map((row) => row.id);
       expect(searched.indexOf("osi-mixed")).toBe(detailed.results.findIndex((row) => row.id === "osi-mixed"));
 
@@ -683,7 +691,8 @@ describe("configured prefix recall retrieval and scoring", () => {
         const result = ordered.searchDetailed("open", { limit: 10, relatedLimit: 0, explain: true });
         const row = Object.fromEntries(result.results.map((hit) => [hit.id, hit]));
         expect(row.mixed.score).toBe(row["title-only"].score);
-        expect(row.mixed.score).toBeGreaterThan(row["body-word"].score);
+        expect(row["title-only"].features.configuredPrefixRecallScore).toBe(0.5);
+        expect(row["title-only"].score).toBeLessThan(row["body-word"].score);
         expect(row["body-only"].features.configuredPrefixRecallScore).toBe(0);
         expect(row["body-only"].features.configuredConceptMatch).not.toBe("key-in-title");
         expect(row.mixed.features.configuredConceptMatch).not.toBe("key-in-title");
@@ -829,7 +838,7 @@ describe("Software.Land frozen contracts after prefix recall", () => {
     await sl.index(inputs.documents);
   });
 
-  test("integ remains Integrity Is Not Obedience #1 without first-token occupancy", () => {
+  test("integ remains Integrity #1 without first-token occupancy", () => {
     const q = sl._prepareQuery("integ");
     expect(q.configuredSequenceIntent).toBeNull();
     expect(q.configuredPrefixRecall).toMatchObject({
@@ -839,7 +848,7 @@ describe("Software.Land frozen contracts after prefix recall", () => {
       lastExact: false,
     });
     expect(q.configuredPrefixRecall.coverage).toBe(Number(((5 / 10) / 3).toFixed(4)));
-    expect(sl.search("integ", { limit: 10, relatedLimit: 0 })[0].title).toBe("Integrity Is Not Obedience");
+    expect(sl.search("integ", { limit: 10, relatedLimit: 0 })[0].title).toBe("Integrity");
   });
 
   test("watchlist queries keep fail-closed or unique-recall contracts", () => {

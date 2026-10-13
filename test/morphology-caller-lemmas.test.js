@@ -153,4 +153,17 @@ describe("caller-owned morphology lemmas", () => {
     });
     await expect(empty.index(docs)).rejects.toThrow(/analyzer identity/i);
   });
+
+  test("constructor is a document token, not an inherited lemma", async () => {
+    const plugin = morphology({ lemmas: { computing: "compute" } });
+    expect(typeof plugin.lemma("constructor")).toBe("string");
+    expect(plugin.lemma("constructor")).not.toBe(Object);
+    const engine = SearchEngine.create({
+      schema,
+      plugins: [plugin],
+      retriever: "full-scan",
+    });
+    await engine.index([{ id: "ctor", title: "Fenwick Tree", body: "the constructor builds the tree" }]);
+    expect(engine.search("constructor", { limit: 1 })[0]?.id).toBe("ctor");
+  });
 });

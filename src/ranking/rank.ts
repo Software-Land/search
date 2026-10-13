@@ -25,6 +25,7 @@ import { BinaryMaxHeap } from "./rankHeap.js";
 import { constraintsAreBuiltin, rankSparse, rankSparseAsync, type RankerStats } from "./rankSparse.js";
 import { constraintSignature } from "./rankSignature.js";
 import { compareScoreThenWeakBodyThenId, scoreThenWeakBodyThenIdBetter } from "./rankTieBreak.js";
+import { BODY_LEXICAL_SCORE_COEFFICIENT } from "./lexicalCoefficient.js";
 import type { ConstraintDef, ConstraintGraph, FeaturedHit, FeatureVector, RankedHit } from "../types.js";
 
 let lastStats: RankerStats | null = null;
@@ -82,11 +83,11 @@ export function scoreFeatures(f: Partial<FeatureVector>) {
     boolNum(f.shortLiteralLeadMatch) * 1.7 +
     boolNum(f.dottedSpanComponentTitleMatch) * 0.9 +
     (f.phraseAdjacency || 0) * 0.8 +
-    (f.bodyLexicalMatch || 0) * 0.25 +
+    (f.bodyLexicalMatch || 0) * BODY_LEXICAL_SCORE_COEFFICIENT +
     (Number(f.standaloneRecallScore) || 0) +
     (Number(f.topicalRecallScore) || 0) +
     (Number(f.equivalentRecallScore) || 0) +
-    (Number(f.configuredPrefixRecallScore) || 0) * 0.25 +
+    (Number(f.configuredPrefixRecallScore) || 0) * BODY_LEXICAL_SCORE_COEFFICIENT +
     (f.relationshipStrength || 0) * 0.45 +
     (f.retrievalScore || 0)
   );

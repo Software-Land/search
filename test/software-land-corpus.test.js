@@ -11,6 +11,7 @@ import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import {
+  assertNoOverlayIdCollision,
   documentOverlayScenarioRows,
   frozenCorpusScenarioRows,
   loadSoftwareLandDocumentOverlays,
@@ -59,6 +60,7 @@ function createEngine({
 }
 
 const documentOverlays = loadSoftwareLandDocumentOverlays();
+assertNoOverlayIdCollision(documents, documentOverlays);
 
 async function indexEngine(engine, { useLexicalFrequency = true, extraDocuments = [] } = {}) {
   const docs = [...documents, ...extraDocuments];
@@ -221,19 +223,49 @@ describe("software-land corpus fixture", () => {
   test("manifest records source commit, package version, document count, and scenario provenance", () => {
     expect(manifest.format).toBe("software-land-search-fixture");
     expect(manifest.version).toBe(1);
-    expect(manifest.corpusSourceCommit).toBe("971012bf3d561a67ca8a20f03ec2128135d1fb87");
+    expect(manifest.corpusSourceCommit).toBe("372ae05540036fea5671726f6ae43f5a75d9441d");
+    expect(manifest.previousCorpusSourceCommit).toBe("971012bf3d561a67ca8a20f03ec2128135d1fb87");
+    expect(manifest.corpusWorktreeClean).toBe(false);
+    expect(manifest.uncommittedInputs).toEqual([
+      " M __tests__/blog-path-migration.test.js",
+      " M __tests__/search-v2-appsec-topical-recall.test.js",
+      " M __tests__/search-v2-generated-search-equivalences.test.js",
+      " M __tests__/search-v2-relevance-gate.test.js",
+      " M __tests__/search-v2-search-equivalences.test.js",
+      " M backend_serverless/lambdas/aws_lambda_resolve_slash_urls/blog-redirects.v1.json",
+      " M content/blog/app-sec/index.md",
+      " M content/blog/authorization-middleware/index.md",
+      " M content/blog/cicd/index.md",
+      " D content/blog/cursor-pagination-previous-page/index.md",
+      " D content/blog/testing-in-software-engineering/index.md",
+      " M content/blog/what-are-distributed-systems/index.md",
+      " M content/blog/what-is-cloud-migration/index.md",
+      " M content/blog/what-is-devops/index.md",
+      " M content/blog/what-is-refactoring/index.md",
+      " M docs/migrations/blog-to-prefixed-paths.v1.json",
+      " M src/data/menu-links.json",
+      " M tests/search-e2e.js",
+      " M tests/search-scenarios.js",
+      " M tests/search-v2-contracts.js",
+      " M tests/search.js",
+    ]);
+    expect(manifest.uncommittedDiffAlgorithm).toBe("git-diff-text-v1");
+    expect(manifest.uncommittedDiffSha256).toBe("4e1af47321ccfb08d549a80bd41c671f14695047ee48d4592218ac459a668719");
+    // Committed content/blog tree. The two removed posts are in the uncommitted diff, not this tree.
+    expect(manifest.contentTree).toBe("b4d56a987e86e28f6b69acb111596ce5d1ec911d");
+    expect(manifest.searchPackageDependency).toBe("file:vendor/software-land-search-0.7.0.tgz");
     expect(manifest.scenarioSourceCommit).toBe("e4507c54451814fcafb9598640bd2323faacefa5");
     expect(manifest.strictV2ContractSupplementCommit).toBe("0a8b33b7604b61e75e03a55b9c1e59d8571a3e19");
     expect(manifest.softwareLandCommit).toBeUndefined();
     expect(manifest.relevanceSoftwareLandCommit).toBe("db5a070dbc6ac112dfae403f38fdfd0fffbedbf6");
-    expect(manifest.dictionaryAcronymMapSoftwareLandCommit).toBe(
-      "df852eb4136dc5fb5b23cbf0bc22d45170e71423"
-    );
+    expect(manifest.dictionaryAcronymMapSoftwareLandCommit).toBeUndefined();
     expect(manifest.historicalRelevanceApplicable).toBe(222);
-    expect(manifest.searchPackageVersion).toBe("0.6.0");
-    expect(manifest.documentCount).toBe(123);
-    expect(manifest.configuredConceptCount).toBe(192);
-    expect(documents).toHaveLength(123);
+    expect(manifest.searchPackageVersion).toBe("0.7.0");
+    expect(manifest.documentCount).toBe(122);
+    expect(manifest.lemmaCount).toBe(1207);
+    expect(manifest.configuredConceptCount).toBe(191);
+    expect(documents).toHaveLength(122);
+    expect(documents.some((doc) => doc.id === "ag" || doc.id === "I")).toBe(false);
     expect(manifest.description).toMatch(/not default package policy/i);
     expect(manifest.scenarioCount).toBe(224);
     expect(manifest.historicalScenarioCount).toBe(223);
@@ -257,9 +289,15 @@ describe("software-land corpus fixture", () => {
       "binary indexed t",
       "binary indexed tree",
     ]);
-    expect(contracts.overlayCases.every((row) => row.documentOverlay === true && row.origin === "overlay")).toBe(true);
-    expect(documentOverlays.map((doc) => doc.id)).toEqual(["cm"]);
-    expect(documents.some((doc) => doc.id === "cm" || doc.title === "Fenwick Tree")).toBe(false);
+    expect(contracts.overlayCases.every((row) => row.documentOverlay == null && row.origin === "overlay")).toBe(true);
+    expect(documentOverlays).toEqual([]);
+    expect(documentOverlayScenarioRows(contracts)).toEqual([]);
+    expect(documents.filter((doc) => doc.id === "cm")).toEqual([
+      expect.objectContaining({ id: "cm", title: "Fenwick Tree" }),
+    ]);
+    expect(frozenCorpusScenarioRows(contracts).filter((row) => row.requiredAnyTop?.ids?.includes("cm"))).toHaveLength(
+      contracts.overlayCases.length
+    );
     expect(regressions.cases).toHaveLength(60);
     expect(regressions.overlayCases).toHaveLength(4);
     expect(historical.rows).toHaveLength(223);
@@ -278,7 +316,8 @@ describe("software-land corpus fixture", () => {
       "oauth",
       "open authorization",
     ]);
-    expect(regressions.overlayCases[0].exactFirst).toBe("Integrity Is Not Obedience");
+    expect(regressions.overlayCases[0].exactFirst).toBe("Integrity");
+    expect(regressions.overlayCases[0].exactFirstId).toBe("cl");
     const open = regressions.overlayCases.find((row) => row.query === "open");
     expect(open.exactFirst).toBeUndefined();
     expect(open.requiredWithin).toEqual([{ id: "7", title: "SAML vs OAuth", topN: SEARCH_LIMIT }]);
@@ -310,7 +349,6 @@ describe("software-land corpus fixture", () => {
     const buf = readFileSync(path.join(FIXTURE, "configured-concepts.json"));
     expect(buf.byteLength).toBe(rec.bytes);
     expect(createHash("sha256").update(buf).digest("hex")).toBe(rec.sha256);
-    expect(rec.sha256).toBe("d0a4e72b54d7431233d5ebc7c9608c88922ddbeeabc52bfdb0a6015fef2f85f5");
   });
 
   test("every recorded fixture file matches its manifest size and checksum", () => {
@@ -458,8 +496,9 @@ describe("software-land candidate-stage survival", () => {
     expect(regressionStats.prefixMiss).toEqual([]);
     expect(contractStats.maxC).toBeLessThanOrEqual(documents.length);
     expect(regressionStats.maxC).toBeLessThanOrEqual(documents.length);
-    expect(contractStats.maxC).toBe(117);
-    expect(regressionStats.maxC).toBe(99);
+    // Widest full-scan sets include both removed posts, so they fell by two.
+    expect(contractStats.maxC).toBe(116);
+    expect(regressionStats.maxC).toBe(98);
   });
 
   test("indexed retains contract and regression targets before ranking", () => {
@@ -482,13 +521,15 @@ describe("software-land candidate-stage survival", () => {
   });
 
   test("representative queries report the measured full-scan candidate counts", () => {
+    // Both removed posts were candidates for "2" and "what". One was a
+    // candidate for Edge Computing. The other measured queries are unchanged.
     const expected = {
-      2: 63,
-      "Edge Computing": 62,
+      2: 62,
+      "Edge Computing": 61,
       aplicationsecurity: 4,
       tls: 6,
       "machine learning": 6,
-      what: 80,
+      what: 79,
     };
     for (const [query, c] of Object.entries(expected)) {
       const detailed = fullScan.searchDetailed(query, { limit: SEARCH_LIMIT });
@@ -508,17 +549,12 @@ describe("software-land candidate-stage survival", () => {
   });
 });
 
-describe.each(["full-scan", "indexed"])("software-land document overlay %s", (retriever) => {
-  let engine;
-
-  beforeAll(async () => {
-    engine = await indexEngine(createEngine({ retriever }), { extraDocuments: documentOverlays });
-  });
-
-  test.each(documentOverlayScenarioRows(contracts).map((row) => [row.name, row]))("contract %s", (_name, row) => {
-    expect(row.documentOverlay).toBe(true);
-    expect(row.requiredAnyTop.topN).toBe(SEARCH_LIMIT);
-    expect(row.exactFirst).toBeUndefined();
-    assertScenarioCase(engine, row);
+describe("software-land fenwick corpus contracts", () => {
+  test("Fenwick Tree is the corpus document and is not indexed again from an overlay", () => {
+    expect(documentOverlays).toEqual([]);
+    expect(documentOverlayScenarioRows(contracts)).toEqual([]);
+    const fenwick = documents.find((doc) => doc.id === "cm");
+    expect(fenwick?.title).toBe("Fenwick Tree");
+    expect(documents.filter((doc) => doc.id === "cm" || doc.title === "Fenwick Tree")).toHaveLength(1);
   });
 });

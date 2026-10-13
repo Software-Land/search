@@ -8,6 +8,7 @@
 
 import { throwIfAborted } from "../cancel.js";
 import { REPEATED_BODY_PHRASE_MIN } from "../evidencePolicy.js";
+import { BODY_LEXICAL_SCORE_COEFFICIENT } from "../ranking/lexicalCoefficient.js";
 import {
   EXACT_PRUNING_BLOCK_SIZE,
   type CompiledLexicalRuntime,
@@ -66,7 +67,7 @@ const UNSUPPORTED_TOKEN_SOURCES = new Set([
 export function oneOfKBodyOnlyMaxRoundedScore(conceptCount: number) {
   const k = Math.max(1, conceptCount);
   const bodyLexicalMatch = Number((1 / k).toFixed(4));
-  return Number((bodyLexicalMatch * 0.25).toFixed(6));
+  return Number((bodyLexicalMatch * BODY_LEXICAL_SCORE_COEFFICIENT).toFixed(6));
 }
 
 export type Stage3AUnsupportedReason =

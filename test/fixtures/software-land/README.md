@@ -5,179 +5,129 @@ Software.Land-derived realistic integration test data. It is not default package
 See `NOTICE.md` in this directory: Software.Land editorial/body content is not
 licensed under the project license merely because it lives in this repository.
 
-This directory is a frozen snapshot of live V2 `SearchEngine` inputs from the
-Software.Land application. It exists so `@software-land/search` can exercise
-production-derived ranking in this OSS repo without importing Gatsby, UI, V1,
-or the Software.Land E2E runner.
+This directory is a snapshot of live V2 search inputs from the Software.Land
+application. It exists so `@software-land/search` can exercise production-derived
+ranking in this OSS repo without importing Gatsby, UI, or the Software.Land E2E
+runner.
 
-Lemmas and configured-concept rows here are **fixture arguments only**.
-They must be passed into `morphology({ lemmas })` and
-`compileAuthoredRelevance({ configuredConcepts })`.
-There is no public root `english()` or `dictionary()` helper; Worker initialization passes the same
-lemma map through `englishOptions`.
-They must never become Core defaults.
+Lemmas, configured-concept rows, the relationship map, document relationships,
+and lexical frequency here are **fixture arguments only**. They must be passed
+into the engine by the test. There is no public root `english()` or
+`dictionary()` helper. They must never become Core defaults.
+
+Historical `expectedTop` / `titlePrefix` / `topN` rows are executable
+Software.Land relevance contracts. They are not Core ranking policy and they
+are not the exact-output oracle.
 
 ## Provenance
 
 | Field | Value |
 | --- | --- |
 | Fixture format | `software-land-search-fixture` v1 (`manifest.json`) |
-| Corpus source commit | `971012bf3d561a67ca8a20f03ec2128135d1fb87` (prior freeze `dff24cf606967cb50b24d28d9142747c9203e053`) |
-| Dictionary acronym-map overlay | `df852eb4136dc5fb5b23cbf0bc22d45170e71423` (`dictionaryAcronymMapSoftwareLandCommit`; `src/search/acronymMap.js`) |
-| Scenario source commit | `e4507c54451814fcafb9598640bd2323faacefa5` (`tests/search-scenarios.js`, 224 product rows; `tests/search-v2-contracts.js` then had 16 queries) |
-| Strict V2 contract supplement | `0a8b33b7604b61e75e03a55b9c1e59d8571a3e19` (`strictV2ContractSupplementCommit`; `tests/search-v2-contracts.js` grew from 16 to 19 by adding `open`, `oauth`, and `open authorization`. Do not mine historical scenarios from this commit.) |
-| `@software-land/search` | `0.6.0` (declared dependency at `corpusSourceCommit`; prior freeze `0.3.1` at `dff24cf`. Not the 0.5.0 relevance overlay, and not the current OSS package version.) |
-| Documents | 123 |
-| Configured concepts | 192 (`dff24cf` snapshot 180 including `testing`, plus 12 later `acronymMap.js` graphics/FPS concepts from Software.Land `df852eb4136dc5fb5b23cbf0bc22d45170e71423`) |
-| Source scenarios | `tests/search-scenarios.js` at the scenario SHA (224 product rows; OSS historical mirror is 223, excluding historical exclusion `integ`) + `tests/search-v2-contracts.js` at the supplement SHA (19) |
-| Strict V2 contracts | 102 (`v2-contracts.json`) |
-| B-intent regressions | 60 (`regression-scenarios.json`, compatibility coverage, not Core policy) |
-| Historical inventory | complete 223-row OSS historical mirror (`historical-scenarios.json`, excluding historical exclusion `integ`, including obsolete `open`); 222 executable relevance contracts |
-| V2 vs V1 historical top-N | `v1-historical-topn-contract.json` — OSS-mirrored Software.Land V1 historical contract (`expectedTop`/`titlePrefix`/`topN`) executed on V2 (`test/software-land-v1-contract-on-v2.test.js`). Not the 320-suite mix and not a V1 engine test. |
-| Historical contract updates | `historical-contract-updates.json` (Software.Land `3ad49e867f82db06aa06cd1c7f38dca8faecf246`) |
-| Historical relevance config | `relevance-config.json` + `relationship-map.json` (authored equivalent + AppSec related; synonym-map.json remains the db5a070 provenance snapshot) |
-| `relevanceSoftwareLandCommit` | `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6` — live `LIVE_SEARCH_EQUIVALENCE_MAP` / `synonym-map.json` snapshot only. Not the NIST alias pin (`relevance-config.json` `7628a85`), not the later relationshipMap/editorial/semantic-rejection commits, and not HEAD. |
-| Omitted empty-intent rows | 51 (not mined into V2 intent/regression; still in historical relevance) |
-| Omitted V1-only source rows | 133 (B + A without intent; some re-enter as regressions; still in historical relevance when `expectedTop` exists) |
-| Omitted browser/UI-only | 1 (`zzz-no-hit` no-results copy) |
-| Omitted historical relevance | 1 (`open`, classification C obsolete) |
+| Corpus source commit | `372ae05540036fea5671726f6ae43f5a75d9441d` |
+| Previous corpus freeze | `971012bf3d561a67ca8a20f03ec2128135d1fb87` (before that, `dff24cf606967cb50b24d28d9142747c9203e053`) |
+| Committed `content/blog` tree | `b4d56a987e86e28f6b69acb111596ce5d1ec911d` |
+| Uncommitted inputs | yes. HEAD alone does not contain this corpus. `uncommittedDiffAlgorithm` is `git-diff-text-v1`: SHA-256 of `git diff HEAD` text. That digest is `4e1af47321ccfb08d549a80bd41c671f14695047ee48d4592218ac459a668719`. It is not a `worktree-bytes-v1` fingerprint. |
+| `@software-land/search` | `0.7.0`, declared as `file:vendor/software-land-search-0.7.0.tgz` |
+| Documents | 122 |
+| Configured concepts | 191 (runtime acronym map merged with compiled extras; `testing` is not in this snapshot) |
+| Lemmas | 1207, including the authored override `computing` → `compute` |
 
-Corpus artifacts come from a clean Software.Land worktree at
-`971012bf3d561a67ca8a20f03ec2128135d1fb87`. Document/lemma/lexical-frequency
-files were regenerated from that tree after `search:artifacts:compile` using
-`loadSoftwareLandDocuments` + `normalizeSearchBody`. Relationships remain the
-`dff24cf` compiled graph (Integrity has no relationship edges yet). Historical scenario policy remains the
-committed Software.Land tree at `e4507c54451814fcafb9598640bd2323faacefa5`.
-The three strict contracts `open`, `oauth`, and `open authorization` come from
-`0a8b33b7604b61e75e03a55b9c1e59d8571a3e19`, which also changes `tests/search-scenarios.js`;
-do not regenerate the historical inventory from that commit.
-Strict V2 contracts are A-class independent intent plus `SEARCH_V2_CONTRACTS`. Regression cases reuse recorded
-B-class independent intent as Software.Land compatibility coverage; they are
-**not Core ranking policy**. Historical `expectedTop` / `titlePrefix` / `topN`
-are executable Software.Land relevance contracts in
-`test/software-land-historical-relevance.test.js` (membership within topN, not
-exact order). Classification C is omitted. That suite is not the exact-output
-oracle and not Core default ranking policy. The relevance engine loads authored `relationship-map.json` (`equivalent` edges from the live curated-plus-generated map plus AppSec `related` forms), omits the `testing` configured-concept key, and patches
-NIST exact institute aliases plus AppSec aliases from `relevance-config.json`. Frozen `configured-concepts.json` is `{ key, aliases }` with aliases as unordered peers (stored order may preserve a former expansion first; that order is serialization only). The live search-equivalence snapshot
-matches Software.Land commit `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6`
-(`LIVE_SEARCH_EQUIVALENCE_MAP`: curated `SYNONYM_MAP` plus four generated
-additions with isolated incremental value; curated wins; no auto-reverse). AppSec `topicalRecall` still matches
-Software.Land commit `eac7a90a15d772f0f0626a0fa9481eb9efa55521`. NIST aliases match
-Software.Land commit `7628a85166781d4ab42f60646e2f66da5f336eaa`.
-Product-approved historical `expectedTop` contracts match Software.Land
-`3ad49e867f82db06aa06cd1c7f38dca8faecf246` (`historical-contract-updates.json`).
-OSS 0.5 equal-alias additionally rebaselined 25 historical rows in
-`historical-contract-updates.json` `equalAliasAcceptedRebaselines` (not a
-Software.Land overlay). Candidate `configuredFormCoverage` is occupied-only;
-query-side prefix `formCoverage` may still be 1/3 without occupancy.
-Corpus document/lemma/lexical-frequency artifacts match
-`971012b`. Relationship artifacts remain the
-`dff24cf` snapshot. `configured-concepts.json` additionally merges missing keys from
-the later committed Software.Land `acronymMap.js` at
-`df852eb4136dc5fb5b23cbf0bc22d45170e71423` (`fps`, `webgl`, `webgpu`,
-`glsl`, `wgsl`, `opengl`, `opengles`, `mdn`, `hz`, `raf`, `dpr`, `vrr`)
-without deleting the frozen `testing` key used by the exact-output oracle.
-That overlay SHA is `dictionaryAcronymMapSoftwareLandCommit`; it is not HEAD
-and is not a full configured-concept re-export. Empty-intent rows
-are not mined into V2 intent/regression cases; they still participate in
-historical relevance when `expectedTop` or `titlePrefix` exist.
+The committed blog tree at that SHA still contains both removed posts. The
+export used the working tree: those posts deleted, their menu entries removed,
+and inbound links revised. `export-content`, the site lemma build, and
+`scripts/search-artifacts/compile.mjs` ran against that working tree. The
+committed tree hash is recorded separately and is not the exported corpus.
+Documents are the runtime shape: `id`, `title`, `summary` (frontmatter
+description), and `body` from `normalizeSearchBody`. Configured concepts are
+`mergeConfiguredConcepts(acronymMap, compiled extras)`. Lemmas are
+`site-lemmas.json` after authored lemma policy. Lexical frequency and
+`relationships.json` are the compiled runtime artifacts. `relationship-map.json`
+is `relationshipMap.js` plus the live search-equivalence composition used by
+`compileSoftwareLandAuthoredRelevance`.
 
-Do not snapshot corpus artifacts from a dirty Software.Land worktree. Do not
-generate scenario fixtures from a dirty worktree. Extract `tests/search-scenarios.js`
-from the scenario SHA and `tests/search-v2-contracts.js` from the strict V2
-contract supplement SHA.
+Suite engines in this package still declare a title and body schema. The
+summary field is stored because the website indexes it, and lexical frequency
+was compiled with that summary. These suites do not add summary to the schema:
+doing so would change retrieval independently of the corpus refresh.
+
+`document-overlays.json` is empty. Fenwick Tree is corpus document `cm` at
+`/fenwick-tree/`. Overlay rows must not be concatenated onto the corpus when
+that would reuse `cm`.
+
+### Content inventory since `971012b`
+
+Added, in the committed tree:
+
+- `cm` `/fenwick-tree/` Fenwick Tree
+
+Removed in the uncommitted working tree. These ids are not in the exported documents, lexical frequency, or document relationships:
+
+- `I` `/cursor-pagination-previous-page/` Previous Page Token for Cursor Pagination
+- `ag` `/testing-in-software-engineering/` Testing in Software Engineering
+
+The historical root-route baseline still names both former paths. The generated
+redirect manifest does not. `/cursor-pagination-previous-page/`,
+`/blog/cursor-pagination-previous-page/`, `/testing-in-software-engineering/`,
+and `/blog/testing-in-software-engineering/` are not published pages.
+
+Indexed title or body changed:
+
+- `9` `/software-engineer-vs-software-developer/` Software Engineer vs Software Developer
+- `A` `/about/` About this Blog
+- `bk` `/terms-of-service-and-privacy-policy/` Terms and Privacy Policy
+- `bl` `/what-is-an-api/` What is an API?
+- `bo` `/working-with-apis/` Working with APIs
+- `bv` `/react-design-systems/` React Design Systems
+- `cl` `/integrity/` title `Integrity Is Not Obedience` → `Integrity`
+
+`content/blog/distributed-cloud/index.md` changed in the source commit and did
+not change the normalized title or body. Glossary remains excluded by the
+document loader.
+
+Document relationships were recompiled with the calibrated semantic compiler.
+The trusted 302-edge pair set did not match, so the new graph is used. Fenwick
+Tree (`cm`) is linked with Minmax Tree (`X`) and Monotonic Stack (`cg`). The
+previous semantic pairs Authorization Middleware (`D`) ↔ CloudFront Signed
+Cookies (`ci`) and Minmax Tree (`X`) ↔ Maximum Flow Algorithm (`w`) are gone.
+Every relationship endpoint is a document id in this snapshot.
+
+### Retained historical inputs
+
+These files were not regenerated from the current engine:
+
+- Scenario source commit `e4507c54451814fcafb9598640bd2323faacefa5` (`tests/search-scenarios.js`, 224 product rows). The OSS historical mirror is 223 rows, excluding historical exclusion `integ`.
+- Strict V2 contract supplement `0a8b33b7604b61e75e03a55b9c1e59d8571a3e19`. Do not mine historical scenarios from this commit.
+- `synonym-map.json` remains the `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6` provenance snapshot (`relevanceSoftwareLandCommit`). It is not the composed relationship map.
+- Historical contract updates `3ad49e867f82db06aa06cd1c7f38dca8faecf246`.
+- Accepted `what are apis` regression from `62c51bad060fea9627f06c752341ea7434f86e46`.
+- AppSec topical recall still matches `eac7a90a15d772f0f0626a0fa9481eb9efa55521`.
+- NIST institute aliases now also live in the runtime acronym map. The earlier pin was `7628a85166781d4ab42f60646e2f66da5f336eaa` via `relevance-config.json`.
+- The previous configured-concept overlay `dictionaryAcronymMapSoftwareLandCommit` (`df852eb4136dc5fb5b23cbf0bc22d45170e71423`) is not this snapshot. This refresh replaces that partial acronym overlay with the runtime merge.
+- `query-result-oracle.json` remains the 215-query freeze (123 documents, head recorded in that file). It is not an identity gate for this 122-document corpus. It was not regenerated.
+- `testing` and `quality ass` historical rows no longer name Testing in Software Engineering. That title was removed with the article. Load vs Stress Testing stays at its existing topN bound. No replacement title was taken from engine output. The historical top-N hash is `4a195cd6149c4fc680ad855ec59d94170b9397931ebfd378b67530e974cbb7de`.
+
+The `integ` regression still requires document `cl` at rank 1. The expected title is the renamed post, `Integrity`, which is what `tests/search-scenarios.js` at the corpus commit requires. Rank and id are unchanged.
+
+Fenwick Tree prefix contracts remain, now against corpus id `cm` rather than a synthetic overlay document. They still require Fenwick Tree inside the top 10. Rank 1 is not required.
 
 ## Files
 
-- `documents.json` — `id`, `title`, normalized search `body` (live V2 indexed shape)
-- `configured-concepts.json` — merged Software.Land acronym map + compiled equivalences as `configuredConcepts` authored `{ key, aliases }` (aliases are unordered peers). The `dff24cf` snapshot is retained, then missing later `acronymMap.js` keys are merged from `dictionaryAcronymMapSoftwareLandCommit` (`df852eb4136dc5fb5b23cbf0bc22d45170e71423`). `testing` remains for the exact-output oracle and is omitted only by `relevance-config.json`.
-- `lemmas.json` — effective site lemma table passed to `morphology({ lemmas })`. Generated rows are unchanged except the authored site override `computing` → `compute`, which wins over the generated stem `comput`.
-- `relationships.json` — runtime relationship graph, including TLS ↔ VPN editorial edges (generated + domain editorial; not relationshipMap)
-- `lexical-frequency.json` — production lexical-frequency artifact
-- `v2-contracts.json` — strict accepted V2 cases (`kind: contract`). The 102 `cases` run on the unchanged frozen corpus. `overlayCases` are OSS-owned contracts and are not part of those 102. Rows marked `documentOverlay` also require `document-overlays.json`.
-- `document-overlays.json` — documents indexed only for `documentOverlay` rows. Fenwick Tree (`id: cm`) is not in the frozen 123-document snapshot. Historical oracles and frozen-corpus suites keep the frozen documents. Overlay suites index this file on top of that snapshot.
-- `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy. Optional `overlayCases` are OSS-owned ranking regressions not mined from the scenario SHA.
-- `historical-scenarios.json` — complete 223-row OSS historical mirror (excluding historical exclusion `integ`, including obsolete `open`); `v1.expectedTop`/`titlePrefix`/`topN` are executable historical relevance contracts
-- `historical-contract-updates.json` — old V1 vs accepted V2/product `expectedTop` for rows superseded by explicit product decisions
-- `relevance-config.json` — Software.Land 0.5 relevance-engine inputs (omit `testing`, patch NIST institute aliases, load relationshipMap)
-- `relationship-map.json` — authored directional `equivalent` / `related` edges for the historical engine
-- `synonym-map.json` — provenance snapshot of the live Software.Land search-equivalence map from `db5a070` (curated `SYNONYM_MAP` plus four pruned generated additions; no reverse materialization)
-- `scenarios.json` — index, counts, and disposition totals
-- `manifest.json` — format, corpus/scenario source commits, package version, document count, scenario provenance, SHA256s
+- `documents.json` — `id`, `title`, `summary`, normalized search `body`
+- `configured-concepts.json` — runtime `{ key, aliases }` merge. Aliases are unordered peers.
+- `lemmas.json` — site lemma table passed to `morphology({ lemmas })`
+- `relationships.json` — compiled document relationship graph (semantic plus domain editorial)
+- `lexical-frequency.json` — production lexical-frequency artifact, compiled with title, summary, and normalized body
+- `relationship-map.json` — authored map plus composed live equivalences
+- `v2-contracts.json` — strict cases plus Fenwick corpus contracts in `overlayCases` (no `documentOverlay`)
+- `document-overlays.json` — empty. Do not add an id that already exists in `documents.json`.
+- `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy
+- `historical-scenarios.json` — retained 223-row historical mirror
+- `historical-contract-updates.json` — retained product updates
+- `relevance-config.json` — historical engine input selector (omit `testing`, NIST and AppSec patches, relationship map)
+- `synonym-map.json` — retained `db5a070` provenance snapshot
+- `query-result-oracle.json` — retained 215-query freeze for the previous corpus
+- `scenarios.json` — retained scenario index
+- `manifest.json` — format, provenance, counts, and SHA256s
 
-`lexical-frequency.json` is copied from the production artifact. Compiling it
-from `documents.json` through `@software-land/search/lexical` is deterministic
-and cheap (~200 ms), but it is **not** byte-identical unless the compile-time
-body shape (`description + body`) is used. That shape is not what live V2
-indexes. Ranking of the compact queries happened to match; the artifact did
-not. The snapshot is retained so production semantics stay exact.
-
-## Regeneration
-
-Corpus files: from a clean Software.Land tree at the recorded corpus commit,
-after `search:artifacts:compile`:
-
-1. Export live V2 documents (`id` / `title` / `normalizeSearchBody(body)`).
-2. Transform `acronymMap.js` + compiled equivalences into `configured-concepts.json`
-   at `corpusSourceCommit`. Then merge missing `{ key, aliases }` rows from
-   the later committed overlay; do not rewrite existing keys; do not delete
-   oracle-load-bearing keys such as `testing`. Do not hand-edit a single
-   concept such as `fps` in isolation.
-
-   ```bash
-   git -C /path/to/software.land show \
-     df852eb4136dc5fb5b23cbf0bc22d45170e71423:src/search/acronymMap.js
-   ```
-
-   For each `ACRONYM_MAP` key not already present in the frozen configured-concept list,
-   append `{ key, aliases }` from that file. The overlay that produced the
-   current 192-row file added exactly: `fps`, `webgl`, `webgpu`, `glsl`,
-   `wgsl`, `opengl`, `opengles`, `mdn`, `hz`, `raf`, `dpr`, `vrr`.
-3. Copy `site-lemmas.json` lemmas, `software-land-relationships.json`, and
-   `lexical-frequency.json`.
-4. Refresh corpus provenance (`corpusSourceCommit`, `searchPackageVersion` from
-   that commit's declared `@software-land/search` dependency, document/lemma
-   counts, and corpus file hashes). Do not hand-edit `manifest.json`.
-
-   ```bash
-   node scripts/software-land-corpus-manifest.mjs \
-     --dir test/fixtures/software-land \
-     --software-land /path/to/software.land \
-     --corpus-source-commit 971012bf3d561a67ca8a20f03ec2128135d1fb87
-   ```
-
-Scenario files: extract historical scenarios from the scenario SHA and strict
-V2 contracts from the supplement SHA (not a dirty worktree), then rebuild
-fixtures and provenance in `manifest.json` with the repo-only transform (no
-Gatsby, UI, or network). The replay keeps the 223-row inventory, including
-obsolete `open`, excludes only `integ`, preserves existing `overlayCases`, and
-keeps the accepted `what are apis` regression from
-`62c51bad060fea9627f06c752341ea7434f86e46` plus the TLS relationship
-`relevanceKind` `direct`:
-
-```bash
-git -C /path/to/software.land show \
-  e4507c54451814fcafb9598640bd2323faacefa5:tests/search-scenarios.js \
-  > /tmp/search-scenarios.js
-git -C /path/to/software.land show \
-  0a8b33b7604b61e75e03a55b9c1e59d8571a3e19:tests/search-v2-contracts.js \
-  > /tmp/search-v2-contracts.js
-
-node scripts/software-land-scenarios.mjs \
-  --scenarios /tmp/search-scenarios.js \
-  --contracts /tmp/search-v2-contracts.js \
-  --dir test/fixtures/software-land \
-  --manifest test/fixtures/software-land/manifest.json \
-  --strict-v2-contract-supplement-commit 0a8b33b7604b61e75e03a55b9c1e59d8571a3e19
-```
-
-Copy `synonym-map.json` from Software.Land live `LIVE_SEARCH_EQUIVALENCE_MAP` at the recorded
-`relevanceSoftwareLandCommit` (`db5a070`, the search-equivalence snapshot) after the same
-directional one-hop normalization used at that snapshot. Do not repoint that field at NIST patches, relationshipMap
-edits, historical-contract commits, or HEAD.
-Patch AppSec configured-concept aliases/`topicalRecall` and NIST exact institute aliases only through `relevance-config.json`;
-do not edit frozen `configured-concepts.json`. Do not reverse-materialize. Do not generate
-`expectedTop` / `topN` / `titlePrefix` from current engine output.
-
-Do not run `compileSemantic` in OSS CI. Do not copy models, vectors, markdown
-posts, Gatsby code, V1 rankings, or the app E2E runner.
+Do not generate `expectedTop`, `topN`, `titlePrefix`, or oracle rows from current engine output.

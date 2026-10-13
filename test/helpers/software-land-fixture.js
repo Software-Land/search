@@ -33,6 +33,17 @@ export function loadSoftwareLandDocumentOverlays() {
   return loadSoftwareLandJson("document-overlays.json");
 }
 
+/** Synthetic overlays must not replace or duplicate a corpus document id. */
+export function assertNoOverlayIdCollision(documents, overlays) {
+  const ids = new Set((documents || []).map((doc) => doc.id));
+  for (const doc of overlays || []) {
+    if (ids.has(doc.id)) {
+      throw new Error(`document overlay duplicates corpus id ${doc.id}`);
+    }
+    ids.add(doc.id);
+  }
+}
+
 function aliasKey(alias) {
   return JSON.stringify(Array.isArray(alias) ? alias : []);
 }

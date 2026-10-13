@@ -19,6 +19,7 @@ import {
   isHistoricalRelevanceApplicable,
 } from "../historical-relevance.js";
 import {
+  assertNoOverlayIdCollision,
   documentOverlayScenarioRows,
   loadSoftwareLandDocumentOverlays,
   loadSoftwareLandJson,
@@ -232,13 +233,13 @@ async function main() {
     const { attachLexicalFrequency } = await import(lexicalHref);
     const documents = attachLexicalFrequency(inputs.documents, inputs.lexicalFrequency);
     const documentOverlays = loadSoftwareLandDocumentOverlays();
-    const documentOverlayContracts = documentOverlayScenarioRows(
-      loadSoftwareLandJson("v2-contracts.json")
-    );
-    const overlayDocuments = attachLexicalFrequency(
-      [...inputs.documents, ...documentOverlays],
-      inputs.lexicalFrequency
-    );
+    assertNoOverlayIdCollision(inputs.documents, documentOverlays);
+    const v2Contracts = loadSoftwareLandJson("v2-contracts.json");
+    const documentOverlayContracts = documentOverlayScenarioRows(v2Contracts);
+    const corpusFenwickContracts = (v2Contracts.overlayCases || []).filter((row) => !row.documentOverlay);
+    const overlayDocuments = documentOverlays.length
+      ? attachLexicalFrequency([...inputs.documents, ...documentOverlays], inputs.lexicalFrequency)
+      : null;
     const initPayload = {
       schema: inputs.schema,
       configuredConcepts: inputs.configuredConcepts,
@@ -251,10 +252,12 @@ async function main() {
       path.join(packed.consumer, "software-land-init.json"),
       JSON.stringify({ ...initPayload, documents })
     );
-    writeFileSync(
-      path.join(packed.consumer, "software-land-overlay-init.json"),
-      JSON.stringify({ ...initPayload, documents: overlayDocuments })
-    );
+    if (overlayDocuments) {
+      writeFileSync(
+        path.join(packed.consumer, "software-land-overlay-init.json"),
+        JSON.stringify({ ...initPayload, documents: overlayDocuments })
+      );
+    }
     copyFileSync(path.join(harnessDir, "software-land-app.mjs"), path.join(packed.consumer, "software-land-app.mjs"));
     writeImportMapHtml(packed.consumer, {
       filename: "software-land.html",
@@ -331,6 +334,50 @@ async function main() {
       assertExpansionContract(expansion[spec.query], spec);
     }
 
+    const fenwickFull = {};
+    for (const spec of corpusFenwickContracts) {
+      const actual = await runQuery(full.page, spec.query, {
+        limit: spec.requiredAnyTop?.topN || 10,
+        resultCollector: spec.resultCollector || "complete-interpretation",
+      });
+      if (actual?.query !== spec.query) {
+        throw new Error(
+          `${spec.name} published ${JSON.stringify(actual?.query)} for ${JSON.stringify(spec.query)}`
+        );
+      }
+      assertExpansionContract(actual, {
+        query: spec.query,
+        within: {
+          id: spec.requiredAnyTop.ids[0],
+          title: spec.requiredAnyTop.titles[0],
+          topN: spec.requiredAnyTop.topN,
+        },
+      });
+      fenwickFull[spec.query] = actual;
+    }
+
+    const removedArticles = {};
+    for (const query of [
+      "Testing in Software Engineering",
+      "Previous Page Token for Cursor Pagination",
+      "cursor pagination",
+    ]) {
+      const actual = await runQuery(full.page, query, { limit: 30 });
+      if (!actual || actual.query !== query || !Array.isArray(actual.titles) || !Array.isArray(actual.ids)) {
+        throw new Error(`removed-article query ${JSON.stringify(query)} did not publish a completed result`);
+      }
+      const bannedTitle = actual.titles.find((title) =>
+        title === "Testing in Software Engineering" || title === "Previous Page Token for Cursor Pagination"
+      );
+      const bannedId = actual.ids.find((id) => id === "ag" || id === "I");
+      if (bannedTitle || bannedId) {
+        throw new Error(
+          `removed article still searchable for ${JSON.stringify(query)}: title ${JSON.stringify(bannedTitle)} id ${JSON.stringify(bannedId)}`
+        );
+      }
+      removedArticles[query] = { ok: true, resultCount: actual.titles.length };
+    }
+
     full.diag.assertClean("software-land full-scan");
     await full.page.evaluate(() => window.__dispose());
 
@@ -357,47 +404,77 @@ async function main() {
         );
       }
     }
+    const fenwickIndexed = {};
+    for (const spec of corpusFenwickContracts) {
+      const actual = await runQuery(indexed.page, spec.query, {
+        limit: spec.requiredAnyTop?.topN || 10,
+        resultCollector: spec.resultCollector || "complete-interpretation",
+      });
+      assertExpansionContract(actual, {
+        query: spec.query,
+        within: {
+          id: spec.requiredAnyTop.ids[0],
+          title: spec.requiredAnyTop.titles[0],
+          topN: spec.requiredAnyTop.topN,
+        },
+      });
+      const fullTitles = (fenwickFull[spec.query]?.titles || []).slice(0, 10);
+      const indexedTitles = (actual?.titles || []).slice(0, 10);
+      if (JSON.stringify(indexedTitles) !== JSON.stringify(fullTitles)) {
+        throw new Error(
+          `indexed/full-scan title mismatch for ${JSON.stringify(spec.query)}\nfull ${JSON.stringify(fullTitles)}\nindexed ${JSON.stringify(indexedTitles)}`
+        );
+      }
+      fenwickIndexed[spec.query] = {
+        name: spec.name,
+        query: spec.query,
+        ok: true,
+        rank: actual.ids.indexOf(spec.requiredAnyTop.ids[0]) + 1,
+      };
+    }
     indexed.diag.assertClean("software-land indexed smoke");
     await indexed.page.evaluate(() => window.__dispose());
 
     const documentOverlayResults = {};
-    for (const retriever of ["full-scan", "indexed"]) {
-      const session = await bootSoftwareLandPage(browser, origin, expectedWorker, retriever, "overlay");
-      if (session.boot.documentCount !== overlayDocuments.length) {
-        throw new Error(
-          `overlay ${retriever} documentCount ${session.boot.documentCount} != ${overlayDocuments.length}`
-        );
-      }
-      const cases = [];
-      for (const spec of documentOverlayContracts) {
-        const actual = await runQuery(session.page, spec.query, {
-          limit: spec.requiredAnyTop?.topN || 10,
-          resultCollector: spec.resultCollector || "complete-interpretation",
-        });
-        if (actual?.query !== spec.query) {
+    if (overlayDocuments) {
+      for (const retriever of ["full-scan", "indexed"]) {
+        const session = await bootSoftwareLandPage(browser, origin, expectedWorker, retriever, "overlay");
+        if (session.boot.documentCount !== overlayDocuments.length) {
           throw new Error(
-            `${spec.name} published ${JSON.stringify(actual?.query)} for ${JSON.stringify(spec.query)}`
+            `overlay ${retriever} documentCount ${session.boot.documentCount} != ${overlayDocuments.length}`
           );
         }
-        assertExpansionContract(actual, {
-          query: spec.query,
-          within: {
-            id: spec.requiredAnyTop.ids[0],
-            title: spec.requiredAnyTop.titles[0],
-            topN: spec.requiredAnyTop.topN,
-          },
-        });
-        cases.push({
-          name: spec.name,
-          query: spec.query,
-          ok: true,
-          rank: actual.ids.indexOf(spec.requiredAnyTop.ids[0]) + 1,
-        });
+        const cases = [];
+        for (const spec of documentOverlayContracts) {
+          const actual = await runQuery(session.page, spec.query, {
+            limit: spec.requiredAnyTop?.topN || 10,
+            resultCollector: spec.resultCollector || "complete-interpretation",
+          });
+          if (actual?.query !== spec.query) {
+            throw new Error(
+              `${spec.name} published ${JSON.stringify(actual?.query)} for ${JSON.stringify(spec.query)}`
+            );
+          }
+          assertExpansionContract(actual, {
+            query: spec.query,
+            within: {
+              id: spec.requiredAnyTop.ids[0],
+              title: spec.requiredAnyTop.titles[0],
+              topN: spec.requiredAnyTop.topN,
+            },
+          });
+          cases.push({
+            name: spec.name,
+            query: spec.query,
+            ok: true,
+            rank: actual.ids.indexOf(spec.requiredAnyTop.ids[0]) + 1,
+          });
+        }
+        session.diag.assertClean(`software-land document overlay ${retriever}`);
+        await session.page.evaluate(() => window.__dispose());
+        await session.page.close();
+        documentOverlayResults[retriever] = cases;
       }
-      session.diag.assertClean(`software-land document overlay ${retriever}`);
-      await session.page.evaluate(() => window.__dispose());
-      await session.page.close();
-      documentOverlayResults[retriever] = cases;
     }
 
     const uniqueExact = new Set(applicable.map((row) => row.query));
@@ -428,8 +505,10 @@ async function main() {
         failed: evaluations.filter((row) => !row.ok).length,
         assertions: applicable.length,
       },
+      removedArticles,
       v2Contracts: {
-        browser: "open, oauth, and open authorization run on the frozen corpus; document-overlay contracts from v2-contracts.json run in one packed Worker session per retriever",
+        browser: "open, oauth, open authorization, and Fenwick Tree corpus contracts run on the refreshed corpus. Synthetic document overlays are indexed only when document-overlays.json is non-empty and does not reuse a corpus id.",
+        fenwick: fenwickIndexed,
         documentOverlay: documentOverlayResults,
       },
       controls: Object.fromEntries(

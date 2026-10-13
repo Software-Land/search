@@ -2,56 +2,56 @@
   "format": "software-land-search-fixture",
   "version": 1,
   "description": "Software.Land-derived realistic integration test data. It is not default package policy.",
-  "corpusSourceCommit": "971012bf3d561a67ca8a20f03ec2128135d1fb87",
+  "corpusSourceCommit": "372ae05540036fea5671726f6ae43f5a75d9441d",
   "scenarioSourceCommit": "e4507c54451814fcafb9598640bd2323faacefa5",
-  "searchPackageVersion": "0.6.0",
-  "documentCount": 123,
-  "configuredConceptCount": 192,
-  "lemmaCount": 1220,
+  "searchPackageVersion": "0.7.0",
+  "documentCount": 122,
+  "configuredConceptCount": 191,
+  "lemmaCount": 1207,
   "files": {
     "documents.json": {
-      "bytes": 784351,
-      "sha256": "a617192c99c64913f9c34fabc9ab503d43f892f0528cb180c65abab172db93cf"
+      "bytes": 827536,
+      "sha256": "c0abc5d4bc85daa92d19512548edd3655b06926aaf873d2f7a558f1f3a2294a0"
     },
     "configured-concepts.json": {
-      "bytes": 24623,
-      "sha256": "d0a4e72b54d7431233d5ebc7c9608c88922ddbeeabc52bfdb0a6015fef2f85f5"
+      "bytes": 24573,
+      "sha256": "27bb47905d1a7afb366be6420e2fb994a27ebf7512030830f6209edf020d3b97"
     },
     "lemmas.json": {
-      "bytes": 31909,
-      "sha256": "a0196eb90fb5c794278b2edab1ba64b390143a9ac8271a6e49c331d1a05b279d"
+      "bytes": 31588,
+      "sha256": "1e843450ef18bbcd084cfb35158799af2f52e38d8223825daa3438bd21b66c5c"
     },
     "relationships.json": {
-      "bytes": 42472,
-      "sha256": "82aeb2fabe59320dc145f2bade94d65fbc453fdbfe571b7bcddfaddc0c70724b"
+      "bytes": 41942,
+      "sha256": "3910eab8141152902b8dce2d13250be63fc5f6c7fbc865213243affefefa5beb"
     },
     "lexical-frequency.json": {
-      "bytes": 1584138,
-      "sha256": "1eeb512956c908c9fe8b7d856e386ff8b5d5ded0db1ac069b819870697ef1c9a"
+      "bytes": 1604352,
+      "sha256": "b64a1ac568cf94642c574bfd4852237b1a210f2ceb8528b32b33ced4c9b1f79b"
     },
     "scenarios.json": {
       "bytes": 2385,
       "sha256": "f1f8e543bda6455786edd76aac139f79966eae0e126c39c2b8ed65fe93f902ee"
     },
     "v2-contracts.json": {
-      "bytes": 42134,
-      "sha256": "3e4466c1f0cb62152d3b5e7f00e564c918b5cb7f7a58657e8577e4262eabe307"
+      "bytes": 41955,
+      "sha256": "7f8baeed5bfbf395f359946d358ec475d58da24837784dc7a86c09d8dee5acde"
     },
     "document-overlays.json": {
-      "bytes": 158,
-      "sha256": "6a4ecf3ab2124c982bd659eab6376274802c673267f001acd321f6641291c2fb"
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
     },
     "regression-scenarios.json": {
-      "bytes": 25849,
-      "sha256": "7cbfe66e51f9336911e81da6da9c08ef8428cb9525c624bc35629e5f57cc0754"
+      "bytes": 25781,
+      "sha256": "866e20bcb1d09b7bfcecc96232022642c567aff39b4686af1f7cdf588f9c1728"
     },
     "historical-scenarios.json": {
-      "bytes": 150016,
-      "sha256": "0099f83d339f163735a7ed14778ee178f96f9a64756d17d0a756a623aef577dd"
+      "bytes": 149762,
+      "sha256": "027146beb2c0e8b5753de5cab1d6dfd2210e4e0c9d66218f925e9e660ebe3ea3"
     },
     "relevance-config.json": {
-      "bytes": 1446,
-      "sha256": "abfc2710777e76514114e136e41af729c1d33519f78ab2258b432baeadb64b11"
+      "bytes": 1698,
+      "sha256": "22b4f3d86756fad1328d5a7d56f8bd203a91a1004798b9682a691986c833f7fe"
     },
     "synonym-map.json": {
       "bytes": 6165,
@@ -62,8 +62,8 @@
       "sha256": "64769779f440cafaa8a2dfa1865b70c209cd6389575c9e532648e4c9dc2cc90c"
     },
     "relationship-map.json": {
-      "bytes": 19676,
-      "sha256": "8ad40d22d3de4f7d44993337c1c07174a9f490ff89599de0081a8d30c5dcd0db"
+      "bytes": 19931,
+      "sha256": "08f2e9bfd39296ac301a757c03fb8aa899c0aed71068bef6d0082ceb90d4f569"
     }
   },
   "scenarioCount": 224,
@@ -71,7 +71,6 @@
   "historicalRelevanceApplicable": 222,
   "relevanceSoftwareLandCommit": "db5a070dbc6ac112dfae403f38fdfd0fffbedbf6",
   "historicalContractSoftwareLandCommit": "3ad49e867f82db06aa06cd1c7f38dca8faecf246",
-  "dictionaryAcronymMapSoftwareLandCommit": "df852eb4136dc5fb5b23cbf0bc22d45170e71423",
   "omittedV1OnlyCount": 133,
   "omittedBrowserUiOnlyCount": 1,
   "sourceScenarioFiles": [
@@ -81,5 +80,34 @@
   "executableRegressionCount": 60,
   "historicalScenarioCount": 223,
   "omittedEmptyIntentCount": 51,
-  "strictV2ContractSupplementCommit": "0a8b33b7604b61e75e03a55b9c1e59d8571a3e19"
+  "strictV2ContractSupplementCommit": "0a8b33b7604b61e75e03a55b9c1e59d8571a3e19",
+  "previousCorpusSourceCommit": "971012bf3d561a67ca8a20f03ec2128135d1fb87",
+  "corpusWorktreeClean": false,
+  "uncommittedInputs": [
+    " M __tests__/blog-path-migration.test.js",
+    " M __tests__/search-v2-appsec-topical-recall.test.js",
+    " M __tests__/search-v2-generated-search-equivalences.test.js",
+    " M __tests__/search-v2-relevance-gate.test.js",
+    " M __tests__/search-v2-search-equivalences.test.js",
+    " M backend_serverless/lambdas/aws_lambda_resolve_slash_urls/blog-redirects.v1.json",
+    " M content/blog/app-sec/index.md",
+    " M content/blog/authorization-middleware/index.md",
+    " M content/blog/cicd/index.md",
+    " D content/blog/cursor-pagination-previous-page/index.md",
+    " D content/blog/testing-in-software-engineering/index.md",
+    " M content/blog/what-are-distributed-systems/index.md",
+    " M content/blog/what-is-cloud-migration/index.md",
+    " M content/blog/what-is-devops/index.md",
+    " M content/blog/what-is-refactoring/index.md",
+    " M docs/migrations/blog-to-prefixed-paths.v1.json",
+    " M src/data/menu-links.json",
+    " M tests/search-e2e.js",
+    " M tests/search-scenarios.js",
+    " M tests/search-v2-contracts.js",
+    " M tests/search.js"
+  ],
+  "contentTree": "b4d56a987e86e28f6b69acb111596ce5d1ec911d",
+  "searchPackageDependency": "file:vendor/software-land-search-0.7.0.tgz",
+  "uncommittedDiffAlgorithm": "git-diff-text-v1",
+  "uncommittedDiffSha256": "4e1af47321ccfb08d549a80bd41c671f14695047ee48d4592218ac459a668719"
 }
