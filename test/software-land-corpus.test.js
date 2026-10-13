@@ -10,6 +10,11 @@ import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
+import {
+  documentOverlayScenarioRows,
+  frozenCorpusScenarioRows,
+  loadSoftwareLandDocumentOverlays,
+} from "./helpers/software-land-fixture.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = path.join(ROOT, "fixtures", "software-land");
@@ -53,18 +58,17 @@ function createEngine({
   });
 }
 
-async function indexEngine(engine, { useLexicalFrequency = true } = {}) {
-  const docs = useLexicalFrequency ? attachLexicalFrequency(documents, lexicalFrequency) : documents;
-  await engine.index(docs);
+const documentOverlays = loadSoftwareLandDocumentOverlays();
+
+async function indexEngine(engine, { useLexicalFrequency = true, extraDocuments = [] } = {}) {
+  const docs = [...documents, ...extraDocuments];
+  const indexed = useLexicalFrequency ? attachLexicalFrequency(docs, lexicalFrequency) : docs;
+  await engine.index(indexed);
   return engine;
 }
 
 function titlesOf(engine, query, limit = SEARCH_LIMIT) {
   return engine.search(query, { limit }).map((hit) => hit.title);
-}
-
-function scenarioRows(payload) {
-  return [...(payload.cases || []), ...(payload.overlayCases || [])];
 }
 
 function indexOfTitle(titles, wanted) {
@@ -130,7 +134,10 @@ function measureCandidateSurvival(engine, rows) {
 }
 
 function assertScenarioCase(engine, row) {
-  const hits = engine.search(row.query, { limit: SEARCH_LIMIT });
+  const hits = engine.search(row.query, {
+    limit: SEARCH_LIMIT,
+    ...(row.resultCollector ? { resultCollector: row.resultCollector } : {}),
+  });
   const titles = hits.map((hit) => hit.title);
   if (row.exactFirst) {
     expect(titles[0]).toBe(row.exactFirst);
@@ -160,9 +167,13 @@ function assertScenarioCase(engine, row) {
     expect(idx + 1).toBeLessThanOrEqual(req.topN);
   }
   if (row.requiredAnyTop) {
-    const window = titles.slice(0, row.requiredAnyTop.topN);
-    for (const title of row.requiredAnyTop.titles) {
+    const windowHits = hits.slice(0, row.requiredAnyTop.topN);
+    const window = windowHits.map((hit) => hit.title);
+    for (const title of row.requiredAnyTop.titles || []) {
       expect(window).toContain(title);
+    }
+    for (const id of row.requiredAnyTop.ids || []) {
+      expect(windowHits.map((hit) => hit.id)).toContain(id);
     }
   }
   if (row.titlePrefix) {
@@ -236,6 +247,19 @@ describe("software-land corpus fixture", () => {
       "tests/search-v2-contracts.js",
     ]);
     expect(contracts.cases).toHaveLength(102);
+    expect(contracts.overlayCases.map((row) => row.query)).toEqual([
+      "binary index",
+      "binary index ",
+      "binary index t",
+      "binary index tr",
+      "binary index tre",
+      "binary index tree",
+      "binary indexed t",
+      "binary indexed tree",
+    ]);
+    expect(contracts.overlayCases.every((row) => row.documentOverlay === true && row.origin === "overlay")).toBe(true);
+    expect(documentOverlays.map((doc) => doc.id)).toEqual(["cm"]);
+    expect(documents.some((doc) => doc.id === "cm" || doc.title === "Fenwick Tree")).toBe(false);
     expect(regressions.cases).toHaveLength(60);
     expect(regressions.overlayCases).toHaveLength(4);
     expect(historical.rows).toHaveLength(223);
@@ -355,12 +379,12 @@ describe("software-land corpus fixture", () => {
     ]);
   });
 
-  test.each(scenarioRows(contracts).map((row) => [row.name, row]))("contract %s", (_name, row) => {
+  test.each(frozenCorpusScenarioRows(contracts).map((row) => [row.name, row]))("contract %s", (_name, row) => {
     expect(row.kind).toBe("contract");
     assertScenarioCase(engine, row);
   });
 
-  test.each(scenarioRows(regressions).map((row) => [row.name, row]))("regression %s", (_name, row) => {
+  test.each(frozenCorpusScenarioRows(regressions).map((row) => [row.name, row]))("regression %s", (_name, row) => {
     expect(row.kind).toBe("regression");
     assertScenarioCase(engine, row);
   });
@@ -410,7 +434,12 @@ describe("software-land candidate-stage survival", () => {
   });
 
   test("executable cases never depend on v1 expectedTop", () => {
-    for (const row of [...scenarioRows(contracts), ...scenarioRows(regressions)]) {
+    for (const row of [
+      ...frozenCorpusScenarioRows(contracts),
+      ...documentOverlayScenarioRows(contracts),
+      ...frozenCorpusScenarioRows(regressions),
+      ...documentOverlayScenarioRows(regressions),
+    ]) {
       expect(row.v1).toBeUndefined();
       expect(row.expectedTop).toBeUndefined();
     }
@@ -476,5 +505,20 @@ describe("software-land candidate-stage survival", () => {
     expect(indexed.searchDetailed("2", { limit: SEARCH_LIMIT }).meta.candidateTitles).toEqual(
       expect.arrayContaining(["200FPS: CSS vs Canvas vs WebGL vs WebGPU", "TLS 1.2 Vulnerability"])
     );
+  });
+});
+
+describe.each(["full-scan", "indexed"])("software-land document overlay %s", (retriever) => {
+  let engine;
+
+  beforeAll(async () => {
+    engine = await indexEngine(createEngine({ retriever }), { extraDocuments: documentOverlays });
+  });
+
+  test.each(documentOverlayScenarioRows(contracts).map((row) => [row.name, row]))("contract %s", (_name, row) => {
+    expect(row.documentOverlay).toBe(true);
+    expect(row.requiredAnyTop.topN).toBe(SEARCH_LIMIT);
+    expect(row.exactFirst).toBeUndefined();
+    assertScenarioCase(engine, row);
   });
 });

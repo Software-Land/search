@@ -1164,11 +1164,18 @@ export function analyzeQuery(
     // Non-canonical lemma() stems stay on `lemma` and do not skip typo repair.
     const tableLemma = pluginCanonicalLemma(plugins, normalized);
     const exactExplicitIntent = explicitQueryIntentKeys.has(surfaceTok);
+    // Title/concept lexicon and the prefix lexicon (corpus surface terms) both
+    // count. A typed stub of a body word such as index → indexed is not an
+    // edit-distance typo, even when the only nearby title/concept key is ide.
+    const knownOrPrefix =
+      lex.has(normalized) ||
+      isPrefixOfVocabulary(normalized, lex) ||
+      (prefixLex !== lex &&
+        (prefixLex.has(normalized) || isPrefixOfVocabulary(normalized, prefixLex)));
     const typoHits =
       exactExplicitIntent ||
-      lex.has(normalized) ||
+      knownOrPrefix ||
       configuredConceptKeys.has(normalized) ||
-      isPrefixOfVocabulary(normalized, lex) ||
       tableLemma
         ? []
         : suggestTypoForms(normalized, spellingLex, { signal });

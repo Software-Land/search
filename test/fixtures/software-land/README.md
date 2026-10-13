@@ -94,7 +94,8 @@ contract supplement SHA.
 - `lemmas.json` — effective site lemma table passed to `morphology({ lemmas })`. Generated rows are unchanged except the authored site override `computing` → `compute`, which wins over the generated stem `comput`.
 - `relationships.json` — runtime relationship graph, including TLS ↔ VPN editorial edges (generated + domain editorial; not relationshipMap)
 - `lexical-frequency.json` — production lexical-frequency artifact
-- `v2-contracts.json` — strict accepted V2 cases (`kind: contract`)
+- `v2-contracts.json` — strict accepted V2 cases (`kind: contract`). The 102 `cases` run on the unchanged frozen corpus. `overlayCases` are OSS-owned contracts and are not part of those 102. Rows marked `documentOverlay` also require `document-overlays.json`.
+- `document-overlays.json` — documents indexed only for `documentOverlay` rows. Fenwick Tree (`id: cm`) is not in the frozen 123-document snapshot. Historical oracles and frozen-corpus suites keep the frozen documents. Overlay suites index this file on top of that snapshot.
 - `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy. Optional `overlayCases` are OSS-owned ranking regressions not mined from the scenario SHA.
 - `historical-scenarios.json` — complete 223-row OSS historical mirror (excluding historical exclusion `integ`, including obsolete `open`); `v1.expectedTop`/`titlePrefix`/`topN` are executable historical relevance contracts
 - `historical-contract-updates.json` — old V1 vs accepted V2/product `expectedTop` for rows superseded by explicit product decisions

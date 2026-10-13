@@ -1,6 +1,6 @@
 /**
- * PROD-2/3: packed ranking evidence wired into ordinary SearchEngine.search().
- * searchDetailed/explain stay on the legacy FeatureVector path.
+ * Packed ranking evidence on ordinary SearchEngine.search().
+ * searchDetailed and explain stay on the FeatureVector path.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
@@ -79,7 +79,7 @@ async function indexedEngine(extra = {}) {
   return engine;
 }
 
-describe("PROD-2 packed ordinary search()", () => {
+describe("packed ordinary search()", () => {
   test("integ keeps Integrity #1 on the FeatureVector prefix-recall path", async () => {
     const engine = await indexedEngine();
     const results = engine.search("integ", { limit: 6 });

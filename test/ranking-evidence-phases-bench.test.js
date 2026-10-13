@@ -1,5 +1,5 @@
 /**
- * PROD-1 phase measurements. These are retrieval/evidence phases, not
+ * Ranking-evidence phase measurements. These are retrieval/evidence phases, not
  * SearchEngine.search() latency.
  */
 import { SearchEngine, morphology } from "../dist/index.js";
@@ -26,7 +26,7 @@ import {
   diffFinalized,
   retrievalRows,
   retrievalStats,
-} from "./helpers/ranking-evidence-prod1.js";
+} from "./helpers/ranking-evidence-equivalence.js";
 
 const SCHEMA = {
   title: { type: "text", role: "title" },
@@ -343,21 +343,21 @@ async function corpusReport(corpus, iterations) {
   };
 }
 
-benchmarkTest("PROD-1 retrieval/evidence phases at 25k", async () => {
+benchmarkTest("ranking-evidence retrieval phases at 25k", async () => {
   const report = await corpusReport(25_000, 9);
   expect(report.rows.every((row) => row.identity && row.noSecondPostingPass)).toBe(true);
   // eslint-disable-next-line no-console
   console.log(JSON.stringify({ rankingEvidenceBench25k: report }));
 }, 900_000);
 
-benchmarkTest("PROD-1 retrieval/evidence phases at 50k", async () => {
+benchmarkTest("ranking-evidence retrieval phases at 50k", async () => {
   const report = await corpusReport(50_000, 7);
   expect(report.rows.every((row) => row.identity && row.noSecondPostingPass)).toBe(true);
   // eslint-disable-next-line no-console
   console.log(JSON.stringify({ rankingEvidenceBench50k: report }));
 }, 1_200_000);
 
-benchmarkTest("PROD-1 retrieval/evidence phases at 100k", async () => {
+benchmarkTest("ranking-evidence retrieval phases at 100k", async () => {
   const report = await corpusReport(100_000, 7);
   expect(report.rows.every((row) => row.identity && row.noSecondPostingPass)).toBe(true);
   // eslint-disable-next-line no-console

@@ -15,6 +15,24 @@ export function loadSoftwareLandJson(name) {
   return JSON.parse(readFileSync(path.join(SOFTWARE_LAND_FIXTURE, name), "utf8"));
 }
 
+function scenarioRows(payload) {
+  return [...(payload?.cases || []), ...(payload?.overlayCases || [])];
+}
+
+/** Rows run against the unchanged frozen corpus. */
+export function frozenCorpusScenarioRows(payload) {
+  return scenarioRows(payload).filter((row) => !row.documentOverlay);
+}
+
+/** Rows that index document-overlays.json on top of the frozen corpus. */
+export function documentOverlayScenarioRows(payload) {
+  return scenarioRows(payload).filter((row) => row.documentOverlay);
+}
+
+export function loadSoftwareLandDocumentOverlays() {
+  return loadSoftwareLandJson("document-overlays.json");
+}
+
 function aliasKey(alias) {
   return JSON.stringify(Array.isArray(alias) ? alias : []);
 }

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Edit-distance typo repair no longer rewrites a token that is a corpus surface term or a proper prefix of one. Title and configured-concept keys remain the suggestion vocabulary. A body-only prefix such as `index` → `indexed` stays a prefix instead of occupying a nearer key such as `ide`. Ordinary prefix recall and exact configured keys are unchanged.
+
 ## 0.7.0 - 2026-10-12
 
 ### Changed

@@ -1410,5 +1410,111 @@
       "exactFirst": "SAML vs OAuth",
       "name": "contract · v2-contract · open authorization · #1:SAML vs OAuth"
     }
+  ],
+  "overlayCases": [
+    {
+      "query": "binary index",
+      "kind": "contract",
+      "origin": "overlay",
+      "documentOverlay": true,
+      "resultCollector": "complete-interpretation",
+      "requiredAnyTop": {
+        "titles": ["Fenwick Tree"],
+        "ids": ["cm"],
+        "topN": 10
+      },
+      "name": "contract · overlay · binary index · Fenwick Tree within 10"
+    },
+    {
+      "query": "binary index ",
+      "kind": "contract",
+      "origin": "overlay",
+      "documentOverlay": true,
+      "resultCollector": "complete-interpretation",
+      "requiredAnyTop": {
+        "titles": ["Fenwick Tree"],
+        "ids": ["cm"],
+        "topN": 10
+      },
+      "name": "contract · overlay · binary index [trailing space] · Fenwick Tree within 10"
+    },
+    {
+      "query": "binary index t",
+      "kind": "contract",
+      "origin": "overlay",
+      "documentOverlay": true,
+      "resultCollector": "complete-interpretation",
+      "requiredAnyTop": {
+        "titles": ["Fenwick Tree"],
+        "ids": ["cm"],
+        "topN": 10
+      },
+      "name": "contract · overlay · binary index t · Fenwick Tree within 10"
+    },
+    {
+      "query": "binary index tr",
+      "kind": "contract",
+      "origin": "overlay",
+      "documentOverlay": true,
+      "resultCollector": "complete-interpretation",
+      "requiredAnyTop": {
+        "titles": ["Fenwick Tree"],
+        "ids": ["cm"],
+        "topN": 10
+      },
+      "name": "contract · overlay · binary index tr · Fenwick Tree within 10"
+    },
+    {
+      "query": "binary index tre",
+      "kind": "contract",
+      "origin": "overlay",
+      "documentOverlay": true,
+      "resultCollector": "complete-interpretation",
+      "requiredAnyTop": {
+        "titles": ["Fenwick Tree"],
+        "ids": ["cm"],
+        "topN": 10
+      },
+      "name": "contract · overlay · binary index tre · Fenwick Tree within 10"
+    },
+    {
+      "query": "binary index tree",
+      "kind": "contract",
+      "origin": "overlay",
+      "documentOverlay": true,
+      "resultCollector": "complete-interpretation",
+      "requiredAnyTop": {
+        "titles": ["Fenwick Tree"],
+        "ids": ["cm"],
+        "topN": 10
+      },
+      "name": "contract · overlay · binary index tree · Fenwick Tree within 10"
+    },
+    {
+      "query": "binary indexed t",
+      "kind": "contract",
+      "origin": "overlay",
+      "documentOverlay": true,
+      "resultCollector": "complete-interpretation",
+      "requiredAnyTop": {
+        "titles": ["Fenwick Tree"],
+        "ids": ["cm"],
+        "topN": 10
+      },
+      "name": "contract · overlay · binary indexed t · Fenwick Tree within 10"
+    },
+    {
+      "query": "binary indexed tree",
+      "kind": "contract",
+      "origin": "overlay",
+      "documentOverlay": true,
+      "resultCollector": "complete-interpretation",
+      "requiredAnyTop": {
+        "titles": ["Fenwick Tree"],
+        "ids": ["cm"],
+        "topN": 10
+      },
+      "name": "contract · overlay · binary indexed tree · Fenwick Tree within 10"
+    }
   ]
 }

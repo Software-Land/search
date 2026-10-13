@@ -12,7 +12,7 @@ import { loadSoftwareLandRelevanceInputs } from "./helpers/software-land-fixture
 import {
   releaseEvidence,
   runEvidence,
-} from "./helpers/ranking-evidence-prod1.js";
+} from "./helpers/ranking-evidence-equivalence.js";
 
 const SCHEMA = {
   title: { type: "text", role: "title" },

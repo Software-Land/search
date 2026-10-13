@@ -14,7 +14,7 @@ import {
   retrievalStats,
   runEvidence,
   runEvidenceAsync,
-} from "./helpers/ranking-evidence-prod1.js";
+} from "./helpers/ranking-evidence-equivalence.js";
 
 const schema = {
   title: { type: "text", role: "title" },
@@ -137,7 +137,7 @@ const targetedDocuments = [
   },
 ];
 
-test("production evidence matches all represented targeted-family facts and F", async () => {
+test("ranking evidence matches all represented targeted-family facts and F", async () => {
   const engine = await compiledEngine(targetedDocuments, [
     { key: "tls", aliases: [["transport", "layer", "security"]] },
   ]);

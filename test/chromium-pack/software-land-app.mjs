@@ -54,10 +54,13 @@ const client = createSearchClient({
 window.__client = client;
 
 try {
-  const retriever = new URLSearchParams(location.search).get("retriever") || "full-scan";
+  const params = new URLSearchParams(location.search);
+  const retriever = params.get("retriever") || "full-scan";
+  const corpus = params.get("corpus") === "overlay" ? "overlay" : "frozen";
+  const initName = corpus === "overlay" ? "software-land-overlay-init.json" : "software-land-init.json";
   state.retriever = retriever;
-  const init = await fetch("/software-land-init.json").then((res) => {
-    if (!res.ok) throw new Error(`software-land-init.json HTTP ${res.status}`);
+  const init = await fetch(`/${initName}`).then((res) => {
+    if (!res.ok) throw new Error(`${initName} HTTP ${res.status}`);
     return res.json();
   });
   init.retriever = retriever;

@@ -34,8 +34,12 @@
       "sha256": "f1f8e543bda6455786edd76aac139f79966eae0e126c39c2b8ed65fe93f902ee"
     },
     "v2-contracts.json": {
-      "bytes": 39074,
-      "sha256": "1560d8ba3fe2951b4ed438ba7f777b24ddc35abdc4077d4a938346c96fc6260d"
+      "bytes": 42134,
+      "sha256": "3e4466c1f0cb62152d3b5e7f00e564c918b5cb7f7a58657e8577e4262eabe307"
+    },
+    "document-overlays.json": {
+      "bytes": 158,
+      "sha256": "6a4ecf3ab2124c982bd659eab6376274802c673267f001acd321f6641291c2fb"
     },
     "regression-scenarios.json": {
       "bytes": 25849,

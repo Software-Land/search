@@ -1,5 +1,5 @@
 /**
- * Old-vs-new public search() differentials for the packed ordinary path.
+ * Public search() equivalence for the packed ordinary path.
  * searchDetailed remains the FeatureVector oracle.
  */
 import {
@@ -12,6 +12,7 @@ import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";
 import {
+  frozenCorpusScenarioRows,
   loadSoftwareLandJson,
   loadSoftwareLandRelevanceInputs,
 } from "./helpers/software-land-fixture.js";
@@ -153,7 +154,7 @@ function generatedQueries(documents, count, seed) {
   return out.slice(0, count);
 }
 
-describe("PROD-2 packed search() public differentials", () => {
+describe("packed search() public equivalence", () => {
   test("Software.Land historical/v1/v2/regression inventory matches searchDetailed", async () => {
     const {
       documents,
@@ -184,10 +185,8 @@ describe("PROD-2 packed search() public differentials", () => {
         [
           ...historical.rows,
           ...enforcedV1HistoricalTopNRows(historical.rows),
-          ...(loadSoftwareLandJson("v2-contracts.json").cases || []),
-          ...(loadSoftwareLandJson("v2-contracts.json").overlayCases || []),
-          ...(loadSoftwareLandJson("regression-scenarios.json").cases || []),
-          ...(loadSoftwareLandJson("regression-scenarios.json").overlayCases || []),
+          ...frozenCorpusScenarioRows(loadSoftwareLandJson("v2-contracts.json")),
+          ...frozenCorpusScenarioRows(loadSoftwareLandJson("regression-scenarios.json")),
         ]
           .map((row) => row.query)
           .filter(Boolean)

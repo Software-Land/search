@@ -6,6 +6,7 @@ import {
 import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import {
+  frozenCorpusScenarioRows,
   loadSoftwareLandJson,
   loadSoftwareLandRelevanceInputs,
 } from "./helpers/software-land-fixture.js";
@@ -14,11 +15,7 @@ import { RankingEvidenceSessionPool } from "../dist/ranking/evidence/rankingEvid
 import {
   releaseEvidence,
   runEvidence,
-} from "./helpers/ranking-evidence-prod1.js";
-
-function rowsFrom(payload) {
-  return [...(payload.cases || []), ...(payload.overlayCases || [])];
-}
+} from "./helpers/ranking-evidence-equivalence.js";
 
 function addResult(total, reason, candidates, primitiveMismatches, scoreMismatches) {
   total.queries += 1;
@@ -73,8 +70,8 @@ test("Software.Land historical, v1, v2, and regression fused eligibility/exactne
   const suites = {
     historical: historical.rows.filter((row) => row.query),
     v1OnV2: enforcedV1HistoricalTopNRows(historical.rows).filter((row) => row.query),
-    v2: rowsFrom(loadSoftwareLandJson("v2-contracts.json")).filter((row) => row.query),
-    regression: rowsFrom(loadSoftwareLandJson("regression-scenarios.json")).filter(
+    v2: frozenCorpusScenarioRows(loadSoftwareLandJson("v2-contracts.json")).filter((row) => row.query),
+    regression: frozenCorpusScenarioRows(loadSoftwareLandJson("regression-scenarios.json")).filter(
       (row) => row.query
     ),
   };

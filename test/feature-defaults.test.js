@@ -8,7 +8,7 @@ import {
   createPackedDirectHits,
   isPackedDirectFeatures,
 } from "../dist/ranking/evidence/rankingEvidencePacked.js";
-import { runEvidence, releaseEvidence } from "./helpers/ranking-evidence-prod1.js";
+import { runEvidence, releaseEvidence } from "./helpers/ranking-evidence-equivalence.js";
 import {
   DEFAULT_CONFIGURED_FIELD_EVIDENCE,
   DEFAULT_FEATURE_VALUES,

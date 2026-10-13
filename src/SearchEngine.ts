@@ -166,11 +166,19 @@ function isPrefixOfVocabulary(token: string, vocabulary: Set<string>) {
   return false;
 }
 
+function isKnownOrVocabularyPrefix(token: string, vocabulary: Set<string> | undefined) {
+  if (!vocabulary || !token) return false;
+  return vocabulary.has(token) || isPrefixOfVocabulary(token, vocabulary);
+}
+
 function attachTypoAlternatives(
   query: AnalyzedQuery,
   vocabulary: Set<string>,
   explicitQueryIntentKeys: Set<string>,
-  { signal }: { signal?: AbortSignal } = {}
+  {
+    signal,
+    prefixVocabulary,
+  }: { signal?: AbortSignal; prefixVocabulary?: Set<string> } = {}
 ) {
   const extra: TypoCompanionConcept[] = [];
   const alternatives: QueryAlternative[] = [...(query.alternatives || [])];
@@ -178,7 +186,12 @@ function attachTypoAlternatives(
     if (!tok) continue;
     if (tok.completedToken || (tok.sources || []).includes("final-token-prefix")) continue;
     const exactExplicitIntent = explicitQueryIntentKeys.has(tok.surface);
-    if (vocabulary.has(tok.normalized) || isPrefixOfVocabulary(tok.normalized, vocabulary)) continue;
+    if (
+      isKnownOrVocabularyPrefix(tok.normalized, vocabulary) ||
+      (prefixVocabulary !== vocabulary && isKnownOrVocabularyPrefix(tok.normalized, prefixVocabulary))
+    ) {
+      continue;
+    }
     const suggestions = suggestTypoForms(tok.normalized, vocabulary, { signal });
     for (const s of suggestions) {
       if (s.form === tok.normalized) continue;
@@ -393,7 +406,10 @@ export class SearchEngine {
       prefixLexicon: index.surfaceVocabulary || index.titleTokenSet,
       signal,
     });
-    query = attachTypoAlternatives(query, typoVocabulary(index, this.plugins), explicitQueryIntentKeys, { signal });
+    query = attachTypoAlternatives(query, typoVocabulary(index, this.plugins), explicitQueryIntentKeys, {
+      signal,
+      prefixVocabulary: index.surfaceVocabulary || index.titleTokenSet,
+    });
     return query;
   }
 
