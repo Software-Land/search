@@ -4,6 +4,7 @@
 
 ### Changed
 
+- `morphology()` no longer ships a built-in lemma table. `morphology()` has an empty explicit table. `morphology({ lemmas })` uses only the supplied entries, and those entries take precedence over suffix heuristics. `canonicalLemma()` does not promote heuristic stems into authoritative mappings. Suffix heuristics and repeat collapse are unchanged. Callers that depended on the former table, including `computing` → `compute` and the recursion, authentication, authorization, shard, learn, library, and interceptor families, pass those mappings themselves. A generated site table is not overridden by the package.
 - An exact first token shared by several configured expansions (`open`, `hypertext`, `real`, `software`) is ambiguous partial evidence. It recalls title occurrences of each matching key and does not occupy a concept, rewrite the query, or activate that concept's equivalent or topical expansion. Title evidence is ranked from expansion coverage above a weak body hit of the typed word. When a title matches one group key and the body matches another, that boost uses the strongest title key; a body-only key does not replace it. A direct title match of the typed word and a complete acronym or alias match keep their existing priority. Incomplete proper prefixes such as `appl` are unchanged. Unique incomplete key prefixes stay on the existing key-prefix path.
 
 ### Added

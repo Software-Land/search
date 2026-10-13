@@ -3,8 +3,7 @@
  * analyzed IndexedDocument. Summary remains phrase/configured/ranking evidence
  * only — this does not add summary unigram candidate generation.
  *
- * Lemma mapping is the supported English table entry `libraries` → `library`
- * (DEFAULT_LEMMAS and Software.Land lemmas.json).
+ * Lemma mapping is the caller-supplied entry `libraries` → `library`.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";

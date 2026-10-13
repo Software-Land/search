@@ -328,8 +328,8 @@ describe("final-token prefix completion for compiled phrases", () => {
   });
 });
 
-describe("english lemma merge policy", () => {
-  test("site lemmas augment defaults and do not replace explicit defaults", () => {
+describe("english lemma table policy", () => {
+  test("caller entries are the whole table and are not replaced", () => {
     const plugin = morphology({
       lemmas: {
         computing: "comput",
@@ -337,20 +337,23 @@ describe("english lemma merge policy", () => {
         foobars: "foobaz",
       },
     });
-    expect(plugin.lemma("computing")).toBe("compute");
-    expect(plugin.lemma("libraries")).toBe("library");
+    expect(plugin.lemma("computing")).toBe("comput");
+    expect(plugin.canonicalLemma("computing")).toBe("comput");
+    expect(plugin.lemma("libraries")).toBe("libz");
     expect(plugin.lemma("foobars")).toBe("foobaz");
+    expect(plugin.canonicalLemma("recursive")).toBeNull();
   });
 
-  test("compute and computing still match a Computing title", () => {
-    const qCompute = analyzeQuery("compute", { plugins: [morphology({ lemmas: { computing: "comput" } })] });
-    const qComputing = analyzeQuery("computing", { plugins: [morphology({ lemmas: { computing: "comput" } })] });
+  test("an explicit computing lemma matches a Computing title", () => {
+    const lemmas = { computing: "compute" };
+    const qCompute = analyzeQuery("compute", { plugins: [morphology({ lemmas })] });
+    const qComputing = analyzeQuery("computing", { plugins: [morphology({ lemmas })] });
     expect(qCompute.tokens[0].lemma).toBe("compute");
     expect(qComputing.tokens[0].lemma).toBe("compute");
     const index = buildIndex(
       [{ id: "edge", title: "Edge Computing", body: "edge" }],
       schema,
-      [morphology({ lemmas: { computing: "comput" } })]
+      [morphology({ lemmas })]
     );
     const f1 = extractFeatures(qCompute, index.documents[0]);
     const f2 = extractFeatures(qComputing, index.documents[0]);

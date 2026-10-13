@@ -1,34 +1,13 @@
 /**
- * Small English morphology plugin. Not intrinsic to SearchEngine.
- * Intentionally tiny: suffix heuristics plus an optional lemma map.
- * Site lemmas augment the built-in table. Explicit DEFAULT_LEMMAS win so a
- * generated spaCy table cannot replace mappings the runtime already relies on.
+ * English morphology mechanics. Not intrinsic to SearchEngine.
+ * Suffix heuristics, repeat collapse, and an optional caller-owned lemma table.
+ * There is no built-in word list. Supplied entries are the whole explicit table
+ * and take precedence over heuristic fallback. `canonicalLemma` reads that
+ * table only; heuristic stems are not authoritative mappings.
  */
 
 import { collapseTrailingRepeats } from "./text.js";
 import { stableFingerprint } from "../stableHash.js";
-
-const DEFAULT_LEMMAS: Record<string, string> = {
-  libraries: "library",
-  recursive: "recursion",
-  recursively: "recursion",
-  recursing: "recursion",
-  recurses: "recursion",
-  recursed: "recursion",
-  authenticating: "authentication",
-  authenticated: "authentication",
-  authorizing: "authorization",
-  authorized: "authorization",
-  authorizes: "authorization",
-  sharding: "shard",
-  shards: "shard",
-  computing: "compute",
-  learning: "learn",
-  learnings: "learn",
-  intercepting: "interceptor",
-  intercepted: "interceptor",
-  intercept: "interceptor",
-};
 
 function stripSuffix(token: string): string {
   if (token.length <= 3) return token;
@@ -63,7 +42,7 @@ export interface EnglishPlugin {
 }
 
 export function createEnglishPlugin({ lemmas = {} }: { lemmas?: Record<string, string> } = {}): EnglishPlugin {
-  const table: Record<string, string> = { ...lemmas, ...DEFAULT_LEMMAS };
+  const table: Record<string, string> = { ...lemmas };
   const indexIdentity = `english-v1:${stableFingerprint(table)}`;
   function exactTableLemma(token: string): string | null {
     const t = String(token || "").toLowerCase();

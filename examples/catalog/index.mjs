@@ -25,6 +25,7 @@ const authored = compileAuthoredRelevance({
   ],
 });
 
+// No lemma table: this catalog does not need caller-owned morphology policy.
 const engine = SearchEngine.create({
   schema,
   plugins: [

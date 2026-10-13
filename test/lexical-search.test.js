@@ -18,13 +18,13 @@ import { tokenize, tokenizeWithRanges } from "../dist/text/text.js";
 import { buildIndex } from "../dist/indexing/indexDocuments.js";
 import { scoreFeatures, rankCandidates } from "../dist/ranking/rank.js";
 
-function engine(docs, dictEntries = []) {
+function engine(docs, dictEntries = [], lemmas = {}) {
   const e = SearchEngine.create({
     schema: {
       title: { type: "text", role: "title" },
       body: { type: "text", role: "body" },
     },
-    plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: dictEntries })],
+    plugins: [morphology({ lemmas }), compileConfiguredConceptPlugin({ configuredConcepts: dictEntries })],
   });
   return e.index(docs).then(() => e);
 }
@@ -114,7 +114,7 @@ describe("query analysis", () => {
   });
 
   test("collapses trailing repeats without dropping the original surface", () => {
-    const q = analyzeQuery("shardsss", { plugins: [morphology()] });
+    const q = analyzeQuery("shardsss", { plugins: [morphology({ lemmas: { shards: "shard" } })] });
     expect(q.tokens[0].surface).toBe("shardsss");
     expect(q.tokens[0].normalized).toBe("shard");
     expect(q.tokens[0].lemma).toBe("shard");
@@ -493,7 +493,8 @@ describe("query analysis", () => {
 
   test("exact expansion collapse keeps pre-collapse lexical phrase evidence", async () => {
     const mlDict = [{ key: "ml", aliases: [["machine", "learning"]]}];
-    const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: mlDict })];
+    const learningLemmas = { learning: "learn", learnings: "learn" };
+    const plugins = [morphology({ lemmas: learningLemmas }), compileConfiguredConceptPlugin({ configuredConcepts: mlDict })];
     const lexicon = ["machine", "learn", "learning", "learnings"];
     const docs = [
       {
@@ -504,7 +505,7 @@ describe("query analysis", () => {
       },
       { id: "linkedin", title: "LinkedIn Learning Review", body: "courses" },
     ];
-    const e = await engine(docs, mlDict);
+    const e = await engine(docs, mlDict, learningLemmas);
     const full = analyzeQuery("machine learning", { plugins, lexicon, prefixLexicon: lexicon });
     expect(full.tokens.map((t) => t.normalized)).toEqual(["machine", "learn"]);
     expect(full.concepts.find((c) => c.kind === "configured-concept")).toMatchObject({
@@ -678,8 +679,9 @@ describe("morphology vs surface", () => {
   ];
 
   test("shards and sharding share the shard lemma so both titles retrieve", async () => {
-    const e = await engine(docs);
-    const q = analyzeQuery("shards", { plugins: [morphology()] });
+    const lemmas = { shards: "shard", sharding: "shard" };
+    const e = await engine(docs, [], lemmas);
+    const q = analyzeQuery("shards", { plugins: [morphology({ lemmas })] });
     expect(q.tokens[0]).toMatchObject({ surface: "shards", surfaceNormalized: "shards", normalized: "shard", lemma: "shard" });
     const results = e.search("shards", { limit: 5 });
     expect(results.map((r) => r.title).sort()).toEqual(["Hot Shards", "Sharding"]);

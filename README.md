@@ -377,13 +377,13 @@ Details: [docs/schema.md](docs/schema.md), [docs/api.md](docs/api.md).
 
 ## Morphology
 
-Lemmatization is corpus-specific. Core owns the morphology mechanism, not every catalog’s morphology policy. `morphology()` is the public factory; it is the current English implementation (suffix heuristics, a small built-in table, and optional `lemmas`). It does not run spaCy, WordNet, lemminflect, or a site lemma script.
+Lemmatization is corpus-specific. The package provides morphology mechanics and consumes caller-owned lemma data. `morphology()` is the public factory: suffix heuristics, repeat collapse, and an optional `lemmas` table. It has no built-in word list, and it does not run spaCy, WordNet, lemminflect, or a site lemma script.
 
 ```js
-morphology({ lemmas: { intercepting: "interceptor", recursive: "recursion", foobars: "foobaz" } })
+morphology({ lemmas: { intercepting: "interceptor", recursive: "recursion", computing: "compute" } })
 ```
 
-`intercepting` → `interceptor` and `recursive` → `recursion` are catalog-specific policy examples, not universal linguistic truth. Some of those mappings already live in Core's small default table. Site entries **augment** the defaults. Explicit built-in mappings win, so a generated table cannot replace stems the runtime already relies on (`computing` stays `compute`). Compile `compileLexicalIndex` / `compileLexicalFrequency` with the same `morphology({ lemmas }).lemma` used at search time, and pass that map to the Worker as `init({ englishOptions: { lemmas } })`.
+`intercepting` → `interceptor`, `recursive` → `recursion`, and `computing` → `compute` are catalog-specific policy examples, not universal linguistic truth. Supplied entries are the whole explicit table and take precedence over heuristic fallback. The package does not merge a second table over them. `canonicalLemma()` reads only that supplied table. Compile `compileLexicalIndex` / `compileLexicalFrequency` with the same `morphology({ lemmas }).lemma` used at search time, and pass that same map to the Worker as `init({ englishOptions: { lemmas } })`.
 
 Keep lemma generators, caches, and models in the site build. This package consumes a `Record<string, string>`, not the generator itself.
 

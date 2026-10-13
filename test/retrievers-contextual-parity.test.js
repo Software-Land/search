@@ -42,6 +42,7 @@ describe("indexed vs full-scan contextual candidate parity", () => {
   });
 
   test("morphology/lemma preceding tokens", () => {
+    const plugins = [morphology({ lemmas: { computing: "compute" } })];
     const { index, indexed } = bothRetrievers(docs, plugins);
     const query = analyzeQuery("compute co", { plugins });
     const computeDoc = index.documents.find((d) => d.id === "compute");

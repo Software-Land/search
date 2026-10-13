@@ -72,7 +72,7 @@ function conceptIds(q) {
 
 describe("morphology-derived lemma prefix", () => {
   test("libraries still matches an independent library title token", () => {
-    const morph = [morphology()];
+    const morph = [morphology({ lemmas: { libraries: "library" } })];
     const index = buildIndex([{ id: "lib", title: "Library", body: "notes" }], schema, morph);
     const q = analyzeQuery("libraries", { plugins: morph });
     const features = extractFeatures(q, index.documents[0]);

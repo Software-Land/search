@@ -78,7 +78,8 @@ export interface SearchPlugin {
 }
 
 /**
- * Options for `morphology()`. Optional `lemmas` augment the built-in English table.
+ * Options for `morphology()`. `lemmas` is the entire explicit lemma table.
+ * Omission leaves that table empty. The package does not merge built-in entries.
  */
 export interface MorphologyOptions {
   lemmas?: Record<string, string>;

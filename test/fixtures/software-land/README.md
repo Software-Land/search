@@ -91,7 +91,7 @@ contract supplement SHA.
 
 - `documents.json` — `id`, `title`, normalized search `body` (live V2 indexed shape)
 - `configured-concepts.json` — merged Software.Land acronym map + compiled equivalences as `configuredConcepts` authored `{ key, aliases }` (aliases are unordered peers). The `dff24cf` snapshot is retained, then missing later `acronymMap.js` keys are merged from `dictionaryAcronymMapSoftwareLandCommit` (`df852eb4136dc5fb5b23cbf0bc22d45170e71423`). `testing` remains for the exact-output oracle and is omitted only by `relevance-config.json`.
-- `lemmas.json` — site lemma table as `morphology({ lemmas })`
+- `lemmas.json` — effective site lemma table passed to `morphology({ lemmas })`. Generated rows are unchanged except the authored site override `computing` → `compute`, which wins over the generated stem `comput`.
 - `relationships.json` — runtime relationship graph, including TLS ↔ VPN editorial edges (generated + domain editorial; not relationshipMap)
 - `lexical-frequency.json` — production lexical-frequency artifact
 - `v2-contracts.json` — strict accepted V2 cases (`kind: contract`)

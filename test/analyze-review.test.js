@@ -126,8 +126,14 @@ describe("final-token prefix completion", () => {
     expect(q.tokens[1].lemma).toBe("learn");
   });
 
-  test("built-in recursion lemmas beat equal-distance typo correction to secure", () => {
-    const plugins = [morphology()];
+  test("supplied recursion lemmas beat equal-distance typo correction to secure", () => {
+    const plugins = [morphology({
+      lemmas: {
+        recurses: "recursion",
+        recursing: "recursion",
+        recursive: "recursion",
+      },
+    })];
     const lexicon = ["secure", "recursion", "recursive", "recurses"];
     for (const query of ["recurses", "recursing", "recursive"]) {
       const q = analyzeQuery(query, { plugins, lexicon });
@@ -154,10 +160,8 @@ describe("final-token prefix completion", () => {
       lexicon,
     });
     expect(without.tokens[0].surface).toBe("recurse");
-    expect(without.tokens[0].surfaceNormalized).toBe("recursed");
-    expect(without.tokens[0].normalized).toBe("recursion");
+    expect(without.tokens[0].normalized).toBe("secure");
     expect(without.tokens[0].sources).toContain("typo-correction");
-    expect(without.tokens[0].sources).toContain("morphology");
 
     const withLemma = analyzeQuery("recurse", {
       plugins: [morphology({ lemmas: { recurse: "recursion" } })],
@@ -200,7 +204,7 @@ describe("final-token prefix completion", () => {
   });
 
   test("exactTitleTokenMatch uses the canonical lemma, not a unique prefix completion", () => {
-    const plugins = [morphology()];
+    const plugins = [morphology({ lemmas: { learning: "learn", learnings: "learn" } })];
     const index = buildIndex(
       [{ id: "learn", title: "Machine Learning", body: "notes" }],
       schema,
@@ -232,7 +236,7 @@ describe("final-token prefix completion", () => {
   });
 
   test("canonical query lemma matches a lemmatized title token", () => {
-    const plugins = [morphology()];
+    const plugins = [morphology({ lemmas: { libraries: "library" } })];
     const index = buildIndex([{ id: "lib", title: "Library", body: "notes" }], schema, plugins);
     const q = analyzeQuery("libraries", { plugins });
     const features = extractFeatures(q, index.documents[0]);
@@ -568,7 +572,7 @@ describe("unknown-token repair", () => {
 
   test("recurssing repairs through the inflected lemma form without mutating typed surface", () => {
     const q = analyzeQuery("recurssing", {
-      plugins: [morphology()],
+      plugins: [morphology({ lemmas: { recursing: "recursion", recurses: "recursion", recursive: "recursion" } })],
       lexicon: ["recursion", "secure"],
     });
     expect(q.raw).toBe("recurssing");
@@ -630,7 +634,13 @@ describe("unknown-token repair", () => {
       "programming",
       "interface",
     ];
-    const plugins = [morphology()];
+    const plugins = [morphology({
+      lemmas: {
+        recursive: "recursion",
+        recursing: "recursion",
+        sharding: "shard",
+      },
+    })];
     const untouched = {
       authentication: "authentication",
       authorization: "authorization",
@@ -664,7 +674,7 @@ describe("unknown-token repair", () => {
   test("recurssing retrieves Recursion as #1", async () => {
     const engine = SearchEngine.create({
       schema,
-      plugins: [morphology()],
+      plugins: [morphology({ lemmas: { recursing: "recursion" } })],
       retriever: "full-scan",
     });
     await engine.index([

@@ -30,8 +30,8 @@ describe("heuristic lemma prefix capability", () => {
     expect(formAllowsOrdinaryLexicalPrefix(q, "nat")).toBe(false);
   });
 
-  test("canonical computing lemma remains prefix-capable via rewritten normalized", () => {
-    const plugins = [morphology()];
+  test("an explicit computing lemma remains prefix-capable via rewritten normalized", () => {
+    const plugins = [morphology({ lemmas: { computing: "compute" } })];
     const q = analyzeQuery("computing", { plugins });
     expect(q.tokens[0].normalized).toBe("compute");
     expect(q.tokens[0].lemma).toBe("compute");
@@ -75,15 +75,15 @@ describe("heuristic lemma prefix capability", () => {
     expect(titles).toEqual(["Ops"]);
   });
 
-  test("canonical morphology still matches compute from computing", async () => {
-    const plugins = [morphology()];
+  test("an explicit computing lemma still matches compute from computing", async () => {
+    const plugins = [morphology({ lemmas: { computing: "compute" } })];
     const e = SearchEngine.create({ schema, plugins, retriever: "indexed" });
     await e.index([{ id: "edge", title: "Edge Computing", body: "Compute at the edge." }]);
     expect(e.search("computing", { limit: 5, relatedLimit: 0 })[0].title).toBe("Edge Computing");
   });
 
-  test("canonical libraries still matches library", async () => {
-    const plugins = [morphology()];
+  test("an explicit libraries lemma still matches library", async () => {
+    const plugins = [morphology({ lemmas: { libraries: "library" } })];
     const e = SearchEngine.create({ schema, plugins, retriever: "full-scan" });
     await e.index([{ id: "lib", title: "What is a Library?", body: "A reusable library." }]);
     expect(e.search("libraries", { limit: 5, relatedLimit: 0 })[0].title).toBe("What is a Library?");

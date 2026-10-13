@@ -701,9 +701,10 @@ describe("morphology-aware directional search equivalences", () => {
 
   test("shard family reaches partitioning without an authored shard key", async () => {
     const map = { sharding: ["partitioning"], partitioning: ["sharding"] };
-    const plugin = morphPlugins({ dict: [], map });
-    expect(morphology().canonicalLemma("sharding")).toBe("shard");
-    expect(morphology().canonicalLemma("shard")).toBeNull();
+    const lemmas = { sharding: "shard", shards: "shard", sharded: "shard" };
+    const plugin = morphPlugins({ lemmas, dict: [], map });
+    expect(morphology({ lemmas }).canonicalLemma("sharding")).toBe("shard");
+    expect(morphology({ lemmas }).canonicalLemma("shard")).toBeNull();
     const shardDocs = [
       { id: "cockroach", title: "CockroachDB vs Postgres", body: "geo partitioning native support" },
       { id: "sql", title: "SQL vs NoSQL", body: "advanced table partitioning" },
@@ -718,11 +719,11 @@ describe("morphology-aware directional search equivalences", () => {
       expect(q.equivalentRecall).toEqual([{ source: "shard", target: "partitioning" }]);
       expect(q.concepts[0].forms).toContain("partitioning");
       expect(searchEquivalenceRecallConcepts(q)).toEqual([]);
-      const { indexedHits } = await assertIndexedFullScan(query, { dict: [], map, docs: shardDocs });
+      const { indexedHits } = await assertIndexedFullScan(query, { lemmas, dict: [], map, docs: shardDocs });
       expect(ids(indexedHits)).toEqual(expect.arrayContaining(["cockroach", "sql", "grpc", "shard"]));
       expect(ids(indexedHits)).not.toContain("unrelated");
     }
-    const proofEngine = await engine({ dict: [], map, docs: shardDocs, retriever: "full-scan" });
+    const proofEngine = await engine({ lemmas, dict: [], map, docs: shardDocs, retriever: "full-scan" });
     const proof = proofEngine.searchDetailed("shard", { limit: 20, explain: true });
     for (const title of ["CockroachDB vs Postgres", "SQL vs NoSQL", "gRPC vs Kafka"]) {
       const hit = proof.results.find((row) => row.title === title);
@@ -745,7 +746,8 @@ describe("morphology-aware directional search equivalences", () => {
       { id: "cockroach", title: "CockroachDB vs Postgres", body: "geo partitioning native support" },
       { id: "shard", title: "Sharding", body: "database sharding overview" },
     ];
-    const { indexed } = await assertIndexedFullScan("shard", { dict: [], map, docs: shardDocs });
+    const lemmas = { sharding: "shard" };
+    const { indexed } = await assertIndexedFullScan("shard", { lemmas, dict: [], map, docs: shardDocs });
     const detailed = indexed.searchDetailed("shard", { limit: 20, explain: true });
     const cockroach = detailed.results.find((row) => row.id === "cockroach");
     expect(cockroach.retrievalSources).toEqual(["body-lexical"]);

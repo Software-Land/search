@@ -40,20 +40,27 @@ describe("0.4.0 morphology() public API", () => {
     expect(viaMorphology.lemma("computing")).toBe(viaInternal.lemma("computing"));
     expect(viaMorphology.canonicalLemma("recurses")).toBe(viaInternal.canonicalLemma("recurses"));
     expect(viaMorphology.lemma("widgets")).toBe("widget");
-    expect(viaMorphology.lemma("computing")).toBe("compute");
+    expect(viaMorphology.canonicalLemma("computing")).toBeNull();
+    expect(viaMorphology.lemma("computing")).toBe("comput");
 
     const morphDefault = morphology();
     const internalDefault = internalEnglish();
+    expect([...morphDefault.lemmaTableKeys()]).toEqual([]);
     expect(await titlesOf(morphDefault, "recurses")).toEqual(await titlesOf(internalDefault, "recurses"));
     expect(await titlesOf(viaMorphology, "widgets")).toEqual(await titlesOf(viaInternal, "widgets"));
     expect(await titlesOf(viaMorphology, "computing")).toEqual(await titlesOf(viaInternal, "computing"));
-    expect((await titlesOf(morphDefault, "recurses"))[0]).toBe("What is Recursion?");
   });
 
-  test("built-in recursion family maps to recursion without a site table", () => {
-    const plugin = morphology();
-    const inflected = ["recurses", "recursing", "recursive", "recursively", "recursed"];
-    for (const form of inflected) {
+  test("recursion family is canonical only when the caller supplies it", async () => {
+    const lemmas = {
+      recurses: "recursion",
+      recursing: "recursion",
+      recursive: "recursion",
+      recursively: "recursion",
+      recursed: "recursion",
+    };
+    const plugin = morphology({ lemmas });
+    for (const form of Object.keys(lemmas)) {
       expect(plugin.canonicalLemma(form)).toBe("recursion");
       expect(plugin.lemma(form)).toBe("recursion");
     }
@@ -61,6 +68,7 @@ describe("0.4.0 morphology() public API", () => {
     expect(plugin.canonicalLemma("recurs")).toBeNull();
     expect(plugin.lemma("recurs")).toBe("recur");
     expect(plugin.canonicalLemma("recursion")).toBeNull();
+    expect((await titlesOf(plugin, "recurses"))[0]).toBe("What is Recursion?");
   });
 
   test("recursion family is not an unbounded recurs* stem", () => {

@@ -300,7 +300,10 @@ describe("query analysis repair", () => {
   });
 
   test("morphological tokens are not compound-split or over-corrected", () => {
-    const intercepting = analyzeQuery("intercepting", { plugins, lexicon: ["interceptor", "testing", "interface"] });
+    const intercepting = analyzeQuery("intercepting", {
+      plugins: [morphology({ lemmas: { intercepting: "interceptor" } }), ...plugins.slice(1)],
+      lexicon: ["interceptor", "testing", "interface"],
+    });
     expect(intercepting.tokens).toHaveLength(1);
     expect(intercepting.tokens[0].surface).toBe("intercepting");
     expect(intercepting.tokens[0].normalized).toBe("interceptor");
