@@ -1175,6 +1175,10 @@ function hasIndependentRetrievalSource(retrievalSources: string[] | undefined) {
   return Boolean(retrievalSources?.includes(CONFIGURED_PREFIX_RECALL_SOURCE));
 }
 
+function documentHasConfiguredTitleKey(doc: IndexedDocument, key: string) {
+  return doc.titleTokenSet.has(key) || doc.titleLemmaSet.has(key);
+}
+
 function keyTitleCoverage(doc: IndexedDocument, key: string) {
   if (!doc.nonStopTitle.length) return 0;
   let hit = 0;
@@ -1187,6 +1191,39 @@ function keyTitleCoverage(doc: IndexedDocument, key: string) {
   return Number((hit / doc.nonStopTitle.length).toFixed(4));
 }
 
+/** Coverage after title-evidence fields are updated. Reads those fields, including direct class. */
+function configuredPrefixRecallCoverage(
+  query: AnalyzedQuery,
+  doc: IndexedDocument,
+  recall: NonNullable<AnalyzedQuery["configuredPrefixRecall"]>,
+  fields: ReturnType<typeof computeFeatureFields>,
+  retrievalSources: string[] | undefined,
+  titleHasKey: boolean
+) {
+  const recallKey = recall.key || "";
+  const titleKeyAlreadyRepresented =
+    fields.configuredConceptMatch === "key-in-title" ||
+    fields.configuredConceptMatch === "form" ||
+    Boolean(fields.canonicalKeyTitle) ||
+    (Boolean(recallKey) && titleKeyTokenAlreadyCovered(query, doc, recallKey));
+  // Unique and ambiguous exact-first title keys. Omitted when that key is already represented.
+  const exactFirstTitleKeyEligible =
+    Boolean(recallKey) &&
+    titleHasKey &&
+    !hasConfiguredSequenceIntent(query) &&
+    isExactFirstTokenRecall(recall) &&
+    !titleKeyAlreadyRepresented;
+  if (exactFirstTitleKeyEligible) return recall.coverage;
+  if (
+    !hasConfiguredSequenceIntent(query) &&
+    isPrefixOnlyConfiguredRecall(retrievalSources) &&
+    classifyDirect(fields) === "none"
+  ) {
+    return recall.coverage;
+  }
+  return 0;
+}
+
 function withConfiguredPrefixRecallFields(
   query: AnalyzedQuery,
   doc: IndexedDocument,
@@ -1197,19 +1234,18 @@ function withConfiguredPrefixRecallFields(
   const recall = configuredPrefixRecallForDocument(doc, retrievalSources, weakRecall);
   const retrieved = Boolean(retrievalSources?.includes(CONFIGURED_PREFIX_RECALL_SOURCE));
   const group = weakRecall?.ambiguity === "group";
-  const titleHasKey = Boolean(
-    recall?.key && (doc.titleTokenSet.has(recall.key) || doc.titleLemmaSet.has(recall.key))
+  const titleHasKey = Boolean(recall?.key && documentHasConfiguredTitleKey(doc, recall.key));
+  // Ambiguous exact-first title evidence stays weak. key-in-title would mark it strong.
+  const ambiguousExactFirstTitle = Boolean(
+    group && retrieved && titleHasKey && isExactFirstTokenRecall(recall)
   );
-  // Exact shared first tokens stay partial. key-in-title would mark them strong
-  // and expand document neighbors as if one concept were occupied.
-  const exactFirstTitle = Boolean(group && retrieved && titleHasKey && isExactFirstTokenRecall(recall));
-  const keyInTitle = Boolean(group && !exactFirstTitle && retrieved && titleHasKey);
+  const keyInTitle = Boolean(group && !ambiguousExactFirstTitle && retrieved && titleHasKey);
   let configuredConceptMatch: ConfiguredConceptMatch = fields.configuredConceptMatch;
   if (!configuredConceptMatch && keyInTitle) configuredConceptMatch = "key-in-title";
   const fieldEvidence = keyInTitle
     ? { ...fields.configuredConceptFieldEvidence, title: fields.configuredConceptFieldEvidence.title || "key" }
     : fields.configuredConceptFieldEvidence;
-  const next = {
+  const classified = {
     ...fields,
     configuredConceptMatch,
     configuredConceptFieldEvidence: fieldEvidence,
@@ -1218,48 +1254,13 @@ function withConfiguredPrefixRecallFields(
         ? Math.max(fields.titleCoverage || 0, keyTitleCoverage(doc, recall.key))
         : fields.titleCoverage,
   };
-  const prefixOnly =
-    Boolean(recall) &&
-    !hasConfiguredSequenceIntent(query) &&
-    isPrefixOnlyConfiguredRecall(retrievalSources);
-  // An exact-first title key is partial concept-title evidence. It stays
-  // off key-in-title, so it must not become strong or expand neighbors.
-  // Coverage is kept when the title key is a different token from the
-  // ordinary lexical hit: a body occurrence of the typed word does not
-  // already count the key. Coverage is omitted when configured title
-  // identity, or the title-coverage matcher, already accounts for that
-  // key. Authored equivalents count because they are forms on the typed
-  // concept, including when the title surface is an inflection whose lemma
-  // is the key.
-  // Unique and ambiguous selections share
-  // this rule. A prefix-only candidate with no lexical class still stores
-  // coverage, including a unique body-only key. Ranking multiplies the
-  // stored coverage by the body-lexical coefficient. Group selection
-  // ignores body-only keys.
-  const recallKey = recall?.key || "";
-  const titleKeyAlreadyRepresented =
-    next.configuredConceptMatch === "key-in-title" ||
-    next.configuredConceptMatch === "form" ||
-    Boolean(next.canonicalKeyTitle) ||
-    (Boolean(recallKey) && titleKeyTokenAlreadyCovered(query, doc, recallKey));
-  const exactFirstTitleKey =
-    Boolean(recallKey) &&
-    titleHasKey &&
-    !hasConfiguredSequenceIntent(query) &&
-    isExactFirstTokenRecall(recall) &&
-    !titleKeyAlreadyRepresented;
-  const score =
-    recall && (exactFirstTitleKey || (prefixOnly && classifyDirect(next) === "none"))
-      ? recall.coverage
-      : 0;
+  const prefixRecallCoverage = recall
+    ? configuredPrefixRecallCoverage(query, doc, recall, classified, retrievalSources, titleHasKey)
+    : 0;
   return {
-    ...next,
-    configuredPrefixRecallScore: Number(score.toFixed(4)),
+    ...classified,
+    configuredPrefixRecallScore: Number(prefixRecallCoverage.toFixed(4)),
   };
-}
-
-function documentHasConfiguredTitleKey(doc: IndexedDocument, key: string) {
-  return doc.titleTokenSet.has(key) || doc.titleLemmaSet.has(key);
 }
 
 function configuredPrefixRecallForDocument(
@@ -1522,7 +1523,7 @@ export const FEATURE_DEFINITIONS = {
   relationshipType: "Relationship type (semantic, same-category, …) or null. Not a query equivalence.",
   relationshipSourceId: "Primary document id that licensed this related candidate, or null.",
   retrievalScore: "Optional 0–1 retrieval evidence (e.g. normalized BM25). Default 0; not a substitute for constraints.",
-  configuredPrefixRecallScore: "Query-side configured-form prefix evidence for a matching key. Unique recall and an exact-first title key store coverage. An exact-first title key keeps that coverage when ordinary lexical evidence is a different token, such as a body occurrence of the typed word; ranking then counts each once. Coverage is omitted when occupancy is present, configured title identity or the title-coverage matcher already accounts for that key at a title position recall would accept (the surface token or its lemma, including an authored equivalent of the typed word), the candidate is an incomplete stub already represented by key-in-title, or the document is not a prefix-recall key. A different title token does not erase it. A prefix-only candidate whose directClass is none also stores coverage, including a unique body-only key. Relationship overlay is not typed lexical provenance. An exact first token shared by several concepts does not add a separate bonus and does not set key-in-title. Ranking multiplies stored coverage by the shared body-lexical coefficient. Coverage is (exactCount + partialCompleteness) / formLength; partial completeness reuses contextual prefix string-length semantics.",
+  configuredPrefixRecallScore: "Stored prefix-recall coverage for a matching key. Ranking multiplies it by the body-lexical coefficient. Unique recall and an exact-first title key store coverage. Coverage stays when lexical evidence is a different token, including a body hit of the typed word, and is omitted when occupancy, configured title identity, or the title-coverage matcher already accounts for that key (surface, lemma, or authored equivalent). An incomplete stub already marked key-in-title stores none. A different title token does not erase it. A prefix-only candidate with directClass none also stores coverage, including a unique body-only key. Relationship overlay is not lexical provenance. An exact first token shared by several concepts adds no bonus and does not set key-in-title. Coverage is (exactCount + partialCompleteness) / formLength.",
   relevanceKind: "direct | related. Related only when directClass is none and query-anchored relationship evidence exists, except independently retrieved configured-prefix-recall candidates, which stay direct. Weak/moderate/strong lexical class stays direct even when a relationship is attached.",
   directClass: "strong | moderate | weak | none. Interpretable lexical/configured evidence class, independent of relatedness.",
 };
