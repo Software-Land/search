@@ -1,23 +1,18 @@
 # Software.Land search fixture
 
-Software.Land-derived realistic integration test data. It is not default package policy.
+Software.Land fixtures under `test/fixtures/software-land/` provide a self-contained snapshot for integration tests. Their configuration and relevance expectations are fixture-specific and do not define the search engine’s defaults.
 
-See `NOTICE.md` in this directory: Software.Land editorial/body content is not
-licensed under the project license merely because it lives in this repository.
+See `NOTICE.md` in this directory. Software.Land editorial and body content is not licensed under the project license merely because it lives in this repository.
 
-This directory is a snapshot of live V2 search inputs from the Software.Land
-application. It exists so `@software-land/search` can exercise production-derived
-ranking in this OSS repo without importing Gatsby, UI, or the Software.Land E2E
-runner.
+Lemmas, configured concepts, the relationship map, document relationships, and lexical frequency are fixture arguments. Tests pass them into the engine. There is no public root `english()` or `dictionary()` helper.
 
-Lemmas, configured-concept rows, the relationship map, document relationships,
-and lexical frequency here are **fixture arguments only**. They must be passed
-into the engine by the test. There is no public root `english()` or
-`dictionary()` helper. They must never become Core defaults.
+Historical `expectedTop`, `titlePrefix`, and `topN` rows are relevance contracts for this fixture (`test/software-land-historical-relevance.test.js`). They are not Core ranking policy and they are not the exact-output oracle. `query-result-oracle.json` is the retained exact-output freeze for an earlier corpus.
 
-Historical `expectedTop` / `titlePrefix` / `topN` rows are executable
-Software.Land relevance contracts. They are not Core ranking policy and they
-are not the exact-output oracle.
+After `npm run build`, run the fixture tests from this package:
+
+```bash
+node --experimental-vm-modules ./node_modules/jest/bin/jest.js test/software-land-corpus.test.js
+```
 
 ## Provenance
 
@@ -33,27 +28,13 @@ are not the exact-output oracle.
 | Configured concepts | 191 (runtime acronym map merged with compiled extras; `testing` is not in this snapshot) |
 | Lemmas | 1207, including the authored override `computing` → `compute` |
 
-The committed blog tree at that SHA still contains both removed posts. The
-export used the working tree: those posts deleted, their menu entries removed,
-and inbound links revised. `export-content`, the site lemma build, and
-`scripts/search-artifacts/compile.mjs` ran against that working tree. The
-committed tree hash is recorded separately and is not the exported corpus.
-Documents are the runtime shape: `id`, `title`, `summary` (frontmatter
-description), and `body` from `normalizeSearchBody`. Configured concepts are
-`mergeConfiguredConcepts(acronymMap, compiled extras)`. Lemmas are
-`site-lemmas.json` after authored lemma policy. Lexical frequency and
-`relationships.json` are the compiled runtime artifacts. `relationship-map.json`
-is `relationshipMap.js` plus the live search-equivalence composition used by
-`compileSoftwareLandAuthoredRelevance`.
+The committed blog tree at that SHA still contains both removed posts. The exported documents come from the working tree at the recorded source commit: those posts deleted, their menu entries removed, and inbound links revised. The committed tree hash is recorded separately and is not the exported corpus.
 
-Suite engines in this package still declare a title and body schema. The
-summary field is stored because the website indexes it, and lexical frequency
-was compiled with that summary. These suites do not add summary to the schema:
-doing so would change retrieval independently of the corpus refresh.
+Documents use `id`, `title`, `summary`, and normalized search `body`. Configured concepts are the merged rows in `configured-concepts.json`. Lemmas are the mappings in `lemmas.json`, including `computing` → `compute`. Lexical frequency and `relationships.json` are the compiled artifacts stored here. `relationship-map.json` is the authored map plus composed equivalences for this snapshot.
 
-`document-overlays.json` is empty. Fenwick Tree is corpus document `cm` at
-`/fenwick-tree/`. Overlay rows must not be concatenated onto the corpus when
-that would reuse `cm`.
+Suite engines in this package declare a title and body schema. The summary field is stored with the documents, and lexical frequency includes that summary. These suites do not add summary to the schema: doing so would change retrieval independently of this snapshot.
+
+`document-overlays.json` is empty. Fenwick Tree is corpus document `cm` at `/fenwick-tree/`. Overlay rows must not be concatenated onto the corpus when that would reuse `cm`.
 
 ### Content inventory since `971012b`
 
@@ -66,10 +47,12 @@ Removed in the uncommitted working tree. These ids are not in the exported docum
 - `I` `/cursor-pagination-previous-page/` Previous Page Token for Cursor Pagination
 - `ag` `/testing-in-software-engineering/` Testing in Software Engineering
 
-The historical root-route baseline still names both former paths. The generated
-redirect manifest does not. `/cursor-pagination-previous-page/`,
-`/blog/cursor-pagination-previous-page/`, `/testing-in-software-engineering/`,
-and `/blog/testing-in-software-engineering/` are not published pages.
+The historical root-route baseline still names both former paths. Those paths are not documents in this snapshot:
+
+- `/cursor-pagination-previous-page/`
+- `/blog/cursor-pagination-previous-page/`
+- `/testing-in-software-engineering/`
+- `/blog/testing-in-software-engineering/`
 
 Indexed title or body changed:
 
@@ -81,33 +64,26 @@ Indexed title or body changed:
 - `bv` `/react-design-systems/` React Design Systems
 - `cl` `/integrity/` title `Integrity Is Not Obedience` → `Integrity`
 
-`content/blog/distributed-cloud/index.md` changed in the source commit and did
-not change the normalized title or body. Glossary remains excluded by the
-document loader.
+`distributed-cloud` changed in the source commit and did not change the normalized title or body. Glossary is not in this snapshot.
 
-Document relationships were recompiled with the calibrated semantic compiler.
-The trusted 302-edge pair set did not match, so the new graph is used. Fenwick
-Tree (`cm`) is linked with Minmax Tree (`X`) and Monotonic Stack (`cg`). The
-previous semantic pairs Authorization Middleware (`D`) ↔ CloudFront Signed
-Cookies (`ci`) and Minmax Tree (`X`) ↔ Maximum Flow Algorithm (`w`) are gone.
-Every relationship endpoint is a document id in this snapshot.
+Document relationships in this snapshot link Fenwick Tree (`cm`) with Minmax Tree (`X`) and Monotonic Stack (`cg`). Authorization Middleware (`D`) is not paired with CloudFront Signed Cookies (`ci`). Minmax Tree (`X`) is not paired with Maximum Flow Algorithm (`w`). Every relationship endpoint is a document id in this snapshot.
 
 ### Retained historical inputs
 
 These files were not regenerated from the current engine:
 
-- Scenario source commit `e4507c54451814fcafb9598640bd2323faacefa5` (`tests/search-scenarios.js`, 224 product rows). The OSS historical mirror is 223 rows, excluding historical exclusion `integ`.
-- Strict V2 contract supplement `0a8b33b7604b61e75e03a55b9c1e59d8571a3e19`. Do not mine historical scenarios from this commit.
+- Scenario source commit `e4507c54451814fcafb9598640bd2323faacefa5` (224 source rows). The historical mirror in this directory is 223 rows, excluding `integ`.
+- Strict V2 contract supplement `0a8b33b7604b61e75e03a55b9c1e59d8571a3e19`. Historical scenarios in this snapshot were not taken from that commit.
 - `synonym-map.json` remains the `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6` provenance snapshot (`relevanceSoftwareLandCommit`). It is not the composed relationship map.
 - Historical contract updates `3ad49e867f82db06aa06cd1c7f38dca8faecf246`.
 - Accepted `what are apis` regression from `62c51bad060fea9627f06c752341ea7434f86e46`.
 - AppSec topical recall still matches `eac7a90a15d772f0f0626a0fa9481eb9efa55521`.
-- NIST institute aliases now also live in the runtime acronym map. The earlier pin was `7628a85166781d4ab42f60646e2f66da5f336eaa` via `relevance-config.json`.
+- NIST aliases in this snapshot match the runtime acronym map: the full name, `institute standards`, and `nist`. The one-token `institute` alias is absent. The earlier pin was `7628a85166781d4ab42f60646e2f66da5f336eaa` via `relevance-config.json`.
 - The previous configured-concept overlay `dictionaryAcronymMapSoftwareLandCommit` (`df852eb4136dc5fb5b23cbf0bc22d45170e71423`) is not this snapshot. This refresh replaces that partial acronym overlay with the runtime merge.
 - `query-result-oracle.json` remains the 215-query freeze (123 documents, head recorded in that file). It is not an identity gate for this 122-document corpus. It was not regenerated.
-- `testing` and `quality ass` historical rows no longer name Testing in Software Engineering. That title was removed with the article. Load vs Stress Testing stays at its existing topN bound. No replacement title was taken from engine output. The historical top-N hash is `4a195cd6149c4fc680ad855ec59d94170b9397931ebfd378b67530e974cbb7de`.
+- `testing` and `quality ass` historical rows no longer name Testing in Software Engineering. That title was removed with the article. Load vs Stress Testing stays at its existing topN bound. No replacement title was taken from engine output. The historical top-N hash is `526c745084124e0b9ee7e22347cc7c5d7d8cd91f8564e7487decde39e1344671`.
 
-The `integ` regression still requires document `cl` at rank 1. The expected title is the renamed post, `Integrity`, which is what `tests/search-scenarios.js` at the corpus commit requires. Rank and id are unchanged.
+The `integ` regression still requires document `cl` at rank 1. The expected title is `Integrity`. Rank and id are unchanged.
 
 Fenwick Tree prefix contracts remain, now against corpus id `cm` rather than a synthetic overlay document. They still require Fenwick Tree inside the top 10. Rank 1 is not required.
 
@@ -115,10 +91,10 @@ Fenwick Tree prefix contracts remain, now against corpus id `cm` rather than a s
 
 - `documents.json` — `id`, `title`, `summary`, normalized search `body`
 - `configured-concepts.json` — runtime `{ key, aliases }` merge. Aliases are unordered peers.
-- `lemmas.json` — site lemma table passed to `morphology({ lemmas })`
+- `lemmas.json` — lemma table passed to `morphology({ lemmas })`
 - `relationships.json` — compiled document relationship graph (semantic plus domain editorial)
-- `lexical-frequency.json` — production lexical-frequency artifact, compiled with title, summary, and normalized body
-- `relationship-map.json` — authored map plus composed live equivalences
+- `lexical-frequency.json` — lexical-frequency artifact, compiled with title, summary, and normalized body
+- `relationship-map.json` — authored map plus composed equivalences
 - `v2-contracts.json` — strict cases plus Fenwick corpus contracts in `overlayCases` (no `documentOverlay`)
 - `document-overlays.json` — empty. Do not add an id that already exists in `documents.json`.
 - `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy

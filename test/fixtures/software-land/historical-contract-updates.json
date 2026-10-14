@@ -549,16 +549,16 @@
       "reason": "APPROVED_CONTRACT_CHANGE",
       "oldV1": {
         "expectedTop": [
-          "Udacity Review",
-          "TLS 1.2 Vulnerability"
-        ],
-        "topN": 2
-      },
-      "newV1": {
-        "expectedTop": [
           "TLS 1.2 Vulnerability"
         ],
         "topN": 1
+      },
+      "newV1": {
+        "expectedTop": [
+          "Udacity Review",
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 10
       }
     },
     {

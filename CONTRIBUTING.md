@@ -33,7 +33,7 @@ Open an issue first for public API changes, ranking/constraint changes, or retri
 - Neural / semantic / lemma-model tooling stays at **build time**. Core consumes data (`Record<string, string>` lemmas, compiled artifacts), not those generators.
 - Ranking changes need regression evidence (existing exact-order tests, Software.Land real-corpus contracts/regressions, or a newly justified case). Do not retune scores or boosts against the toy relevance fixture.
 - Do not expose internal analyzed-query, feature-vector, or index representations without a compatibility reason.
-- Software.Land fixtures under `test/fixtures/software-land/` are production-derived test data, not default package policy. Historical `expectedTop` / `titlePrefix` / `topN` rows are executable Software.Land relevance contracts in `test/software-land-historical-relevance.test.js`. They are not Core default ranking policy and are not the exact-output oracle.
+- Software.Land fixtures under `test/fixtures/software-land/` provide a self-contained snapshot for integration tests. Their configuration and relevance expectations are fixture-specific and do not define the search engine’s defaults. Historical `expectedTop`, `titlePrefix`, and `topN` rows in `test/software-land-historical-relevance.test.js` are relevance contracts for that fixture. They are not the exact-output oracle in `test/fixtures/software-land/query-result-oracle.json`.
 
 ## Tests
 

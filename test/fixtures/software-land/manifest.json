@@ -14,8 +14,8 @@
       "sha256": "c0abc5d4bc85daa92d19512548edd3655b06926aaf873d2f7a558f1f3a2294a0"
     },
     "configured-concepts.json": {
-      "bytes": 24573,
-      "sha256": "27bb47905d1a7afb366be6420e2fb994a27ebf7512030830f6209edf020d3b97"
+      "bytes": 24536,
+      "sha256": "94633df31586b2aca57580bcbf656497ca1ed6d45fe9785f0ad31ac6e4a2f7ee"
     },
     "lemmas.json": {
       "bytes": 31588,
@@ -46,24 +46,28 @@
       "sha256": "866e20bcb1d09b7bfcecc96232022642c567aff39b4686af1f7cdf588f9c1728"
     },
     "historical-scenarios.json": {
-      "bytes": 149762,
-      "sha256": "027146beb2c0e8b5753de5cab1d6dfd2210e4e0c9d66218f925e9e660ebe3ea3"
+      "bytes": 149791,
+      "sha256": "196e772c26169d1474266800df6b2050cf0d416a1d0fa2b51198740be46e28e3"
     },
     "relevance-config.json": {
-      "bytes": 1698,
-      "sha256": "22b4f3d86756fad1328d5a7d56f8bd203a91a1004798b9682a691986c833f7fe"
+      "bytes": 1648,
+      "sha256": "7a4db9994f083eaeec9becdbce87f716edc5a0fc319d0a4ff31d863d437e5767"
     },
     "synonym-map.json": {
       "bytes": 6165,
       "sha256": "bf09dd75b7a7c02e2ab983d863c23606e34a06d7ad4ea3d07cd41302b5b37e7c"
     },
     "historical-contract-updates.json": {
-      "bytes": 30749,
-      "sha256": "64769779f440cafaa8a2dfa1865b70c209cd6389575c9e532648e4c9dc2cc90c"
+      "bytes": 30750,
+      "sha256": "1526c4da99f10968ec996e89a38b86647ded73fa15cd0853a4c04169ff74c780"
     },
     "relationship-map.json": {
       "bytes": 19931,
       "sha256": "08f2e9bfd39296ac301a757c03fb8aa899c0aed71068bef6d0082ceb90d4f569"
+    },
+    "v1-historical-topn-contract.json": {
+      "bytes": 50755,
+      "sha256": "347975ad72f22d367a79d8d5aa64f8b3c15f23c425a6184ae8d8505104efb020"
     }
   },
   "scenarioCount": 224,

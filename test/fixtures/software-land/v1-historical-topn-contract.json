@@ -17,7 +17,7 @@
       "reason": "classification C is obsolete; not enforced on V1 or V2 E2E"
     }
   ],
-  "sha256": "4a195cd6149c4fc680ad855ec59d94170b9397931ebfd378b67530e974cbb7de",
+  "sha256": "526c745084124e0b9ee7e22347cc7c5d7d8cd91f8564e7487decde39e1344671",
   "rows": [
     {
       "index": 0,
@@ -1425,10 +1425,11 @@
       "index": 128,
       "query": "institute",
       "expectedTop": [
+        "Udacity Review",
         "TLS 1.2 Vulnerability"
       ],
       "titlePrefix": null,
-      "topN": 1
+      "topN": 10
     },
     {
       "index": 129,

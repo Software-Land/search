@@ -1,6 +1,7 @@
 /**
- * Software.Land-derived realistic integration tests.
- * Fixture data is not default package policy.
+ * Software.Land fixture integration tests.
+ * Fixture configuration and relevance expectations are fixture-specific
+ * and do not define the search engine's defaults.
  * Regression cases are compatibility coverage, not Core ranking policy.
  */
 import { createHash } from "node:crypto";
@@ -329,8 +330,6 @@ describe("software-land corpus fixture", () => {
 
   test("fixture README states site data is not Core policy", () => {
     const readme = readFileSync(path.join(FIXTURE, "README.md"), "utf8");
-    expect(readme).toContain("Software.Land-derived realistic integration test data. It is not default package policy.");
-    expect(readme).toContain("They must never become Core defaults.");
     expect(readme).toContain("not Core ranking policy");
     expect(readme).toContain("dff24cf606967cb50b24d28d9142747c9203e053");
     expect(readme).toContain("3ad49e867f82db06aa06cd1c7f38dca8faecf246");

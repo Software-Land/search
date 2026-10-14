@@ -6,8 +6,7 @@
  * Path: npm pack → isolated install → real Chromium → SearchClient →
  * packed searchWorker.js → frozen fixture → historical-relevance.js.
  *
- * Does not import src/, does not checkout Software.Land, and does not
- * go through Gatsby/TestCafe.
+ * Does not import src/. Uses the checked-in fixture.
  */
 import { copyFileSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";

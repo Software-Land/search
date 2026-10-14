@@ -195,13 +195,11 @@ describe("Software.Land historical relevance contracts", () => {
     const frozenNist = loadSoftwareLandJson("configured-concepts.json").find((entry) => entry.key === "nist");
     expect(frozenNist.aliases).toEqual([
       ["national", "institute", "standards", "technology"],
-      ["institute"],
       ["institute", "standards"],
     ]);
     const nist = configuredConcepts.find((entry) => entry.key === "nist");
     expect(nist.aliases).toEqual([
       ["national", "institute", "standards", "technology"],
-      ["institute"],
       ["institute", "standards"],
     ]);
     const gatech = configuredConcepts.find((entry) => entry.key === "gatech");

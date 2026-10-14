@@ -11,9 +11,6 @@
     "nist": {
       "addAliases": [
         [
-          "institute"
-        ],
-        [
           "institute",
           "standards"
         ]
@@ -30,7 +27,7 @@
   "notes": [
     "configured-concepts.json is the runtime merge of src/search/acronymMap.js and compiled extras for keys not already in that map. It is an explicit fixture input, not a Search Core default.",
     "The refreshed concept list does not include testing. omitConfiguredConceptKeys still names testing so a later reintroduction cannot reach the historical engine unnoticed.",
-    "NIST institute aliases and the AppSec alias list now match the runtime acronym map. configuredConceptPatches still omit AppSec [\"security\"] and add the NIST institute aliases; both are already true of the refreshed file, so the patch does not create a second copy.",
+    "NIST aliases match the runtime acronym map: the full name, institute standards, and the key nist. The patch does not add the one-token institute alias. It still omits AppSec [\"security\"] and repeats institute standards, which is already in the concept file.",
     "relationship-map.json is the runtime authored map plus the composed live search-equivalence pairs. Do not reverse generated maps through synonym-map.json; that file remains the db5a070 provenance snapshot.",
     "expectedTop / topN / titlePrefix values are not generated from engine output."
   ],
