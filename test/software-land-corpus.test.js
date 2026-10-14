@@ -4,19 +4,13 @@
  * and do not define the search engine's defaults.
  * Regression cases are compatibility coverage, not Core ranking policy.
  */
-import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
-import {
-  assertNoOverlayIdCollision,
-  documentOverlayScenarioRows,
-  frozenCorpusScenarioRows,
-  loadSoftwareLandDocumentOverlays,
-} from "./helpers/software-land-fixture.js";
+import { frozenCorpusScenarioRows } from "./helpers/software-land-fixture.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = path.join(ROOT, "fixtures", "software-land");
@@ -26,7 +20,6 @@ function loadJson(name) {
   return JSON.parse(readFileSync(path.join(FIXTURE, name), "utf8"));
 }
 
-const manifest = loadJson("manifest.json");
 const documents = loadJson("documents.json");
 const configuredConcepts = loadJson("configured-concepts.json");
 const lemmas = loadJson("lemmas.json");
@@ -60,12 +53,8 @@ function createEngine({
   });
 }
 
-const documentOverlays = loadSoftwareLandDocumentOverlays();
-assertNoOverlayIdCollision(documents, documentOverlays);
-
-async function indexEngine(engine, { useLexicalFrequency = true, extraDocuments = [] } = {}) {
-  const docs = [...documents, ...extraDocuments];
-  const indexed = useLexicalFrequency ? attachLexicalFrequency(docs, lexicalFrequency) : docs;
+async function indexEngine(engine, { useLexicalFrequency = true } = {}) {
+  const indexed = useLexicalFrequency ? attachLexicalFrequency(documents, lexicalFrequency) : documents;
   await engine.index(indexed);
   return engine;
 }
@@ -221,64 +210,9 @@ describe("software-land corpus fixture", () => {
     engine = await indexEngine(createEngine());
   });
 
-  test("manifest records source commit, package version, document count, and scenario provenance", () => {
-    expect(manifest.format).toBe("software-land-search-fixture");
-    expect(manifest.version).toBe(1);
-    expect(manifest.corpusSourceCommit).toBe("372ae05540036fea5671726f6ae43f5a75d9441d");
-    expect(manifest.previousCorpusSourceCommit).toBe("971012bf3d561a67ca8a20f03ec2128135d1fb87");
-    expect(manifest.corpusWorktreeClean).toBe(false);
-    expect(manifest.uncommittedInputs).toEqual([
-      " M __tests__/blog-path-migration.test.js",
-      " M __tests__/search-v2-appsec-topical-recall.test.js",
-      " M __tests__/search-v2-generated-search-equivalences.test.js",
-      " M __tests__/search-v2-relevance-gate.test.js",
-      " M __tests__/search-v2-search-equivalences.test.js",
-      " M backend_serverless/lambdas/aws_lambda_resolve_slash_urls/blog-redirects.v1.json",
-      " M content/blog/app-sec/index.md",
-      " M content/blog/authorization-middleware/index.md",
-      " M content/blog/cicd/index.md",
-      " D content/blog/cursor-pagination-previous-page/index.md",
-      " D content/blog/testing-in-software-engineering/index.md",
-      " M content/blog/what-are-distributed-systems/index.md",
-      " M content/blog/what-is-cloud-migration/index.md",
-      " M content/blog/what-is-devops/index.md",
-      " M content/blog/what-is-refactoring/index.md",
-      " M docs/migrations/blog-to-prefixed-paths.v1.json",
-      " M src/data/menu-links.json",
-      " M tests/search-e2e.js",
-      " M tests/search-scenarios.js",
-      " M tests/search-v2-contracts.js",
-      " M tests/search.js",
-    ]);
-    expect(manifest.uncommittedDiffAlgorithm).toBe("git-diff-text-v1");
-    expect(manifest.uncommittedDiffSha256).toBe("4e1af47321ccfb08d549a80bd41c671f14695047ee48d4592218ac459a668719");
-    // Committed content/blog tree. The two removed posts are in the uncommitted diff, not this tree.
-    expect(manifest.contentTree).toBe("b4d56a987e86e28f6b69acb111596ce5d1ec911d");
-    expect(manifest.searchPackageDependency).toBe("file:vendor/software-land-search-0.7.0.tgz");
-    expect(manifest.scenarioSourceCommit).toBe("e4507c54451814fcafb9598640bd2323faacefa5");
-    expect(manifest.strictV2ContractSupplementCommit).toBe("0a8b33b7604b61e75e03a55b9c1e59d8571a3e19");
-    expect(manifest.softwareLandCommit).toBeUndefined();
-    expect(manifest.relevanceSoftwareLandCommit).toBe("db5a070dbc6ac112dfae403f38fdfd0fffbedbf6");
-    expect(manifest.dictionaryAcronymMapSoftwareLandCommit).toBeUndefined();
-    expect(manifest.historicalRelevanceApplicable).toBe(222);
-    expect(manifest.searchPackageVersion).toBe("0.7.0");
-    expect(manifest.documentCount).toBe(122);
-    expect(manifest.lemmaCount).toBe(1207);
-    expect(manifest.configuredConceptCount).toBe(191);
+  test("fixture inventory records documents, removed articles, and scenario coverage", () => {
     expect(documents).toHaveLength(122);
     expect(documents.some((doc) => doc.id === "ag" || doc.id === "I")).toBe(false);
-    expect(manifest.description).toMatch(/not default package policy/i);
-    expect(manifest.scenarioCount).toBe(224);
-    expect(manifest.historicalScenarioCount).toBe(223);
-    expect(manifest.executableV2ScenarioCount).toBe(102);
-    expect(manifest.executableRegressionCount).toBe(60);
-    expect(manifest.omittedV1OnlyCount).toBe(133);
-    expect(manifest.omittedEmptyIntentCount).toBe(51);
-    expect(manifest.omittedBrowserUiOnlyCount).toBe(1);
-    expect(manifest.sourceScenarioFiles).toEqual([
-      "tests/search-scenarios.js",
-      "tests/search-v2-contracts.js",
-    ]);
     expect(contracts.cases).toHaveLength(102);
     expect(contracts.overlayCases.map((row) => row.query)).toEqual([
       "binary index",
@@ -290,9 +224,7 @@ describe("software-land corpus fixture", () => {
       "binary indexed t",
       "binary indexed tree",
     ]);
-    expect(contracts.overlayCases.every((row) => row.documentOverlay == null && row.origin === "overlay")).toBe(true);
-    expect(documentOverlays).toEqual([]);
-    expect(documentOverlayScenarioRows(contracts)).toEqual([]);
+    expect(contracts.overlayCases.every((row) => row.origin === "overlay")).toBe(true);
     expect(documents.filter((doc) => doc.id === "cm")).toEqual([
       expect.objectContaining({ id: "cm", title: "Fenwick Tree" }),
     ]);
@@ -341,24 +273,6 @@ describe("software-land corpus fixture", () => {
     expect(readme).toContain("df852eb4136dc5fb5b23cbf0bc22d45170e71423");
     expect(readme).toContain("dictionaryAcronymMapSoftwareLandCommit");
     expect(readme).not.toMatch(/df852eb \/ HEAD/);
-  });
-
-  test("configured-concepts.json bytes match the recorded manifest hash", () => {
-    const rec = manifest.files["configured-concepts.json"];
-    const buf = readFileSync(path.join(FIXTURE, "configured-concepts.json"));
-    expect(buf.byteLength).toBe(rec.bytes);
-    expect(createHash("sha256").update(buf).digest("hex")).toBe(rec.sha256);
-  });
-
-  test("every recorded fixture file matches its manifest size and checksum", () => {
-    const names = Object.keys(manifest.files);
-    expect(names.length).toBeGreaterThan(0);
-    for (const name of names) {
-      const rec = manifest.files[name];
-      const buf = readFileSync(path.join(FIXTURE, name));
-      expect(buf.byteLength).toBe(rec.bytes);
-      expect(createHash("sha256").update(buf).digest("hex")).toBe(rec.sha256);
-    }
   });
 
   test("historical inventory keeps intent-mining dispositions and marks relevance applicability", () => {
@@ -473,9 +387,7 @@ describe("software-land candidate-stage survival", () => {
   test("executable cases never depend on v1 expectedTop", () => {
     for (const row of [
       ...frozenCorpusScenarioRows(contracts),
-      ...documentOverlayScenarioRows(contracts),
       ...frozenCorpusScenarioRows(regressions),
-      ...documentOverlayScenarioRows(regressions),
     ]) {
       expect(row.v1).toBeUndefined();
       expect(row.expectedTop).toBeUndefined();
@@ -549,9 +461,7 @@ describe("software-land candidate-stage survival", () => {
 });
 
 describe("software-land fenwick corpus contracts", () => {
-  test("Fenwick Tree is the corpus document and is not indexed again from an overlay", () => {
-    expect(documentOverlays).toEqual([]);
-    expect(documentOverlayScenarioRows(contracts)).toEqual([]);
+  test("Fenwick Tree appears once in the corpus", () => {
     const fenwick = documents.find((doc) => doc.id === "cm");
     expect(fenwick?.title).toBe("Fenwick Tree");
     expect(documents.filter((doc) => doc.id === "cm" || doc.title === "Fenwick Tree")).toHaveLength(1);

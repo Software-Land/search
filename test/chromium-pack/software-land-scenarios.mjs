@@ -18,9 +18,6 @@ import {
   isHistoricalRelevanceApplicable,
 } from "../historical-relevance.js";
 import {
-  assertNoOverlayIdCollision,
-  documentOverlayScenarioRows,
-  loadSoftwareLandDocumentOverlays,
   loadSoftwareLandJson,
   loadSoftwareLandRelevanceInputs,
 } from "../helpers/software-land-fixture.js";
@@ -165,11 +162,11 @@ async function runQuery(page, query, options = { limit: 10 }) {
   return snapshot.last;
 }
 
-async function bootSoftwareLandPage(browser, origin, expectedWorker, retriever, corpus = "frozen") {
+async function bootSoftwareLandPage(browser, origin, expectedWorker, retriever) {
   const page = await browser.newPage();
   const diag = attachPageDiagnostics(page);
   await page.goto(
-    `${origin}/software-land.html?retriever=${encodeURIComponent(retriever)}&corpus=${encodeURIComponent(corpus)}`,
+    `${origin}/software-land.html?retriever=${encodeURIComponent(retriever)}`,
     {
     waitUntil: "load",
     timeout: CORPUS_BOOT_MS,
@@ -231,14 +228,8 @@ async function main() {
     ).href;
     const { attachLexicalFrequency } = await import(lexicalHref);
     const documents = attachLexicalFrequency(inputs.documents, inputs.lexicalFrequency);
-    const documentOverlays = loadSoftwareLandDocumentOverlays();
-    assertNoOverlayIdCollision(inputs.documents, documentOverlays);
     const v2Contracts = loadSoftwareLandJson("v2-contracts.json");
-    const documentOverlayContracts = documentOverlayScenarioRows(v2Contracts);
-    const corpusFenwickContracts = (v2Contracts.overlayCases || []).filter((row) => !row.documentOverlay);
-    const overlayDocuments = documentOverlays.length
-      ? attachLexicalFrequency([...inputs.documents, ...documentOverlays], inputs.lexicalFrequency)
-      : null;
+    const corpusFenwickContracts = v2Contracts.overlayCases || [];
     const initPayload = {
       schema: inputs.schema,
       configuredConcepts: inputs.configuredConcepts,
@@ -251,12 +242,6 @@ async function main() {
       path.join(packed.consumer, "software-land-init.json"),
       JSON.stringify({ ...initPayload, documents })
     );
-    if (overlayDocuments) {
-      writeFileSync(
-        path.join(packed.consumer, "software-land-overlay-init.json"),
-        JSON.stringify({ ...initPayload, documents: overlayDocuments })
-      );
-    }
     copyFileSync(path.join(harnessDir, "software-land-app.mjs"), path.join(packed.consumer, "software-land-app.mjs"));
     writeImportMapHtml(packed.consumer, {
       filename: "software-land.html",
@@ -434,48 +419,6 @@ async function main() {
     indexed.diag.assertClean("software-land indexed smoke");
     await indexed.page.evaluate(() => window.__dispose());
 
-    const documentOverlayResults = {};
-    if (overlayDocuments) {
-      for (const retriever of ["full-scan", "indexed"]) {
-        const session = await bootSoftwareLandPage(browser, origin, expectedWorker, retriever, "overlay");
-        if (session.boot.documentCount !== overlayDocuments.length) {
-          throw new Error(
-            `overlay ${retriever} documentCount ${session.boot.documentCount} != ${overlayDocuments.length}`
-          );
-        }
-        const cases = [];
-        for (const spec of documentOverlayContracts) {
-          const actual = await runQuery(session.page, spec.query, {
-            limit: spec.requiredAnyTop?.topN || 10,
-            resultCollector: spec.resultCollector || "complete-interpretation",
-          });
-          if (actual?.query !== spec.query) {
-            throw new Error(
-              `${spec.name} published ${JSON.stringify(actual?.query)} for ${JSON.stringify(spec.query)}`
-            );
-          }
-          assertExpansionContract(actual, {
-            query: spec.query,
-            within: {
-              id: spec.requiredAnyTop.ids[0],
-              title: spec.requiredAnyTop.titles[0],
-              topN: spec.requiredAnyTop.topN,
-            },
-          });
-          cases.push({
-            name: spec.name,
-            query: spec.query,
-            ok: true,
-            rank: actual.ids.indexOf(spec.requiredAnyTop.ids[0]) + 1,
-          });
-        }
-        session.diag.assertClean(`software-land document overlay ${retriever}`);
-        await session.page.evaluate(() => window.__dispose());
-        await session.page.close();
-        documentOverlayResults[retriever] = cases;
-      }
-    }
-
     const uniqueExact = new Set(applicable.map((row) => row.query));
     const uniqueNormalized = new Set(applicable.map((row) => normalizeQuery(row.query)));
     const summary = {
@@ -506,9 +449,8 @@ async function main() {
       },
       removedArticles,
       v2Contracts: {
-        browser: "open, oauth, open authorization, and Fenwick Tree corpus contracts run on the refreshed corpus. Synthetic document overlays are indexed only when document-overlays.json is non-empty and does not reuse a corpus id.",
+        browser: "open, oauth, open authorization, and Fenwick Tree corpus contracts run on the refreshed corpus.",
         fenwick: fenwickIndexed,
-        documentOverlay: documentOverlayResults,
       },
       controls: Object.fromEntries(
         CRITICAL_CONTROLS.map((query) => [

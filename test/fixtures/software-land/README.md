@@ -16,25 +16,15 @@ node --experimental-vm-modules ./node_modules/jest/bin/jest.js test/software-lan
 
 ## Provenance
 
-| Field | Value |
-| --- | --- |
-| Fixture format | `software-land-search-fixture` v1 (`manifest.json`) |
-| Corpus source commit | `372ae05540036fea5671726f6ae43f5a75d9441d` |
-| Previous corpus freeze | `971012bf3d561a67ca8a20f03ec2128135d1fb87` (before that, `dff24cf606967cb50b24d28d9142747c9203e053`) |
-| Committed `content/blog` tree | `b4d56a987e86e28f6b69acb111596ce5d1ec911d` |
-| Uncommitted inputs | yes. HEAD alone does not contain this corpus. `uncommittedDiffAlgorithm` is `git-diff-text-v1`: SHA-256 of `git diff HEAD` text. That digest is `4e1af47321ccfb08d549a80bd41c671f14695047ee48d4592218ac459a668719`. It is not a `worktree-bytes-v1` fingerprint. |
-| `@software-land/search` | `0.7.0`, declared as `file:vendor/software-land-search-0.7.0.tgz` |
-| Documents | 122 |
-| Configured concepts | 191 (runtime acronym map merged with compiled extras; `testing` is not in this snapshot) |
-| Lemmas | 1207, including the authored override `computing` → `compute` |
+The checked-in snapshot has 122 documents, 191 configured concepts, and 1207 lemmas, including the authored override `computing` → `compute`. The corpus was exported from source commit `372ae05540036fea5671726f6ae43f5a75d9441d`, after the freeze at `971012bf3d561a67ca8a20f03ec2128135d1fb87` (before that, `dff24cf606967cb50b24d28d9142747c9203e053`). The committed `content/blog` tree is `b4d56a987e86e28f6b69acb111596ce5d1ec911d`. HEAD alone does not contain this corpus.
 
-The committed blog tree at that SHA still contains both removed posts. The exported documents come from the working tree at the recorded source commit: those posts deleted, their menu entries removed, and inbound links revised. The committed tree hash is recorded separately and is not the exported corpus.
+The committed blog tree at that SHA still contains both removed posts. The exported documents come from the working tree at the recorded source commit: those posts deleted, their menu entries removed, and inbound links revised. That tree hash is not the exported corpus.
 
 Documents use `id`, `title`, `summary`, and normalized search `body`. Configured concepts are the merged rows in `configured-concepts.json`. Lemmas are the mappings in `lemmas.json`, including `computing` → `compute`. Lexical frequency and `relationships.json` are the compiled artifacts stored here. `relationship-map.json` is the authored map plus composed equivalences for this snapshot.
 
 Suite engines in this package declare a title and body schema. The summary field is stored with the documents, and lexical frequency includes that summary. These suites do not add summary to the schema: doing so would change retrieval independently of this snapshot.
 
-`document-overlays.json` is empty. Fenwick Tree is corpus document `cm` at `/fenwick-tree/`. Overlay rows must not be concatenated onto the corpus when that would reuse `cm`.
+Fenwick Tree is corpus document `cm` at `/fenwick-tree/` and appears once.
 
 ### Content inventory since `971012b`
 
@@ -85,7 +75,7 @@ These files were not regenerated from the current engine:
 
 The `integ` regression still requires document `cl` at rank 1. The expected title is `Integrity`. Rank and id are unchanged.
 
-Fenwick Tree prefix contracts remain, now against corpus id `cm` rather than a synthetic overlay document. They still require Fenwick Tree inside the top 10. Rank 1 is not required.
+Fenwick Tree prefix contracts require corpus id `cm` within the top 10. Rank 1 is not required.
 
 ## Files
 
@@ -95,8 +85,7 @@ Fenwick Tree prefix contracts remain, now against corpus id `cm` rather than a s
 - `relationships.json` — compiled document relationship graph (semantic plus domain editorial)
 - `lexical-frequency.json` — lexical-frequency artifact, compiled with title, summary, and normalized body
 - `relationship-map.json` — authored map plus composed equivalences
-- `v2-contracts.json` — strict cases plus Fenwick corpus contracts in `overlayCases` (no `documentOverlay`)
-- `document-overlays.json` — empty. Do not add an id that already exists in `documents.json`.
+- `v2-contracts.json` — strict cases plus Fenwick corpus contracts in `overlayCases`
 - `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy
 - `historical-scenarios.json` — retained 223-row historical mirror
 - `historical-contract-updates.json` — retained product updates
@@ -104,6 +93,5 @@ Fenwick Tree prefix contracts remain, now against corpus id `cm` rather than a s
 - `synonym-map.json` — retained `db5a070` provenance snapshot
 - `query-result-oracle.json` — retained 215-query freeze for the previous corpus
 - `scenarios.json` — retained scenario index
-- `manifest.json` — format, provenance, counts, and SHA256s
 
 Do not generate `expectedTop`, `topN`, `titlePrefix`, or oracle rows from current engine output.

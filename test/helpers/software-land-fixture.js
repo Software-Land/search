@@ -19,29 +19,9 @@ function scenarioRows(payload) {
   return [...(payload?.cases || []), ...(payload?.overlayCases || [])];
 }
 
-/** Rows run against the unchanged frozen corpus. */
+/** Cases and overlayCases. They run against the checked-in corpus. */
 export function frozenCorpusScenarioRows(payload) {
-  return scenarioRows(payload).filter((row) => !row.documentOverlay);
-}
-
-/** Rows that index document-overlays.json on top of the frozen corpus. */
-export function documentOverlayScenarioRows(payload) {
-  return scenarioRows(payload).filter((row) => row.documentOverlay);
-}
-
-export function loadSoftwareLandDocumentOverlays() {
-  return loadSoftwareLandJson("document-overlays.json");
-}
-
-/** Synthetic overlays must not replace or duplicate a corpus document id. */
-export function assertNoOverlayIdCollision(documents, overlays) {
-  const ids = new Set((documents || []).map((doc) => doc.id));
-  for (const doc of overlays || []) {
-    if (ids.has(doc.id)) {
-      throw new Error(`document overlay duplicates corpus id ${doc.id}`);
-    }
-    ids.add(doc.id);
-  }
+  return scenarioRows(payload);
 }
 
 function aliasKey(alias) {

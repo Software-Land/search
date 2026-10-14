@@ -56,8 +56,7 @@ window.__client = client;
 try {
   const params = new URLSearchParams(location.search);
   const retriever = params.get("retriever") || "full-scan";
-  const corpus = params.get("corpus") === "overlay" ? "overlay" : "frozen";
-  const initName = corpus === "overlay" ? "software-land-overlay-init.json" : "software-land-init.json";
+  const initName = "software-land-init.json";
   state.retriever = retriever;
   const init = await fetch(`/${initName}`).then((res) => {
     if (!res.ok) throw new Error(`${initName} HTTP ${res.status}`);
