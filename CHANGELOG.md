@@ -12,9 +12,9 @@
 - Edit-distance typo repair leaves a token unchanged when it is a corpus surface word or a proper prefix of one, including body-only vocabulary. Suggestions still come from title tokens, configured-concept keys, and explicit lemma-table keys. A body-only prefix such as `index` → `indexed` stays a prefix instead of being rewritten toward a nearer title or concept key such as `ide`. Exact configured keys and ordinary prefix recall are unchanged.
 - The explicit lemma table does not inherit object properties. A token such as `constructor` is a string lemma lookup, not `Object`.
 
-### Fixture
+### Tests
 
-- Software.Land files under `test/fixtures/software-land/` are a self-contained snapshot. Their expectations are fixture contracts, not Core defaults. Public tests use that snapshot. Scenario export and the complete-interpretation product harness are no longer part of this package. The fixture NIST concept no longer includes the one-token alias `institute`; the full name, `institute standards`, and `nist` remain. The historical `institute` contract requires Udacity Review and TLS 1.2 Vulnerability within the first 10 and does not require either first. The fixture `open` contract requires SAML vs OAuth (document id `7`) within the first 10 and does not require it first. `oauth` and `open authorization` still rank that document first. The historical V1 expectation that bare `open` ranks it first stays obsolete.
+- Updated real-corpus regression coverage, including configured-concept aliases and partial-query matching.
 
 ## 0.6.10
 
