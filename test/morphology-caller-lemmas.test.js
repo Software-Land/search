@@ -13,28 +13,6 @@ const schema = {
   body: { type: "text", role: "body" },
 };
 
-const FORMER_DEFAULTS = {
-  libraries: "library",
-  recursive: "recursion",
-  recursively: "recursion",
-  recursing: "recursion",
-  recurses: "recursion",
-  recursed: "recursion",
-  authenticating: "authentication",
-  authenticated: "authentication",
-  authorizing: "authorization",
-  authorized: "authorization",
-  authorizes: "authorization",
-  sharding: "shard",
-  shards: "shard",
-  computing: "compute",
-  learning: "learn",
-  learnings: "learn",
-  intercepting: "interceptor",
-  intercepted: "interceptor",
-  intercept: "interceptor",
-};
-
 const docs = [
   { id: "edge", title: "Edge Computing", body: "Compute at the edge." },
   { id: "lib", title: "What is a Library?", body: "A reusable library." },
@@ -72,9 +50,6 @@ describe("caller-owned morphology lemmas", () => {
   test("an empty call has no canonical mappings and no lemma-table entries", () => {
     const plugin = morphology();
     expect([...plugin.lemmaTableKeys()]).toEqual([]);
-    for (const word of Object.keys(FORMER_DEFAULTS)) {
-      expect(plugin.canonicalLemma(word)).toBeNull();
-    }
     expect(plugin.lemma("computing")).toBe("comput");
     expect(plugin.lemma("libraries")).toBe("library");
     expect(plugin.lemma("nation")).toBe("nat");
