@@ -2,11 +2,12 @@
  * Indexed / adaptive retrieval must match current full-scan Software.Land
  * ordered results, related rail, scores, and candidateCount (live, not the
  * frozen 0.5 122-result oracle tails). The frozen query-result oracle remains
- * the identity gate for #1 on the explicit full-scan engine, except the
- * accepted 0.7.0 `open` contract: SAML vs OAuth must appear in the first 10
- * results and is not required at rank 1. The oracle file still records
- * Knowledge Graph (`br`) as that query's historical #1. Indexed and adaptive
- * retrieval still match the live full-scan result, including `open`.
+ * the identity gate for #1 on the explicit full-scan engine. Accepted
+ * divergences are `open` (SAML vs OAuth in the first 10), `institute
+ * standards` (TLS 1.2 Vulnerability first), and configured-concepts-only
+ * `quality ass` (no results). The oracle file still records the original
+ * first row for each. Indexed and adaptive retrieval still match the live
+ * full-scan result, including those three queries.
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";

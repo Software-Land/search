@@ -149,15 +149,22 @@ test("Software.Land historical, v1, v2, and regression fused eligibility/exactne
 
   expect(aggregate.primitiveMismatches).toBe(0);
   expect(aggregate.scoreMismatches).toBe(0);
+  // origin/main locked 199 queries, 90 eligible, 109 ineligible, 1511 candidates.
+  // Eight Fenwick overlay queries are new, all eligible, and add 119 candidates.
+  // Bare `institute` no longer occupies `nist`, so packed evidence rejects it as
+  // configured-prefix-recall and its 1 eligible candidate leaves that set.
+  // Nine other still-eligible queries change by one candidate and net -5.
+  // 90 + 8 - 1 = 97 eligible, 109 + 1 = 110 ineligible,
+  // 1511 - 1 - 5 + 119 = 1624 candidates.
   expect(totals.unique).toMatchObject({
-    queries: 199,
-    eligible: 90,
-    ineligible: 109,
-    candidates: 1511,
+    queries: 207,
+    eligible: 97,
+    ineligible: 110,
+    candidates: 1624,
     primitiveMismatches: 0,
     scoreMismatches: 0,
   });
-  expect(queryAudit.size).toBe(199);
+  expect(queryAudit.size).toBe(207);
   // eslint-disable-next-line no-console
   console.log(JSON.stringify({ rankingEvidenceSoftwareLand: { totals, aggregate } }));
 }, 300_000);

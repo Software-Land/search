@@ -180,6 +180,16 @@ describe("packed search() public equivalence", () => {
     });
     await engine.index(indexedDocuments);
 
+    const fenwickQueries = [
+      "binary index",
+      "binary index ",
+      "binary index t",
+      "binary index tr",
+      "binary index tre",
+      "binary index tree",
+      "binary indexed t",
+      "binary indexed tree",
+    ];
     const queries = [
       ...new Set(
         [
@@ -192,13 +202,16 @@ describe("packed search() public equivalence", () => {
           .filter(Boolean)
       ),
     ];
-    expect(queries.length).toBe(199);
+    expect(loadSoftwareLandJson("v2-contracts.json").overlayCases.map((row) => row.query)).toEqual(fenwickQueries);
+    expect(fenwickQueries.filter((query) => !queries.includes(query))).toEqual([]);
+    expect(queries.filter((query) => !fenwickQueries.includes(query))).toHaveLength(199);
+    expect(queries.length).toBe(207);
 
     let packed = 0;
     let fallback = 0;
     let mismatches = 0;
     const integ = compareSearch(engine, "integ", { limit: 10, relatedLimit: 5 });
-    expect(engine.search("integ", { limit: 1 })[0].title).toBe("Integrity Is Not Obedience");
+    expect(engine.search("integ", { limit: 1 })[0].title).toBe("Integrity");
     expect(integ.rankingEvidence).not.toBe("packed");
 
     for (const query of queries) {
@@ -215,7 +228,7 @@ describe("packed search() public equivalence", () => {
     expect(publicRows(asyncRows)).toEqual(publicRows(syncRows));
 
     expect(mismatches).toBe(0);
-    expect(packed + fallback).toBe(199);
+    expect(packed + fallback).toBe(207);
 
     const adversarial = generatedQueries(indexedDocuments, 200, SEED ^ 0x51);
     expect(adversarial).toHaveLength(200);
@@ -229,7 +242,7 @@ describe("packed search() public equivalence", () => {
 
     // eslint-disable-next-line no-console
     console.log(JSON.stringify({
-      packedSearchSoftwareLand: { queries: 199, packed, fallback, mismatches: 0 },
+      packedSearchSoftwareLand: { queries: 207, packed, fallback, mismatches: 0 },
       packedSearchSoftwareLandGenerated: {
         queries: 200,
         packed: generatedPacked,

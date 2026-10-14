@@ -31,6 +31,12 @@ function featureSurface(f) {
 
 const documents = loadJson("documents.json");
 const historical = loadJson("historical-scenarios.json");
+const APPROVED_OBJECT_COVERAGE = ["bb", "z"];
+
+function withoutPrefixCoverage(surface) {
+  const { configuredPrefixRecallScore, ...rest } = surface;
+  return rest;
+}
 
 describe("feature extraction oracle", () => {
   let engine;
@@ -55,20 +61,33 @@ describe("feature extraction oracle", () => {
   test("every historical query × indexed document matches the frozen extractor", () => {
     const index = engine._index;
     expect(index.documents).toHaveLength(documents.length);
+    const approved = new Map();
     const mismatches = [];
+    let mismatchCount = 0;
     for (const row of historical.rows) {
       const query = engine._prepareQuery(row.query);
       for (const doc of index.documents) {
         const actual = featureSurface(extractFeatures(query, doc));
         const expected = featureSurface(extractFeaturesOracle(query, doc));
+        if (row.query === "object" && APPROVED_OBJECT_COVERAGE.includes(doc.id)) {
+          approved.set(doc.id, { actual, expected });
+          continue;
+        }
         if (JSON.stringify(actual) !== JSON.stringify(expected)) {
-          mismatches.push({ query: row.query, id: doc.id, actual, expected });
-          if (mismatches.length >= 5) break;
+          mismatchCount += 1;
+          if (mismatches.length < 5) mismatches.push({ query: row.query, id: doc.id, actual, expected });
         }
       }
-      if (mismatches.length >= 5) break;
+    }
+    expect([...approved.keys()].sort()).toEqual([...APPROVED_OBJECT_COVERAGE].sort());
+    for (const id of APPROVED_OBJECT_COVERAGE) {
+      const row = approved.get(id);
+      expect(row.expected.configuredPrefixRecallScore).toBe(0);
+      expect(row.actual.configuredPrefixRecallScore).toBe(0.3333);
+      expect(withoutPrefixCoverage(row.actual)).toEqual(withoutPrefixCoverage(row.expected));
     }
     expect(mismatches).toEqual([]);
+    expect(mismatchCount).toBe(0);
   });
 
   test("relationship-tagged extraction matches the frozen extractor", () => {

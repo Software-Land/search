@@ -315,10 +315,14 @@ describe("NIST spoken forms on the Software.Land fixture", () => {
     }
   });
 
-  test("bare institute and two-token institute standards stay fail-closed", () => {
+  test("bare institute stays unoccupied and institute standards occupies nist", () => {
     expect(full._prepareQuery("institute").configuredSequenceIntent).toBeNull();
-    expect(full._prepareQuery("institute standards").configuredSequenceIntent).toBeNull();
+    expect(full._prepareQuery("institute standards").configuredSequenceIntent?.key).toBe("nist");
     expect(full.search("institute", { limit: 1 })[0].title).toBe("Udacity Review");
+    expect(full.search("institute standards", { limit: 1 })[0]).toMatchObject({
+      id: "ai",
+      title: "TLS 1.2 Vulnerability",
+    });
   });
 
   test("indexed and full-scan agree on NIST spoken forms", () => {
@@ -328,6 +332,7 @@ describe("NIST spoken forms on the Software.Land fixture", () => {
       "national institute of stan",
       "national institute of standards and tec",
       "institute of standards and technology",
+      "institute standards",
       "institute",
     ]) {
       expect(indexed.search(raw).map((row) => row.id)).toEqual(full.search(raw).map((row) => row.id));

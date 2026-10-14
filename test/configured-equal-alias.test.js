@@ -291,9 +291,21 @@ describe("fixture multi-alias exhaustive permutation occupancy", () => {
   );
   const multi = fixture.filter((e) => Array.isArray(e.aliases) && e.aliases.length >= 2);
 
-  test("fixture has 17 multi-alias concepts with max 5 aliases", () => {
-    expect(multi.length).toBe(17);
-    expect(Math.max(...multi.map((e) => e.aliases.length))).toBe(5);
+  test("fixture has 18 multi-alias concepts with max 4 aliases", () => {
+    const nist = multi.find((entry) => entry.key === "nist");
+    const appsec = fixture.find((entry) => entry.key === "appsec");
+    expect(nist.aliases).toEqual([
+      ["national", "institute", "standards", "technology"],
+      ["institute", "standards"],
+    ]);
+    expect(appsec.aliases).toEqual([
+      ["application", "security"],
+      ["app", "sec"],
+      ["app", "security"],
+      ["application", "sec"],
+    ]);
+    expect(multi.length).toBe(18);
+    expect(Math.max(...multi.map((entry) => entry.aliases.length))).toBe(4);
   });
 
   test.each(multi.map((e) => [e.key, e.aliases.length]))(

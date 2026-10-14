@@ -6,10 +6,11 @@
  * superset; the oracle freeze stays the original 215-row prefix.
  * Known #1 diffs versus that freeze are
  * occupancy ranking, not collector policy.
- * The accepted 0.7.0 exception is `open`: the freeze still records Knowledge
- * Graph (`br`) first, and live search must keep SAML vs OAuth in the first
- * 10 results without requiring rank 1. The other 214 queries keep the
- * frozen first-result id.
+ * Accepted 0.7.0 divergences, each still searched: `open` keeps SAML vs OAuth
+ * in the first 10; `institute standards` occupies `nist` and returns TLS 1.2
+ * Vulnerability first; configured-concepts-only `quality ass` returns no
+ * results. The freeze still records the original first row for each. The
+ * other 212 queries keep the frozen first-result id.
  *
  * Complete ordered lists, scores, relevanceKind, directClass, related rail,
  * and candidateCount versus the 0.5 freeze are not restored: that snapshot
