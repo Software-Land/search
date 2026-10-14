@@ -266,7 +266,7 @@ Search data is four distinct layers:
 
 `configuredConcepts` is not the corpus lexicon; term postings live in `lexicalIndex`.
 
-Configured aliases also support incomplete typed forms. A sufficiently strong, unambiguous form prefix may identify the configured concept; weaker prefixes can contribute the concept key as recall evidence without replacing the query's ordinary lexical interpretation. Ambiguous prefixes fail closed for concept identity. See [docs/concepts.md](docs/concepts.md) for occupancy, prefix-recall, and ambiguity rules.
+Configured aliases also support incomplete typed forms. A sufficiently strong, unambiguous form prefix may identify the configured concept; weaker prefixes can contribute the concept key as recall evidence without replacing the query's ordinary lexical interpretation. Ambiguous prefixes fail closed for concept identity. An exact first token shared by several concepts does not occupy. Eligible exact-first title keys keep prefix coverage alongside independent lexical evidence of a different token. Coverage already counted for that key, including an inflected title token or an authored equivalent, is not added again. See [docs/concepts.md](docs/concepts.md) for occupancy, prefix-recall, and ambiguity rules.
 
 `authored.plugins` is the compiler-owned runtime plugin list for configured-concept recognition and authored relevance. Ordinary applications do not assemble those pieces by name. `equivalent` edges are directional and do not auto-reverse. `qa → testing` does not imply `testing → qa`. When equivalence is symmetric, author both directions. Trusted corpus-mined accepted groups do this automatically by compiling each group into a bidirectional equivalent clique. Phrase sources match as exact contiguous normalized phrases.
 
@@ -383,9 +383,11 @@ Lemmatization is corpus-specific. The package provides morphology mechanics and 
 morphology({ lemmas: { intercepting: "interceptor", recursive: "recursion", computing: "compute" } })
 ```
 
-`intercepting` → `interceptor`, `recursive` → `recursion`, and `computing` → `compute` are catalog-specific policy examples, not universal linguistic truth. Supplied entries are the whole explicit table and take precedence over heuristic fallback. The package does not merge a second table over them. `canonicalLemma()` reads only that supplied table. Compile `compileLexicalIndex` / `compileLexicalFrequency` with the same `morphology({ lemmas }).lemma` used at search time, and pass that same map to the Worker as `init({ englishOptions: { lemmas } })`.
+`intercepting` → `interceptor`, `recursive` → `recursion`, and `computing` → `compute` are catalog-specific policy examples, not universal linguistic truth. Supplied entries are the whole explicit table and take precedence over heuristic fallback. The package does not merge a second table over them. `canonicalLemma()` reads only that supplied table. An unmapped word still uses suffix heuristics, so `computing` stems to `comput` unless the table maps it. Callers that relied on the former built-in families (recursion, authentication, authorization, shard, learn, library, interceptor, and `computing` → `compute`) pass those mappings themselves. The table does not inherit object properties, so a token such as `constructor` is a string lookup rather than `Object`. Compile `compileLexicalIndex` / `compileLexicalFrequency` with the same `morphology({ lemmas }).lemma` used at search time, and pass that same map to the Worker as `init({ englishOptions: { lemmas } })`.
 
 Keep lemma generators, caches, and models in the site build. This package consumes a `Record<string, string>`, not the generator itself.
+
+Edit-distance repair does not rewrite a corpus surface word or a proper prefix of one, including a body-only word. Suggestions come from title tokens, configured-concept keys, and the explicit lemma table. A typed prefix such as `index` for a body word `indexed` stays a prefix.
 
 ## TypeScript
 

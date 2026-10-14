@@ -78,7 +78,7 @@ These files were not regenerated from the current engine:
 - Historical contract updates `3ad49e867f82db06aa06cd1c7f38dca8faecf246`.
 - Accepted `what are apis` regression from `62c51bad060fea9627f06c752341ea7434f86e46`.
 - AppSec topical recall still matches `eac7a90a15d772f0f0626a0fa9481eb9efa55521`.
-- NIST aliases in this snapshot match the runtime acronym map: the full name, `institute standards`, and `nist`. The one-token `institute` alias is absent. The earlier pin was `7628a85166781d4ab42f60646e2f66da5f336eaa` via `relevance-config.json`.
+- NIST aliases in this snapshot match the runtime acronym map: the full name, `institute standards`, and `nist`. The one-token `institute` alias is absent. The earlier pin was `7628a85166781d4ab42f60646e2f66da5f336eaa` via `relevance-config.json`. The historical `institute` contract requires Udacity Review and TLS 1.2 Vulnerability within the first 10. Neither title must be first. That membership is a fixture contract, not a Core default.
 - The previous configured-concept overlay `dictionaryAcronymMapSoftwareLandCommit` (`df852eb4136dc5fb5b23cbf0bc22d45170e71423`) is not this snapshot. This refresh replaces that partial acronym overlay with the runtime merge.
 - `query-result-oracle.json` remains the 215-query freeze (123 documents, head recorded in that file). It is not an identity gate for this 122-document corpus. It was not regenerated.
 - `testing` and `quality ass` historical rows no longer name Testing in Software Engineering. That title was removed with the article. Load vs Stress Testing stays at its existing topN bound. No replacement title was taken from engine output. The historical top-N hash is `526c745084124e0b9ee7e22347cc7c5d7d8cd91f8564e7487decde39e1344671`.

@@ -1,27 +1,22 @@
 # Changelog
 
-## Unreleased
-
-### Fixed
-
-- Edit-distance typo repair no longer rewrites a token that is a corpus surface term or a proper prefix of one. Title and configured-concept keys remain the suggestion vocabulary. A body-only prefix such as `index` → `indexed` stays a prefix instead of occupying a nearer key such as `ide`. Ordinary prefix recall and exact configured keys are unchanged.
-- The checked-in Software.Land fixture records corpus provenance on its manifest. Public tests use that snapshot. The captured digest stays `git-diff-text-v1` (SHA-256 of `git diff HEAD`). A later provenance record uses `worktree-bytes-v1`, which hashes dirty paths, statuses, and bytes.
-- Software.Land scenario export and the complete-interpretation product harness are no longer part of this package. Public tests use the checked-in fixture.
-- The Software.Land fixture NIST concept no longer includes the one-token alias `institute`. The full name, `institute standards`, and the key `nist` remain.
-- An exact first token shared by several configured concepts no longer adds a score bonus. A title key stores the same coverage as unique prefix recall. That coverage remains when a body hit is a different token from the concept key, and it is omitted when configured title identity or the title-coverage matcher already accounts for the key, including an authored equivalent and a title lemma of that key. Adding another concept that shares the first token does not raise an existing document. The title key stays weak: it does not become `key-in-title` or a completed alias. Incomplete stubs, completed aliases, ordinary lexical hits, and retention of those lexical hits by the complete-interpretation collector are unchanged.
-
-## 0.7.0 - 2026-10-12
+## 0.7.0
 
 ### Changed
 
-- `morphology()` no longer ships a built-in lemma table. `morphology()` has an empty explicit table. `morphology({ lemmas })` uses only the supplied entries, and those entries take precedence over suffix heuristics. `canonicalLemma()` does not promote heuristic stems into authoritative mappings. Suffix heuristics and repeat collapse are unchanged. Callers that depended on the former table, including `computing` → `compute` and the recursion, authentication, authorization, shard, learn, library, and interceptor families, pass those mappings themselves. A generated site table is not overridden by the package.
-- An exact first token shared by several configured expansions (`open`, `hypertext`, `real`, `software`) is ambiguous partial evidence. It recalls title occurrences of each matching key and does not occupy a concept, rewrite the query, or activate that concept's equivalent or topical expansion. Title evidence is ranked from expansion coverage above a weak body hit of the typed word. When a title matches one group key and the body matches another, that boost uses the strongest title key; a body-only key does not replace it. A direct title match of the typed word and a complete acronym or alias match keep their existing priority. Incomplete proper prefixes such as `appl` are unchanged. Unique incomplete key prefixes stay on the existing key-prefix path.
+- `morphology()` no longer ships a built-in lemma table. `morphology()` has an empty explicit table. `morphology({ lemmas })` uses only the mappings you pass, and those entries take precedence over suffix heuristics. `canonicalLemma()` reads that table only and does not promote a heuristic stem. Suffix heuristics and repeat collapse are unchanged, so an unmapped word such as `computing` still stems (`comput`) unless the table says otherwise. Callers that relied on the removed defaults must pass those mappings themselves. The former explicit families were `computing` → `compute` and the recursion, authentication, authorization, shard, learn, library, and interceptor forms. A generated site table is not overridden by the package. Use the same map when compiling the lexical index, searching directly, and initializing the Worker (`englishOptions.lemmas`).
+- Configured-prefix recall stores coverage. Ranking multiplies that coverage by the body-lexical coefficient. An exact first token shared by several concepts (`open`, `hypertext`, `real`, `software`) does not add a separate bonus, occupy a concept, rewrite the query, or activate equivalent or topical expansion. Unique recall and an exact-first title key store the same coverage. Adding another concept that shares the first token does not raise an existing document. Independent title-key coverage and ordinary lexical evidence of a different token can both contribute. Coverage is omitted when that key is already counted, including an inflected title token and an authored equivalent. An exact-first title key stays weak: it does not become `key-in-title`. Incomplete stubs still use `key-in-title`. A body-only key does not replace the title key chosen for the group. Partial title-key evidence is not guaranteed to outrank a body hit of the typed word. Incomplete proper prefixes such as `appl` are unchanged. Unique incomplete key prefixes stay on the existing key-prefix path. Ordinary lexical hits of the typed word remain, including for the complete-interpretation collector.
 
-### Added
+### Fixed
 
-- Software.Land scenario regression for this recall. `open`, searched at the blog's normal limit of 10 against the fixture that includes both `opengl` and `opengles`, must include SAML vs OAuth (document id `7`). The assertion does not require that post to rank first. Companion regressions keep `oauth` and `open authorization` ranking that same document first. The same three checks are in the V2 contract fixture and the Chromium corpus run. The historical V1 expectation that bare `open` ranks it first stays obsolete.
+- Edit-distance typo repair leaves a token unchanged when it is a corpus surface word or a proper prefix of one, including body-only vocabulary. Suggestions still come from title tokens, configured-concept keys, and explicit lemma-table keys. A body-only prefix such as `index` → `indexed` stays a prefix instead of being rewritten toward a nearer title or concept key such as `ide`. Exact configured keys and ordinary prefix recall are unchanged.
+- The explicit lemma table does not inherit object properties. A token such as `constructor` is a string lemma lookup, not `Object`.
 
-## 0.6.10 - 2026-10-08
+### Fixture
+
+- Software.Land files under `test/fixtures/software-land/` are a self-contained snapshot. Their expectations are fixture contracts, not Core defaults. Public tests use that snapshot. Scenario export and the complete-interpretation product harness are no longer part of this package. The captured digest stays `git-diff-text-v1` (SHA-256 of `git diff HEAD`). A later provenance record uses `worktree-bytes-v1`. The fixture NIST concept no longer includes the one-token alias `institute`; the full name, `institute standards`, and `nist` remain. The historical `institute` contract requires Udacity Review and TLS 1.2 Vulnerability within the first 10 and does not require either first. The fixture `open` contract requires SAML vs OAuth (document id `7`) within the first 10 and does not require it first. `oauth` and `open authorization` still rank that document first. The historical V1 expectation that bare `open` ranks it first stays obsolete.
+
+## 0.6.10
 
 ### Changed
 
