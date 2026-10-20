@@ -239,6 +239,19 @@ async function main() {
     }
     const nistAliases = inputs.configuredConcepts.find((entry) => entry.key === "nist")?.aliases || [];
     const nistQueries = [...nistTyping.steps, ...(nistTyping.also || [])];
+    const membershipContracts = [
+      ...corpusFenwickContracts,
+      ...nistQueries.map((query) => ({
+        query,
+        name: "nist typing",
+        resultCollector: "complete-interpretation",
+        requiredAnyTop: {
+          ids: [nistTyping.document.id],
+          titles: [nistTyping.document.title],
+          topN: nistTyping.topN || 10,
+        },
+      })),
+    ];
     const initPayload = {
       schema: inputs.schema,
       configuredConcepts: inputs.configuredConcepts,
@@ -327,8 +340,8 @@ async function main() {
       assertExpansionContract(expansion[spec.query], spec);
     }
 
-    const fenwickFull = {};
-    for (const spec of corpusFenwickContracts) {
+    const membershipFull = {};
+    for (const spec of membershipContracts) {
       const actual = await runQuery(full.page, spec.query, {
         limit: spec.requiredAnyTop?.topN || 10,
         resultCollector: spec.resultCollector || "complete-interpretation",
@@ -346,29 +359,7 @@ async function main() {
           topN: spec.requiredAnyTop.topN,
         },
       });
-      fenwickFull[spec.query] = actual;
-    }
-
-    const nistFull = {};
-    for (const query of nistQueries) {
-      const actual = await runQuery(full.page, query, {
-        limit: nistTyping.topN || 10,
-        resultCollector: "complete-interpretation",
-      });
-      if (actual?.query !== query) {
-        throw new Error(
-          `nist typing published ${JSON.stringify(actual?.query)} for ${JSON.stringify(query)}`
-        );
-      }
-      assertExpansionContract(actual, {
-        query,
-        within: {
-          id: nistTyping.document.id,
-          title: nistTyping.document.title,
-          topN: nistTyping.topN || 10,
-        },
-      });
-      nistFull[query] = actual;
+      membershipFull[spec.query] = actual;
     }
 
     const removedArticles = {};
@@ -420,11 +411,17 @@ async function main() {
       }
     }
     const fenwickIndexed = {};
-    for (const spec of corpusFenwickContracts) {
+    const nistIndexed = {};
+    for (const spec of membershipContracts) {
       const actual = await runQuery(indexed.page, spec.query, {
         limit: spec.requiredAnyTop?.topN || 10,
         resultCollector: spec.resultCollector || "complete-interpretation",
       });
+      if (actual?.query !== spec.query) {
+        throw new Error(
+          `${spec.name} published ${JSON.stringify(actual?.query)} for ${JSON.stringify(spec.query)}`
+        );
+      }
       assertExpansionContract(actual, {
         query: spec.query,
         within: {
@@ -433,51 +430,25 @@ async function main() {
           topN: spec.requiredAnyTop.topN,
         },
       });
-      const fullTitles = (fenwickFull[spec.query]?.titles || []).slice(0, 10);
-      const indexedTitles = (actual?.titles || []).slice(0, 10);
+      const topN = spec.requiredAnyTop?.topN || 10;
+      const fullTitles = (membershipFull[spec.query]?.titles || []).slice(0, topN);
+      const indexedTitles = (actual?.titles || []).slice(0, topN);
       if (JSON.stringify(indexedTitles) !== JSON.stringify(fullTitles)) {
         throw new Error(
           `indexed/full-scan title mismatch for ${JSON.stringify(spec.query)}\nfull ${JSON.stringify(fullTitles)}\nindexed ${JSON.stringify(indexedTitles)}`
         );
       }
-      fenwickIndexed[spec.query] = {
-        name: spec.name,
-        query: spec.query,
-        ok: true,
-        rank: actual.ids.indexOf(spec.requiredAnyTop.ids[0]) + 1,
-      };
-    }
-    const nistIndexed = {};
-    for (const query of nistQueries) {
-      const actual = await runQuery(indexed.page, query, {
-        limit: nistTyping.topN || 10,
-        resultCollector: "complete-interpretation",
-      });
-      if (actual?.query !== query) {
-        throw new Error(
-          `indexed nist typing published ${JSON.stringify(actual?.query)} for ${JSON.stringify(query)}`
-        );
+      const rank = actual.ids.indexOf(spec.requiredAnyTop.ids[0]) + 1;
+      if (spec.name === "nist typing") {
+        nistIndexed[spec.query] = { query: spec.query, ok: true, rank };
+      } else {
+        fenwickIndexed[spec.query] = {
+          name: spec.name,
+          query: spec.query,
+          ok: true,
+          rank,
+        };
       }
-      assertExpansionContract(actual, {
-        query,
-        within: {
-          id: nistTyping.document.id,
-          title: nistTyping.document.title,
-          topN: nistTyping.topN || 10,
-        },
-      });
-      const fullTitles = (nistFull[query]?.titles || []).slice(0, nistTyping.topN || 10);
-      const indexedTitles = (actual?.titles || []).slice(0, nistTyping.topN || 10);
-      if (JSON.stringify(indexedTitles) !== JSON.stringify(fullTitles)) {
-        throw new Error(
-          `indexed/full-scan title mismatch for ${JSON.stringify(query)}\nfull ${JSON.stringify(fullTitles)}\nindexed ${JSON.stringify(indexedTitles)}`
-        );
-      }
-      nistIndexed[query] = {
-        query,
-        ok: true,
-        rank: actual.ids.indexOf(nistTyping.document.id) + 1,
-      };
     }
     indexed.diag.assertClean("software-land indexed smoke");
     await indexed.page.evaluate(() => window.__dispose());
