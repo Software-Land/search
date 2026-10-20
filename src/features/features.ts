@@ -67,6 +67,13 @@ function timeFeat<T>(name: string, fn: () => T): T {
   }
 }
 
+/** Unprofiled timer. Calls the helper and does not record a bucket. */
+function identityTime<T>(_name: string, fn: () => T): T {
+  return fn();
+}
+
+type FeatureTimer = <T>(name: string, fn: () => T) => T;
+
 type QueryFeatPrep = {
   joinedNorm: string;
   nonStop: QueryToken[];
@@ -1310,35 +1317,37 @@ function finishFeatures(
   return base;
 }
 
-function computeFeatureFields(query: AnalyzedQuery, doc: IndexedDocument) {
-  getQueryFeatPrep(query);
-  const vHit = versionHit(query, doc);
-  const phrase = compiledPhraseLookup(query, doc);
-  const contextual = hasConfiguredSequenceIntent(query) ? null : matchContextualTitlePrefix(query, doc);
-  const fieldEvidence = configuredConceptFieldEvidence(query, doc);
+function computeFeatureFields(query: AnalyzedQuery, doc: IndexedDocument, time: FeatureTimer) {
+  time("queryPrep", () => getQueryFeatPrep(query));
+  const vHit = time("versionHit", () => versionHit(query, doc));
+  const phrase = time("compiledPhraseLookup", () => compiledPhraseLookup(query, doc));
+  const contextual = time("contextualTitlePrefix", () =>
+    hasConfiguredSequenceIntent(query) ? null : matchContextualTitlePrefix(query, doc)
+  );
+  const fieldEvidence = time("configuredConceptFieldEvidence", () => configuredConceptFieldEvidence(query, doc));
   return {
-    exactTitleMatch: exactTitle(query, doc),
-    exactTitleTokenMatch: exactTitleTokenMatch(query, doc),
-    typedSurfaceTitleMatch: typedSurfaceTitleMatch(query, doc),
-    titleCoverage: titleCoverage(query, doc),
-    queryCoverage: queryCoverage(query, doc, vHit),
-    titlePrefixQuality: titlePrefixQuality(query, doc),
+    exactTitleMatch: time("exactTitleMatch", () => exactTitle(query, doc)),
+    exactTitleTokenMatch: time("exactTitleTokenMatch", () => exactTitleTokenMatch(query, doc)),
+    typedSurfaceTitleMatch: time("typedSurfaceTitleMatch", () => typedSurfaceTitleMatch(query, doc)),
+    titleCoverage: time("titleCoverage", () => titleCoverage(query, doc)),
+    queryCoverage: time("queryCoverage", () => queryCoverage(query, doc, vHit)),
+    titlePrefixQuality: time("titlePrefixQuality", () => titlePrefixQuality(query, doc)),
     ...contextualFeatureFields(contextual),
     configuredConceptMatch: configuredConceptMatchFromField(fieldEvidence),
     configuredConceptFieldEvidence: fieldEvidence,
-    morphologyMatch: morphologyMatch(query, doc),
-    typoDistance: typoDistance(query, doc),
-    versionMatch: versionMatch(query, doc, vHit),
-    shortLiteralLeadMatch: shortLiteralLeadMatch(query, doc),
-    dottedSpanComponentTitleMatch: dottedSpanComponentTitleMatch(query, doc),
-    phraseAdjacency: phraseAdjacency(query, doc),
-    ...lexicalCoverageFields(query, doc),
-    ordinaryEquivalenceBodyMatch: ordinaryEquivalenceBodyMatch(query, doc),
+    morphologyMatch: time("morphologyMatch", () => morphologyMatch(query, doc)),
+    typoDistance: time("typoDistance", () => typoDistance(query, doc)),
+    versionMatch: time("versionMatch", () => versionMatch(query, doc, vHit)),
+    shortLiteralLeadMatch: time("shortLiteralLeadMatch", () => shortLiteralLeadMatch(query, doc)),
+    dottedSpanComponentTitleMatch: time("dottedSpanComponentTitleMatch", () => dottedSpanComponentTitleMatch(query, doc)),
+    phraseAdjacency: time("phraseAdjacency", () => phraseAdjacency(query, doc)),
+    ...time("lexicalCoverageFields", () => lexicalCoverageFields(query, doc)),
+    ordinaryEquivalenceBodyMatch: time("ordinaryEquivalenceBodyMatch", () => ordinaryEquivalenceBodyMatch(query, doc)),
     titleTokenCount: doc.nonStopTitle.length,
-    configuredFormEvidence: configuredFormEvidence(query, doc),
-    configuredFormCoverage: configuredFormCoverage(query),
-    configuredFormBodyMatch: configuredFormBodyMatch(query, doc),
-    canonicalKeyTitle: canonicalKeyTitle(query, doc),
+    configuredFormEvidence: time("configuredFormEvidence", () => configuredFormEvidence(query, doc)),
+    configuredFormCoverage: time("configuredFormCoverage", () => configuredFormCoverage(query)),
+    configuredFormBodyMatch: time("configuredFormBodyMatch", () => configuredFormBodyMatch(query, doc)),
+    canonicalKeyTitle: time("canonicalKeyTitle", () => canonicalKeyTitle(query, doc)),
     queryTokenCount: getQueryFeatPrep(query).lexicalNonStopCount,
     normalizedQueryPhrase: phrase.normalizedQueryPhrase,
     matchingPhraseKey: phrase.matchingPhraseKey,
@@ -1357,32 +1366,7 @@ export function extractFeatures(
     retrievalSources,
   }: { relationship?: RelationshipInfo | null; retrievalScore?: number; retrievalSources?: string[] } = {}
 ): FeatureVector {
-  if (!featureProfile) {
-    return finishFeatures(
-      relationship,
-      retrievalScore,
-      withConfiguredPrefixRecallFields(
-        query,
-        doc,
-        withSynonymRecallFields(
-          query,
-          doc,
-          withTopicalRecallFields(query, doc, withStandaloneRecallFields(query, doc, computeFeatureFields(query, doc)))
-        ),
-        retrievalSources
-      ),
-      retrievalSources
-    );
-  }
-  timeFeat("queryPrep", () => getQueryFeatPrep(query));
-  const vHit = timeFeat("versionHit", () => versionHit(query, doc));
-  const phrase = timeFeat("compiledPhraseLookup", () => compiledPhraseLookup(query, doc));
-  const contextual = timeFeat("contextualTitlePrefix", () =>
-    hasConfiguredSequenceIntent(query) ? null : matchContextualTitlePrefix(query, doc)
-  );
-  const fieldEvidence = timeFeat("configuredConceptFieldEvidence", () =>
-    configuredConceptFieldEvidence(query, doc)
-  );
+  const fields = computeFeatureFields(query, doc, featureProfile ? timeFeat : identityTime);
   return finishFeatures(
     relationship,
     retrievalScore,
@@ -1390,39 +1374,10 @@ export function extractFeatures(
       query,
       doc,
       withSynonymRecallFields(
-      query,
-      doc,
-      withTopicalRecallFields(query, doc, withStandaloneRecallFields(query, doc, {
-    exactTitleMatch: timeFeat("exactTitleMatch", () => exactTitle(query, doc)),
-    exactTitleTokenMatch: timeFeat("exactTitleTokenMatch", () => exactTitleTokenMatch(query, doc)),
-    typedSurfaceTitleMatch: timeFeat("typedSurfaceTitleMatch", () => typedSurfaceTitleMatch(query, doc)),
-    titleCoverage: timeFeat("titleCoverage", () => titleCoverage(query, doc)),
-    queryCoverage: timeFeat("queryCoverage", () => queryCoverage(query, doc, vHit)),
-    titlePrefixQuality: timeFeat("titlePrefixQuality", () => titlePrefixQuality(query, doc)),
-    ...contextualFeatureFields(contextual),
-    configuredConceptMatch: configuredConceptMatchFromField(fieldEvidence),
-    configuredConceptFieldEvidence: fieldEvidence,
-    morphologyMatch: timeFeat("morphologyMatch", () => morphologyMatch(query, doc)),
-    typoDistance: timeFeat("typoDistance", () => typoDistance(query, doc)),
-    versionMatch: timeFeat("versionMatch", () => versionMatch(query, doc, vHit)),
-    shortLiteralLeadMatch: timeFeat("shortLiteralLeadMatch", () => shortLiteralLeadMatch(query, doc)),
-    dottedSpanComponentTitleMatch: timeFeat("dottedSpanComponentTitleMatch", () => dottedSpanComponentTitleMatch(query, doc)),
-    phraseAdjacency: timeFeat("phraseAdjacency", () => phraseAdjacency(query, doc)),
-    ...timeFeat("lexicalCoverageFields", () => lexicalCoverageFields(query, doc)),
-    ordinaryEquivalenceBodyMatch: timeFeat("ordinaryEquivalenceBodyMatch", () => ordinaryEquivalenceBodyMatch(query, doc)),
-    titleTokenCount: doc.nonStopTitle.length,
-    configuredFormEvidence: timeFeat("configuredFormEvidence", () => configuredFormEvidence(query, doc)),
-    configuredFormCoverage: timeFeat("configuredFormCoverage", () => configuredFormCoverage(query)),
-    configuredFormBodyMatch: timeFeat("configuredFormBodyMatch", () => configuredFormBodyMatch(query, doc)),
-    canonicalKeyTitle: timeFeat("canonicalKeyTitle", () => canonicalKeyTitle(query, doc)),
-    queryTokenCount: getQueryFeatPrep(query).lexicalNonStopCount,
-    normalizedQueryPhrase: phrase.normalizedQueryPhrase,
-    matchingPhraseKey: phrase.matchingPhraseKey,
-    bodyPhraseCount: phrase.bodyPhraseCount,
-    bodyPhraseFrequency: phrase.bodyPhraseFrequency,
-    ...typedPhraseFieldFrequencies(query, doc),
-      }))
-    ),
+        query,
+        doc,
+        withTopicalRecallFields(query, doc, withStandaloneRecallFields(query, doc, fields))
+      ),
       retrievalSources
     ),
     retrievalSources

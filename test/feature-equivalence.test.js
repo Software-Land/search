@@ -7,7 +7,12 @@ import { fileURLToPath } from "node:url";
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
-import { extractFeatures } from "../dist/features/features.js";
+import {
+  extractFeatures,
+  startFeatureProfile,
+  stopFeatureProfile,
+  lastFeatureProfile,
+} from "../dist/features/features.js";
 import { extractFeaturesOracle } from "../build/test/oracles/featuresOracle.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -113,5 +118,78 @@ describe("feature extraction oracle", () => {
       if (mismatches.length >= 5) break;
     }
     expect(mismatches).toEqual([]);
+  });
+
+  test("profiling records the same fields and buckets as the unprofiled path", () => {
+    const queries = [
+      "sort",
+      "machine learning",
+      "application programming",
+      "national institute of standards and technology",
+      "national institute of",
+      "national",
+    ];
+    const relationship = {
+      sourceId: "src",
+      sourceTitle: "Source",
+      type: "editorial",
+      strength: 0.5,
+      provenance: "manual",
+    };
+    const buckets = [
+      "queryPrep",
+      "versionHit",
+      "compiledPhraseLookup",
+      "contextualTitlePrefix",
+      "configuredConceptFieldEvidence",
+      "exactTitleMatch",
+      "exactTitleTokenMatch",
+      "typedSurfaceTitleMatch",
+      "titleCoverage",
+      "queryCoverage",
+      "titlePrefixQuality",
+      "morphologyMatch",
+      "typoDistance",
+      "versionMatch",
+      "shortLiteralLeadMatch",
+      "dottedSpanComponentTitleMatch",
+      "phraseAdjacency",
+      "lexicalCoverageFields",
+      "ordinaryEquivalenceBodyMatch",
+      "configuredFormEvidence",
+      "configuredFormCoverage",
+      "configuredFormBodyMatch",
+      "canonicalKeyTitle",
+    ];
+    stopFeatureProfile();
+    try {
+      const plain = queries.map((raw) => {
+        const query = engine._prepareQuery(raw);
+        return engine._index.documents.map((doc) => extractFeatures(query, doc));
+      });
+      const related = extractFeatures(engine._prepareQuery("national"), engine._index.documents[0], {
+        relationship,
+        retrievalScore: 0.25,
+        retrievalSources: ["configured-prefix-recall"],
+      });
+      startFeatureProfile();
+      const profiled = queries.map((raw) => {
+        const query = engine._prepareQuery(raw);
+        return engine._index.documents.map((doc) => extractFeatures(query, doc));
+      });
+      const profiledRelated = extractFeatures(engine._prepareQuery("national"), engine._index.documents[0], {
+        relationship,
+        retrievalScore: 0.25,
+        retrievalSources: ["configured-prefix-recall"],
+      });
+      const profile = lastFeatureProfile();
+      expect(Object.keys(profile)).toEqual(buckets);
+      const calls = engine._index.documents.length * queries.length + 1;
+      for (const name of buckets) expect(profile[name].calls).toBe(calls);
+      expect(profiled).toEqual(plain);
+      expect(profiledRelated).toEqual(related);
+    } finally {
+      stopFeatureProfile();
+    }
   });
 });

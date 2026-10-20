@@ -277,6 +277,80 @@ describe("explicit exact 1-token configured aliases", () => {
   });
 });
 
+describe("trailing structural tokens do not complete a partial form", () => {
+  const quad = [{ key: "abcd", aliases: [["alpha", "bravo", "charlie", "delta"]] }];
+
+  function occupied(raw, entries) {
+    const q = analyze(raw, entries);
+    return {
+      q,
+      concept: q.concepts.find((row) => row.kind === "configured-concept"),
+    };
+  }
+
+  test("three of four content tokens stay at coverage 0.75 with and without a trailing stop", async () => {
+    const engine = SearchEngine.create({
+      schema,
+      plugins: plugins(quad),
+      relationshipStrategy: "none",
+    });
+    await engine.index([
+      { id: "notes", title: "Notes", body: "alpha bravo charlie delta appears in this note" },
+    ]);
+
+    for (const raw of ["alpha bravo charlie", "alpha bravo charlie of"]) {
+      const { q, concept } = occupied(raw, quad);
+      expect(q.configuredSequenceIntent?.key).toBe("abcd");
+      expect(resolveConfiguredSequence(q.tokens, plugins(quad)[1])).toMatchObject({
+        status: "unique",
+        alignment: "left-prefix",
+      });
+      // Content coverage is 3/4. A skipped stop is not a matched form token,
+      // and coverage below 1 still qualifies the n≥3 peer form as a body match.
+      expect(concept).toMatchObject({
+        formCoverage: 0.75,
+        matchedFormTokens: 3,
+        formTokenCount: 4,
+      });
+      const hit = engine.searchDetailed(raw, { limit: 5, relatedLimit: 0, explain: true }).results[0];
+      expect(hit.features.configuredFormCoverage).toBe(0.75);
+      expect(hit.features.configuredFormBodyMatch).toBe(true);
+      expect(hit.directClass).toBe("moderate");
+    }
+  });
+
+  test("an exact two-of-four prefix keeps coverage 0.5 after a trailing stop", () => {
+    for (const raw of ["national institute", "national institute of"]) {
+      const { q, concept } = occupied(raw);
+      expect(q.configuredSequenceIntent?.key).toBe("nist");
+      expect(concept).toMatchObject({
+        formCoverage: 0.5,
+        matchedFormTokens: 2,
+        formTokenCount: 4,
+      });
+    }
+  });
+
+  test("a fully consumed configured form stays complete", () => {
+    const exact = occupied("alpha bravo charlie delta", quad);
+    expect(exact.q.configuredSequenceIntent?.key).toBe("abcd");
+    expect(resolveConfiguredSequence(exact.q.tokens, plugins(quad)[1])).toMatchObject({
+      status: "unique",
+      alignment: "full",
+    });
+    expect(exact.concept.formCoverage).toBe(1);
+
+    const spoken = occupied("national institute of standards and technology");
+    expect(spoken.q.configuredSequenceIntent?.key).toBe("nist");
+    expect(resolveConfiguredSequence(spoken.q.tokens, plugins()[1])).toMatchObject({
+      status: "unique",
+      alignment: "full",
+      usedPrefix: false,
+    });
+    expect(spoken.concept.formCoverage).toBe(1);
+  });
+});
+
 describe("NIST spoken forms on the Software.Land fixture", () => {
   const ROOT = path.dirname(fileURLToPath(import.meta.url));
   const FIXTURE = path.join(ROOT, "fixtures", "software-land");

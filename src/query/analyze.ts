@@ -658,13 +658,21 @@ function attachConfiguredSequenceConcept(
     return null;
   }
   if (resolution.status !== "unique") return null;
-  const { intent, concept, usedPrefix } = resolution;
+  const { intent, concept, usedPrefix, alignment } = resolution;
   for (let i = concepts.length - 1; i >= 0; i--) {
     if (concepts[i].kind === "configured-concept" && concepts[i].id !== intent.key) concepts.splice(i, 1);
   }
   const aliases = allConfiguredConceptForms(concept);
   const matched = Array.isArray(intent.matchedForm) ? intent.matchedForm : [];
   const matchedLen = usedPrefix ? Math.max(matched.length, tokenCount, 1) : Math.max(matched.length, 1);
+  // Left-prefix completeness uses the content coverage established during
+  // resolution. usedPrefix alone does not establish full-form completeness.
+  const contentCoverage = resolution.contentCoverage;
+  const matchedContentTokens = resolution.matchedContentTokens;
+  const leftPrefixContent =
+    alignment === "left-prefix" &&
+    typeof contentCoverage === "number" &&
+    typeof matchedContentTokens === "number";
   const fields = {
     id: concept.key,
     kind: "configured-concept",
@@ -672,13 +680,15 @@ function attachConfiguredSequenceConcept(
     matchedForm: [...matched],
     aliases: aliases.map((a) => [...a]),
     provenance: provenanceForSequenceKinds(intent.matchedKinds, usedPrefix),
-    matchedFormTokens: tokenCount,
-    formTokenCount: usedPrefix ? matchedLen : matched.length || 1,
+    matchedFormTokens: leftPrefixContent ? matchedContentTokens : tokenCount,
+    formTokenCount: leftPrefixContent ? Math.max(matched.length, 1) : usedPrefix ? matchedLen : matched.length || 1,
     // Occupancy is boolean (this concept is uniquely established).
     // formCoverage is matched-form completeness, not occupancy.
-    formCoverage: usedPrefix
-      ? Number((tokenCount / matchedLen).toFixed(4))
-      : 1,
+    formCoverage: leftPrefixContent
+      ? Number(contentCoverage.toFixed(4))
+      : usedPrefix
+        ? Number((tokenCount / matchedLen).toFixed(4))
+        : 1,
   };
   const existing = concepts.find((c) => c.kind === "configured-concept" && c.id === intent.key);
   if (existing) Object.assign(existing, fields);

@@ -604,7 +604,6 @@ export interface IndexedLexicalOptions {
 export interface AdaptiveRetrieverOptions {
   documentThreshold?: number;
   smallLimit?: number;
-  indexedOptions?: IndexedLexicalOptions;
   type?: string;
 }
 

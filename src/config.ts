@@ -160,9 +160,8 @@ function validateCandidateLimit(value?: unknown, field = "candidateLimit"): numb
  */
 export function resolvePublicRetriever(
   spec?: unknown,
-  { candidateLimit, adaptive }: { candidateLimit?: number | null; adaptive?: AdaptiveOptions | null } = {}
+  { adaptive }: { candidateLimit?: number | null; adaptive?: AdaptiveOptions | null } = {}
 ): Retriever {
-  const limit = candidateLimit || DEFAULT_CANDIDATE_LIMIT;
   const threshold = adaptive?.documentThreshold || DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD;
   if (spec === "full-scan") return createFullScanRetriever();
   if (spec == null) return createCompiledLexicalRetriever();
@@ -173,10 +172,7 @@ export function resolvePublicRetriever(
     return createCompiledLexicalRetriever();
   }
   if (spec === "adaptive") {
-    return createAdaptiveRetriever({
-      documentThreshold: threshold,
-      indexedOptions: { candidateLimit: limit },
-    });
+    return createAdaptiveRetriever({ documentThreshold: threshold });
   }
   throw new InvalidConfigurationError(
     `retriever must be one of ${RETRIEVER_NAMES.join(" | ")} (got ${JSON.stringify(spec)})`,

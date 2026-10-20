@@ -84,6 +84,14 @@ export type ConfiguredSequenceResolution =
       concept: ConfiguredConcept;
       usedPrefix: boolean;
       alignment: ConfiguredAlignmentKind;
+      /**
+       * Left-prefix only. Content tokens already counted by occupancy,
+       * divided by the matched form length. Absent for full and suffix
+       * alignments, which keep their existing completeness stamp.
+       */
+      contentCoverage?: number;
+      /** Left-prefix content tokens. Skipped stops are not included. */
+      matchedContentTokens?: number;
     }
   | { status: "ambiguous"; keys: string[] }
   | { status: "none" };
@@ -366,7 +374,8 @@ function uniqueResolution(
   matchedKinds: string[],
   usedPrefix: boolean,
   alignment: ConfiguredAlignmentKind = "full",
-  matchedForm: string[] = []
+  matchedForm: string[] = [],
+  content?: { coverage: number; matchedTokens: number }
 ): ConfiguredSequenceResolution {
   return {
     status: "unique",
@@ -378,6 +387,9 @@ function uniqueResolution(
     concept,
     usedPrefix,
     alignment,
+    ...(content
+      ? { contentCoverage: content.coverage, matchedContentTokens: content.matchedTokens }
+      : {}),
   };
 }
 
@@ -408,8 +420,13 @@ function uniqueFormLeftPrefix(
 ): ConfiguredSequenceResolution {
   const k = tokens.length;
   if (k < MIN_FORM_PREFIX_TOKENS || !configured.sequences?.length) return { status: "none" };
-  const candidates: Array<{ seq: ConfiguredConceptSequence; coverage: number; n: number; usedPrefix: boolean }> =
-    [];
+  const candidates: Array<{
+    seq: ConfiguredConceptSequence;
+    coverage: number;
+    n: number;
+    usedPrefix: boolean;
+    matchedContentTokens: number;
+  }> = [];
   for (const seq of configured.sequences) {
     if (!isConfiguredFormKind(seq.kind) || !seq.concept?.key || !seq.tokens?.length) continue;
     const n = seq.tokens.length;
@@ -452,7 +469,7 @@ function uniqueFormLeftPrefix(
     } else if (coverage < MIN_EXACT_LEFT_PREFIX_COVERAGE) {
       continue;
     }
-    candidates.push({ seq, coverage, n, usedPrefix });
+    candidates.push({ seq, coverage, n, usedPrefix, matchedContentTokens: k });
   }
   return uniqueCandidateResolution(candidates, configured, "left-prefix");
 }
@@ -464,6 +481,7 @@ type ExpansionAlignCandidate = {
   coverage: number;
   n: number;
   usedPrefix: boolean;
+  matchedContentTokens?: number;
 };
 
 function uniqueCandidateResolution(
@@ -479,7 +497,11 @@ function uniqueCandidateResolution(
   if (keys.size !== 1) return { status: "none" };
   const hit = top[0];
   const concept = configured.byKey?.get(hit.seq.concept.key) || hit.seq.concept;
-  return uniqueResolution(concept, ["form"], hit.usedPrefix, alignment, [...(hit.seq.tokens || [])]);
+  const content =
+    alignment === "left-prefix" && typeof hit.matchedContentTokens === "number"
+      ? { coverage: hit.coverage, matchedTokens: hit.matchedContentTokens }
+      : undefined;
+  return uniqueResolution(concept, ["form"], hit.usedPrefix, alignment, [...(hit.seq.tokens || [])], content);
 }
 
 /**
@@ -516,7 +538,13 @@ function uniqueStopTolerantLeftPrefix(
     } else if (coverage < MIN_EXACT_LEFT_PREFIX_COVERAGE) {
       continue;
     }
-    candidates.push({ seq, coverage, n, usedPrefix: aligned.usedPrefix });
+    candidates.push({
+      seq,
+      coverage,
+      n,
+      usedPrefix: aligned.usedPrefix,
+      matchedContentTokens: aligned.typedContentMatched,
+    });
   }
   return uniqueCandidateResolution(candidates, configured, "left-prefix");
 }

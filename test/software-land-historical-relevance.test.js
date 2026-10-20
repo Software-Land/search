@@ -201,6 +201,7 @@ describe("Software.Land historical relevance contracts", () => {
     expect(nist.aliases).toEqual([
       ["national", "institute", "standards", "technology"],
       ["institute", "standards"],
+      ["institute", "of", "standards"],
     ]);
     const gatech = configuredConcepts.find((entry) => entry.key === "gatech");
     expect(gatech.aliases).toEqual([["georgia", "institute", "of", "technology"]]);

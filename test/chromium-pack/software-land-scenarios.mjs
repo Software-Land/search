@@ -230,6 +230,15 @@ async function main() {
     const documents = attachLexicalFrequency(inputs.documents, inputs.lexicalFrequency);
     const v2Contracts = loadSoftwareLandJson("v2-contracts.json");
     const corpusFenwickContracts = v2Contracts.overlayCases || [];
+    const nistTyping = loadSoftwareLandJson("nist-typing-progression.json");
+    const nistTarget = inputs.documents.find((doc) => doc.id === nistTyping.document.id);
+    if (!nistTarget || nistTarget.title !== nistTyping.document.title) {
+      throw new Error(
+        `NIST target ${JSON.stringify(nistTyping.document)} is not in the frozen corpus`
+      );
+    }
+    const nistAliases = inputs.configuredConcepts.find((entry) => entry.key === "nist")?.aliases || [];
+    const nistQueries = [...nistTyping.steps, ...(nistTyping.also || [])];
     const initPayload = {
       schema: inputs.schema,
       configuredConcepts: inputs.configuredConcepts,
@@ -340,6 +349,28 @@ async function main() {
       fenwickFull[spec.query] = actual;
     }
 
+    const nistFull = {};
+    for (const query of nistQueries) {
+      const actual = await runQuery(full.page, query, {
+        limit: nistTyping.topN || 10,
+        resultCollector: "complete-interpretation",
+      });
+      if (actual?.query !== query) {
+        throw new Error(
+          `nist typing published ${JSON.stringify(actual?.query)} for ${JSON.stringify(query)}`
+        );
+      }
+      assertExpansionContract(actual, {
+        query,
+        within: {
+          id: nistTyping.document.id,
+          title: nistTyping.document.title,
+          topN: nistTyping.topN || 10,
+        },
+      });
+      nistFull[query] = actual;
+    }
+
     const removedArticles = {};
     for (const query of [
       "Testing in Software Engineering",
@@ -416,6 +447,38 @@ async function main() {
         rank: actual.ids.indexOf(spec.requiredAnyTop.ids[0]) + 1,
       };
     }
+    const nistIndexed = {};
+    for (const query of nistQueries) {
+      const actual = await runQuery(indexed.page, query, {
+        limit: nistTyping.topN || 10,
+        resultCollector: "complete-interpretation",
+      });
+      if (actual?.query !== query) {
+        throw new Error(
+          `indexed nist typing published ${JSON.stringify(actual?.query)} for ${JSON.stringify(query)}`
+        );
+      }
+      assertExpansionContract(actual, {
+        query,
+        within: {
+          id: nistTyping.document.id,
+          title: nistTyping.document.title,
+          topN: nistTyping.topN || 10,
+        },
+      });
+      const fullTitles = (nistFull[query]?.titles || []).slice(0, nistTyping.topN || 10);
+      const indexedTitles = (actual?.titles || []).slice(0, nistTyping.topN || 10);
+      if (JSON.stringify(indexedTitles) !== JSON.stringify(fullTitles)) {
+        throw new Error(
+          `indexed/full-scan title mismatch for ${JSON.stringify(query)}\nfull ${JSON.stringify(fullTitles)}\nindexed ${JSON.stringify(indexedTitles)}`
+        );
+      }
+      nistIndexed[query] = {
+        query,
+        ok: true,
+        rank: actual.ids.indexOf(nistTyping.document.id) + 1,
+      };
+    }
     indexed.diag.assertClean("software-land indexed smoke");
     await indexed.page.evaluate(() => window.__dispose());
 
@@ -430,7 +493,13 @@ async function main() {
       worker: "searchWorkerUrl()/searchWorker.js",
       retrievers: {
         historical: "full-scan",
-        indexedSmoke: ["recurse", "sharde", "frames per", ...EXPANSION_CONTRACTS.map((spec) => spec.query)],
+        indexedSmoke: [
+          "recurse",
+          "sharde",
+          "frames per",
+          ...EXPANSION_CONTRACTS.map((spec) => spec.query),
+          ...nistQueries,
+        ],
       },
       fixture: {
         dir: "test/fixtures/software-land",
@@ -451,6 +520,11 @@ async function main() {
       v2Contracts: {
         browser: "open, oauth, open authorization, and Fenwick Tree corpus contracts run on the refreshed corpus.",
         fenwick: fenwickIndexed,
+        nistTyping: {
+          document: nistTyping.document,
+          workerAliases: nistAliases,
+          indexed: nistIndexed,
+        },
       },
       controls: Object.fromEntries(
         CRITICAL_CONTROLS.map((query) => [

@@ -1,0 +1,21 @@
+{
+  "description": "Natural NIST alias typing progression. Rank 1 is not required. The target is frozen corpus document ai, so this file does not add a document overlay.",
+  "document": {
+    "id": "ai",
+    "title": "TLS 1.2 Vulnerability",
+    "path": "/blog/tls-1.2-vulnerability/"
+  },
+  "topN": 10,
+  "steps": [
+    "institute",
+    "institute ",
+    "institute o",
+    "institute of",
+    "institute of s",
+    "institute of standards"
+  ],
+  "also": [
+    "nist",
+    "national institute of standards and technology"
+  ]
+}

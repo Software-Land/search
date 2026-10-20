@@ -125,10 +125,7 @@ describe("full-scan and adaptive ignore a hard ranker envelope", () => {
     const docs = Array.from({ length: 8 }, (_, i) => ({ id: `a${i}`, title: `Doc ${i}`, body: "zzunique" }));
     const plugins = [morphology()];
     const index = buildIndex(docs, schema, plugins);
-    const retriever = createAdaptiveRetriever({
-      documentThreshold: 1500,
-      indexedOptions: { candidateLimit: 2 },
-    });
+    const retriever = createAdaptiveRetriever({ documentThreshold: 1500 });
     retriever.prepare(index);
     expect(retriever.stats().active).toBe("full-scan");
     const hits = retriever.retrieve(analyzeQuery("zzunique", { plugins }), index, { candidateLimit: 2 });
@@ -139,10 +136,7 @@ describe("full-scan and adaptive ignore a hard ranker envelope", () => {
     const docs = Array.from({ length: 6 }, (_, i) => ({ id: `a${i}`, title: `Unrelated ${i}`, body: "zzunique" }));
     const plugins = [morphology()];
     const index = buildIndex(docs, schema, plugins);
-    const retriever = createAdaptiveRetriever({
-      documentThreshold: 3,
-      indexedOptions: { candidateLimit: 2, prefixCap: 1 },
-    });
+    const retriever = createAdaptiveRetriever({ documentThreshold: 3 });
     retriever.prepare(index);
     expect(retriever.stats().active).toBe("indexed-lexical");
     const hits = retriever.retrieve(analyzeQuery("zzunique", { plugins }), index);

@@ -603,10 +603,6 @@ export function constraintsForStrategy(strategy?: string | RelationshipStrategy)
   return strategy === "hybrid" ? HYBRID_CONSTRAINTS : DEFAULT_CONSTRAINTS;
 }
 
-export function constraintsForPresentation(presentation?: string | RelationshipStrategy) {
-  return constraintsForStrategy(presentation);
-}
-
 const CLASS_ORDER = ["absolute", "strong", "soft"];
 
 export function compareConstraint(a: FeaturedHit, b: FeaturedHit, defs: ConstraintDef[] = DEFAULT_CONSTRAINTS): ConstraintCompareResult {

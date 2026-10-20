@@ -114,16 +114,6 @@ export function parseRelationships(obj?: unknown) {
   };
 }
 
-export function parseCorpusStats(obj?: unknown) {
-  if (obj == null) return { format: ARTIFACT_FORMATS.corpusStats, version: 1, stats: {} };
-  const art = assertArtifact(obj, ARTIFACT_FORMATS.corpusStats);
-  return {
-    format: ARTIFACT_FORMATS.corpusStats,
-    version: art.version,
-    stats: art.stats && typeof art.stats === "object" ? art.stats : {},
-  };
-}
-
 function clamp01(n: number): number {
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(1, n));

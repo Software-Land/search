@@ -1123,7 +1123,7 @@ export function createCompiledLexicalRetriever(): Retriever {
   return retriever;
 }
 
-export function createAdaptiveRetriever({ documentThreshold = 1500, smallLimit, indexedOptions }: AdaptiveRetrieverOptions = {}): Retriever {
+export function createAdaptiveRetriever({ documentThreshold = 1500, smallLimit }: AdaptiveRetrieverOptions = {}): Retriever {
   const full = createFullScanRetriever();
   const indexed = createCompiledLexicalRetriever();
   const threshold =
@@ -1163,23 +1163,6 @@ export function createAdaptiveRetriever({ documentThreshold = 1500, smallLimit, 
     },
   });
   return retriever;
-}
-
-export function resolveRetriever(spec: unknown): Retriever {
-  if (spec === "full-scan") return createFullScanRetriever();
-  if (!spec) return createCompiledLexicalRetriever();
-  if (typeof spec === "object" && spec && "retrieve" in spec && typeof spec.retrieve === "function") {
-    return spec as Retriever;
-  }
-  if (spec === "indexed" || spec === "indexed-lexical") return createCompiledLexicalRetriever();
-  if (spec === "adaptive") return createAdaptiveRetriever();
-  if (typeof spec === "object" && spec && "type" in spec && spec.type === "indexed-lexical") {
-    return createIndexedLexicalRetriever(spec as IndexedLexicalOptions);
-  }
-  if (typeof spec === "object" && spec && "type" in spec && spec.type === "adaptive") {
-    return createAdaptiveRetriever(spec as AdaptiveRetrieverOptions);
-  }
-  return createIndexedLexicalRetriever();
 }
 
 export { UNBOUNDED_MUST_KEEP, CONTEXTUAL_MUST_KEEP_SOURCE, TITLE_PREFIX_KEEP_SOURCE, queryForms };
