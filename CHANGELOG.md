@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.7.1
+
+### Fixed
+
+- Stop-tolerant configured-form left prefixes preserve content coverage. A skipped structural token is not a completed form token, so occupied `formCoverage` and `configuredFormCoverage` follow the matched content tokens. In applicable cases this can change direct-match classification and ranking.
+
+### Changed
+
+- Removed unused private retriever-resolution and artifact/constraint helpers. Public exports, artifact format names, and retriever names stay as they are.
+- Removed ineffective internal adaptive retriever configuration forwarding. Public retriever selection and `adaptive.documentThreshold` stay as they are.
+- Consolidated feature-field composition for profiled and ordinary extraction, preserving extracted feature values and profiling buckets.
+- Simplified and expanded real-corpus regression coverage.
+
 ## 0.7.0
 
 ### Changed
