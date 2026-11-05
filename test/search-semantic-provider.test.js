@@ -18,7 +18,7 @@ const DOCS = [
 
 function writeFakePython(dir) {
   const marker = path.join(dir, "invoked.txt");
-  const bin = path.join(dir, "python");
+  const bin = path.join(dir, "fake-python.mjs");
   fs.writeFileSync(
     bin,
     `#!/usr/bin/env node
@@ -245,7 +245,7 @@ describe("embedding provider validation", () => {
 
 function writeEnvPython(dir) {
   const marker = path.join(dir, "child-env.json");
-  const bin = path.join(dir, "python");
+  const bin = path.join(dir, "fake-python.mjs");
   fs.writeFileSync(
     bin,
     `#!/usr/bin/env node
