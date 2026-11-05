@@ -9,7 +9,7 @@ engine.searchDetailedAsync(...)
 
 Invariant: `search(q, opts)` is semantically identical to `searchDetailed(q, opts).results`. Ranking, relationship, representative, and public result semantics are the same. Eligible ordinary `search()` / `searchAsync()` may execute via packed ranking-evidence views. `explain: true` on those calls disables packed ranking evidence and remains eligible for feature block pruning and body posting pruning. `searchDetailed()` / `searchDetailedAsync()` are exact diagnostics: they use the FeatureVector path, turn both pruning capabilities off, and may additionally compute a full exact diagnostic plan for candidate titles, cycles, conflicts, and explanation successors. Explicit exhaustive mode also turns those pruning capabilities off. `meta.stage3A` and `meta.stage3AFallbackReason` are historical diagnostic names for body posting pruning.
 
-`searchAsync` / `searchDetailedAsync` are the same algorithm with yields for cancellation. They must not change ordering.
+`searchAsync` / `searchDetailedAsync` are the same algorithm. During large stages they yield to the task queue so cancellation can interrupt in-flight work. They must not change ordering.
 
 ## Options
 
@@ -45,11 +45,15 @@ Do not treat `score` as globally meaningful. Constraints dominate. `meta` on `se
 
 ## Cancellation
 
-A cancelled search throws (`DOMException` named `AbortError` when available). Index state is unchanged. `lastSearchMeta` is only written on success.
+A cancelled search throws (`DOMException` named `AbortError` when available). It does not return an empty hit list. Index state is unchanged. `lastSearchMeta` is written only when a search finishes successfully.
 
-Synchronous `search()` only observes `signal.aborted` at checkpoints. Use `searchAsync` or the Worker when abort must interrupt in-flight work.
+`search()` and `searchDetailed()` stay synchronous. They observe `signal.aborted` at the same work checkpoints and do not return to the event loop.
 
-Pre-aborted signals throw immediately.
+`searchAsync()` and `searchDetailedAsync()` use those same retrieval, feature, and ranking calculations. On a large search they also yield to the task queue with `setTimeout`, so a timer callback or Worker message can abort the signal. Checks are amortized over about 512 posting rows, documents, candidates, or constraint pairs, or about 12ms of slice time, whichever comes first. Time is sampled every few checkpoints, not once per row. A checkpoint with no completed work does not yield. Ranking yields while grouping candidates, copying a signature group, emitting ordered hits, and attaching constraint metadata, including when every candidate shares one signature. Sorting one group remains one native sort. One microtask at entry still lets the caller abort on the same turn before a short search finishes. Successful packed publication checks the signal again after ranking resolves.
+
+Cancellation stays cooperative. A slice is not a deadline. The current batch, a synchronous callback, and any indivisible JavaScript operation run to completion. A search that finishes inside one slice does not observe a timer until it returns. Body-posting block planning is one of those synchronous stretches: it polls the signal per concept and per block, and it returns before the next task yield. On the mixed generator used by the body-posting pruning measurements, `virtual private network` spent about 3 ms in that call at 25,000 and 100,000 documents, inside a slice of a few milliseconds. The longer steady gap on the 100,000-document run was about 26 ms after the last ranking-evidence yield, while packed direct hits are built and packed ranking finishes. Overlapping asynchronous searches on one engine keep separate scratch state. Cancelling one does not publish its partial metadata or replace the other's result.
+
+Use `searchAsync` or the Worker when an abort needs to interrupt in-flight work. Pre-aborted signals throw immediately.
 
 ## Determinism
 

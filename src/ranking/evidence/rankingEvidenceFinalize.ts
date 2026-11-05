@@ -6,6 +6,7 @@
  * implementations. It never allocates a FeatureVector per candidate.
  */
 import { compactOrdinal } from "../../indexing/compactDocuments.js";
+import { checkpoint, enterCooperationStage, type Cooperation } from "../../execution/cooperate.js";
 import { queryHasTypedConfiguredGraph } from "../../query/configuredFormGraph.js";
 import { resetReusableFeatureScalar, DEFAULT_FEATURE_VALUES } from "../../features/featureDefaults.js";
 import { classifyDirect } from "../../features/features.js";
@@ -874,6 +875,60 @@ export function finalizeRankingEvidence(
   const bodySequences = session.configuredBodySequenceScratch;
   const contributes = session.configuredContributesScratch;
   for (let candidate = 0; candidate < hits.length; candidate++) {
+    const ordinal = ordinalOf(hits[candidate], candidate);
+    finalizeCandidate(
+      session,
+      hits[candidate],
+      candidate,
+      ordinal,
+      planPhraseGeometry,
+      titleSequences,
+      bodySequences,
+      contributes
+    );
+  }
+  return {
+    session,
+    plan,
+    generation: session.generation,
+    finalizationVersion: session.finalizationVersion,
+    length: hits.length,
+    counters: Object.freeze({ ...session.counters }),
+    memory: Object.freeze(session.memory()),
+  };
+}
+
+export async function finalizeRankingEvidenceAsync(
+  session: RankingEvidenceSession,
+  hits: readonly RetrievalHit[],
+  queryPlan: QueryPlan | null = null,
+  signal?: AbortSignal,
+  cooperation?: Cooperation | null
+): Promise<RankingEvidenceFinalized> {
+  enterCooperationStage(cooperation, "finalize");
+  const plan = session.plan;
+  if (!plan) throw new Error("ranking evidence session is not acquired");
+  session.beginFinalization(hits.length);
+  for (let candidate = 0; candidate < hits.length; candidate++) {
+    if (hits[candidate].relationship) {
+      throw new Error("ranking evidence supports direct candidates only");
+    }
+    const ordinal = ordinalOf(hits[candidate], candidate);
+    session.admitCandidate(ordinal);
+    if (plan.exactTitleNorms.has(session.static.store.normalizedTitles[ordinal] || "")) {
+      session.markExactTitle(ordinal);
+    }
+  }
+  applyUnwalkedTitleActions(session, hits);
+  const planPhraseGeometry = applyQueryPlan(session, hits, queryPlan);
+  const titleSequences = session.configuredTitleSequenceScratch;
+  const bodySequences = session.configuredBodySequenceScratch;
+  const contributes = session.configuredContributesScratch;
+  for (let candidate = 0; candidate < hits.length; candidate++) {
+    if ((candidate & 31) === 0) {
+      const pending = checkpoint(cooperation, signal, 32);
+      if (pending) await pending;
+    }
     const ordinal = ordinalOf(hits[candidate], candidate);
     finalizeCandidate(
       session,

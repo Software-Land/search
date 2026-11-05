@@ -34,6 +34,7 @@ import { querySemanticFacts } from "../query/querySemantics.js";
 import { allowPrefixMatch, DEFAULT_STOP } from "../text/text.js";
 import { isAllDigitToken } from "../text/versionForms.js";
 import { throwIfAborted } from "../cancel.js";
+import { checkpoint, createCooperation, readCooperation, type Cooperation } from "../execution/cooperate.js";
 import {
   ensureCompiledLexicalIndex,
   type CompiledLexicalRuntime,
@@ -286,7 +287,7 @@ export function createFullScanRetriever(): Retriever {
       return retrieveCandidates(query, index, { signal: opts.signal });
     },
     retrieveAsync(query, index, opts = {}) {
-      return retrieveCandidatesAsync(query, index, { signal: opts.signal });
+      return retrieveCandidatesAsync(query, index, opts);
     },
     stats() {
       return { kind: "full-scan" };
@@ -425,16 +426,24 @@ export function createIndexedLexicalRetriever({
     fieldBoost: number,
     avgdl: number,
     dlArr: number[],
-    { signal, n }: { signal?: AbortSignal; n?: number } = {}
-  ) {
+    { signal, n, coop }: { signal?: AbortSignal; n?: number; coop?: Cooperation | null } = {}
+  ): void | Promise<void> {
     if (!posting) return;
     const w = idf(n || 0, posting.df) * fieldBoost;
-    for (let i = 0; i < posting.docs.length; i++) {
-      if ((i & 63) === 0) throwIfAborted(signal);
-      const pos = posting.docs[i];
-      const tf = posting.tfs[i];
-      addHit(byPos, pos, source, w * bm25Tf(tf, dlArr[pos], avgdl));
-    }
+    let i = 0;
+    const run = (): void | Promise<void> => {
+      while (i < posting.docs.length) {
+        if ((i & 63) === 0) {
+          const pending = checkpoint(coop, signal, 64);
+          if (pending) return pending.then(run);
+        }
+        const pos = posting.docs[i];
+        const tf = posting.tfs[i];
+        addHit(byPos, pos, source, w * bm25Tf(tf, dlArr[pos], avgdl));
+        i += 1;
+      }
+    };
+    return run();
   }
 
   function prefixTerms(prefix: string, accept: (term: string) => boolean) {
@@ -450,7 +459,8 @@ export function createIndexedLexicalRetriever({
     return out;
   }
 
-  function retrieve(query: AnalyzedQuery, index: SearchIndex, { signal, candidateLimit: limitOverride }: RetrieveOptions = {}) {
+  async function retrieveIndexed(query: AnalyzedQuery, index: SearchIndex, { signal, candidateLimit: limitOverride }: RetrieveOptions = {}, coop: Cooperation | null = null, box: { settled: boolean; result?: any; error?: unknown } | null = null) {
+    try {
     throwIfAborted(signal);
     if (!state.prepared) prepare(index);
     const docs = index.documents || [];
@@ -486,21 +496,35 @@ export function createIndexedLexicalRetriever({
       }
     }
 
+    const post = (posting: Posting | undefined, source: string, boost: number, avgdl: number, lengths: number[]) =>
+      accumulatePosting(byPos, posting, source, boost, avgdl, lengths, { signal, n, coop });
+
     let step = 0;
     for (const { form, kind } of forms) {
-      if ((step++ & 7) === 0) throwIfAborted(signal);
+      if ((step++ & 7) === 0) {
+        const pending = checkpoint(coop, signal, 8);
+        if (pending) await pending;
+      }
       const titleP = state.titlePostings.get(form);
-      if (titleP) accumulatePosting(byPos, titleP, postingTitleSource(kind), titleBoost, state.avgTitleDl, state.titleDl, { signal, n });
+      if (titleP) {
+        const pending = post(titleP, postingTitleSource(kind), titleBoost, state.avgTitleDl, state.titleDl);
+        if (pending) await pending;
+      }
       const skipPrefixBody = kind === "configured-prefix-recall" && prefixRecallTitleOnly;
       const bodyP = state.bodyPostings.get(form);
-      if (bodyP && !skipPrefixBody) accumulatePosting(byPos, bodyP, postingBodySource(kind), 1, state.avgBodyDl, state.bodyDl, { signal, n });
+      if (bodyP && !skipPrefixBody) {
+        const pending = post(bodyP, postingBodySource(kind), 1, state.avgBodyDl, state.bodyDl);
+        if (pending) await pending;
+      }
       const titleL = state.titleLemmaPostings.get(form);
       if (titleL && titleL !== titleP) {
-        accumulatePosting(byPos, titleL, kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology", titleBoost * 0.6, state.avgTitleDl, state.titleDl, { signal, n });
+        const pending = post(titleL, kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology", titleBoost * 0.6, state.avgTitleDl, state.titleDl);
+        if (pending) await pending;
       }
       const bodyL = state.bodyLemmaPostings.get(form);
       if (bodyL && !skipPrefixBody) {
-        accumulatePosting(byPos, bodyL, kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology", 0.5, state.avgBodyDl, state.bodyDl, { signal, n });
+        const pending = post(bodyL, kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology", 0.5, state.avgBodyDl, state.bodyDl);
+        if (pending) await pending;
       }
 
       const skipOccupiedFormPrefix =
@@ -509,23 +533,35 @@ export function createIndexedLexicalRetriever({
         for (const term of prefixTerms(form, (t) => allowPrefixMatch(form, t))) {
           if (term === form) continue;
           const tp = state.titlePostings.get(term);
-          if (tp) accumulatePosting(byPos, tp, "title-token-prefix", titleBoost * 0.5, state.avgTitleDl, state.titleDl, { signal, n });
+          if (tp) {
+            const pending = post(tp, "title-token-prefix", titleBoost * 0.5, state.avgTitleDl, state.titleDl);
+            if (pending) await pending;
+          }
         }
         // Body prefix evidence matches scanDocument: length ≥ 3 and startsWith, not allowPrefixMatch.
         for (const term of prefixTerms(form, (t) => !isAllDigitToken(t))) {
           if (term === form) continue;
           const bp = state.bodyPostings.get(term);
-          if (bp) accumulatePosting(byPos, bp, "indexed-lexical", 0.4, state.avgBodyDl, state.bodyDl, { signal, n });
+          if (bp) {
+            const pending = post(bp, "indexed-lexical", 0.4, state.avgBodyDl, state.bodyDl);
+            if (pending) await pending;
+          }
         }
       }
     }
 
     const shortStub = shortTitleTokenPrefixStub(query);
     if (shortStub) {
-      eachTitlePrefixTerm(state.sortedTerms, shortStub, (term) => {
+      let i = lowerBoundTerm(state.sortedTerms, shortStub);
+      while (i < state.sortedTerms.length) {
+        const term = state.sortedTerms[i++];
+        if (!term.startsWith(shortStub)) break;
+        if (term === shortStub || isAllDigitToken(term)) continue;
         const tp = state.titlePostings.get(term);
-        if (tp) accumulatePosting(byPos, tp, "title-token-prefix", titleBoost * 0.5, state.avgTitleDl, state.titleDl, { signal, n });
-      });
+        if (!tp) continue;
+        const pending = post(tp, "title-token-prefix", titleBoost * 0.5, state.avgTitleDl, state.titleDl);
+        if (pending) await pending;
+      }
     }
 
     for (const tok of query.tokens || []) {
@@ -554,7 +590,10 @@ export function createIndexedLexicalRetriever({
       }
       const positions = [...contextualPos].sort((a, b) => a - b);
       for (let i = 0; i < positions.length; i++) {
-        if ((i & 7) === 0) throwIfAborted(signal);
+        if ((i & 7) === 0) {
+          const pending = checkpoint(coop, signal, 8);
+          if (pending) await pending;
+        }
         const pos = positions[i];
         const doc = docs[pos];
         if (!doc) continue;
@@ -567,7 +606,10 @@ export function createIndexedLexicalRetriever({
 
     const drop: number[] = [];
     for (const [pos, hit] of byPos) {
-      if ((step++ & 7) === 0) throwIfAborted(signal);
+      if ((step++ & 7) === 0) {
+        const pending = checkpoint(coop, signal, 8);
+        if (pending) await pending;
+      }
       const sources = retrievalSourcesForDocument(query, docs[pos]);
       if (!sources.length) {
         drop.push(pos);
@@ -625,22 +667,39 @@ export function createIndexedLexicalRetriever({
     const must = unionDeterministic ? [...unboundedMust, ...contextualKept, ...titlePrefixKept] : [];
     const chosen = unionDeterministic ? [...must, ...rest.slice(0, k)] : rest.slice(0, k);
     chosen.sort((a, b) => a.pos - b.pos);
-    return chosen.map((h) => ({
+    const mapped = chosen.map((h) => ({
       document: docs[h.pos],
       retrievalSources: h.retrievalSources,
       retrievalScore: h.retrievalScore,
     }));
+    if (box) {
+      box.result = mapped;
+      box.settled = true;
+    }
+    return mapped;
+    } catch (error) {
+      if (box) {
+        box.error = error;
+        box.settled = true;
+      }
+      throw error;
+    }
   }
 
   return {
     name: "indexed-lexical",
     prepare,
-    retrieve,
+    retrieve(query: AnalyzedQuery, index: SearchIndex, opts: RetrieveOptions = {}) {
+      const box = { settled: false, result: undefined as any, error: undefined as unknown };
+      const pending = retrieveIndexed(query, index, opts, null, box);
+      pending.catch(() => {});
+      if (!box.settled) throw new Error("synchronous lexical retrieval suspended");
+      if (box.error) throw box.error;
+      return box.result;
+    },
     async retrieveAsync(query: AnalyzedQuery, index: SearchIndex, opts: RetrieveOptions = {}) {
-      throwIfAborted(opts.signal);
-      await Promise.resolve();
-      throwIfAborted(opts.signal);
-      return retrieve(query, index, opts);
+      const coop = readCooperation(opts) ?? createCooperation();
+      return retrieveIndexed(query, index, opts, coop, null);
     },
     stats() {
       return {
@@ -698,62 +757,38 @@ export function createCompiledLexicalRetriever(): Retriever {
     return entries > 0 ? Math.ceil(entries / 128) : 0;
   }
 
-  function flatEach(
-    flat: number[],
-    visit: (doc: number, tf: number) => void,
-    signal?: AbortSignal
-  ) {
-    let cursor = 0;
-    let row = 0;
-    while (cursor < flat.length) {
-      if ((row++ & 63) === 0) throwIfAborted(signal);
-      const doc = flat[cursor++];
-      const tf = flat[cursor++];
-      cursor += tf;
-      last.postingEntriesVisited += 1;
-      visit(doc, tf);
-    }
+  type CompiledRetrieveStats = typeof last;
+
+  function readPostingRow(flat: number[], cursor: number) {
+    const doc = flat[cursor];
+    const tf = flat[cursor + 1];
+    const positionsOffset = cursor + 2;
+    return { doc, tf, positionsOffset, next: positionsOffset + tf };
   }
 
-  function flatEachTitleEvidence(
+  function drivePostingRows(
     flat: number[],
-    actionId: number,
-    visit: (doc: number, tf: number) => void,
-    writer: RankingEvidenceSession,
-    signal?: AbortSignal
-  ) {
+    signal: AbortSignal | undefined,
+    stats: CompiledRetrieveStats,
+    coop: Cooperation | null,
+    consume: (doc: number, tf: number, positionsOffset: number) => void
+  ): void | Promise<void> {
     let cursor = 0;
     let row = 0;
-    while (cursor < flat.length) {
-      if ((row++ & 63) === 0) throwIfAborted(signal);
-      const doc = flat[cursor++];
-      const tf = flat[cursor++];
-      const positionsOffset = cursor;
-      cursor += tf;
-      last.postingEntriesVisited += 1;
-      writer.writeTitlePosting(actionId, doc, tf, flat, positionsOffset);
-      visit(doc, tf);
-    }
-  }
-
-  function flatEachBodyEvidence(
-    flat: number[],
-    actionId: number,
-    visit: (doc: number, tf: number) => void,
-    writer: RankingEvidenceSession,
-    signal?: AbortSignal
-  ) {
-    let cursor = 0;
-    let row = 0;
-    while (cursor < flat.length) {
-      if ((row++ & 63) === 0) throwIfAborted(signal);
-      const doc = flat[cursor++];
-      const tf = flat[cursor++];
-      cursor += tf;
-      last.postingEntriesVisited += 1;
-      writer.writeBodyPosting(actionId, doc);
-      visit(doc, tf);
-    }
+    const run = (): void | Promise<void> => {
+      while (cursor < flat.length) {
+        if ((row & 63) === 0) {
+          const pending = checkpoint(coop, signal, 64);
+          if (pending) return pending.then(run);
+        }
+        const posting = readPostingRow(flat, cursor);
+        cursor = posting.next;
+        row += 1;
+        stats.postingEntriesVisited += 1;
+        consume(posting.doc, posting.tf, posting.positionsOffset);
+      }
+    };
+    return run();
   }
 
   function walkPostings(
@@ -764,53 +799,58 @@ export function createCompiledLexicalRetriever(): Retriever {
     walked: WeakSet<number[]>,
     skipDuplicate: boolean,
     field: RankingEvidenceFieldCode,
-    evidenceWriter: RankingEvidenceSession | null
-  ) {
+    evidenceWriter: RankingEvidenceSession | null,
+    stats: CompiledRetrieveStats,
+    coop: Cooperation | null
+  ): void | Promise<void> {
     if (!flat.length) return;
     if (skipDuplicate && walked.has(flat)) {
       const entries = df || 0;
-      last.postingEntriesSkipped += entries;
-      last.duplicatePostingEntriesAvoided += entries;
+      stats.postingEntriesSkipped += entries;
+      stats.duplicatePostingEntriesAvoided += entries;
       // Duplicate posting-list skip: ceil(df/128) of posting arrays already walked.
       // Not unread skip. postingBlocksSkipped is the legacy name of
       // duplicatePostingBlocksAvoided.
       const duplicateBlocks = postingBlockCount(entries);
-      last.postingBlocksSkipped += duplicateBlocks;
-      last.duplicatePostingBlocksAvoided += duplicateBlocks;
+      stats.postingBlocksSkipped += duplicateBlocks;
+      stats.duplicatePostingBlocksAvoided += duplicateBlocks;
       return;
     }
     if (skipDuplicate) walked.add(flat);
-    const before = last.postingEntriesVisited;
+    const before = stats.postingEntriesVisited;
     const actionId = evidenceWriter
       ? evidenceWriter.beginPostingList(field, flat, df)
       : RANKING_EVIDENCE_NO_ACTION;
-    if (!actionId || !evidenceWriter) {
-      flatEach(flat, visit, signal);
-    } else if (field === RANKING_EVIDENCE_TITLE_FIELD) {
-      flatEachTitleEvidence(flat, actionId, visit, evidenceWriter, signal);
-    } else {
-      flatEachBodyEvidence(flat, actionId, visit, evidenceWriter, signal);
-    }
-    const entries = last.postingEntriesVisited - before;
-    last.postingBlocksVisited += postingBlockCount(entries);
-    last.termsExpanded += 1;
+    const pending = !actionId || !evidenceWriter
+      ? drivePostingRows(flat, signal, stats, coop, (doc, tf) => visit(doc, tf))
+      : field === RANKING_EVIDENCE_TITLE_FIELD
+        ? drivePostingRows(flat, signal, stats, coop, (doc, tf, positionsOffset) => {
+            evidenceWriter.writeTitlePosting(actionId, doc, tf, flat, positionsOffset);
+            visit(doc, tf);
+          })
+        : drivePostingRows(flat, signal, stats, coop, (doc, tf) => {
+            evidenceWriter.writeBodyPosting(actionId, doc);
+            visit(doc, tf);
+          });
+    const finish = () => {
+      const entries = stats.postingEntriesVisited - before;
+      stats.postingBlocksVisited += postingBlockCount(entries);
+      stats.termsExpanded += 1;
+    };
+    if (pending) return pending.then(finish);
+    finish();
   }
 
-  function retrieveInternal(query: AnalyzedQuery, index: SearchIndex, {
+  async function retrieveInternal(query: AnalyzedQuery, index: SearchIndex, {
     signal,
     skipDuplicatePostingLists = false,
     exactBlockSkip = false,
-  }: RetrieveOptions = {}, evidenceWriter: RankingEvidenceSession | null = null) {
-    throwIfAborted(signal);
-    if (evidenceWriter) evidenceWriter.assertQuery(query, index);
-    if (!state) prepare(index);
-    const compiled = state as CompiledLexicalRuntime;
-    const docs = index.documents || [];
-    const n = docs.length;
-    const byPos = new Map<number, IndexedHit>();
-    const walked = new WeakSet<number[]>();
-    const skipDuplicate = Boolean(skipDuplicatePostingLists);
-    last = {
+  }: RetrieveOptions = {}, evidenceWriter: RankingEvidenceSession | null = null, coop: Cooperation | null = null, box: {
+    settled: boolean;
+    result?: ReturnType<typeof retrieveInternal> extends Promise<infer T> ? T : never;
+    error?: unknown;
+  } | null = null) {
+    const stats = {
       postingEntriesVisited: 0,
       postingEntriesSkipped: 0,
       postingBlocksVisited: 0,
@@ -832,6 +872,16 @@ export function createCompiledLexicalRetriever(): Retriever {
       stage3A: "off",
       stage3AFallbackReason: null as string | null,
     };
+    try {
+    throwIfAborted(signal);
+    if (evidenceWriter) evidenceWriter.assertQuery(query, index);
+    if (!state) prepare(index);
+    const compiled = state as CompiledLexicalRuntime;
+    const docs = index.documents || [];
+    const n = docs.length;
+    const byPos = new Map<number, IndexedHit>();
+    const walked = new WeakSet<number[]>();
+    const skipDuplicate = Boolean(skipDuplicatePostingLists);
     const skipPlan = typeof exactBlockSkip === "object" && exactBlockSkip ? exactBlockSkip : null;
     const skipScore = skipPlan !== null;
 
@@ -850,7 +900,7 @@ export function createCompiledLexicalRetriever(): Retriever {
       field: "title" | "body",
       source: string,
       boost: number
-    ) {
+    ): void | Promise<void> {
       if (!term) return;
       const flat = field === "title" ? term.title : term.body;
       const df = field === "title" ? term.titleDf : term.bodyDf;
@@ -858,11 +908,11 @@ export function createCompiledLexicalRetriever(): Retriever {
       const avgdl = field === "title" ? compiled.avgTitleDl : compiled.avgBodyDl;
       const lengths = field === "title" ? compiled.titleDl : compiled.bodyDl;
       const weight = idf(n, df) * boost;
-      walkPostings(flat, df, (doc, tf) => {
+      return walkPostings(flat, df, (doc, tf) => {
         add(doc, source, skipScore ? 0 : weight * bm25Tf(tf, lengths[doc], avgdl));
       }, signal, walked, skipDuplicate,
       field === "title" ? RANKING_EVIDENCE_TITLE_FIELD : RANKING_EVIDENCE_BODY_FIELD,
-      evidenceWriter);
+      evidenceWriter, stats, coop);
     }
 
     function accumulateLemma(
@@ -870,29 +920,38 @@ export function createCompiledLexicalRetriever(): Retriever {
       field: "title" | "body",
       source: string,
       boost: number
-    ) {
+    ): void | Promise<void> {
       if (!terms?.length) return;
       const counts = new Map<number, number>();
-      for (const term of terms) {
-        const flat = field === "title" ? term.title : term.body;
-        const df = field === "title" ? term.titleDf : term.bodyDf;
-        walkPostings(flat, df, (doc, tf) => {
-          counts.set(doc, (counts.get(doc) || 0) + tf);
-        }, signal, walked, skipDuplicate,
-        field === "title" ? RANKING_EVIDENCE_TITLE_FIELD : RANKING_EVIDENCE_BODY_FIELD,
-        evidenceWriter);
-      }
-      if (!counts.size) return;
-      const avgdl = field === "title" ? compiled.avgTitleDl : compiled.avgBodyDl;
-      const lengths = field === "title" ? compiled.titleDl : compiled.bodyDl;
-      const weight = idf(n, counts.size) * boost;
-      for (const [doc, tf] of counts) {
-        add(doc, source, skipScore ? 0 : weight * bm25Tf(tf, lengths[doc], avgdl));
-      }
+      let index = 0;
+      const finish = () => {
+        if (!counts.size) return;
+        const avgdl = field === "title" ? compiled.avgTitleDl : compiled.avgBodyDl;
+        const lengths = field === "title" ? compiled.titleDl : compiled.bodyDl;
+        const weight = idf(n, counts.size) * boost;
+        for (const [doc, tf] of counts) {
+          add(doc, source, skipScore ? 0 : weight * bm25Tf(tf, lengths[doc], avgdl));
+        }
+      };
+      const run = (): void | Promise<void> => {
+        while (index < terms.length) {
+          const term = terms[index++];
+          const flat = field === "title" ? term.title : term.body;
+          const df = field === "title" ? term.titleDf : term.bodyDf;
+          const pending = walkPostings(flat, df, (doc, tf) => {
+            counts.set(doc, (counts.get(doc) || 0) + tf);
+          }, signal, walked, skipDuplicate,
+          field === "title" ? RANKING_EVIDENCE_TITLE_FIELD : RANKING_EVIDENCE_BODY_FIELD,
+          evidenceWriter, stats, coop);
+          if (pending) return pending.then(run);
+        }
+        finish();
+      };
+      return run();
     }
 
     const forms = queryForms(query);
-    last.queryFormsExpanded = forms.length;
+    stats.queryFormsExpanded = forms.length;
     const semantics = querySemanticFacts(query);
     const occupied = Boolean(semantics.configured.occupiedKey);
     const prefixRecallTitleOnly = semantics.configured.weakRecall?.ambiguity === "group";
@@ -915,24 +974,37 @@ export function createCompiledLexicalRetriever(): Retriever {
     let step = 0;
     const skipBodyWalk = skipPlan !== null;
     for (const { form, kind } of forms) {
-      if ((step++ & 7) === 0) throwIfAborted(signal);
+      if ((step++ & 7) === 0) {
+        const pending = checkpoint(coop, signal, 8);
+        if (pending) await pending;
+      }
       const surface = compiled.bySurface.get(form);
-      accumulateSurface(surface, "title", postingTitleSource(kind), TITLE_BOOST);
+      {
+        const pending = accumulateSurface(surface, "title", postingTitleSource(kind), TITLE_BOOST);
+        if (pending) await pending;
+      }
       const skipPrefixBody = kind === "configured-prefix-recall" && prefixRecallTitleOnly;
-      if (!skipBodyWalk && !skipPrefixBody) accumulateSurface(surface, "body", postingBodySource(kind), 1);
-      accumulateLemma(
-        compiled.byLemma.get(form),
-        "title",
-        kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology",
-        TITLE_BOOST * 0.6
-      );
       if (!skipBodyWalk && !skipPrefixBody) {
-        accumulateLemma(
+        const pending = accumulateSurface(surface, "body", postingBodySource(kind), 1);
+        if (pending) await pending;
+      }
+      {
+        const pending = accumulateLemma(
+          compiled.byLemma.get(form),
+          "title",
+          kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology",
+          TITLE_BOOST * 0.6
+        );
+        if (pending) await pending;
+      }
+      if (!skipBodyWalk && !skipPrefixBody) {
+        const pending = accumulateLemma(
           compiled.byLemma.get(form),
           "body",
           kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology",
           0.5
         );
+        if (pending) await pending;
       }
 
       const skipOccupiedFormPrefix =
@@ -945,10 +1017,12 @@ export function createCompiledLexicalRetriever(): Retriever {
           if (term === form) continue;
           const row = compiled.bySurface.get(term);
           if (allowPrefixMatch(form, term)) {
-            accumulateSurface(row, "title", "title-token-prefix", TITLE_BOOST * 0.5);
+            const pending = accumulateSurface(row, "title", "title-token-prefix", TITLE_BOOST * 0.5);
+            if (pending) await pending;
           }
           if (!skipBodyWalk && !isAllDigitToken(term)) {
-            accumulateSurface(row, "body", "indexed-lexical", 0.4);
+            const pending = accumulateSurface(row, "body", "indexed-lexical", 0.4);
+            if (pending) await pending;
           }
         }
       }
@@ -956,9 +1030,14 @@ export function createCompiledLexicalRetriever(): Retriever {
 
     const shortStub = shortTitleTokenPrefixStub(query);
     if (shortStub) {
-      eachTitlePrefixTerm(compiled.sortedTerms, shortStub, (term) => {
-        accumulateSurface(compiled.bySurface.get(term), "title", "title-token-prefix", TITLE_BOOST * 0.5);
-      });
+      let i = lowerBoundTerm(compiled.sortedTerms, shortStub);
+      while (i < compiled.sortedTerms.length) {
+        const term = compiled.sortedTerms[i++];
+        if (!term.startsWith(shortStub)) break;
+        if (term === shortStub || isAllDigitToken(term)) continue;
+        const pending = accumulateSurface(compiled.bySurface.get(term), "title", "title-token-prefix", TITLE_BOOST * 0.5);
+        if (pending) await pending;
+      }
     }
 
     for (const token of query.tokens || []) {
@@ -978,7 +1057,7 @@ export function createCompiledLexicalRetriever(): Retriever {
       for (const key of keys) {
         const surface = compiled.bySurface.get(key);
         if (surface) {
-          walkPostings(
+          const pending = walkPostings(
             surface.title,
             surface.titleDf,
             (doc) => positions.add(doc),
@@ -986,11 +1065,14 @@ export function createCompiledLexicalRetriever(): Retriever {
             walked,
             skipDuplicate,
             RANKING_EVIDENCE_TITLE_FIELD,
-            evidenceWriter
+            evidenceWriter,
+            stats,
+            coop
           );
+          if (pending) await pending;
         }
         for (const term of compiled.byLemma.get(key) || []) {
-          walkPostings(
+          const pending = walkPostings(
             term.title,
             term.titleDf,
             (doc) => positions.add(doc),
@@ -998,8 +1080,11 @@ export function createCompiledLexicalRetriever(): Retriever {
             walked,
             skipDuplicate,
             RANKING_EVIDENCE_TITLE_FIELD,
-            evidenceWriter
+            evidenceWriter,
+            stats,
+            coop
           );
+          if (pending) await pending;
         }
       }
       for (const pos of [...positions].sort((a, b) => a - b)) {
@@ -1021,63 +1106,96 @@ export function createCompiledLexicalRetriever(): Retriever {
         relatedExpansionSources: skipPlan?.relatedExpansionSources || null,
       });
       if (plan) {
-        last.stage3A = "applied";
-        last.postingBlocksTotal = plan.stats.postingBlocksTotal;
-        last.postingBlocksDecoded = plan.stats.postingBlocksDecoded;
-        last.postingBlocksClassifiedFromMasks = plan.stats.postingBlocksClassifiedFromMasks;
-        last.postingBlocksSkippedUnread = plan.stats.postingBlocksSkippedUnread;
-        last.postingEntriesDecoded = last.postingEntriesVisited + plan.stats.postingEntriesDecoded;
+        stats.stage3A = "applied";
+        stats.postingBlocksTotal = plan.stats.postingBlocksTotal;
+        stats.postingBlocksDecoded = plan.stats.postingBlocksDecoded;
+        stats.postingBlocksClassifiedFromMasks = plan.stats.postingBlocksClassifiedFromMasks;
+        stats.postingBlocksSkippedUnread = plan.stats.postingBlocksSkippedUnread;
+        stats.postingEntriesDecoded = stats.postingEntriesVisited + plan.stats.postingEntriesDecoded;
         for (const pos of plan.bodyOrdinals) add(pos, "body-lexical", 0);
       } else {
-        last.stage3A = "fallback";
-        last.stage3AFallbackReason = bodyPostingPruningUnsupportedReason(query) || "unbounded-presence";
+        stats.stage3A = "fallback";
+        stats.stage3AFallbackReason = bodyPostingPruningUnsupportedReason(query) || "unbounded-presence";
         for (const { form, kind } of forms) {
-          if ((step++ & 7) === 0) throwIfAborted(signal);
+          if ((step++ & 7) === 0) {
+            const pending = checkpoint(coop, signal, 8);
+            if (pending) await pending;
+          }
           if (kind === "configured-prefix-recall" && prefixRecallTitleOnly) continue;
           const surface = compiled.bySurface.get(form);
-          accumulateSurface(surface, "body", postingBodySource(kind), 1);
-          accumulateLemma(
-            compiled.byLemma.get(form),
-            "body",
-            kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology",
-            0.5
-          );
+          {
+            const pending = accumulateSurface(surface, "body", postingBodySource(kind), 1);
+            if (pending) await pending;
+          }
+          {
+            const pending = accumulateLemma(
+              compiled.byLemma.get(form),
+              "body",
+              kind === "configured-prefix-recall" ? "configured-prefix-recall" : "morphology",
+              0.5
+            );
+            if (pending) await pending;
+          }
           if (formKindAllowsPrefix(kind, query, form) && !isAllDigitToken(form) && form.length >= 3) {
             let i = lowerBoundTerm(compiled.sortedTerms, form);
             while (i < compiled.sortedTerms.length) {
               const term = compiled.sortedTerms[i++];
               if (!term.startsWith(form)) break;
               if (term === form || isAllDigitToken(term)) continue;
-              accumulateSurface(compiled.bySurface.get(term), "body", "indexed-lexical", 0.4);
+              const pending = accumulateSurface(compiled.bySurface.get(term), "body", "indexed-lexical", 0.4);
+              if (pending) await pending;
             }
           }
         }
       }
     }
 
-    last.distinctDocumentsExamined = byPos.size;
-    last.candidateDocumentsMaterialized = byPos.size;
+    stats.distinctDocumentsExamined = byPos.size;
+    stats.candidateDocumentsMaterialized = byPos.size;
     const hits: IndexedHit[] = [];
     for (const [pos, hit] of byPos) {
-      if ((step++ & 7) === 0) throwIfAborted(signal);
+      if ((step++ & 7) === 0) {
+        const pending = checkpoint(coop, signal, 8);
+        if (pending) await pending;
+      }
       const sources = retrievalSourcesForDocument(query, docs[pos]);
-      last.provenanceDocumentsScanned += 1;
+      stats.provenanceDocumentsScanned += 1;
       if (!sources.length) continue;
       if (evidenceWriter) evidenceWriter.admitCandidate(pos);
       hit.retrievalSources = sources;
       hits.push(hit);
     }
     hits.sort((a, b) => a.pos - b.pos);
-    last.exactMatches = hits.length;
-    if (last.stage3A !== "applied") {
-      last.postingEntriesDecoded = last.postingEntriesVisited;
+    stats.exactMatches = hits.length;
+    if (stats.stage3A !== "applied") {
+      stats.postingEntriesDecoded = stats.postingEntriesVisited;
     }
-    return hits.map((hit) => ({
+    const mapped = hits.map((hit) => ({
       document: docs[hit.pos],
       retrievalSources: hit.retrievalSources,
       retrievalScore: hit.retrievalScore,
       documentOrdinal: hit.pos,
     }));
+    last = stats;
+    if (box) {
+      box.result = mapped;
+      box.settled = true;
+    }
+    return mapped;
+    } catch (error) {
+      if (box) {
+        box.error = error;
+        box.settled = true;
+      }
+      throw error;
+    }
+  }
+
+  function finishSyncRetrieval(pending: Promise<unknown>, box: { settled: boolean; result?: any; error?: unknown }) {
+    pending.catch(() => {});
+    if (!box.settled) throw new Error("synchronous compiled retrieval suspended");
+    if (box.error) throw box.error;
+    return box.result;
   }
 
   const retriever: Retriever = {
@@ -1085,13 +1203,12 @@ export function createCompiledLexicalRetriever(): Retriever {
     exactSignatureSelection: true,
     prepare,
     retrieve(query: AnalyzedQuery, index: SearchIndex, opts: RetrieveOptions = {}) {
-      return retrieveInternal(query, index, opts, null);
+      const box = { settled: false, result: undefined as any, error: undefined as unknown };
+      return finishSyncRetrieval(retrieveInternal(query, index, opts, null, null, box), box);
     },
     async retrieveAsync(query: AnalyzedQuery, index: SearchIndex, opts: RetrieveOptions = {}) {
-      throwIfAborted(opts.signal);
-      await Promise.resolve();
-      throwIfAborted(opts.signal);
-      return retrieveInternal(query, index, opts, null);
+      const coop = readCooperation(opts) ?? createCooperation();
+      return retrieveInternal(query, index, opts, null, coop, null);
     },
     stats() {
       return {
@@ -1112,13 +1229,12 @@ export function createCompiledLexicalRetriever(): Retriever {
   };
   rankingEvidenceCapabilities.set(retriever, {
     retrieve(query, index, options, writer) {
-      return retrieveInternal(query, index, options, writer);
+      const box = { settled: false, result: undefined as any, error: undefined as unknown };
+      return finishSyncRetrieval(retrieveInternal(query, index, options, writer, null, box), box);
     },
     async retrieveAsync(query, index, options, writer) {
-      throwIfAborted(options.signal);
-      await Promise.resolve();
-      throwIfAborted(options.signal);
-      return retrieveInternal(query, index, options, writer);
+      const coop = readCooperation(options) ?? createCooperation();
+      return retrieveInternal(query, index, options, writer, coop, null);
     },
   });
   return retriever;

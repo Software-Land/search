@@ -30,7 +30,8 @@ import {
 } from "./ranking/rank.js";
 import { compileRankingEvidencePlan } from "./ranking/evidence/rankingEvidencePlan.js";
 import { RankingEvidenceSessionPool, rankingEvidenceStaticFor } from "./ranking/evidence/rankingEvidenceState.js";
-import { finalizeRankingEvidence } from "./ranking/evidence/rankingEvidenceFinalize.js";
+import { finalizeRankingEvidence, finalizeRankingEvidenceAsync } from "./ranking/evidence/rankingEvidenceFinalize.js";
+import { COOPERATION, checkpoint, createCooperation, enterCooperationStage, isThenable, takeBeforePackedPublish, type Cooperation } from "./execution/cooperate.js";
 import { createPackedDirectHits, isPackedDirectFeatures } from "./ranking/evidence/rankingEvidencePacked.js";
 import { packedSearchFallbackReason } from "./ranking/evidence/rankingEvidenceSearch.js";
 import { assembleDetailedResult, withPackedSearchMeta } from "./results/resultAssembly.js";
@@ -423,21 +424,53 @@ export class SearchEngine {
     retrieved: RetrievalHit[],
     query: AnalyzedQuery,
     strategy: string,
+    options: {
+      signal?: AbortSignal;
+      sourcePolicy?: SourcePolicy;
+      exactDiagnostics?: boolean;
+      pruningMode?: "auto" | "exhaustive";
+      requiredDepth?: number;
+      cooperation?: Cooperation | null;
+    } = {}
+  ) {
+    const featureBox: {
+      settled: boolean;
+      value?: Awaited<ReturnType<SearchEngine["_expandAndFeatureAsync"]>>;
+      error?: unknown;
+    } = { settled: false };
+    const featurePending = this._expandAndFeatureAsync(retrieved, query, strategy, options, featureBox);
+    featurePending.catch(() => {});
+    if (!featureBox.settled || !featureBox.value) {
+      throw featureBox.error ?? new Error("synchronous feature expansion suspended");
+    }
+    if (featureBox.error) throw featureBox.error;
+    return featureBox.value;
+  }
+
+  async _expandAndFeatureAsync(
+    retrieved: RetrievalHit[],
+    query: AnalyzedQuery,
+    strategy: string,
     {
       signal,
       sourcePolicy,
       exactDiagnostics = true,
       pruningMode = "auto",
       requiredDepth = 0,
+      cooperation = null,
     }: {
       signal?: AbortSignal;
       sourcePolicy?: SourcePolicy;
       exactDiagnostics?: boolean;
       pruningMode?: "auto" | "exhaustive";
       requiredDepth?: number;
-    } = {}
+      cooperation?: Cooperation | null;
+    } = {},
+    box: { settled: boolean; value?: any; error?: unknown } | null = null
   ) {
+    try {
     throwIfAborted(signal);
+    enterCooperationStage(cooperation, "features");
     const weight = this.retrievalScoreWeight;
     let maxRet = 0;
     if (weight) {
@@ -446,19 +479,38 @@ export class SearchEngine {
     const retrievalScoreOf = (hit: RetrievalHit) => (weight && maxRet ? weight * ((hit.retrievalScore || 0) / maxRet) : 0);
     const tFeat = performance.now();
     let featureVectorsConstructed = 0;
-    const featureHits = (hits: RetrievalHit[]) =>
-      hits.map((hit, i) => {
-        if (i % 8 === 0) throwIfAborted(signal);
-        featureVectorsConstructed += 1;
-        return {
-          ...hit,
-          features: extractFeatures(query, hit.document, {
-            relationship: hit.relationship || null,
-            retrievalScore: retrievalScoreOf(hit),
-            retrievalSources: hit.retrievalSources,
-          }),
-        };
-      });
+    const toFeatured = (hit: RetrievalHit): FeaturedHit => ({
+      ...hit,
+      features: extractFeatures(query, hit.document, {
+        relationship: hit.relationship || null,
+        retrievalScore: retrievalScoreOf(hit),
+        retrievalSources: hit.retrievalSources,
+      }),
+    });
+    const featureHits = (hits: RetrievalHit[]): FeaturedHit[] | Promise<FeaturedHit[]> => {
+      if (!cooperation) {
+        return hits.map((hit, i) => {
+          if (i % 8 === 0) throwIfAborted(signal);
+          featureVectorsConstructed += 1;
+          return toFeatured(hit);
+        });
+      }
+      const out: FeaturedHit[] = [];
+      let i = 0;
+      const run = (): FeaturedHit[] | Promise<FeaturedHit[]> => {
+        while (i < hits.length) {
+          if (i % 8 === 0) {
+            const pending = checkpoint(cooperation, signal, 8);
+            if (pending) return pending.then(run);
+          }
+          featureVectorsConstructed += 1;
+          out.push(toFeatured(hits[i]));
+          i += 1;
+        }
+        return out;
+      };
+      return run();
+    };
     const mergeFeatured = (...groups: FeaturedHit[][]) => {
       const byId = new Map<string, FeaturedHit>();
       for (const group of groups) {
@@ -490,7 +542,8 @@ export class SearchEngine {
     });
 
     if (fallbackReason || !compiledRuntime) {
-      featured = featureHits(retrieved);
+      const fallbackFeatured = featureHits(retrieved);
+      featured = isThenable(fallbackFeatured) ? await fallbackFeatured : fallbackFeatured;
       pruningStats = exhaustiveFeaturePruningStats(
         retrieved.length,
         fallbackReason || "missing-pruning-extension"
@@ -503,13 +556,15 @@ export class SearchEngine {
         extension: compiledRuntime.extension,
       });
       if (!plan.bounded.length) {
-        featured = featureHits(retrieved);
+        const directFeatured = featureHits(retrieved);
+        featured = isThenable(directFeatured) ? await directFeatured : directFeatured;
         pruningStats = exhaustiveFeaturePruningStats(
           retrieved.length,
           plan.stats.pruningFallbackReason || "no-provable-candidates"
         );
       } else {
-        const unboundedFeatured = featureHits(plan.unbounded);
+        let unboundedFeatured = featureHits(plan.unbounded);
+        if (isThenable(unboundedFeatured)) unboundedFeatured = await unboundedFeatured;
         const constraints = constraintsForStrategy(strategy);
         const primaries =
           strategy === "none"
@@ -523,14 +578,16 @@ export class SearchEngine {
           this.relationships.has(primary.document.id)
         );
         if (activeRelationships) {
-          const boundedFeatured = featureHits(plan.bounded.map((candidate) => candidate.hit));
+          let boundedFeatured = featureHits(plan.bounded.map((candidate) => candidate.hit));
+          if (isThenable(boundedFeatured)) boundedFeatured = await boundedFeatured;
           featured = mergeFeatured(unboundedFeatured, boundedFeatured);
           pruningStats = exhaustiveFeaturePruningStats(
             retrieved.length,
             "active-relationships"
           );
         } else {
-          const retainedFeatured = featureHits(plan.retainedBounded);
+          let retainedFeatured = featureHits(plan.retainedBounded);
+          if (isThenable(retainedFeatured)) retainedFeatured = await retainedFeatured;
           featured = mergeFeatured(unboundedFeatured, retainedFeatured);
           pruningStats = plan.stats;
         }
@@ -538,20 +595,38 @@ export class SearchEngine {
     }
     const featureMs = performance.now() - tFeat;
 
+    const finish = (value: {
+      featured: FeaturedHit[];
+      applied: { featured: FeaturedHit[]; relatedHits: RetrievalHit[]; primaries: FeaturedHit[] };
+      featureMs: number;
+      relationshipMs: number;
+      pruningStats: typeof pruningStats;
+      featureVectorsConstructed: number;
+    }) => {
+      if (box) {
+        box.value = value;
+        box.settled = true;
+      }
+      return value;
+    };
+
     if (strategy === "none") {
-      return {
+      return finish({
         featured,
         applied: { featured, relatedHits: [], primaries: [] },
         featureMs,
         relationshipMs: 0,
         pruningStats,
         featureVectorsConstructed,
-      };
+      });
     }
 
-    throwIfAborted(signal);
+    {
+      const pending = checkpoint(cooperation, signal, 0);
+      if (pending) await pending;
+    }
     const tRel = performance.now();
-    const applied = applyRelationshipExpansion({
+    let applied = applyRelationshipExpansion({
       featured,
       query,
       extractFeatures,
@@ -561,10 +636,13 @@ export class SearchEngine {
       sourcePolicy,
       signal,
       constraints: constraintsForStrategy(strategy),
+      cooperation,
     });
+    if (isThenable(applied)) applied = await applied;
     featured = applied.featured;
     for (const hit of applied.relatedHits) {
-      throwIfAborted(signal);
+      const pending = checkpoint(cooperation, signal, 1);
+      if (pending) await pending;
       const features = extractFeatures(query, hit.document, {
         relationship: hit.relationship,
         retrievalSources: hit.retrievalSources,
@@ -576,7 +654,14 @@ export class SearchEngine {
       });
     }
     const relationshipMs = performance.now() - tRel;
-    return { featured, applied, featureMs, relationshipMs, pruningStats, featureVectorsConstructed };
+    return finish({ featured, applied, featureMs, relationshipMs, pruningStats, featureVectorsConstructed });
+    } catch (error) {
+      if (box) {
+        box.error = error;
+        box.settled = true;
+      }
+      throw error;
+    }
   }
 
   _expandPacked(
@@ -586,9 +671,11 @@ export class SearchEngine {
     {
       signal,
       sourcePolicy,
+      cooperation = null,
     }: {
       signal?: AbortSignal;
       sourcePolicy?: SourcePolicy;
+      cooperation?: Cooperation | null;
     } = {}
   ) {
     throwIfAborted(signal);
@@ -618,7 +705,7 @@ export class SearchEngine {
       directFeatureVectorsConstructed += 1;
       return extractFeatures(overlayQuery, document, extra);
     };
-    const applied = applyRelationshipExpansion({
+    const appliedValue = applyRelationshipExpansion({
       featured,
       query,
       extractFeatures: extractDirectOverlay,
@@ -628,30 +715,46 @@ export class SearchEngine {
       sourcePolicy,
       signal,
       constraints: constraintsForStrategy(strategy),
+      cooperation,
     });
-    featured = applied.featured;
-    for (const hit of applied.relatedHits) {
-      throwIfAborted(signal);
-      relationshipOnlyFeatureVectorsConstructed += 1;
-      const features = extractFeatures(query, hit.document, {
-        relationship: hit.relationship,
-        retrievalSources: hit.retrievalSources,
-      });
-      featured.push({
-        ...hit,
-        features,
-        score: scoreFeatures(features),
-      });
-    }
-    const relationshipMs = performance.now() - tRel;
-    return {
-      featured,
-      applied,
-      featureMs,
-      relationshipMs,
-      directFeatureVectorsConstructed,
-      relationshipOnlyFeatureVectorsConstructed,
+    const finishApplied = (applied: Exclude<typeof appliedValue, Promise<unknown>>) => {
+      featured = applied.featured;
+      let i = 0;
+      const hits = applied.relatedHits;
+      const run = (): ReturnType<typeof finish> | Promise<ReturnType<typeof finish>> => {
+        while (i < hits.length) {
+          const pending = checkpoint(cooperation, signal, 1);
+          if (pending) return pending.then(run);
+          const hit = hits[i]!;
+          i += 1;
+          relationshipOnlyFeatureVectorsConstructed += 1;
+          const features = extractFeatures(query, hit.document, {
+            relationship: hit.relationship,
+            retrievalSources: hit.retrievalSources,
+          });
+          featured.push({
+            ...hit,
+            features,
+            score: scoreFeatures(features),
+          });
+        }
+        return finish(applied);
+      };
+      return run();
     };
+    const finish = (applied: Exclude<typeof appliedValue, Promise<unknown>>) => {
+      const relationshipMs = performance.now() - tRel;
+      return {
+        featured,
+        applied,
+        featureMs,
+        relationshipMs,
+        directFeatureVectorsConstructed,
+        relationshipOnlyFeatureVectorsConstructed,
+      };
+    };
+    if (isThenable(appliedValue)) return appliedValue.then(finishApplied);
+    return finishApplied(appliedValue);
   }
 
   _finishPacked(
@@ -680,10 +783,12 @@ export class SearchEngine {
       signal,
       limit,
       relatedLimit,
+      cooperation = null,
     }: {
       signal?: AbortSignal;
       limit: number;
       relatedLimit: number;
+      cooperation?: Cooperation | null;
     }
   ) {
     const seen = new Set(featured.map((hit) => hit.document.id));
@@ -710,41 +815,66 @@ export class SearchEngine {
     }
 
     const constraints = constraintsForStrategy(strategy);
-    let representativeStats: Record<string, unknown> | null = null;
     const fullRelatedCount = featured.filter((hit) => hit.features.relevanceKind === "related").length;
-    const tSelect = performance.now();
-    const publicDepth = Math.max(0, limit, relatedLimit);
-    if (this.retriever.exactSignatureSelection) {
-      let representativeDepth = publicDepth;
-      const hasRelated = fullRelatedCount > 0;
-      if (publicDepth > 0 && ((relatedLimit > 0 && hasRelated) || (strategy === "separate" && limit > 0 && hasRelated))) {
-        const planningRanked = rankCandidates(featured, { constraints, signal });
-        representativeDepth = Math.max(
-          representativeDepth,
-          representativeDepthForOutput(planningRanked, strategy, { limit, relatedLimit, explain: false })
-        );
+    const selectAndRank = (planningRanked: RankedHit[] | null, ranked: RankedHit[], tSelect: number) => {
+      let representativeStats: Record<string, unknown> | null = null;
+      if (this.retriever.exactSignatureSelection) {
+        let representativeDepth = Math.max(0, limit, relatedLimit);
+        if (planningRanked) {
+          representativeDepth = Math.max(
+            representativeDepth,
+            representativeDepthForOutput(planningRanked, strategy, { limit, relatedLimit, explain: false })
+          );
+        }
+        const selected = selectTopPerBuiltinSignature(featured, representativeDepth, constraints);
+        featured = selected.candidates;
+        representativeStats = {
+          ...selected.stats,
+          outputDepth: representativeDepth,
+          plannedFullRanking: false,
+        };
       }
-      const selected = selectTopPerBuiltinSignature(featured, representativeDepth, constraints);
-      featured = selected.candidates;
-      representativeStats = {
-        ...selected.stats,
-        outputDepth: representativeDepth,
-        plannedFullRanking: false,
+      const selectionMs = performance.now() - tSelect;
+      const tRank = performance.now();
+      const rankMs = () => performance.now() - tRank;
+      return {
+        featured,
+        ranked,
+        representativeStats,
+        fullRelatedCount,
+        selectionMs,
+        rankMs: rankMs(),
+        extraDirectFeatureVectors,
       };
-    }
-    const selectionMs = performance.now() - tSelect;
-    const tRank = performance.now();
-    const ranked = rankCandidates(featured, { constraints, signal });
-    const rankMs = performance.now() - tRank;
-    return {
-      featured,
-      ranked,
-      representativeStats,
-      fullRelatedCount,
-      selectionMs,
-      rankMs,
-      extraDirectFeatureVectors,
     };
+    const needsPlanningRank = () => {
+      if (!this.retriever.exactSignatureSelection) return false;
+      const publicDepth = Math.max(0, limit, relatedLimit);
+      const hasRelated = fullRelatedCount > 0;
+      return publicDepth > 0 && ((relatedLimit > 0 && hasRelated) || (strategy === "separate" && limit > 0 && hasRelated));
+    };
+    if (!cooperation) {
+      const tSelect = performance.now();
+      const planningRanked = needsPlanningRank() ? rankCandidates(featured, { constraints, signal }) : null;
+      const selected = selectAndRank(planningRanked, [] as RankedHit[], tSelect);
+      const tRank = performance.now();
+      const ranked = rankCandidates(selected.featured, { constraints, signal });
+      selected.ranked = ranked;
+      selected.rankMs = performance.now() - tRank;
+      return selected;
+    }
+    return (async () => {
+      const tSelect = performance.now();
+      const planningRanked = needsPlanningRank()
+        ? await rankCandidatesAsync(featured, { constraints, signal, cooperation })
+        : null;
+      const selected = selectAndRank(planningRanked, [] as RankedHit[], tSelect);
+      const tRank = performance.now();
+      const ranked = await rankCandidatesAsync(selected.featured, { constraints, signal, cooperation });
+      selected.ranked = ranked;
+      selected.rankMs = performance.now() - tRank;
+      return selected;
+    })();
   }
 
   _searchPackedSync(
@@ -787,15 +917,19 @@ export class SearchEngine {
         sourcePolicy = "top1-strong",
         signal,
       } = opts;
-      const expanded = this._expandPacked(packedDirects, query, strategy, {
+      const expandedValue = this._expandPacked(packedDirects, query, strategy, {
         signal,
         sourcePolicy,
       });
-      const rankedPack = this._rankPackedFeatured(expanded.featured, query, plan, strategy, {
+      if (isThenable(expandedValue)) throw new Error("synchronous packed expansion suspended");
+      const expanded = expandedValue;
+      const rankedPackValue = this._rankPackedFeatured(expanded.featured, query, plan, strategy, {
         signal,
         limit,
         relatedLimit,
       });
+      if (isThenable(rankedPackValue)) throw new Error("synchronous packed ranking suspended");
+      const rankedPack = rankedPackValue;
       const finished = this._finishPacked(rankedPack.ranked, query, strategy, {
         limit,
         relatedLimit,
@@ -850,7 +984,8 @@ export class SearchEngine {
       skipDuplicatePostingLists?: boolean;
       exactBlockSkip: Exclude<RetrieveOptions["exactBlockSkip"], undefined>;
     },
-    t0: number
+    t0: number,
+    cooperation: Cooperation
   ) {
     const compiled = compileRankingEvidencePlan(rankingEvidenceStaticFor(requireIndexed(this)), query);
     if (!compiled.eligible || !compiled.plan) return null;
@@ -869,11 +1004,12 @@ export class SearchEngine {
         session.abort();
         return null;
       }
-      throwIfAborted(retrieveOpts.signal);
-      await Promise.resolve();
-      throwIfAborted(retrieveOpts.signal);
+      {
+        const pending = checkpoint(cooperation, retrieveOpts.signal, 0);
+        if (pending) await pending;
+      }
       const tFeat = performance.now();
-      const finalized = finalizeRankingEvidence(session, retrieved, plan);
+      const finalized = await finalizeRankingEvidenceAsync(session, retrieved, plan, retrieveOpts.signal, cooperation);
       const packedDirects = createPackedDirectHits(retrieved, finalized);
       const packedMs = performance.now() - tFeat;
       const {
@@ -882,18 +1018,26 @@ export class SearchEngine {
         sourcePolicy = "top1-strong",
         signal,
       } = opts;
-      const expanded = this._expandPacked(packedDirects, query, strategy, {
+      const expandedValue = this._expandPacked(packedDirects, query, strategy, {
         signal,
         sourcePolicy,
+        cooperation,
       });
-      throwIfAborted(signal);
-      await Promise.resolve();
-      throwIfAborted(signal);
-      const rankedPack = this._rankPackedFeatured(expanded.featured, query, plan, strategy, {
+      const expanded = isThenable(expandedValue) ? await expandedValue : expandedValue;
+      {
+        const pending = checkpoint(cooperation, signal, 0);
+        if (pending) await pending;
+      }
+      const rankedPackValue = this._rankPackedFeatured(expanded.featured, query, plan, strategy, {
         signal,
         limit,
         relatedLimit,
+        cooperation,
       });
+      const rankedPack = isThenable(rankedPackValue) ? await rankedPackValue : rankedPackValue;
+      const publishHold = takeBeforePackedPublish();
+      if (publishHold) await publishHold;
+      throwIfAborted(signal);
       const finished = this._finishPacked(rankedPack.ranked, query, strategy, {
         limit,
         relatedLimit,
@@ -1116,6 +1260,8 @@ export class SearchEngine {
     throwIfAborted(signal);
     await Promise.resolve();
     throwIfAborted(signal);
+    const cooperation = createCooperation();
+    enterCooperationStage(cooperation, "retrieve");
     const strategy =
       relationshipStrategy == null
         ? this.relationshipStrategy
@@ -1124,9 +1270,10 @@ export class SearchEngine {
     const query = this._prepareQuery(rawQuery, { signal });
     const index = requireIndexed(this);
     const plan = buildQueryPlan(query, index);
-    throwIfAborted(signal);
-    await Promise.resolve();
-    throwIfAborted(signal);
+    {
+      const pending = checkpoint(cooperation, signal, 0);
+      if (pending) await pending;
+    }
 
     const publicDepth = Math.max(0, limit, relatedLimit);
     const initialRepresentativeDepth =
@@ -1149,6 +1296,7 @@ export class SearchEngine {
           : false
       ) as Exclude<RetrieveOptions["exactBlockSkip"], undefined>,
     };
+    (retrieveOpts as { [COOPERATION]?: Cooperation })[COOPERATION] = cooperation;
     if (
       !packedSearchFallbackReason({
         exactDiagnostics,
@@ -1161,7 +1309,7 @@ export class SearchEngine {
         index,
       })
     ) {
-      const packed = await this._searchPackedAsync(query, plan, opts, strategy, retrieveOpts, t0);
+      const packed = await this._searchPackedAsync(query, plan, opts, strategy, retrieveOpts, t0, cooperation);
       if (packed) return packed;
     }
     const tRetrieve = performance.now();
@@ -1172,16 +1320,18 @@ export class SearchEngine {
     throwIfAborted(signal);
     const retrieveMs = performance.now() - tRetrieve;
 
-    throwIfAborted(signal);
-    await Promise.resolve();
-    throwIfAborted(signal);
+    {
+      const pending = checkpoint(cooperation, signal, 0);
+      if (pending) await pending;
+    }
 
-    const expanded = this._expandAndFeature(retrieved, query, strategy, {
+    const expanded = await this._expandAndFeatureAsync(retrieved, query, strategy, {
       signal,
       sourcePolicy,
       exactDiagnostics,
       pruningMode,
       requiredDepth: initialRepresentativeDepth,
+      cooperation,
     });
     let featured = unionExecutedClauseHits(expanded.featured, plan, query);
     const { applied, featureMs, relationshipMs, pruningStats, featureVectorsConstructed } = expanded;
@@ -1195,9 +1345,10 @@ export class SearchEngine {
       ).featured;
     }
 
-    throwIfAborted(signal);
-    await Promise.resolve();
-    throwIfAborted(signal);
+    {
+      const pending = checkpoint(cooperation, signal, 0);
+      if (pending) await pending;
+    }
 
     const constraints = constraintsForStrategy(strategy);
     let representativeStats: Record<string, unknown> | null = null;
@@ -1206,7 +1357,7 @@ export class SearchEngine {
     const tSelect = performance.now();
     if (this.retriever.exactSignatureSelection) {
       if (exactDiagnostics) {
-        planningRanked = await rankCandidatesAsync(featured, { constraints, signal });
+        planningRanked = await rankCandidatesAsync(featured, { constraints, signal, cooperation });
       }
       let representativeDepth = publicDepth + (explain && publicDepth > 0 ? 1 : 0);
       const hasRelated = fullRelatedCount > 0;
@@ -1214,7 +1365,7 @@ export class SearchEngine {
         publicDepth > 0 &&
         (explain || (relatedLimit > 0 && hasRelated) || (strategy === "separate" && limit > 0 && hasRelated))
       ) {
-        planningRanked ||= await rankCandidatesAsync(featured, { constraints, signal });
+        planningRanked ||= await rankCandidatesAsync(featured, { constraints, signal, cooperation });
         representativeDepth = Math.max(
           representativeDepth,
           representativeDepthForOutput(planningRanked, strategy, { limit, relatedLimit, explain })
@@ -1231,7 +1382,7 @@ export class SearchEngine {
     const selectionMs = performance.now() - tSelect;
 
     const tRank = performance.now();
-    const ranked = await rankCandidatesAsync(featured, { constraints, signal });
+    const ranked = await rankCandidatesAsync(featured, { constraints, signal, cooperation });
     if (planningRanked?.[0]?.constraintMeta) {
       for (const hit of ranked) hit.constraintMeta = planningRanked[0].constraintMeta;
     }

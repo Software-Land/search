@@ -17,6 +17,7 @@
  */
 
 import { throwIfAborted } from "../cancel.js";
+import { checkpoint, type Cooperation } from "../execution/cooperate.js";
 import {
   FULL_QUERY_COVERAGE,
   TWO_THIRDS_QUERY_COVERAGE,
@@ -908,22 +909,31 @@ export function buildConstraintGraph(
 export async function buildConstraintGraphAsync(
   candidates: FeaturedHit[],
   defs: ConstraintDef[] = DEFAULT_CONSTRAINTS,
-  { signal }: { signal?: AbortSignal } = {}
+  { signal, cooperation = null }: { signal?: AbortSignal; cooperation?: Cooperation | null } = {}
 ): Promise<ConstraintGraph> {
   const n = candidates.length;
   const edges = new PackedConstraintEdges();
   const pairReports: Array<ConstraintCompareResult & { i: number; j: number }> = [];
   let k = 0;
-  for (let i = 0; i < n; i++) {
-    for (let j = i + 1; j < n; j++) {
-      if ((k++ & 63) === 0) {
-        throwIfAborted(signal);
-        await Promise.resolve();
-        throwIfAborted(signal);
+  let i = 0;
+  let j = 1;
+  const run = (): void | Promise<void> => {
+    while (i < n) {
+      while (j < n) {
+        if ((k & 63) === 0) {
+          const pending = checkpoint(cooperation, signal, 64);
+          if (pending) return pending.then(run);
+        }
+        k += 1;
+        recordConstraintPair(i, j, candidates, defs, edges, pairReports);
+        j += 1;
       }
-      recordConstraintPair(i, j, candidates, defs, edges, pairReports);
+      i += 1;
+      j = i + 1;
     }
-  }
+  };
+  const pending = run();
+  if (pending) await pending;
   return { n, edges, pairReports };
 }
 

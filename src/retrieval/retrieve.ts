@@ -9,6 +9,7 @@ import {
   hasIndependentTitleForm,
 } from "../text/versionForms.js";
 import { throwIfAborted } from "../cancel.js";
+import { checkpoint, createCooperation, readCooperation } from "../execution/cooperate.js";
 import {
   asCompactStore,
   compactAdjacentTokens,
@@ -930,14 +931,15 @@ export function retrieveCandidates(query: AnalyzedQuery, index: SearchIndex, { s
   return [...byId.values()];
 }
 
-export async function retrieveCandidatesAsync(query: AnalyzedQuery, index: SearchIndex, { signal }: RetrieveOptions = {}): Promise<RetrievalHit[]> {
+export async function retrieveCandidatesAsync(query: AnalyzedQuery, index: SearchIndex, options: RetrieveOptions = {}): Promise<RetrievalHit[]> {
+  const { signal } = options;
+  const coop = readCooperation(options) ?? createCooperation();
   const { byId, add } = createHitBag();
   const docs = index.documents || [];
   for (let i = 0; i < docs.length; i++) {
     if (i % 8 === 0) {
-      throwIfAborted(signal);
-      await Promise.resolve();
-      throwIfAborted(signal);
+      const pending = checkpoint(coop, signal, 8);
+      if (pending) await pending;
     }
     scanDocument(query, docs[i], add);
   }

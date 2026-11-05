@@ -1,8 +1,11 @@
 import { morphology, SearchEngine, isAbortError } from "../dist/index.js";
+import { setBeforePackedPublish, setCooperationProbe } from "../dist/execution/cooperate.js";
 import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { retrieveCandidates } from "../dist/retrieval/retrieve.js";
+import { DEFAULT_CONSTRAINTS } from "../dist/ranking/constraints.js";
 import { rankCandidates } from "../dist/ranking/rank.js";
+import { rankSparse, rankSparseAsync } from "../dist/ranking/rankSparse.js";
 import { buildIndex } from "../dist/indexing/indexDocuments.js";
 import { leftoverLooksLikeJunk } from "../dist/query/analyzeRepair.js";
 import {
@@ -509,5 +512,294 @@ describe("worker adapter", () => {
     client.terminate();
     await sleep(40);
     expect(published).toEqual([]);
+  });
+});
+
+function taskTest(name, fn) {
+  test(name, fn, 60_000);
+}
+
+describe("in-flight task cancellation", () => {
+  afterEach(() => {
+    setCooperationProbe(null);
+    setBeforePackedPublish(null);
+  });
+
+  const schemaOnly = {
+    title: { type: "text", role: "title" },
+    body: { type: "text", role: "body" },
+  };
+  const taskPlugins = [morphology()];
+  const packedDocs = Array.from({ length: 4000 }, (_, i) => ({
+    id: `d${i}`,
+    title: `Note ${i}`,
+    body: `secure network policy ${i} secure network controls`,
+  }));
+  packedDocs.push({
+    id: "only-zephyr",
+    title: "Zephyr Beacon",
+    body: "unique zephyrbeacon marker",
+  });
+
+  async function packedEngine() {
+    const engine = SearchEngine.create({ schema: schemaOnly, plugins: taskPlugins });
+    await engine.index(packedDocs);
+    return engine;
+  }
+
+  function idsOf(results) {
+    return results.map((row) => row.id);
+  }
+
+  taskTest("packed async search yields during the work and matches synchronous results", async () => {
+    const engine = await packedEngine();
+    const seen = [];
+    setCooperationProbe((info) => seen.push(info.completedUnits));
+    const asyncResults = await engine.searchAsync("secure network");
+    const asyncMeta = engine.lastSearchMeta;
+    const syncResults = engine.search("secure network");
+    expect(seen.length).toBeGreaterThan(1);
+    expect(seen[0]).toBeGreaterThan(0);
+    expect(seen[seen.length - 1]).toBeGreaterThan(512);
+    expect(idsOf(asyncResults)).toEqual(idsOf(syncResults));
+    expect(asyncMeta.rankingEvidenceFallbackReason).toBeNull();
+    expect(asyncMeta.retrievalStats.kind).toBe("compiled-indexed");
+    expect(asyncResults.length).toBeGreaterThan(0);
+  });
+
+  taskTest("a timer aborts a packed search after substantial work and before it finishes", async () => {
+    const engine = await packedEngine();
+    const full = [];
+    setCooperationProbe((info) => full.push(info.completedUnits));
+    await engine.searchAsync("secure network");
+    const good = engine.lastSearchMeta;
+    setCooperationProbe(null);
+
+    const seen = [];
+    setCooperationProbe((info) => seen.push(info.completedUnits));
+    const ac = new AbortController();
+    setTimeout(() => ac.abort(), 0);
+    const pending = engine.searchAsync("secure network", { signal: ac.signal });
+    await abortErrorGuardAsync(() => pending);
+    expect(ac.signal.aborted).toBe(true);
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen[0]).toBeGreaterThan(0);
+    expect(seen[seen.length - 1]).toBeLessThan(full[full.length - 1]);
+    expect(full[full.length - 1]).toBeGreaterThan(512);
+    expect(engine.lastSearchMeta).toBe(good);
+
+    const again = await engine.searchAsync("zephyrbeacon");
+    const fresh = SearchEngine.create({ schema: schemaOnly, plugins: taskPlugins });
+    await fresh.index(packedDocs);
+    expect(idsOf(again)).toEqual(idsOf(fresh.search("zephyrbeacon")));
+    expect(again.map((row) => row.id)).toEqual(["only-zephyr"]);
+  });
+
+  taskTest("an abort during ranking-evidence finalization rejects before that stage finishes", async () => {
+    const engine = await packedEngine();
+    let fullStage = 0;
+    setCooperationProbe((info) => {
+      if (info.stage === "finalize") fullStage = info.stageUnits;
+    });
+    const finished = await engine.searchAsync("secure network");
+    const good = engine.lastSearchMeta;
+    expect(finished.length).toBeGreaterThan(0);
+    expect(fullStage).toBeGreaterThan(200);
+    setCooperationProbe(null);
+
+    const ac = new AbortController();
+    let abortedAt = 0;
+    setCooperationProbe((info) => {
+      if (abortedAt || info.stage !== "finalize" || info.stageUnits <= 200) return;
+      abortedAt = info.stageUnits;
+      setTimeout(() => ac.abort(), 0);
+    });
+    await abortErrorGuardAsync(() => engine.searchAsync("secure network", { signal: ac.signal }));
+    expect(abortedAt).toBeGreaterThan(200);
+    expect(abortedAt).toBeLessThan(fullStage);
+    expect(engine.lastSearchMeta).toBe(good);
+  });
+
+  taskTest("detailed async search enters the feature path and aborts in that work", async () => {
+    const engine = await packedEngine();
+    let fullStage = 0;
+    setCooperationProbe((info) => {
+      if (info.stage === "features") fullStage = info.stageUnits;
+    });
+    const detailed = await engine.searchDetailedAsync("secure network", { limit: 5 });
+    const asyncMeta = engine.lastSearchMeta;
+    expect(asyncMeta.featureVectorsConstructed).toBeGreaterThan(0);
+    expect(asyncMeta.rankingEvidenceFallbackReason).toBeUndefined();
+    expect(detailed.results.length).toBeGreaterThan(0);
+    expect(fullStage).toBeGreaterThan(200);
+    setCooperationProbe(null);
+
+    const ac = new AbortController();
+    let abortedAt = 0;
+    setCooperationProbe((info) => {
+      if (abortedAt || info.stage !== "features" || info.stageUnits <= 200) return;
+      abortedAt = info.stageUnits;
+      setTimeout(() => ac.abort(), 0);
+    });
+    await abortErrorGuardAsync(() =>
+      engine.searchDetailedAsync("secure network", { signal: ac.signal, limit: 5 })
+    );
+    expect(abortedAt).toBeGreaterThan(200);
+    expect(abortedAt).toBeLessThan(fullStage);
+    expect(engine.lastSearchMeta).toBe(asyncMeta);
+  });
+
+  taskTest("an abort across the packed publication boundary leaves the previous result in place", async () => {
+    const engine = await packedEngine();
+    const first = await engine.searchAsync("zephyrbeacon");
+    expect(first.map((row) => row.id)).toEqual(["only-zephyr"]);
+    const good = engine.lastSearchMeta;
+    expect(engine._rankingEvidencePool.memory().activeSessions).toBe(0);
+
+    let release;
+    let entered = false;
+    const hold = new Promise((resolve) => {
+      release = resolve;
+    });
+    setBeforePackedPublish(() => {
+      entered = true;
+      return hold;
+    });
+    const ac = new AbortController();
+    const pending = engine.searchAsync("secure network", { signal: ac.signal });
+    const deadline = Date.now() + 20000;
+    while (!entered) {
+      if (Date.now() > deadline) throw new Error("publication gate was not reached");
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    ac.abort();
+    release();
+    await abortErrorGuardAsync(() => pending);
+    expect(engine.lastSearchMeta).toBe(good);
+    expect(engine._rankingEvidencePool.memory().activeSessions).toBe(0);
+
+    const again = await engine.searchAsync("zephyrbeacon");
+    expect(again.map((row) => row.id)).toEqual(["only-zephyr"]);
+  });
+
+  taskTest("one-signature ranking yields and aborts before the candidate set is finished", async () => {
+    const features = { relevanceKind: "direct", directClass: "none", queryCoverage: 0 };
+    const many = Array.from({ length: 100000 }, (_, i) => ({
+      document: { id: `c${String(i).padStart(6, "0")}` },
+      features,
+      score: 100000 - i,
+    }));
+    const ac = new AbortController();
+    let abortedAt = 0;
+    let finished = false;
+    setCooperationProbe((info) => {
+      if (abortedAt || info.stage !== "rank" || info.stageUnits <= 0) return;
+      abortedAt = info.stageUnits;
+      setTimeout(() => ac.abort(), 0);
+    });
+    const pending = rankSparseAsync(many, DEFAULT_CONSTRAINTS, { signal: ac.signal }).then((ranked) => {
+      finished = true;
+      return ranked;
+    });
+    await abortErrorGuardAsync(() => pending);
+    expect(abortedAt).toBeGreaterThan(0);
+    expect(finished).toBe(false);
+
+    const small = Array.from({ length: 2000 }, (_, i) => ({
+      document: { id: `s${String(i).padStart(4, "0")}` },
+      features,
+      score: (i * 17) % 97,
+    }));
+    const syncRanked = rankSparse(small, DEFAULT_CONSTRAINTS);
+    const asyncRanked = await rankSparseAsync(small, DEFAULT_CONSTRAINTS);
+    expect(asyncRanked.map((row) => [row.document.id, row.score, row.rank, row.constraintVsNext.order])).toEqual(
+      syncRanked.map((row) => [row.document.id, row.score, row.rank, row.constraintVsNext.order])
+    );
+  });
+
+  taskTest("full-scan async search scans documents and aborts during that scan", async () => {
+    const docs = packedDocs.slice(0, 1200);
+    const engine = SearchEngine.create({
+      schema: schemaOnly,
+      plugins: taskPlugins,
+      retriever: "full-scan",
+    });
+    await engine.index(docs);
+    const seen = [];
+    setCooperationProbe((info) => seen.push(info.completedUnits));
+    const results = await engine.searchAsync("secure network");
+    expect(engine.lastSearchMeta.retrievalStats.kind).toBe("full-scan");
+    expect(seen.length).toBeGreaterThan(1);
+    expect(results.length).toBeGreaterThan(0);
+    const fullUnits = seen[seen.length - 1];
+    setCooperationProbe(null);
+
+    const ac = new AbortController();
+    setTimeout(() => ac.abort(), 0);
+    const aborted = [];
+    setCooperationProbe((info) => aborted.push(info.completedUnits));
+    await abortErrorGuardAsync(() => engine.searchAsync("secure network", { signal: ac.signal }));
+    expect(aborted[0]).toBeGreaterThan(200);
+    expect(aborted[aborted.length - 1]).toBeLessThan(fullUnits);
+  });
+
+  taskTest("adaptive search below the threshold uses the full-scan async branch", async () => {
+    const docs = packedDocs.slice(0, 800);
+    const engine = SearchEngine.create({
+      schema: schemaOnly,
+      plugins: taskPlugins,
+      retriever: "adaptive",
+    });
+    await engine.index(docs);
+    const seen = [];
+    setCooperationProbe((info) => seen.push(info.completedUnits));
+    await engine.searchAsync("secure network");
+    expect(engine.lastSearchMeta.retriever).toBe("adaptive");
+    expect(engine.lastSearchMeta.retrievalStats.active).toBe("full-scan");
+    expect(engine.lastSearchMeta.retrievalStats.kind).toBe("full-scan");
+    expect(engine.lastSearchMeta.featureVectorsConstructed).toBeGreaterThan(0);
+    expect(seen.length).toBeGreaterThan(1);
+    const fullUnits = seen[seen.length - 1];
+    setCooperationProbe(null);
+
+    const ac = new AbortController();
+    let abortedAt = 0;
+    setCooperationProbe((info) => {
+      if (!abortedAt && info.completedUnits > 200) {
+        abortedAt = info.completedUnits;
+        ac.abort();
+      }
+    });
+    await abortErrorGuardAsync(() => engine.searchAsync("secure network", { signal: ac.signal }));
+    expect(abortedAt).toBeGreaterThan(200);
+    expect(abortedAt).toBeLessThan(fullUnits);
+  });
+
+  taskTest("aborting one overlapping search leaves the other result and metadata intact", async () => {
+    const engine = await packedEngine();
+    await engine.searchAsync("zephyrbeacon");
+    const before = engine.lastSearchMeta;
+    const ac = new AbortController();
+    const cancelled = engine.searchAsync("secure network", { signal: ac.signal });
+    const kept = engine.searchAsync("zephyrbeacon");
+    setTimeout(() => ac.abort(), 0);
+    const [cancelledResult, keptResult] = await Promise.allSettled([cancelled, kept]);
+    expect(cancelledResult.status).toBe("rejected");
+    expect(isAbortError(cancelledResult.reason)).toBe(true);
+    expect(keptResult.status).toBe("fulfilled");
+    expect(idsOf(keptResult.value)).toEqual(["only-zephyr"]);
+    expect(engine.lastSearchMeta).not.toBe(before);
+    expect(engine.lastSearchMeta.query.raw).toBe("zephyrbeacon");
+    expect(idsOf(await engine.searchAsync("zephyrbeacon"))).toEqual(["only-zephyr"]);
+  });
+
+  taskTest("a pre-aborted async search rejects and preserves the previous metadata", async () => {
+    const engine = await packedEngine();
+    await engine.searchAsync("zephyrbeacon");
+    const good = engine.lastSearchMeta;
+    const ac = new AbortController();
+    ac.abort();
+    await abortErrorGuardAsync(() => engine.searchAsync("secure network", { signal: ac.signal }));
+    expect(engine.lastSearchMeta).toBe(good);
   });
 });

@@ -25,6 +25,9 @@ interface Performance {
 
 declare var performance: Performance;
 
+/** Task timer. Node 18+ and browsers. Not a Node or DOM import. */
+declare function setTimeout(handler: () => void, timeout: number): unknown;
+
 interface DOMException extends Error {
   readonly name: string;
   readonly message: string;

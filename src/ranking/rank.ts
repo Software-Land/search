@@ -21,6 +21,7 @@ import {
   DEFAULT_CONSTRAINTS,
 } from "./constraints.js";
 import { throwIfAborted } from "../cancel.js";
+import { createCooperation, type Cooperation } from "../execution/cooperate.js";
 import { BinaryMaxHeap } from "./rankHeap.js";
 import { constraintsAreBuiltin, rankSparse, rankSparseAsync, type RankerStats } from "./rankSparse.js";
 import { constraintSignature } from "./rankSignature.js";
@@ -214,7 +215,11 @@ export function rankCandidates(
     score: Number(scoreFeatures(c.features).toFixed(6)),
   }));
   if (constraintsAreBuiltin(constraints)) {
-    return rankSparse(decorated, constraints, { signal, onStats: (s) => (lastStats = s) });
+    const ranked = rankSparse(decorated, constraints, { signal, onStats: (s) => (lastStats = s), cooperation: null });
+    if (ranked && typeof (ranked as Promise<RankedHit[]>).then === "function") {
+      throw new Error("synchronous ranking suspended");
+    }
+    return ranked as RankedHit[];
   }
   const graph = buildConstraintGraph(decorated, constraints, { signal });
   recordPairwiseStats(decorated.length, graph.edges.length);
@@ -223,19 +228,22 @@ export function rankCandidates(
 
 export async function rankCandidatesAsync(
   candidates: FeaturedHit[],
-  { constraints = DEFAULT_CONSTRAINTS, signal }: { constraints?: ConstraintDef[]; signal?: AbortSignal } = {}
+  {
+    constraints = DEFAULT_CONSTRAINTS,
+    signal,
+    cooperation,
+  }: { constraints?: ConstraintDef[]; signal?: AbortSignal; cooperation?: Cooperation | null } = {}
 ): Promise<RankedHit[]> {
-  throwIfAborted(signal);
-  await Promise.resolve();
+  const coop = cooperation ?? createCooperation();
   throwIfAborted(signal);
   const decorated = candidates.map((c) => ({
     ...c,
     score: Number(scoreFeatures(c.features).toFixed(6)),
   }));
   if (constraintsAreBuiltin(constraints)) {
-    return rankSparseAsync(decorated, constraints, { signal, onStats: (s) => (lastStats = s) });
+    return rankSparseAsync(decorated, constraints, { signal, cooperation: coop, onStats: (s) => (lastStats = s) });
   }
-  const graph = await buildConstraintGraphAsync(decorated, constraints, { signal });
+  const graph = await buildConstraintGraphAsync(decorated, constraints, { signal, cooperation: coop });
   recordPairwiseStats(decorated.length, graph.edges.length);
   return orderFromGraph(decorated, graph, constraints, { signal });
 }

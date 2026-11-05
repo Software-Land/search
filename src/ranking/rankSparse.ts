@@ -29,6 +29,7 @@ import {
   advanceConstraintStamp,
 } from "./constraints.js";
 import { throwIfAborted } from "../cancel.js";
+import { checkpoint, createCooperation, enterCooperationStage, type Cooperation } from "../execution/cooperate.js";
 import { BinaryMaxHeap } from "./rankHeap.js";
 import { constraintSignature } from "./rankSignature.js";
 import { compareScoreThenWeakBodyThenId, scoreThenWeakBodyThenIdBetter } from "./rankTieBreak.js";
@@ -84,27 +85,40 @@ type SuperNode = {
   cursor: number;
 };
 
-function groupBySignature(decorated: FeaturedHit[]) {
+function groupBySignature(
+  decorated: FeaturedHit[],
+  cooperation: Cooperation | null,
+  signal?: AbortSignal
+): number[][] | Promise<number[][]> {
   const map = new Map<string, number[]>();
   const keys: string[] = [];
-  for (let i = 0; i < decorated.length; i++) {
-    const key = constraintSignature(decorated[i].features);
-    let members = map.get(key);
-    if (!members) {
-      members = [];
-      map.set(key, members);
-      keys.push(key);
+  let i = 0;
+  const run = (): number[][] | Promise<number[][]> => {
+    while (i < decorated.length) {
+      if (cooperation && (i & 63) === 0) {
+        const pending = checkpoint(cooperation, signal, 64);
+        if (pending) return pending.then(run);
+      }
+      const key = constraintSignature(decorated[i].features);
+      let members = map.get(key);
+      if (!members) {
+        members = [];
+        map.set(key, members);
+        keys.push(key);
+      }
+      members.push(i);
+      i += 1;
     }
-    members.push(i);
-  }
-  return keys.map((key) => map.get(key) as number[]);
+    return keys.map((key) => map.get(key) as number[]);
+  };
+  return run();
 }
 
 export function rankSparse(
   decorated: FeaturedHit[],
   constraints: ConstraintDef[],
-  { signal, onStats }: { signal?: AbortSignal; onStats?: (stats: RankerStats) => void } = {}
-): RankedHit[] {
+  { signal, onStats, cooperation = null }: { signal?: AbortSignal; onStats?: (stats: RankerStats) => void; cooperation?: Cooperation | null } = {}
+): RankedHit[] | Promise<RankedHit[]> {
   throwIfAborted(signal);
   const C = decorated.length;
   if (C === 0) {
@@ -120,7 +134,14 @@ export function rankSparse(
     return [];
   }
 
-  const buckets = groupBySignature(decorated);
+  if (cooperation) enterCooperationStage(cooperation, "rank");
+  const grouped = groupBySignature(decorated, cooperation, signal);
+  if (grouped && typeof (grouped as Promise<number[][]>).then === "function") {
+    return (grouped as Promise<number[][]>).then((buckets) => rankGrouped(buckets));
+  }
+  return rankGrouped(grouped as number[][]);
+
+  function rankGrouped(buckets: number[][]): RankedHit[] | Promise<RankedHit[]> {
   const B = buckets.length;
   // Same abort opportunity as the all-pairs loop's first k===0 poll when C>=2.
   if (C >= 2) throwIfAborted(signal);
@@ -129,111 +150,212 @@ export function rankSparse(
   let conflictCount = 0;
   let bucketCompares = 0;
   let k = 0;
+  let p = 0;
+  let q = 1;
 
-  for (let p = 0; p < B; p++) {
-    for (let q = p + 1; q < B; q++) {
-      if ((k++ & 63) === 0) throwIfAborted(signal);
-      bucketCompares += 1;
-      const cmp = compareConstraint(reps[p], reps[q], constraints);
-      if (cmp.conflict) conflictCount += buckets[p].length * buckets[q].length;
-      if (cmp.order < 0) edges.append(p, q);
-      else if (cmp.order > 0) edges.append(q, p);
+  const comparePairs = (): void | Promise<void> => {
+    while (p < B) {
+      while (q < B) {
+        if ((k & 63) === 0) {
+          const pending = checkpoint(cooperation, signal, 64);
+          if (pending) return pending.then(comparePairs);
+        }
+        k += 1;
+        bucketCompares += 1;
+        const cmp = compareConstraint(reps[p], reps[q], constraints);
+        if (cmp.conflict) conflictCount += buckets[p].length * buckets[q].length;
+        if (cmp.order < 0) edges.append(p, q);
+        else if (cmp.order > 0) edges.append(q, p);
+        q += 1;
+      }
+      p += 1;
+      q = p + 1;
     }
-  }
-
+  };
+  const finishRank = (): RankedHit[] | Promise<RankedHit[]> => {
   const scc = stronglyConnectedComponents(B, edges);
   const nSuper = scc.groups.length;
   const supers: SuperNode[] = [];
   const cycleGroups: number[][] = [];
-
-  for (let g = 0; g < nSuper; g++) {
-    const bucketIds = scc.groups[g];
-    const isBlock = bucketIds.length > 1;
-    const members: number[] = [];
-    for (const b of bucketIds) members.push(...buckets[b]);
-    const sorted = members.slice().sort((ia, ib) => cmpScoreId(decorated[ia], decorated[ib]));
-    supers.push({ isBlock, members, sorted, cursor: 0 });
-    if (isBlock && members.length > 1) {
-      cycleGroups.push(members.slice().sort((a, b) => a - b));
-    }
-  }
+  let g = 0;
+  let bucketCursor = 0;
+  let copyAt = 0;
+  let members: number[] = [];
+  let bucketIds: number[] = [];
 
   const indeg = computeComponentIndegrees(scc.comp, scc.groups, scc.adj);
   const marks = new Uint32Array(nSuper);
   let generation = 0;
   const inHeap = new Uint8Array(nSuper);
+  const ordered: FeaturedHit[] = [];
+  let active: number | null = null;
 
-  function keyHit(g: number) {
-    const node = supers[g];
-    const i = node.isBlock ? node.sorted[0] : node.sorted[node.cursor];
-    return decorated[i];
+  function keyHit(group: number) {
+    const node = supers[group];
+    const index = node.isBlock ? node.sorted[0] : node.sorted[node.cursor];
+    return decorated[index];
   }
 
   const heap = new BinaryMaxHeap<number>((ga, gb) => scoreThenWeakBodyThenIdBetter(keyHit(ga), keyHit(gb)));
 
-  function offer(g: number) {
-    if (inHeap[g]) return;
-    inHeap[g] = 1;
-    heap.push(g);
+  function offer(group: number) {
+    if (inHeap[group]) return;
+    inHeap[group] = 1;
+    heap.push(group);
   }
 
-  for (let g = 0; g < nSuper; g++) if (indeg[g] === 0) offer(g);
-
-  const ordered: FeaturedHit[] = [];
-
-  function unlock(g: number) {
+  function unlock(group: number) {
     generation = advanceConstraintStamp(marks, generation);
-    forEachOutgoingComponent(g, scc.comp, scc.groups, scc.adj, marks, generation, (h) => {
+    forEachOutgoingComponent(group, scc.comp, scc.groups, scc.adj, marks, generation, (h) => {
       indeg[h] -= 1;
       if (indeg[h] === 0) offer(h);
     });
   }
 
-  while (heap.size) {
-    const g = heap.pop();
-    inHeap[g] = 0;
-    const node = supers[g];
-    if (node.isBlock) {
-      for (const i of node.sorted) ordered.push(decorated[i]);
-      node.cursor = node.sorted.length;
-      unlock(g);
-      continue;
+  const publish = (cycles: string[][]): RankedHit[] | Promise<RankedHit[]> => {
+    if (!cooperation) {
+      onStats?.({
+        mode: "sparse",
+        C,
+        B,
+        kAmbiguous: 0,
+        bucketCompares,
+        candidatePairCompares: 0,
+        bucketEdges: edges.length,
+      });
+      throwIfAborted(signal);
+      return attachRankMeta(ordered, cycles, conflictCount, constraints);
     }
-    const i = node.sorted[node.cursor];
-    ordered.push(decorated[i]);
-    node.cursor += 1;
-    if (node.cursor < node.sorted.length) offer(g);
-    else unlock(g);
-  }
+    let i = 0;
+    const out: RankedHit[] = [];
+    const run = (): RankedHit[] | Promise<RankedHit[]> => {
+      while (i < ordered.length) {
+        if ((i & 63) === 0) {
+          const pending = checkpoint(cooperation, signal, 64);
+          if (pending) return pending.then(run);
+        }
+        const hit = ordered[i];
+        out.push({
+          ...hit,
+          score: hit.score ?? 0,
+          rank: i + 1,
+          constraintVsNext:
+            i + 1 < ordered.length
+              ? compareConstraint(hit, ordered[i + 1], constraints)
+              : { order: 0, applied: [], conflict: false, resolution: "unordered" },
+          constraintMeta: { cycles, conflictCount },
+        });
+        i += 1;
+      }
+      onStats?.({
+        mode: "sparse",
+        C,
+        B,
+        kAmbiguous: 0,
+        bucketCompares,
+        candidatePairCompares: 0,
+        bucketEdges: edges.length,
+      });
+      return out;
+    };
+    return run();
+  };
 
-  if (ordered.length < C) {
-    const seen = new Set(ordered.map((h) => h.document.id));
-    for (const hit of decorated) {
-      if (!seen.has(hit.document.id)) ordered.push(hit);
+  const fillGaps = (cycles: string[][]): RankedHit[] | Promise<RankedHit[]> => {
+    if (ordered.length >= C) return publish(cycles);
+    const seen = new Set(ordered.map((hit) => hit.document.id));
+    let i = 0;
+    const run = (): RankedHit[] | Promise<RankedHit[]> => {
+      while (i < decorated.length) {
+        if (cooperation && (i & 63) === 0) {
+          const pending = checkpoint(cooperation, signal, 64);
+          if (pending) return pending.then(run);
+        }
+        if (!seen.has(decorated[i].document.id)) ordered.push(decorated[i]);
+        i += 1;
+      }
+      return publish(cycles);
+    };
+    return run();
+  };
+
+  const drain = (): RankedHit[] | Promise<RankedHit[]> => {
+    while (active !== null || heap.size) {
+      if (cooperation && (ordered.length & 63) === 0) {
+        const pending = checkpoint(cooperation, signal, 64);
+        if (pending) return pending.then(drain);
+      }
+      if (active === null) {
+        const next = heap.pop();
+        inHeap[next] = 0;
+        active = next;
+      }
+      const node = supers[active];
+      if (node.cursor < node.sorted.length) {
+        ordered.push(decorated[node.sorted[node.cursor]]);
+        node.cursor += 1;
+      }
+      if (node.cursor < node.sorted.length) {
+        if (!node.isBlock) offer(active);
+        if (!node.isBlock) active = null;
+        continue;
+      }
+      unlock(active);
+      active = null;
     }
-  }
+    const cycles = cycleGroups.map((idxs) => idxs.map((index) => decorated[index].document.id));
+    return fillGaps(cycles);
+  };
 
-  const cycles = cycleGroups.map((idxs) => idxs.map((i) => decorated[i].document.id));
-  onStats?.({
-    mode: "sparse",
-    C,
-    B,
-    kAmbiguous: 0,
-    bucketCompares,
-    candidatePairCompares: 0,
-    bucketEdges: edges.length,
-  });
-  throwIfAborted(signal);
-  return attachRankMeta(ordered, cycles, conflictCount, constraints);
+  const buildGroups = (): RankedHit[] | Promise<RankedHit[]> => {
+    while (g < nSuper) {
+      if (bucketCursor === 0 && copyAt === 0 && members.length === 0) bucketIds = scc.groups[g];
+      while (bucketCursor < bucketIds.length) {
+        const source = buckets[bucketIds[bucketCursor]];
+        while (copyAt < source.length) {
+          if (cooperation && (copyAt & 63) === 0) {
+            const pending = checkpoint(cooperation, signal, 64);
+            if (pending) return pending.then(buildGroups);
+          }
+          members.push(source[copyAt]);
+          copyAt += 1;
+        }
+        bucketCursor += 1;
+        copyAt = 0;
+      }
+      // The native sort is one atomic step. Checkpoints surround it.
+      if (cooperation) {
+        const pending = checkpoint(cooperation, signal, 0);
+        if (pending) return pending.then(buildGroups);
+      }
+      const isBlock = bucketIds.length > 1;
+      const sorted = members.slice().sort((ia, ib) => cmpScoreId(decorated[ia], decorated[ib]));
+      supers.push({ isBlock, members, sorted, cursor: 0 });
+      if (isBlock && members.length > 1) cycleGroups.push(members.slice().sort((a, b) => a - b));
+      g += 1;
+      bucketCursor = 0;
+      copyAt = 0;
+      members = [];
+    }
+    for (let group = 0; group < nSuper; group++) if (indeg[group] === 0) offer(group);
+    return drain();
+  };
+  return buildGroups();
+  };
+  const pendingPairs = comparePairs();
+  if (pendingPairs) return pendingPairs.then(finishRank);
+  return finishRank();
+  }
 }
 
 export async function rankSparseAsync(
   decorated: FeaturedHit[],
   constraints: ConstraintDef[],
-  opts: { signal?: AbortSignal; onStats?: (stats: RankerStats) => void } = {}
+  opts: { signal?: AbortSignal; onStats?: (stats: RankerStats) => void; cooperation?: Cooperation | null } = {}
 ): Promise<RankedHit[]> {
-  throwIfAborted(opts.signal);
-  await Promise.resolve();
-  throwIfAborted(opts.signal);
-  return rankSparse(decorated, constraints, opts);
+  const cooperation = opts.cooperation ?? createCooperation();
+  const ranked = rankSparse(decorated, constraints, { ...opts, cooperation });
+  return typeof (ranked as Promise<RankedHit[]>).then === "function"
+    ? ranked as Promise<RankedHit[]>
+    : ranked as RankedHit[];
 }

@@ -350,6 +350,59 @@ async function main() {
       }
     }
 
+    copyFileSync(path.join(harnessDir, "cancel-app.mjs"), path.join(consumer, "cancel-app.mjs"));
+    writeImportMapHtml(consumer, {
+      filename: "cancel.html",
+      title: "chromium-pack cancellation fixture",
+      scriptSrc: "/cancel-app.mjs",
+      importMap,
+    });
+    const cancelPage = await browser.newPage();
+    const cancelConsoleErrors = [];
+    const cancelPageErrors = [];
+    cancelPage.on("console", (msg) => {
+      if (msg.type() === "error") cancelConsoleErrors.push(msg.text());
+    });
+    cancelPage.on("pageerror", (err) => {
+      cancelPageErrors.push(String(err?.stack || err?.message || err));
+    });
+    const CANCEL_WAIT_MS = 60_000;
+    await cancelPage.goto(`${origin}/cancel.html`, { waitUntil: "load", timeout: CANCEL_WAIT_MS });
+    await cancelPage.waitForFunction(() => window.__booted === true || window.__bootError, null, {
+      timeout: CANCEL_WAIT_MS,
+    });
+    const cancelBoot = await cancelPage.evaluate(() => ({
+      booted: window.__booted,
+      bootError: window.__bootError || null,
+      errors: window.__state?.errors || [],
+      outcome: window.__state?.outcome || null,
+      messages: window.__state?.messages || [],
+    }));
+    if (!cancelBoot.booted) {
+      throw new Error(`cancellation boot failed: ${cancelBoot.bootError || JSON.stringify(cancelBoot.errors)}`);
+    }
+    if (cancelBoot.errors.length) {
+      throw new Error(`cancellation errors: ${JSON.stringify(cancelBoot.errors)}`);
+    }
+    if (cancelBoot.outcome?.cancelledType !== "aborted") {
+      throw new Error(`cancellation expected aborted, got ${JSON.stringify(cancelBoot.outcome)}`);
+    }
+    if (cancelBoot.outcome?.replacementIds?.[0] !== "only-zephyr") {
+      throw new Error(`cancellation replacement failed: ${JSON.stringify(cancelBoot.outcome)}`);
+    }
+    if (cancelBoot.messages.some((msg) => msg.requestId === 2 && msg.type === "result")) {
+      throw new Error(`superseded worker request published a result: ${JSON.stringify(cancelBoot.messages)}`);
+    }
+    if (cancelBoot.outcome?.disposedType !== "aborted") {
+      throw new Error(`dispose did not abort the active request: ${JSON.stringify(cancelBoot.outcome)}`);
+    }
+    if (cancelBoot.outcome?.cleared < 1 || cancelBoot.outcome?.clientIds?.[0] !== "nfc") {
+      throw new Error(`clearing input did not retain client behavior: ${JSON.stringify(cancelBoot.outcome)}`);
+    }
+    if (cancelConsoleErrors.length) throw new Error(`cancellation console error: ${cancelConsoleErrors.join("\n")}`);
+    if (cancelPageErrors.length) throw new Error(`cancellation pageerror: ${cancelPageErrors.join("\n")}`);
+    await cancelPage.close();
+
     diagnostics.push({
       origin,
       workerUrl,
@@ -362,6 +415,7 @@ async function main() {
       relationshipMap: lastByQuery,
       rankBench: rankBoot.results,
       retrievalBench: retrievalBoot.results,
+      cancellation: cancelBoot.outcome,
     });
     console.log(JSON.stringify({ ok: true, ...diagnostics[0] }, null, 2));
   } finally {

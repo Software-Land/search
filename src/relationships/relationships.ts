@@ -7,6 +7,7 @@
 import { parseRelationships } from "../artifacts.js";
 import { classifyDirect } from "../features/features.js";
 import { throwIfAborted } from "../cancel.js";
+import { checkpoint, type Cooperation } from "../execution/cooperate.js";
 import { querySemanticFacts } from "../query/querySemantics.js";
 import { rankCandidates, selectTopPerBuiltinSignature } from "../ranking/rank.js";
 import type {
@@ -142,7 +143,8 @@ export function applyRelationshipExpansion({
   sourcePolicy = "top1-strong",
   signal,
   constraints,
-}: RelationshipExpansionArgs = {}): ExpansionResult {
+  cooperation = null,
+}: RelationshipExpansionArgs & { cooperation?: Cooperation | null } = {}): ExpansionResult | Promise<ExpansionResult> {
   throwIfAborted(signal);
   if (!graph || graph.empty || !featured || !query || !extractFeatures || !scoreFeatures || !index) {
     return { featured: featured || [], relatedHits: [], primaries: [] };
@@ -175,9 +177,16 @@ export function applyRelationshipExpansion({
   }
 
   const relatedHits: RetrievalHit[] = [];
+  const entries = [...collected];
   let n = 0;
-  for (const [target, relationship] of collected) {
-    if ((n++ & 7) === 0) throwIfAborted(signal);
+  const run = (): ExpansionResult | Promise<ExpansionResult> => {
+    while (n < entries.length) {
+      if ((n & 7) === 0) {
+        const pending = checkpoint(cooperation, signal, 8);
+        if (pending) return pending.then(run);
+      }
+      const [target, relationship] = entries[n]!;
+      n += 1;
     const existing = byId.get(target);
     if (existing) {
       const cls = existing.features?.directClass || classifyDirect(existing.features || {});
@@ -200,8 +209,10 @@ export function applyRelationshipExpansion({
       retrievalSources: ["relationship"],
       relationship,
     });
-  }
-  return { featured, relatedHits, primaries };
+    }
+    return { featured, relatedHits, primaries };
+  };
+  return run();
 }
 
 export function expandRelatedCandidates({
