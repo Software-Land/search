@@ -341,6 +341,26 @@ describe("software-land corpus fixture", () => {
 });
 
 describe("software-land fixture inputs are load-bearing", () => {
+  test("authored dfs relationship is the later tree correction", () => {
+    const authored = loadJson("relationship-map.json");
+    expect(authored.map.dfs).toEqual([{ kind: "related", to: { form: "tree" } }]);
+    for (const edges of Object.values(authored.map)) {
+      for (const edge of edges || []) {
+        expect(edge?.to?.form).not.toBe("minimax");
+      }
+    }
+    expect(authored.notes.join("\n")).toContain("not a new corpus export");
+    const manifest = loadJson("manifest.json");
+    expect(manifest.corpusSourceCommit).toBe("2f085e6789d30dc7bdfa26027e0e9ab15d489f85");
+    expect(manifest.fixtureCorrections).toEqual([
+      expect.objectContaining({
+        file: "relationship-map.json",
+        replaced: { source: "dfs", kind: "related", form: "minimax" },
+        current: { source: "dfs", kind: "related", form: "tree" },
+      }),
+    ]);
+  });
+
   test("sorting #3 depends on the site lemma table", async () => {
     const without = await indexEngine(createEngine({ useLemmas: false }));
     expect(without.search("sorting", { limit: 3 }).map((hit) => hit.title)).not.toEqual([

@@ -489,6 +489,12 @@ describe("Software.Land historical relevance contracts", () => {
   test("dfs neighborhood keeps Minmax Tree as a candidate behind repeated direct evidence", () => {
     for (const query of ["dfs", "depth first search"]) {
       const detailed = engine.searchDetailed(query, { limit: 12, explain: true });
+      expect(detailed.results[0]?.explanation?.query?.configuredSequenceIntent?.key).toBe("dfs");
+      expect(detailed.results[0]?.explanation?.query?.topicalRecall).toEqual({
+        key: "dfs",
+        forms: [["tree"]],
+        primaryForms: [],
+      });
       const titles = detailed.results.map((hit) => hit.title);
       expect(titles[0]).toBe("DFS Backtracking");
       const repeated = detailed.results.find((hit) => hit.title === "A-Star Pathfinding");

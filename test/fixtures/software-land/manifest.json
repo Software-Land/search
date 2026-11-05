@@ -21,8 +21,8 @@
       "sha256": "c002352a4279ba3001a1dae6c366c407f123be408893728fb9e561c63d3fac4e"
     },
     "relationship-map.json": {
-      "bytes": 20746,
-      "sha256": "76e9e85caa46a49930a9b7159e56240d5278cc9aba88633e10a22bbb599d3fbd"
+      "bytes": 20936,
+      "sha256": "b043ec59763059ae9b52b46efe0aceb5310b9def048d73631acf88883852b122"
     },
     "historical-scenarios.json": {
       "bytes": 147581,
@@ -65,8 +65,8 @@
       "sha256": "3d42e142c3eaa8b5d5467377ba13693cc1ebfa219e994084ea182fa214f3931b"
     },
     "README.md": {
-      "bytes": 11022,
-      "sha256": "602c5ec2f9cba79372190b6552c46e54f2ede1fdd055569b446df106a19691f3"
+      "bytes": 11478,
+      "sha256": "483ec05a73028c3fb82fc92ae6322c3d2dfa78952aa4cf7398da1eac6e31144d"
     }
   },
   "corpusSourceCommit": "2f085e6789d30dc7bdfa26027e0e9ab15d489f85",
@@ -103,5 +103,21 @@
     "tests/search-scenarios.js",
     "tests/search-v2-contracts.js"
   ],
-  "previousCorpusSourceCommit": "acf8fbf24bf417af6639838f07ec2246d35c0ed9"
+  "previousCorpusSourceCommit": "acf8fbf24bf417af6639838f07ec2246d35c0ed9",
+  "fixtureCorrections": [
+    {
+      "file": "relationship-map.json",
+      "note": "Later authored-map correction. Not a new corpus export. corpusSourceCommit, contentTree, previousCorpusSourceCommit, and uncommittedDiffSha256 remain the original snapshot.",
+      "replaced": {
+        "source": "dfs",
+        "kind": "related",
+        "form": "minimax"
+      },
+      "current": {
+        "source": "dfs",
+        "kind": "related",
+        "form": "tree"
+      }
+    }
+  ]
 }

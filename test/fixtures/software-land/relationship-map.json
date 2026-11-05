@@ -3,7 +3,8 @@
   "notes": [
     "Runtime relationship map consumed by Software.Land Search V2 at this corpus snapshot.",
     "Base map is src/search/relationshipMap.js. Live search-equivalence pairs are composed onto it by composeLiveEquivalencesIntoRelationshipMap before SearchEngine.create.",
-    "Includes the authored API primary-term edge, the DFS related edge to minimax, the AI related edge to embeddings, and the ordinary AppSec related edge to security.",
+    "Includes the authored API primary-term edge, the DFS related edge to tree, the AI related edge to embeddings, and the ordinary AppSec related edge to security.",
+    "The dfs → tree edge is a later fixture correction aligned with Software.Land src/search/relationshipMap.js. It is not a new corpus export. The original snapshot recorded dfs → minimax.",
     "synonym-map.json remains the older db5a070 provenance snapshot and is not this map.",
     "Explicit fixture input. Not a Search Core default. Compiled document relationships remain in relationships.json."
   ],
@@ -435,7 +436,7 @@
       {
         "kind": "related",
         "to": {
-          "form": "minimax"
+          "form": "tree"
         }
       }
     ],
