@@ -1,6 +1,8 @@
-# Compact lexical runtime (Stage 2C)
+# Compact lexical runtime
 
-Stage 2C is a representation optimization. It does not change retrieval, features, constraints, scores, representatives, relationships, ranks, explanations, or `search-v2-lexical-index` v1 bytes.
+<a id="compact-lexical-runtime-stage-2c"></a>
+
+The compact lexical runtime is a representation optimization. It does not change retrieval, features, constraints, scores, representatives, relationships, ranks, explanations, or the bytes of a `search-lexical-index` artifact with schema version 1.
 
 ```text
 packed immutable lexical representation
@@ -13,11 +15,11 @@ rather than reconstructing token arrays, lemma arrays, Sets, and position Maps f
 Exactness remains:
 
 ```text
-compact runtime
-== current hydrated runtime
-== Stage-2B
-== Stage-2A
-== Stage-1 exhaustive compiled
+compact lexical runtime
+== hydrated runtime
+== duplicate posting-list skipping
+== feature block pruning
+== exhaustive compiled evaluation
 == frozen public quality
 ```
 
@@ -25,7 +27,7 @@ The full-scan/reference path may keep fat `IndexedDocument` objects. Indexed and
 
 ## Benchmark methodology
 
-Absolute milliseconds are not a semantic signal. Hardware, OS noise, and single-shot `meta.totalMs` explain historical variation such as a Stage-1 mixed high-DF sample moving ~169 ms → ~126 ms without any ranking change.
+Absolute milliseconds are not a semantic signal. Hardware, OS noise, and single-shot `meta.totalMs` explain historical variation such as an earlier exact compiled retrieval sample moving ~169 ms → ~126 ms without any ranking change.
 
 Node measurements that claim timing now:
 
@@ -39,14 +41,14 @@ CI must not treat latency as a contract. Store harness output separately from te
 ```bash
 node --expose-gc scripts/heap-attribution.mjs --n 25000
 node --expose-gc scripts/compact-runtime-bench.mjs --sizes 1000,5000,10000,25000
-node --expose-gc scripts/budget-pressure.mjs --suite stage1 --sizes 1000,5000,10000,25000
+node --expose-gc scripts/budget-pressure.mjs --suite exact-compiled --sizes 1000,5000,10000,25000
 ```
 
 ## Heap attribution (approximate)
 
 V8 `heapUsed` deltas after `gc()` are ownership estimates, not retained-size proofs. Build structures one at a time.
 
-On mixed N=25k the Stage-2B object runtime was dominated by per-document JavaScript graphs, not the packed artifact:
+On mixed N=25k the earlier hydrated-object runtime was dominated by per-document JavaScript graphs, not the packed artifact:
 
 1. Per-document token/lemma string arrays plus `Set`/`Map` objects (`titleTokens`, `bodyTokens`, four Sets, two position Maps)
 2. Compiled posting `number[]` rows plus `bySurface` / `byLemma` lookup
@@ -67,7 +69,7 @@ Typed token-id arrays and interned dictionary strings are small relative to thos
 | `titleLemmaSet` | features, retrieve | `.has` | lemma ids | no | no | no | `.has` only | no | yes |
 | `bodyLemmaSet` | retrieve | `.has` | lemma ids | no | no | no | `.has` only | no | yes |
 | `nonStopTitle` | features (`titleTokenCount`, tightness) | per evaluated doc | title ids minus stop list | no | yes | yes | no | no | yes |
-| `firstToken` | short-literal, Stage 2A | cheap | no — surface fact | yes | n/a | n/a | n/a | n/a | stored |
+| `firstToken` | short-literal, feature block pruning | cheap | no — surface fact | yes | n/a | n/a | n/a | n/a | stored |
 | `normalizedTitle` | exact title, prefix | cheap | reconstructable | stored to avoid join | n/a | n/a | n/a | n/a | stored |
 | `independentTitleTokens` | typed surface / prefix quality | per evaluated doc | title ids minus dotted indexes | dotted metadata | yes | yes | no | no | yes |
 | `independentTitleTokenSet` | independent token checks | `.has` | same | dotted metadata | no | no | `.has` | no | yes |
@@ -85,22 +87,22 @@ Index-level `titleTokenSet` and `surfaceVocabulary` stay real `Set`s (query anal
 
 Compared:
 
-- **A. Hydrated objects** — Stage-2B baseline; ~1 GB mixed 25k heap.
+- **A. Hydrated objects** — pre-compact baseline; ~1 GB mixed 25k heap.
 - **B. Lazy `IndexedDocumentView`** — packed data, accessors decode query needs.
 - **C. Query-local evidence view** — skip document objects; map query+ordinal → `FeatureVector`.
 - **D. Hybrid** — tiny per-doc metadata plus packed token/position streams.
 
 Chosen: **D + B**. `CompactIndexedDocument` duck-types `IndexedDocument` so the frozen feature oracle and retrieve/feature code keep working without a second extractor. Token storage is global `Uint32Array`s with per-document offsets and an interned dictionary. Lemma arrays are not stored; `lemmaOf[surfaceId]` is applied at access. Permanent per-document `Set`/`Map` graphs are not allocated. Query-local Sets of a few terms are preferred over 25k permanent Sets.
 
-A pure C rewrite would be a smaller semantic abstraction eventually, but it would fork the frozen oracle. Stage 2C stops at a compact document view.
+A pure C rewrite would be a smaller semantic abstraction eventually, but it would fork the frozen oracle. The compact lexical runtime stops at a compact document view.
 
 Term ids are `Uint32Array`, not `Uint16Array`, so vocabulary size is not capped at 16 bits.
 
-Stage 2B still sees compiled posting `number[]` identity, so the existing `WeakSet` skip remains the semantic equivalent of “walk each unique logical posting slice once per query.”
+Duplicate posting-list skipping still sees compiled posting `number[]` identity, so the existing `WeakSet` skip remains “walk each unique logical posting slice once per query.” It does not skip a list this query has not read.
 
 ## Artifact format
 
-Current `search-v2-lexical-index` v1 bytes hydrate the compact runtime. No version bump. No required `data.extensions` for Stage 2C. Old v1 artifacts stay exact.
+Bytes of a `search-lexical-index` artifact with schema version 1 hydrate the compact runtime. The schema version stays 1. The compact lexical runtime requires no `data.extensions`. Older artifacts with that schema version stay exact.
 
 ## Fallback and full-scan
 
@@ -114,7 +116,7 @@ Typed arrays, term ordinals, offsets, packed stores, and document views are not 
 
 ## Packed ranking representation (0.6.5)
 
-Stage 2C is the compact document view. Eligible ordinary `search()` / `searchAsync()` additionally keep compact ordinal-aligned ranking-evidence state: generation/slot session memory plus packed numeric columns used as ranking accessors. Those views are not public types and are not a lexical-artifact extension. Byte layouts are implementation details, not a package contract. `searchDetailed()` and ineligible shapes still construct FeatureVectors. See [scaling.md](scaling.md) and [exact-pruning.md](exact-pruning.md).
+The compact lexical runtime is the document view. Eligible ordinary `search()` / `searchAsync()` additionally keep compact ordinal-aligned ranking-evidence state: generation/slot session memory plus packed numeric columns used as ranking accessors. Those views are not public types and are not a lexical-artifact extension. Byte layouts are implementation details, not a package contract. `searchDetailed()` and ineligible shapes still construct FeatureVectors. See [scaling.md](scaling.md) and [exact-pruning.md](exact-pruning.md).
 
 ## Phrase adjacency fast path
 
@@ -137,8 +139,8 @@ Surface streams run first. Lemma streams run only when the query surface/lemma s
 
 Compiled positional postings are term-oriented and cheap to walk by document ordinal, but they cannot reconstruct this feature as exact `t0@p ∧ t1@p+1 ∧ t2@p+2` term-id membership. Prefix-capable non-digit matching would require expanding every query token against the vocabulary, then intersecting those posting unions, then still applying the same window predicate for repeats, digits, and missing terms. A ~60-token packed-id scan is the exact equivalent and does not need a persistent doc→posting offset table.
 
-Stage 2C originally scanned `PackedTokenProxy` bodies and skipped the Stage-2B `Map` start index (`instanceof Map` failed). That was a compact-runtime regression, not an inherent phrase cost.
+The compact runtime originally scanned `PackedTokenProxy` bodies and skipped the hydrated-object `Map` start index (`instanceof Map` failed). That was a compact-runtime regression, not an inherent phrase cost.
 
 The compact adapter now applies the shared `tokenAdjacencyMatch` predicate over packed `Uint32Array` token ids and interned strings (`compactAdjacentTokens`). Fat full-scan keeps the object/`Map` adapter. No persistent side index. Query-local work is existing per-search feature state plus a small interned-id `Set` during compact body-concept membership. Title/body concept helpers used by `queryCoverage` follow the same packed-id pattern; they do not change `extractFeatures` output on the FeatureVector path.
 
-Eligible ordinary indexed `search()` / `searchAsync()` rank from compact ordinal-aligned ranking-evidence state (generation/slot session plus packed numeric columns) rather than allocating a FeatureVector per retrieved direct. `searchDetailed()`, explain, exhaustive diagnostics, and ineligible shapes still fully extract features for every legitimate match that Stage 2A does not bound-reject and that Stage 3A does not skip as unread 1-of-k body-only. Multi-token / phrase conjunction classes are not Stage-2A pruned: exact class and constraint-signature membership can depend on body evidence. A later lazy FeatureVector skip was investigated and not shipped; 0.6.5 uses fused ranking evidence instead. See [limitations.md](limitations.md), [exact-pruning.md](exact-pruning.md), and [scaling.md](scaling.md).
+Eligible ordinary indexed `search()` / `searchAsync()` rank from compact ordinal-aligned ranking-evidence state (generation/slot session plus packed numeric columns) rather than allocating a FeatureVector per retrieved direct. `searchDetailed()` is exact diagnostics: feature block pruning and body posting pruning do not skip work on that call. Explicit exhaustive mode does not either. `explain: true` disables packed ranking evidence and still leaves both pruning capabilities on their ordinary `search()` gates. Those explained calls, exhaustive mode, and other ineligible `search()` shapes extract features for matches that feature block pruning does not bound-reject and that body posting pruning does not skip as unread 1-of-k body-only. Multi-token and phrase conjunction classes are not feature-block pruned: exact class and constraint-signature membership can depend on body evidence. A later lazy FeatureVector skip was investigated and not shipped; 0.6.5 uses fused ranking evidence instead. See [limitations.md](limitations.md), [exact-pruning.md](exact-pruning.md), and [scaling.md](scaling.md).

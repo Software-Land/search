@@ -39,7 +39,7 @@ import {
   type CompiledLexicalRuntime,
   type CompiledTermRuntime,
 } from "../indexing/lexicalIndex.js";
-import { planStage3ABodyOrdinals, stage3AUnsupportedReason } from "./exactBlockSkip.js";
+import { planBodyPostingPruning, bodyPostingPruningUnsupportedReason } from "./exactBlockSkip.js";
 import type { RankingEvidenceFieldCode } from "../ranking/evidence/rankingEvidencePlan.js";
 import type { RankingEvidenceSession } from "../ranking/evidence/rankingEvidenceState.js";
 import type {
@@ -657,11 +657,11 @@ export function createIndexedLexicalRetriever({
 }
 
 /**
- * Stage-1 exact compiled retrieval.
+ * Exact compiled retrieval.
  *
  * Every potentially matching posting is visited and exact provenance is
- * rechecked against the reconstructed indexed document, except Stage 3A
- * unread 1-of-k body skip (presence masks) and Stage 2B skip of posting
+ * rechecked against the reconstructed indexed document, except unread 1-of-k
+ * body postings skipped by body posting pruning and duplicate skips of posting
  * arrays this query already walked. There is no candidate budget, prefix
  * cap, or approximate top-K.
  */
@@ -771,7 +771,7 @@ export function createCompiledLexicalRetriever(): Retriever {
       const entries = df || 0;
       last.postingEntriesSkipped += entries;
       last.duplicatePostingEntriesAvoided += entries;
-      // Stage 2B: ceil(df/128) of duplicate already-walked posting arrays.
+      // Duplicate posting-list skip: ceil(df/128) of posting arrays already walked.
       // Not unread skip. postingBlocksSkipped is the legacy name of
       // duplicatePostingBlocksAvoided.
       const duplicateBlocks = postingBlockCount(entries);
@@ -1010,7 +1010,7 @@ export function createCompiledLexicalRetriever(): Retriever {
     }
 
     if (skipBodyWalk) {
-      const plan = planStage3ABodyOrdinals({
+      const plan = planBodyPostingPruning({
         query,
         compiled,
         documents: docs,
@@ -1018,6 +1018,7 @@ export function createCompiledLexicalRetriever(): Retriever {
         requiredDepth: skipPlan ? skipPlan.requiredDepth : 0,
         signal,
         evidenceWriter,
+        relatedExpansionSources: skipPlan?.relatedExpansionSources || null,
       });
       if (plan) {
         last.stage3A = "applied";
@@ -1029,7 +1030,7 @@ export function createCompiledLexicalRetriever(): Retriever {
         for (const pos of plan.bodyOrdinals) add(pos, "body-lexical", 0);
       } else {
         last.stage3A = "fallback";
-        last.stage3AFallbackReason = stage3AUnsupportedReason(query) || "unbounded-presence";
+        last.stage3AFallbackReason = bodyPostingPruningUnsupportedReason(query) || "unbounded-presence";
         for (const { form, kind } of forms) {
           if ((step++ & 7) === 0) throwIfAborted(signal);
           if (kind === "configured-prefix-recall" && prefixRecallTitleOnly) continue;

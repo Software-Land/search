@@ -41,7 +41,7 @@ const documents = [
 ];
 
 const semantic = {
-  format: "search-v2-relationships",
+  format: "search-relationships",
   version: 1,
   relationships: {
     "doc-a": [{ target: "qa-guide", type: "semantic", strength: 0.7, provenance: "generated" }],
@@ -119,12 +119,12 @@ describe("compileAuthoredRelevance aggregate surface", () => {
   test("documentRelationships is the editorial artifact or null", () => {
     expect(authored.documentRelationships).toEqual(
       mergeRelationships(null, {
-        format: "search-v2-relationships",
+        format: "search-relationships",
         version: 1,
         relationships: map.editorialRelationships,
       })
     );
-    expect(authored.documentRelationships.format).toBe("search-v2-relationships");
+    expect(authored.documentRelationships.format).toBe("search-relationships");
     expect(authored.documentRelationships.relationships["doc-a"]).toEqual([
       { target: "doc-b", type: "editorial", strength: 1, provenance: "manual" },
     ]);

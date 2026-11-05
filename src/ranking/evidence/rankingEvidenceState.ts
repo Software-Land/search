@@ -165,6 +165,7 @@ export type RankingEvidenceCounters = {
   postingEntriesScattered: number;
   postingPositionsObserved: number;
   actionExecutions: number;
+  /** Historical benchmark counter for body posting pruning mask writes. */
   stage3AWrites: number;
   slots: number;
   capacityGrows: number;
@@ -599,7 +600,7 @@ export class RankingEvidenceSession {
     return this.assertActive().conceptBitByConcept.get(concept) || 0;
   }
 
-  writeStage3AConceptMask(ordinal: number, conceptMask: number) {
+  writeBodyPostingConceptMask(ordinal: number, conceptMask: number) {
     if (!conceptMask) return;
     const slot = this.touchOrdinal(ordinal);
     this.bodyConceptMask[slot] |= conceptMask;

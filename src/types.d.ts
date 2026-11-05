@@ -51,6 +51,11 @@ export interface StandaloneRecall {
 export interface TopicalRecall {
   key: string;
   forms: string[][];
+  /**
+   * Expanded forms that descend from an authored primary topical term.
+   * A title match is topical evidence, not concept equivalence or query coverage.
+   */
+  primaryForms: string[][];
 }
 
 export interface ConfiguredConceptSequence {
@@ -73,6 +78,8 @@ export interface SearchPlugin {
   byKey?: Map<string, ConfiguredConcept>;
   standaloneRecallByToken?: Map<string, string>;
   topicalRecallByKey?: Map<string, string[][]>;
+  /** Authored primary topical forms, before alias expansion of a named concept. */
+  topicalPrimaryByKey?: Map<string, string[][]>;
   expand?: (token: string) => Array<{
     form: string;
     type?: string;
@@ -215,6 +222,12 @@ export interface QueryConcept {
    * Not a proxy for what the user typed; do not use as typed companion evidence.
    */
   forms: string[];
+  /**
+   * Forms that match only as an exact token or lemma. They are not ordinary
+   * lexical prefixes. Set for a single-token equivalent target whose heuristic
+   * lemma is not also its canonical normalized form.
+   */
+  lemmaOnlyForms?: string[];
   provenance: string;
   matchedForm?: string[];
   aliases?: string[][];
@@ -300,7 +313,9 @@ export interface AnalyzedQuery {
    * One-hop topical recall for a trusted configured concept: either
    * configuredSequenceIntent.key or a unique exact configured span whose
    * remaining tokens are existing stopwords. Absent unless that key declares
-   * topicalRecall forms. Does not rewrite tokens, lexical intent, or
+   * topicalRecall forms. A form that uniquely names another configured concept
+   * also includes that concept's key and full aliases. It does not follow that
+   * concept's own topical targets. Does not rewrite tokens, lexical intent, or
    * configuredSequenceIntent.
    */
   topicalRecall?: TopicalRecall | null;
@@ -510,6 +525,11 @@ export interface FeatureVector {
   topicalRecallMatch?: boolean;
   topicalRecallFormCount?: number;
   topicalRecallTitleMatch?: boolean;
+  /**
+   * Title matched an authored primary topical term. Not equivalence, not
+   * literal query coverage, and not a manufactured body occurrence.
+   */
+  topicalPrimaryTitleMatch?: boolean;
   topicalRecallPhraseMatch?: boolean;
   topicalRecallScore?: number;
   equivalentRecallMatch?: boolean;
@@ -517,6 +537,13 @@ export interface FeatureVector {
   equivalentRecallTitleMatch?: boolean;
   equivalentRecallBodyMatch?: boolean;
   equivalentRecallScore?: number;
+  /** Unique body occurrences of equivalent-recall forms. Not bodyPhraseCount. */
+  equivalentRecallBodyOccurrenceCount?: number;
+  /**
+   * Unique body occurrences of direct query evidence. 0 is uncomputed or
+   * absent, not a single mention. Not bodyPhraseCount and not a score term.
+   */
+  directBodyOccurrenceCount?: number;
   /**
    * Query-side unique configured-form prefix completeness for a prefix-only
    * key candidate. 0 when occupancy is present, the candidate also has typed
@@ -576,17 +603,25 @@ export interface RetrieveOptions {
   signal?: AbortSignal;
   candidateLimit?: number | null;
   /**
-   * Internal Stage-2B flag. When true, already-walked posting arrays are not
-   * decoded again. Membership stays exhaustive; BM25 retrievalScore is not
+   * Internal duplicate posting-list flag. When true, an identical posting array
+   * already walked during this query is not decoded again. Unread posting lists
+   * are still walked. Membership stays exhaustive; BM25 retrievalScore is not
    * double-counted. The engine enables this only when retrievalScoreWeight is 0.
    */
   skipDuplicatePostingLists?: boolean;
   /**
-   * Internal Stage-3A flag. When set, compiled retrieval may skip unread
+   * Internal body posting pruning flag. When set, compiled retrieval may skip unread
    * 1-of-k body blocks after stronger co-occurrence classes are evaluated.
    * Fail closed to exhaustive compiled retrieval if the proof does not hold.
+   * `relatedExpansionSources` is consulted only for ids already retrieved as
+   * title hits. It does not by itself walk skipped body documents.
    */
-  exactBlockSkip?: false | { requiredDepth: number };
+  exactBlockSkip?:
+    | false
+    | {
+        requiredDepth: number;
+        relatedExpansionSources?: ((id: string) => boolean) | null;
+      };
 }
 
 export interface AdaptiveOptions {
@@ -706,7 +741,7 @@ export interface SearchEngineOptions {
 }
 
 export interface LexicalIndexArtifact {
-  format: "search-v2-lexical-index";
+  format: "search-lexical-index" | "search-v2-lexical-index";
   version: 1;
   compatibility: {
     core: string;

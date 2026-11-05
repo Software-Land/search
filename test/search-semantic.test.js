@@ -31,6 +31,8 @@ describe("search-semantic package boundary", () => {
     expect(fs.existsSync(semanticBuilderPath())).toBe(true);
     expect(semanticRoot()).toContain("search-semantic");
     expect(fs.existsSync(path.join(semanticRoot(), "lib", "embedding.py"))).toBe(true);
+    expect(fs.existsSync(path.join(semanticRoot(), "lib", "openai_embeddings.py"))).toBe(true);
+    expect(fs.existsSync(path.join(semanticRoot(), "requirements-openai.txt"))).toBe(true);
   });
 
   test("runtime and browser do not import the semantic launcher", () => {
@@ -42,6 +44,9 @@ describe("search-semantic package boundary", () => {
         expect(text.includes("search-semantic")).toBe(false);
         expect(text.includes("@software-land/search/semantic")).toBe(false);
         expect(text.includes("compileSemantic")).toBe(false);
+        expect(text.includes("openai")).toBe(false);
+        expect(text.includes("OPENAI_API_KEY")).toBe(false);
+        expect(text.includes("api.openai.com")).toBe(false);
       }
     }
   });
@@ -52,7 +57,7 @@ describe("search-semantic package boundary", () => {
     expect(text.includes("@software-land/search/src")).toBe(false);
   });
 
-  test("lexical compile emits search-v2-relationships without vectors", async () => {
+  test("lexical compile emits search-relationships without vectors", async () => {
     const outputPath = path.join(os.tmpdir(), `search-semantic-lex-${process.pid}.json`);
     const { artifact, report } = await compileSemantic(DOCS, {
       method: "lexical",
@@ -61,7 +66,7 @@ describe("search-semantic package boundary", () => {
       minScore: 0.05,
       outputPath,
     });
-    expect(artifact.format).toBe("search-v2-relationships");
+    expect(artifact.format).toBe("search-relationships");
     expect(artifact.version).toBe(1);
     expect(artifact.vectors).toBeUndefined();
     expect(artifact.embeddings).toBeUndefined();
@@ -122,7 +127,7 @@ describe("compileSemantic outputPath lifecycle", () => {
       outputPath = result.outputPath;
       expect(fs.existsSync(result.outputPath)).toBe(true);
       const onDisk = JSON.parse(fs.readFileSync(result.outputPath, "utf8"));
-      expect(onDisk.format).toBe("search-v2-relationships");
+      expect(onDisk.format).toBe("search-relationships");
       expect(onDisk.version).toBe(1);
       expect(onDisk).toEqual(result.artifact);
       expect(path.basename(result.outputPath)).toMatch(/^search-semantic-output-.+\.json$/);
@@ -145,7 +150,7 @@ describe("compileSemantic outputPath lifecycle", () => {
       expect(fs.existsSync(outputPath)).toBe(true);
       const onDisk = JSON.parse(fs.readFileSync(outputPath, "utf8"));
       expect(onDisk).toEqual(result.artifact);
-      expect(onDisk.format).toBe("search-v2-relationships");
+      expect(onDisk.format).toBe("search-relationships");
       expect(onDisk.version).toBe(1);
       for (const dir of mk.dirs) expect(fs.existsSync(dir)).toBe(false);
     } finally {

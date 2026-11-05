@@ -1,4 +1,4 @@
-"""Emit search-v2-relationships v1. No vectors."""
+"""Emit a search-relationships artifact with schema version 1. No vectors."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ def to_artifact(
             for tgt, strength in rows
         ]
     return {
-        "format": "search-v2-relationships",
+        "format": "search-relationships",
         "version": 1,
         "relationships": relationships,
     }

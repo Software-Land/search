@@ -1,13 +1,14 @@
 /**
- * Stage 3A: exact unread body-block skipping on the shared 128-document
- * ordinal grid. Stronger co-occurrence classes are evaluated first. The 1-of-k
- * body flood is skipped only after every pop>=2 class has been evaluated and
- * the weak representative stream is proven full. Missing or uncertain metadata
- * fails closed to exhaustive retrieval.
+ * Body posting pruning: skip unread noncompetitive body postings on the shared
+ * 128-document ordinal grid. Stronger co-occurrence classes are evaluated
+ * first. The 1-of-k body flood is skipped only after every pop>=2 class has
+ * been evaluated and the weak representative stream is proven full. Missing or
+ * uncertain metadata fails closed to exhaustive retrieval.
  */
 
 import { throwIfAborted } from "../cancel.js";
 import { REPEATED_BODY_PHRASE_MIN } from "../evidencePolicy.js";
+import { directBodyOccurrenceCount } from "./retrieve.js";
 import { BODY_LEXICAL_SCORE_COEFFICIENT } from "../ranking/lexicalCoefficient.js";
 import {
   EXACT_PRUNING_BLOCK_SIZE,
@@ -22,7 +23,7 @@ import type { AnalyzedQuery, IndexedDocument, QueryConcept } from "../types.js";
 import { isAllDigitToken } from "../text/versionForms.js";
 import type { RankingEvidenceSession } from "../ranking/evidence/rankingEvidenceState.js";
 
-export type Stage3AStats = {
+export type BodyPostingPruningStats = {
   applied: boolean;
   fallbackReason: string | null;
   /**
@@ -33,7 +34,7 @@ export type Stage3AStats = {
   /** Presence blocks whose body posting payloads were walked. */
   postingBlocksDecoded: number;
   /**
-   * Presence blocks classified from exact-pruning-v2 bits without walking
+   * Presence blocks classified from exact-pruning-body-term-masks bits without walking
    * body posting payloads.
    */
   postingBlocksClassifiedFromMasks: number;
@@ -47,9 +48,9 @@ export type Stage3AStats = {
   skippedBodyOrdinals: number;
 };
 
-export type Stage3APlan = {
+export type BodyPostingPruningPlan = {
   bodyOrdinals: number[];
-  stats: Stage3AStats;
+  stats: BodyPostingPruningStats;
 };
 
 const MASK_WORDS = 4;
@@ -70,7 +71,7 @@ export function oneOfKBodyOnlyMaxRoundedScore(conceptCount: number) {
   return Number((bodyLexicalMatch * BODY_LEXICAL_SCORE_COEFFICIENT).toFixed(6));
 }
 
-export type Stage3AUnsupportedReason =
+export type BodyPostingPruningUnsupportedReason =
   | "token-count"
   | "alternatives"
   | "dotted-spans"
@@ -87,7 +88,7 @@ export type Stage3AUnsupportedReason =
   | "completed-token"
   | "token-sources";
 
-export function stage3AUnsupportedReason(query: AnalyzedQuery): Stage3AUnsupportedReason | null {
+export function bodyPostingPruningUnsupportedReason(query: AnalyzedQuery): BodyPostingPruningUnsupportedReason | null {
   const tokens = query.tokens || [];
   if (tokens.length < 2) return "token-count";
   if (query.alternatives?.length) return "alternatives";
@@ -235,7 +236,7 @@ function unreadBlockSet(skipped: number[]) {
   return blocks;
 }
 
-export function planStage3ABodyOrdinals({
+export function planBodyPostingPruning({
   query,
   compiled,
   documents,
@@ -243,6 +244,7 @@ export function planStage3ABodyOrdinals({
   requiredDepth,
   signal,
   evidenceWriter,
+  relatedExpansionSources = null,
 }: {
   query: AnalyzedQuery;
   compiled: CompiledLexicalRuntime;
@@ -251,9 +253,10 @@ export function planStage3ABodyOrdinals({
   requiredDepth: number;
   signal?: AbortSignal;
   evidenceWriter?: RankingEvidenceSession | null;
-}): Stage3APlan | null {
-  const reason = stage3AUnsupportedReason(query);
-  if (reason || !compiled.exactPruningV2) return null;
+  relatedExpansionSources?: ((id: string) => boolean) | null;
+}): BodyPostingPruningPlan | null {
+  const reason = bodyPostingPruningUnsupportedReason(query);
+  if (reason || !compiled.bodyTermMasks) return null;
   const terms = (query.concepts || []).filter((concept) => concept.kind === "term");
   const n = documents.length;
   const nBlocks = Math.max(1, Math.ceil(n / EXACT_PRUNING_BLOCK_SIZE));
@@ -320,6 +323,29 @@ export function planStage3ABodyOrdinals({
       if (depth > 0 && weak >= depth) break;
     }
   }
+  // A repeated body count outranks a zero-term related neighbor. That neighbor
+  // is expanded only from a strong primary, and on this query class a strong
+  // primary is already a title hit. When none of those hits can expand a
+  // hybrid neighbor, the count cannot change order and is not read.
+  const expandsRelated = relatedExpansionSources || null;
+  let repeatedDirectCanBeatRelated = false;
+  if (expandsRelated) {
+    for (const ordinal of titleOrdinals) {
+      const id = documents[ordinal]?.id;
+      if (id && expandsRelated(id)) {
+        repeatedDirectCanBeatRelated = true;
+        break;
+      }
+    }
+  }
+  if (repeatedDirectCanBeatRelated) {
+    for (const ordinal of class1) {
+      if (evaluated.has(ordinal) || titleOrdinals.has(ordinal)) continue;
+      if (directBodyOccurrenceCount(query, documents[ordinal]) >= REPEATED_BODY_PHRASE_MIN) {
+        evaluated.add(ordinal);
+      }
+    }
+  }
 
   const skippedBodyOrdinals = class1.filter(
     (ordinal) => !evaluated.has(ordinal) && !titleOrdinals.has(ordinal)
@@ -337,7 +363,7 @@ export function planStage3ABodyOrdinals({
           evidenceMask |= evidenceConceptMasks[conceptIndex];
         }
       }
-      evidenceWriter.writeStage3AConceptMask(ordinal, evidenceMask);
+      evidenceWriter.writeBodyPostingConceptMask(ordinal, evidenceMask);
     };
     for (const ordinal of titleOrdinals) emit(ordinal);
     for (const ordinal of bodyOrdinals) emit(ordinal);

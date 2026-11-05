@@ -59,7 +59,7 @@ function hitSet(engine, query, skipDuplicatePostingLists) {
     .sort();
 }
 
-describe("Stage-2B exact posting-work audit", () => {
+describe("duplicate posting-list skipping audit", () => {
   test("shadow planner matches exhaustive visits and proves identical-list skip", async () => {
     const documents = [
       { id: "winner", title: "The", body: "" },
@@ -247,7 +247,7 @@ describe("Stage-2B exact posting-work audit", () => {
     }
   }, 120_000);
 
-  test("audit block size stays aligned with Stage 2A", () => {
+  test("audit block size stays aligned with feature block pruning", () => {
     expect(POSTING_AUDIT_BLOCK_SIZE).toBe(128);
   });
 });

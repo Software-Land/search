@@ -1,36 +1,24 @@
 {
-  "format": "search-v2-relationships",
+  "format": "search-relationships",
   "version": 1,
   "relationships": {
     "1": [
       {
         "target": "r",
         "type": "semantic",
-        "strength": 0.507686,
-        "provenance": "embedding"
-      },
-      {
-        "target": "4",
-        "type": "semantic",
-        "strength": 0.493335,
+        "strength": 0.61107,
         "provenance": "embedding"
       },
       {
         "target": "R",
         "type": "semantic",
-        "strength": 0.487369,
-        "provenance": "embedding"
-      },
-      {
-        "target": "af",
-        "type": "semantic",
-        "strength": 0.466611,
+        "strength": 0.604743,
         "provenance": "embedding"
       },
       {
         "target": "Q",
         "type": "semantic",
-        "strength": 0.44612,
+        "strength": 0.58535,
         "provenance": "embedding"
       }
     ],
@@ -38,59 +26,19 @@
       {
         "target": "ce",
         "type": "semantic",
-        "strength": 0.715741,
-        "provenance": "embedding"
-      }
-    ],
-    "3": [
-      {
-        "target": "D",
-        "type": "semantic",
-        "strength": 0.39409,
+        "strength": 0.773091,
         "provenance": "embedding"
       },
       {
-        "target": "bo",
+        "target": "ae",
         "type": "semantic",
-        "strength": 0.367063,
+        "strength": 0.48699,
         "provenance": "embedding"
       },
       {
-        "target": "7",
+        "target": "6",
         "type": "semantic",
-        "strength": 0.352959,
-        "provenance": "embedding"
-      }
-    ],
-    "4": [
-      {
-        "target": "1",
-        "type": "semantic",
-        "strength": 0.493335,
-        "provenance": "embedding"
-      },
-      {
-        "target": "R",
-        "type": "semantic",
-        "strength": 0.484445,
-        "provenance": "embedding"
-      },
-      {
-        "target": "d",
-        "type": "semantic",
-        "strength": 0.469511,
-        "provenance": "embedding"
-      },
-      {
-        "target": "r",
-        "type": "semantic",
-        "strength": 0.456569,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bo",
-        "type": "semantic",
-        "strength": 0.446395,
+        "strength": 0.47755,
         "provenance": "embedding"
       }
     ],
@@ -98,7 +46,7 @@
       {
         "target": "R",
         "type": "semantic",
-        "strength": 0.673531,
+        "strength": 0.749527,
         "provenance": "embedding"
       }
     ],
@@ -106,47 +54,53 @@
       {
         "target": "cj",
         "type": "semantic",
-        "strength": 0.439483,
+        "strength": 0.570578,
         "provenance": "embedding"
       },
       {
-        "target": "bc",
+        "target": "2",
         "type": "semantic",
-        "strength": 0.390771,
-        "provenance": "embedding"
-      }
-    ],
-    "7": [
-      {
-        "target": "e",
-        "type": "semantic",
-        "strength": 0.379408,
-        "provenance": "embedding"
-      },
-      {
-        "target": "3",
-        "type": "semantic",
-        "strength": 0.352959,
+        "strength": 0.47755,
         "provenance": "embedding"
       }
     ],
     "8": [
       {
-        "target": "am",
-        "type": "semantic",
-        "strength": 0.554443,
-        "provenance": "embedding"
+        "target": "G",
+        "type": "editorial",
+        "strength": 1,
+        "provenance": "manual"
       },
       {
         "target": "cc",
         "type": "semantic",
-        "strength": 0.394512,
+        "strength": 0.695428,
         "provenance": "embedding"
       },
       {
-        "target": "X",
+        "target": "am",
         "type": "semantic",
-        "strength": 0.357641,
+        "strength": 0.661549,
+        "provenance": "embedding"
+      },
+      {
+        "target": "aa",
+        "type": "semantic",
+        "strength": 0.516104,
+        "provenance": "embedding"
+      },
+      {
+        "target": "cf",
+        "type": "semantic",
+        "strength": 0.479645,
+        "provenance": "embedding"
+      }
+    ],
+    "9": [
+      {
+        "target": "c",
+        "type": "semantic",
+        "strength": 0.458172,
         "provenance": "embedding"
       }
     ],
@@ -154,41 +108,39 @@
       {
         "target": "c",
         "type": "semantic",
-        "strength": 0.472043,
+        "strength": 0.651274,
         "provenance": "embedding"
       },
       {
-        "target": "bk",
+        "target": "bi",
         "type": "semantic",
-        "strength": 0.399905,
-        "provenance": "embedding"
-      }
-    ],
-    "B": [
-      {
-        "target": "c",
-        "type": "semantic",
-        "strength": 0.428197,
+        "strength": 0.54041,
         "provenance": "embedding"
       }
     ],
     "C": [
       {
-        "target": "bk",
+        "target": "bo",
         "type": "semantic",
-        "strength": 0.412513,
+        "strength": 0.516251,
+        "provenance": "embedding"
+      },
+      {
+        "target": "c",
+        "type": "semantic",
+        "strength": 0.509807,
+        "provenance": "embedding"
+      },
+      {
+        "target": "M",
+        "type": "semantic",
+        "strength": 0.504732,
         "provenance": "embedding"
       },
       {
         "target": "bj",
         "type": "semantic",
-        "strength": 0.385591,
-        "provenance": "embedding"
-      },
-      {
-        "target": "D",
-        "type": "semantic",
-        "strength": 0.379634,
+        "strength": 0.501087,
         "provenance": "embedding"
       }
     ],
@@ -206,27 +158,21 @@
         "provenance": "manual"
       },
       {
+        "target": "ci",
+        "type": "semantic",
+        "strength": 0.498103,
+        "provenance": "embedding"
+      },
+      {
         "target": "Q",
         "type": "semantic",
-        "strength": 0.461957,
-        "provenance": "embedding"
-      },
-      {
-        "target": "3",
-        "type": "semantic",
-        "strength": 0.39409,
-        "provenance": "embedding"
-      },
-      {
-        "target": "C",
-        "type": "semantic",
-        "strength": 0.379634,
+        "strength": 0.49212,
         "provenance": "embedding"
       },
       {
         "target": "e",
         "type": "semantic",
-        "strength": 0.377866,
+        "strength": 0.465414,
         "provenance": "embedding"
       }
     ],
@@ -240,7 +186,7 @@
       {
         "target": "f",
         "type": "semantic",
-        "strength": 0.349504,
+        "strength": 0.518449,
         "provenance": "embedding"
       }
     ],
@@ -248,45 +194,33 @@
       {
         "target": "as",
         "type": "semantic",
-        "strength": 0.701103,
+        "strength": 0.616167,
         "provenance": "embedding"
       },
       {
         "target": "y",
         "type": "semantic",
-        "strength": 0.520852,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bb",
-        "type": "semantic",
-        "strength": 0.50075,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bl",
-        "type": "semantic",
-        "strength": 0.495718,
+        "strength": 0.532194,
         "provenance": "embedding"
       }
     ],
     "J": [
       {
-        "target": "br",
-        "type": "semantic",
-        "strength": 0.511752,
-        "provenance": "embedding"
-      },
-      {
         "target": "cd",
         "type": "semantic",
-        "strength": 0.408773,
+        "strength": 0.56969,
         "provenance": "embedding"
       },
       {
-        "target": "a",
+        "target": "br",
         "type": "semantic",
-        "strength": 0.339066,
+        "strength": 0.517504,
+        "provenance": "embedding"
+      },
+      {
+        "target": "N",
+        "type": "semantic",
+        "strength": 0.470543,
         "provenance": "embedding"
       }
     ],
@@ -294,71 +228,91 @@
       {
         "target": "an",
         "type": "semantic",
-        "strength": 0.72547,
+        "strength": 0.618936,
         "provenance": "embedding"
       },
       {
         "target": "bf",
         "type": "semantic",
-        "strength": 0.677727,
-        "provenance": "embedding"
-      },
-      {
-        "target": "au",
-        "type": "semantic",
-        "strength": 0.532582,
-        "provenance": "embedding"
-      },
-      {
-        "target": "x",
-        "type": "semantic",
-        "strength": 0.519397,
-        "provenance": "embedding"
-      },
-      {
-        "target": "ba",
-        "type": "semantic",
-        "strength": 0.508141,
-        "provenance": "embedding"
-      }
-    ],
-    "L": [
-      {
-        "target": "bf",
-        "type": "semantic",
-        "strength": 0.492003,
+        "strength": 0.618058,
         "provenance": "embedding"
       },
       {
         "target": "bm",
         "type": "semantic",
-        "strength": 0.387815,
+        "strength": 0.492717,
         "provenance": "embedding"
       },
       {
+        "target": "L",
+        "type": "semantic",
+        "strength": 0.483686,
+        "provenance": "embedding"
+      },
+      {
+        "target": "au",
+        "type": "semantic",
+        "strength": 0.481243,
+        "provenance": "embedding"
+      }
+    ],
+    "L": [
+      {
         "target": "az",
         "type": "semantic",
-        "strength": 0.36697,
+        "strength": 0.508472,
+        "provenance": "embedding"
+      },
+      {
+        "target": "K",
+        "type": "semantic",
+        "strength": 0.483686,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bm",
+        "type": "semantic",
+        "strength": 0.468788,
         "provenance": "embedding"
       }
     ],
     "M": [
       {
-        "target": "ao",
+        "target": "y",
         "type": "semantic",
-        "strength": 0.482416,
+        "strength": 0.546878,
         "provenance": "embedding"
       },
       {
-        "target": "Q",
+        "target": "bb",
         "type": "semantic",
-        "strength": 0.434158,
+        "strength": 0.522208,
+        "provenance": "embedding"
+      },
+      {
+        "target": "C",
+        "type": "semantic",
+        "strength": 0.504732,
         "provenance": "embedding"
       },
       {
         "target": "s",
         "type": "semantic",
-        "strength": 0.39885,
+        "strength": 0.500047,
+        "provenance": "embedding"
+      }
+    ],
+    "N": [
+      {
+        "target": "bo",
+        "type": "semantic",
+        "strength": 0.49026,
+        "provenance": "embedding"
+      },
+      {
+        "target": "J",
+        "type": "semantic",
+        "strength": 0.470543,
         "provenance": "embedding"
       }
     ],
@@ -366,51 +320,39 @@
       {
         "target": "z",
         "type": "semantic",
-        "strength": 0.783118,
-        "provenance": "embedding"
-      },
-      {
-        "target": "y",
-        "type": "semantic",
-        "strength": 0.543501,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bb",
-        "type": "semantic",
-        "strength": 0.512099,
+        "strength": 0.763495,
         "provenance": "embedding"
       }
     ],
     "Q": [
       {
-        "target": "R",
-        "type": "semantic",
-        "strength": 0.512663,
-        "provenance": "embedding"
-      },
-      {
         "target": "r",
         "type": "semantic",
-        "strength": 0.465212,
+        "strength": 0.59501,
         "provenance": "embedding"
       },
       {
-        "target": "D",
+        "target": "R",
         "type": "semantic",
-        "strength": 0.461957,
+        "strength": 0.590394,
         "provenance": "embedding"
       },
       {
         "target": "1",
         "type": "semantic",
-        "strength": 0.44612,
+        "strength": 0.58535,
         "provenance": "embedding"
       },
       {
-        "target": "M",
+        "target": "D",
         "type": "semantic",
-        "strength": 0.434158,
+        "strength": 0.49212,
+        "provenance": "embedding"
+      },
+      {
+        "target": "aq",
+        "type": "semantic",
+        "strength": 0.480898,
         "provenance": "embedding"
       }
     ],
@@ -418,39 +360,25 @@
       {
         "target": "5",
         "type": "semantic",
-        "strength": 0.673531,
+        "strength": 0.749527,
         "provenance": "embedding"
       },
       {
         "target": "r",
         "type": "semantic",
-        "strength": 0.576049,
-        "provenance": "embedding"
-      },
-      {
-        "target": "Q",
-        "type": "semantic",
-        "strength": 0.512663,
+        "strength": 0.738355,
         "provenance": "embedding"
       },
       {
         "target": "1",
         "type": "semantic",
-        "strength": 0.487369,
+        "strength": 0.604743,
         "provenance": "embedding"
       },
       {
-        "target": "4",
+        "target": "Q",
         "type": "semantic",
-        "strength": 0.484445,
-        "provenance": "embedding"
-      }
-    ],
-    "S": [
-      {
-        "target": "cl",
-        "type": "semantic",
-        "strength": 0.302812,
+        "strength": 0.590394,
         "provenance": "embedding"
       }
     ],
@@ -458,31 +386,13 @@
       {
         "target": "h",
         "type": "semantic",
-        "strength": 0.793886,
+        "strength": 0.851588,
         "provenance": "embedding"
       },
       {
-        "target": "i",
+        "target": "m",
         "type": "semantic",
-        "strength": 0.76376,
-        "provenance": "embedding"
-      },
-      {
-        "target": "o",
-        "type": "semantic",
-        "strength": 0.747227,
-        "provenance": "embedding"
-      },
-      {
-        "target": "aj",
-        "type": "semantic",
-        "strength": 0.722575,
-        "provenance": "embedding"
-      },
-      {
-        "target": "ak",
-        "type": "semantic",
-        "strength": 0.713756,
+        "strength": 0.798467,
         "provenance": "embedding"
       }
     ],
@@ -490,87 +400,51 @@
       {
         "target": "ae",
         "type": "semantic",
-        "strength": 0.342076,
-        "provenance": "embedding"
-      }
-    ],
-    "X": [
-      {
-        "target": "cm",
-        "type": "semantic",
-        "strength": 0.41683,
-        "provenance": "embedding"
-      },
-      {
-        "target": "ap",
-        "type": "semantic",
-        "strength": 0.36128,
-        "provenance": "embedding"
-      },
-      {
-        "target": "8",
-        "type": "semantic",
-        "strength": 0.357641,
-        "provenance": "embedding"
-      },
-      {
-        "target": "t",
-        "type": "semantic",
-        "strength": 0.35162,
-        "provenance": "embedding"
-      },
-      {
-        "target": "k",
-        "type": "semantic",
-        "strength": 0.349078,
+        "strength": 0.442275,
         "provenance": "embedding"
       }
     ],
     "Z": [
       {
-        "target": "h",
+        "target": "al",
         "type": "semantic",
-        "strength": 0.753175,
+        "strength": 0.827844,
         "provenance": "embedding"
       },
       {
-        "target": "aj",
+        "target": "i",
         "type": "semantic",
-        "strength": 0.678312,
+        "strength": 0.82287,
         "provenance": "embedding"
       },
       {
         "target": "v",
         "type": "semantic",
-        "strength": 0.674558,
+        "strength": 0.7977,
         "provenance": "embedding"
       }
     ],
     "a": [
       {
-        "target": "t",
+        "target": "k",
         "type": "semantic",
-        "strength": 0.392851,
-        "provenance": "embedding"
-      },
-      {
-        "target": "J",
-        "type": "semantic",
-        "strength": 0.339066,
-        "provenance": "embedding"
-      },
-      {
-        "target": "w",
-        "type": "semantic",
-        "strength": 0.317606,
+        "strength": 0.511495,
         "provenance": "embedding"
       }
     ],
     "aa": [
       {
-        "target": "bp",
+        "target": "8",
         "type": "semantic",
-        "strength": 0.436902,
+        "strength": 0.516104,
+        "provenance": "embedding"
+      }
+    ],
+    "ad": [
+      {
+        "target": "ai",
+        "type": "semantic",
+        "strength": 0.440683,
         "provenance": "embedding"
       }
     ],
@@ -578,21 +452,19 @@
       {
         "target": "ah",
         "type": "semantic",
-        "strength": 0.592703,
+        "strength": 0.584162,
+        "provenance": "embedding"
+      },
+      {
+        "target": "2",
+        "type": "semantic",
+        "strength": 0.48699,
         "provenance": "embedding"
       },
       {
         "target": "W",
         "type": "semantic",
-        "strength": 0.342076,
-        "provenance": "embedding"
-      }
-    ],
-    "af": [
-      {
-        "target": "1",
-        "type": "semantic",
-        "strength": 0.466611,
+        "strength": 0.442275,
         "provenance": "embedding"
       }
     ],
@@ -600,7 +472,7 @@
       {
         "target": "ae",
         "type": "semantic",
-        "strength": 0.592703,
+        "strength": 0.584162,
         "provenance": "embedding"
       }
     ],
@@ -610,31 +482,11 @@
         "type": "editorial",
         "strength": 1,
         "provenance": "manual"
-      }
-    ],
-    "aj": [
-      {
-        "target": "h",
-        "type": "semantic",
-        "strength": 0.729772,
-        "provenance": "embedding"
       },
       {
-        "target": "o",
+        "target": "ad",
         "type": "semantic",
-        "strength": 0.728424,
-        "provenance": "embedding"
-      },
-      {
-        "target": "T",
-        "type": "semantic",
-        "strength": 0.722575,
-        "provenance": "embedding"
-      },
-      {
-        "target": "Z",
-        "type": "semantic",
-        "strength": 0.678312,
+        "strength": 0.440683,
         "provenance": "embedding"
       }
     ],
@@ -642,25 +494,31 @@
       {
         "target": "al",
         "type": "semantic",
-        "strength": 0.861703,
+        "strength": 0.911785,
         "provenance": "embedding"
       },
       {
-        "target": "T",
+        "target": "h",
         "type": "semantic",
-        "strength": 0.713756,
+        "strength": 0.869613,
         "provenance": "embedding"
       },
       {
         "target": "i",
         "type": "semantic",
-        "strength": 0.702919,
+        "strength": 0.857587,
         "provenance": "embedding"
       },
       {
         "target": "m",
         "type": "semantic",
-        "strength": 0.694225,
+        "strength": 0.834433,
+        "provenance": "embedding"
+      },
+      {
+        "target": "o",
+        "type": "semantic",
+        "strength": 0.803942,
         "provenance": "embedding"
       }
     ],
@@ -668,19 +526,31 @@
       {
         "target": "ak",
         "type": "semantic",
-        "strength": 0.861703,
+        "strength": 0.911785,
+        "provenance": "embedding"
+      },
+      {
+        "target": "h",
+        "type": "semantic",
+        "strength": 0.886646,
         "provenance": "embedding"
       },
       {
         "target": "i",
         "type": "semantic",
-        "strength": 0.724532,
+        "strength": 0.881761,
         "provenance": "embedding"
       },
       {
-        "target": "o",
+        "target": "m",
         "type": "semantic",
-        "strength": 0.678294,
+        "strength": 0.857032,
+        "provenance": "embedding"
+      },
+      {
+        "target": "Z",
+        "type": "semantic",
+        "strength": 0.827844,
         "provenance": "embedding"
       }
     ],
@@ -688,13 +558,7 @@
       {
         "target": "8",
         "type": "semantic",
-        "strength": 0.554443,
-        "provenance": "embedding"
-      },
-      {
-        "target": "cg",
-        "type": "semantic",
-        "strength": 0.454613,
+        "strength": 0.661549,
         "provenance": "embedding"
       }
     ],
@@ -702,19 +566,31 @@
       {
         "target": "K",
         "type": "semantic",
-        "strength": 0.72547,
+        "strength": 0.618936,
+        "provenance": "embedding"
+      },
+      {
+        "target": "ba",
+        "type": "semantic",
+        "strength": 0.56425,
+        "provenance": "embedding"
+      },
+      {
+        "target": "aq",
+        "type": "semantic",
+        "strength": 0.55907,
         "provenance": "embedding"
       },
       {
         "target": "x",
         "type": "semantic",
-        "strength": 0.491667,
+        "strength": 0.548782,
         "provenance": "embedding"
       },
       {
-        "target": "n",
+        "target": "bf",
         "type": "semantic",
-        "strength": 0.456345,
+        "strength": 0.540299,
         "provenance": "embedding"
       }
     ],
@@ -722,27 +598,27 @@
       {
         "target": "ax",
         "type": "semantic",
-        "strength": 0.637183,
+        "strength": 0.61156,
         "provenance": "embedding"
       },
       {
-        "target": "M",
+        "target": "ba",
         "type": "semantic",
-        "strength": 0.482416,
+        "strength": 0.534741,
+        "provenance": "embedding"
+      },
+      {
+        "target": "ap",
+        "type": "semantic",
+        "strength": 0.530353,
         "provenance": "embedding"
       }
     ],
     "ap": [
       {
-        "target": "br",
+        "target": "ao",
         "type": "semantic",
-        "strength": 0.452314,
-        "provenance": "embedding"
-      },
-      {
-        "target": "X",
-        "type": "semantic",
-        "strength": 0.36128,
+        "strength": 0.530353,
         "provenance": "embedding"
       }
     ],
@@ -750,45 +626,57 @@
       {
         "target": "ba",
         "type": "semantic",
-        "strength": 0.612526,
+        "strength": 0.649935,
+        "provenance": "embedding"
+      },
+      {
+        "target": "an",
+        "type": "semantic",
+        "strength": 0.55907,
         "provenance": "embedding"
       },
       {
         "target": "x",
         "type": "semantic",
-        "strength": 0.502585,
+        "strength": 0.557056,
+        "provenance": "embedding"
+      },
+      {
+        "target": "Q",
+        "type": "semantic",
+        "strength": 0.480898,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bg",
+        "type": "semantic",
+        "strength": 0.45489,
         "provenance": "embedding"
       }
     ],
     "as": [
       {
-        "target": "F",
+        "target": "bl",
         "type": "semantic",
-        "strength": 0.701103,
+        "strength": 0.633655,
         "provenance": "embedding"
       },
       {
-        "target": "bl",
+        "target": "F",
         "type": "semantic",
-        "strength": 0.51235,
+        "strength": 0.616167,
         "provenance": "embedding"
       },
       {
         "target": "ay",
         "type": "semantic",
-        "strength": 0.43877,
+        "strength": 0.524403,
         "provenance": "embedding"
       },
       {
         "target": "az",
         "type": "semantic",
-        "strength": 0.429095,
-        "provenance": "embedding"
-      },
-      {
-        "target": "f",
-        "type": "semantic",
-        "strength": 0.380839,
+        "strength": 0.504216,
         "provenance": "embedding"
       }
     ],
@@ -796,13 +684,25 @@
       {
         "target": "av",
         "type": "semantic",
-        "strength": 0.557058,
+        "strength": 0.601243,
         "provenance": "embedding"
       },
       {
         "target": "bd",
         "type": "semantic",
-        "strength": 0.349919,
+        "strength": 0.584804,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bb",
+        "type": "semantic",
+        "strength": 0.514513,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bq",
+        "type": "semantic",
+        "strength": 0.459597,
         "provenance": "embedding"
       }
     ],
@@ -810,25 +710,19 @@
       {
         "target": "bf",
         "type": "semantic",
-        "strength": 0.627315,
-        "provenance": "embedding"
-      },
-      {
-        "target": "K",
-        "type": "semantic",
-        "strength": 0.532582,
+        "strength": 0.602268,
         "provenance": "embedding"
       },
       {
         "target": "bm",
         "type": "semantic",
-        "strength": 0.436385,
+        "strength": 0.486709,
         "provenance": "embedding"
       },
       {
-        "target": "aw",
+        "target": "K",
         "type": "semantic",
-        "strength": 0.432403,
+        "strength": 0.481243,
         "provenance": "embedding"
       }
     ],
@@ -836,47 +730,53 @@
       {
         "target": "at",
         "type": "semantic",
-        "strength": 0.557058,
+        "strength": 0.601243,
         "provenance": "embedding"
       },
       {
-        "target": "j",
+        "target": "p",
         "type": "semantic",
-        "strength": 0.401127,
+        "strength": 0.499968,
         "provenance": "embedding"
       }
     ],
     "aw": [
       {
-        "target": "b",
-        "type": "semantic",
-        "strength": 0.439447,
-        "provenance": "embedding"
-      },
-      {
-        "target": "au",
-        "type": "semantic",
-        "strength": 0.432403,
-        "provenance": "embedding"
-      },
-      {
         "target": "f",
         "type": "semantic",
-        "strength": 0.426853,
+        "strength": 0.550525,
+        "provenance": "embedding"
+      },
+      {
+        "target": "ax",
+        "type": "semantic",
+        "strength": 0.50442,
+        "provenance": "embedding"
+      },
+      {
+        "target": "be",
+        "type": "semantic",
+        "strength": 0.49321,
         "provenance": "embedding"
       }
     ],
     "ax": [
       {
-        "target": "ao",
+        "target": "ba",
         "type": "semantic",
-        "strength": 0.637183,
+        "strength": 0.625886,
         "provenance": "embedding"
       },
       {
-        "target": "ba",
+        "target": "ao",
         "type": "semantic",
-        "strength": 0.528809,
+        "strength": 0.61156,
+        "provenance": "embedding"
+      },
+      {
+        "target": "aw",
+        "type": "semantic",
+        "strength": 0.50442,
         "provenance": "embedding"
       }
     ],
@@ -884,29 +784,29 @@
       {
         "target": "as",
         "type": "semantic",
-        "strength": 0.43877,
+        "strength": 0.524403,
         "provenance": "embedding"
       }
     ],
     "az": [
       {
-        "target": "as",
+        "target": "L",
         "type": "semantic",
-        "strength": 0.429095,
+        "strength": 0.508472,
         "provenance": "embedding"
       },
       {
-        "target": "L",
+        "target": "as",
         "type": "semantic",
-        "strength": 0.36697,
+        "strength": 0.504216,
         "provenance": "embedding"
       }
     ],
     "b": [
       {
-        "target": "aw",
+        "target": "f",
         "type": "semantic",
-        "strength": 0.439447,
+        "strength": 0.527082,
         "provenance": "embedding"
       }
     ],
@@ -914,31 +814,31 @@
       {
         "target": "aq",
         "type": "semantic",
-        "strength": 0.612526,
-        "provenance": "embedding"
-      },
-      {
-        "target": "x",
-        "type": "semantic",
-        "strength": 0.54693,
+        "strength": 0.649935,
         "provenance": "embedding"
       },
       {
         "target": "ax",
         "type": "semantic",
-        "strength": 0.528809,
+        "strength": 0.625886,
         "provenance": "embedding"
       },
       {
-        "target": "K",
+        "target": "an",
         "type": "semantic",
-        "strength": 0.508141,
+        "strength": 0.56425,
         "provenance": "embedding"
       },
       {
-        "target": "bf",
+        "target": "x",
         "type": "semantic",
-        "strength": 0.507258,
+        "strength": 0.547789,
+        "provenance": "embedding"
+      },
+      {
+        "target": "ao",
+        "type": "semantic",
+        "strength": 0.534741,
         "provenance": "embedding"
       }
     ],
@@ -946,91 +846,67 @@
       {
         "target": "y",
         "type": "semantic",
-        "strength": 0.776788,
+        "strength": 0.689481,
         "provenance": "embedding"
       },
       {
         "target": "z",
         "type": "semantic",
-        "strength": 0.64494,
+        "strength": 0.657312,
         "provenance": "embedding"
       },
       {
-        "target": "O",
+        "target": "M",
         "type": "semantic",
-        "strength": 0.512099,
-        "provenance": "embedding"
-      },
-      {
-        "target": "F",
-        "type": "semantic",
-        "strength": 0.50075,
+        "strength": 0.522208,
         "provenance": "embedding"
       },
       {
         "target": "j",
         "type": "semantic",
-        "strength": 0.453733,
-        "provenance": "embedding"
-      }
-    ],
-    "bc": [
-      {
-        "target": "cg",
-        "type": "semantic",
-        "strength": 0.450954,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bd",
-        "type": "semantic",
-        "strength": 0.438663,
-        "provenance": "embedding"
-      },
-      {
-        "target": "6",
-        "type": "semantic",
-        "strength": 0.390771,
-        "provenance": "embedding"
-      },
-      {
-        "target": "k",
-        "type": "semantic",
-        "strength": 0.372046,
-        "provenance": "embedding"
-      }
-    ],
-    "bd": [
-      {
-        "target": "bc",
-        "type": "semantic",
-        "strength": 0.438663,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bl",
-        "type": "semantic",
-        "strength": 0.431761,
+        "strength": 0.5164,
         "provenance": "embedding"
       },
       {
         "target": "at",
         "type": "semantic",
-        "strength": 0.349919,
+        "strength": 0.514513,
+        "provenance": "embedding"
+      }
+    ],
+    "bc": [
+      {
+        "target": "k",
+        "type": "semantic",
+        "strength": 0.466721,
+        "provenance": "embedding"
+      }
+    ],
+    "bd": [
+      {
+        "target": "at",
+        "type": "semantic",
+        "strength": 0.584804,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bq",
+        "type": "semantic",
+        "strength": 0.487467,
         "provenance": "embedding"
       }
     ],
     "be": [
       {
-        "target": "x",
+        "target": "bf",
         "type": "semantic",
-        "strength": 0.439705,
+        "strength": 0.557908,
         "provenance": "embedding"
       },
       {
-        "target": "bj",
+        "target": "aw",
         "type": "semantic",
-        "strength": 0.421985,
+        "strength": 0.49321,
         "provenance": "embedding"
       }
     ],
@@ -1038,31 +914,31 @@
       {
         "target": "K",
         "type": "semantic",
-        "strength": 0.677727,
+        "strength": 0.618058,
         "provenance": "embedding"
       },
       {
         "target": "au",
         "type": "semantic",
-        "strength": 0.627315,
+        "strength": 0.602268,
         "provenance": "embedding"
       },
       {
-        "target": "ba",
+        "target": "be",
         "type": "semantic",
-        "strength": 0.507258,
+        "strength": 0.557908,
         "provenance": "embedding"
       },
       {
-        "target": "L",
+        "target": "an",
         "type": "semantic",
-        "strength": 0.492003,
+        "strength": 0.540299,
         "provenance": "embedding"
       },
       {
         "target": "bm",
         "type": "semantic",
-        "strength": 0.475278,
+        "strength": 0.531866,
         "provenance": "embedding"
       }
     ],
@@ -1072,19 +948,53 @@
         "type": "editorial",
         "strength": 1,
         "provenance": "manual"
+      },
+      {
+        "target": "bl",
+        "type": "semantic",
+        "strength": 0.512122,
+        "provenance": "embedding"
+      },
+      {
+        "target": "aq",
+        "type": "semantic",
+        "strength": 0.45489,
+        "provenance": "embedding"
+      }
+    ],
+    "bh": [
+      {
+        "target": "bi",
+        "type": "semantic",
+        "strength": 0.534531,
+        "provenance": "embedding"
+      }
+    ],
+    "bi": [
+      {
+        "target": "A",
+        "type": "semantic",
+        "strength": 0.54041,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bh",
+        "type": "semantic",
+        "strength": 0.534531,
+        "provenance": "embedding"
+      },
+      {
+        "target": "p",
+        "type": "semantic",
+        "strength": 0.534069,
+        "provenance": "embedding"
       }
     ],
     "bj": [
       {
-        "target": "be",
-        "type": "semantic",
-        "strength": 0.421985,
-        "provenance": "embedding"
-      },
-      {
         "target": "C",
         "type": "semantic",
-        "strength": 0.385591,
+        "strength": 0.501087,
         "provenance": "embedding"
       }
     ],
@@ -1092,25 +1002,7 @@
       {
         "target": "c",
         "type": "semantic",
-        "strength": 0.527322,
-        "provenance": "embedding"
-      },
-      {
-        "target": "C",
-        "type": "semantic",
-        "strength": 0.412513,
-        "provenance": "embedding"
-      },
-      {
-        "target": "A",
-        "type": "semantic",
-        "strength": 0.399905,
-        "provenance": "embedding"
-      },
-      {
-        "target": "ci",
-        "type": "semantic",
-        "strength": 0.372189,
+        "strength": 0.509781,
         "provenance": "embedding"
       }
     ],
@@ -1118,19 +1010,13 @@
       {
         "target": "as",
         "type": "semantic",
-        "strength": 0.51235,
+        "strength": 0.633655,
         "provenance": "embedding"
       },
       {
-        "target": "F",
+        "target": "bg",
         "type": "semantic",
-        "strength": 0.495718,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bd",
-        "type": "semantic",
-        "strength": 0.431761,
+        "strength": 0.512122,
         "provenance": "embedding"
       }
     ],
@@ -1138,61 +1024,59 @@
       {
         "target": "bf",
         "type": "semantic",
-        "strength": 0.475278,
+        "strength": 0.531866,
+        "provenance": "embedding"
+      },
+      {
+        "target": "K",
+        "type": "semantic",
+        "strength": 0.492717,
         "provenance": "embedding"
       },
       {
         "target": "au",
         "type": "semantic",
-        "strength": 0.436385,
+        "strength": 0.486709,
+        "provenance": "embedding"
+      },
+      {
+        "target": "ci",
+        "type": "semantic",
+        "strength": 0.478271,
         "provenance": "embedding"
       },
       {
         "target": "L",
         "type": "semantic",
-        "strength": 0.387815,
-        "provenance": "embedding"
-      }
-    ],
-    "bn": [
-      {
-        "target": "cd",
-        "type": "semantic",
-        "strength": 0.372492,
-        "provenance": "embedding"
-      },
-      {
-        "target": "t",
-        "type": "semantic",
-        "strength": 0.360532,
+        "strength": 0.468788,
         "provenance": "embedding"
       }
     ],
     "bo": [
       {
-        "target": "4",
+        "target": "C",
         "type": "semantic",
-        "strength": 0.446395,
+        "strength": 0.516251,
         "provenance": "embedding"
       },
       {
-        "target": "3",
+        "target": "N",
         "type": "semantic",
-        "strength": 0.367063,
+        "strength": 0.49026,
         "provenance": "embedding"
       }
     ],
-    "bp": [
+    "bq": [
       {
-        "target": "aa",
+        "target": "bd",
         "type": "semantic",
-        "strength": 0.436902,
+        "strength": 0.487467,
         "provenance": "embedding"
       },
       {
-        "target": "br",
+        "target": "at",
         "type": "semantic",
-        "strength": 0.343007,
+        "strength": 0.459597,
         "provenance": "embedding"
       }
     ],
@@ -1200,19 +1084,7 @@
       {
         "target": "J",
         "type": "semantic",
-        "strength": 0.511752,
-        "provenance": "embedding"
-      },
-      {
-        "target": "ap",
-        "type": "semantic",
-        "strength": 0.452314,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bp",
-        "type": "semantic",
-        "strength": 0.343007,
+        "strength": 0.517504,
         "provenance": "embedding"
       }
     ],
@@ -1220,63 +1092,51 @@
       {
         "target": "bv",
         "type": "semantic",
-        "strength": 0.700973,
+        "strength": 0.738573,
         "provenance": "embedding"
       },
       {
         "target": "bu",
         "type": "semantic",
-        "strength": 0.614335,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bx",
-        "type": "semantic",
-        "strength": 0.589485,
+        "strength": 0.70415,
         "provenance": "embedding"
       },
       {
         "target": "by",
         "type": "semantic",
-        "strength": 0.552793,
-        "provenance": "embedding"
-      },
-      {
-        "target": "ca",
-        "type": "semantic",
-        "strength": 0.503616,
+        "strength": 0.60296,
         "provenance": "embedding"
       }
     ],
     "bt": [
       {
-        "target": "by",
+        "target": "cb",
         "type": "semantic",
-        "strength": 0.581858,
+        "strength": 0.712401,
         "provenance": "embedding"
       },
       {
         "target": "bw",
         "type": "semantic",
-        "strength": 0.571138,
-        "provenance": "embedding"
-      },
-      {
-        "target": "cb",
-        "type": "semantic",
-        "strength": 0.551479,
+        "strength": 0.678726,
         "provenance": "embedding"
       },
       {
         "target": "bx",
         "type": "semantic",
-        "strength": 0.535233,
+        "strength": 0.653102,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bz",
+        "type": "semantic",
+        "strength": 0.634125,
         "provenance": "embedding"
       },
       {
         "target": "bv",
         "type": "semantic",
-        "strength": 0.513303,
+        "strength": 0.599772,
         "provenance": "embedding"
       }
     ],
@@ -1284,45 +1144,45 @@
       {
         "target": "bv",
         "type": "semantic",
-        "strength": 0.751503,
+        "strength": 0.735235,
         "provenance": "embedding"
       },
       {
         "target": "bs",
         "type": "semantic",
-        "strength": 0.614335,
-        "provenance": "embedding"
-      }
-    ],
-    "bv": [
-      {
-        "target": "bu",
-        "type": "semantic",
-        "strength": 0.751503,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bs",
-        "type": "semantic",
-        "strength": 0.700973,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bx",
-        "type": "semantic",
-        "strength": 0.642399,
+        "strength": 0.70415,
         "provenance": "embedding"
       },
       {
         "target": "by",
         "type": "semantic",
-        "strength": 0.553362,
+        "strength": 0.647263,
+        "provenance": "embedding"
+      }
+    ],
+    "bv": [
+      {
+        "target": "bs",
+        "type": "semantic",
+        "strength": 0.738573,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bu",
+        "type": "semantic",
+        "strength": 0.735235,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bx",
+        "type": "semantic",
+        "strength": 0.713964,
         "provenance": "embedding"
       },
       {
         "target": "bt",
         "type": "semantic",
-        "strength": 0.513303,
+        "strength": 0.599772,
         "provenance": "embedding"
       }
     ],
@@ -1330,25 +1190,31 @@
       {
         "target": "bt",
         "type": "semantic",
-        "strength": 0.571138,
-        "provenance": "embedding"
-      },
-      {
-        "target": "by",
-        "type": "semantic",
-        "strength": 0.53862,
+        "strength": 0.678726,
         "provenance": "embedding"
       },
       {
         "target": "bx",
         "type": "semantic",
-        "strength": 0.477045,
+        "strength": 0.664732,
         "provenance": "embedding"
       },
       {
-        "target": "ck",
+        "target": "ca",
         "type": "semantic",
-        "strength": 0.476098,
+        "strength": 0.642624,
+        "provenance": "embedding"
+      },
+      {
+        "target": "by",
+        "type": "semantic",
+        "strength": 0.640484,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bz",
+        "type": "semantic",
+        "strength": 0.63473,
         "provenance": "embedding"
       }
     ],
@@ -1356,63 +1222,63 @@
       {
         "target": "bv",
         "type": "semantic",
-        "strength": 0.642399,
+        "strength": 0.713964,
         "provenance": "embedding"
       },
       {
-        "target": "bs",
+        "target": "bw",
         "type": "semantic",
-        "strength": 0.589485,
+        "strength": 0.664732,
         "provenance": "embedding"
       },
       {
         "target": "bt",
         "type": "semantic",
-        "strength": 0.535233,
+        "strength": 0.653102,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bz",
+        "type": "semantic",
+        "strength": 0.645307,
         "provenance": "embedding"
       },
       {
         "target": "by",
         "type": "semantic",
-        "strength": 0.505507,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bw",
-        "type": "semantic",
-        "strength": 0.477045,
+        "strength": 0.642953,
         "provenance": "embedding"
       }
     ],
     "by": [
       {
-        "target": "bt",
+        "target": "bu",
         "type": "semantic",
-        "strength": 0.581858,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bv",
-        "type": "semantic",
-        "strength": 0.553362,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bs",
-        "type": "semantic",
-        "strength": 0.552793,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bw",
-        "type": "semantic",
-        "strength": 0.53862,
+        "strength": 0.647263,
         "provenance": "embedding"
       },
       {
         "target": "bx",
         "type": "semantic",
-        "strength": 0.505507,
+        "strength": 0.642953,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bw",
+        "type": "semantic",
+        "strength": 0.640484,
+        "provenance": "embedding"
+      },
+      {
+        "target": "cb",
+        "type": "semantic",
+        "strength": 0.626658,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bs",
+        "type": "semantic",
+        "strength": 0.60296,
         "provenance": "embedding"
       }
     ],
@@ -1431,36 +1297,84 @@
       },
       {
         "target": "e",
+        "type": "editorial",
+        "strength": 1,
+        "provenance": "manual"
+      },
+      {
+        "target": "bx",
         "type": "semantic",
-        "strength": 0.466049,
+        "strength": 0.645307,
+        "provenance": "embedding"
+      },
+      {
+        "target": "cb",
+        "type": "semantic",
+        "strength": 0.643188,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bw",
+        "type": "semantic",
+        "strength": 0.63473,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bt",
+        "type": "semantic",
+        "strength": 0.634125,
+        "provenance": "embedding"
+      },
+      {
+        "target": "ca",
+        "type": "semantic",
+        "strength": 0.632302,
         "provenance": "embedding"
       }
     ],
     "c": [
       {
-        "target": "bk",
-        "type": "semantic",
-        "strength": 0.527322,
-        "provenance": "embedding"
-      },
-      {
         "target": "A",
         "type": "semantic",
-        "strength": 0.472043,
+        "strength": 0.651274,
         "provenance": "embedding"
       },
       {
-        "target": "B",
+        "target": "C",
         "type": "semantic",
-        "strength": 0.428197,
+        "strength": 0.509807,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bk",
+        "type": "semantic",
+        "strength": 0.509781,
+        "provenance": "embedding"
+      },
+      {
+        "target": "9",
+        "type": "semantic",
+        "strength": 0.458172,
         "provenance": "embedding"
       }
     ],
     "ca": [
       {
-        "target": "bs",
+        "target": "cb",
         "type": "semantic",
-        "strength": 0.503616,
+        "strength": 0.644299,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bw",
+        "type": "semantic",
+        "strength": 0.642624,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bz",
+        "type": "semantic",
+        "strength": 0.632302,
         "provenance": "embedding"
       }
     ],
@@ -1468,7 +1382,25 @@
       {
         "target": "bt",
         "type": "semantic",
-        "strength": 0.551479,
+        "strength": 0.712401,
+        "provenance": "embedding"
+      },
+      {
+        "target": "ca",
+        "type": "semantic",
+        "strength": 0.644299,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bz",
+        "type": "semantic",
+        "strength": 0.643188,
+        "provenance": "embedding"
+      },
+      {
+        "target": "by",
+        "type": "semantic",
+        "strength": 0.626658,
         "provenance": "embedding"
       }
     ],
@@ -1476,13 +1408,19 @@
       {
         "target": "8",
         "type": "semantic",
-        "strength": 0.394512,
+        "strength": 0.695428,
         "provenance": "embedding"
       },
       {
         "target": "cj",
         "type": "semantic",
-        "strength": 0.33076,
+        "strength": 0.501083,
+        "provenance": "embedding"
+      },
+      {
+        "target": "cf",
+        "type": "semantic",
+        "strength": 0.475542,
         "provenance": "embedding"
       }
     ],
@@ -1490,31 +1428,31 @@
       {
         "target": "J",
         "type": "semantic",
-        "strength": 0.408773,
+        "strength": 0.56969,
         "provenance": "embedding"
       },
       {
         "target": "t",
         "type": "semantic",
-        "strength": 0.399744,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bn",
-        "type": "semantic",
-        "strength": 0.372492,
-        "provenance": "embedding"
-      },
-      {
-        "target": "cf",
-        "type": "semantic",
-        "strength": 0.35638,
+        "strength": 0.528645,
         "provenance": "embedding"
       },
       {
         "target": "k",
         "type": "semantic",
-        "strength": 0.336406,
+        "strength": 0.507943,
+        "provenance": "embedding"
+      },
+      {
+        "target": "cg",
+        "type": "semantic",
+        "strength": 0.487125,
+        "provenance": "embedding"
+      },
+      {
+        "target": "w",
+        "type": "semantic",
+        "strength": 0.469796,
         "provenance": "embedding"
       }
     ],
@@ -1522,67 +1460,99 @@
       {
         "target": "2",
         "type": "semantic",
-        "strength": 0.715741,
+        "strength": 0.773091,
+        "provenance": "embedding"
+      },
+      {
+        "target": "cj",
+        "type": "semantic",
+        "strength": 0.550247,
         "provenance": "embedding"
       },
       {
         "target": "cf",
         "type": "semantic",
-        "strength": 0.315738,
+        "strength": 0.515183,
         "provenance": "embedding"
-      }
-    ],
-    "cf": [
+      },
       {
-        "target": "cd",
+        "target": "ci",
         "type": "semantic",
-        "strength": 0.35638,
+        "strength": 0.505071,
         "provenance": "embedding"
       },
       {
         "target": "w",
         "type": "semantic",
-        "strength": 0.323909,
+        "strength": 0.481856,
         "provenance": "embedding"
-      },
+      }
+    ],
+    "cf": [
       {
         "target": "ce",
         "type": "semantic",
-        "strength": 0.315738,
+        "strength": 0.515183,
+        "provenance": "embedding"
+      },
+      {
+        "target": "8",
+        "type": "semantic",
+        "strength": 0.479645,
+        "provenance": "embedding"
+      },
+      {
+        "target": "cc",
+        "type": "semantic",
+        "strength": 0.475542,
         "provenance": "embedding"
       }
     ],
     "cg": [
       {
-        "target": "am",
-        "type": "semantic",
-        "strength": 0.454613,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bc",
-        "type": "semantic",
-        "strength": 0.450954,
-        "provenance": "embedding"
-      },
-      {
-        "target": "s",
-        "type": "semantic",
-        "strength": 0.392893,
-        "provenance": "embedding"
-      },
-      {
         "target": "cm",
         "type": "semantic",
-        "strength": 0.31824,
+        "strength": 0.508936,
+        "provenance": "embedding"
+      },
+      {
+        "target": "cd",
+        "type": "semantic",
+        "strength": 0.487125,
+        "provenance": "embedding"
+      }
+    ],
+    "ch": [
+      {
+        "target": "cn",
+        "type": "semantic",
+        "strength": 0.565487,
         "provenance": "embedding"
       }
     ],
     "ci": [
       {
-        "target": "bk",
+        "target": "cj",
         "type": "semantic",
-        "strength": 0.372189,
+        "strength": 0.525038,
+        "provenance": "embedding"
+      },
+      {
+        "target": "ce",
+        "type": "semantic",
+        "strength": 0.505071,
+        "provenance": "embedding"
+      },
+      {
+        "target": "D",
+        "type": "semantic",
+        "strength": 0.498103,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bm",
+        "type": "semantic",
+        "strength": 0.478271,
         "provenance": "embedding"
       }
     ],
@@ -1590,77 +1560,63 @@
       {
         "target": "6",
         "type": "semantic",
-        "strength": 0.439483,
+        "strength": 0.570578,
+        "provenance": "embedding"
+      },
+      {
+        "target": "ce",
+        "type": "semantic",
+        "strength": 0.550247,
+        "provenance": "embedding"
+      },
+      {
+        "target": "ci",
+        "type": "semantic",
+        "strength": 0.525038,
         "provenance": "embedding"
       },
       {
         "target": "cc",
         "type": "semantic",
-        "strength": 0.33076,
-        "provenance": "embedding"
-      }
-    ],
-    "ck": [
-      {
-        "target": "bw",
-        "type": "semantic",
-        "strength": 0.476098,
-        "provenance": "embedding"
-      }
-    ],
-    "cl": [
-      {
-        "target": "S",
-        "type": "semantic",
-        "strength": 0.302812,
+        "strength": 0.501083,
         "provenance": "embedding"
       }
     ],
     "cm": [
       {
-        "target": "X",
+        "target": "cg",
         "type": "semantic",
-        "strength": 0.41683,
+        "strength": 0.508936,
         "provenance": "embedding"
       },
       {
-        "target": "cg",
+        "target": "t",
         "type": "semantic",
-        "strength": 0.31824,
+        "strength": 0.473734,
+        "provenance": "embedding"
+      }
+    ],
+    "cn": [
+      {
+        "target": "ch",
+        "type": "semantic",
+        "strength": 0.565487,
         "provenance": "embedding"
       }
     ],
     "d": [
       {
-        "target": "4",
+        "target": "n",
         "type": "semantic",
-        "strength": 0.469511,
+        "strength": 0.507077,
         "provenance": "embedding"
       }
     ],
     "e": [
       {
-        "target": "bz",
-        "type": "semantic",
-        "strength": 0.466049,
-        "provenance": "embedding"
-      },
-      {
-        "target": "7",
-        "type": "semantic",
-        "strength": 0.379408,
-        "provenance": "embedding"
-      },
-      {
         "target": "D",
         "type": "semantic",
-        "strength": 0.377866,
-        "provenance": "embedding"
-      },
-      {
-        "target": "f",
-        "type": "semantic",
-        "strength": 0.361107,
+        "strength": 0.465414,
         "provenance": "embedding"
       }
     ],
@@ -1668,89 +1624,83 @@
       {
         "target": "aw",
         "type": "semantic",
-        "strength": 0.426853,
+        "strength": 0.550525,
         "provenance": "embedding"
       },
       {
-        "target": "as",
+        "target": "b",
         "type": "semantic",
-        "strength": 0.380839,
-        "provenance": "embedding"
-      },
-      {
-        "target": "e",
-        "type": "semantic",
-        "strength": 0.361107,
+        "strength": 0.527082,
         "provenance": "embedding"
       },
       {
         "target": "E",
         "type": "semantic",
-        "strength": 0.349504,
+        "strength": 0.518449,
         "provenance": "embedding"
       }
     ],
     "h": [
       {
-        "target": "T",
-        "type": "semantic",
-        "strength": 0.793886,
-        "provenance": "embedding"
-      },
-      {
-        "target": "o",
-        "type": "semantic",
-        "strength": 0.792242,
-        "provenance": "embedding"
-      },
-      {
-        "target": "i",
-        "type": "semantic",
-        "strength": 0.786106,
-        "provenance": "embedding"
-      },
-      {
-        "target": "Z",
-        "type": "semantic",
-        "strength": 0.753175,
-        "provenance": "embedding"
-      },
-      {
-        "target": "aj",
-        "type": "semantic",
-        "strength": 0.729772,
-        "provenance": "embedding"
-      }
-    ],
-    "i": [
-      {
-        "target": "h",
-        "type": "semantic",
-        "strength": 0.786106,
-        "provenance": "embedding"
-      },
-      {
-        "target": "T",
-        "type": "semantic",
-        "strength": 0.76376,
-        "provenance": "embedding"
-      },
-      {
-        "target": "o",
-        "type": "semantic",
-        "strength": 0.734389,
-        "provenance": "embedding"
-      },
-      {
         "target": "al",
         "type": "semantic",
-        "strength": 0.724532,
+        "strength": 0.886646,
+        "provenance": "embedding"
+      },
+      {
+        "target": "o",
+        "type": "semantic",
+        "strength": 0.878555,
         "provenance": "embedding"
       },
       {
         "target": "ak",
         "type": "semantic",
-        "strength": 0.702919,
+        "strength": 0.869613,
+        "provenance": "embedding"
+      },
+      {
+        "target": "i",
+        "type": "semantic",
+        "strength": 0.86262,
+        "provenance": "embedding"
+      },
+      {
+        "target": "T",
+        "type": "semantic",
+        "strength": 0.851588,
+        "provenance": "embedding"
+      }
+    ],
+    "i": [
+      {
+        "target": "al",
+        "type": "semantic",
+        "strength": 0.881761,
+        "provenance": "embedding"
+      },
+      {
+        "target": "h",
+        "type": "semantic",
+        "strength": 0.86262,
+        "provenance": "embedding"
+      },
+      {
+        "target": "ak",
+        "type": "semantic",
+        "strength": 0.857587,
+        "provenance": "embedding"
+      },
+      {
+        "target": "m",
+        "type": "semantic",
+        "strength": 0.844326,
+        "provenance": "embedding"
+      },
+      {
+        "target": "Z",
+        "type": "semantic",
+        "strength": 0.82287,
         "provenance": "embedding"
       }
     ],
@@ -1758,19 +1708,13 @@
       {
         "target": "y",
         "type": "semantic",
-        "strength": 0.490125,
+        "strength": 0.52371,
         "provenance": "embedding"
       },
       {
         "target": "bb",
         "type": "semantic",
-        "strength": 0.453733,
-        "provenance": "embedding"
-      },
-      {
-        "target": "av",
-        "type": "semantic",
-        "strength": 0.401127,
+        "strength": 0.5164,
         "provenance": "embedding"
       }
     ],
@@ -1778,41 +1722,73 @@
       {
         "target": "t",
         "type": "semantic",
-        "strength": 0.461273,
+        "strength": 0.543977,
         "provenance": "embedding"
       },
       {
-        "target": "bc",
+        "target": "a",
         "type": "semantic",
-        "strength": 0.372046,
-        "provenance": "embedding"
-      },
-      {
-        "target": "X",
-        "type": "semantic",
-        "strength": 0.349078,
+        "strength": 0.511495,
         "provenance": "embedding"
       },
       {
         "target": "cd",
         "type": "semantic",
-        "strength": 0.336406,
+        "strength": 0.507943,
+        "provenance": "embedding"
+      },
+      {
+        "target": "l",
+        "type": "semantic",
+        "strength": 0.483459,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bc",
+        "type": "semantic",
+        "strength": 0.466721,
+        "provenance": "embedding"
+      }
+    ],
+    "l": [
+      {
+        "target": "k",
+        "type": "semantic",
+        "strength": 0.483459,
         "provenance": "embedding"
       }
     ],
     "m": [
       {
+        "target": "al",
+        "type": "semantic",
+        "strength": 0.857032,
+        "provenance": "embedding"
+      },
+      {
+        "target": "i",
+        "type": "semantic",
+        "strength": 0.844326,
+        "provenance": "embedding"
+      },
+      {
         "target": "ak",
         "type": "semantic",
-        "strength": 0.694225,
+        "strength": 0.834433,
+        "provenance": "embedding"
+      },
+      {
+        "target": "T",
+        "type": "semantic",
+        "strength": 0.798467,
         "provenance": "embedding"
       }
     ],
     "n": [
       {
-        "target": "an",
+        "target": "d",
         "type": "semantic",
-        "strength": 0.456345,
+        "strength": 0.507077,
         "provenance": "embedding"
       }
     ],
@@ -1820,31 +1796,27 @@
       {
         "target": "h",
         "type": "semantic",
-        "strength": 0.792242,
+        "strength": 0.878555,
         "provenance": "embedding"
       },
       {
-        "target": "T",
+        "target": "ak",
         "type": "semantic",
-        "strength": 0.747227,
+        "strength": 0.803942,
+        "provenance": "embedding"
+      }
+    ],
+    "p": [
+      {
+        "target": "bi",
+        "type": "semantic",
+        "strength": 0.534069,
         "provenance": "embedding"
       },
       {
-        "target": "i",
+        "target": "av",
         "type": "semantic",
-        "strength": 0.734389,
-        "provenance": "embedding"
-      },
-      {
-        "target": "aj",
-        "type": "semantic",
-        "strength": 0.728424,
-        "provenance": "embedding"
-      },
-      {
-        "target": "al",
-        "type": "semantic",
-        "strength": 0.678294,
+        "strength": 0.499968,
         "provenance": "embedding"
       }
     ],
@@ -1852,25 +1824,19 @@
       {
         "target": "R",
         "type": "semantic",
-        "strength": 0.576049,
+        "strength": 0.738355,
         "provenance": "embedding"
       },
       {
         "target": "1",
         "type": "semantic",
-        "strength": 0.507686,
+        "strength": 0.61107,
         "provenance": "embedding"
       },
       {
         "target": "Q",
         "type": "semantic",
-        "strength": 0.465212,
-        "provenance": "embedding"
-      },
-      {
-        "target": "4",
-        "type": "semantic",
-        "strength": 0.456569,
+        "strength": 0.59501,
         "provenance": "embedding"
       }
     ],
@@ -1878,13 +1844,7 @@
       {
         "target": "M",
         "type": "semantic",
-        "strength": 0.39885,
-        "provenance": "embedding"
-      },
-      {
-        "target": "cg",
-        "type": "semantic",
-        "strength": 0.392893,
+        "strength": 0.500047,
         "provenance": "embedding"
       }
     ],
@@ -1892,31 +1852,19 @@
       {
         "target": "k",
         "type": "semantic",
-        "strength": 0.461273,
+        "strength": 0.543977,
         "provenance": "embedding"
       },
       {
         "target": "cd",
         "type": "semantic",
-        "strength": 0.399744,
+        "strength": 0.528645,
         "provenance": "embedding"
       },
       {
-        "target": "a",
+        "target": "cm",
         "type": "semantic",
-        "strength": 0.392851,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bn",
-        "type": "semantic",
-        "strength": 0.360532,
-        "provenance": "embedding"
-      },
-      {
-        "target": "X",
-        "type": "semantic",
-        "strength": 0.35162,
+        "strength": 0.473734,
         "provenance": "embedding"
       }
     ],
@@ -1924,53 +1872,41 @@
       {
         "target": "Z",
         "type": "semantic",
-        "strength": 0.674558,
+        "strength": 0.7977,
         "provenance": "embedding"
       }
     ],
     "w": [
       {
-        "target": "cf",
+        "target": "ce",
         "type": "semantic",
-        "strength": 0.323909,
+        "strength": 0.481856,
         "provenance": "embedding"
       },
       {
-        "target": "a",
+        "target": "cd",
         "type": "semantic",
-        "strength": 0.317606,
+        "strength": 0.469796,
         "provenance": "embedding"
       }
     ],
     "x": [
       {
-        "target": "ba",
-        "type": "semantic",
-        "strength": 0.54693,
-        "provenance": "embedding"
-      },
-      {
-        "target": "K",
-        "type": "semantic",
-        "strength": 0.519397,
-        "provenance": "embedding"
-      },
-      {
         "target": "aq",
         "type": "semantic",
-        "strength": 0.502585,
+        "strength": 0.557056,
         "provenance": "embedding"
       },
       {
         "target": "an",
         "type": "semantic",
-        "strength": 0.491667,
+        "strength": 0.548782,
         "provenance": "embedding"
       },
       {
-        "target": "be",
+        "target": "ba",
         "type": "semantic",
-        "strength": 0.439705,
+        "strength": 0.547789,
         "provenance": "embedding"
       }
     ],
@@ -1978,31 +1914,31 @@
       {
         "target": "bb",
         "type": "semantic",
-        "strength": 0.776788,
+        "strength": 0.689481,
         "provenance": "embedding"
       },
       {
         "target": "z",
         "type": "semantic",
-        "strength": 0.613342,
+        "strength": 0.680768,
         "provenance": "embedding"
       },
       {
-        "target": "O",
+        "target": "M",
         "type": "semantic",
-        "strength": 0.543501,
+        "strength": 0.546878,
         "provenance": "embedding"
       },
       {
         "target": "F",
         "type": "semantic",
-        "strength": 0.520852,
+        "strength": 0.532194,
         "provenance": "embedding"
       },
       {
         "target": "j",
         "type": "semantic",
-        "strength": 0.490125,
+        "strength": 0.52371,
         "provenance": "embedding"
       }
     ],
@@ -2010,19 +1946,19 @@
       {
         "target": "O",
         "type": "semantic",
-        "strength": 0.783118,
-        "provenance": "embedding"
-      },
-      {
-        "target": "bb",
-        "type": "semantic",
-        "strength": 0.64494,
+        "strength": 0.763495,
         "provenance": "embedding"
       },
       {
         "target": "y",
         "type": "semantic",
-        "strength": 0.613342,
+        "strength": 0.680768,
+        "provenance": "embedding"
+      },
+      {
+        "target": "bb",
+        "type": "semantic",
+        "strength": 0.657312,
         "provenance": "embedding"
       }
     ]

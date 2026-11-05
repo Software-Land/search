@@ -1,3 +1,4 @@
+import { directBodyOccurrenceCount } from "../retrieval/retrieve.js";
 import { canonicalLexicalTokensFromQuery } from "../text/lexicalNormalize.js";
 import { querySemanticFacts } from "../query/querySemantics.js";
 import { scoreFeatures } from "./rank.js";
@@ -12,7 +13,7 @@ import type {
   FeatureVector,
   RetrievalHit,
 } from "../types.js";
-import type { ExactPruningExtensionV1 } from "../indexing/lexicalIndex.js";
+import type { ExactPruningBlockBoundaries } from "../indexing/lexicalIndex.js";
 
 export type ExactCandidateBound = {
   hit: RetrievalHit;
@@ -92,7 +93,7 @@ function bodyOnlySingleTokenContext(query: AnalyzedQuery): BoundContext | null {
 }
 
 /**
- * Exact local bound for the first Stage-2A class. A null result is a
+ * Exact local bound for feature block pruning. A null result is a
  * fail-closed request for ordinary exhaustive feature evaluation.
  */
 export function exactBodyOnlySingleTokenBound(
@@ -138,6 +139,7 @@ export function exactBodyOnlySingleTokenBound(
     lexicalConceptCoverage: 1,
     coverageConceptCount: 1,
     bodyPhraseCount,
+    directBodyOccurrenceCount: directBodyOccurrenceCount(query, hit.document),
     queryTokenCount: 1,
     relevanceKind: "direct",
     directClass: "weak",
@@ -195,7 +197,7 @@ export function planExactFeaturePruning({
   retrieved: RetrievalHit[];
   query: AnalyzedQuery;
   requiredDepth: number;
-  extension: ExactPruningExtensionV1;
+  extension: ExactPruningBlockBoundaries;
 }): ExactFeaturePruningPlan {
   type Block = {
     bounded: ExactCandidateBound[];
@@ -295,7 +297,7 @@ export type FeatureBlockPruningFallbackReason =
   | "missing-pruning-extension";
 
 /**
- * Stage-2A feature-block session gate. Packed search has a different retriever
+ * Feature block pruning session gate. Packed search has a different retriever
  * check, a different all-strong guard, and extra explain/collector reasons.
  * Do not reuse packedSearchFallbackReason here.
  */

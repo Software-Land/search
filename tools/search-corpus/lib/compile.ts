@@ -21,7 +21,7 @@ import type {
   SynonymCandidate,
 } from "../types.js";
 
-export const CONFIGURED_CONCEPT_FORMAT = "search-v2-configured-concepts";
+export const CONFIGURED_CONCEPT_FORMAT = "search-configured-concepts" as const;
 const REMOVED_CONCEPT_FIELDS = ["expansion", "exp", "primary", "standaloneRecall", "topicalRecall"];
 
 function failConfiguredConcept(message: string): never {
@@ -29,10 +29,13 @@ function failConfiguredConcept(message: string): never {
 }
 
 /**
- * Fail-closed reader for corpus `search-v2-configured-concepts` artifacts.
- * Does not accept `search-v2-equivalences`.
+ * Fail-closed reader for a `search-configured-concepts` artifact with schema version 1.
+ * Also accepts the pre-0.8.0 identifier `search-v2-configured-concepts`.
+ * Does not accept `search-v2-equivalences` or `search-equivalences`.
  */
-export function parseConfiguredConcepts(obj?: unknown): ConfiguredConceptArtifact {
+export function parseConfiguredConcepts(
+  obj?: unknown
+): ConfiguredConceptArtifact & { format: "search-configured-concepts" } {
   if (obj == null) {
     return { format: CONFIGURED_CONCEPT_FORMAT, version: 1, entries: [], compileWarnings: [] };
   }
@@ -40,23 +43,28 @@ export function parseConfiguredConcepts(obj?: unknown): ConfiguredConceptArtifac
     failConfiguredConcept("configured-concept artifact must be a plain object");
   }
   const rec = obj as Record<string, unknown>;
-  if (rec.format === "search-v2-equivalences") {
+  if (
+    rec.format === "search-v2-equivalences" ||
+    rec.format === "search-equivalences" ||
+    rec.format === "search-v2-synonyms" ||
+    rec.format === "search-synonyms"
+  ) {
     failConfiguredConcept(
-      "search-v2-equivalences is not supported; regenerate as search-v2-configured-concepts"
+      `${rec.format} is not supported; regenerate as ${CONFIGURED_CONCEPT_FORMAT}`
     );
   }
   if (!rec.format) failConfiguredConcept("configured-concept artifact is missing required field \"format\"");
-  if (rec.format !== CONFIGURED_CONCEPT_FORMAT) {
+  if (rec.format !== CONFIGURED_CONCEPT_FORMAT && rec.format !== "search-v2-configured-concepts") {
     failConfiguredConcept(`Expected format ${CONFIGURED_CONCEPT_FORMAT}, got ${JSON.stringify(rec.format)}`);
   }
   const version = rec.version == null ? null : Number(rec.version);
   if (version == null) failConfiguredConcept("configured-concept artifact is missing required field \"version\"");
   if (!Number.isInteger(version) || version < 1) {
-    failConfiguredConcept(`Invalid artifact version for ${CONFIGURED_CONCEPT_FORMAT}: ${JSON.stringify(rec.version)}`);
+    failConfiguredConcept(`Invalid artifact schema version for ${CONFIGURED_CONCEPT_FORMAT}: ${JSON.stringify(rec.version)}`);
   }
   if (version !== 1) {
     failConfiguredConcept(
-      `Unsupported ${CONFIGURED_CONCEPT_FORMAT} version ${version}; this runtime reads version 1 only`
+      `Unsupported ${CONFIGURED_CONCEPT_FORMAT} schema version ${version}; this runtime reads schema version 1 only`
     );
   }
   const entries = Array.isArray(rec.entries) ? rec.entries : [];
@@ -123,7 +131,9 @@ function reviewerRow(c: CorpusCandidate): ReviewerRow {
   };
 }
 
-export function compileConfiguredConcepts(candidates: EquivalenceCandidate[]): ConfiguredConceptArtifact {
+export function compileConfiguredConcepts(
+  candidates: EquivalenceCandidate[]
+): ConfiguredConceptArtifact & { format: "search-configured-concepts" } {
   const accepted = trustedEquivalences(candidates);
   const byKey = new Map<string, EquivalenceCandidate>();
   const skipped: Array<{ key: string; reason: string; ids: unknown[] }> = [];

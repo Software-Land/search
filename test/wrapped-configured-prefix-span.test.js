@@ -6,7 +6,7 @@ import {
   resolveConfiguredSequence,
   resolveConfiguredSpans,
 } from "../dist/query/configuredSequence.js";
-import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
+import { bodyPostingPruningUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const dict = [
@@ -170,7 +170,7 @@ describe("wrapped configured prefix activation", () => {
     expect(appsec.provenance).toBe("partial-form");
     expect(unboundTypedTokens(q).map((t) => t.surface)).toEqual(["what", "is", "an", "applicatio", "security"]);
     expect(q.lexicalPhraseKey).toBe(baseline.lexicalPhraseKey);
-    expect(stage3AUnsupportedReason(q)).toBe("configured-concept");
+    expect(bodyPostingPruningUnsupportedReason(q)).toBe("configured-concept");
   });
 
   test("prefix spans do not trigger topical recall", () => {

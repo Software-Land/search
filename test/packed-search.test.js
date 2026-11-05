@@ -43,7 +43,7 @@ const docs = [
 ];
 
 const graph = {
-  format: "search-v2-relationships",
+  format: "search-relationships",
   version: 1,
   relationships: {
     network: [{ target: "vpn", type: "editorial", strength: 0.9, provenance: "test" }],
@@ -129,6 +129,120 @@ describe("packed ordinary search()", () => {
     const asyncRows = await engine.searchAsync("search index", { limit: 8, relatedLimit: 3 });
     expect(publicRows(asyncRows)).toEqual(publicRows(sync));
     expect(engine.lastSearchMeta.rankingEvidence).toBe("packed");
+  });
+
+  test("packed ranking keeps a repeated weak direct ahead of a zero-term neighbor", async () => {
+    const localDocs = [
+      {
+        id: "handbook",
+        title: "Beacon Handbook",
+        body: "beacon is the subject of this handbook",
+      },
+      {
+        id: "bench",
+        title: "Bench Notes",
+        body: "beacon beacon appears as ordinary body evidence",
+      },
+      {
+        id: "once",
+        title: "Once Notes",
+        body: "beacon appears a single time in the body",
+      },
+      {
+        id: "distant",
+        title: "Distant Note",
+        body: "catalog text with no shared query term",
+      },
+    ];
+    const localGraph = {
+      format: "search-relationships",
+      version: 1,
+      relationships: {
+        handbook: [{ target: "distant", type: "semantic", strength: 0.95, provenance: "embedding" }],
+      },
+    };
+    const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: dict })];
+    const lexicalIndex = compileLexicalIndex(localDocs, { schema, plugins });
+    const engine = SearchEngine.create({
+      schema,
+      plugins,
+      lexicalIndex,
+      documentRelationships: localGraph,
+      relationshipStrategy: "hybrid",
+      retriever: "indexed",
+    });
+    await engine.index(localDocs);
+    const options = { limit: 10, relatedLimit: 5 };
+    const packed = engine.search("beacon", options);
+    const meta = { ...engine.lastSearchMeta };
+    const detailed = engine.searchDetailed("beacon", options);
+    expect(meta.rankingEvidence).toBe("packed");
+    expect(publicRows(packed)).toEqual(publicRows(detailed.results));
+    const order = packed.map((row) => row.id);
+    expect(order.indexOf("handbook")).toBeLessThan(order.indexOf("bench"));
+    expect(order.indexOf("bench")).toBeLessThan(order.indexOf("distant"));
+    expect(order.indexOf("distant")).toBeLessThan(order.indexOf("once"));
+    const distant = packed.find((row) => row.id === "distant");
+    const bench = packed.find((row) => row.id === "bench");
+    expect(distant.relevanceKind).toBe("related");
+    expect(bench.relevanceKind).toBe("direct");
+    expect(bench.directClass).toBe("weak");
+    expect(distant.score).toBeGreaterThan(bench.score);
+  });
+
+  test("body-block skipping keeps a repeated weak direct that outranks a neighbor", async () => {
+    const fillers = Array.from({ length: 12 }, (_, index) => ({
+      id: `fill-${index}`,
+      title: `Note ${index}`,
+      body: "beacon appears once here",
+    }));
+    const localDocs = [
+      {
+        id: "handbook",
+        title: "Amber Beacon Handbook",
+        body: "amber beacon is the subject of this handbook",
+      },
+      ...fillers,
+      {
+        id: "bench",
+        title: "Bench Notes",
+        body: "beacon beacon in the notes",
+      },
+      {
+        id: "distant",
+        title: "Distant Note",
+        body: "catalog text with no shared query term",
+      },
+    ];
+    const localGraph = {
+      format: "search-relationships",
+      version: 1,
+      relationships: {
+        handbook: [{ target: "distant", type: "semantic", strength: 0.95, provenance: "embedding" }],
+      },
+    };
+    const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: dict })];
+    const lexicalIndex = compileLexicalIndex(localDocs, { schema, plugins });
+    const engine = SearchEngine.create({
+      schema,
+      plugins,
+      lexicalIndex,
+      documentRelationships: localGraph,
+      relationshipStrategy: "hybrid",
+      retriever: "indexed",
+    });
+    await engine.index(localDocs);
+    const options = { limit: 10, relatedLimit: 5 };
+    const packed = engine.search("amber beacon", options);
+    const meta = { ...engine.lastSearchMeta };
+    const detailed = engine.searchDetailed("amber beacon", options);
+    expect(meta.stage3A).toBe("applied");
+    expect(meta.rankingEvidence).toBe("packed");
+    expect(publicRows(packed)).toEqual(publicRows(detailed.results));
+    const order = packed.map((row) => row.id);
+    expect(order).toContain("bench");
+    expect(order.indexOf("bench")).toBeLessThan(order.indexOf("distant"));
+    expect(packed.find((row) => row.id === "distant").relevanceKind).toBe("related");
   });
 
   test("explain and retrievalScoreWeight fail closed to the legacy path", async () => {

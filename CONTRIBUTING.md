@@ -62,6 +62,18 @@ npm run smoke:pack
 
 `npm test` runs the Jest suite and the Python semantic-compiler unit tests. A checkout needs `npm run build` before runtime tests.
 
+Python tests that count OpenAI tokens need a prepared `cl100k_base` file. `npm test` and `npm run test:python` do not download it. Install the optional OpenAI test dependencies, then prepare the cache. Preparation does not need `OPENAI_API_KEY`, does not call the embeddings API, and does not install FastEmbed or download embedding-model weights.
+
+```bash
+python3 -m pip install -r tools/search-semantic/requirements-openai.txt
+python3 tools/search-semantic/prepare_tokenizer.py
+npm test
+```
+
+Run those two Python commands before `npm run test:python` as well, from the same project directory. `prepare_tokenizer.py` follows the builder cache: `TIKTOKEN_CACHE_DIR`, then `DATA_GYM_CACHE_DIR` when the first variable is unset, then `build/search-semantic/tokenizers/` under the current working directory. The file name is `9b5ad71b2ce5302211f9c61530b329a4922fc6a4`. An empty `TIKTOKEN_CACHE_DIR` does not fall through to another directory; preparation fails instead of storing the file elsewhere. Deleting the project’s `build` directory removes the prepared file, so the next token count needs it acquired again.
+
+On a restricted network, copy a verified ranks file to that cache path and run `python3 tools/search-semantic/prepare_tokenizer.py` again. The command checks the checksum and does not download when the cached bytes already match. The Python CI job selects Python 3.12. It caches pip downloads for `tools/search-semantic/requirements-openai.txt` and still installs that file on every run. It restores only `build/search-semantic/tokenizers/` with an exact cache key: a `cl100k-tokenizer-v1` prefix, the runner OS, `cl100k_base`, and `CL100K_SHA256` read from the production module. A cache miss is normal. Preparation still runs, with `TIKTOKEN_CACHE_DIR` and `DATA_GYM_CACHE_DIR` unset, and verifies restored or missing bytes before `npm run test:python`.
+
 Development-only workloads (not npm scripts, not in the tarball):
 
 ```bash

@@ -17,6 +17,7 @@ import { annotateReviewQueue } from "./queue.js";
 import { hashJson } from "./hash.js";
 import type { AnalyzeOptions, AnalyzeResult, CompileOptions } from "../types.js";
 
+/** Published corpus-compiler revision. Inspection manifests record the same revision as `compilerVersion`. */
 export const COMPILER_VERSION: 1 = 1;
 
 function now(): number {

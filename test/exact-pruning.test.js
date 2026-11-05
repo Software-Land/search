@@ -116,7 +116,7 @@ function refreshIntegrity(artifact) {
   return artifact;
 }
 
-describe("Stage-2A exact document-feature block pruning", () => {
+describe("feature block pruning", () => {
   test("block boundaries are deterministic for every supported layout", () => {
     expect(documentBlockBoundaries(0, 32)).toEqual([0]);
     expect(documentBlockBoundaries(1, 64)).toEqual([0, 1]);
@@ -125,10 +125,10 @@ describe("Stage-2A exact document-feature block pruning", () => {
     expect(() => documentBlockBoundaries(10, 16)).toThrow(/blockSize/);
   });
 
-  test("known pruning metadata validates strictly while old v1 artifacts remain exhaustive", async () => {
+  test("known pruning metadata validates strictly while older schema version 1 artifacts without block boundaries remain exhaustive", async () => {
     const documents = bodyFlood(300);
     const artifact = compileLexicalIndex(documents, { schema });
-    expect(artifact.data.extensions["exact-pruning-v1"]).toEqual({
+    expect(artifact.data.extensions["exact-pruning-block-boundaries"]).toEqual({
       revision: 1,
       unit: "document-ordinal",
       blockSize: 128,
@@ -153,15 +153,15 @@ describe("Stage-2A exact document-feature block pruning", () => {
       },
     ]) {
       const corrupted = JSON.parse(JSON.stringify(artifact));
-      mutate(corrupted.data.extensions["exact-pruning-v1"]);
+      mutate(corrupted.data.extensions["exact-pruning-block-boundaries"]);
       refreshIntegrity(corrupted);
       expect(() => loadLexicalIndex(corrupted, documents, schema)).toThrow(
-        /exact-pruning-v1/
+        /exact-pruning-block-boundaries/
       );
     }
 
     const old = JSON.parse(JSON.stringify(artifact));
-    delete old.data.extensions["exact-pruning-v1"];
+    delete old.data.extensions["exact-pruning-block-boundaries"];
     refreshIntegrity(old);
     const engine = await compiledEngine(documents, { lexicalIndex: old });
     const actual = engine._searchDetailedSync(
@@ -453,7 +453,7 @@ describe("Stage-2A exact document-feature block pruning", () => {
       retrieved,
       query,
       requiredDepth: 7,
-      extension: runtime.exactPruning,
+      extension: runtime.blockBoundaries,
     });
     const expected = new Map();
     for (const candidate of plan.bounded) {
@@ -662,7 +662,7 @@ describe("Stage-2A exact document-feature block pruning", () => {
       retrieved,
       query,
       requiredDepth: 1,
-      extension: runtime.exactPruning,
+      extension: runtime.blockBoundaries,
     });
     const retained = plan.retainedBounded.map((hit) => hit.document.id);
     expect(retained).toContain("a-smallest-id-supplied-last");
@@ -720,7 +720,7 @@ describe("Stage-2A exact document-feature block pruning", () => {
     );
 
     const relationships = {
-      format: "search-v2-relationships",
+      format: "search-relationships",
       version: 1,
       relationships: {
         winner: [{

@@ -1,0 +1,107 @@
+{
+  "files": {
+    "documents.json": {
+      "bytes": 891293,
+      "sha256": "c78738e4008f5b0c559099d5984a3eb9b9b2bbd3c7dd7bf7692939c211744a99"
+    },
+    "configured-concepts.json": {
+      "bytes": 24695,
+      "sha256": "ef3f7ff0f26623199ebd112b374a0de1be43644c585928dba2d6a9d54d932711"
+    },
+    "lemmas.json": {
+      "bytes": 32526,
+      "sha256": "83277c71f8901e346644c38ae78f97b881bf01ae1c302c8c3ef9b35fdbd8f8fb"
+    },
+    "lexical-frequency.json": {
+      "bytes": 1679408,
+      "sha256": "28c18e8176d4fdf76113b33c3a8732c7415ee871c11a84011233943a0cb1cc05"
+    },
+    "relationships.json": {
+      "bytes": 40569,
+      "sha256": "c002352a4279ba3001a1dae6c366c407f123be408893728fb9e561c63d3fac4e"
+    },
+    "relationship-map.json": {
+      "bytes": 20746,
+      "sha256": "76e9e85caa46a49930a9b7159e56240d5278cc9aba88633e10a22bbb599d3fbd"
+    },
+    "historical-scenarios.json": {
+      "bytes": 147581,
+      "sha256": "e7434804b53458592d9bff0d3a2eec55abf84e4946ea5c661c9b2470bab79abf"
+    },
+    "v1-historical-topn-contract.json": {
+      "bytes": 51044,
+      "sha256": "d8fec2d2890b5999b875f7386c603e9a3c271922e65e77818ff54ab8ca7df033"
+    },
+    "strict-contracts.json": {
+      "bytes": 91249,
+      "sha256": "6103be53ef119a9164059a6af7b83854c006348606e8b863a2cfcbd65c6c177f"
+    },
+    "regression-scenarios.json": {
+      "bytes": 23519,
+      "sha256": "7555ebf5e1adca71116660b5c2059943aa95f258e88324fc9bd47cbb4481687b"
+    },
+    "scenarios.json": {
+      "bytes": 2807,
+      "sha256": "0c7e26e0622506eef358995fab6118b3a4092452b13ea31493017c8742bcd54e"
+    },
+    "historical-contract-updates.json": {
+      "bytes": 40894,
+      "sha256": "f173f9039d339d4f3325082da64a8be3e8a496fb6d46790d1f331693b3929274"
+    },
+    "relevance-config.json": {
+      "bytes": 1672,
+      "sha256": "62a2ecd164d432536a4382e7c8d394c9432af38250a4f9ad04797f8c58e463de"
+    },
+    "synonym-map.json": {
+      "bytes": 6165,
+      "sha256": "bf09dd75b7a7c02e2ab983d863c23606e34a06d7ad4ea3d07cd41302b5b37e7c"
+    },
+    "query-result-oracle.json": {
+      "bytes": 535919,
+      "sha256": "ab600eed3c8af49e151ae64f6aee0c8e386fc91b365facf7a2ff876a941e615a"
+    },
+    "nist-typing-progression.json": {
+      "bytes": 530,
+      "sha256": "3d42e142c3eaa8b5d5467377ba13693cc1ebfa219e994084ea182fa214f3931b"
+    },
+    "README.md": {
+      "bytes": 11022,
+      "sha256": "602c5ec2f9cba79372190b6552c46e54f2ede1fdd055569b446df106a19691f3"
+    }
+  },
+  "corpusSourceCommit": "2f085e6789d30dc7bdfa26027e0e9ab15d489f85",
+  "corpusWorktreeClean": false,
+  "uncommittedInputs": [
+    " M __tests__/search-scenario-contract.test.js",
+    " M __tests__/v2-against-v1-historical-topn-contract.test.js",
+    " M docs/search-historical-contract-updates.json",
+    " M docs/search-historical-contract-updates.md",
+    " M scripts/search-artifacts/software-land-scenarios.mjs",
+    " M tests/search-e2e-result-helpers.test.js",
+    " M tests/search-e2e.js",
+    " M tests/search-scenarios.js",
+    " M tests/search-v2-contracts.js"
+  ],
+  "contentTree": "755fc9ba1edee11c9fe2bc56e866715297222443",
+  "uncommittedDiffAlgorithm": "worktree-bytes-v1",
+  "uncommittedDiffSha256": "a917a2f0cf180e4f5b6876fdda415222026091fdc4a12df31c3c408e151b40c3",
+  "searchPackageDependency": "file:vendor/software-land-search-0.8.0.tgz",
+  "searchPackageVersion": "0.8.0",
+  "documentCount": 123,
+  "configuredConceptCount": 192,
+  "lemmaCount": 1240,
+  "scenarioCount": 216,
+  "executableV2ScenarioCount": 135,
+  "executableRegressionCount": 54,
+  "historicalScenarioCount": 215,
+  "historicalRelevanceApplicable": 214,
+  "omittedV1OnlyCount": 125,
+  "omittedEmptyIntentCount": 43,
+  "omittedBrowserUiOnlyCount": 3,
+  "browserHrefCheckCount": 28,
+  "sourceScenarioFiles": [
+    "tests/search-scenarios.js",
+    "tests/search-v2-contracts.js"
+  ],
+  "previousCorpusSourceCommit": "acf8fbf24bf417af6639838f07ec2246d35c0ed9"
+}

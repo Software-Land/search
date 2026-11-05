@@ -8,7 +8,7 @@ import {
   retrieveCandidates,
   shortTitleTokenPrefixStub,
 } from "../dist/retrieval/retrieve.js";
-import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
+import { bodyPostingPruningUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 import { allowPrefixMatch, DEFAULT_STOP } from "../dist/text/text.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
@@ -140,7 +140,7 @@ describe("short title-token prefix admission", () => {
     expect(appsec.retrievalSources.some((source) => source === "indexed-lexical" || source === "body-lexical")).toBe(
       false
     );
-    expect(stage3AUnsupportedReason(analyzeQuery("what is an ap", { plugins: plugins() }))).toBe("term-concept-count");
+    expect(bodyPostingPruningUnsupportedReason(analyzeQuery("what is an ap", { plugins: plugins() }))).toBe("term-concept-count");
   });
 
   test("full-title and contextual prefix still outrank token-prefix-only neighbors", async () => {

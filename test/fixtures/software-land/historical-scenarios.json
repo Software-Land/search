@@ -2,22 +2,22 @@
   "kind": "historical-relevance-contracts",
   "notes": [
     "Full historical scenario inventory.",
-    "v1.expectedTop / titlePrefix / topN are executable historical relevance contracts (membership within topN, not exact order).",
+    "v1.expectedTop / titlePrefix / topN are executable historical relevance contracts (membership within topN, not exact order). v1.within is a separate membership check and is copied through.",
     "classification C is omitted from the relevance suite (obsolete).",
     "All other rows with expectedTop or titlePrefix participate. Failures are not silently excluded.",
     "integ is omitted: it is an OSS ranking regression for the frozen-corpus Integrity title and is not mined from the source SHA. Supplementary regression overlays such as open stay in this inventory.",
-    "disposition describes V2-intent mining into v2-contracts.json / regression-scenarios.json, not relevance-suite inclusion."
+    "disposition describes V2-intent mining into strict-contracts.json / regression-scenarios.json, not relevance-suite inclusion."
   ],
   "counts": {
-    "rows": 223,
-    "historicalRelevanceApplicable": 222,
-    "omitted-covered-by-v2-contract": 16,
+    "rows": 215,
+    "historicalRelevanceApplicable": 214,
+    "omitted-covered-by-v2-contract": 26,
     "contract-a-intent": 83,
-    "regression-b-intent": 60,
-    "omitted-empty-intent-observational-v1": 51,
-    "omitted-duplicate-b-intent": 5,
+    "regression-b-intent": 54,
+    "omitted-empty-intent-observational-v1": 43,
     "omitted-duplicate-a-intent": 6,
     "omitted-b-intent-not-current-v2": 1,
+    "omitted-duplicate-b-intent": 1,
     "omitted-obsolete": 1
   },
   "rows": [
@@ -399,10 +399,15 @@
           "InOrder vs PreOrder vs PostOrder",
           "What is Recursion?",
           "Topological Sort",
-          "Minmax Tree",
           "Maximum Flow Algorithm"
         ],
-        "topN": 6
+        "topN": 6,
+        "within": [
+          {
+            "title": "Minmax Tree",
+            "topN": 10
+          }
+        ]
       }
     },
     {
@@ -887,8 +892,8 @@
       "index": 32,
       "query": "appsec",
       "classification": "B",
-      "disposition": "regression-b-intent",
-      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "App Sec"
@@ -920,8 +925,8 @@
       "index": 33,
       "query": "appsec",
       "classification": "B",
-      "disposition": "omitted-duplicate-b-intent",
-      "note": "Duplicate of a B-class independent intent already in regression-scenarios.json.",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "App Sec"
@@ -937,18 +942,31 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "App Sec",
-          "Authorization Middleware"
+          "App Sec"
         ],
-        "topN": 2
+        "topN": 1,
+        "within": [
+          {
+            "title": "RBAC (Role Based Access Control)",
+            "topN": 10
+          },
+          {
+            "title": "Authorization Middleware",
+            "topN": 10
+          },
+          {
+            "title": "Zero-Trust Security",
+            "topN": 3
+          }
+        ]
       }
     },
     {
       "index": 34,
       "query": "app sec",
       "classification": "B",
-      "disposition": "regression-b-intent",
-      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "App Sec"
@@ -980,8 +998,8 @@
       "index": 35,
       "query": "app sec",
       "classification": "B",
-      "disposition": "omitted-duplicate-b-intent",
-      "note": "Duplicate of a B-class independent intent already in regression-scenarios.json.",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "App Sec"
@@ -997,10 +1015,23 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "App Sec",
-          "Authorization Middleware"
+          "App Sec"
         ],
-        "topN": 2
+        "topN": 1,
+        "within": [
+          {
+            "title": "RBAC (Role Based Access Control)",
+            "topN": 10
+          },
+          {
+            "title": "Authorization Middleware",
+            "topN": 10
+          },
+          {
+            "title": "Zero-Trust Security",
+            "topN": 3
+          }
+        ]
       }
     },
     {
@@ -1061,7 +1092,7 @@
       "query": "what is an ap",
       "classification": "A",
       "disposition": "omitted-duplicate-a-intent",
-      "note": "Duplicate of an A-class independent intent already in v2-contracts.json.",
+      "note": "Duplicate of an A-class independent intent already in strict-contracts.json.",
       "intent": {
         "requiredPrimary": [
           "What is an API?"
@@ -1087,8 +1118,8 @@
       "index": 39,
       "query": "app sec",
       "classification": "B",
-      "disposition": "omitted-duplicate-b-intent",
-      "note": "Duplicate of a B-class independent intent already in regression-scenarios.json.",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "App Sec"
@@ -1182,10 +1213,15 @@
         "expectedTop": [
           "What is an API?",
           "REST API vs GraphQL",
-          "Working with APIs",
-          "gRPC vs REST"
+          "Working with APIs"
         ],
-        "topN": 5
+        "topN": 5,
+        "within": [
+          {
+            "title": "gRPC vs REST",
+            "topN": 10
+          }
+        ]
       }
     },
     {
@@ -1281,8 +1317,8 @@
       "index": 47,
       "query": "application se",
       "classification": "B",
-      "disposition": "regression-b-intent",
-      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "App Sec"
@@ -1298,10 +1334,23 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "App Sec",
-          "Authorization Middleware"
+          "App Sec"
         ],
-        "topN": 2
+        "topN": 1,
+        "within": [
+          {
+            "title": "RBAC (Role Based Access Control)",
+            "topN": 10
+          },
+          {
+            "title": "Authorization Middleware",
+            "topN": 10
+          },
+          {
+            "title": "Zero-Trust Security",
+            "topN": 3
+          }
+        ]
       }
     },
     {
@@ -1403,10 +1452,23 @@
       "historicalRelevance": true,
       "v1": {
         "expectedTop": [
-          "App Sec",
-          "Authorization Middleware"
+          "App Sec"
         ],
-        "topN": 2
+        "topN": 1,
+        "within": [
+          {
+            "title": "RBAC (Role Based Access Control)",
+            "topN": 10
+          },
+          {
+            "title": "Authorization Middleware",
+            "topN": 10
+          },
+          {
+            "title": "Zero-Trust Security",
+            "topN": 3
+          }
+        ]
       }
     },
     {
@@ -1444,8 +1506,8 @@
       "index": 53,
       "query": "application security",
       "classification": "B",
-      "disposition": "regression-b-intent",
-      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "App Sec"
@@ -1468,7 +1530,21 @@
           "Bearer Token",
           "SAML vs OAuth"
         ],
-        "topN": 10
+        "topN": 10,
+        "within": [
+          {
+            "title": "RBAC (Role Based Access Control)",
+            "topN": 10
+          },
+          {
+            "title": "Authorization Middleware",
+            "topN": 10
+          },
+          {
+            "title": "Zero-Trust Security",
+            "topN": 3
+          }
+        ]
       }
     },
     {
@@ -1893,7 +1969,7 @@
       "query": "application programming",
       "classification": "A",
       "disposition": "omitted-duplicate-a-intent",
-      "note": "Duplicate of an A-class independent intent already in v2-contracts.json.",
+      "note": "Duplicate of an A-class independent intent already in strict-contracts.json.",
       "intent": {
         "requiredPrimary": [
           "What is an API?"
@@ -2061,13 +2137,11 @@
       "disposition": "regression-b-intent",
       "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
       "intent": {
-        "requiredPrimary": [
-          "Linear vs Logistic Regression"
-        ],
+        "requiredPrimary": [],
         "requiredWithin": [
           {
             "title": "Linear vs Logistic Regression",
-            "topN": 1
+            "topN": 10
           }
         ],
         "requiredAnyWithin": []
@@ -2089,13 +2163,11 @@
       "disposition": "regression-b-intent",
       "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
       "intent": {
-        "requiredPrimary": [
-          "Linear vs Logistic Regression"
-        ],
+        "requiredPrimary": [],
         "requiredWithin": [
           {
             "title": "Linear vs Logistic Regression",
-            "topN": 1
+            "topN": 10
           }
         ],
         "requiredAnyWithin": []
@@ -3105,7 +3177,7 @@
       "query": "what is an ap",
       "classification": "A",
       "disposition": "omitted-duplicate-a-intent",
-      "note": "Duplicate of an A-class independent intent already in v2-contracts.json.",
+      "note": "Duplicate of an A-class independent intent already in strict-contracts.json.",
       "intent": {
         "requiredPrimary": [
           "What is an API?"
@@ -3151,10 +3223,15 @@
           "InOrder vs PreOrder vs PostOrder",
           "What is Recursion?",
           "Topological Sort",
-          "Minmax Tree",
           "Maximum Flow Algorithm"
         ],
-        "topN": 6
+        "topN": 6,
+        "within": [
+          {
+            "title": "Minmax Tree",
+            "topN": 10
+          }
+        ]
       }
     },
     {
@@ -3376,8 +3453,8 @@
       "index": 128,
       "query": "institute",
       "classification": "B",
-      "disposition": "regression-b-intent",
-      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "Udacity Review"
@@ -3403,8 +3480,8 @@
       "index": 129,
       "query": "recursion",
       "classification": "B",
-      "disposition": "regression-b-intent",
-      "note": "Executable Software.Land compatibility coverage. Not Core ranking policy.",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "What is Recursion?"
@@ -3433,8 +3510,8 @@
       "index": 130,
       "query": "recursion",
       "classification": "B",
-      "disposition": "omitted-duplicate-b-intent",
-      "note": "Duplicate of a B-class independent intent already in regression-scenarios.json.",
+      "disposition": "omitted-covered-by-v2-contract",
+      "note": "Query is already asserted by a strict V2 contract. Historical expectedTop still participates in the relevance suite.",
       "intent": {
         "requiredPrimary": [
           "What is Recursion?"
@@ -3575,9 +3652,9 @@
         "expectedTop": [
           "Sharding",
           "Hot Shards",
+          "LLM Model Conversion Correctness",
           "CockroachDB vs Postgres",
-          "SQL vs NoSQL",
-          "gRPC vs Kafka"
+          "SQL vs NoSQL"
         ],
         "topN": 6
       }
@@ -3605,9 +3682,9 @@
         "expectedTop": [
           "Sharding",
           "Hot Shards",
+          "LLM Model Conversion Correctness",
           "CockroachDB vs Postgres",
-          "SQL vs NoSQL",
-          "gRPC vs Kafka"
+          "SQL vs NoSQL"
         ],
         "topN": 6
       }
@@ -3628,9 +3705,9 @@
         "expectedTop": [
           "Sharding",
           "Hot Shards",
+          "LLM Model Conversion Correctness",
           "CockroachDB vs Postgres",
-          "SQL vs NoSQL",
-          "gRPC vs Kafka"
+          "SQL vs NoSQL"
         ],
         "topN": 6
       }
@@ -3734,7 +3811,7 @@
           },
           {
             "title": "Throughput vs Latency",
-            "topN": 3
+            "topN": 10
           }
         ],
         "requiredAnyWithin": []
@@ -3744,10 +3821,10 @@
         "expectedTop": [
           "Sharding",
           "Hot Shards",
+          "LLM Model Conversion Correctness",
           "Throughput vs Latency",
           "CockroachDB vs Postgres",
-          "SQL vs NoSQL",
-          "gRPC vs Kafka"
+          "SQL vs NoSQL"
         ],
         "topN": 6
       }
@@ -4781,8 +4858,6 @@
         "expectedTop": [
           "What is DevOps?",
           "CI/CD",
-          "Agile vs Waterfall",
-          "What is Cloud Migration?",
           "Build Time"
         ],
         "topN": 5
@@ -4811,8 +4886,6 @@
         "expectedTop": [
           "What is DevOps?",
           "CI/CD",
-          "Agile vs Waterfall",
-          "What is Cloud Migration?",
           "Build Time"
         ],
         "topN": 5
@@ -4969,7 +5042,7 @@
       "query": "authenticated",
       "classification": "A",
       "disposition": "omitted-duplicate-a-intent",
-      "note": "Duplicate of an A-class independent intent already in v2-contracts.json.",
+      "note": "Duplicate of an A-class independent intent already in strict-contracts.json.",
       "intent": {
         "requiredPrimary": [
           "React Authentication"
@@ -4995,7 +5068,7 @@
       "query": "authenticating",
       "classification": "A",
       "disposition": "omitted-duplicate-a-intent",
-      "note": "Duplicate of an A-class independent intent already in v2-contracts.json.",
+      "note": "Duplicate of an A-class independent intent already in strict-contracts.json.",
       "intent": {
         "requiredPrimary": [
           "React Authentication"
@@ -5021,7 +5094,7 @@
       "query": "authentication",
       "classification": "A",
       "disposition": "omitted-duplicate-a-intent",
-      "note": "Duplicate of an A-class independent intent already in v2-contracts.json.",
+      "note": "Duplicate of an A-class independent intent already in strict-contracts.json.",
       "intent": {
         "requiredPrimary": [
           "React Authentication"
@@ -5701,158 +5774,6 @@
             "topN": 1
           }
         ],
-        "requiredAnyWithin": []
-      },
-      "historicalRelevance": true,
-      "v1": {
-        "expectedTop": [
-          "TLS 1.2 Vulnerability"
-        ],
-        "topN": 1
-      }
-    },
-    {
-      "index": 215,
-      "query": "national",
-      "classification": "B",
-      "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
-      "intent": {
-        "requiredPrimary": [],
-        "requiredWithin": [],
-        "requiredAnyWithin": []
-      },
-      "historicalRelevance": true,
-      "v1": {
-        "expectedTop": [
-          "TLS 1.2 Vulnerability"
-        ],
-        "topN": 2
-      }
-    },
-    {
-      "index": 216,
-      "query": "national i",
-      "classification": "B",
-      "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
-      "intent": {
-        "requiredPrimary": [],
-        "requiredWithin": [],
-        "requiredAnyWithin": []
-      },
-      "historicalRelevance": true,
-      "v1": {
-        "expectedTop": [
-          "TLS 1.2 Vulnerability"
-        ],
-        "topN": 2
-      }
-    },
-    {
-      "index": 217,
-      "query": "national in",
-      "classification": "B",
-      "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
-      "intent": {
-        "requiredPrimary": [],
-        "requiredWithin": [],
-        "requiredAnyWithin": []
-      },
-      "historicalRelevance": true,
-      "v1": {
-        "expectedTop": [
-          "TLS 1.2 Vulnerability"
-        ],
-        "topN": 2
-      }
-    },
-    {
-      "index": 218,
-      "query": "national institute",
-      "classification": "B",
-      "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
-      "intent": {
-        "requiredPrimary": [],
-        "requiredWithin": [],
-        "requiredAnyWithin": []
-      },
-      "historicalRelevance": true,
-      "v1": {
-        "expectedTop": [
-          "TLS 1.2 Vulnerability"
-        ],
-        "topN": 1
-      }
-    },
-    {
-      "index": 219,
-      "query": "national institute o",
-      "classification": "B",
-      "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
-      "intent": {
-        "requiredPrimary": [],
-        "requiredWithin": [],
-        "requiredAnyWithin": []
-      },
-      "historicalRelevance": true,
-      "v1": {
-        "expectedTop": [
-          "TLS 1.2 Vulnerability"
-        ],
-        "topN": 1
-      }
-    },
-    {
-      "index": 220,
-      "query": "national institute of",
-      "classification": "B",
-      "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
-      "intent": {
-        "requiredPrimary": [],
-        "requiredWithin": [],
-        "requiredAnyWithin": []
-      },
-      "historicalRelevance": true,
-      "v1": {
-        "expectedTop": [
-          "TLS 1.2 Vulnerability"
-        ],
-        "topN": 1
-      }
-    },
-    {
-      "index": 221,
-      "query": "national institute o s",
-      "classification": "B",
-      "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
-      "intent": {
-        "requiredPrimary": [],
-        "requiredWithin": [],
-        "requiredAnyWithin": []
-      },
-      "historicalRelevance": true,
-      "v1": {
-        "expectedTop": [
-          "TLS 1.2 Vulnerability"
-        ],
-        "topN": 1
-      }
-    },
-    {
-      "index": 222,
-      "query": "national institute of s",
-      "classification": "B",
-      "disposition": "omitted-empty-intent-observational-v1",
-      "note": "No independent V2 intent. Historical expectedTop/titlePrefix still participate in the relevance suite.",
-      "intent": {
-        "requiredPrimary": [],
-        "requiredWithin": [],
         "requiredAnyWithin": []
       },
       "historicalRelevance": true,

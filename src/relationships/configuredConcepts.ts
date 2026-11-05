@@ -31,6 +31,7 @@ export interface ConfiguredConceptPlugin {
   sequences: ConfiguredConceptSequence[];
   standaloneRecallByToken: Map<string, string>;
   topicalRecallByKey: Map<string, string[][]>;
+  topicalPrimaryByKey: Map<string, string[][]>;
   lexicon(): Set<string>;
 }
 
@@ -54,6 +55,7 @@ function configuredConceptPluginFromNormalized(
   recall: {
     standaloneRecallByKey?: Map<string, string[]>;
     topicalRecallByKey?: Map<string, string[][]>;
+    topicalPrimaryByKey?: Map<string, string[][]>;
   } = {}
 ): ConfiguredConceptPlugin {
   const byKey = new Map<string, ConfiguredConcept>();
@@ -82,6 +84,7 @@ function configuredConceptPluginFromNormalized(
     sequences,
     standaloneRecallByToken: compileStandaloneRecallLookup(recall.standaloneRecallByKey || new Map()),
     topicalRecallByKey: compileTopicalRecallLookup(recall.topicalRecallByKey || new Map()),
+    topicalPrimaryByKey: compileTopicalRecallLookup(recall.topicalPrimaryByKey || new Map()),
     lexicon() {
       const words = new Set<string>();
       for (const concept of list) {
@@ -125,6 +128,7 @@ export function compileAuthoredRelevance({
   const plugin = configuredConceptPluginFromNormalized(list, {
     standaloneRecallByKey: compiled.standaloneRecallByKey,
     topicalRecallByKey: compiled.topicalRecallByKey,
+    topicalPrimaryByKey: compiled.topicalPrimaryByKey,
   });
   const synonyms = synonymsPlugin(compiled.synonymMap);
   return {

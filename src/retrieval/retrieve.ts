@@ -178,10 +178,16 @@ export function configuredConceptFieldMatch(
  * (`frame` of typed `frames`) must not prefix a longer different title token
  * (`framework`). Independent exact/lemma token matches still use the full bag.
  */
-function titlePrefixableForms(forms: string[] | undefined, query?: AnalyzedQuery | null) {
+function titlePrefixableForms(
+  forms: string[] | undefined,
+  query?: AnalyzedQuery | null,
+  lemmaOnlyForms?: readonly string[]
+) {
   const list = forms || [];
+  const lemmaOnly = lemmaOnlyForms?.length ? new Set(lemmaOnlyForms) : null;
   return list.filter((form) => {
     if (!form || /^\d+$/.test(form) || /\s/.test(form)) return false;
+    if (lemmaOnly?.has(form)) return false;
     if (!formAllowsOrdinaryLexicalPrefix(query, form)) return false;
     return !list.some((other) => other !== form && other.startsWith(form) && other.length > form.length);
   });
@@ -256,7 +262,7 @@ function conceptMatchesTitle(
       if (compactHasIndependentTitleForm(store, ordinal, form)) return "exact";
       if (compactTitleHasLemma(store, ordinal, form)) return "lemma";
     }
-    for (const form of titlePrefixableForms(concept.forms, query)) {
+    for (const form of titlePrefixableForms(concept.forms, query, concept.lemmaOnlyForms)) {
       if (compactTitleHasPrefixForm(store, ordinal, form, allowPrefixMatch)) return "prefix";
     }
     return null;
@@ -268,7 +274,7 @@ function conceptMatchesTitle(
       if (form === tok) return "lemma";
     }
   }
-  for (const form of titlePrefixableForms(concept.forms, query)) {
+  for (const form of titlePrefixableForms(concept.forms, query, concept.lemmaOnlyForms)) {
     for (const tok of doc.titleTokens) {
       if (allowPrefixMatch(form, tok)) return "prefix";
     }
@@ -288,20 +294,22 @@ function conceptMatchesBody(concept: QueryConcept, doc: IndexedDocument, query?:
     );
   }
   if (conceptPhraseMatchesBody(concept, doc)) return true;
+  const lemmaOnly = concept.lemmaOnlyForms?.length ? new Set(concept.lemmaOnlyForms) : null;
+  const allowsPrefix = (form: string) => !lemmaOnly?.has(form) && formAllowsOrdinaryLexicalPrefix(query, form);
   const store = asCompactStore(doc);
   if (store) {
     return compactBodyMatchesConcept(
       store,
       compactOrdinal(doc),
       (concept.forms || []).filter((form) => !phraseFormTokens(form)),
-      (form) => formAllowsOrdinaryLexicalPrefix(query, form)
+      allowsPrefix
     );
   }
   for (const form of concept.forms) {
     if (phraseFormTokens(form)) continue;
     if (doc.bodyTokenSet.has(form) || doc.bodyLemmaSet.has(form)) return true;
     if (/^\d+$/.test(form)) continue;
-    if (!formAllowsOrdinaryLexicalPrefix(query, form)) continue;
+    if (!allowsPrefix(form)) continue;
     for (const tok of doc.bodyTokens) {
       if (/^\d+$/.test(tok)) continue;
       if (form.length >= 3 && tok.startsWith(form)) return true;
@@ -463,6 +471,96 @@ export function searchEquivalenceRecallConcepts(query: AnalyzedQuery | null | un
   return (query?.concepts || []).filter((concept) => isSearchEquivalenceRecallConcept(query, concept));
 }
 
+function countMarkedBodyOccurrences(
+  tokens: string[],
+  lemmas: string[],
+  exact: Set<string>,
+  phrases: string[][]
+): number {
+  const n = tokens.length;
+  const covered = n ? new Uint8Array(n) : null;
+  let count = 0;
+  const spans: Array<{ start: number; end: number }> = [];
+  const seenSpan = new Set<string>();
+  for (const phrase of phrases) {
+    const width = phrase.length;
+    if (!width || n < width) continue;
+    for (let i = 0; i <= n - width; i++) {
+      let onTokens = true;
+      let onLemmas = true;
+      for (let j = 0; j < width; j++) {
+        if (onTokens && tokens[i + j] !== phrase[j]) onTokens = false;
+        if (onLemmas && lemmas[i + j] !== phrase[j]) onLemmas = false;
+        if (!onTokens && !onLemmas) break;
+      }
+      if (!onTokens && !onLemmas) continue;
+      const end = i + width;
+      const key = `${i}:${end}`;
+      if (seenSpan.has(key)) continue;
+      seenSpan.add(key);
+      spans.push({ start: i, end });
+    }
+  }
+  // Wider spans first, then earlier starts. Alias order cannot mint a second
+  // occurrence for the same positions, and a token covered by a phrase is not
+  // available to a shorter overlapping phrase.
+  spans.sort((a, b) => {
+    const width = b.end - b.start - (a.end - a.start);
+    if (width) return width;
+    return a.start - b.start;
+  });
+  for (const span of spans) {
+    let overlaps = false;
+    if (covered) {
+      for (let i = span.start; i < span.end; i++) {
+        if (covered[i]) {
+          overlaps = true;
+          break;
+        }
+      }
+    }
+    if (overlaps) continue;
+    count += 1;
+    if (covered) {
+      for (let i = span.start; i < span.end; i++) covered[i] = 1;
+    }
+  }
+  for (let i = 0; i < n; i++) {
+    if (covered?.[i]) continue;
+    const surface = tokens[i];
+    const lemma = lemmas[i];
+    if ((surface && exact.has(surface)) || (lemma && exact.has(lemma))) count += 1;
+  }
+  return count;
+}
+
+/**
+ * Unique body occurrences matched by equivalent-recall forms.
+ * A span counts once when several forms match the same positions through
+ * surface tokens or lemmas. A token already covered by a phrase is not
+ * counted again. Distinct non-overlapping spans still count separately.
+ * This is not bodyPhraseCount and does not mark direct lexical evidence.
+ */
+export function equivalentRecallBodyOccurrenceCount(query: AnalyzedQuery, doc: IndexedDocument): number {
+  const concepts = searchEquivalenceRecallConcepts(query);
+  if (!concepts.length) return 0;
+  const exact = new Set<string>();
+  const phrases: string[][] = [];
+  const seenPhrase = new Set<string>();
+  for (const concept of concepts) {
+    for (const form of concept.forms || []) {
+      const seq = String(form || "").split(/\s+/).filter(Boolean);
+      if (seq.length >= 2) {
+        const key = seq.join(" ");
+        if (seenPhrase.has(key)) continue;
+        seenPhrase.add(key);
+        phrases.push(seq);
+      } else if (form) exact.add(form);
+    }
+  }
+  return countMarkedBodyOccurrences(doc.bodyTokens || [], doc.bodyLemmas || [], exact, phrases);
+}
+
 export function coverageConcepts(query: AnalyzedQuery, concepts: QueryConcept[]) {
   return concepts.filter((concept) => !isSearchEquivalenceRecallConcept(query, concept));
 }
@@ -476,6 +574,51 @@ export function rankingCoverageConcepts(query: AnalyzedQuery, concepts: QueryCon
   const usable = coverageConcepts(query, concepts);
   if (!querySemanticFacts(query).configured.hasRankingIdentity) return usable;
   return usable.filter((c) => !isStructuralWrapperTermConcept(c));
+}
+
+/**
+ * Unique body occurrences of direct query evidence.
+ * Configured concepts count the key and the same peer forms body matching
+ * accepts. A one-token alias that is a member of a longer peer form is not
+ * a body occurrence, and neither is a one-token alias that field matching
+ * rejects as a stopword. An explicit configured key still counts. Ordinary
+ * query terms count even when they are stopwords. The words of a multiword
+ * alias are not counted on their own. Aliases that land on the same token
+ * span count once. A compiled bodyPhraseCount of 0 is not a count: callers
+ * must not treat that zero as one mention.
+ */
+export function directBodyOccurrenceCount(query: AnalyzedQuery, doc: IndexedDocument): number {
+  const concepts = rankingCoverageConcepts(query, query.concepts || []);
+  const exact = new Set<string>();
+  const phrases: string[][] = [];
+  const seenPhrase = new Set<string>();
+  const push = (seq: readonly string[]) => {
+    const parts = seq.map((token) => String(token || "").toLowerCase()).filter(Boolean);
+    if (!parts.length) return;
+    if (parts.length === 1) {
+      exact.add(parts[0]);
+      return;
+    }
+    const key = parts.join("\u001f");
+    if (seenPhrase.has(key)) return;
+    seenPhrase.add(key);
+    phrases.push(parts);
+  };
+  for (const concept of concepts) {
+    if (concept.kind === "configured-concept") {
+      const key = String(concept.id || "").toLowerCase();
+      if (key) exact.add(key);
+      const peerForms = configuredPeerForms(concept);
+      for (const alias of peerForms) {
+        if (isSingleFormWordAlias(alias, peerForms)) continue;
+        if (alias.length === 1 && DEFAULT_STOP.has(alias[0])) continue;
+        push(alias);
+      }
+      continue;
+    }
+    for (const form of concept.forms || []) push(String(form || "").split(/\s+/));
+  }
+  return countMarkedBodyOccurrences(doc.bodyTokens || [], doc.bodyLemmas || [], exact, phrases);
 }
 
 export function topicalRecallHint(query: AnalyzedQuery | null | undefined): TopicalRecall | null {

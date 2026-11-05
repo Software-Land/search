@@ -30,7 +30,7 @@ Search data is four distinct layers:
 | --- | --- | --- |
 | Concept map (`configuredConcepts`: `{ key, aliases }`) | what query forms mean the **same thing** | Aliases are unordered semantic peers. `key` is the concept identifier and lexical key form. Unambiguous key/alias spellings share ranked results. Compile with `compileAuthoredRelevance()`. |
 | Relationship map (`relationshipMap`) | what other forms/concepts/documents are explicitly **related** | kinds `equivalent` (one-hop recall) and `related` (standalone / topical / editorial). Directional. No auto-reverse. No authored numeric weight. Compile with `compileAuthoredRelevance()`. |
-| Semantic graph (generated MiniLM artifact) | what relationships the **model inferred** | separate generated pipeline with embedding provenance. Not authored in `relationshipMap`. |
+| Semantic graph (generated offline embedding artifact) | what relationships the **model inferred** | separate generated pipeline with embedding provenance. The default builder is MiniLM. An optional OpenAI provider can produce the same artifact offline. Not authored in `relationshipMap`. |
 
 `equivalent` is not `related`. Generated is not authored. Browser `SearchClient.init({ configuredConcepts, relationshipMap, documentRelationships })` uses these same primitives.
 
@@ -82,6 +82,8 @@ A non-occupied configured prefix may still appear in query analysis (`configured
 Core does not invent aliases. `wifi` will not match `Wi-Fi` unless you compile that decision. Lemma generators stay in the site build; Core consumes an optional `Record<string, string>` and will not import spaCy, lemminflect, or a site lemmatizer.
 
 Former authoring fields `expansion`, `primary`, `standaloneRecall`, and `topicalRecall` are not part of the public configured-concept schema. Explain output may still name compiled standalone/topical provenance. Use `migrateConfiguredEntry()` for a one-shot conversion from 0.4 / early-0.5 rows.
+
+A related concept-to-form edge may set `primaryTerm: true`. That selects one primary topical term. The compiler does not split aliases and mark every word. A title match of the selected term is topical title evidence. It is not concept equivalence and it does not fill literal query coverage. Ordinary related forms keep ordinary topical ranking.
 
 ## What is frozen
 

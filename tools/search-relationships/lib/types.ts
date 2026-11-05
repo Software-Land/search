@@ -9,7 +9,7 @@
 
 import type { TypeSpec } from "../types.js";
 
-export const ARTIFACT_FORMAT = "search-v2-relationships";
+export const ARTIFACT_FORMAT = "search-relationships";
 
 export const RELATIONSHIP_TYPES: Record<string, TypeSpec> = {
   semantic: {

@@ -80,7 +80,8 @@ export function buildVocabulary(
   }
 
   return {
-    format: "search-v2-vocabulary",
+    // Format identifier. Schema version is `version`, which stays 1.
+    format: "search-vocabulary",
     version: 1,
     terms: stableSort(terms, (t) => t.term),
   };

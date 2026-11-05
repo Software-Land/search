@@ -7,10 +7,10 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { SearchEngine, morphology } from "../dist/index.js";
-import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
+import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
 import { frozenCorpusScenarioRows } from "./helpers/software-land-fixture.js";
+import { assertExportedScenario } from "./helpers/scenario-assertions.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = path.join(ROOT, "fixtures", "software-land");
@@ -23,10 +23,11 @@ function loadJson(name) {
 const documents = loadJson("documents.json");
 const configuredConcepts = loadJson("configured-concepts.json");
 const lemmas = loadJson("lemmas.json");
+const relationshipMap = loadJson("relationship-map.json").map;
 const relationships = loadJson("relationships.json");
 const lexicalFrequency = loadJson("lexical-frequency.json");
 const index = loadJson("scenarios.json");
-const contracts = loadJson("v2-contracts.json");
+const contracts = loadJson("strict-contracts.json");
 const regressions = loadJson("regression-scenarios.json");
 const historical = loadJson("historical-scenarios.json");
 
@@ -41,11 +42,15 @@ function createEngine({
   useRelationships = true,
   retriever = "full-scan",
 } = {}) {
+  const compiled = compileAuthoredRelevance({
+    configuredConcepts: useDictionary ? configuredConcepts : [],
+    relationshipMap: useDictionary && useRelationships ? relationshipMap : undefined,
+  });
   return SearchEngine.create({
     schema,
     plugins: [
       morphology(useLemmas ? { lemmas } : {}),
-      compileConfiguredConceptPlugin({ configuredConcepts: useDictionary ? configuredConcepts : [] }),
+      ...compiled.plugins,
     ],
     documentRelationships: useRelationships ? relationships : undefined,
     relationshipStrategy: useRelationships ? "hybrid" : undefined,
@@ -63,10 +68,6 @@ function titlesOf(engine, query, limit = SEARCH_LIMIT) {
   return engine.search(query, { limit }).map((hit) => hit.title);
 }
 
-function indexOfTitle(titles, wanted) {
-  return titles.findIndex((title) => title === wanted);
-}
-
 function expectedTargetTitles(row) {
   const titles = new Set();
   if (row.exactFirst) titles.add(row.exactFirst);
@@ -76,6 +77,11 @@ function expectedTargetTitles(row) {
     for (const title of row.requiredAnyTop.titles) titles.add(title);
   }
   if (row.mustNotDominate?.primary) titles.add(row.mustNotDominate.primary);
+  for (const pair of row.precedes || []) {
+    titles.add(pair.earlier);
+    if (pair.whenLaterVisible !== true) titles.add(pair.later);
+  }
+  for (const doc of row.requiredDocuments || []) titles.add(doc.title);
   if (row.relationship?.title) titles.add(row.relationship.title);
   return [...titles];
 }
@@ -130,21 +136,7 @@ function assertScenarioCase(engine, row) {
     limit: SEARCH_LIMIT,
     ...(row.resultCollector ? { resultCollector: row.resultCollector } : {}),
   });
-  const titles = hits.map((hit) => hit.title);
-  if (row.exactFirst) {
-    expect(titles[0]).toBe(row.exactFirst);
-  }
-  if (row.exactFirstId) {
-    expect(hits[0]?.id).toBe(row.exactFirstId);
-  }
-  for (const req of row.requiredWithin || []) {
-    const idx = req.id
-      ? hits.findIndex((hit) => hit.id === req.id)
-      : indexOfTitle(titles, req.title);
-    expect(idx).toBeGreaterThanOrEqual(0);
-    expect(idx + 1).toBeLessThanOrEqual(req.topN);
-    if (req.id && req.title) expect(hits[idx].title).toBe(req.title);
-  }
+  assertExportedScenario(hits, row);
   if (row.ambiguousExactFirstKeys) {
     const prepared = engine._prepareQuery(row.query);
     expect(prepared.configuredSequenceIntent).toBeNull();
@@ -152,40 +144,6 @@ function assertScenarioCase(engine, row) {
     expect(prepared.concepts.some((concept) => concept.kind === "configured-concept")).toBe(false);
     const keys = (prepared.configuredPrefixRecallGroup || []).map((group) => group.key);
     for (const key of row.ambiguousExactFirstKeys) expect(keys).toContain(key);
-  }
-  for (const req of row.requiredAnyWithin || []) {
-    const idx = indexOfTitle(titles, req.title);
-    expect(idx).toBeGreaterThanOrEqual(0);
-    expect(idx + 1).toBeLessThanOrEqual(req.topN);
-  }
-  if (row.requiredAnyTop) {
-    const windowHits = hits.slice(0, row.requiredAnyTop.topN);
-    const window = windowHits.map((hit) => hit.title);
-    for (const title of row.requiredAnyTop.titles || []) {
-      expect(window).toContain(title);
-    }
-    for (const id of row.requiredAnyTop.ids || []) {
-      expect(windowHits.map((hit) => hit.id)).toContain(id);
-    }
-  }
-  if (row.titlePrefix) {
-    const topN = row.titlePrefixTopN ?? 10;
-    for (const title of titles.slice(0, topN)) {
-      expect(title.startsWith(row.titlePrefix)).toBe(true);
-    }
-  }
-  if (row.mustNotDominate?.primary) {
-    const primaryIdx = indexOfTitle(titles, row.mustNotDominate.primary);
-    expect(primaryIdx).toBeGreaterThanOrEqual(0);
-    for (const forbidden of row.mustNotDominate.titles) {
-      const idx = indexOfTitle(titles, forbidden);
-      if (idx >= 0) expect(idx).toBeGreaterThan(primaryIdx);
-    }
-  }
-  if (row.requiredRelatedAny) {
-    const window = titles.slice(0, row.requiredRelatedAny.topN || SEARCH_LIMIT);
-    const matched = row.requiredRelatedAny.titles.filter((title) => window.includes(title));
-    expect(matched.length).toBeGreaterThanOrEqual(row.requiredRelatedAny.minCount || 1);
   }
   if (row.relationship) {
     const detailed = engine.searchDetailed(row.query, { limit: SEARCH_LIMIT, explain: true });
@@ -211,9 +169,9 @@ describe("software-land corpus fixture", () => {
   });
 
   test("fixture inventory records documents, removed articles, and scenario coverage", () => {
-    expect(documents).toHaveLength(122);
+    expect(documents).toHaveLength(123);
     expect(documents.some((doc) => doc.id === "ag" || doc.id === "I")).toBe(false);
-    expect(contracts.cases).toHaveLength(102);
+    expect(contracts.cases).toHaveLength(135);
     expect(contracts.overlayCases.map((row) => row.query)).toEqual([
       "binary index",
       "binary index ",
@@ -231,15 +189,51 @@ describe("software-land corpus fixture", () => {
     expect(frozenCorpusScenarioRows(contracts).filter((row) => row.requiredAnyTop?.ids?.includes("cm"))).toHaveLength(
       contracts.overlayCases.length
     );
-    expect(regressions.cases).toHaveLength(60);
+    expect(regressions.cases).toHaveLength(54);
     expect(regressions.overlayCases).toHaveLength(4);
-    expect(historical.rows).toHaveLength(223);
+    expect(historical.rows).toHaveLength(215);
     expect(historical.kind).toBe("historical-relevance-contracts");
-    expect(historical.counts.historicalRelevanceApplicable).toBe(222);
-    expect(index.counts.executableContracts).toBe(102);
-    expect(index.counts.executableRegressions).toBe(60);
-    expect(index.counts.sourceScenarioRows).toBe(224);
-    expect(index.counts.historicalRows).toBe(223);
+    expect(historical.counts.historicalRelevanceApplicable).toBe(214);
+    expect(index.counts.executableContracts).toBe(135);
+    expect(index.counts.omittedBrowserUiOnly).toBe(3);
+    expect(contracts.cases.some((row) => [
+      "recent search transitions",
+      "binary index typing progression",
+      "institute of standards typing progression",
+    ].includes(row.query))).toBe(false);
+    const sessions = contracts.browserOnly.filter((item) => item.kind === "typing-session" || item.kind === "query-sequence");
+    expect(sessions.map((item) => item.label)).toEqual([
+      "binary index typing progression",
+      "institute of standards typing progression",
+      "recent search transitions",
+    ]);
+    expect(sessions.flatMap((item) => item.steps).some((step) => step.coverage === "browser-input" || step.coverage === "existing-executable-query" || step.coverage === "exported-step-query")).toBe(true);
+    expect(sessions.find((item) => item.kind === "query-sequence").steps.filter((step) => step.coverage === "browser-input")).toEqual([
+      { query: "q", coverage: "browser-input" },
+      { query: "a", coverage: "browser-input" },
+      { action: "clear", coverage: "browser-input" },
+    ]);
+    const ai = contracts.cases.find((row) => row.query === "ai" && row.origin === "v2-contract");
+    expect(ai.absentWithin).toEqual({ titles: ["Fenwick Tree"], topN: 10 });
+    expect(ai.precedes).toEqual([
+      { earlier: "Software.Land's Alignment with Society", later: "LLM Model Conversion Correctness", topN: 10 },
+      { earlier: "What is a Knowledge Graph?", later: "LLM Model Conversion Correctness", topN: 10 },
+      { earlier: "LLM Model Conversion Correctness", later: "About this Blog", topN: 10 },
+    ]);
+    const machineLearning = contracts.cases.find((row) => row.query === "machine learning");
+    expect(machineLearning.exactFirst).toBeUndefined();
+    expect(machineLearning.mustNotDominate).toEqual({
+      primary: "Linear vs Logistic Regression",
+      titles: ["LinkedIn Learning Review"],
+    });
+    for (const query of ["institute ", "institute o", "institute of", "institute of s", "institute of standards"]) {
+      expect(contracts.cases.find((row) => row.query === query).requiredDocuments).toEqual([
+        { id: "ai", title: "TLS 1.2 Vulnerability", topN: 10 },
+      ]);
+    }
+    expect(index.counts.executableRegressions).toBe(54);
+    expect(index.counts.sourceScenarioRows).toBe(216);
+    expect(index.counts.historicalRows).toBe(215);
     expect(index.counts.omittedOverlayOwned).toBe(1);
     expect(historical.rows.some((row) => row.query === "integ")).toBe(false);
     expect(contracts.cases.some((row) => row.query === "integ")).toBe(false);
@@ -262,7 +256,12 @@ describe("software-land corpus fixture", () => {
 
   test("fixture README states site data is not Core policy", () => {
     const readme = readFileSync(path.join(FIXTURE, "README.md"), "utf8");
+    const manifest = loadJson("manifest.json");
     expect(readme).toContain("not Core ranking policy");
+    expect(readme).toContain(manifest.corpusSourceCommit);
+    expect(readme).toContain(manifest.contentTree);
+    expect(readme).toContain(manifest.uncommittedDiffSha256);
+    expect(readme).toContain(`previous corpus HEAD was \`${manifest.previousCorpusSourceCommit}\``);
     expect(readme).toContain("dff24cf606967cb50b24d28d9142747c9203e053");
     expect(readme).toContain("3ad49e867f82db06aa06cd1c7f38dca8faecf246");
     expect(readme).toContain("e4507c54451814fcafb9598640bd2323faacefa5");
@@ -291,11 +290,11 @@ describe("software-land corpus fixture", () => {
     );
     expect(historical.rows.filter((row) => row.disposition === "contract-a-intent")).toHaveLength(83);
     expect(historical.rows.filter((row) => row.disposition === "omitted-duplicate-a-intent")).toHaveLength(6);
-    expect(historical.rows.filter((row) => row.disposition === "regression-b-intent")).toHaveLength(60);
-    expect(historical.rows.filter((row) => row.disposition === "omitted-duplicate-b-intent")).toHaveLength(5);
-    expect(historical.rows.filter((row) => row.disposition === "omitted-covered-by-v2-contract")).toHaveLength(16);
+    expect(historical.rows.filter((row) => row.disposition === "regression-b-intent")).toHaveLength(54);
+    expect(historical.rows.filter((row) => row.disposition === "omitted-duplicate-b-intent")).toHaveLength(1);
+    expect(historical.rows.filter((row) => row.disposition === "omitted-covered-by-v2-contract")).toHaveLength(26);
     expect(historical.rows.filter((row) => row.disposition === "omitted-obsolete")).toHaveLength(1);
-    expect(historical.rows.filter((row) => row.disposition === "omitted-empty-intent-observational-v1")).toHaveLength(51);
+    expect(historical.rows.filter((row) => row.disposition === "omitted-empty-intent-observational-v1")).toHaveLength(43);
     expect(historical.rows.filter((row) => row.disposition === "omitted-b-intent-not-current-v2").map((row) => row.query)).toEqual([
       "what is an appli",
     ]);
@@ -308,7 +307,7 @@ describe("software-land corpus fixture", () => {
     const emptyIntent = historical.rows.filter((row) => row.disposition === "omitted-empty-intent-observational-v1");
     expect(emptyIntent.every((row) => row.v1?.expectedTop || row.v1?.titlePrefix)).toBe(true);
     expect(emptyIntent.every((row) => row.historicalRelevance === true)).toBe(true);
-    expect(historical.rows.filter((row) => row.historicalRelevance)).toHaveLength(222);
+    expect(historical.rows.filter((row) => row.historicalRelevance)).toHaveLength(214);
     expect(historical.rows.filter((row) => row.historicalRelevance === false).map((row) => row.query)).toEqual(["open"]);
     expect(contracts.cases.every((row) => row.kind === "contract" && !row.v1)).toBe(true);
     expect(regressions.cases.every((row) => row.kind === "regression" && row.classification === "B" && !row.v1)).toBe(true);
@@ -397,8 +396,8 @@ describe("software-land candidate-stage survival", () => {
   test("full-scan retains contract and regression targets before ranking", () => {
     const contractStats = measureCandidateSurvival(fullScan, contracts.cases);
     const regressionStats = measureCandidateSurvival(fullScan, regressions.cases);
-    expect(contractStats.n).toBe(102);
-    expect(regressionStats.n).toBe(60);
+    expect(contractStats.n).toBe(135);
+    expect(regressionStats.n).toBe(54);
     expect(contractStats.missing).toEqual([]);
     expect(regressionStats.missing).toEqual([]);
     expect(contractStats.relatedMiss).toEqual([]);
@@ -407,9 +406,9 @@ describe("software-land candidate-stage survival", () => {
     expect(regressionStats.prefixMiss).toEqual([]);
     expect(contractStats.maxC).toBeLessThanOrEqual(documents.length);
     expect(regressionStats.maxC).toBeLessThanOrEqual(documents.length);
-    // Widest full-scan sets include both removed posts, so they fell by two.
-    expect(contractStats.maxC).toBe(116);
-    expect(regressionStats.maxC).toBe(98);
+    // Measured on this 123-document snapshot with the authored relationship map.
+    expect(contractStats.maxC).toBe(117);
+    expect(regressionStats.maxC).toBe(99);
   });
 
   test("indexed retains contract and regression targets before ranking", () => {
@@ -424,7 +423,9 @@ describe("software-land candidate-stage survival", () => {
     expect(contractStats.maxC).toBeLessThanOrEqual(documents.length);
     expect(regressionStats.maxC).toBeLessThanOrEqual(documents.length);
     // Exact compiled retrieval enumerates every match, then ranks only the
-    // required score/id representatives per builtin constraint signature.
+    // required per-signature representatives. Within a signature that order
+    // is rounded score, then the conditional weak-body and equivalent-body
+    // occurrence counts, then document id.
     // The retained count is intentionally no longer the old BM25 candidate
     // envelope and is not a fixed product contract.
     expect(contractStats.maxC).toBeLessThan(117);
@@ -432,15 +433,16 @@ describe("software-land candidate-stage survival", () => {
   });
 
   test("representative queries report the measured full-scan candidate counts", () => {
-    // Both removed posts were candidates for "2" and "what". One was a
-    // candidate for Edge Computing. The other measured queries are unchanged.
+    // Measured full-scan candidate counts for this snapshot. Topical recall
+    // widens aplicationsecurity and machine learning. The AppSec security form widens aplicationsecurity further. The added conversion
+    // article accounts for the one-document increase on "2", Edge Computing, and what.
     const expected = {
-      2: 62,
-      "Edge Computing": 61,
-      aplicationsecurity: 4,
+      2: 63,
+      "Edge Computing": 62,
+      aplicationsecurity: 36,
       tls: 6,
-      "machine learning": 6,
-      what: 79,
+      "machine learning": 20,
+      what: 80,
     };
     for (const [query, c] of Object.entries(expected)) {
       const detailed = fullScan.searchDetailed(query, { limit: SEARCH_LIMIT });
@@ -457,6 +459,67 @@ describe("software-land candidate-stage survival", () => {
     expect(indexed.searchDetailed("2", { limit: SEARCH_LIMIT }).meta.candidateTitles).toEqual(
       expect.arrayContaining(["200FPS: CSS vs Canvas vs WebGL vs WebGPU", "TLS 1.2 Vulnerability"])
     );
+  });
+});
+
+describe("conditional precedence candidate survival", () => {
+  function engineWith(candidateTitles) {
+    return {
+      searchDetailed() {
+        return { meta: { candidateTitles, candidateCount: candidateTitles.length } };
+      },
+    };
+  }
+
+  const APP_SEC = "App Sec";
+  const ZERO = "Zero-Trust Security";
+  const RBAC = "RBAC (Role Based Access Control)";
+  const AUTHZ = "Authorization Middleware";
+  const LLAMA = "Working with Llama.cpp Embeddings";
+
+  test("a visible-later precedence does not require that article unless another assertion does", () => {
+    const appsec = contracts.cases.find((row) => row.query === "appsec" && row.origin === "v2-contract");
+    const withoutLlama = measureCandidateSurvival(engineWith([APP_SEC, ZERO, RBAC, AUTHZ]), [appsec]);
+    expect(withoutLlama.missing).toEqual([]);
+
+    expect(() => assertExportedScenario([
+      { title: APP_SEC, id: "C" },
+      { title: LLAMA, id: "ch" },
+      { title: ZERO, id: "bj" },
+      { title: RBAC, id: "3" },
+      { title: AUTHZ, id: "D" },
+    ], appsec)).toThrow(/Zero-Trust Security must precede Working with Llama.cpp Embeddings/);
+
+    const unconditional = {
+      query: "order",
+      name: "unconditional order",
+      precedes: [{ earlier: "Alpha", later: "Beta", topN: 10 }],
+    };
+    expect(measureCandidateSurvival(engineWith(["Alpha"]), [unconditional]).missing).toEqual([
+      { query: "order", name: "unconditional order", title: "Beta" },
+    ]);
+    expect(measureCandidateSurvival(engineWith(["Beta"]), [unconditional]).missing).toEqual([
+      { query: "order", name: "unconditional order", title: "Alpha" },
+    ]);
+    expect(measureCandidateSurvival(engineWith(["Alpha", "Beta"]), [unconditional]).missing).toEqual([]);
+
+    const alsoRequired = {
+      query: "appsec",
+      name: "later required independently",
+      requiredAnyTop: { titles: [LLAMA], topN: 10 },
+      precedes: [{ earlier: ZERO, later: LLAMA, topN: 10, whenLaterVisible: true }],
+    };
+    expect(measureCandidateSurvival(engineWith([ZERO]), [alsoRequired]).missing).toEqual([
+      { query: "appsec", name: "later required independently", title: LLAMA },
+    ]);
+
+    expect(() => assertExportedScenario([
+      { title: APP_SEC, id: "C" },
+      { title: RBAC, id: "3" },
+      { title: "SAML vs OAuth", id: "7" },
+      { title: ZERO, id: "bj" },
+      { title: AUTHZ, id: "D" },
+    ], appsec)).toThrow(/Missing required article "Zero-Trust Security" within the top 3/);
   });
 });
 

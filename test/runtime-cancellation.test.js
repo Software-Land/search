@@ -29,7 +29,7 @@ const dictEntries = [
 const plugins = [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: dictEntries })];
 
 const graph = {
-  format: "search-v2-relationships",
+  format: "search-relationships",
   version: 1,
   relationships: {
     "tls-config": [{ target: "vpn", type: "semantic", strength: 0.8, provenance: "test" }],

@@ -2,8 +2,11 @@
  * Compiled corpus-intelligence artifacts. Runtime consumes these objects;
  * it does not care whether a builder was manual, lexical, embedding, or LLM.
  *
- * Tiny format versioning: `format` + integer `version`.
- * This runtime reads version 1 only. Unknown or future versions fail closed.
+ * Each artifact has a format identifier plus an integer schema `version`.
+ * Example: format `search-relationships` with schema version 1.
+ * This runtime reads schema version 1 only. Unknown or future schema versions fail closed.
+ * Readers also accept the pre-0.8.0 identifier for the same schema. Writers emit the
+ * identifier in `ARTIFACT_FORMATS`.
  */
 
 import { ArtifactVersionError, ArtifactValidationError } from "./errors.js";
@@ -11,10 +14,17 @@ import { ArtifactVersionError, ArtifactValidationError } from "./errors.js";
 const FORBIDDEN_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 
 export const ARTIFACT_FORMATS = {
+  relationships: "search-relationships",
+  corpusStats: "search-corpus-stats",
+  lexicalIndex: "search-lexical-index",
+} as const;
+
+/** Explicit pre-0.8.0 spellings. Not derived by editing strings. */
+const LEGACY_ARTIFACT_FORMATS = {
   relationships: "search-v2-relationships",
   corpusStats: "search-v2-corpus-stats",
   lexicalIndex: "search-v2-lexical-index",
-};
+} as const;
 
 export const ARTIFACT_VERSION = 1;
 
@@ -49,7 +59,12 @@ export function assertArtifact(
       field: "format",
     });
   }
-  if (rec.format !== format) {
+  const accepted =
+    rec.format === format ||
+    (format === ARTIFACT_FORMATS.relationships && rec.format === LEGACY_ARTIFACT_FORMATS.relationships) ||
+    (format === ARTIFACT_FORMATS.corpusStats && rec.format === LEGACY_ARTIFACT_FORMATS.corpusStats) ||
+    (format === ARTIFACT_FORMATS.lexicalIndex && rec.format === LEGACY_ARTIFACT_FORMATS.lexicalIndex);
+  if (!accepted) {
     throw new ArtifactValidationError(`Expected format ${format}, got ${JSON.stringify(rec.format)}`, { format, field: "format" });
   }
   const version = rec.version == null ? null : Number(rec.version);
@@ -60,14 +75,14 @@ export function assertArtifact(
     });
   }
   if (!Number.isInteger(version) || version < 1) {
-    throw new ArtifactVersionError(`Invalid artifact version for ${format}: ${JSON.stringify(rec.version)}`, {
+    throw new ArtifactVersionError(`Invalid artifact schema version for ${format}: ${JSON.stringify(rec.version)}`, {
       format,
       version,
     });
   }
   if (version !== ARTIFACT_VERSION) {
     throw new ArtifactVersionError(
-      `Unsupported ${format} version ${version}; this runtime reads version ${ARTIFACT_VERSION} only`,
+      `Unsupported ${format} schema version ${version}; this runtime reads schema version ${ARTIFACT_VERSION} only`,
       { format, version }
     );
   }

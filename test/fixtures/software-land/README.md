@@ -16,64 +16,63 @@ node --experimental-vm-modules ./node_modules/jest/bin/jest.js test/software-lan
 
 ## Provenance
 
-The checked-in snapshot has 122 documents, 191 configured concepts, and 1207 lemmas, including the authored override `computing` → `compute`. The corpus was exported from source commit `372ae05540036fea5671726f6ae43f5a75d9441d`, after the freeze at `971012bf3d561a67ca8a20f03ec2128135d1fb87` (before that, `dff24cf606967cb50b24d28d9142747c9203e053`). The committed `content/blog` tree is `b4d56a987e86e28f6b69acb111596ce5d1ec911d`. HEAD alone does not contain this corpus.
+This snapshot has 123 documents, 192 configured concepts, and 1240 lemmas, including the authored override `computing` → `compute`. The corpus was exported from Software.Land HEAD `2f085e6789d30dc7bdfa26027e0e9ab15d489f85`. The committed `content/blog` tree is `755fc9ba1edee11c9fe2bc56e866715297222443`. Article markdown in that tree is the document source. `manifest.json` records this dirty worktree with `worktree-bytes-v1` digest `a917a2f0cf180e4f5b6876fdda415222026091fdc4a12df31c3c408e151b40c3`. Uncommitted inputs on that HEAD are `__tests__/search-scenario-contract.test.js`, `__tests__/v2-against-v1-historical-topn-contract.test.js`, `docs/search-historical-contract-updates.json`, `docs/search-historical-contract-updates.md`, `scripts/search-artifacts/software-land-scenarios.mjs`, `tests/search-e2e-result-helpers.test.js`, `tests/search-e2e.js`, `tests/search-scenarios.js`, and `tests/search-v2-contracts.js`. The site dependency is `file:vendor/software-land-search-0.8.0.tgz`.
 
-The committed blog tree at that SHA still contains both removed posts. The exported documents come from the working tree at the recorded source commit: those posts deleted, their menu entries removed, and inbound links revised. That tree hash is not the exported corpus.
+Earlier corpus pins remain provenance, not this snapshot: `372ae05540036fea5671726f6ae43f5a75d9441d`, `971012bf3d561a67ca8a20f03ec2128135d1fb87`, and `dff24cf606967cb50b24d28d9142747c9203e053`. The earlier committed blog tree was `b4d56a987e86e28f6b69acb111596ce5d1ec911d`. The previous corpus HEAD was `acf8fbf24bf417af6639838f07ec2246d35c0ed9`, kept on the manifest as `previousCorpusSourceCommit`. Its worktree digest was `d8517388cc4864cf8a8bc311fa89402abb8bec76949af52fa803d820b62821d0`, not the current manifest digest.
 
-Documents use `id`, `title`, `summary`, and normalized search `body`. Configured concepts are the merged rows in `configured-concepts.json`. Lemmas are the mappings in `lemmas.json`, including `computing` → `compute`. Lexical frequency and `relationships.json` are the compiled artifacts stored here. `relationship-map.json` is the authored map plus composed equivalences for this snapshot.
+Documents use `id`, `title`, `summary`, and normalized search `body`. Bodies come from the site search-store pipeline: bracket-boundary link extraction, URL stripping, store tokenization, then `normalizeSearchBody`. Rendered navigation and footer text are not copied. Configured concepts are the runtime merge of `src/search/acronymMap.js` and the existing compiled extras. Lemmas are the existing site lemma artifact plus the authored `computing` → `compute` override. Lexical frequency was recompiled locally from those documents and lemmas. `relationships.json` is the existing compiled document graph, with no new embedding request. `relationship-map.json` is `relationshipMap.js` plus composed live equivalences. That map includes `api` → `interface` with `primaryTerm`, `dfs` → `minimax`, and `ai` → `embeddings`.
 
-Suite engines in this package declare a title and body schema. The summary field is stored with the documents, and lexical frequency includes that summary. These suites do not add summary to the schema: doing so would change retrieval independently of this snapshot.
+Suite engines in this package declare a title and body schema. The summary field is stored with the documents, and lexical frequency includes that summary. These suites do not add summary to the schema.
 
-Fenwick Tree is corpus document `cm` at `/fenwick-tree/` and appears once.
+Fenwick Tree is corpus document `cm` at `/blog/fenwick-tree/` and appears once.
 
-### Content inventory since `971012b`
+### Content inventory for this refresh
 
-Added, in the committed tree:
+Added:
 
-- `cm` `/fenwick-tree/` Fenwick Tree
+- `cn` `/blog/llm-model-conversion-correctness/` LLM Model Conversion Correctness
 
-Removed in the uncommitted working tree. These ids are not in the exported documents, lexical frequency, or document relationships:
+Removed: none. These earlier ids stay absent:
 
 - `I` `/cursor-pagination-previous-page/` Previous Page Token for Cursor Pagination
 - `ag` `/testing-in-software-engineering/` Testing in Software Engineering
 
-The historical root-route baseline still names both former paths. Those paths are not documents in this snapshot:
+Normalized body changed:
 
-- `/cursor-pagination-previous-page/`
-- `/blog/cursor-pagination-previous-page/`
-- `/testing-in-software-engineering/`
-- `/blog/testing-in-software-engineering/`
+- `9` `/blog/software-engineer-vs-software-developer/` Software Engineer vs Software Developer
+- `A` `/blog/about/` About this Blog
+- `bc` `/blog/what-is-recursion/` What is Recursion?
+- `bw` `/blog/react-performance-optimization/` React Performance Optimization
+- `cd` `/blog/topological-sort/` Topological Sort
+- `cg` `/blog/monotonic-stack/` Monotonic Stack
+- `ch` `/blog/working-with-llama-cpp-embeddings/` Working with Llama.cpp Embeddings
+- `ck` `/blog/200-fps-css-vs-canvas-vs-webgl-vs-webgpu/` 200FPS: CSS vs Canvas vs WebGL vs WebGPU
+- `cm` `/blog/fenwick-tree/` Fenwick Tree
 
-Indexed title or body changed:
+Glossary is not in this snapshot. Compiled document relationships pair Fenwick Tree (`cm`) with Monotonic Stack (`cg`) and InOrder vs PreOrder vs PostOrder (`t`). Authorization Middleware (`D`) is paired with CloudFront Signed Cookies (`ci`). Minmax Tree (`X`) has no compiled document-relationship edge; its DFS connection is the authored `dfs` → `minimax` map edge. LLM Model Conversion Correctness (`cn`) is paired with Working with Llama.cpp Embeddings (`ch`). Every relationship endpoint is a document id in this snapshot.
 
-- `9` `/software-engineer-vs-software-developer/` Software Engineer vs Software Developer
-- `A` `/about/` About this Blog
-- `bk` `/terms-of-service-and-privacy-policy/` Terms and Privacy Policy
-- `bl` `/what-is-an-api/` What is an API?
-- `bo` `/working-with-apis/` Working with APIs
-- `bv` `/react-design-systems/` React Design Systems
-- `cl` `/integrity/` title `Integrity Is Not Obedience` → `Integrity`
+### Scenarios and retained inputs
 
-`distributed-cloud` changed in the source commit and did not change the normalized title or body. Glossary is not in this snapshot.
+The current source has 216 scenario rows. The historical mirror is 215 rows, excluding overlay-owned `integ`. Eight short NIST prefix rows left that source and are not in this mirror: `national`, `national i`, `national in`, `national institute`, `national institute o`, `national institute of`, `national institute o s`, and `national institute of s`. The longer NIST phrases remain. Enforced historical rows: 214. The historical top-N hash is `59561f315e944172ab83852f3762be29b00bfa4b96a6163c781f1a0f4d309632`.
 
-Document relationships in this snapshot link Fenwick Tree (`cm`) with Minmax Tree (`X`) and Monotonic Stack (`cg`). Authorization Middleware (`D`) is not paired with CloudFront Signed Cookies (`ci`). Minmax Tree (`X`) is not paired with Maximum Flow Algorithm (`w`). Every relationship endpoint is a document id in this snapshot.
+These identities stay explicit and were not rewritten from engine output:
 
-### Retained historical inputs
-
-These files were not regenerated from the current engine:
-
-- Scenario source commit `e4507c54451814fcafb9598640bd2323faacefa5` (224 source rows). The historical mirror in this directory is 223 rows, excluding `integ`.
-- Strict V2 contract supplement `0a8b33b7604b61e75e03a55b9c1e59d8571a3e19`. Historical scenarios in this snapshot were not taken from that commit.
-- `synonym-map.json` remains the `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6` provenance snapshot (`relevanceSoftwareLandCommit`). It is not the composed relationship map.
-- Historical contract updates `3ad49e867f82db06aa06cd1c7f38dca8faecf246`.
+- Earlier scenario source commit `e4507c54451814fcafb9598640bd2323faacefa5` (224 source rows at that pin).
+- Strict V2 contract supplement `0a8b33b7604b61e75e03a55b9c1e59d8571a3e19`.
+- `synonym-map.json` remains the `db5a070dbc6ac112dfae403f38fdfd0fffbedbf6` provenance snapshot. It is not the composed relationship map.
+- Historical contract updates pin `3ad49e867f82db06aa06cd1c7f38dca8faecf246`.
 - Accepted `what are apis` regression from `62c51bad060fea9627f06c752341ea7434f86e46`.
-- AppSec topical recall still matches `eac7a90a15d772f0f0626a0fa9481eb9efa55521`.
-- **NIST:** The frozen concept fixture lacks the site's `institute of standards` alias, so `relevance-config.json` adds it without introducing the one-token `institute` alias. Historical `institute` results must include Udacity Review and TLS 1.2 Vulnerability within the top 10. The typing-progression tests use frozen document `ai`. Previous fixture pin: `7628a85166781d4ab42f60646e2f66da5f336eaa`.
-- The previous configured-concept overlay `dictionaryAcronymMapSoftwareLandCommit` (`df852eb4136dc5fb5b23cbf0bc22d45170e71423`) is not this snapshot. This refresh replaces that partial acronym overlay with the runtime merge.
-- `query-result-oracle.json` remains the 215-query freeze (123 documents, head recorded in that file). It is not an identity gate for this 122-document corpus. It was not regenerated.
-- `testing` and `quality ass` historical rows no longer name Testing in Software Engineering. That title was removed with the article. Load vs Stress Testing stays at its existing topN bound. No replacement title was taken from engine output. The historical top-N hash is `526c745084124e0b9ee7e22347cc7c5d7d8cd91f8564e7487decde39e1344671`.
+- AppSec topical recall was introduced at `eac7a90a15d772f0f0626a0fa9481eb9efa55521`. The current map adds an ordinary related form `security`. That form is not an AppSec alias, not an equivalence, and not `primaryTerm`.
+- **NIST:** the refreshed concept file already includes `institute of standards`. `relevance-config.json` adds that alias again and the loader dedupes it. It does not add the one-token `institute` alias. Previous fixture pin: `7628a85166781d4ab42f60646e2f66da5f336eaa`.
+- The previous configured-concept overlay `dictionaryAcronymMapSoftwareLandCommit` (`df852eb4136dc5fb5b23cbf0bc22d45170e71423`) is not this snapshot.
+- `query-result-oracle.json` remains the 215-query exact-output freeze. Its query list matches this historical mirror. It was not regenerated.
+- Package-only overlays that remain are `strict-contracts.json` `overlayCases` and `regression-scenarios.json` `overlayCases`.
 
-The `integ` regression still requires document `cl` at rank 1. The expected title is `Integrity`. Rank and id are unchanged.
+`appsec`, `app sec`, `application security`, `application se`, and `aplicationsecurity` keep App Sec first. RBAC and Authorization Middleware stay inside the visible ten. Zero-Trust Security is required inside the top 3 and precedes Working with Llama.cpp Embeddings when that article is also visible. Fourth place fails that window even though the article remains visible. `dfs` and `depth first search` keep Minmax Tree inside the visible ten. The `sharde` A-class intent keeps Throughput vs Latency inside the visible ten. Linear vs Logistic Regression stays in the machine-learn historical membership bag and in the `machine learn`, `machine learni`, and `machine learnin` visible-ten contracts. `maachine leaarning` and `what is machine learning` require Linear vs Logistic Regression within the visible ten, not first; their other historical membership titles stay. DevOps rows do not require Agile vs Waterfall or What is Cloud Migration?. The six API phrase rows include Class vs Interface because the source authors the API primary-term edge. `what is an appli` keeps What is an API?, REST API vs GraphQL, and Working with APIs in the top five, and requires gRPC vs REST within ten.
+
+Typing-session labels and the `recent search transitions` label are browser-only. They are not searched as queries and are not executable coverage. Bare keystrokes and clear are browser input behavior. Per-step queries that carry result assertions are executable when an existing case or overlay does not already cover them. Result hrefs are inventoried as browser path checks. `what is an appli` is not mined into regressions: its recorded B intent still requires What is an API? first, and that omission is package-only. The historical membership contract above is the source contract.
+
+The `integ` regression still requires document `cl` at rank 1. The expected title is `Integrity`.
 
 Fenwick Tree prefix contracts require corpus id `cm` within the top 10. Rank 1 is not required.
 
@@ -82,17 +81,19 @@ Fenwick Tree prefix contracts require corpus id `cm` within the top 10. Rank 1 i
 - `documents.json` — `id`, `title`, `summary`, normalized search `body`
 - `configured-concepts.json` — runtime `{ key, aliases }` merge. Aliases are unordered peers.
 - `lemmas.json` — lemma table passed to `morphology({ lemmas })`
-- `relationships.json` — compiled document relationship graph (semantic plus domain editorial)
-- `lexical-frequency.json` — lexical-frequency artifact, compiled with title, summary, and normalized body
-- `relationship-map.json` — authored map plus composed equivalences
-- `v2-contracts.json` — strict cases plus Fenwick corpus contracts in `overlayCases`
+- `relationships.json` — compiled document relationship graph reused from the site artifact cache
+- `lexical-frequency.json` — lexical-frequency artifact, compiled locally from title, summary, and normalized body
+- `relationship-map.json` — authored map plus composed equivalences, including the API primary-term edge, DFS/minimax, AI/embeddings, and the ordinary AppSec → security edge
+- `strict-contracts.json` — strict cases plus Fenwick corpus contracts in `overlayCases`
 - `regression-scenarios.json` — B-intent compatibility coverage, not Core ranking policy
-- `historical-scenarios.json` — retained 223-row historical mirror
-- `historical-contract-updates.json` — retained product updates
+- `historical-scenarios.json` — 215-row historical mirror of the current source
+- `v1-historical-topn-contract.json` — hashed executable historical membership contract
+- `historical-contract-updates.json` — product-decision record aligned to the current source contracts
 - `relevance-config.json` — historical engine input selector (omit `testing`, NIST and AppSec patches, relationship map)
+- `manifest.json` — corpus HEAD, content tree, worktree fingerprint, and fixture file hashes
 - `nist-typing-progression.json` — institute-of typing steps for the packed Chromium corpus. Target is frozen document `ai`
 - `synonym-map.json` — retained `db5a070` provenance snapshot
-- `query-result-oracle.json` — retained 215-query freeze for the previous corpus
-- `scenarios.json` — retained scenario index
+- `query-result-oracle.json` — retained 215-query exact-output freeze
+- `scenarios.json` — scenario index for this source snapshot
 
-Do not generate `expectedTop`, `topN`, `titlePrefix`, or oracle rows from current engine output.
+Do not generate `expectedTop`, `topN`, `titlePrefix`, `within`, or oracle rows from current engine output.

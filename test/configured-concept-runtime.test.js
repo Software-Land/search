@@ -209,7 +209,7 @@ describe("canonical ConfiguredConcept query occupancy", () => {
       ])
     );
     const topical = analyzeQuery("appsec", { plugins });
-    expect(topical.topicalRecall).toEqual({ key: "appsec", forms: [["authentication"]] });
+    expect(topical.topicalRecall).toEqual({ key: "appsec", forms: [["authentication"]], primaryForms: [] });
     const detailed = engine.searchDetailed("http", { limit: 10, explain: true });
     expect(detailed.results[0].id).toBe("http");
     expect(detailed.results[0].explanation.query.configuredSequenceIntent.matchedForm).toEqual([]);

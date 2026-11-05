@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseRelationships } from "../dist/artifacts.js";
+import { prohibitedBuilderSpecifiers } from "./helpers/import-specifiers.js";
 import { morphology, SearchEngine } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
@@ -29,29 +30,28 @@ describe("runtime isolation", () => {
   test("runtime does not import the semantic builder or embedding stacks", () => {
     const root = path.join(__dirname, "../dist");
     const banned = [
-      "search-semantic",
-      "search-lexical",
       "sentence-transformers",
       "fastembed",
       "huggingface",
       "hnsw",
       "pytorch",
       "onnxruntime",
-      "search-enrichment",
       "llama.cpp",
       "gguf",
     ];
     for (const file of walkJs(root)) {
-      const text = fs.readFileSync(file, "utf8").toLowerCase();
+      const text = fs.readFileSync(file, "utf8");
+      const lowered = text.toLowerCase();
       for (const token of banned) {
-        expect(text.includes(token)).toBe(false);
+        expect(lowered.includes(token)).toBe(false);
       }
+      expect(prohibitedBuilderSpecifiers(text, file)).toEqual([]);
     }
   });
 
   test("relationship parser rejects nothing extra and stores no vectors", () => {
     const art = parseRelationships({
-      format: "search-v2-relationships",
+      format: "search-relationships",
       version: 1,
       relationships: {
         "/tls/": [{ target: "/vpn/", type: "semantic", strength: 0.77, provenance: "embedding" }],
@@ -68,7 +68,7 @@ describe("runtime isolation", () => {
       schema,
       plugins: [morphology(), compileConfiguredConceptPlugin({ configuredConcepts: [{ key: "tls", aliases: [["transport", "layer", "security"]]}] })],
       documentRelationships: {
-        format: "search-v2-relationships",
+        format: "search-relationships",
         version: 1,
         relationships: {
           "/tls-1.2-vulnerability/": [

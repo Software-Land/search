@@ -22,7 +22,10 @@ import {
   type CompileRelOptions,
 } from "@software-land/search/relationships";
 import {
+  DEFAULT_EMBEDDING_PROVIDER,
   DEFAULT_METHOD,
+  OPENAI_EMBEDDING_DIMENSIONS,
+  OPENAI_EMBEDDING_MODEL,
   compileSemantic,
   semanticBuilderPath,
   semanticRoot,
@@ -56,6 +59,16 @@ const configuredArtifact: ConfiguredConceptArtifact = parseConfiguredConcepts({
   compileWarnings: [],
 });
 void configuredArtifact.entries[0].key;
+const legacyConfigured: ConfiguredConceptArtifact = {
+  format: "search-v2-configured-concepts",
+  version: 1,
+  entries: [],
+  compileWarnings: [],
+};
+const parsedLegacyFormat: "search-configured-concepts" = parseConfiguredConcepts(legacyConfigured).format;
+const writtenConceptFormat: "search-configured-concepts" = CONFIGURED_CONCEPT_FORMAT;
+void parsedLegacyFormat;
+void writtenConceptFormat;
 const generatedEquivalence: GeneratedRelationshipMap = (corpus.relationshipMap || {}) as GeneratedRelationshipMap;
 void generatedEquivalence;
 const analysis: AnalyzeResult = analyzeCorpus({ documents });
@@ -70,9 +83,14 @@ void loaded.documents;
 const relOpts: CompileRelOptions = { semantic: null, domain: null };
 const relationships: Record<string, unknown> = compileRelationships({ documents: [] }, relOpts);
 const filteredRel = filterRelationships(
-  { format: "search-v2-relationships", version: 1, relationships: {} },
+  { format: "search-relationships", version: 1, relationships: {} },
   ["semantic", "editorial"]
 );
+const filteredLegacyRel = filterRelationships(
+  { format: "search-v2-relationships", version: 1, relationships: {} },
+  ["semantic"]
+);
+void filteredLegacyRel;
 void REL_COMPILER_VERSION;
 const relCompilerVersion: 2 = REL_COMPILER_VERSION;
 void relCompilerVersion;
@@ -81,19 +99,34 @@ void filteredRel;
 
 const semanticOpts: CompileSemanticOptions = {
   method: DEFAULT_METHOD,
+  embeddingProvider: DEFAULT_EMBEDDING_PROVIDER,
   precisionGate: true,
   mutual: true,
 };
+const openaiSemanticOpts: CompileSemanticOptions = {
+  method: "embedding",
+  embeddingProvider: "openai",
+  model: OPENAI_EMBEDDING_MODEL,
+  dimensions: OPENAI_EMBEDDING_DIMENSIONS,
+  apiBase: "https://api.openai.com/v1",
+};
+void openaiSemanticOpts;
 export async function runSemantic(input: unknown): Promise<CompileSemanticResult> {
   void semanticRoot();
   void semanticBuilderPath();
   return compileSemantic(input, semanticOpts);
 }
 
-const artifact: LexicalFrequencyArtifact = compileLexicalFrequency(
+const artifact = compileLexicalFrequency(
   [{ id: "a", body: "machine learning machine learning" }],
   { lemma: (token: string) => token }
 );
+const frequencyAsInput: LexicalFrequencyArtifact = artifact;
+const writtenFrequencyFormat: "search-lexical-frequency" = artifact.format;
+const legacyFrequency: LexicalFrequencyArtifact = { ...artifact, format: "search-v2-lexical-frequency" };
+void frequencyAsInput;
+void writtenFrequencyFormat;
+void attachLexicalFrequency([{ id: "a", body: "x" }], legacyFrequency);
 const attached = attachLexicalFrequency([{ id: "a", body: "x" }], artifact);
 void LEX_COMPILER_VERSION;
 void LEXICAL_FREQUENCY_FORMAT;
@@ -103,7 +136,7 @@ void lookupNgramCount(artifact.documents.a?.ngrams, "machine learn");
 void saturatingFrequency(2);
 void attached;
 
-const lexicalIndex: LexicalIndexArtifact = compileLexicalIndex(
+const lexicalIndex = compileLexicalIndex(
   [{ id: "a", title: "Machine Learning", body: "machine learning" }],
   {
     lemma: (token: string) => token,
@@ -115,6 +148,12 @@ const lexicalIndex: LexicalIndexArtifact = compileLexicalIndex(
   }
 );
 const lexicalIndexVersion: 1 = LEXICAL_INDEX_VERSION;
+const lexicalIndexAsInput: LexicalIndexArtifact = lexicalIndex;
+const writtenLexicalFormat: "search-lexical-index" = lexicalIndex.format;
+const legacyLexicalIndex: LexicalIndexArtifact = { ...lexicalIndex, format: "search-v2-lexical-index" };
+void lexicalIndexAsInput;
+void writtenLexicalFormat;
+void legacyLexicalIndex;
 void LEXICAL_INDEX_FORMAT;
 void lexicalIndexVersion;
 void lexicalIndex.corpus.documentCount;

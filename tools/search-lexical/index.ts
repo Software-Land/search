@@ -1,7 +1,8 @@
 /**
  * Public search-lexical compiler API.
- * Frequency implementation lives in ./lib/compile.ts; the positional v1
- * compiler shares Core's analyzer implementation through the built output.
+ * Frequency implementation lives in ./lib/compile.ts. The positional compiler
+ * emits a `search-lexical-index` artifact with schema version 1 and shares
+ * Core's analyzer implementation through the built output.
  */
 import {
   COMPILER_VERSION as compilerVersion,
@@ -35,7 +36,7 @@ export interface LexicalDocumentNgrams {
 }
 
 export interface LexicalFrequencyArtifact {
-  format: "search-v2-lexical-frequency";
+  format: "search-lexical-frequency" | "search-v2-lexical-frequency";
   version: number;
   policy: {
     minN: number;
@@ -46,7 +47,7 @@ export interface LexicalFrequencyArtifact {
 }
 
 export interface LexicalIndexArtifact {
-  format: "search-v2-lexical-index";
+  format: "search-lexical-index" | "search-v2-lexical-index";
   version: 1;
   compatibility: {
     core: string;
@@ -73,8 +74,8 @@ export interface LexicalIndexCompileOptions {
 }
 
 export const COMPILER_VERSION: 1 = compilerVersion;
-export const LEXICAL_FREQUENCY_FORMAT: "search-v2-lexical-frequency" = lexicalFrequencyFormat;
-export const LEXICAL_INDEX_FORMAT: "search-v2-lexical-index" = lexicalIndexFormat;
+export const LEXICAL_FREQUENCY_FORMAT: "search-lexical-frequency" = lexicalFrequencyFormat;
+export const LEXICAL_INDEX_FORMAT: "search-lexical-index" = lexicalIndexFormat;
 export const LEXICAL_INDEX_VERSION: 1 = lexicalIndexVersion;
 export const DEFAULT_LEXICAL_POLICY: {
   readonly minN: 1;
@@ -93,14 +94,14 @@ export function resolveLexicalPolicy(policy?: LexicalPolicy | null): {
 export function compileLexicalFrequency(
   input?: unknown,
   opts?: LexicalCompileOptions
-): LexicalFrequencyArtifact {
-  return compileLexicalFrequencyImpl(input, opts);
+): LexicalFrequencyArtifact & { format: "search-lexical-frequency" } {
+  return compileLexicalFrequencyImpl(input, opts) as LexicalFrequencyArtifact & { format: "search-lexical-frequency" };
 }
 
 export function compileLexicalIndex(
   input?: unknown,
   { schema, lemma, analyzerId }: LexicalIndexCompileOptions = {}
-): LexicalIndexArtifact {
+): LexicalIndexArtifact & { format: "search-lexical-index" } {
   if (typeof lemma === "function" && !analyzerId) {
     throw new Error("compileLexicalIndex requires analyzerId when lemma is supplied");
   }
@@ -112,7 +113,7 @@ export function compileLexicalIndex(
     schema,
     plugins,
     analyzer: analyzerId,
-  }) as LexicalIndexArtifact;
+  }) as LexicalIndexArtifact & { format: "search-lexical-index" };
 }
 
 export function attachLexicalFrequency<T extends { id?: unknown }>(

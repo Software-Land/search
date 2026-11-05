@@ -2,7 +2,7 @@ import { SearchEngine, morphology } from "../dist/index.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { retrieveCandidates } from "../dist/retrieval/retrieve.js";
 import { compileStandaloneRecallLookup } from "../dist/relationships/configuredConcepts.js";
-import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
+import { bodyPostingPruningUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const httpDict = [
@@ -79,7 +79,7 @@ describe("standalone recall analysis", () => {
     expect(q.concepts.every((c) => c.kind !== "acronym")).toBe(true);
     expect(q.concepts.some((c) => c.kind === "term" && c.forms.includes("hypertext"))).toBe(true);
     expect(q.standaloneRecall).toMatchObject({ key: "http", sourceToken: "hypertext" });
-    expect(stage3AUnsupportedReason(q)).toBe("token-count");
+    expect(bodyPostingPruningUnsupportedReason(q)).toBe("token-count");
   });
 
   test("legacy primary does not activate standalone recall", () => {

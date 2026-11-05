@@ -46,7 +46,7 @@ class BuilderTests(unittest.TestCase):
 
     def test_artifact_has_no_vectors(self):
         art = to_artifact({"/tls/": [("/vpn/", 0.81)]}, provenance="lexical")
-        self.assertEqual(art["format"], "search-v2-relationships")
+        self.assertEqual(art["format"], "search-relationships")
         blob = json.dumps(art)
         self.assertNotIn("embedding", blob)
         self.assertNotIn("vector", blob)

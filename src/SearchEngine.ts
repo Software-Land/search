@@ -6,10 +6,11 @@ import {
   lexicalAnalyzerIdentity,
   lexicalCorpusFingerprint,
   lexicalHydrationFingerprint,
+  LEXICAL_INDEX_FORMAT,
   loadLexicalIndex,
 } from "./indexing/lexicalIndex.js";
 import { extractFeatures } from "./features/features.js";
-import { retrievalSourcesForDocument } from "./retrieval/retrieve.js";
+import { directBodyOccurrenceCount, retrievalSourcesForDocument } from "./retrieval/retrieve.js";
 import { buildQueryPlan } from "./query/queryPlan.js";
 import {
   applyCompleteInterpretationCollector,
@@ -38,7 +39,7 @@ import {
   retrieveWithRankingEvidence,
   retrieveWithRankingEvidenceAsync,
 } from "./retrieval/retrievers.js";
-import { constraintsForStrategy } from "./ranking/constraints.js";
+import { constraintsForStrategy, isZeroTermRelatedNeighbor } from "./ranking/constraints.js";
 import { morphology } from "./morphology.js";
 import { compileConfiguredConceptPlugin } from "./relationships/configuredConcepts.js";
 import { bindMorphologyDerivedEquivalences } from "./query/synonyms.js";
@@ -224,6 +225,11 @@ function resolveGraph(
   return RelationshipGraph(relationships);
 }
 
+function hybridRelatedSources(strategy: string, graph: RelationshipGraphApi) {
+  if (strategy !== "hybrid" || graph.empty) return null;
+  return (id: string) => graph.has(id);
+}
+
 function representativeDepthForOutput(
   ranked: RankedHit[],
   strategy: string,
@@ -331,7 +337,7 @@ export class SearchEngine {
         throw new ArtifactValidationError(
           "Re-index input is incompatible with the consumed lexical index",
           {
-            format: "search-v2-lexical-index",
+            format: LEXICAL_INDEX_FORMAT,
             field:
               fingerprint === this.loadedLexicalIndex.fingerprint &&
               hydrationFingerprint !== this.loadedLexicalIndex.hydrationFingerprint
@@ -689,6 +695,20 @@ export class SearchEngine {
       featured.push(missingPhraseFeatured(query, hit.document));
     }
 
+    // Packed columns do not store this count. Compute the same body measurement
+    // the feature-vector path uses, and only once a zero-term neighbor makes
+    // the repeated-evidence constraint able to change order. Queries with no
+    // such neighbor leave the count uncomputed. The count is not a score term.
+    if (featured.some((hit) => isZeroTermRelatedNeighbor(hit.features))) {
+      for (const hit of featured) {
+        const features = hit.features;
+        if (features.relevanceKind === "related") continue;
+        if (features.directClass !== "weak" && features.directClass !== "none") continue;
+        if (typeof features.directBodyOccurrenceCount === "number") continue;
+        features.directBodyOccurrenceCount = directBodyOccurrenceCount(query, hit.document);
+      }
+    }
+
     const constraints = constraintsForStrategy(strategy);
     let representativeStats: Record<string, unknown> | null = null;
     const fullRelatedCount = featured.filter((hit) => hit.features.relevanceKind === "related").length;
@@ -736,7 +756,7 @@ export class SearchEngine {
       signal?: AbortSignal;
       candidateLimit?: number | null;
       skipDuplicatePostingLists?: boolean;
-      exactBlockSkip: false | { requiredDepth: number };
+      exactBlockSkip: Exclude<RetrieveOptions["exactBlockSkip"], undefined>;
     },
     t0: number
   ) {
@@ -828,7 +848,7 @@ export class SearchEngine {
       signal?: AbortSignal;
       candidateLimit?: number | null;
       skipDuplicatePostingLists?: boolean;
-      exactBlockSkip: false | { requiredDepth: number };
+      exactBlockSkip: Exclude<RetrieveOptions["exactBlockSkip"], undefined>;
     },
     t0: number
   ) {
@@ -972,9 +992,12 @@ export class SearchEngine {
         pruningMode === "auto" &&
         this.retrievalScoreWeight === 0 &&
         sourcePolicy !== "all-strong"
-          ? { requiredDepth: initialRepresentativeDepth }
+          ? {
+              requiredDepth: initialRepresentativeDepth,
+              relatedExpansionSources: hybridRelatedSources(strategy, this.relationships),
+            }
           : false
-      ) as false | { requiredDepth: number },
+      ) as Exclude<RetrieveOptions["exactBlockSkip"], undefined>,
     };
     if (
       !packedSearchFallbackReason({
@@ -1119,9 +1142,12 @@ export class SearchEngine {
         pruningMode === "auto" &&
         this.retrievalScoreWeight === 0 &&
         sourcePolicy !== "all-strong"
-          ? { requiredDepth: initialRepresentativeDepth }
+          ? {
+              requiredDepth: initialRepresentativeDepth,
+              relatedExpansionSources: hybridRelatedSources(strategy, this.relationships),
+            }
           : false
-      ) as false | { requiredDepth: number },
+      ) as Exclude<RetrieveOptions["exactBlockSkip"], undefined>,
     };
     if (
       !packedSearchFallbackReason({

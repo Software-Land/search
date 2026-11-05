@@ -42,7 +42,7 @@ writeFileSync(
   path.join(dist, "indexing", "lexicalIndex.d.ts"),
   `import type { LexicalIndexArtifact, Schema, SearchPlugin } from "../api.js";
 
-export declare const LEXICAL_INDEX_FORMAT: "search-v2-lexical-index";
+export declare const LEXICAL_INDEX_FORMAT: "search-lexical-index";
 export declare const LEXICAL_INDEX_VERSION: 1;
 export declare function compileLexicalIndex(
   documents: unknown,
@@ -51,7 +51,7 @@ export declare function compileLexicalIndex(
     plugins?: SearchPlugin[];
     analyzer?: string;
   }
-): LexicalIndexArtifact;
+): LexicalIndexArtifact & { format: "search-lexical-index" };
 `
 );
 

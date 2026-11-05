@@ -1,8 +1,9 @@
 import { SearchEngine, morphology } from "../dist/index.js";
+import { tokenize } from "../dist/text/text.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { retrieveCandidates } from "../dist/retrieval/retrieve.js";
 import { normalizeTopicalRecall } from "../dist/relationships/configuredConcepts.js";
-import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
+import { bodyPostingPruningUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const appsecDict = [
@@ -106,7 +107,8 @@ describe("topical recall analysis", () => {
       expect(q.configuredSequenceIntent?.key).toBe("appsec");
       expect(q.topicalRecall).toEqual({
         key: "appsec",
-        forms: [["authentication"], ["authorization"], ["bearer", "token"], ["oauth"]],
+        forms: [["authentication"], ["authorization"], ["bearer", "token"], ["oauth"], ["open", "authorization"]],
+        primaryForms: [],
       });
       expect(q.tokens.map((t) => t.surface)).toEqual(baseline.tokens.map((t) => t.surface));
       expect(q.tokens.map((t) => t.normalized)).toEqual(baseline.tokens.map((t) => t.normalized));
@@ -118,7 +120,7 @@ describe("topical recall analysis", () => {
       );
       expect(q.standaloneRecall ?? null).toBeNull();
     }
-    expect(stage3AUnsupportedReason(analyzeQuery("app sec", { plugins: withTopical }))).toBe("topical-recall");
+    expect(bodyPostingPruningUnsupportedReason(analyzeQuery("app sec", { plugins: withTopical }))).toBe("topical-recall");
   });
 
   test("bare security and topical words do not reverse-activate appsec", () => {
@@ -129,7 +131,7 @@ describe("topical recall analysis", () => {
     }
     const oauth = analyzeQuery("oauth", { plugins: plugins() });
     expect(oauth.configuredSequenceIntent?.key).toBe("oauth");
-    expect(oauth.topicalRecall).toEqual({ key: "oauth", forms: [["openid"], ["redirect"]] });
+    expect(oauth.topicalRecall).toEqual({ key: "oauth", forms: [["openid"], ["redirect"]], primaryForms: [] });
   });
 
   test("concept without topical config is unchanged", () => {
@@ -163,7 +165,8 @@ describe("topical recall retrieval and ranking", () => {
     expect(detailed.results[0].explanation.query.configuredSequenceIntent.key).toBe("appsec");
     expect(detailed.results[0].explanation.query.topicalRecall).toEqual({
       key: "appsec",
-      forms: [["authentication"], ["authorization"], ["bearer", "token"], ["oauth"]],
+      forms: [["authentication"], ["authorization"], ["bearer", "token"], ["oauth"], ["open", "authorization"]],
+      primaryForms: [],
     });
     expect(detailed.results[0].explanation.query.tokens.map((t) => t.surface)).toEqual(["app", "sec"]);
     const topicalOnly = detailed.results.filter((row) => row.id !== "direct");
@@ -228,5 +231,103 @@ describe("topical recall retrieval and ranking", () => {
     const hits = retrieveCandidates(q, e._index);
     expect(hits.some((h) => h.document.id === "http-body")).toBe(true);
     expect(hits.every((h) => !h.retrievalSources.includes("topical-recall"))).toBe(true);
+  });
+});
+
+describe("topical concept forms against manufactured and incidental evidence", () => {
+  const entries = [
+    { key: "widget", aliases: [["widget", "concept"]], topicalRecall: [["large", "language", "model"]] },
+    { key: "acme", aliases: [["large", "language", "model"]], topicalRecall: [["other", "thing"]] },
+    { key: "other", aliases: [["other", "thing"]] },
+  ];
+  const docs = [
+    { id: "0-incidental", title: "Notes", body: "widget appears once" },
+    { id: "1-topical-body", title: "Overview", body: "a large language model overview" },
+    { id: "2-topical-title", title: "Acme Primer", body: "format conversion notes" },
+    { id: "3-words", title: "Large", body: "language and model appear apart" },
+    { id: "4-recursive", title: "Other Thing", body: "unrelated notes" },
+    { id: "8-repeated", title: "Repeats", body: "widget then later widget again" },
+    { id: "9-strong", title: "Widget", body: "unrelated gardening" },
+  ];
+
+  test("bracket syntax does not manufacture a token", () => {
+    expect(tokenize("A[i]")).toEqual(["a", "i"]);
+    expect(tokenize("D[i] = A[i] - A[i - 1]")).not.toContain("ai");
+    expect(tokenize("AI will be used")).toContain("ai");
+  });
+
+  test("a related phrase resolves its configured acronym without splitting the phrase", () => {
+    const q = analyzeQuery("widget", { plugins: plugins(entries) });
+    expect(q.topicalRecall).toEqual({
+      key: "widget",
+      forms: [["large", "language", "model"], ["acme"]],
+      primaryForms: [],
+    });
+    expect(q.equivalentRecall || []).toEqual([]);
+    expect(q.topicalRecall.forms).not.toEqual(expect.arrayContaining([["large"]]));
+    expect(q.topicalRecall.forms).not.toEqual(expect.arrayContaining([["language"]]));
+    expect(q.topicalRecall.forms).not.toEqual(expect.arrayContaining([["model"]]));
+    expect(q.topicalRecall.forms).not.toEqual(expect.arrayContaining([["other"]]));
+    expect(q.topicalRecall.forms).not.toEqual(expect.arrayContaining([["other", "thing"]]));
+    expect(q.topicalRecall.forms).not.toEqual(expect.arrayContaining([["widget"]]));
+
+    const reverse = analyzeQuery("acme", { plugins: plugins(entries) });
+    expect(reverse.topicalRecall).toEqual({
+      key: "acme",
+      forms: [["other", "thing"], ["other"]],
+      primaryForms: [],
+    });
+    expect(reverse.topicalRecall.forms).not.toEqual(expect.arrayContaining([["widget"]]));
+    expect(reverse.equivalentRecall || []).toEqual([]);
+  });
+
+  test("an ambiguous concept owner stays the authored phrase", () => {
+    const q = analyzeQuery("widget", {
+      plugins: plugins([
+        { key: "widget", aliases: [["widget", "concept"]], topicalRecall: [["shared", "phrase"]] },
+        { key: "left", aliases: [["shared", "phrase"]] },
+        { key: "right", aliases: [["shared", "phrase"]] },
+      ]),
+    });
+    expect(q.topicalRecall.forms).toEqual([["shared", "phrase"]]);
+  });
+
+  test("topical title outranks one weak body mention and stays behind strong and repeated evidence", async () => {
+    const make = (retriever) => engine(entries, docs, retriever);
+    const full = await make("full-scan");
+    const indexed = await make("indexed");
+    for (const e of [full, indexed]) {
+      const detailed = e.searchDetailed("widget", { limit: 20, explain: true });
+      expect(detailed.results.map((row) => row.id)).toEqual([
+        "9-strong",
+        "8-repeated",
+        "2-topical-title",
+        "0-incidental",
+        "1-topical-body",
+      ]);
+      const byId = Object.fromEntries(detailed.results.map((row) => [row.id, row]));
+      expect(byId["9-strong"].directClass).toBe("strong");
+      expect(byId["8-repeated"].directClass).toBe("weak");
+      expect(byId["8-repeated"].features.bodyPhraseCount).toBe(0);
+      expect(byId["8-repeated"].features.directBodyOccurrenceCount).toBe(2);
+      expect(byId["0-incidental"].features.directBodyOccurrenceCount).toBe(1);
+      expect(byId["0-incidental"].directClass).toBe("weak");
+      expect(byId["2-topical-title"].retrievalSources).toEqual(["topical-recall"]);
+      expect(byId["2-topical-title"].features.topicalRecallTitleMatch).toBe(true);
+      expect(byId["2-topical-title"].features.queryCoverage).toBe(0);
+      expect(byId["2-topical-title"].features.bodyLexicalMatch).toBe(0);
+      expect(byId["2-topical-title"].features.equivalentRecallMatch).toBeFalsy();
+      expect(byId["1-topical-body"].features.topicalRecallTitleMatch).toBe(false);
+      expect(byId["1-topical-body"].features.topicalRecallPhraseMatch).toBe(true);
+      expect(e.search("widget").map((row) => row.id)).toEqual(detailed.results.map((row) => row.id));
+    }
+    expect(indexed.search("widget").map((row) => row.id)).toEqual(full.search("widget").map((row) => row.id));
+
+    const reverse = full.searchDetailed("acme", { limit: 20, explain: true });
+    expect(reverse.results.map((row) => row.id)).not.toContain("0-incidental");
+    expect(reverse.results.map((row) => row.id)).toContain("4-recursive");
+    expect(reverse.results.find((row) => row.id === "4-recursive").retrievalSources).toEqual(["topical-recall"]);
+    expect(full.search("widget").map((row) => row.id)).not.toContain("4-recursive");
+    expect(full.search("widget").map((row) => row.id)).not.toContain("3-words");
   });
 });

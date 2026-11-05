@@ -8,9 +8,9 @@ This page describes **current package behavior**, then historical shipped measur
 
 Direct candidate-wide `FeatureVector` construction is eliminated on that eligible ordinary path. Default hybrid uses the optimized path. Unsupported shapes fail closed to the exact FeatureVector execution path. That fallback is success: same public results, not a quality degradation.
 
-`searchDetailed()`, `explain: true`, exhaustive diagnostics, and complete-interpretation collection may still use the FeatureVector path.
+`searchDetailed()`, `explain: true`, exhaustive diagnostics, and complete-interpretation collection may still use the FeatureVector path. That sentence is the packed ranking-evidence gate. Ordinary `search()` / `searchAsync()` with `explain: true` remains eligible for feature block pruning and body posting pruning. Public `searchDetailed()` and explicit exhaustive mode turn those capabilities off.
 
-0.6.5 is the last planned constant-factor v1 performance release for now. Production measurements cover 25k / 50k / 100k documents on one mixed workload. Ordinary million-document search under 50 ms is **not** current capability.
+0.6.5 is the last planned constant-factor performance release of the positional lexical index for now. Production measurements cover 25k / 50k / 100k documents on one mixed workload. Ordinary million-document search under 50 ms is **not** current capability.
 
 ## 0.6.5 measured search() performance
 
@@ -40,7 +40,7 @@ Headline speedups on this suite:
 
 Six ordinary non-tiny queries (`network`, `search index`, `searching`, `searc`, `serach`, `tls`) are about **2.2–2.3×** overall. Individual ordinary rows reach about **2.9×**. Not every query is 2× faster. `network` is about **1.37–1.45×**. `tls` is about **1.9×**. Tiny `integ` stays exact (Integrity document #1) and sub-millisecond; packed plan/session setup can add ~0.1–0.2 ms there. That is setup overhead, not a ranking regression.
 
-Do not substitute older Stage 3A phase numbers, or an internal ~3.1× retrieve+features comparison, for these public API measurements.
+Do not substitute the 0.6.1 Stage 3A phase numbers below, or an internal ~3.1× retrieve+features comparison, for these public API measurements.
 
 ### 25k documents
 
@@ -100,11 +100,11 @@ As N and workload grow, remaining costs include:
 
 Workload depends more on query document frequency, posting entries touched, prefix expansion, the number and distribution of **competitive** matches, and relationship behavior than on N alone. A 100k corpus with a rare exact title can be cheap. A 5k corpus with a high-DF prefix and active relationships can be expensive.
 
-Stage 3A still skips unread noncompetitive 1-of-k body postings after stronger co-occurrence classes are evaluated. 0.6.5 packed ranking evidence removes candidate-wide FeatureVector construction on the eligible ordinary lane. Neither makes high-DF conjunction work flat with N.
+Body posting pruning still skips unread noncompetitive 1-of-k body postings after stronger co-occurrence classes are evaluated. 0.6.5 packed ranking evidence removes candidate-wide FeatureVector construction on the eligible ordinary lane. Neither makes high-DF conjunction work flat with N.
 
 ## Practical demonstrated range
 
-Indexed exact search has been **validated through about 100k documents** on the mixed generator above and on the older Stage 3A VPN-like tables below. Roughly **50k–100k** is the currently demonstrated practical corpus range, subject to query distribution, environment, artifact size, and latency requirements.
+Indexed exact search has been **validated through about 100k documents** on the mixed generator above and on the historical Stage 3A VPN-like tables below. Roughly **50k–100k** is the currently demonstrated practical corpus range, subject to query distribution, environment, artifact size, and latency requirements.
 
 That range is an engineering/performance observation. It is not a correctness limit, a quality cliff, a hard corpus maximum, or an SLA. Do not read the tables as “100k always searches in X ms.”
 
@@ -112,7 +112,7 @@ That range is an engineering/performance observation. It is not a correctness li
 
 Two layers, not one:
 
-1. **Retrieval pruning** (shipped since 0.6.x Stage 2A / 2B / 3A) — skip work that cannot change exact representatives. Stage 3A may skip unread 1-of-k body postings. See [exact-pruning.md](exact-pruning.md).
+1. **Retrieval pruning** (feature block pruning, duplicate posting-list skipping, and body posting pruning, shipped since 0.6.x) — skip work that cannot change exact representatives. Body posting pruning may skip unread 1-of-k body postings. See [exact-pruning.md](exact-pruning.md).
 2. **Ranking-evidence production** (0.6.5) — on eligible ordinary `search()` / `searchAsync()`, the same compiled posting/mask walk already required by retrieval also records exact ranking evidence. After numeric finalization, packed direct views feed the existing builtin selector and constraint ranker. There is no second high-DF posting traversal.
 
 Eligible ordinary path:
@@ -135,13 +135,13 @@ retrieve
   → public results
 ```
 
-There is no public optimization toggle and no artifact extension for ranking evidence. Missing or ineligible cases fail closed to the FeatureVector path. Stage 3A is exact signature-aware block skipping, not classic WAND, BMW, or MaxScore.
+There is no public optimization toggle and no artifact extension for ranking evidence. Missing or ineligible cases fail closed to the FeatureVector path. Body posting pruning is exact signature-aware block skipping, not classic WAND, BMW, or MaxScore.
 
-Conceptual ineligibility (not a quality loss): recall-heavy equivalent/topical/standalone queries, dotted/version queries, bound contextual completion, short-literal leads, custom retrieval/ranking, nonzero retrieval-score weight, `all-strong`, and diagnostic/explain/complete-interpretation surfaces. Canonical Stage 3A fail-closed classes remain in [exact-pruning.md](exact-pruning.md).
+Conceptual ineligibility for packed ranking evidence (not a quality loss): recall-heavy equivalent/topical/standalone queries, dotted/version queries, bound contextual completion, short-literal leads, custom retrieval/ranking, nonzero retrieval-score weight, `all-strong`, and diagnostic, explain, or complete-interpretation surfaces. Explain on ordinary `search()` is ineligible for that packed path and remains eligible for feature block pruning and body posting pruning. Canonical body posting pruning fail-closed classes remain in [exact-pruning.md](exact-pruning.md#fail-closed-queries).
 
 ## Historical Stage 3A measurements
 
-These rows compare exhaustive compiled retrieval versus Stage 3A unread-block skipping on `"virtual private network"`. They are **0.6.1** provenance, not the 0.6.5 public `search()` comparison above. Do not treat them as current end-to-end speedup.
+These rows compare exhaustive compiled retrieval versus Stage 3A unread-block skipping on `"virtual private network"`. They are **0.6.1** provenance, not the 0.6.5 public `search()` comparison above. Stage 3A in this section is the original measurement name for body posting pruning. Do not treat them as current end-to-end speedup.
 
 Deterministic mixed generator, seed `0x60d6e7ed`, 60-token articles. Same engine/artifact, exhaustive vs Stage 3A auto.
 
@@ -174,7 +174,7 @@ Corrected Stage 3A body-presence block counters (unique 128-document ordinal blo
 
 Invariant: `total = decoded + classifiedFromMasks`. `skippedUnread` is a subset of `classifiedFromMasks`.
 
-Lexical artifact ~13.1 MB; v2 metadata ~964 KB (~7.4%).
+Lexical artifact ~13.1 MB; historical `exact-pruning-v2` metadata ~964 KB (~7.4%) in this 0.6.1 series. That key is the legacy alias of `exact-pruning-body-term-masks`. The recorded size includes the shorter historical key.
 
 ### 100k documents
 
@@ -188,7 +188,7 @@ Lexical artifact ~13.1 MB; v2 metadata ~964 KB (~7.4%).
 
 Stage 3A body-presence block counters at 100k: `postingBlocksTotal` 782, `decoded` 1, `classifiedFromMasks` 781, `skippedUnread` 781 (same invariant as 25k).
 
-Lexical artifact ~54.0 MB; v2 metadata ~3.89 MB (~7.2%). Output stayed exact vs exhaustive.
+Lexical artifact ~54.0 MB; historical `exact-pruning-v2` metadata ~3.89 MB (~7.2%) in this 0.6.1 series. Output stayed exact vs exhaustive. The recorded size includes the shorter historical key, not the canonical `exact-pruning-body-term-masks` spelling.
 
 A later rerun of the same command on the same host showed absolute-latency variation while reproducing identical work counters, artifact sizes, and exactness. The documented table retains the explicitly captured 0.6.1 measurement series.
 
@@ -205,7 +205,7 @@ On a true 1,000,000-document mixed corpus:
 - a rare-title posting-local path measured about **42 ms** p50; that is a selective query, not ordinary high-DF work
 - ordinary 1M search under **50 ms** was **not** achieved
 - oracle / skip-bound research showed large theoretical skip opportunity on some classes
-- the existing v1 posting/conjunction architecture still scales with high-DF work
+- the existing positional posting/conjunction architecture still scales with high-DF work
 
 Those prototypes are not shipped. They must not be read as 0.6.5 latency, as a public `compoundAcceleration` option, or as a new artifact format. 0.6.5 does not introduce compound-state acceleration.
 
@@ -218,13 +218,13 @@ Scaling has two related but separate problems:
 1. **query work** — how much index/candidate state a query touches
 2. **artifact / storage / memory** — what must be downloaded, mapped, and retained
 
-Solving one does not automatically solve the other. 0.6.5 ranking-evidence state is additional query-time memory (about 4.4 / 8.9 / 17.8 MB retained at 25k / 50k / 100k on the production benches above). Compact document views remain Stage 2C; see [compact-runtime.md](compact-runtime.md).
+Solving one does not automatically solve the other. 0.6.5 ranking-evidence state is additional query-time memory (about 4.4 / 8.9 / 17.8 MB retained at 25k / 50k / 100k on the production benches above). Compact document views remain the compact lexical runtime; see [compact-runtime.md](compact-runtime.md).
 
 ## Long-term scaling direction
 
-0.6.5 is the last planned constant-factor v1 performance release for now. There is no committed next production slice of Stage 3A / WAND / block-mask / compound-state work.
+0.6.5 is the last planned constant-factor performance release of the positional lexical index for now. There is no committed next production slice of body posting pruning, WAND, block-mask, or compound-state work.
 
-Million-document ordinary low-latency search requires a more fundamental execution or index architecture than further constant-factor tuning of the current v1 path. A useful conceptual target is millions of indexed documents with ordinary queries touching only hundreds or thousands of competitive candidates. That complexity class is **not proven**. A ~50 ms ordinary-query figure at that scale is an **aspirational investigation benchmark**, not an SLA and not a claim that 0.6.5 achieves 1M / 50 ms (or 1M / 5 ms, O(1), or constant-time search).
+Million-document ordinary low-latency search requires a more fundamental execution or index architecture than further constant-factor tuning of the positional lexical-index path. A useful conceptual target is millions of indexed documents with ordinary queries touching only hundreds or thousands of competitive candidates. That complexity class is **not proven**. A ~50 ms ordinary-query figure at that scale is an **aspirational investigation benchmark**, not an SLA and not a claim that 0.6.5 achieves 1M / 50 ms (or 1M / 5 ms, O(1), or constant-time search).
 
 Partitioning or multi-process/Worker distribution may eventually help storage, memory, topology, throughput, or fault isolation. Sharding a Θ(N) or Θ(matches) query path only divides that work; it does not by itself yield sublinear query complexity.
 

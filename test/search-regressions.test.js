@@ -20,7 +20,7 @@ const reversedPrimaryDocs = [
 ];
 
 const reversedPrimaryGraph = {
-  format: "search-v2-relationships",
+  format: "search-relationships",
   version: 1,
   relationships: {
     "a-guide": [{ target: "a-neighbor", type: "editorial", strength: 1, provenance: "manual" }],

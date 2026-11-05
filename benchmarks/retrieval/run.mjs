@@ -62,7 +62,7 @@ function generateMixed(n, seed = SEED) {
 }
 
 const RELATIONSHIPS = {
-  format: "search-v2-relationships",
+  format: "search-relationships",
   version: 1,
   relationships: {
     tls: [{ target: "vpn", type: "editorial", strength: 1, provenance: "manual" }],

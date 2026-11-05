@@ -162,7 +162,7 @@ describe("relationship expansion after retrieval", () => {
       candidateLimit: 1,
       relationshipStrategy: "hybrid",
       documentRelationships: {
-        format: "search-v2-relationships",
+        format: "search-relationships",
         version: 1,
         relationships: { primary: edges },
       },

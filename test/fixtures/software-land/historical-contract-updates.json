@@ -35,7 +35,7 @@
     {
       "index": 140,
       "query": "sharde",
-      "reason": "APPROVED_CONTRACT_CHANGE: reactivate duplicate sharde row; Hot Shards-first expectation was stale. Current neighborhood is Sharding #1, Hot Shards #2.",
+      "reason": "SOURCE_CONTRACT: Sharding and Hot Shards stay in the top-six membership bag with Throughput vs Latency. The A-class intent requires Throughput vs Latency inside the visible ten, not at an exact rank.",
       "oldV1": {
         "expectedTop": [
           "Hot Shards",
@@ -47,10 +47,10 @@
         "expectedTop": [
           "Sharding",
           "Hot Shards",
+          "LLM Model Conversion Correctness",
           "Throughput vs Latency",
           "CockroachDB vs Postgres",
-          "SQL vs NoSQL",
-          "gRPC vs Kafka"
+          "SQL vs NoSQL"
         ],
         "topN": 6
       }
@@ -581,7 +581,7 @@
     {
       "index": 180,
       "query": "developme operations",
-      "reason": "APPROVED_CONTRACT_CHANGE: product-approved DevOps neighborhood after rejecting the false-positive DevOps↔Alignment semantic pair; Build Time is in the top-5 window",
+      "reason": "SOURCE_CONTRACT: What is DevOps?, CI/CD, and Build Time stay in the top-five membership bag. Mandatory Agile vs Waterfall and What is Cloud Migration? results stay removed.",
       "oldV1": {
         "expectedTop": [
           "What is DevOps?",
@@ -594,8 +594,6 @@
         "expectedTop": [
           "What is DevOps?",
           "CI/CD",
-          "Agile vs Waterfall",
-          "What is Cloud Migration?",
           "Build Time"
         ],
         "topN": 5
@@ -604,7 +602,7 @@
     {
       "index": 181,
       "query": "development operations",
-      "reason": "APPROVED_CONTRACT_CHANGE: product-approved DevOps neighborhood after rejecting the false-positive DevOps↔Alignment semantic pair; Build Time is in the top-5 window",
+      "reason": "SOURCE_CONTRACT: What is DevOps?, CI/CD, and Build Time stay in the top-five membership bag. Mandatory Agile vs Waterfall and What is Cloud Migration? results stay removed.",
       "oldV1": {
         "expectedTop": [
           "What is DevOps?",
@@ -617,11 +615,251 @@
         "expectedTop": [
           "What is DevOps?",
           "CI/CD",
-          "Agile vs Waterfall",
-          "What is Cloud Migration?",
           "Build Time"
         ],
         "topN": 5
+      }
+    },
+    {
+      "index": 14,
+      "query": "depth first search",
+      "reason": "APPROVED_CONTRACT_CHANGE: Minmax Tree is rank 7, a zero-term related neighbor behind repeated direct DFS evidence. The other five titles stay in the top 6. Minmax Tree is required separately inside the visible ten.",
+      "oldV1": {
+        "expectedTop": [
+          "DFS Backtracking",
+          "InOrder vs PreOrder vs PostOrder",
+          "What is Recursion?",
+          "Topological Sort",
+          "Minmax Tree",
+          "Maximum Flow Algorithm"
+        ],
+        "topN": 6
+      },
+      "newV1": {
+        "expectedTop": [
+          "DFS Backtracking",
+          "InOrder vs PreOrder vs PostOrder",
+          "What is Recursion?",
+          "Topological Sort",
+          "Maximum Flow Algorithm"
+        ],
+        "topN": 6,
+        "within": [
+          {
+            "title": "Minmax Tree",
+            "topN": 10
+          }
+        ]
+      }
+    },
+    {
+      "index": 117,
+      "query": "dfs",
+      "reason": "APPROVED_CONTRACT_CHANGE: Minmax Tree is rank 7, a zero-term related neighbor behind repeated direct DFS evidence. The other five titles stay in the top 6. Minmax Tree is required separately inside the visible ten.",
+      "oldV1": {
+        "expectedTop": [
+          "DFS Backtracking",
+          "InOrder vs PreOrder vs PostOrder",
+          "What is Recursion?",
+          "Topological Sort",
+          "Minmax Tree",
+          "Maximum Flow Algorithm"
+        ],
+        "topN": 6
+      },
+      "newV1": {
+        "expectedTop": [
+          "DFS Backtracking",
+          "InOrder vs PreOrder vs PostOrder",
+          "What is Recursion?",
+          "Topological Sort",
+          "Maximum Flow Algorithm"
+        ],
+        "topN": 6,
+        "within": [
+          {
+            "title": "Minmax Tree",
+            "topN": 10
+          }
+        ]
+      }
+    },
+    {
+      "index": 42,
+      "query": "what is an appli",
+      "reason": "SOURCE_CONTRACT: the three strong API titles stay in the top five. gRPC vs REST is a separate visible-ten membership check.",
+      "oldV1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "gRPC vs REST"
+        ],
+        "topN": 5
+      },
+      "newV1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs"
+        ],
+        "topN": 5,
+        "within": [
+          {
+            "title": "gRPC vs REST",
+            "topN": 10
+          }
+        ]
+      }
+    },
+    {
+      "index": 101,
+      "query": "app programming interface",
+      "reason": "SOURCE_CONTRACT: the current source authors api \u2192 interface as primaryTerm. Class vs Interface stays in the top-6 membership bag. The earlier omission was the old fixture's missing primary-term edge and is not retained.",
+      "oldV1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "What is an Interface?",
+          "Class vs Interface"
+        ],
+        "topN": 6
+      },
+      "newV1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "What is an Interface?",
+          "Class vs Interface"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "index": 103,
+      "query": "application orogramming interface",
+      "reason": "SOURCE_CONTRACT: the current source authors api \u2192 interface as primaryTerm. Class vs Interface stays in the top-6 membership bag. The earlier omission was the old fixture's missing primary-term edge and is not retained.",
+      "oldV1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "What is an Interface?",
+          "Class vs Interface"
+        ],
+        "topN": 6
+      },
+      "newV1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "What is an Interface?",
+          "Class vs Interface"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "index": 104,
+      "query": "application programming interface",
+      "reason": "SOURCE_CONTRACT: the current source authors api \u2192 interface as primaryTerm. Class vs Interface stays in the top-6 membership bag. The earlier omission was the old fixture's missing primary-term edge and is not retained.",
+      "oldV1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "What is an Interface?",
+          "Class vs Interface"
+        ],
+        "topN": 6
+      },
+      "newV1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "What is an Interface?",
+          "Class vs Interface"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "index": 105,
+      "query": "applicationprogramming interface",
+      "reason": "SOURCE_CONTRACT: the current source authors api \u2192 interface as primaryTerm. Class vs Interface stays in the top-6 membership bag. The earlier omission was the old fixture's missing primary-term edge and is not retained.",
+      "oldV1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "What is an Interface?",
+          "Class vs Interface"
+        ],
+        "topN": 6
+      },
+      "newV1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "What is an Interface?",
+          "Class vs Interface"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "index": 106,
+      "query": "applicationprogramminginterface",
+      "reason": "SOURCE_CONTRACT: the current source authors api \u2192 interface as primaryTerm. Class vs Interface stays in the top-6 membership bag. The earlier omission was the old fixture's missing primary-term edge and is not retained.",
+      "oldV1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "What is an Interface?",
+          "Class vs Interface"
+        ],
+        "topN": 6
+      },
+      "newV1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "What is an Interface?",
+          "Class vs Interface"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "index": 107,
+      "query": "application programminginterface",
+      "reason": "SOURCE_CONTRACT: the current source authors api \u2192 interface as primaryTerm. Class vs Interface stays in the top-6 membership bag. The earlier omission was the old fixture's missing primary-term edge and is not retained.",
+      "oldV1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "What is an Interface?",
+          "Class vs Interface"
+        ],
+        "topN": 6
+      },
+      "newV1": {
+        "expectedTop": [
+          "What is an API?",
+          "REST API vs GraphQL",
+          "Working with APIs",
+          "What is an Interface?",
+          "Class vs Interface"
+        ],
+        "topN": 6
       }
     }
   ],
@@ -672,39 +910,77 @@
       {
         "index": 33,
         "query": "appsec",
-        "reason": "APPROVED_REBASELINE: Zero-Trust left topN 2; keep App Sec identity plus Authorization related",
+        "reason": "APPROVED_CONTRACT_CHANGE: ordinary AppSec to security topical title evidence requires Zero-Trust Security inside the top 3. Fourth place remains visible and fails. App Sec stays first. RBAC and Authorization Middleware stay inside the visible ten. Zero-Trust precedes Working with Llama.cpp Embeddings when that article is visible.",
         "oldV1": {
           "expectedTop": [
             "App Sec",
-            "Zero-Trust Security"
+            "RBAC (Role Based Access Control)"
           ],
-          "topN": 2
+          "topN": 2,
+          "within": [
+            {
+              "title": "Authorization Middleware",
+              "topN": 10
+            }
+          ]
         },
         "newV1": {
           "expectedTop": [
-            "App Sec",
-            "Authorization Middleware"
+            "App Sec"
           ],
-          "topN": 2
+          "topN": 1,
+          "within": [
+            {
+              "title": "RBAC (Role Based Access Control)",
+              "topN": 10
+            },
+            {
+              "title": "Authorization Middleware",
+              "topN": 10
+            },
+            {
+              "title": "Zero-Trust Security",
+              "topN": 3
+            }
+          ]
         }
       },
       {
         "index": 35,
         "query": "app sec",
-        "reason": "APPROVED_REBASELINE: Zero-Trust left topN 2; keep App Sec identity plus Authorization related",
+        "reason": "APPROVED_CONTRACT_CHANGE: ordinary AppSec to security topical title evidence requires Zero-Trust Security inside the top 3. Fourth place remains visible and fails. App Sec stays first. RBAC and Authorization Middleware stay inside the visible ten. Zero-Trust precedes Working with Llama.cpp Embeddings when that article is visible.",
         "oldV1": {
           "expectedTop": [
             "App Sec",
-            "Zero-Trust Security"
+            "RBAC (Role Based Access Control)"
           ],
-          "topN": 2
+          "topN": 2,
+          "within": [
+            {
+              "title": "Authorization Middleware",
+              "topN": 10
+            }
+          ]
         },
         "newV1": {
           "expectedTop": [
-            "App Sec",
-            "Authorization Middleware"
+            "App Sec"
           ],
-          "topN": 2
+          "topN": 1,
+          "within": [
+            {
+              "title": "RBAC (Role Based Access Control)",
+              "topN": 10
+            },
+            {
+              "title": "Authorization Middleware",
+              "topN": 10
+            },
+            {
+              "title": "Zero-Trust Security",
+              "topN": 3
+            }
+          ]
         }
       },
       {
@@ -802,39 +1078,77 @@
       {
         "index": 47,
         "query": "application se",
-        "reason": "APPROVED_REBASELINE: Zero-Trust left topN 2; keep App Sec identity plus Authorization related",
+        "reason": "APPROVED_CONTRACT_CHANGE: ordinary AppSec to security topical title evidence requires Zero-Trust Security inside the top 3. Fourth place remains visible and fails. App Sec stays first. RBAC and Authorization Middleware stay inside the visible ten. Zero-Trust precedes Working with Llama.cpp Embeddings when that article is visible.",
         "oldV1": {
           "expectedTop": [
             "App Sec",
-            "Zero-Trust Security"
+            "RBAC (Role Based Access Control)"
           ],
-          "topN": 2
+          "topN": 2,
+          "within": [
+            {
+              "title": "Authorization Middleware",
+              "topN": 10
+            }
+          ]
         },
         "newV1": {
           "expectedTop": [
-            "App Sec",
-            "Authorization Middleware"
+            "App Sec"
           ],
-          "topN": 2
+          "topN": 1,
+          "within": [
+            {
+              "title": "RBAC (Role Based Access Control)",
+              "topN": 10
+            },
+            {
+              "title": "Authorization Middleware",
+              "topN": 10
+            },
+            {
+              "title": "Zero-Trust Security",
+              "topN": 3
+            }
+          ]
         }
       },
       {
         "index": 51,
         "query": "aplicationsecurity",
-        "reason": "APPROVED_REBASELINE: Zero-Trust left topN 2; keep App Sec identity plus Authorization related",
+        "reason": "APPROVED_CONTRACT_CHANGE: ordinary AppSec to security topical title evidence requires Zero-Trust Security inside the top 3. Fourth place remains visible and fails. App Sec stays first. RBAC and Authorization Middleware stay inside the visible ten. Zero-Trust precedes Working with Llama.cpp Embeddings when that article is visible.",
         "oldV1": {
           "expectedTop": [
             "App Sec",
-            "Zero-Trust Security"
+            "RBAC (Role Based Access Control)"
           ],
-          "topN": 2
+          "topN": 2,
+          "within": [
+            {
+              "title": "Authorization Middleware",
+              "topN": 10
+            }
+          ]
         },
         "newV1": {
           "expectedTop": [
-            "App Sec",
-            "Authorization Middleware"
+            "App Sec"
           ],
-          "topN": 2
+          "topN": 1,
+          "within": [
+            {
+              "title": "RBAC (Role Based Access Control)",
+              "topN": 10
+            },
+            {
+              "title": "Authorization Middleware",
+              "topN": 10
+            },
+            {
+              "title": "Zero-Trust Security",
+              "topN": 3
+            }
+          ]
         }
       },
       {

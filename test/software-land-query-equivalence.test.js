@@ -66,12 +66,12 @@ describe("Software.Land 215-query result oracle", () => {
     expect(oracle.rowCount).toBe(215);
     expect(oracle.rows).toHaveLength(215);
     expect(historical.rows.length).toBeGreaterThanOrEqual(215);
-    // The 215-row oracle remains the previous 123-document freeze. It is not
-    // regenerated against this 122-document corpus.
+    // The 215-row oracle remains the retained exact-output freeze. It is not
+    // regenerated from the refreshed 123-document corpus.
     expect(oracle.documentCount).toBe(123);
     expect(oracle.resultLimit).toBe(123);
     expect(oracle.relatedLimit).toBe(123);
-    expect(documents).toHaveLength(122);
+    expect(documents).toHaveLength(123);
     expect(oracle.rows.map((row) => row.query)).toEqual(
       historical.rows.slice(0, 215).map((row) => row.query)
     );

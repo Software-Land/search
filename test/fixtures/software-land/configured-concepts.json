@@ -975,6 +975,14 @@
     ]
   },
   {
+    "key": "minimax",
+    "aliases": [
+      [
+        "minmax"
+      ]
+    ]
+  },
+  {
     "key": "mtls",
     "aliases": [
       [
@@ -1494,6 +1502,11 @@
       ],
       [
         "institute",
+        "standards"
+      ],
+      [
+        "institute",
+        "of",
         "standards"
       ]
     ]

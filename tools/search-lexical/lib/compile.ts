@@ -21,8 +21,9 @@ import type {
 
 export { saturatingFrequency };
 
+/** Published compiler constant. Written as the schema `version` of a `search-lexical-frequency` artifact. */
 export const COMPILER_VERSION: 1 = 1;
-export const LEXICAL_FREQUENCY_FORMAT: "search-v2-lexical-frequency" = "search-v2-lexical-frequency";
+export const LEXICAL_FREQUENCY_FORMAT: "search-lexical-frequency" = "search-lexical-frequency";
 
 export const DEFAULT_LEXICAL_POLICY: {
   readonly minN: 1;

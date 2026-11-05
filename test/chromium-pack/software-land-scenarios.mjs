@@ -21,6 +21,7 @@ import {
   loadSoftwareLandJson,
   loadSoftwareLandRelevanceInputs,
 } from "../helpers/software-land-fixture.js";
+import { assertExplainedShardeControl } from "../helpers/scenario-assertions.js";
 import {
   CORPUS_BOOT_MS,
   CORPUS_QUERY_MS,
@@ -102,14 +103,6 @@ const ADJUDICATED = {
     "InOrder vs PreOrder vs PostOrder",
     "Dynamic Programming Matrix",
     "React Performance Optimization",
-  ],
-  sharde: [
-    "Sharding",
-    "Hot Shards",
-    "Throughput vs Latency",
-    "CockroachDB vs Postgres",
-    "SQL vs NoSQL",
-    "gRPC vs Kafka",
   ],
   "frames per": {
     primary: "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
@@ -228,8 +221,8 @@ async function main() {
     ).href;
     const { attachLexicalFrequency } = await import(lexicalHref);
     const documents = attachLexicalFrequency(inputs.documents, inputs.lexicalFrequency);
-    const v2Contracts = loadSoftwareLandJson("v2-contracts.json");
-    const corpusFenwickContracts = v2Contracts.overlayCases || [];
+    const strictContracts = loadSoftwareLandJson("strict-contracts.json");
+    const corpusFenwickContracts = strictContracts.overlayCases || [];
     const nistTyping = loadSoftwareLandJson("nist-typing-progression.json");
     const nistTarget = inputs.documents.find((doc) => doc.id === nistTyping.document.id);
     if (!nistTarget || nistTarget.title !== nistTyping.document.title) {
@@ -315,12 +308,8 @@ async function main() {
         `recurse top five mismatch\nexpected ${JSON.stringify(ADJUDICATED.recurse)}\nactual ${JSON.stringify(recurseTitles)}\nids ${JSON.stringify(controls.recurse?.ids || [])}`
       );
     }
-    const shardeTitles = (controls.sharde?.titles || []).slice(0, ADJUDICATED.sharde.length);
-    if (JSON.stringify(shardeTitles) !== JSON.stringify(ADJUDICATED.sharde)) {
-      throw new Error(
-        `sharde top six mismatch\nexpected ${JSON.stringify(ADJUDICATED.sharde)}\nactual ${JSON.stringify(shardeTitles)}\nids ${JSON.stringify(controls.sharde?.ids || [])}`
-      );
-    }
+    assertExplainedShardeControl(controls.sharde, inputs.historical.rows, strictContracts.cases);
+    const shardeTitles = (controls.sharde?.titles || []).slice(0, 10);
     const frames = controls["frames per"];
     const framesExpected = ADJUDICATED["frames per"];
     if (frames?.titles?.[0] !== framesExpected.primary) {
@@ -488,7 +477,7 @@ async function main() {
         assertions: applicable.length,
       },
       removedArticles,
-      v2Contracts: {
+      strictContracts: {
         browser: "open, oauth, open authorization, and Fenwick Tree corpus contracts run on the refreshed corpus.",
         fenwick: fenwickIndexed,
         nistTyping: {

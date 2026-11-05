@@ -31,7 +31,7 @@ const docs = [
 ];
 
 const graph = {
-  format: "search-v2-relationships",
+  format: "search-relationships",
   version: 1,
   relationships: {
     bluetooth: [{ target: "connected-devices", type: "editorial", strength: 1, provenance: "manual" }],
@@ -189,7 +189,7 @@ describe("public API", () => {
   });
 
   test("artifact version and format fail closed", () => {
-    expect(() => parseRelationships({ format: "search-v2-relationships", version: 2, relationships: {} })).toThrow(
+    expect(() => parseRelationships({ format: "search-relationships", version: 2, relationships: {} })).toThrow(
       ArtifactVersionError
     );
     expect(() => parseRelationships({ relationships: {} })).toThrow(ArtifactValidationError);
@@ -384,7 +384,7 @@ describe("public API", () => {
       schema,
       retriever: "indexed",
       lexicalIndex: {
-        format: "search-v2-lexical-index",
+        format: "search-lexical-index",
         version: 2,
       },
     })).rejects.toThrow(/version/i);

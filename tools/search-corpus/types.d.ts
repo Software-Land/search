@@ -260,7 +260,7 @@ export interface InspectionDoc {
 }
 
 export interface ConfiguredConceptArtifact {
-  format: "search-v2-configured-concepts";
+  format: "search-configured-concepts" | "search-v2-configured-concepts";
   version: 1;
   entries: Array<{
     key: string;

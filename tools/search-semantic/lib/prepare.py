@@ -6,6 +6,8 @@ import re
 from typing import Iterable
 
 TOKEN_RE = re.compile(r"[a-z0-9]+")
+# Cache identity for prepared text. Bump when preparation changes the exact string.
+PREPARE_REVISION = "1"
 
 STOP = {
     "a", "an", "the", "and", "or", "of", "to", "in", "on", "for", "with", "is", "are",

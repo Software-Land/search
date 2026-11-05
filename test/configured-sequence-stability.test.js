@@ -8,7 +8,7 @@
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
-import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
+import { bodyPostingPruningUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 
 const schema = { title: { type: "text", role: "title" }, body: { type: "text", role: "body" } };
 
@@ -179,10 +179,10 @@ describe("configured sequence alignment and result stability", () => {
     expect(e.search("security", { limit: 3 })[0].id).not.toBe("appsec");
   });
 
-  test("configured sequence intent fail-closes Stage 3A", () => {
+  test("configured sequence intent fail-closes body posting pruning", () => {
     const q = analyze("app sec");
     expect(q.configuredSequenceIntent.key).toBe("appsec");
-    expect(stage3AUnsupportedReason(q)).toBe("configured-concept");
+    expect(bodyPostingPruningUnsupportedReason(q)).toBe("configured-concept");
   });
 
   test("full-scan and indexed retrievers stay equivalent on the contract queries", async () => {

@@ -72,7 +72,7 @@ try {
       "doc-a": [{ kind: "related", to: { document: "doc-b" } }],
     },
     documentRelationships: {
-      format: "search-v2-relationships",
+      format: "search-relationships",
       version: 1,
       relationships: {
         "doc-a": [{ target: "qa-guide", type: "semantic", strength: 0.7, provenance: "generated" }],

@@ -51,6 +51,7 @@ export function createEnglishPlugin({ lemmas = {} }: { lemmas?: Record<string, s
       if (typeof value === "string" && value) table[key] = value;
     }
   }
+  // Compatibility fingerprint stored in lexical-index analyzer identity. The prefix is part of that fingerprint.
   const indexIdentity = `english-v1:${stableFingerprint(table)}`;
   function exactTableLemma(token: string): string | null {
     const t = String(token || "").toLowerCase();

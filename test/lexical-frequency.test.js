@@ -33,7 +33,7 @@ describe("lexical-frequency compiler", () => {
       },
     ];
     const artifact = compileLexicalFrequency(docs, { lemma });
-    expect(artifact.format).toBe("search-v2-lexical-frequency");
+    expect(artifact.format).toBe("search-lexical-frequency");
     expect(artifact.documents.a.ngrams["machine learn"]).toBe(5);
     expect(artifact.documents.b.ngrams["machine learn"]).toBe(2);
     expect(artifact.documents.a.ngrams.machine).toBeGreaterThanOrEqual(5);

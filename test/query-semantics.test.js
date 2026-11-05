@@ -5,7 +5,7 @@
 import { morphology } from "../dist/index.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { querySemanticFacts } from "../dist/query/querySemantics.js";
-import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
+import { bodyPostingPruningUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const nistFamily = [
@@ -204,20 +204,20 @@ describe("querySemanticFacts", () => {
     ).toEqual({ vocabularyPrefix: false, boundTrailing: true });
   });
 
-  test("Stage 3A completion reasons follow vocabularyPrefix and boundTrailing facts", () => {
+  test("body posting pruning completion reasons follow vocabularyPrefix and boundTrailing facts", () => {
     const prefix = analyzeQuery("open interfa", {
       plugins: [morphology()],
       prefixLexicon: ["open", "interface", "interceptor", "internet"],
     });
     expect(querySemanticFacts(prefix).completion.vocabularyPrefix).toBe(true);
     expect(prefix.alternatives.length).toBeGreaterThan(0);
-    expect(stage3AUnsupportedReason(prefix)).toBe("alternatives");
-    expect(stage3AUnsupportedReason({ ...prefix, alternatives: [] })).toBe("prefix-completion");
+    expect(bodyPostingPruningUnsupportedReason(prefix)).toBe("alternatives");
+    expect(bodyPostingPruningUnsupportedReason({ ...prefix, alternatives: [] })).toBe("prefix-completion");
 
     const bound = analyze("machine l", [
       { key: "ml", aliases: [["machine", "learning"]] },
     ]);
     expect(querySemanticFacts(bound).completion.boundTrailing).toBe(true);
-    expect(stage3AUnsupportedReason(bound)).toBe("contextual-completion");
+    expect(bodyPostingPruningUnsupportedReason(bound)).toBe("contextual-completion");
   });
 });

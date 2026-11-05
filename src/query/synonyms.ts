@@ -69,7 +69,7 @@ export type SearchEquivalenceMap = Record<string, string[]>;
 /**
  * Generic bound on authored targets per normalized source. Existing
  * configured-concept/equivalence validation has no analogous per-key fan-out cap;
- * 8 is the investigation recommendation (V1 max fan-out was well below this).
+ * 8 is the investigation recommendation (the historical synonym map's maximum fan-out was well below this).
  */
 export const MAX_SEARCH_EQUIVALENCE_TARGETS = 8;
 

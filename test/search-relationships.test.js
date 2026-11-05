@@ -12,6 +12,7 @@ import { normalizePath } from "../tools/search-relationships/lib/ids.js";
 import { RelationshipError as ImplementationRelationshipError } from "../tools/search-relationships/lib/domain.js";
 import { filterRelationships as filterRelationshipsImpl } from "../tools/search-relationships/lib/compile.js";
 import { morphology, SearchEngine } from "../dist/index.js";
+import { moduleSpecifiers, prohibitedBuilderSpecifiers } from "./helpers/import-specifiers.js";
 import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 
@@ -55,7 +56,7 @@ const slEquivalentDocs = {
 };
 
 const slEquivalentSemantic = {
-  format: "search-v2-relationships",
+  format: "search-relationships",
   version: 1,
   relationships: {
     ai: [{ target: "ch", type: "semantic", strength: 0.41, provenance: "embedding" }],
@@ -91,19 +92,18 @@ describe("search-relationships isolation", () => {
     const root = path.join(__dirname, "../tools/search-relationships/lib");
     for (const file of walkJs(root)) {
       const text = fs.readFileSync(file, "utf8");
-      expect(text.includes("src/search/")).toBe(false);
-      expect(text.includes("src/search-v2")).toBe(false);
-      expect(text.includes("search-corpus")).toBe(false);
-      expect(text.includes("search-semantic")).toBe(false);
-      expect(text.includes("../index.js")).toBe(false);
+      const specs = moduleSpecifiers(text, file);
+      expect(specs.some((spec) => spec.includes("src/search/") || spec.includes("src/search-v2"))).toBe(false);
+      expect(specs.includes("../index.js")).toBe(false);
+      expect(prohibitedBuilderSpecifiers(text, file)).toEqual([]);
     }
   });
 
   test("Search Core does not import search-relationships", () => {
     const root = path.join(__dirname, "../dist");
     for (const file of walkJs(root)) {
-      const text = fs.readFileSync(file, "utf8").toLowerCase();
-      expect(text.includes("search-relationships")).toBe(false);
+      const text = fs.readFileSync(file, "utf8");
+      expect(prohibitedBuilderSpecifiers(text, file)).toEqual([]);
     }
   });
 });
@@ -213,7 +213,7 @@ describe("search-relationships compilation", () => {
 
   test("semantic and editorial coexist on the same pair without duplicating the result", async () => {
     const semantic = {
-      format: "search-v2-relationships",
+      format: "search-relationships",
       version: 1,
       relationships: {
         bluetooth: [{ target: "wifi", type: "semantic", strength: 0.82, provenance: "embedding" }],
@@ -361,7 +361,7 @@ describe("search-relationships compilation", () => {
 
   test("filterRelationships honors a caller-provided type array and keeps the default path", () => {
     const artifact = {
-      format: "search-v2-relationships",
+      format: "search-relationships",
       version: 1,
       relationships: {
         bluetooth: [
@@ -431,7 +431,7 @@ describe("search-relationships compilation", () => {
       { target: "ai", type: "editorial", strength: 1, provenance: "manual" },
     ]);
     expect(JSON.stringify(compiled.runtime)).toBe(JSON.stringify(compiled.merged));
-    expect(compiled.runtime.format).toBe("search-v2-relationships");
+    expect(compiled.runtime.format).toBe("search-relationships");
     expect(compiled.runtime.version).toBe(1);
   });
 
@@ -448,7 +448,7 @@ describe("search-relationships compilation", () => {
       domain: slEquivalentDomain,
     });
     const expected = {
-      format: "search-v2-relationships",
+      format: "search-relationships",
       version: 1,
       relationships: {
         ai: [
@@ -464,7 +464,7 @@ describe("search-relationships compilation", () => {
 
   test("merged artifacts are byte-stable", () => {
     const semantic = {
-      format: "search-v2-relationships",
+      format: "search-relationships",
       version: 1,
       relationships: { bluetooth: [{ target: "wifi", type: "semantic", strength: 0.5, provenance: "embedding" }] },
     };

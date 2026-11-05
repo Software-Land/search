@@ -20,7 +20,7 @@ function load(name) {
 const documents = load("documents.json");
 const historical = load("historical-scenarios.json");
 const oracle = load("query-result-oracle.json");
-const contracts = load("v2-contracts.json");
+const contracts = load("strict-contracts.json");
 const regressions = load("regression-scenarios.json");
 const RESULT_LIMIT = documents.length;
 const RELATED_LIMIT = documents.length;

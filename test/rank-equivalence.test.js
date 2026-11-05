@@ -499,7 +499,7 @@ describe("ranking equivalence on Software.Land featured hits", () => {
   const lemmas = loadJson("lemmas.json");
   const relationships = loadJson("relationships.json");
   const lexicalFrequency = loadJson("lexical-frequency.json");
-  const contracts = loadJson("v2-contracts.json");
+  const contracts = loadJson("strict-contracts.json");
   const regressions = loadJson("regression-scenarios.json");
 
   beforeAll(async () => {

@@ -2,7 +2,7 @@ import { SearchEngine, morphology } from "../dist/index.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
 import { retrieveCandidates } from "../dist/retrieval/retrieve.js";
 import { resolveConfiguredSequence, resolveConfiguredSpans } from "../dist/query/configuredSequence.js";
-import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
+import { bodyPostingPruningUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 import { configuredConceptPluginFromLegacy } from "./helpers/authored.js";
 
 const dict = [
@@ -105,7 +105,8 @@ describe("wrapped span topical activation", () => {
       expect(q.configuredSpans[0].key).toBe("appsec");
       expect(q.topicalRecall).toEqual({
         key: "appsec",
-        forms: [["authentication"], ["authorization"], ["bearer", "token"], ["oauth"]],
+        forms: [["authentication"], ["authorization"], ["bearer", "token"], ["oauth"], ["open", "authorization"]],
+        primaryForms: [],
       });
       expect(q.tokens.map((t) => t.surface)).toEqual(baseline.tokens.map((t) => t.surface));
       expect(q.tokens.map((t) => t.normalized)).toEqual(baseline.tokens.map((t) => t.normalized));
@@ -113,7 +114,7 @@ describe("wrapped span topical activation", () => {
       expect(q.lexicalPhraseKey).toBe(baseline.lexicalPhraseKey);
       expect(q.configuredSequenceIntent).toEqual(baseline.configuredSequenceIntent);
       expect(q.standaloneRecall ?? null).toBeNull();
-      expect(stage3AUnsupportedReason(q)).toBe("topical-recall");
+      expect(bodyPostingPruningUnsupportedReason(q)).toBe("topical-recall");
     }
   });
 

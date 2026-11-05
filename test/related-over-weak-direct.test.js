@@ -229,3 +229,94 @@ describe("related-over-weak-direct repeated body exemption", () => {
     expect(relatedOverWeakFn(rel, weakHybrid)).toBe(0);
   });
 });
+
+describe("established repeated occurrences outrank a zero-term neighbor", () => {
+  test("an established count of at least two beats a higher related score", () => {
+    const rel = related("neighbor", 1);
+    const weak = weakBody("repeated", 0, {
+      queryTokenCount: 1,
+      directBodyOccurrenceCount: REPEATED_BODY_PHRASE_MIN,
+      configuredConceptFieldEvidence: { title: false, summary: false, body: "key" },
+    });
+    expect(scoreFeatures(rel.features)).toBeGreaterThan(scoreFeatures(weak.features));
+    expect(relatedOverWeakFn(rel, weak)).toBe(1);
+    expect(relatedOverWeakFn(weak, rel)).toBe(-1);
+    const cmp = compareConstraint(weak, rel, HYBRID_CONSTRAINTS);
+    expect(cmp.order).toBe(-1);
+    expect(cmp.conflict).toBe(false);
+    expect(cmp.applied.some((row) => row.id === "related-over-weak-direct" && row.result === "A>B")).toBe(true);
+    const ranked = rankCandidates([rel, weak], { constraints: HYBRID_CONSTRAINTS });
+    expect(ranked.map((row) => row.document.id)).toEqual(["repeated", "neighbor"]);
+  });
+
+  test("the same order applies to a multi-token query", () => {
+    const rel = related("neighbor", 1);
+    const weak = weakBody("repeated", 0, {
+      queryTokenCount: 2,
+      directBodyOccurrenceCount: 3,
+    });
+    expect(relatedOverWeakFn(weak, rel)).toBe(-1);
+    const ranked = rankCandidates([rel, weak], { constraints: HYBRID_CONSTRAINTS });
+    expect(ranked.map((row) => row.document.id)).toEqual(["repeated", "neighbor"]);
+  });
+
+  test("an unavailable count is not treated as repeated", () => {
+    const rel = related("neighbor", 0.4);
+    const missing = weakBody("missing", 16, { directBodyOccurrenceCount: 0, queryTokenCount: 2 });
+    const absent = weakBody("absent", 16, { queryTokenCount: 2 });
+    delete absent.features.directBodyOccurrenceCount;
+    expect(relatedOverWeakFn(rel, missing)).toBe(0);
+    expect(relatedOverWeakFn(rel, absent)).toBe(0);
+  });
+
+  test("a single established mention still loses to the zero-term neighbor", () => {
+    const rel = related("neighbor", 0.4);
+    const single = weakBody("single", 0, { directBodyOccurrenceCount: 1, queryTokenCount: 1 });
+    expect(relatedOverWeakFn(rel, single)).toBe(-1);
+    const ranked = rankCandidates([single, rel], { constraints: HYBRID_CONSTRAINTS });
+    expect(ranked.map((row) => row.document.id)).toEqual(["neighbor", "single"]);
+  });
+
+  test("a neighbor with equivalent evidence is not demoted as zero-term", () => {
+    const rel = related("equiv", 0.4);
+    rel.features.equivalentRecallMatch = true;
+    rel.features.equivalentRecallBodyMatch = true;
+    const weak = weakBody("repeated", 0, { directBodyOccurrenceCount: 4, queryTokenCount: 1 });
+    expect(relatedOverWeakFn(rel, weak)).toBe(-1);
+    expect(relatedOverWeakFn(weak, rel)).toBe(1);
+  });
+
+  test("a neighbor that also has direct evidence stays a weak direct", () => {
+    const zero = related("neighbor", 0.9);
+    const mixed = weakBody("mixed", 0, {
+      directBodyOccurrenceCount: 2,
+      relationshipStrength: 0.2,
+      queryTokenCount: 1,
+    });
+    expect(mixed.features.relevanceKind).toBe("direct");
+    expect(relatedOverWeakFn(mixed, zero)).toBe(-1);
+    const ranked = rankCandidates([zero, mixed], { constraints: HYBRID_CONSTRAINTS });
+    expect(ranked.map((row) => row.document.id)).toEqual(["mixed", "neighbor"]);
+  });
+
+  test("a topical title still outranks an incidental single and not a repeated direct", () => {
+    const topical = hit("topical", {
+      relevanceKind: "direct",
+      directClass: "none",
+      topicalRecallMatch: true,
+      topicalRecallTitleMatch: true,
+      directBodyOccurrenceCount: 0,
+      bodyLexicalMatch: 0,
+      bodyPhraseCount: 0,
+    });
+    const incidental = weakBody("incidental", 0, { directBodyOccurrenceCount: 1 });
+    const repeated = weakBody("repeated", 0, { directBodyOccurrenceCount: 2 });
+    const neighbor = related("neighbor", 0.9);
+    expect(compareConstraint(topical, incidental, HYBRID_CONSTRAINTS).order).toBe(-1);
+    expect(compareConstraint(topical, incidental, HYBRID_CONSTRAINTS).conflict).toBe(false);
+    expect(compareConstraint(repeated, topical, HYBRID_CONSTRAINTS).order).toBe(-1);
+    expect(compareConstraint(repeated, neighbor, HYBRID_CONSTRAINTS).conflict).toBe(false);
+    const ranked = rankCandidates([incidental, neighbor, topical, repeated], { constraints: HYBRID_CONSTRAINTS });
+    expect(ranked.map((row) => row.document.id)).toEqual(["repeated", "neighbor", "topical", "incidental"]);
+  });
+});

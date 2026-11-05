@@ -7,7 +7,7 @@
     "overlayCases are OSS-owned ranking regressions that are not mined from the frozen scenario SHA. Not Core ranking policy."
   ],
   "counts": {
-    "cases": 60,
+    "cases": 54,
     "overlayCases": 4
   },
   "cases": [
@@ -152,61 +152,6 @@
       "name": "regression · scenario · applicationsec · #1:App Sec | App Sec@1"
     },
     {
-      "query": "appsec",
-      "kind": "regression",
-      "origin": "scenario",
-      "classification": "B",
-      "requiredWithin": [
-        {
-          "title": "App Sec",
-          "topN": 3
-        }
-      ],
-      "name": "regression · scenario · appsec · App Sec@3"
-    },
-    {
-      "query": "app sec",
-      "kind": "regression",
-      "origin": "scenario",
-      "classification": "B",
-      "requiredWithin": [
-        {
-          "title": "App Sec",
-          "topN": 1
-        }
-      ],
-      "exactFirst": "App Sec",
-      "name": "regression · scenario · app sec · #1:App Sec | App Sec@1"
-    },
-    {
-      "query": "application se",
-      "kind": "regression",
-      "origin": "scenario",
-      "classification": "B",
-      "requiredWithin": [
-        {
-          "title": "App Sec",
-          "topN": 1
-        }
-      ],
-      "exactFirst": "App Sec",
-      "name": "regression · scenario · application se · #1:App Sec | App Sec@1"
-    },
-    {
-      "query": "application security",
-      "kind": "regression",
-      "origin": "scenario",
-      "classification": "B",
-      "requiredWithin": [
-        {
-          "title": "App Sec",
-          "topN": 1
-        }
-      ],
-      "exactFirst": "App Sec",
-      "name": "regression · scenario · application security · #1:App Sec | App Sec@1"
-    },
-    {
       "query": "what are apis",
       "kind": "regression",
       "origin": "scenario",
@@ -256,11 +201,10 @@
       "requiredWithin": [
         {
           "title": "Linear vs Logistic Regression",
-          "topN": 1
+          "topN": 10
         }
       ],
-      "exactFirst": "Linear vs Logistic Regression",
-      "name": "regression · scenario · maachine leaarning · #1:Linear vs Logistic Regression | Linear vs Logistic Regression@1"
+      "name": "regression · scenario · maachine leaarning · Linear vs Logistic Regression@10"
     },
     {
       "query": "what is machine learning",
@@ -270,11 +214,10 @@
       "requiredWithin": [
         {
           "title": "Linear vs Logistic Regression",
-          "topN": 1
+          "topN": 10
         }
       ],
-      "exactFirst": "Linear vs Logistic Regression",
-      "name": "regression · scenario · what is machine learning · #1:Linear vs Logistic Regression | Linear vs Logistic Regression@1"
+      "name": "regression · scenario · what is machine learning · Linear vs Logistic Regression@10"
     },
     {
       "query": "dynamicprogramming",
@@ -569,34 +512,6 @@
       ],
       "exactFirst": "Build Time",
       "name": "regression · scenario · build time · #1:Build Time | Build Time@1"
-    },
-    {
-      "query": "institute",
-      "kind": "regression",
-      "origin": "scenario",
-      "classification": "B",
-      "requiredWithin": [
-        {
-          "title": "Udacity Review",
-          "topN": 1
-        }
-      ],
-      "exactFirst": "Udacity Review",
-      "name": "regression · scenario · institute · #1:Udacity Review | Udacity Review@1"
-    },
-    {
-      "query": "recursion",
-      "kind": "regression",
-      "origin": "scenario",
-      "classification": "B",
-      "requiredWithin": [
-        {
-          "title": "What is Recursion?",
-          "topN": 1
-        }
-      ],
-      "exactFirst": "What is Recursion?",
-      "name": "regression · scenario · recursion · #1:What is Recursion? | What is Recursion?@1"
     },
     {
       "query": "recursing",

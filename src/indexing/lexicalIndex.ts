@@ -1,5 +1,5 @@
 /**
- * search-v2-lexical-index v1
+ * `search-lexical-index` artifacts with schema version 1.
  *
  * The serialized payload stores one positional posting row per normalized
  * surface term. Each surface term carries its deterministic lemma, so lemma
@@ -7,10 +7,10 @@
  * in the artifact. Raw title/body text is deliberately absent; caller-supplied
  * documents provide display titles, optional summary text, and the separately
  * owned lexical-frequency data after the corpus fingerprint has been validated.
- * The v1 corpus fingerprint is (id, title, body, lexicalFrequency). Summary is
- * not stored in the artifact; load hydrates it from caller documents. Re-index
- * reuse after a consumed artifact also checks a separate hydration fingerprint
- * so a summary-only edit cannot keep stale search-relevant state.
+ * The schema version 1 corpus fingerprint is (id, title, body, lexicalFrequency).
+ * Summary is not stored in the artifact; load hydrates it from caller documents.
+ * Re-index reuse after a consumed artifact also checks a separate hydration
+ * fingerprint so a summary-only edit cannot keep stale search-relevant state.
  */
 
 import { tokenize } from "../text/text.js";
@@ -33,17 +33,33 @@ import type {
   SearchPlugin,
 } from "../types.js";
 
-export const LEXICAL_INDEX_FORMAT = "search-v2-lexical-index" as const;
+export const LEXICAL_INDEX_FORMAT = "search-lexical-index" as const;
+/** Schema version accepted for `LEXICAL_INDEX_FORMAT`. */
 export const LEXICAL_INDEX_VERSION = 1 as const;
+// Serialized compatibility fingerprints. Their embedded generation labels are identity, not `LEXICAL_INDEX_VERSION`.
 export const CORE_ANALYZER_COMPATIBILITY = "search-v2-core-analyzer-v1";
 export const IDENTITY_LEMMA_COMPATIBILITY = "identity-lemma-v1";
-export const EXACT_PRUNING_EXTENSION = "exact-pruning-v1";
-export const EXACT_PRUNING_REVISION = 1 as const;
+/**
+ * Feature block pruning document-ordinal boundaries. The identifier is not the lexical
+ * schema version, the payload revision, or the package release. Writers emit
+ * this name. `buildPayload` constructs it in memory; there is no compiled
+ * artifact cache that could replay the legacy spelling.
+ */
+export const EXACT_PRUNING_BLOCK_BOUNDARIES_EXTENSION = "exact-pruning-block-boundaries";
+/** Pre-0.8.0 spelling of the block-boundaries extension. Readers only. */
+export const EXACT_PRUNING_BLOCK_BOUNDARIES_LEGACY_EXTENSION = "exact-pruning-v1";
+export const EXACT_PRUNING_BLOCK_BOUNDARIES_REVISION = 1 as const;
 export const EXACT_PRUNING_BLOCK_SIZE = 128;
 export const SUPPORTED_PRUNING_BLOCK_SIZES = new Set([32, 64, 128, 256]);
-export const EXACT_PRUNING_V2_EXTENSION = "exact-pruning-v2";
-export const EXACT_PRUNING_V2_REVISION = 1 as const;
-export const EXACT_PRUNING_V2_MASK_WORDS = 4;
+/**
+ * Body posting pruning per-term body presence masks. Independent of the block-boundaries
+ * extension. Writers emit this name and do not copy a cached legacy key.
+ */
+export const EXACT_PRUNING_BODY_TERM_MASKS_EXTENSION = "exact-pruning-body-term-masks";
+/** Pre-0.8.0 spelling of the body-term-masks extension. Readers only. */
+export const EXACT_PRUNING_BODY_TERM_MASKS_LEGACY_EXTENSION = "exact-pruning-v2";
+export const EXACT_PRUNING_BODY_TERM_MASKS_REVISION = 1 as const;
+export const EXACT_PRUNING_BODY_TERM_MASKS_WORDS = 4;
 
 // Document tuple:
 // [id, titleTokenLength, bodyTokenLength, firstSurfaceToken,
@@ -67,27 +83,28 @@ type LexicalIndexPayload = {
   terms: SerializedTerm[];
   stats: [number, number];
   /**
-   * Additive capability namespace. The exact-pruning-v1 extension references
-   * stable document ordinals without changing the core v1 positional data.
+   * Additive capability namespace. Block-boundary and body-term-mask extensions
+   * reference stable document ordinals without changing the schema version 1
+   * positional data. Payload revisions stay 1.
    */
   extensions: Record<string, unknown>;
 };
 
 type SourceRow = [string, string, string, Record<string, number> | null, string, string[], string[]];
 
-export type ExactPruningExtensionV1 = {
-  revision: typeof EXACT_PRUNING_REVISION;
+export type ExactPruningBlockBoundaries = {
+  revision: typeof EXACT_PRUNING_BLOCK_BOUNDARIES_REVISION;
   unit: "document-ordinal";
   blockSize: number;
   boundaries: number[];
 };
 
-export type ExactPruningExtensionV2 = {
-  revision: typeof EXACT_PRUNING_V2_REVISION;
+export type ExactPruningBodyTermMasks = {
+  revision: typeof EXACT_PRUNING_BODY_TERM_MASKS_REVISION;
   unit: "document-ordinal";
   blockSize: number;
   documentCount: number;
-  maskWords: typeof EXACT_PRUNING_V2_MASK_WORDS;
+  maskWords: typeof EXACT_PRUNING_BODY_TERM_MASKS_WORDS;
   terms: Array<[string, number[][]]>;
 };
 
@@ -119,8 +136,8 @@ export type CompiledLexicalRuntime = {
   avgTitleDl: number;
   avgBodyDl: number;
   postingEntries: number;
-  exactPruning: ExactPruningExtensionV1 | null;
-  exactPruningV2: ExactPruningExtensionV2 | null;
+  blockBoundaries: ExactPruningBlockBoundaries | null;
+  bodyTermMasks: ExactPruningBodyTermMasks | null;
 };
 
 function fail(message: string, field: string): never {
@@ -175,7 +192,7 @@ function sourceRows(documents: unknown, schema?: Schema | null) {
 
 /**
  * Runtime hydration identity. Includes optional summary when the schema has
- * role `summary`. Not stored on the v1 artifact; used only to refuse re-index
+ * role `summary`. Not stored on the schema version 1 artifact; used only to refuse re-index
  * reuse of a consumed lexical index whose caller summaries changed.
  */
 function hydrationRows(documents: unknown, schema?: Schema | null) {
@@ -305,16 +322,16 @@ export function documentBlockBoundaries(documentCount: number, blockSize = EXACT
   return out;
 }
 
-function buildExactPruningExtension(documentCount: number): ExactPruningExtensionV1 {
+function buildBlockBoundariesExtension(documentCount: number): ExactPruningBlockBoundaries {
   return {
-    revision: EXACT_PRUNING_REVISION,
+    revision: EXACT_PRUNING_BLOCK_BOUNDARIES_REVISION,
     unit: "document-ordinal",
     blockSize: EXACT_PRUNING_BLOCK_SIZE,
     boundaries: documentBlockBoundaries(documentCount),
   };
 }
 
-function buildExactPruningV2Extension(terms: SerializedTerm[], documentCount: number): ExactPruningExtensionV2 {
+function buildBodyTermMasksExtension(terms: SerializedTerm[], documentCount: number): ExactPruningBodyTermMasks {
   const blockSize = EXACT_PRUNING_BLOCK_SIZE;
   const encoded: Array<[string, number[][]]> = [];
   for (const row of terms) {
@@ -348,11 +365,11 @@ function buildExactPruningV2Extension(terms: SerializedTerm[], documentCount: nu
     encoded.push([row[0], blockRows]);
   }
   return {
-    revision: EXACT_PRUNING_V2_REVISION,
+    revision: EXACT_PRUNING_BODY_TERM_MASKS_REVISION,
     unit: "document-ordinal",
     blockSize,
     documentCount,
-    maskWords: EXACT_PRUNING_V2_MASK_WORDS,
+    maskWords: EXACT_PRUNING_BODY_TERM_MASKS_WORDS,
     terms: encoded,
   };
 }
@@ -375,8 +392,8 @@ function buildPayload(index: SearchIndex): LexicalIndexPayload {
     terms: sortedTerms,
     stats: [n ? titleLength / n : 1, n ? bodyLength / n : 1],
     extensions: {
-      [EXACT_PRUNING_EXTENSION]: buildExactPruningExtension(n),
-      [EXACT_PRUNING_V2_EXTENSION]: buildExactPruningV2Extension(sortedTerms, n),
+      [EXACT_PRUNING_BLOCK_BOUNDARIES_EXTENSION]: buildBlockBoundariesExtension(n),
+      [EXACT_PRUNING_BODY_TERM_MASKS_EXTENSION]: buildBodyTermMasksExtension(sortedTerms, n),
     },
   };
 }
@@ -512,14 +529,33 @@ function parseTerm(value: unknown, i: number): SerializedTerm {
   ];
 }
 
-function parseExactPruningExtension(
+function selectedExtension(
+  extensions: Record<string, unknown>,
+  canonical: string,
+  legacy: string,
+  family: string
+): { key: string; value: unknown } | null {
+  const hasCanonical = Object.prototype.hasOwnProperty.call(extensions, canonical);
+  const hasLegacy = Object.prototype.hasOwnProperty.call(extensions, legacy);
+  if (hasCanonical && hasLegacy) {
+    fail(
+      `Lexical index data.extensions contains both ${canonical} and ${legacy} for the same ${family} extension`,
+      "data.extensions"
+    );
+  }
+  if (hasCanonical) return { key: canonical, value: extensions[canonical] };
+  if (hasLegacy) return { key: legacy, value: extensions[legacy] };
+  return null;
+}
+
+function parseBlockBoundariesExtension(
   value: unknown,
-  documentCount: number
-): ExactPruningExtensionV1 | null {
-  if (value === undefined) return null;
-  const field = `data.extensions.${EXACT_PRUNING_EXTENSION}`;
+  documentCount: number,
+  extensionKey: string
+): ExactPruningBlockBoundaries {
+  const field = `data.extensions.${extensionKey}`;
   if (!plainRecord(value)) fail(`${field} must be a plain object`, field);
-  if (value.revision !== EXACT_PRUNING_REVISION) {
+  if (value.revision !== EXACT_PRUNING_BLOCK_BOUNDARIES_REVISION) {
     fail(`${field}.revision is unsupported`, `${field}.revision`);
   }
   if (value.unit !== "document-ordinal") {
@@ -545,7 +581,7 @@ function parseExactPruningExtension(
     fail(`${field}.boundaries must cover sorted document ordinals exactly`, `${field}.boundaries`);
   }
   return {
-    revision: EXACT_PRUNING_REVISION,
+    revision: EXACT_PRUNING_BLOCK_BOUNDARIES_REVISION,
     unit: "document-ordinal",
     blockSize,
     boundaries,
@@ -559,29 +595,29 @@ function unsigned32(value: unknown, field: string) {
   return value >>> 0;
 }
 
-function parseExactPruningV2Extension(
+function parseBodyTermMasksExtension(
   value: unknown,
   documentCount: number,
   termNames: string[],
-  blockSize: number
-): ExactPruningExtensionV2 | null {
-  if (value === undefined) return null;
-  const field = `data.extensions.${EXACT_PRUNING_V2_EXTENSION}`;
+  blockSize: number,
+  extensionKey: string
+): ExactPruningBodyTermMasks {
+  const field = `data.extensions.${extensionKey}`;
   if (!plainRecord(value)) fail(`${field} must be a plain object`, field);
-  if (value.revision !== EXACT_PRUNING_V2_REVISION) {
+  if (value.revision !== EXACT_PRUNING_BODY_TERM_MASKS_REVISION) {
     fail(`${field}.revision is unsupported`, `${field}.revision`);
   }
   if (value.unit !== "document-ordinal") {
     fail(`${field}.unit must be document-ordinal`, `${field}.unit`);
   }
   if (value.blockSize !== blockSize) {
-    fail(`${field}.blockSize must match exact-pruning-v1`, `${field}.blockSize`);
+    fail(`${field}.blockSize must match the block-boundaries extension`, `${field}.blockSize`);
   }
   if (value.documentCount !== documentCount) {
     fail(`${field}.documentCount must match the compiled corpus`, `${field}.documentCount`);
   }
-  if (value.maskWords !== EXACT_PRUNING_V2_MASK_WORDS) {
-    fail(`${field}.maskWords must be ${EXACT_PRUNING_V2_MASK_WORDS}`, `${field}.maskWords`);
+  if (value.maskWords !== EXACT_PRUNING_BODY_TERM_MASKS_WORDS) {
+    fail(`${field}.maskWords must be ${EXACT_PRUNING_BODY_TERM_MASKS_WORDS}`, `${field}.maskWords`);
   }
   if (!Array.isArray(value.terms)) fail(`${field}.terms must be an array`, `${field}.terms`);
   const knownTerms = new Set(termNames);
@@ -632,11 +668,11 @@ function parseExactPruningV2Extension(
     parsed.push([term, encoded]);
   }
   return {
-    revision: EXACT_PRUNING_V2_REVISION,
+    revision: EXACT_PRUNING_BODY_TERM_MASKS_REVISION,
     unit: "document-ordinal",
     blockSize,
     documentCount,
-    maskWords: EXACT_PRUNING_V2_MASK_WORDS,
+    maskWords: EXACT_PRUNING_BODY_TERM_MASKS_WORDS,
     terms: parsed,
   };
 }
@@ -659,16 +695,38 @@ function parsePayload(value: unknown): LexicalIndexPayload {
   for (let i = 1; i < terms.length; i++) {
     if (terms[i - 1][0] >= terms[i][0]) fail("Lexical index terms must be unique and sorted", "data.terms");
   }
-  const extensions = { ...value.extensions };
-  const exactPruning = parseExactPruningExtension(extensions[EXACT_PRUNING_EXTENSION], documents.length);
-  if (exactPruning) extensions[EXACT_PRUNING_EXTENSION] = exactPruning;
-  const exactPruningV2 = parseExactPruningV2Extension(
-    extensions[EXACT_PRUNING_V2_EXTENSION],
-    documents.length,
-    terms.map((row) => row[0]),
-    exactPruning?.blockSize || EXACT_PRUNING_BLOCK_SIZE
+  const sourceExtensions = value.extensions;
+  const boundariesSelection = selectedExtension(
+    sourceExtensions,
+    EXACT_PRUNING_BLOCK_BOUNDARIES_EXTENSION,
+    EXACT_PRUNING_BLOCK_BOUNDARIES_LEGACY_EXTENSION,
+    "block-boundaries"
   );
-  if (exactPruningV2) extensions[EXACT_PRUNING_V2_EXTENSION] = exactPruningV2;
+  const masksSelection = selectedExtension(
+    sourceExtensions,
+    EXACT_PRUNING_BODY_TERM_MASKS_EXTENSION,
+    EXACT_PRUNING_BODY_TERM_MASKS_LEGACY_EXTENSION,
+    "body-term-masks"
+  );
+  const blockBoundaries = boundariesSelection
+    ? parseBlockBoundariesExtension(boundariesSelection.value, documents.length, boundariesSelection.key)
+    : null;
+  const bodyTermMasks = masksSelection
+    ? parseBodyTermMasksExtension(
+        masksSelection.value,
+        documents.length,
+        terms.map((row) => row[0]),
+        blockBoundaries?.blockSize || EXACT_PRUNING_BLOCK_SIZE,
+        masksSelection.key
+      )
+    : null;
+  const extensions: Record<string, unknown> = { ...sourceExtensions };
+  delete extensions[EXACT_PRUNING_BLOCK_BOUNDARIES_EXTENSION];
+  delete extensions[EXACT_PRUNING_BLOCK_BOUNDARIES_LEGACY_EXTENSION];
+  delete extensions[EXACT_PRUNING_BODY_TERM_MASKS_EXTENSION];
+  delete extensions[EXACT_PRUNING_BODY_TERM_MASKS_LEGACY_EXTENSION];
+  if (blockBoundaries) extensions[EXACT_PRUNING_BLOCK_BOUNDARIES_EXTENSION] = blockBoundaries;
+  if (bodyTermMasks) extensions[EXACT_PRUNING_BODY_TERM_MASKS_EXTENSION] = bodyTermMasks;
   return {
     documents,
     terms,
@@ -737,22 +795,24 @@ function runtimeFromPayload(
     }
   }
   sortedTitles.sort((a, b) => (a.norm < b.norm ? -1 : a.norm > b.norm ? 1 : a.pos - b.pos));
-  const exactPruning = (payload.extensions[EXACT_PRUNING_EXTENSION] as ExactPruningExtensionV1 | undefined) || null;
-  const exactPruningV2 = (payload.extensions[EXACT_PRUNING_V2_EXTENSION] as ExactPruningExtensionV2 | undefined) || null;
-  if (exactPruningV2) {
+  const blockBoundaries =
+    (payload.extensions[EXACT_PRUNING_BLOCK_BOUNDARIES_EXTENSION] as ExactPruningBlockBoundaries | undefined) || null;
+  const bodyTermMasks =
+    (payload.extensions[EXACT_PRUNING_BODY_TERM_MASKS_EXTENSION] as ExactPruningBodyTermMasks | undefined) || null;
+  if (bodyTermMasks) {
     const byTerm = new Map(terms.map((term) => [term.term, term]));
-    for (const [name, blocks] of exactPruningV2.terms) {
+    for (const [name, blocks] of bodyTermMasks.terms) {
       const term = byTerm.get(name);
       if (!term) continue;
       const blockIndexes = new Uint32Array(blocks.length);
-      const words = new Uint32Array(blocks.length * EXACT_PRUNING_V2_MASK_WORDS);
+      const words = new Uint32Array(blocks.length * EXACT_PRUNING_BODY_TERM_MASKS_WORDS);
       for (let i = 0; i < blocks.length; i++) {
         const row = blocks[i];
         blockIndexes[i] = row[0];
-        words[i * EXACT_PRUNING_V2_MASK_WORDS] = row[1];
-        words[i * EXACT_PRUNING_V2_MASK_WORDS + 1] = row[2];
-        words[i * EXACT_PRUNING_V2_MASK_WORDS + 2] = row[3];
-        words[i * EXACT_PRUNING_V2_MASK_WORDS + 3] = row[4];
+        words[i * EXACT_PRUNING_BODY_TERM_MASKS_WORDS] = row[1];
+        words[i * EXACT_PRUNING_BODY_TERM_MASKS_WORDS + 1] = row[2];
+        words[i * EXACT_PRUNING_BODY_TERM_MASKS_WORDS + 2] = row[3];
+        words[i * EXACT_PRUNING_BODY_TERM_MASKS_WORDS + 3] = row[4];
       }
       term.bodyPresence = { blockIndexes, words };
     }
@@ -770,8 +830,8 @@ function runtimeFromPayload(
     avgTitleDl: payload.stats[0] || 1,
     avgBodyDl: payload.stats[1] || 1,
     postingEntries,
-    exactPruning,
-    exactPruningV2,
+    blockBoundaries,
+    bodyTermMasks,
   };
 }
 
@@ -1004,6 +1064,8 @@ export function parseLexicalIndex(artifactValue: unknown): {
     data: artifact.data,
   });
   if (artifact.integrity !== expectedIntegrity) fail("Lexical index integrity fingerprint mismatch", "integrity");
+  // Alias resolution happens on the parsed payload only. artifact.data stays
+  // the incoming object, so its integrity fingerprint still matches that data.
   const payload = parsePayload(artifact.data);
   if (payload.documents.length !== artifact.corpus.documentCount) {
     fail("Lexical index document count does not match its payload", "corpus.documentCount");
@@ -1054,11 +1116,11 @@ export function ensureCompiledLexicalIndex(index: SearchIndex, plugins: SearchPl
 }
 
 export function exactPruningRuntime(index: SearchIndex): {
-  extension: ExactPruningExtensionV1;
+  extension: ExactPruningBlockBoundaries;
 } | null {
   const runtime = index.compiledLexical as CompiledLexicalRuntime | undefined;
-  if (!runtime?.exactPruning) return null;
+  if (!runtime?.blockBoundaries) return null;
   return {
-    extension: runtime.exactPruning,
+    extension: runtime.blockBoundaries,
   };
 }

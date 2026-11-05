@@ -6,6 +6,7 @@ import { DEFAULT_RUNTIME_TYPES } from "./types.js";
 import { hashJson } from "./hash.js";
 import type { CompileRelOptions, RelationshipArtifact, RelationshipEdge } from "../types.js";
 
+/** Published compiler revision, stored on the build manifest as `compilerVersion`. The runtime graph remains a `search-relationships` artifact with schema version 1. */
 export const COMPILER_VERSION: 2 = 2;
 
 function countEdges(artifact: unknown): number {
@@ -29,7 +30,7 @@ function countPairs(artifact: unknown): number {
 }
 
 function emptySemantic(): RelationshipArtifact {
-  return { format: "search-v2-relationships", version: 1, relationships: {} as Record<string, RelationshipEdge[]> };
+  return { format: "search-relationships", version: 1, relationships: {} as Record<string, RelationshipEdge[]> };
 }
 
 export function compileRelationships(

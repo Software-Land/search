@@ -3,14 +3,15 @@
  * Deterministic retrieval-pressure and exact compiled-index benchmark harness.
  *
  * Authoritative ranking: full-scan retrieve → current extractFeatures → sparse ranker.
- * Legacy suites retain the candidateLimit survival diagnostics. The `stage1`
- * suite measures the exact compiled path, fallback construction, posting work,
- * representative selection, artifact size, load cost, memory, and deterministic
- * A/B/C serialization projections.
+ * Legacy suites retain the candidateLimit survival diagnostics. The
+ * `exact-compiled` suite measures exact compiled retrieval, fallback
+ * construction, posting work, representative selection, artifact size, load
+ * cost, memory, and deterministic A/B/C serialization projections. `--suite
+ * stage1` is the same suite. Its JSON key remains `stage1`.
  *
  *   node scripts/budget-pressure.mjs
  *   node scripts/budget-pressure.mjs --suite adversarial
- *   node --expose-gc scripts/budget-pressure.mjs --suite stage1 --sizes 1000,5000
+ *   node --expose-gc scripts/budget-pressure.mjs --suite exact-compiled --sizes 1000,5000
  *
  * Not packed.
  */
@@ -928,7 +929,7 @@ const MIXED_QUERIES = [
 const LEMMAS = { searching: "search", searched: "search", searches: "search" };
 const CONFIGURED_CONCEPTS = [{ key: "tls", aliases: [["transport", "layer", "security"]] }];
 const RELATIONSHIPS = {
-  format: "search-v2-relationships",
+  format: "search-relationships",
   version: 1,
   relationships: {
     tls: [{ target: "vpn", type: "editorial", strength: 1, provenance: "manual" }],
@@ -1448,7 +1449,7 @@ function estimateCompiledIndex(engine, rawDocs) {
   }
   const terms = [...byTerm.values()].sort((a, b) => idCompare(a.term, b.term));
   const artifact = {
-    format: "search-v2-lexical-index",
+    format: "search-lexical-index",
     version: 1,
     analyzer: { normalization: "runtime-current", morphologyHash: "required" },
     documents: docRows,
@@ -1636,7 +1637,7 @@ function compareArtifactLayouts(artifact) {
   };
 }
 
-async function measureActualStage1(docs, extra, queries) {
+async function measureExactCompiledRetrieval(docs, extra, queries) {
   if (typeof globalThis.gc === "function") globalThis.gc();
   const english = morphology({ lemmas: extra.lemmas || {} });
   const plugins = [english, compileConfiguredConceptPlugin({ configuredConcepts: extra.configuredConcepts || [] })];
@@ -1765,12 +1766,12 @@ async function measureActualStage1(docs, extra, queries) {
   };
 }
 
-async function suiteActualStage1(sizes) {
+async function suiteExactCompiledRetrieval(sizes) {
   const rows = [];
   const originals = attachLexicalFrequency(load("documents.json"), load("lexical-frequency.json"));
   rows.push({
     corpus: "software-land",
-    ...(await measureActualStage1(
+    ...(await measureExactCompiledRetrieval(
       originals,
       {
         lemmas: load("lemmas.json"),
@@ -1784,7 +1785,7 @@ async function suiteActualStage1(sizes) {
   for (const n of sizes) {
     rows.push({
       corpus: "mixed",
-      ...(await measureActualStage1(
+      ...(await measureExactCompiledRetrieval(
         mixedCorpus(n),
         {
           lemmas: LEMMAS,
@@ -1848,8 +1849,8 @@ async function main() {
   if (suite === "artifact-estimate") {
     report.artifactEstimate = await suiteArtifactEstimate(sizes);
   }
-  if (suite === "stage1") {
-    report.stage1 = await suiteActualStage1(sizes);
+  if (suite === "exact-compiled" || suite === "stage1") {
+    report.stage1 = await suiteExactCompiledRetrieval(sizes);
   }
   console.log(JSON.stringify(report, null, 2));
 }

@@ -117,13 +117,63 @@ function resolveStandaloneRecall(
   };
 }
 
+function completeConceptForms(concept: ConfiguredConcept): string[][] {
+  const forms: string[][] = [];
+  if (concept.key) forms.push([concept.key]);
+  for (const alias of concept.aliases || []) {
+    if (alias.length) forms.push([...alias]);
+  }
+  return forms;
+}
+
+/**
+ * A topical target that uniquely names a configured concept also matches that
+ * concept's key and full aliases. Ambiguous owners stay the authored phrase.
+ * The resolved concept's own topical targets are not followed.
+ */
+function expandTopicalForms(sourceKey: string, forms: string[][], concepts: ConfiguredConcept[]): string[][] {
+  const owners = new Map<string, ConfiguredConcept[]>();
+  const addOwner = (seq: readonly string[], concept: ConfiguredConcept) => {
+    const key = sequenceKey(seq);
+    if (!key) return;
+    const list = owners.get(key) || [];
+    if (!list.includes(concept)) list.push(concept);
+    owners.set(key, list);
+  };
+  for (const concept of concepts) {
+    addOwner([concept.key], concept);
+    for (const alias of concept.aliases || []) addOwner(alias, concept);
+  }
+  const out: string[][] = [];
+  const seen = new Set<string>();
+  const push = (seq: readonly string[]) => {
+    const normalized = seq.map((token) => String(token || "").toLowerCase()).filter(Boolean);
+    const key = sequenceKey(normalized);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    out.push(normalized);
+  };
+  for (const form of forms) {
+    push(form);
+    const list = owners.get(sequenceKey(form)) || [];
+    if (list.length !== 1 || list[0].key === sourceKey) continue;
+    for (const resolved of completeConceptForms(list[0])) push(resolved);
+  }
+  return out;
+}
+
 function topicalRecallForKey(key: string | null | undefined, configured: SearchPlugin | null): TopicalRecall | null {
   if (!key || !configured) return null;
-  const forms = configured.topicalRecallByKey?.get(key);
-  if (!Array.isArray(forms) || !forms.length) return null;
+  const authored = configured.topicalRecallByKey?.get(key);
+  if (!Array.isArray(authored) || !authored.length) return null;
+  const concepts = [...(configured.byKey?.values() || [])];
+  const primaryAuthored = configured.topicalPrimaryByKey?.get(key) || [];
   return {
     key,
-    forms: forms.map((form) => [...form]),
+    forms: expandTopicalForms(key, authored.map((form) => [...form]), concepts),
+    primaryForms: primaryAuthored.length
+      ? expandTopicalForms(key, primaryAuthored.map((form) => [...form]), concepts)
+      : [],
   };
 }
 
@@ -251,6 +301,30 @@ function admitSearchEquivalenceTargets(
 }
 
 /**
+ * Surface and canonical-lemma forms a single-token equivalent target would
+ * receive if it had been typed. Multiword targets do not use this. A heuristic
+ * lemma that is not the canonical normalized form stays exact and lemma-only.
+ */
+function singleTokenEquivalentTargetForms(target: string, plugins: SearchPlugin[]) {
+  const surface = target;
+  const canonical = pluginCanonicalLemma(plugins, surface);
+  const lemma = pluginLemma(plugins, surface);
+  const normalized = canonical && canonical !== surface ? canonical : surface;
+  const resolvedLemma = canonical || lemma || normalized;
+  const forms = new Set<string>();
+  for (const value of [surface, normalized, resolvedLemma]) {
+    if (value) forms.add(value);
+  }
+  const prefixable = new Set<string>();
+  if (surface) prefixable.add(surface);
+  if (normalized) prefixable.add(normalized);
+  return {
+    forms: [...forms],
+    lemmaOnlyForms: [...forms].filter((form) => !prefixable.has(form)),
+  };
+}
+
+/**
  * Additive one-hop synonym recall after configured occupancy.
  * Lookup uses accepted configured/phrase/uncovered semantics only.
  * Does not rewrite tokens, lexical intent, or configured-concept occupancy.
@@ -298,14 +372,27 @@ function attachSearchEquivalenceRecall(
     for (const form of concept.forms || []) existingForms.add(form);
   }
   for (const pair of pairs) {
-    if (existingForms.has(pair.target)) continue;
-    query.concepts.push({
+    const built = /\s/.test(pair.target)
+      ? { forms: [pair.target], lemmaOnlyForms: [] as string[] }
+      : singleTokenEquivalentTargetForms(pair.target, plugins);
+    // The ordinary term path merges the raw target onto the source concept.
+    // That string is not the canonical normalized form. A missing canonical
+    // form still needs the recall concept. A heuristic lemma-only form does
+    // not: it stays off the extra concept when the raw target is already merged.
+    const lemmaOnly = new Set(built.lemmaOnlyForms);
+    const missingCanonical = built.forms.some((form) => !existingForms.has(form) && !lemmaOnly.has(form));
+    if (existingForms.has(pair.target) ? !missingCanonical : built.forms.every((form) => existingForms.has(form))) {
+      continue;
+    }
+    const concept: QueryConcept = {
       id: pair.target,
       kind: "term",
-      forms: [pair.target],
+      forms: built.forms,
       provenance: "synonym",
-    });
-    existingForms.add(pair.target);
+    };
+    if (built.lemmaOnlyForms.length) concept.lemmaOnlyForms = built.lemmaOnlyForms;
+    query.concepts.push(concept);
+    for (const form of built.forms) existingForms.add(form);
   }
   query.equivalentRecall = pairs;
 }

@@ -41,7 +41,7 @@ documents
    ├─ typical when avoiding init-time corpus analysis:
    │          compileLexicalIndex(documents, { schema, lemma, analyzerId })
    │                ↓
-   │          persist JSON (search-v2-lexical-index v1)
+   │          persist JSON (search-lexical-index, schema version 1)
    │
    ├─ optional concept/form layer:
    │          authored JSON, and/or compileCorpus(...)
@@ -66,7 +66,7 @@ engine.search(...)
 
 **Runtime initialization** creates morphology and other plugins, compiles authored relevance from trusted JSON (`compileAuthoredRelevance` returns runtime plugin objects, not a second JSON format; `configuredConcepts` and `relationshipMap` are not `SearchEngine.create` options), creates the engine, and calls `index(documents)`. With a supplied `lexicalIndex`, that call validates and hydrates. With the artifact omitted, it constructs equivalent lexical state from the documents.
 
-**Query time** searches the already-hydrated compact/indexed representation. The indexed path does not rescan or retokenize raw title/body text. Eligible ordinary `search()` ranks from packed ranking-evidence views rather than per-direct FeatureVectors; `searchDetailed()` and unsupported shapes keep the diagnostic FeatureVector path. Details: [docs/compact-runtime.md](docs/compact-runtime.md), [docs/scaling.md](docs/scaling.md).
+**Query time** searches the already-hydrated compact/indexed representation. The indexed path does not rescan or retokenize raw title/body text. Eligible ordinary `search()` ranks from packed ranking-evidence views rather than per-direct FeatureVectors. `explain: true` on that call disables packed ranking evidence and remains eligible for feature block pruning and body posting pruning. `searchDetailed()` and unsupported shapes keep the diagnostic FeatureVector path, and `searchDetailed()` turns those pruning capabilities off. Details: [docs/compact-runtime.md](docs/compact-runtime.md), [docs/scaling.md](docs/scaling.md), [docs/exact-pruning.md](docs/exact-pruning.md).
 
 ## Runtime construction
 
@@ -107,7 +107,7 @@ Optional schema role `"summary"` is short authored summary or search-description
 
 When init-time corpus analysis should be avoided, compile the positional index in a build step and pass it into `SearchEngine.create({ lexicalIndex })`. Default retrieval is already `"indexed"`; you do not need to set `retriever` for this path.
 
-The artifact is ordinary JSON-serializable data (`search-v2-lexical-index` version 1). Search Core does not read the filesystem. `writeFile` / `readFile` below are illustrative; a static import, `fetch`, bundler asset, or object-storage read is equally valid.
+The artifact is ordinary JSON-serializable data: a `search-lexical-index` artifact with schema version 1. 0.8.0 also reads the pre-0.8.0 `search-v2-lexical-index` spelling. Older packages are not guaranteed to read the identifier 0.8.0 writes. See [docs/artifacts.md](docs/artifacts.md#format-compatibility). Search Core does not read the filesystem. `writeFile` / `readFile` below are illustrative; a static import, `fetch`, bundler asset, or object-storage read is equally valid.
 
 Use the same `schema` and the same `morphology({ lemmas })` (or `morphology()`) at compile time and at search time. `compileLexicalIndex` requires `analyzerId` whenever `lemma` is supplied; pass `morphology(...).indexIdentity`.
 
@@ -163,7 +163,7 @@ await engine.index(documents);
 engine.search("wireless");
 ```
 
-`documents` at runtime must be the same corpus the artifact was compiled from (stable ids, title/body text, and any attached lexical-frequency maps). Optional `summary` is not stored in the v1 title/body postings; `index()` hydrates summary state from the caller documents. See [docs/artifacts.md](docs/artifacts.md) and [docs/schema.md](docs/schema.md).
+`documents` at runtime must be the same corpus the artifact was compiled from (stable ids, title/body text, and any attached lexical-frequency maps). Optional `summary` is not stored in the schema version 1 title/body postings; `index()` hydrates summary state from the caller documents. See [docs/artifacts.md](docs/artifacts.md) and [docs/schema.md](docs/schema.md).
 
 A supplied incompatible or corrupt artifact **throws**. The engine does not ignore it and rebuild from raw documents. If `lexicalIndex` is omitted instead, each `index()` call constructs equivalent state from `documents`.
 
@@ -185,7 +185,7 @@ Searching before `index()` throws. Details: [docs/retrievers.md](docs/retrievers
 
 A supplied lexical index is tied to the data and analyzer used to build it. Rebuild it when document ids, title/body text, schema title/body roles, morphology / lemma identity, or attached lexical-frequency maps change. Mismatches fail closed.
 
-Optional `summary` is not part of the v1 serialized title/body corpus fingerprint, so a summary-only edit does not require rebuilding the lexical artifact. Summary state is hydrated from the documents on a new engine's first `index()`; after that, changing summary data requires creating a new engine with the same lexical artifact rather than re-indexing the existing engine. See [docs/artifacts.md](docs/artifacts.md).
+Optional `summary` is not part of the schema version 1 serialized title/body corpus fingerprint, so a summary-only edit does not require rebuilding the lexical artifact. Summary state is hydrated from the documents on a new engine's first `index()`; after that, changing summary data requires creating a new engine with the same lexical artifact rather than re-indexing the existing engine. See [docs/artifacts.md](docs/artifacts.md).
 
 Rebuild authored configuration when `configuredConcepts` or `relationshipMap` change, and rebuild relationship graphs when semantic or editorial edges change. Those are separate artifacts from the lexical index.
 
@@ -345,7 +345,37 @@ const { artifact } = await compileSemantic(corpusJson, {
 
 When `outputPath` is omitted, `compileSemantic()` still writes a unique file under the system temp directory and returns that path. The file survives the call. The caller owns it and may remove it when finished. Pass `outputPath` to choose a durable location.
 
-Lexical relatedness uses the Python standard library. Embedding extras are installed into an isolated venv on first `combined` / `embedding` compile. Default embedding model (when requested): `sentence-transformers/all-MiniLM-L6-v2`. Weights are downloaded into a builder cache and are not redistributed. See `tools/search-semantic/LICENSES.md`.
+Lexical relatedness uses the Python standard library. Embedding extras are installed into an isolated venv on first `combined` / `embedding` compile. The default embedding provider is FastEmbed with `sentence-transformers/all-MiniLM-L6-v2`. Weights are downloaded into a builder cache and are not redistributed. See `tools/search-semantic/LICENSES.md`.
+
+Search Core never embeds a query. `compileSemantic` writes the same relationship artifact either provider produces, and the runtime reads that artifact only.
+
+OpenAI is an explicit offline provider. It is not the default, and omitting it does not read `OPENAI_API_KEY`.
+
+```js
+const { artifact } = await compileSemantic(corpusJson, {
+  method: "embedding",
+  representation: "title_struct",
+  topK: 5,
+  minScore: 0.3,
+  precisionGate: true,
+  mutual: true,
+  embeddingProvider: "openai",
+  model: "text-embedding-3-large",
+  dimensions: 3072,
+  cacheDir: "build/semantic-openai-cache",
+});
+```
+
+`minScore: 0.3` above is only an example of the existing default. Cosine ranges differ by model. Choose the threshold for the corpus and model you are compiling; do not reuse a floor from another model without evaluating it.
+
+```bash
+OPENAI_API_KEY=... node node_modules/@software-land/search/tools/search-semantic/build.mjs \
+  --input corpus.json --output graph.json --method embedding \
+  --embedding-provider openai --model text-embedding-3-large --dimensions 3072 \
+  --cache-dir build/semantic-openai-cache --precision-gate --mutual
+```
+
+The key can also be passed as `apiKey` to `compileSemantic`. `OPENAI_API_BASE` or `--openai-api-base` overrides the API origin. Cached vectors are reused when the provider, model, dimensions, preparation, and exact text are unchanged. A failed OpenAI build leaves an existing `graph.json` in place and does not switch to FastEmbed. The published JSON contains neighbors and strengths, not vectors or credentials.
 
 Shipped CLIs (no package `bin`; from an npm install):
 
@@ -362,7 +392,7 @@ Merge generated semantic edges with authored editorial edges via `mergeRelations
 
 ## Positional queries
 
-Multi-token typed queries execute same-field positional clauses against runtime positional state for title, optional summary, and body. The serialized `search-v2-lexical-index` v1 artifact stores title/body positional postings only; optional summary positional state is hydrated from caller documents. Those clauses record field hits; they do not collapse the default public result list.
+Multi-token typed queries execute same-field positional clauses against runtime positional state for title, optional summary, and body. The serialized `search-lexical-index` artifact with schema version 1 stores title/body positional postings only; optional summary positional state is hydrated from caller documents. Those clauses record field hits; they do not collapse the default public result list.
 
 - **PhraseQuery** — exact contiguous typed (`originalSurface`) token sequence in one field.
 - **PhrasePrefixQuery** — that sequence’s exact preceding tokens plus a trailing typed **proper prefix** of the next token in the same field.

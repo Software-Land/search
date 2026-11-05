@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Deterministic Stage-2A benchmark.
+ * Deterministic feature block pruning benchmark.
  *
  * Compares the internal exhaustive compiled oracle with exact document-feature
  * block pruning. This is a development measurement, not a CI timing gate.

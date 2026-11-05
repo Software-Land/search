@@ -1,6 +1,6 @@
 # Relationships
 
-Core consumes a versioned `search-v2-relationships` artifact. It does not embed documents.
+Core consumes a `search-relationships` artifact with schema version 1. It does not embed documents.
 
 ## Strategies (application policy, not a different engine)
 
@@ -31,7 +31,7 @@ const engine = SearchEngine.create({
   plugins: [morphology()],
   relationshipStrategy: "separate",
   documentRelationships: {
-    format: "search-v2-relationships",
+    format: "search-relationships",
     version: 1,
     relationships: {
       bluetooth: [{ target: "connected-devices", type: "editorial", strength: 1, provenance: "manual" }],

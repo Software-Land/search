@@ -47,7 +47,7 @@ const documents: SearchDocument[] = [
 ];
 
 const relationships: RelationshipArtifact = {
-  format: "search-v2-relationships",
+  format: "search-relationships",
   version: 1,
   relationships: {
     wifi: [{ target: "wifi", type: "editorial", strength: 1, provenance: "manual" }],
@@ -94,7 +94,7 @@ void morphologyPlugin.lemma;
 void morphologyPlugin.indexIdentity;
 
 const lexicalIndex: LexicalIndexArtifact = {
-  format: "search-v2-lexical-index",
+  format: "search-lexical-index",
   version: 1,
   compatibility: {
     core: "search-v2-core-analyzer-v1",
@@ -105,6 +105,18 @@ const lexicalIndex: LexicalIndexArtifact = {
   integrity: "fixture",
   data: {},
 };
+
+const legacyRelationships: RelationshipArtifact = {
+  format: "search-v2-relationships",
+  version: 1,
+  relationships: {},
+};
+const legacyLexicalIndex: LexicalIndexArtifact = { ...lexicalIndex, format: "search-v2-lexical-index" };
+const legacyOptions: SearchEngineOptions = {
+  lexicalIndex: legacyLexicalIndex,
+  documentRelationships: legacyRelationships,
+};
+void legacyOptions;
 
 const options: SearchEngineOptions = {
   schema,

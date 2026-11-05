@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { compileCorpus, spellingLexiconPlugin } from "../tools/search-corpus/index.js";
+import { moduleSpecifiers, prohibitedBuilderSpecifiers } from "./helpers/import-specifiers.js";
 import { morphology, SearchEngine } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
@@ -31,8 +32,8 @@ describe("search-corpus isolation", () => {
   test("Search Core does not import search-corpus", () => {
     const root = path.join(__dirname, "../dist");
     for (const file of walkJs(root)) {
-      const text = fs.readFileSync(file, "utf8").toLowerCase();
-      expect(text.includes("search-corpus")).toBe(false);
+      const text = fs.readFileSync(file, "utf8");
+      expect(prohibitedBuilderSpecifiers(text, file)).toEqual([]);
     }
   });
 
@@ -40,9 +41,9 @@ describe("search-corpus isolation", () => {
     const root = path.join(__dirname, "../tools/search-corpus/lib");
     for (const file of walkJs(root)) {
       const text = fs.readFileSync(file, "utf8");
-      expect(text.includes("src/search/")).toBe(false);
-      expect(text.includes("search-semantic")).toBe(false);
-      expect(text.includes("src/search-v2")).toBe(false);
+      const specs = moduleSpecifiers(text, file);
+      expect(specs.some((spec) => spec.includes("src/search/") || spec.includes("src/search-v2"))).toBe(false);
+      expect(prohibitedBuilderSpecifiers(text, file)).toEqual([]);
     }
   });
 });
@@ -189,7 +190,7 @@ describe("search-corpus synthetic mining", () => {
         { id: "b", title: "CPU cooling", body: "Keep the CPU cool." },
       ],
     });
-    expect(result.configuredConceptArtifact.format).toBe("search-v2-configured-concepts");
+    expect(result.configuredConceptArtifact.format).toBe("search-configured-concepts");
     expect(result.configuredConceptArtifact.version).toBe(1);
     expect(Array.isArray(result.configuredConcepts)).toBe(true);
     expect(result.configuredConcepts.some((e) => e.key === "cpu")).toBe(true);

@@ -1,11 +1,14 @@
 /**
  * Within-constraint ordering after score: a weak single-token body-only pack
- * may use compiled body occurrence counts before document id. This is not a
- * score term and not H8. Stronger title/configured/direct classes are excluded.
+ * may use compiled body occurrence counts before document id. Tied
+ * equivalent-body hits use their own unique occurrence count before document
+ * id. Neither count is a score term or H8. Stronger title, configured, and
+ * direct classes stay on their existing constraints.
  * Configured summary vs body-only field provenance is recorded on features
  * but is not consumed here.
  */
 
+import { isEquivalentRecallBodyOnly } from "./constraints.js";
 import type { FeaturedHit, FeatureVector } from "../types.js";
 
 /**
@@ -37,8 +40,9 @@ function idCmp(a: FeaturedHit, b: FeaturedHit) {
 
 /**
  * Sort comparator: higher score first; among the weak single-token body pack,
- * higher bodyPhraseCount first; then document id. Returns negative when `a`
- * should rank above `b`.
+ * higher bodyPhraseCount first; among tied equivalent-body hits, higher
+ * equivalent occurrence count first; then document id. Returns negative when
+ * `a` should rank above `b`.
  */
 export function compareScoreThenWeakBodyThenId(a: FeaturedHit, b: FeaturedHit) {
   const sa = a.score || 0;
@@ -47,6 +51,11 @@ export function compareScoreThenWeakBodyThenId(a: FeaturedHit, b: FeaturedHit) {
   if (isWeakSingleTokenBodyPack(a.features) && isWeakSingleTokenBodyPack(b.features)) {
     const ca = a.features.bodyPhraseCount || 0;
     const cb = b.features.bodyPhraseCount || 0;
+    if (cb !== ca) return cb - ca;
+  }
+  if (isEquivalentRecallBodyOnly(a.features) && isEquivalentRecallBodyOnly(b.features)) {
+    const ca = a.features.equivalentRecallBodyOccurrenceCount || 0;
+    const cb = b.features.equivalentRecallBodyOccurrenceCount || 0;
     if (cb !== ca) return cb - ca;
   }
   return idCmp(a, b);

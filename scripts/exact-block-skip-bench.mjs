@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Stage-3A unread-block skip measurements. Not a CI latency gate.
+ * Body posting pruning measurements. Not a CI latency gate.
  *
  *   node --expose-gc scripts/exact-block-skip-bench.mjs
  *   node --expose-gc scripts/exact-block-skip-bench.mjs --sizes 25000,100000
@@ -12,7 +12,7 @@ import { parseArgs } from "node:util";
 import { SearchEngine, morphology } from "../dist/index.js";
 import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
-import { EXACT_PRUNING_V2_EXTENSION } from "../dist/indexing/lexicalIndex.js";
+import { EXACT_PRUNING_BODY_TERM_MASKS_EXTENSION } from "../dist/indexing/lexicalIndex.js";
 import { generateArticle, generateSettings } from "../benchmarks/memory/lib/generate.mjs";
 
 const SEED = 0x60d6e7ed;
@@ -98,15 +98,15 @@ function sample(engine, pruningMode) {
   return { ...counters(last.meta), ids: last.results.map((hit) => hit.id), scores: last.results.map((hit) => hit.score), latency: quantiles(total) };
 }
 
-function v2Stats(artifact) {
-  const ext = artifact.data?.extensions?.[EXACT_PRUNING_V2_EXTENSION];
+function presenceMaskStats(artifact) {
+  const ext = artifact.data?.extensions?.[EXACT_PRUNING_BODY_TERM_MASKS_EXTENSION];
   const json = JSON.stringify(ext || null);
   const terms = ext?.terms || [];
   let nonempty = 0;
   for (const row of terms) nonempty += (row[1] || []).length;
   return {
     artifactBytes: Buffer.byteLength(JSON.stringify(artifact)),
-    v2Bytes: Buffer.byteLength(json),
+    presenceMaskBytes: Buffer.byteLength(json),
     termsWithMasks: terms.length,
     nonemptyBlockMasks: nonempty,
     avgBytesPerEligibleTerm: terms.length ? Buffer.byteLength(json) / terms.length : 0,
@@ -121,7 +121,7 @@ const plugins = [
 for (const size of sizes) {
   const docs = mixedCorpus(size);
   const artifact = compileLexicalIndex(docs, { schema: SCHEMA, plugins });
-  const meta = v2Stats(artifact);
+  const meta = presenceMaskStats(artifact);
   const engine = SearchEngine.create({
     schema: SCHEMA,
     lexicalIndex: artifact,
@@ -144,7 +144,7 @@ for (const size of sizes) {
     auto,
   }, null, 2));
   if (!same) {
-    console.error("STAGE 3A differential mismatch");
+    console.error("body posting pruning differential mismatch");
     process.exitCode = 1;
     break;
   }

@@ -40,7 +40,7 @@ const mixedMap = {
 };
 
 const baseRelationships = {
-  format: "search-v2-relationships",
+  format: "search-relationships",
   version: 1,
   relationships: {
     "doc-a": [{ target: "qa-guide", type: "semantic", strength: 0.7, provenance: "generated" }],
@@ -183,14 +183,14 @@ describe("editorial merge", () => {
   test("same source/target/type keeps the first edge", () => {
     const merged = mergeRelationships(
       {
-        format: "search-v2-relationships",
+        format: "search-relationships",
         version: 1,
         relationships: {
           "doc-a": [{ target: "doc-b", type: "editorial", strength: 1, provenance: "manual" }],
         },
       },
       {
-        format: "search-v2-relationships",
+        format: "search-relationships",
         version: 1,
         relationships: {
           "doc-a": [{ target: "doc-b", type: "editorial", strength: 1, provenance: "manual" }],
@@ -203,14 +203,14 @@ describe("editorial merge", () => {
   test("semantic and editorial edges for the same pair stay distinct", () => {
     const merged = mergeRelationships(
       {
-        format: "search-v2-relationships",
+        format: "search-relationships",
         version: 1,
         relationships: {
           "doc-a": [{ target: "doc-b", type: "semantic", strength: 0.4, provenance: "generated" }],
         },
       },
       {
-        format: "search-v2-relationships",
+        format: "search-relationships",
         version: 1,
         relationships: {
           "doc-a": [{ target: "doc-b", type: "editorial", strength: 1, provenance: "manual" }],

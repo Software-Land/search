@@ -250,7 +250,7 @@ describe("positional PhraseQuery / PhrasePrefixQuery", () => {
       retriever: "full-scan",
       relationshipStrategy: "hybrid",
       documentRelationships: {
-        format: "search-v2-relationships",
+        format: "search-relationships",
         version: 1,
         relationships: {
           incidental: [{ target: "api", type: "semantic", strength: 0.9, provenance: "generated" }],

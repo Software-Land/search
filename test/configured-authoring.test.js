@@ -384,7 +384,7 @@ describe("authored compile preserves runtime identity", () => {
       schema,
       plugins: [morphology(), ...compiled.plugins],
       documentRelationships: {
-        format: "search-v2-relationships",
+        format: "search-relationships",
         version: 1,
         relationships: {
           tls: [{ target: "vpn", type: "semantic", strength: 0.42, provenance: "embedding" }],
@@ -407,20 +407,20 @@ describe("parseConfiguredConcepts hard cut", () => {
   test("rejects expansion and primary on the configured-concept artifact", () => {
     expect(() =>
       parseConfiguredConcepts({
-        format: "search-v2-configured-concepts",
+        format: "search-configured-concepts",
         version: 1,
         entries: [{ key: "wifi", expansion: ["wi", "fi"] }],
       })
     ).toThrow(/expansion/);
   });
 
-  test("parses search-v2-configured-concepts and feeds compileAuthoredRelevance", () => {
+  test("parses search-configured-concepts and feeds compileAuthoredRelevance", () => {
     const parsed = parseConfiguredConcepts({
-      format: "search-v2-configured-concepts",
+      format: "search-configured-concepts",
       version: 1,
       entries: [{ key: "wifi", aliases: [["wi", "fi"]] }],
     });
-    expect(parsed.format).toBe("search-v2-configured-concepts");
+    expect(parsed.format).toBe("search-configured-concepts");
     expect(parsed.version).toBe(1);
     expect(parsed.entries[0]).toEqual(
       expect.objectContaining({ key: "wifi", aliases: [["wi", "fi"]] })
@@ -446,6 +446,6 @@ describe("parseConfiguredConcepts hard cut", () => {
         version: 1,
         entries: [],
       })
-    ).toThrow(/search-v2-configured-concepts/);
+    ).toThrow(/search-configured-concepts/);
   });
 });

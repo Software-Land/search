@@ -36,7 +36,7 @@ const engine = SearchEngine.create({
   adaptive: { documentThreshold: 1500 },
   relationshipStrategy: "separate",
   documentRelationships: {
-    format: "search-v2-relationships",
+    format: "search-relationships",
     version: 1,
     relationships: {
       bluetooth: [

@@ -1,0 +1,3127 @@
+{
+  "kind": "contract",
+  "notes": [
+    "Strict accepted Search V2 assertions. Not Core default ranking policy.",
+    "A-class independent intent plus SEARCH_V2_CONTRACTS.",
+    "V1 expectedTop is not asserted.",
+    "browserOnly records typing sessions, query-sequence input behavior, and result href checks. Those entries are not executable coverage and are not searched as queries.",
+    "Per-step typing queries are executable when they carry result assertions and are not already covered by an exported case or overlay.",
+    "overlayCases are OSS-owned ranking regressions that are not mined from the frozen scenario SHA. Not Core ranking policy."
+  ],
+  "counts": {
+    "cases": 135,
+    "browserOnlySessions": 3,
+    "browserHrefChecks": 28,
+    "overlayCases": 8
+  },
+  "cases": [
+    {
+      "query": "libraries",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredAnyWithin": [
+        {
+          "title": "React Component Libraries",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · libraries · any:React Component Libraries@5"
+    },
+    {
+      "query": "compute",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Edge Computing",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Edge Computing",
+      "name": "contract · scenario · compute · #1:Edge Computing | Edge Computing@1"
+    },
+    {
+      "query": "testing",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredAnyWithin": [
+        {
+          "title": "Load vs Stress Testing",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · testing · any:Load vs Stress Testing@5"
+    },
+    {
+      "query": "wha",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "titlePrefix": "What",
+      "titlePrefixTopN": 10,
+      "name": "contract · scenario · wha · prefix:What@10"
+    },
+    {
+      "query": "continuous d",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "CI/CD",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "CI/CD",
+      "name": "contract · scenario · continuous d · #1:CI/CD | CI/CD@1"
+    },
+    {
+      "query": "zer",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Zero-Trust Security",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Zero-Trust Security",
+      "name": "contract · scenario · zer · #1:Zero-Trust Security | Zero-Trust Security@1"
+    },
+    {
+      "query": "asyncronou",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Asynchronous vs Synchronous",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Asynchronous vs Synchronous",
+      "name": "contract · scenario · asyncronou · #1:Asynchronous vs Synchronous | Asynchronous vs Synchronous@1"
+    },
+    {
+      "query": "input output",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is IO?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is IO?",
+      "name": "contract · scenario · input output · #1:What is IO? | What is IO?@1"
+    },
+    {
+      "query": "io",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is IO?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is IO?",
+      "name": "contract · scenario · io · #1:What is IO? | What is IO?@1"
+    },
+    {
+      "query": "iot",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is IoT?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is IoT?",
+      "name": "contract · scenario · iot · #1:What is IoT? | What is IoT?@1"
+    },
+    {
+      "query": "what is iot",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is IoT?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is IoT?",
+      "name": "contract · scenario · what is iot · #1:What is IoT? | What is IoT?@1"
+    },
+    {
+      "query": "what is cod",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is Code?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is Code?",
+      "name": "contract · scenario · what is cod · #1:What is Code? | What is Code?@1"
+    },
+    {
+      "query": "what is ci",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "CI/CD",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "CI/CD",
+      "name": "contract · scenario · what is ci · #1:CI/CD | CI/CD@1"
+    },
+    {
+      "query": "what is an applicatio security",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 3
+        }
+      ],
+      "name": "contract · scenario · what is an applicatio security · App Sec@3"
+    },
+    {
+      "query": "what is an ap",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is an API?",
+          "topN": 3
+        }
+      ],
+      "name": "contract · scenario · what is an ap · What is an API?@3"
+    },
+    {
+      "query": "app",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "App Sec",
+      "name": "contract · scenario · app · #1:App Sec | App Sec@1"
+    },
+    {
+      "query": "aplication s3curity",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "App Sec",
+      "name": "contract · scenario · aplication s3curity · #1:App Sec | App Sec@1"
+    },
+    {
+      "query": "aPplicationsecurity",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "App Sec",
+      "name": "contract · scenario · aPplicationsecurity · #1:App Sec | App Sec@1"
+    },
+    {
+      "query": "aplicationsecurity",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "App Sec",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "App Sec",
+      "name": "contract · scenario · aplicationsecurity · #1:App Sec | App Sec@1"
+    },
+    {
+      "query": "object oriented prog",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredAnyWithin": [
+        {
+          "title": "What is OOP (Object-Oriented Programming)?",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · object oriented prog · any:What is OOP (Object-Oriented Programming)?@5"
+    },
+    {
+      "query": "oop",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is OOP (Object-Oriented Programming)?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is OOP (Object-Oriented Programming)?",
+      "name": "contract · scenario · oop · #1:What is OOP (Object-Oriented Programming)? | What is OOP (Object-Oriented Programming)?@1"
+    },
+    {
+      "query": "what is an a",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is an API?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is an API?",
+      "name": "contract · scenario · what is an a · #1:What is an API? | What is an API?@1"
+    },
+    {
+      "query": "programming",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Which Programming Language to Start?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Which Programming Language to Start?",
+      "name": "contract · scenario · programming · #1:Which Programming Language to Start? | Which Programming Language to Start?@1"
+    },
+    {
+      "query": "programming",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is OOP (Object-Oriented Programming)?",
+          "topN": 3
+        }
+      ],
+      "requiredAnyWithin": [
+        {
+          "title": "Which Programming Language to Start?",
+          "topN": 5
+        },
+        {
+          "title": "Dynamic Programming Matrix",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · programming · What is OOP (Object-Oriented Programming)?@3 | any:Which Programming Language to Start?@5 | any:Dynamic Programming Matrix@5"
+    },
+    {
+      "query": "programming",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is OOP (Object-Oriented Programming)?",
+          "topN": 3
+        }
+      ],
+      "requiredAnyWithin": [
+        {
+          "title": "Dynamic Programming Matrix",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · programming · What is OOP (Object-Oriented Programming)?@3 | any:Dynamic Programming Matrix@5"
+    },
+    {
+      "query": "what is dev",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is DevOps?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is DevOps?",
+      "name": "contract · scenario · what is dev · #1:What is DevOps? | What is DevOps?@1"
+    },
+    {
+      "query": "what is c",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is Code?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is Code?",
+      "name": "contract · scenario · what is c · #1:What is Code? | What is Code?@1"
+    },
+    {
+      "query": "what is a c",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is a Container?",
+          "topN": 3
+        }
+      ],
+      "name": "contract · scenario · what is a c · What is a Container?@3"
+    },
+    {
+      "query": "what is a co",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is a Container?",
+          "topN": 3
+        }
+      ],
+      "name": "contract · scenario · what is a co · What is a Container?@3"
+    },
+    {
+      "query": "what is c",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is Clean Code?",
+          "topN": 3
+        }
+      ],
+      "name": "contract · scenario · what is c · What is Clean Code?@3"
+    },
+    {
+      "query": "internet of th",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is IoT?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is IoT?",
+      "name": "contract · scenario · internet of th · #1:What is IoT? | What is IoT?@1"
+    },
+    {
+      "query": "application programming",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What is an API?",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "What is an API?",
+      "name": "contract · scenario · application programming · #1:What is an API? | What is an API?@1"
+    },
+    {
+      "query": "object oriented programming vs functional",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredAnyWithin": [
+        {
+          "title": "What is OOP (Object-Oriented Programming)?",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · object oriented programming vs functional · any:What is OOP (Object-Oriented Programming)?@5"
+    },
+    {
+      "query": "object oriented",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredAnyWithin": [
+        {
+          "title": "What is OOP (Object-Oriented Programming)?",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · object oriented · any:What is OOP (Object-Oriented Programming)?@5"
+    },
+    {
+      "query": "shadcnuireactcomponents",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Shadcn UI React Components",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Shadcn UI React Components",
+      "name": "contract · scenario · shadcnuireactcomponents · #1:Shadcn UI React Components | Shadcn UI React Components@1"
+    },
+    {
+      "query": "ai",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Staying Ahead of the AI Revolution",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Staying Ahead of the AI Revolution",
+      "name": "contract · scenario · ai · #1:Staying Ahead of the AI Revolution | Staying Ahead of the AI Revolution@1"
+    },
+    {
+      "query": "grpc",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredAnyWithin": [
+        {
+          "title": "gRPC vs REST",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · grpc · any:gRPC vs REST@5"
+    },
+    {
+      "query": "astar",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "A-Star Pathfinding",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "A-Star Pathfinding",
+      "name": "contract · scenario · astar · #1:A-Star Pathfinding | A-Star Pathfinding@1"
+    },
+    {
+      "query": "protobuf",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Protobuf Encoding",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Protobuf Encoding",
+      "name": "contract · scenario · protobuf · #1:Protobuf Encoding | Protobuf Encoding@1"
+    },
+    {
+      "query": "shards",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Hot Shards",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Hot Shards",
+      "name": "contract · scenario · shards · #1:Hot Shards | Hot Shards@1"
+    },
+    {
+      "query": "shardsss",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Hot Shards",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Hot Shards",
+      "name": "contract · scenario · shardsss · #1:Hot Shards | Hot Shards@1"
+    },
+    {
+      "query": "sharding",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Sharding",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Sharding",
+      "name": "contract · scenario · sharding · #1:Sharding | Sharding@1"
+    },
+    {
+      "query": "sharde",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Sharding",
+          "topN": 1
+        },
+        {
+          "title": "Hot Shards",
+          "topN": 2
+        },
+        {
+          "title": "Throughput vs Latency",
+          "topN": 10
+        }
+      ],
+      "exactFirst": "Sharding",
+      "name": "contract · scenario · sharde · #1:Sharding | Sharding@1 | Hot Shards@2 | Throughput vs Latency@10"
+    },
+    {
+      "query": "auth",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "React Authentication",
+          "topN": 3
+        }
+      ],
+      "requiredAnyWithin": [
+        {
+          "title": "Authorization Middleware",
+          "topN": 5
+        }
+      ],
+      "name": "contract · scenario · auth · React Authentication@3 | any:Authorization Middleware@5"
+    },
+    {
+      "query": "author",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Authorization Middleware",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Authorization Middleware",
+      "name": "contract · scenario · author · #1:Authorization Middleware | Authorization Middleware@1"
+    },
+    {
+      "query": "authen",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "React Authentication",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "React Authentication",
+      "name": "contract · scenario · authen · #1:React Authentication | React Authentication@1"
+    },
+    {
+      "query": "interceptor",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "gRPC Interceptor",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "gRPC Interceptor",
+      "name": "contract · scenario · interceptor · #1:gRPC Interceptor | gRPC Interceptor@1"
+    },
+    {
+      "query": "zerk trust security",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Zero-Trust Security",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Zero-Trust Security",
+      "name": "contract · scenario · zerk trust security · #1:Zero-Trust Security | Zero-Trust Security@1"
+    },
+    {
+      "query": "topological sorti",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Topological Sort",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Topological Sort",
+      "name": "contract · scenario · topological sorti · #1:Topological Sort | Topological Sort@1"
+    },
+    {
+      "query": "sorting",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Python Custom Sorting",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Python Custom Sorting",
+      "name": "contract · scenario · sorting · #1:Python Custom Sorting | Python Custom Sorting@1"
+    },
+    {
+      "query": "sorti",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Python Custom Sorting",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Python Custom Sorting",
+      "name": "contract · scenario · sorti · #1:Python Custom Sorting | Python Custom Sorting@1"
+    },
+    {
+      "query": "sorts",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Topological Sort",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Topological Sort",
+      "name": "contract · scenario · sorts · #1:Topological Sort | Topological Sort@1"
+    },
+    {
+      "query": "sort",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Topological Sort",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Topological Sort",
+      "name": "contract · scenario · sort · #1:Topological Sort | Topological Sort@1"
+    },
+    {
+      "query": "authenticated",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "React Authentication",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "React Authentication",
+      "name": "contract · scenario · authenticated · #1:React Authentication | React Authentication@1"
+    },
+    {
+      "query": "authentication",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "React Authentication",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "React Authentication",
+      "name": "contract · scenario · authentication · #1:React Authentication | React Authentication@1"
+    },
+    {
+      "query": "authenticating",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "React Authentication",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "React Authentication",
+      "name": "contract · scenario · authenticating · #1:React Authentication | React Authentication@1"
+    },
+    {
+      "query": "intercept",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "gRPC Interceptor",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "gRPC Interceptor",
+      "name": "contract · scenario · intercept · #1:gRPC Interceptor | gRPC Interceptor@1"
+    },
+    {
+      "query": "intercepting",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "gRPC Interceptor",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "gRPC Interceptor",
+      "name": "contract · scenario · intercepting · #1:gRPC Interceptor | gRPC Interceptor@1"
+    },
+    {
+      "query": "intercepted",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "gRPC Interceptor",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "gRPC Interceptor",
+      "name": "contract · scenario · intercepted · #1:gRPC Interceptor | gRPC Interceptor@1"
+    },
+    {
+      "query": "object",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Object",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Object",
+      "name": "contract · scenario · object · #1:Object | Object@1"
+    },
+    {
+      "query": "authenticat",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "React Authentication",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "React Authentication",
+      "name": "contract · scenario · authenticat · #1:React Authentication | React Authentication@1"
+    },
+    {
+      "query": "rate limiting",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Rate Limiting",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Rate Limiting",
+      "name": "contract · scenario · rate limiting · #1:Rate Limiting | Rate Limiting@1"
+    },
+    {
+      "query": "rate limit",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Rate Limiting",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Rate Limiting",
+      "name": "contract · scenario · rate limit · #1:Rate Limiting | Rate Limiting@1"
+    },
+    {
+      "query": "algorithms",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Rate Limiting Algorithms",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Rate Limiting Algorithms",
+      "name": "contract · scenario · algorithms · #1:Rate Limiting Algorithms | Rate Limiting Algorithms@1"
+    },
+    {
+      "query": "algorithmsss",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Rate Limiting Algorithms",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Rate Limiting Algorithms",
+      "name": "contract · scenario · algorithmsss · #1:Rate Limiting Algorithms | Rate Limiting Algorithms@1"
+    },
+    {
+      "query": "distributed s",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "What are Distributed Systems?",
+          "topN": 1
+        }
+      ],
+      "requiredAnyWithin": [
+        {
+          "title": "Distributed Cloud",
+          "topN": 5
+        }
+      ],
+      "exactFirst": "What are Distributed Systems?",
+      "name": "contract · scenario · distributed s · #1:What are Distributed Systems? | What are Distributed Systems?@1 | any:Distributed Cloud@5"
+    },
+    {
+      "query": "mono",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Monotonic Stack",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Monotonic Stack",
+      "name": "contract · scenario · mono · #1:Monotonic Stack | Monotonic Stack@1"
+    },
+    {
+      "query": "monoto",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Monotonic Stack",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Monotonic Stack",
+      "name": "contract · scenario · monoto · #1:Monotonic Stack | Monotonic Stack@1"
+    },
+    {
+      "query": "monoton",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "Monotonic Stack",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "Monotonic Stack",
+      "name": "contract · scenario · monoton · #1:Monotonic Stack | Monotonic Stack@1"
+    },
+    {
+      "query": "12 vulnerability",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · 12 vulnerability · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "tls 12",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · tls 12 · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "1.2 vulnerability",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · 1.2 vulnerability · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "tls 1.2",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · tls 1.2 · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "120",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+      "name": "contract · scenario · 120 · #1:200FPS: CSS vs Canvas vs WebGL vs WebGPU | 200FPS: CSS vs Canvas vs WebGL vs WebGPU@1"
+    },
+    {
+      "query": "12 vulnerabilit",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · 12 vulnerabilit · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "12 vulnerabili",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · 12 vulnerabili · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "12 vulnerab",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · 12 vulnerab · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "2",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+          "topN": 1
+        },
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 2
+        }
+      ],
+      "exactFirst": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+      "name": "contract · scenario · 2 · #1:200FPS: CSS vs Canvas vs WebGL vs WebGPU | 200FPS: CSS vs Canvas vs WebGL vs WebGPU@1 | TLS 1.2 Vulnerability@2"
+    },
+    {
+      "query": "20",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+      "name": "contract · scenario · 20 · #1:200FPS: CSS vs Canvas vs WebGL vs WebGPU | 200FPS: CSS vs Canvas vs WebGL vs WebGPU@1"
+    },
+    {
+      "query": "200",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+      "name": "contract · scenario · 200 · #1:200FPS: CSS vs Canvas vs WebGL vs WebGPU | 200FPS: CSS vs Canvas vs WebGL vs WebGPU@1"
+    },
+    {
+      "query": "200fps",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "200FPS: CSS vs Canvas vs WebGL vs WebGPU",
+      "name": "contract · scenario · 200fps · #1:200FPS: CSS vs Canvas vs WebGL vs WebGPU | 200FPS: CSS vs Canvas vs WebGL vs WebGPU@1"
+    },
+    {
+      "query": "1.2",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · 1.2 · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "12",
+      "kind": "contract",
+      "origin": "scenario",
+      "classification": "A",
+      "requiredWithin": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 1
+        }
+      ],
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "name": "contract · scenario · 12 · #1:TLS 1.2 Vulnerability | TLS 1.2 Vulnerability@1"
+    },
+    {
+      "query": "machine learning",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "LLM Model Conversion Correctness",
+          "Staying Ahead of the AI Revolution"
+        ],
+        "topN": 10
+      },
+      "mustNotDominate": {
+        "primary": "Linear vs Logistic Regression",
+        "titles": [
+          "LinkedIn Learning Review"
+        ]
+      },
+      "precedes": [
+        {
+          "earlier": "Working with Llama.cpp Embeddings",
+          "later": "LLM Model Conversion Correctness",
+          "topN": 10
+        },
+        {
+          "earlier": "Working with Llama.cpp Embeddings",
+          "later": "Staying Ahead of the AI Revolution",
+          "topN": 10
+        },
+        {
+          "earlier": "Linear vs Logistic Regression",
+          "later": "LLM Model Conversion Correctness",
+          "topN": 10
+        },
+        {
+          "earlier": "Linear vs Logistic Regression",
+          "later": "Staying Ahead of the AI Revolution",
+          "topN": 10
+        },
+        {
+          "earlier": "Coursera Review",
+          "later": "LLM Model Conversion Correctness",
+          "topN": 10
+        },
+        {
+          "earlier": "Coursera Review",
+          "later": "Staying Ahead of the AI Revolution",
+          "topN": 10
+        }
+      ],
+      "requiredDocuments": [
+        {
+          "id": "cn",
+          "title": "LLM Model Conversion Correctness",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · machine learning · anyTop:LLM Model Conversion Correctness, Staying Ahead of the AI Revolution@10 | notAbove:LinkedIn Learning Review vs Linear vs Logistic Regression | order:Working with Llama.cpp Embeddings<LLM Model Conversion Correctness@10,Working with Llama.cpp Embeddings<Staying Ahead of the AI Revolution@10,Linear vs Logistic Regression<LLM Model Conversion Correctness@10,Linear vs Logistic Regression<Staying Ahead of the AI Revolution@10,Coursera Review<LLM Model Conversion Correctness@10,Coursera Review<Staying Ahead of the AI Revolution@10 | docs:cn:LLM Model Conversion Correctness@10"
+    },
+    {
+      "query": "machine learn",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "Linear vs Logistic Regression"
+        ],
+        "topN": 10
+      },
+      "mustNotDominate": {
+        "primary": "Linear vs Logistic Regression",
+        "titles": [
+          "LinkedIn Learning Review"
+        ]
+      },
+      "name": "contract · v2-contract · machine learn · anyTop:Linear vs Logistic Regression@10 | notAbove:LinkedIn Learning Review vs Linear vs Logistic Regression"
+    },
+    {
+      "query": "machine learni",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "Linear vs Logistic Regression"
+        ],
+        "topN": 10
+      },
+      "mustNotDominate": {
+        "primary": "Linear vs Logistic Regression",
+        "titles": [
+          "LinkedIn Learning Review"
+        ]
+      },
+      "name": "contract · v2-contract · machine learni · anyTop:Linear vs Logistic Regression@10 | notAbove:LinkedIn Learning Review vs Linear vs Logistic Regression"
+    },
+    {
+      "query": "machine learnin",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "Linear vs Logistic Regression"
+        ],
+        "topN": 10
+      },
+      "mustNotDominate": {
+        "primary": "Linear vs Logistic Regression",
+        "titles": [
+          "LinkedIn Learning Review"
+        ]
+      },
+      "name": "contract · v2-contract · machine learnin · anyTop:Linear vs Logistic Regression@10 | notAbove:LinkedIn Learning Review vs Linear vs Logistic Regression"
+    },
+    {
+      "query": "compute",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "Edge Computing",
+      "name": "contract · v2-contract · compute · #1:Edge Computing"
+    },
+    {
+      "query": "computing",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "Edge Computing",
+      "name": "contract · v2-contract · computing · #1:Edge Computing"
+    },
+    {
+      "query": "testing",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "Load vs Stress Testing",
+      "requiredAnyTop": {
+        "titles": [
+          "LLM Model Conversion Correctness"
+        ],
+        "topN": 10
+      },
+      "precedes": [
+        {
+          "earlier": "Load vs Stress Testing",
+          "later": "LLM Model Conversion Correctness",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · testing · #1:Load vs Stress Testing | anyTop:LLM Model Conversion Correctness@10 | order:Load vs Stress Testing<LLM Model Conversion Correctness@10"
+    },
+    {
+      "query": "library",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "Framework vs Library vs Package",
+          "React Component Libraries"
+        ],
+        "topN": 2
+      },
+      "name": "contract · v2-contract · library · anyTop:Framework vs Library vs Package, React Component Libraries@2"
+    },
+    {
+      "query": "libraries",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "Framework vs Library vs Package",
+          "React Component Libraries"
+        ],
+        "topN": 2
+      },
+      "name": "contract · v2-contract · libraries · anyTop:Framework vs Library vs Package, React Component Libraries@2"
+    },
+    {
+      "query": "wha",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "titlePrefix": "What",
+      "titlePrefixTopN": 10,
+      "name": "contract · v2-contract · wha · prefix:What@10"
+    },
+    {
+      "query": "tls",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "requiredRelatedAny": {
+        "titles": [
+          "What is VPN?",
+          "Zero-Trust Security",
+          "Symmetric vs Asymmetric Encryption",
+          "What is a Service Mesh?",
+          "Bearer Token"
+        ],
+        "topN": 10,
+        "minCount": 2
+      },
+      "relationship": {
+        "title": "What is VPN?",
+        "relevanceKind": "direct",
+        "type": "editorial",
+        "provenance": "manual",
+        "sourceTitle": "TLS 1.2 Vulnerability"
+      },
+      "name": "contract · v2-contract · tls · #1:TLS 1.2 Vulnerability | relatedAny | relationship"
+    },
+    {
+      "query": "what is an ap",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "What is an API?",
+      "name": "contract · v2-contract · what is an ap · #1:What is an API?"
+    },
+    {
+      "query": "what is c",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "What is Code?",
+      "requiredAnyTop": {
+        "titles": [
+          "What is Clean Code?"
+        ],
+        "topN": 3
+      },
+      "mustNotDominate": {
+        "primary": "What is Code?",
+        "titles": [
+          "CI/CD",
+          "Edge Computing"
+        ]
+      },
+      "name": "contract · v2-contract · what is c · #1:What is Code? | anyTop:What is Clean Code?@3 | notAbove:CI/CD, Edge Computing vs What is Code?"
+    },
+    {
+      "query": "what is a c",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "What is a Container?",
+      "name": "contract · v2-contract · what is a c · #1:What is a Container?"
+    },
+    {
+      "query": "what is a co",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "What is a Container?",
+      "name": "contract · v2-contract · what is a co · #1:What is a Container?"
+    },
+    {
+      "query": "appsecurity",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "App Sec",
+      "name": "contract · v2-contract · appsecurity · #1:App Sec"
+    },
+    {
+      "query": "open",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "SAML vs OAuth"
+        ],
+        "topN": 10
+      },
+      "name": "contract · v2-contract · open · anyTop:SAML vs OAuth@10"
+    },
+    {
+      "query": "oauth",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "SAML vs OAuth",
+      "name": "contract · v2-contract · oauth · #1:SAML vs OAuth"
+    },
+    {
+      "query": "open authorization",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "SAML vs OAuth",
+      "name": "contract · v2-contract · open authorization · #1:SAML vs OAuth"
+    },
+    {
+      "query": "binary indexed t",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "topN": 10
+      },
+      "requiredDocuments": [
+        {
+          "id": "cm",
+          "title": "Fenwick Tree",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · binary indexed t · anyTop:Fenwick Tree@10 | docs:cm:Fenwick Tree@10"
+    },
+    {
+      "query": "binary indexed tree",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "topN": 10
+      },
+      "requiredDocuments": [
+        {
+          "id": "cm",
+          "title": "Fenwick Tree",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · binary indexed tree · anyTop:Fenwick Tree@10 | docs:cm:Fenwick Tree@10"
+    },
+    {
+      "query": "institute",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "Udacity Review",
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 10
+      },
+      "requiredDocuments": [
+        {
+          "id": "ak",
+          "title": "Udacity Review",
+          "topN": 10
+        },
+        {
+          "id": "ai",
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · institute · anyTop:Udacity Review, TLS 1.2 Vulnerability@10 | docs:ak:Udacity Review@10,ai:TLS 1.2 Vulnerability@10"
+    },
+    {
+      "query": "nist",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "TLS 1.2 Vulnerability",
+      "requiredDocuments": [
+        {
+          "id": "ai",
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · nist · #1:TLS 1.2 Vulnerability | docs:ai:TLS 1.2 Vulnerability@10"
+    },
+    {
+      "query": "gatech",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "Udacity Review"
+        ],
+        "topN": 10
+      },
+      "requiredDocuments": [
+        {
+          "id": "ak",
+          "title": "Udacity Review",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · gatech · anyTop:Udacity Review@10 | docs:ak:Udacity Review@10"
+    },
+    {
+      "query": "georgia institute",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "Udacity Review"
+        ],
+        "topN": 10
+      },
+      "requiredDocuments": [
+        {
+          "id": "ak",
+          "title": "Udacity Review",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · georgia institute · anyTop:Udacity Review@10 | docs:ak:Udacity Review@10"
+    },
+    {
+      "query": "georgia institute of technology",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "Udacity Review"
+        ],
+        "topN": 10
+      },
+      "requiredDocuments": [
+        {
+          "id": "ak",
+          "title": "Udacity Review",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · georgia institute of technology · anyTop:Udacity Review@10 | docs:ak:Udacity Review@10"
+    },
+    {
+      "query": "llm",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "LLM Model Conversion Correctness",
+      "requiredAnyTop": {
+        "titles": [
+          "About this Blog",
+          "Staying Ahead of the AI Revolution",
+          "Working with Llama.cpp Embeddings"
+        ],
+        "topN": 10
+      },
+      "precedes": [
+        {
+          "earlier": "About this Blog",
+          "later": "Staying Ahead of the AI Revolution",
+          "topN": 10
+        }
+      ],
+      "requiredDocuments": [
+        {
+          "id": "cn",
+          "title": "LLM Model Conversion Correctness",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · llm · #1:LLM Model Conversion Correctness | anyTop:About this Blog, Staying Ahead of the AI Revolution, Working with Llama.cpp Embeddings@10 | order:About this Blog<Staying Ahead of the AI Revolution@10 | docs:cn:LLM Model Conversion Correctness@10"
+    },
+    {
+      "query": "large language model",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "LLM Model Conversion Correctness",
+      "requiredAnyTop": {
+        "titles": [
+          "About this Blog",
+          "Staying Ahead of the AI Revolution",
+          "Working with Llama.cpp Embeddings"
+        ],
+        "topN": 10
+      },
+      "precedes": [
+        {
+          "earlier": "About this Blog",
+          "later": "Staying Ahead of the AI Revolution",
+          "topN": 10
+        }
+      ],
+      "requiredDocuments": [
+        {
+          "id": "cn",
+          "title": "LLM Model Conversion Correctness",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · large language model · #1:LLM Model Conversion Correctness | anyTop:About this Blog, Staying Ahead of the AI Revolution, Working with Llama.cpp Embeddings@10 | order:About this Blog<Staying Ahead of the AI Revolution@10 | docs:cn:LLM Model Conversion Correctness@10"
+    },
+    {
+      "query": "large language models",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "LLM Model Conversion Correctness",
+      "requiredAnyTop": {
+        "titles": [
+          "About this Blog",
+          "Staying Ahead of the AI Revolution",
+          "Working with Llama.cpp Embeddings"
+        ],
+        "topN": 10
+      },
+      "precedes": [
+        {
+          "earlier": "About this Blog",
+          "later": "Staying Ahead of the AI Revolution",
+          "topN": 10
+        }
+      ],
+      "requiredDocuments": [
+        {
+          "id": "cn",
+          "title": "LLM Model Conversion Correctness",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · large language models · #1:LLM Model Conversion Correctness | anyTop:About this Blog, Staying Ahead of the AI Revolution, Working with Llama.cpp Embeddings@10 | order:About this Blog<Staying Ahead of the AI Revolution@10 | docs:cn:LLM Model Conversion Correctness@10"
+    },
+    {
+      "query": "ml",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "LLM Model Conversion Correctness",
+          "Staying Ahead of the AI Revolution"
+        ],
+        "topN": 10
+      },
+      "mustNotDominate": {
+        "primary": "Linear vs Logistic Regression",
+        "titles": [
+          "LinkedIn Learning Review"
+        ]
+      },
+      "precedes": [
+        {
+          "earlier": "Working with Llama.cpp Embeddings",
+          "later": "LLM Model Conversion Correctness",
+          "topN": 10
+        },
+        {
+          "earlier": "Working with Llama.cpp Embeddings",
+          "later": "Staying Ahead of the AI Revolution",
+          "topN": 10
+        },
+        {
+          "earlier": "Linear vs Logistic Regression",
+          "later": "LLM Model Conversion Correctness",
+          "topN": 10
+        },
+        {
+          "earlier": "Linear vs Logistic Regression",
+          "later": "Staying Ahead of the AI Revolution",
+          "topN": 10
+        },
+        {
+          "earlier": "Coursera Review",
+          "later": "LLM Model Conversion Correctness",
+          "topN": 10
+        },
+        {
+          "earlier": "Coursera Review",
+          "later": "Staying Ahead of the AI Revolution",
+          "topN": 10
+        }
+      ],
+      "requiredDocuments": [
+        {
+          "id": "cn",
+          "title": "LLM Model Conversion Correctness",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · ml · anyTop:LLM Model Conversion Correctness, Staying Ahead of the AI Revolution@10 | notAbove:LinkedIn Learning Review vs Linear vs Logistic Regression | order:Working with Llama.cpp Embeddings<LLM Model Conversion Correctness@10,Working with Llama.cpp Embeddings<Staying Ahead of the AI Revolution@10,Linear vs Logistic Regression<LLM Model Conversion Correctness@10,Linear vs Logistic Regression<Staying Ahead of the AI Revolution@10,Coursera Review<LLM Model Conversion Correctness@10,Coursera Review<Staying Ahead of the AI Revolution@10 | docs:cn:LLM Model Conversion Correctness@10"
+    },
+    {
+      "query": "ai",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "Staying Ahead of the AI Revolution",
+      "requiredAnyTop": {
+        "titles": [
+          "LLM Model Conversion Correctness",
+          "Working with Llama.cpp Embeddings"
+        ],
+        "topN": 10
+      },
+      "absentWithin": {
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "topN": 10
+      },
+      "precedes": [
+        {
+          "earlier": "Software.Land's Alignment with Society",
+          "later": "LLM Model Conversion Correctness",
+          "topN": 10
+        },
+        {
+          "earlier": "What is a Knowledge Graph?",
+          "later": "LLM Model Conversion Correctness",
+          "topN": 10
+        },
+        {
+          "earlier": "LLM Model Conversion Correctness",
+          "later": "About this Blog",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · ai · #1:Staying Ahead of the AI Revolution | anyTop:LLM Model Conversion Correctness, Working with Llama.cpp Embeddings@10 | absent:Fenwick Tree@10 | order:Software.Land's Alignment with Society<LLM Model Conversion Correctness@10,What is a Knowledge Graph?<LLM Model Conversion Correctness@10,LLM Model Conversion Correctness<About this Blog@10"
+    },
+    {
+      "query": "artificial intelligence",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "Staying Ahead of the AI Revolution",
+      "requiredAnyTop": {
+        "titles": [
+          "LLM Model Conversion Correctness",
+          "Working with Llama.cpp Embeddings"
+        ],
+        "topN": 10
+      },
+      "absentWithin": {
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "topN": 10
+      },
+      "precedes": [
+        {
+          "earlier": "Software.Land's Alignment with Society",
+          "later": "LLM Model Conversion Correctness",
+          "topN": 10
+        },
+        {
+          "earlier": "What is a Knowledge Graph?",
+          "later": "LLM Model Conversion Correctness",
+          "topN": 10
+        },
+        {
+          "earlier": "LLM Model Conversion Correctness",
+          "later": "About this Blog",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · artificial intelligence · #1:Staying Ahead of the AI Revolution | anyTop:LLM Model Conversion Correctness, Working with Llama.cpp Embeddings@10 | absent:Fenwick Tree@10 | order:Software.Land's Alignment with Society<LLM Model Conversion Correctness@10,What is a Knowledge Graph?<LLM Model Conversion Correctness@10,LLM Model Conversion Correctness<About this Blog@10"
+    },
+    {
+      "query": "model",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "LLM Model Conversion Correctness",
+      "requiredAnyTop": {
+        "titles": [
+          "TCP vs UDP"
+        ],
+        "topN": 10
+      },
+      "absentWithin": {
+        "titles": [
+          "Linear vs Logistic Regression"
+        ],
+        "topN": 10
+      },
+      "name": "contract · v2-contract · model · #1:LLM Model Conversion Correctness | anyTop:TCP vs UDP@10 | absent:Linear vs Logistic Regression@10"
+    },
+    {
+      "query": "language",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "Which Programming Language to Start?",
+      "absentWithin": {
+        "titles": [
+          "LLM Model Conversion Correctness",
+          "Linear vs Logistic Regression"
+        ],
+        "topN": 10
+      },
+      "name": "contract · v2-contract · language · #1:Which Programming Language to Start? | absent:LLM Model Conversion Correctness, Linear vs Logistic Regression@10"
+    },
+    {
+      "query": "learning",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "LinkedIn Learning Review",
+      "absentWithin": {
+        "titles": [
+          "LLM Model Conversion Correctness",
+          "Linear vs Logistic Regression"
+        ],
+        "topN": 10
+      },
+      "name": "contract · v2-contract · learning · #1:LinkedIn Learning Review | absent:LLM Model Conversion Correctness, Linear vs Logistic Regression@10"
+    },
+    {
+      "query": "language model",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "LLM Model Conversion Correctness",
+      "absentWithin": {
+        "titles": [
+          "Linear vs Logistic Regression",
+          "Process vs Thread",
+          "A-Star Pathfinding"
+        ],
+        "topN": 10
+      },
+      "name": "contract · v2-contract · language model · #1:LLM Model Conversion Correctness | absent:Linear vs Logistic Regression, Process vs Thread, A-Star Pathfinding@10"
+    },
+    {
+      "query": "artifici",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "Staying Ahead of the AI Revolution",
+      "requiredAnyTop": {
+        "titles": [
+          "Information Asymmetry"
+        ],
+        "topN": 10
+      },
+      "absentWithin": {
+        "titles": [
+          "LLM Model Conversion Correctness",
+          "Linear vs Logistic Regression"
+        ],
+        "topN": 10
+      },
+      "name": "contract · v2-contract · artifici · #1:Staying Ahead of the AI Revolution | anyTop:Information Asymmetry@10 | absent:LLM Model Conversion Correctness, Linear vs Logistic Regression@10"
+    },
+    {
+      "query": "qa",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "Load vs Stress Testing",
+      "requiredAnyTop": {
+        "titles": [
+          "LLM Model Conversion Correctness"
+        ],
+        "topN": 10
+      },
+      "precedes": [
+        {
+          "earlier": "Load vs Stress Testing",
+          "later": "LLM Model Conversion Correctness",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · qa · #1:Load vs Stress Testing | anyTop:LLM Model Conversion Correctness@10 | order:Load vs Stress Testing<LLM Model Conversion Correctness@10"
+    },
+    {
+      "query": "quality assurance",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "Load vs Stress Testing",
+      "requiredAnyTop": {
+        "titles": [
+          "LLM Model Conversion Correctness"
+        ],
+        "topN": 10
+      },
+      "precedes": [
+        {
+          "earlier": "Load vs Stress Testing",
+          "later": "LLM Model Conversion Correctness",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · quality assurance · #1:Load vs Stress Testing | anyTop:LLM Model Conversion Correctness@10 | order:Load vs Stress Testing<LLM Model Conversion Correctness@10"
+    },
+    {
+      "query": "test",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "Load vs Stress Testing",
+      "requiredAnyTop": {
+        "titles": [
+          "LLM Model Conversion Correctness"
+        ],
+        "topN": 10
+      },
+      "precedes": [
+        {
+          "earlier": "Load vs Stress Testing",
+          "later": "LLM Model Conversion Correctness",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · test · #1:Load vs Stress Testing | anyTop:LLM Model Conversion Correctness@10 | order:Load vs Stress Testing<LLM Model Conversion Correctness@10"
+    },
+    {
+      "query": "recursion",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "What is Recursion?",
+      "requiredAnyTop": {
+        "titles": [
+          "DFS Backtracking"
+        ],
+        "topN": 10
+      },
+      "absentWithin": {
+        "titles": [
+          "Monotonic Stack",
+          "What is Refactoring?",
+          "Retries (Retry Patterns)"
+        ],
+        "topN": 10
+      },
+      "name": "contract · v2-contract · recursion · #1:What is Recursion? | anyTop:DFS Backtracking@10 | absent:Monotonic Stack, What is Refactoring?, Retries (Retry Patterns)@10"
+    },
+    {
+      "query": "backtracking",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "DFS Backtracking",
+      "requiredAnyTop": {
+        "titles": [
+          "What is Recursion?"
+        ],
+        "topN": 10
+      },
+      "name": "contract · v2-contract · backtracking · #1:DFS Backtracking | anyTop:What is Recursion?@10"
+    },
+    {
+      "query": "appsec",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "App Sec",
+      "requiredAnyTop": {
+        "titles": [
+          "RBAC (Role Based Access Control)",
+          "Authorization Middleware"
+        ],
+        "topN": 10
+      },
+      "requiredWithin": [
+        {
+          "title": "Zero-Trust Security",
+          "topN": 3
+        }
+      ],
+      "precedes": [
+        {
+          "earlier": "RBAC (Role Based Access Control)",
+          "later": "Authorization Middleware",
+          "topN": 10
+        },
+        {
+          "earlier": "Zero-Trust Security",
+          "later": "Working with Llama.cpp Embeddings",
+          "topN": 10,
+          "whenLaterVisible": true
+        }
+      ],
+      "name": "contract · v2-contract · appsec · #1:App Sec | Zero-Trust Security@3 | anyTop:RBAC (Role Based Access Control), Authorization Middleware@10 | order:RBAC (Role Based Access Control)<Authorization Middleware@10,Zero-Trust Security<Working with Llama.cpp Embeddings@10?"
+    },
+    {
+      "query": "app sec",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "App Sec",
+      "requiredAnyTop": {
+        "titles": [
+          "RBAC (Role Based Access Control)",
+          "Authorization Middleware"
+        ],
+        "topN": 10
+      },
+      "requiredWithin": [
+        {
+          "title": "Zero-Trust Security",
+          "topN": 3
+        }
+      ],
+      "precedes": [
+        {
+          "earlier": "RBAC (Role Based Access Control)",
+          "later": "Authorization Middleware",
+          "topN": 10
+        },
+        {
+          "earlier": "Zero-Trust Security",
+          "later": "Working with Llama.cpp Embeddings",
+          "topN": 10,
+          "whenLaterVisible": true
+        }
+      ],
+      "name": "contract · v2-contract · app sec · #1:App Sec | Zero-Trust Security@3 | anyTop:RBAC (Role Based Access Control), Authorization Middleware@10 | order:RBAC (Role Based Access Control)<Authorization Middleware@10,Zero-Trust Security<Working with Llama.cpp Embeddings@10?"
+    },
+    {
+      "query": "application security",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "App Sec",
+      "requiredAnyTop": {
+        "titles": [
+          "RBAC (Role Based Access Control)",
+          "Authorization Middleware"
+        ],
+        "topN": 10
+      },
+      "requiredWithin": [
+        {
+          "title": "Zero-Trust Security",
+          "topN": 3
+        }
+      ],
+      "precedes": [
+        {
+          "earlier": "RBAC (Role Based Access Control)",
+          "later": "Authorization Middleware",
+          "topN": 10
+        },
+        {
+          "earlier": "Zero-Trust Security",
+          "later": "Working with Llama.cpp Embeddings",
+          "topN": 10,
+          "whenLaterVisible": true
+        }
+      ],
+      "name": "contract · v2-contract · application security · #1:App Sec | Zero-Trust Security@3 | anyTop:RBAC (Role Based Access Control), Authorization Middleware@10 | order:RBAC (Role Based Access Control)<Authorization Middleware@10,Zero-Trust Security<Working with Llama.cpp Embeddings@10?"
+    },
+    {
+      "query": "application se",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "App Sec",
+      "requiredAnyTop": {
+        "titles": [
+          "RBAC (Role Based Access Control)",
+          "Authorization Middleware"
+        ],
+        "topN": 10
+      },
+      "requiredWithin": [
+        {
+          "title": "Zero-Trust Security",
+          "topN": 3
+        }
+      ],
+      "precedes": [
+        {
+          "earlier": "RBAC (Role Based Access Control)",
+          "later": "Authorization Middleware",
+          "topN": 10
+        },
+        {
+          "earlier": "Zero-Trust Security",
+          "later": "Working with Llama.cpp Embeddings",
+          "topN": 10,
+          "whenLaterVisible": true
+        }
+      ],
+      "name": "contract · v2-contract · application se · #1:App Sec | Zero-Trust Security@3 | anyTop:RBAC (Role Based Access Control), Authorization Middleware@10 | order:RBAC (Role Based Access Control)<Authorization Middleware@10,Zero-Trust Security<Working with Llama.cpp Embeddings@10?"
+    },
+    {
+      "query": "aplicationsecurity",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "exactFirst": "App Sec",
+      "requiredAnyTop": {
+        "titles": [
+          "RBAC (Role Based Access Control)",
+          "Authorization Middleware"
+        ],
+        "topN": 10
+      },
+      "requiredWithin": [
+        {
+          "title": "Zero-Trust Security",
+          "topN": 3
+        }
+      ],
+      "precedes": [
+        {
+          "earlier": "RBAC (Role Based Access Control)",
+          "later": "Authorization Middleware",
+          "topN": 10
+        },
+        {
+          "earlier": "Zero-Trust Security",
+          "later": "Working with Llama.cpp Embeddings",
+          "topN": 10,
+          "whenLaterVisible": true
+        }
+      ],
+      "name": "contract · v2-contract · aplicationsecurity · #1:App Sec | Zero-Trust Security@3 | anyTop:RBAC (Role Based Access Control), Authorization Middleware@10 | order:RBAC (Role Based Access Control)<Authorization Middleware@10,Zero-Trust Security<Working with Llama.cpp Embeddings@10?"
+    },
+    {
+      "query": "institute ",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 10
+      },
+      "requiredDocuments": [
+        {
+          "id": "ai",
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · institute  · anyTop:TLS 1.2 Vulnerability@10 | docs:ai:TLS 1.2 Vulnerability@10"
+    },
+    {
+      "query": "institute o",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 10
+      },
+      "requiredDocuments": [
+        {
+          "id": "ai",
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · institute o · anyTop:TLS 1.2 Vulnerability@10 | docs:ai:TLS 1.2 Vulnerability@10"
+    },
+    {
+      "query": "institute of",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 10
+      },
+      "requiredDocuments": [
+        {
+          "id": "ai",
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · institute of · anyTop:TLS 1.2 Vulnerability@10 | docs:ai:TLS 1.2 Vulnerability@10"
+    },
+    {
+      "query": "institute of s",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 10
+      },
+      "requiredDocuments": [
+        {
+          "id": "ai",
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · institute of s · anyTop:TLS 1.2 Vulnerability@10 | docs:ai:TLS 1.2 Vulnerability@10"
+    },
+    {
+      "query": "institute of standards",
+      "kind": "contract",
+      "origin": "v2-contract",
+      "requiredAnyTop": {
+        "titles": [
+          "TLS 1.2 Vulnerability"
+        ],
+        "topN": 10
+      },
+      "requiredDocuments": [
+        {
+          "id": "ai",
+          "title": "TLS 1.2 Vulnerability",
+          "topN": 10
+        }
+      ],
+      "name": "contract · v2-contract · institute of standards · anyTop:TLS 1.2 Vulnerability@10 | docs:ai:TLS 1.2 Vulnerability@10"
+    }
+  ],
+  "browserOnly": [
+    {
+      "kind": "href-checks",
+      "query": "machine learning",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "Working with Llama.cpp Embeddings",
+          "href": "/blog/working-with-llama-cpp-embeddings/",
+          "topN": 10
+        },
+        {
+          "title": "Linear vs Logistic Regression",
+          "href": "/blog/linear-vs-logistic-regression/",
+          "topN": 10
+        },
+        {
+          "title": "Coursera Review",
+          "href": "/blog/coursera-review/",
+          "topN": 10
+        },
+        {
+          "title": "LLM Model Conversion Correctness",
+          "href": "/blog/llm-model-conversion-correctness/",
+          "topN": 10
+        },
+        {
+          "title": "Staying Ahead of the AI Revolution",
+          "href": "/blog/ai-revolution/",
+          "topN": 10
+        },
+        {
+          "title": "LLM Model Conversion Correctness",
+          "href": "/blog/llm-model-conversion-correctness/",
+          "documentId": "cn",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "testing",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "Load vs Stress Testing",
+          "href": "/blog/load-vs-stress-testing/",
+          "topN": 10
+        },
+        {
+          "title": "LLM Model Conversion Correctness",
+          "href": "/blog/llm-model-conversion-correctness/",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "institute",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "Udacity Review",
+          "href": "/blog/udacity-review/",
+          "documentId": "ak",
+          "topN": 10
+        },
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "href": "/blog/tls-1.2-vulnerability/",
+          "documentId": "ai",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "nist",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "href": "/blog/tls-1.2-vulnerability/",
+          "documentId": "ai",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "gatech",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "Udacity Review",
+          "href": "/blog/udacity-review/",
+          "documentId": "ak",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "georgia institute",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "Udacity Review",
+          "href": "/blog/udacity-review/",
+          "documentId": "ak",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "georgia institute of technology",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "Udacity Review",
+          "href": "/blog/udacity-review/",
+          "documentId": "ak",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "llm",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "LLM Model Conversion Correctness",
+          "href": "/blog/llm-model-conversion-correctness/",
+          "topN": 10
+        },
+        {
+          "title": "About this Blog",
+          "href": "/blog/about/",
+          "topN": 10
+        },
+        {
+          "title": "Staying Ahead of the AI Revolution",
+          "href": "/blog/ai-revolution/",
+          "topN": 10
+        },
+        {
+          "title": "Working with Llama.cpp Embeddings",
+          "href": "/blog/working-with-llama-cpp-embeddings/",
+          "topN": 10
+        },
+        {
+          "title": "LLM Model Conversion Correctness",
+          "href": "/blog/llm-model-conversion-correctness/",
+          "documentId": "cn",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "large language model",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "LLM Model Conversion Correctness",
+          "href": "/blog/llm-model-conversion-correctness/",
+          "topN": 10
+        },
+        {
+          "title": "About this Blog",
+          "href": "/blog/about/",
+          "topN": 10
+        },
+        {
+          "title": "Staying Ahead of the AI Revolution",
+          "href": "/blog/ai-revolution/",
+          "topN": 10
+        },
+        {
+          "title": "Working with Llama.cpp Embeddings",
+          "href": "/blog/working-with-llama-cpp-embeddings/",
+          "topN": 10
+        },
+        {
+          "title": "LLM Model Conversion Correctness",
+          "href": "/blog/llm-model-conversion-correctness/",
+          "documentId": "cn",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "large language models",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "LLM Model Conversion Correctness",
+          "href": "/blog/llm-model-conversion-correctness/",
+          "topN": 10
+        },
+        {
+          "title": "About this Blog",
+          "href": "/blog/about/",
+          "topN": 10
+        },
+        {
+          "title": "Staying Ahead of the AI Revolution",
+          "href": "/blog/ai-revolution/",
+          "topN": 10
+        },
+        {
+          "title": "Working with Llama.cpp Embeddings",
+          "href": "/blog/working-with-llama-cpp-embeddings/",
+          "topN": 10
+        },
+        {
+          "title": "LLM Model Conversion Correctness",
+          "href": "/blog/llm-model-conversion-correctness/",
+          "documentId": "cn",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "ml",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "Working with Llama.cpp Embeddings",
+          "href": "/blog/working-with-llama-cpp-embeddings/",
+          "topN": 10
+        },
+        {
+          "title": "Linear vs Logistic Regression",
+          "href": "/blog/linear-vs-logistic-regression/",
+          "topN": 10
+        },
+        {
+          "title": "Coursera Review",
+          "href": "/blog/coursera-review/",
+          "topN": 10
+        },
+        {
+          "title": "LLM Model Conversion Correctness",
+          "href": "/blog/llm-model-conversion-correctness/",
+          "topN": 10
+        },
+        {
+          "title": "Staying Ahead of the AI Revolution",
+          "href": "/blog/ai-revolution/",
+          "topN": 10
+        },
+        {
+          "title": "LLM Model Conversion Correctness",
+          "href": "/blog/llm-model-conversion-correctness/",
+          "documentId": "cn",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "ai",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "Staying Ahead of the AI Revolution",
+          "href": "/blog/ai-revolution/",
+          "topN": 10
+        },
+        {
+          "title": "Software.Land's Alignment with Society",
+          "href": "/blog/alignment-with-society/",
+          "topN": 10
+        },
+        {
+          "title": "What is a Knowledge Graph?",
+          "href": "/blog/what-is-a-knowledge-graph/",
+          "topN": 10
+        },
+        {
+          "title": "LLM Model Conversion Correctness",
+          "href": "/blog/llm-model-conversion-correctness/",
+          "topN": 10
+        },
+        {
+          "title": "About this Blog",
+          "href": "/blog/about/",
+          "topN": 10
+        },
+        {
+          "title": "Working with Llama.cpp Embeddings",
+          "href": "/blog/working-with-llama-cpp-embeddings/",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "artificial intelligence",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "Staying Ahead of the AI Revolution",
+          "href": "/blog/ai-revolution/",
+          "topN": 10
+        },
+        {
+          "title": "Software.Land's Alignment with Society",
+          "href": "/blog/alignment-with-society/",
+          "topN": 10
+        },
+        {
+          "title": "What is a Knowledge Graph?",
+          "href": "/blog/what-is-a-knowledge-graph/",
+          "topN": 10
+        },
+        {
+          "title": "LLM Model Conversion Correctness",
+          "href": "/blog/llm-model-conversion-correctness/",
+          "topN": 10
+        },
+        {
+          "title": "About this Blog",
+          "href": "/blog/about/",
+          "topN": 10
+        },
+        {
+          "title": "Working with Llama.cpp Embeddings",
+          "href": "/blog/working-with-llama-cpp-embeddings/",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "qa",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "Load vs Stress Testing",
+          "href": "/blog/load-vs-stress-testing/",
+          "topN": 10
+        },
+        {
+          "title": "LLM Model Conversion Correctness",
+          "href": "/blog/llm-model-conversion-correctness/",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "quality assurance",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "Load vs Stress Testing",
+          "href": "/blog/load-vs-stress-testing/",
+          "topN": 10
+        },
+        {
+          "title": "LLM Model Conversion Correctness",
+          "href": "/blog/llm-model-conversion-correctness/",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "test",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "Load vs Stress Testing",
+          "href": "/blog/load-vs-stress-testing/",
+          "topN": 10
+        },
+        {
+          "title": "LLM Model Conversion Correctness",
+          "href": "/blog/llm-model-conversion-correctness/",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "recursion",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "What is Recursion?",
+          "href": "/blog/what-is-recursion/",
+          "topN": 10
+        },
+        {
+          "title": "DFS Backtracking",
+          "href": "/blog/dfs-backtracking/",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "backtracking",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "DFS Backtracking",
+          "href": "/blog/dfs-backtracking/",
+          "topN": 10
+        },
+        {
+          "title": "What is Recursion?",
+          "href": "/blog/what-is-recursion/",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "appsec",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "App Sec",
+          "href": "/blog/app-sec/",
+          "topN": 10
+        },
+        {
+          "title": "RBAC (Role Based Access Control)",
+          "href": "/blog/rbac/",
+          "topN": 10
+        },
+        {
+          "title": "Authorization Middleware",
+          "href": "/blog/authorization-middleware/",
+          "topN": 10
+        },
+        {
+          "title": "Zero-Trust Security",
+          "href": "/blog/zero-trust-security/",
+          "topN": 3
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "app sec",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "App Sec",
+          "href": "/blog/app-sec/",
+          "topN": 10
+        },
+        {
+          "title": "RBAC (Role Based Access Control)",
+          "href": "/blog/rbac/",
+          "topN": 10
+        },
+        {
+          "title": "Authorization Middleware",
+          "href": "/blog/authorization-middleware/",
+          "topN": 10
+        },
+        {
+          "title": "Zero-Trust Security",
+          "href": "/blog/zero-trust-security/",
+          "topN": 3
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "application security",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "App Sec",
+          "href": "/blog/app-sec/",
+          "topN": 10
+        },
+        {
+          "title": "RBAC (Role Based Access Control)",
+          "href": "/blog/rbac/",
+          "topN": 10
+        },
+        {
+          "title": "Authorization Middleware",
+          "href": "/blog/authorization-middleware/",
+          "topN": 10
+        },
+        {
+          "title": "Zero-Trust Security",
+          "href": "/blog/zero-trust-security/",
+          "topN": 3
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "application se",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "App Sec",
+          "href": "/blog/app-sec/",
+          "topN": 10
+        },
+        {
+          "title": "RBAC (Role Based Access Control)",
+          "href": "/blog/rbac/",
+          "topN": 10
+        },
+        {
+          "title": "Authorization Middleware",
+          "href": "/blog/authorization-middleware/",
+          "topN": 10
+        },
+        {
+          "title": "Zero-Trust Security",
+          "href": "/blog/zero-trust-security/",
+          "topN": 3
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "aplicationsecurity",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "App Sec",
+          "href": "/blog/app-sec/",
+          "topN": 10
+        },
+        {
+          "title": "RBAC (Role Based Access Control)",
+          "href": "/blog/rbac/",
+          "topN": 10
+        },
+        {
+          "title": "Authorization Middleware",
+          "href": "/blog/authorization-middleware/",
+          "topN": 10
+        },
+        {
+          "title": "Zero-Trust Security",
+          "href": "/blog/zero-trust-security/",
+          "topN": 3
+        }
+      ]
+    },
+    {
+      "kind": "typing-session",
+      "label": "binary index typing progression",
+      "reason": "The label is not a search query. Each step is checked as its own query. Append-only typing, including a trailing space, and the result href are browser-only and are not executable coverage.",
+      "href": null,
+      "steps": [
+        {
+          "query": "binary index",
+          "coverage": "existing-executable-query"
+        },
+        {
+          "query": "binary index ",
+          "coverage": "existing-executable-query"
+        },
+        {
+          "query": "binary index t",
+          "coverage": "existing-executable-query"
+        },
+        {
+          "query": "binary index tr",
+          "coverage": "existing-executable-query"
+        },
+        {
+          "query": "binary index tre",
+          "coverage": "existing-executable-query"
+        },
+        {
+          "query": "binary index tree",
+          "coverage": "existing-executable-query"
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "institute ",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "href": "/blog/tls-1.2-vulnerability/",
+          "documentId": "ai",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "institute o",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "href": "/blog/tls-1.2-vulnerability/",
+          "documentId": "ai",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "institute of",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "href": "/blog/tls-1.2-vulnerability/",
+          "documentId": "ai",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "institute of s",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "href": "/blog/tls-1.2-vulnerability/",
+          "documentId": "ai",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "href-checks",
+      "query": "institute of standards",
+      "reason": "Result hrefs are browser path checks. Title and document id membership are executable. These hrefs are not executable coverage.",
+      "checks": [
+        {
+          "title": "TLS 1.2 Vulnerability",
+          "href": "/blog/tls-1.2-vulnerability/",
+          "documentId": "ai",
+          "topN": 10
+        }
+      ]
+    },
+    {
+      "kind": "typing-session",
+      "label": "institute of standards typing progression",
+      "reason": "The label is not a search query. Each step is checked as its own query. Append-only typing, including a trailing space, and the result href are browser-only and are not executable coverage.",
+      "href": "/blog/tls-1.2-vulnerability/",
+      "steps": [
+        {
+          "query": "institute",
+          "coverage": "existing-executable-query"
+        },
+        {
+          "query": "institute ",
+          "coverage": "exported-step-query"
+        },
+        {
+          "query": "institute o",
+          "coverage": "exported-step-query"
+        },
+        {
+          "query": "institute of",
+          "coverage": "exported-step-query"
+        },
+        {
+          "query": "institute of s",
+          "coverage": "exported-step-query"
+        },
+        {
+          "query": "institute of standards",
+          "coverage": "exported-step-query"
+        }
+      ]
+    },
+    {
+      "kind": "query-sequence",
+      "label": "recent search transitions",
+      "reason": "The label is not a search query. Steps with result assertions stay executable queries. Bare keystrokes and clear are browser-only input behavior and are not executable coverage.",
+      "steps": [
+        {
+          "query": "q",
+          "coverage": "browser-input"
+        },
+        {
+          "query": "qa",
+          "coverage": "existing-executable-query"
+        },
+        {
+          "query": "a",
+          "coverage": "browser-input"
+        },
+        {
+          "query": "ai",
+          "coverage": "existing-executable-query"
+        },
+        {
+          "query": "recursion",
+          "coverage": "existing-executable-query"
+        },
+        {
+          "query": "test",
+          "coverage": "existing-executable-query"
+        },
+        {
+          "query": "testing",
+          "coverage": "existing-executable-query"
+        },
+        {
+          "action": "clear",
+          "coverage": "browser-input"
+        }
+      ]
+    }
+  ],
+  "overlayCases": [
+    {
+      "query": "binary index",
+      "kind": "contract",
+      "origin": "overlay",
+      "resultCollector": "complete-interpretation",
+      "requiredAnyTop": {
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "ids": [
+          "cm"
+        ],
+        "topN": 10
+      },
+      "name": "contract · corpus · binary index · Fenwick Tree within 10"
+    },
+    {
+      "query": "binary index ",
+      "kind": "contract",
+      "origin": "overlay",
+      "resultCollector": "complete-interpretation",
+      "requiredAnyTop": {
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "ids": [
+          "cm"
+        ],
+        "topN": 10
+      },
+      "name": "contract · corpus · binary index [trailing space] · Fenwick Tree within 10"
+    },
+    {
+      "query": "binary index t",
+      "kind": "contract",
+      "origin": "overlay",
+      "resultCollector": "complete-interpretation",
+      "requiredAnyTop": {
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "ids": [
+          "cm"
+        ],
+        "topN": 10
+      },
+      "name": "contract · corpus · binary index t · Fenwick Tree within 10"
+    },
+    {
+      "query": "binary index tr",
+      "kind": "contract",
+      "origin": "overlay",
+      "resultCollector": "complete-interpretation",
+      "requiredAnyTop": {
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "ids": [
+          "cm"
+        ],
+        "topN": 10
+      },
+      "name": "contract · corpus · binary index tr · Fenwick Tree within 10"
+    },
+    {
+      "query": "binary index tre",
+      "kind": "contract",
+      "origin": "overlay",
+      "resultCollector": "complete-interpretation",
+      "requiredAnyTop": {
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "ids": [
+          "cm"
+        ],
+        "topN": 10
+      },
+      "name": "contract · corpus · binary index tre · Fenwick Tree within 10"
+    },
+    {
+      "query": "binary index tree",
+      "kind": "contract",
+      "origin": "overlay",
+      "resultCollector": "complete-interpretation",
+      "requiredAnyTop": {
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "ids": [
+          "cm"
+        ],
+        "topN": 10
+      },
+      "name": "contract · corpus · binary index tree · Fenwick Tree within 10"
+    },
+    {
+      "query": "binary indexed t",
+      "kind": "contract",
+      "origin": "overlay",
+      "resultCollector": "complete-interpretation",
+      "requiredAnyTop": {
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "ids": [
+          "cm"
+        ],
+        "topN": 10
+      },
+      "name": "contract · corpus · binary indexed t · Fenwick Tree within 10"
+    },
+    {
+      "query": "binary indexed tree",
+      "kind": "contract",
+      "origin": "overlay",
+      "resultCollector": "complete-interpretation",
+      "requiredAnyTop": {
+        "titles": [
+          "Fenwick Tree"
+        ],
+        "ids": [
+          "cm"
+        ],
+        "topN": 10
+      },
+      "name": "contract · corpus · binary indexed tree · Fenwick Tree within 10"
+    }
+  ]
+}

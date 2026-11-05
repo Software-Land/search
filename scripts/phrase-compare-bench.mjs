@@ -2,8 +2,8 @@
 /**
  * Same-corpus phrase/high-DF/prefix/rare comparison across built checkouts.
  *
- *   node scripts/phrase-compare-bench.mjs --dist ./dist --label 2C
- *   node scripts/phrase-compare-bench.mjs --dist /tmp/sl-search-stage2b/dist --label 2B
+ *   node scripts/phrase-compare-bench.mjs --dist ./dist --label compact-runtime
+ *   node scripts/phrase-compare-bench.mjs --dist /tmp/sl-search-duplicate-postings/dist --label duplicate-postings
  *
  * Not packed. Not a CI gate.
  */

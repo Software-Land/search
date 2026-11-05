@@ -238,8 +238,8 @@ async function searchWorker(
   }
 }
 
-describe("Stage-1 exact compiled retrieval under pressure", () => {
-  test("Stage 1A in-memory and Stage 1B hydrated indexes enumerate all 215 exact hit sets", async () => {
+describe("exact compiled retrieval under pressure", () => {
+  test("exact in-memory retrieval and a compiled positional index enumerate all 215 exact hit sets", async () => {
     const documents = attachLexicalFrequency(load("documents.json"), load("lexical-frequency.json"));
     const relationships = load("relationships.json");
     const { full, compiled } = await engines(documents, {
@@ -344,7 +344,7 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
       { id: "probezz-neighbor", title: "Unrelated Neighbor", body: "unrelated" },
     ];
     const relationships = {
-      format: "search-v2-relationships",
+      format: "search-relationships",
       version: 1,
       relationships: {
         "winner-probezz": [{
@@ -467,7 +467,7 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
       })),
     ];
     const relationships = {
-      format: "search-v2-relationships",
+      format: "search-relationships",
       version: 1,
       relationships: {
         primary: [{ target: "related", type: "test", strength: 1 }],
@@ -497,7 +497,7 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
       })),
     ];
     const relationships = {
-      format: "search-v2-relationships",
+      format: "search-relationships",
       version: 1,
       relationships: {
         primary: [
@@ -544,7 +544,7 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
     }));
     const documents = [...primaryDocuments, ...neighbors];
     const relationships = {
-      format: "search-v2-relationships",
+      format: "search-relationships",
       version: 1,
       relationships: Object.fromEntries(primaryDocuments.map((source) => [
         source.id,
@@ -595,7 +595,7 @@ describe("Stage-1 exact compiled retrieval under pressure", () => {
       ...related,
     ];
     const relationships = {
-      format: "search-v2-relationships",
+      format: "search-relationships",
       version: 1,
       relationships: {
         primary: related.map((document) => ({

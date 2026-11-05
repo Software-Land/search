@@ -178,6 +178,10 @@ try {
       rel.includes("node_modules/") ||
       rel.includes(".venv/") ||
       rel.includes("/.cache/") ||
+      rel.endsWith(".tiktoken") ||
+      rel.includes("cl100k_base") ||
+      rel.startsWith("build/") ||
+      rel.includes("search-semantic/tokenizers/") ||
       rel.endsWith(".tgz") ||
       /(^|\/)\.env($|\.)/.test(rel)
   );
@@ -354,8 +358,8 @@ try {
   if (!corpusDts.includes("ConfiguredConceptArtifact")) {
     throw new Error("packed corpus dts missing ConfiguredConceptArtifact");
   }
-  if (!corpusDts.includes("search-v2-configured-concepts")) {
-    throw new Error("packed corpus dts missing search-v2-configured-concepts");
+  if (!corpusDts.includes("search-configured-concepts")) {
+    throw new Error("packed corpus dts missing search-configured-concepts");
   }
   if (corpusDts.includes("configuredConceptsFromEquivalences")) {
     throw new Error("packed corpus dts must not export configuredConceptsFromEquivalences");
@@ -606,7 +610,7 @@ if (mergeRelationships(null, authored.documentRelationships) !== null) {
 
 try {
   SearchEngine.create({
-    relationships: { format: "search-v2-relationships", version: 1, relationships: {} },
+    relationships: { format: "search-relationships", version: 1, relationships: {} },
   });
   throw new Error("old SearchEngine.create relationships option must be rejected");
 } catch (err) {
@@ -644,7 +648,7 @@ if ("synonyms" in acceptedEquivalence) {
 if ("equivalences" in compiledCorpus) {
   throw new Error("compileCorpus must not return equivalences");
 }
-if (!compiledCorpus.configuredConceptArtifact || compiledCorpus.configuredConceptArtifact.format !== "search-v2-configured-concepts") {
+if (!compiledCorpus.configuredConceptArtifact || compiledCorpus.configuredConceptArtifact.format !== "search-configured-concepts") {
   throw new Error("compileCorpus must return configuredConceptArtifact");
 }
 const parsedConcepts = parseConfiguredConcepts(compiledCorpus.configuredConceptArtifact);

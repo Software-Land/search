@@ -107,10 +107,15 @@ export type RepresentativeSelectionStats = {
  * Exact builtin-ranker reduction.
  *
  * For one constraint signature every builtin constraint compares identically
- * against every other signature. The sparse ranker orders members of that
- * signature by the rounded final score, then document id. Therefore a member
- * below depth R in its signature has at least R same-signature predecessors
- * and cannot occur in the global top R.
+ * against every other signature. Members of that signature are ordered by
+ * compareScoreThenWeakBodyThenId: rounded final score descending; then
+ * bodyPhraseCount descending when both candidates are the weak single-token
+ * body pack; then equivalentRecallBodyOccurrenceCount descending when both
+ * are equivalent-body-only; then document id ascending. Those occurrence
+ * keys are conditional. Stronger title, configured, and direct classes do
+ * not use them. A member below depth R in its signature under that order
+ * has at least R same-signature predecessors and cannot occur in the global
+ * top R.
  *
  * Map insertion order is part of the reduction: retained groups are emitted
  * in the first-seen signature order used by rankSparse. Do not reorder the

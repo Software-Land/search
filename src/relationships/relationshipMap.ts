@@ -27,6 +27,11 @@ export type RelationshipEndpoint =
 export interface AuthoredRelationshipEdge {
   to: RelationshipEndpoint;
   kind: RelationshipKind;
+  /**
+   * Related concept-to-form edges only. Marks that form as a primary topical
+   * term of the source concept. Not a weight, alias, or equivalence.
+   */
+  primaryTerm?: true;
 }
 
 export type RelationshipMap = Record<string, AuthoredRelationshipEdge[]>;
@@ -54,6 +59,7 @@ export interface CompiledRelationshipMap {
 export interface CompiledRelationshipInternals extends CompiledRelationshipMap {
   standaloneRecallByKey: Map<string, string[]>;
   topicalRecallByKey: Map<string, string[][]>;
+  topicalPrimaryByKey: Map<string, string[][]>;
 }
 
 export interface CompileRelationshipMapOptions {
@@ -209,6 +215,7 @@ function emptyCompiledInternals(): CompiledRelationshipInternals {
     synonymMap: emptyRecord(),
     standaloneRecallByKey: new Map(),
     topicalRecallByKey: new Map(),
+    topicalPrimaryByKey: new Map(),
     editorialRelationships: emptyRecord(),
   };
 }
@@ -240,6 +247,7 @@ export function compileRelationshipMapInternal(
   const synonymMap = emptyRecord<string[]>();
   const standaloneRecallByKey = new Map<string, string[]>();
   const topicalRecallByKey = new Map<string, string[][]>();
+  const topicalPrimaryByKey = new Map<string, string[][]>();
   const editorialRelationships = emptyRecord<
     CompiledRelationshipMap["editorialRelationships"][string]
   >();
@@ -262,7 +270,17 @@ export function compileRelationshipMapInternal(
       if (typeof kind !== "string" || !KINDS.has(kind)) {
         fail(`unsupported relationship kind ${JSON.stringify(kind)}`, `${field}.kind`, "equivalent | related");
       }
+      if ("primaryTerm" in edge && edge.primaryTerm !== true) {
+        fail("primaryTerm must be true when present", `${field}.primaryTerm`, "true");
+      }
       const endpointType = endpointKind(edge.to, `${field}.to`);
+      if (edge.primaryTerm === true && !(kind === "related" && endpointType === "form")) {
+        fail(
+          "primaryTerm is only valid on a related concept-to-form edge",
+          `${field}.primaryTerm`,
+          "related form edge"
+        );
+      }
       const to = edge.to as Record<string, unknown>;
 
       if (kind === "equivalent") {
@@ -308,6 +326,11 @@ export function compileRelationshipMapInternal(
         const forms = topicalRecallByKey.get(concept) || [];
         pushUniqueForm(forms, form);
         topicalRecallByKey.set(concept, forms);
+        if (edge.primaryTerm === true) {
+          const primaryForms = topicalPrimaryByKey.get(concept) || [];
+          pushUniqueForm(primaryForms, form);
+          topicalPrimaryByKey.set(concept, primaryForms);
+        }
         return;
       }
 
@@ -323,7 +346,7 @@ export function compileRelationshipMapInternal(
     });
   }
 
-  return { synonymMap, standaloneRecallByKey, topicalRecallByKey, editorialRelationships };
+  return { synonymMap, standaloneRecallByKey, topicalRecallByKey, topicalPrimaryByKey, editorialRelationships };
 }
 
 /**
@@ -385,7 +408,7 @@ function mergeEditorialRelationships(
 }
 
 /**
- * Merge two `search-v2-relationships` artifacts without mutating callers.
+ * Merge two `search-relationships` artifacts with schema version 1 without mutating callers.
  * Same source/target/type keeps the first edge. Distinct types remain distinct.
  * Either argument may be null/omitted.
  */

@@ -297,6 +297,7 @@ describe("fixture multi-alias exhaustive permutation occupancy", () => {
     expect(nist.aliases).toEqual([
       ["national", "institute", "standards", "technology"],
       ["institute", "standards"],
+      ["institute", "of", "standards"],
     ]);
     expect(appsec.aliases).toEqual([
       ["application", "security"],

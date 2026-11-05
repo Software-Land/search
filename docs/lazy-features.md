@@ -4,18 +4,18 @@
 
 This note keeps the bound theorem and one mixed-corpus observation so future work does not rediscover why a **lazy FeatureVector skip** was not shipped. It is not a product feature, not a ranking change, and not a latency SLA.
 
-0.6.5 ordinary eligible `search()` uses a different, shipped approach: retrieval-fused ranking evidence and packed direct views. That path does not construct a FeatureVector per retrieved direct. It is not the lazy evaluator described here. `searchDetailed()`, explain, exhaustive diagnostics, and ineligible shapes still call `extractFeatures` for matches that Stage 2A does not bound-reject and that Stage 3A does not skip as unread 1-of-k body-only. See [scaling.md](scaling.md) and [exact-pruning.md](exact-pruning.md).
+0.6.5 ordinary eligible `search()` uses a different, shipped approach: retrieval-fused ranking evidence and packed direct views. That path does not construct a FeatureVector per retrieved direct. It is not the lazy evaluator described here. `searchDetailed()` is exact diagnostics, so feature block pruning and body posting pruning do not skip work there. Explicit exhaustive mode does not either. `explain: true` disables packed ranking evidence and still leaves both pruning capabilities on their ordinary `search()` gates. Those explained calls, exhaustive mode, and ineligible `search()` shapes still call `extractFeatures` for matches that feature block pruning does not bound-reject and that body posting pruning does not skip as unread 1-of-k body-only. See [scaling.md](scaling.md) and [exact-pruning.md](exact-pruning.md).
 
 ## FeatureVector path (diagnostic / fallback)
 
 ```text
 compiled match enumeration
-  → extractFeatures (Stage 2C compact views)
+  → extractFeatures (compact lexical runtime)
   → exact per-signature representatives
   → unchanged sparse ranker
 ```
 
-There is no lazy FeatureVector evaluator, no deferred-feature mask, and no score-bound rejection in `src/`. Stage 2A remains limited to proven plain single-token body-only candidates. On the FeatureVector path, multi-token / phrase **conjunction** documents stay on that exhaustive Stage-2C feature path; Stage 3A only removes the noncompetitive 1-of-k body flood before feature construction.
+There is no lazy FeatureVector evaluator, no deferred-feature mask, and no score-bound rejection in `src/`. Feature block pruning remains limited to proven plain single-token body-only candidates. On the FeatureVector path, multi-token and phrase **conjunction** documents stay on the compact lexical runtime and are fully featured. Body posting pruning only removes the noncompetitive 1-of-k body flood before feature construction.
 
 ## Why a FeatureVector skip is not current work
 

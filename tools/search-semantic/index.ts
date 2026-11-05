@@ -13,17 +13,24 @@ export const SEMANTIC_ROOT = path.dirname(fileURLToPath(import.meta.url));
 export const SEMANTIC_BUILDER = path.join(SEMANTIC_ROOT, "build.py");
 export const SEMANTIC_REQUIREMENTS = path.join(SEMANTIC_ROOT, "requirements.txt");
 export const SEMANTIC_REQUIREMENTS_EMBED = path.join(SEMANTIC_ROOT, "requirements-embed.txt");
+export const SEMANTIC_REQUIREMENTS_OPENAI = path.join(SEMANTIC_ROOT, "requirements-openai.txt");
 
 export const DEFAULT_METHOD: "combined" = "combined";
 export const DEFAULT_REPRESENTATION = "title_struct";
 export const DEFAULT_TOP_K = 5;
 export const DEFAULT_MIN_SCORE = 0.3;
 export const DEFAULT_MODEL = "sentence-transformers/all-MiniLM-L6-v2";
+export const DEFAULT_EMBEDDING_PROVIDER: "fastembed" = "fastembed";
+const EMBEDDING_PROVIDERS = ["fastembed", "openai"] as const;
+export const OPENAI_EMBEDDING_MODEL = "text-embedding-3-large";
+export const OPENAI_EMBEDDING_DIMENSIONS = 3072;
 
 type SemanticMethod = "lexical" | "embedding" | "combined";
+type EmbeddingProvider = "fastembed" | "openai";
 
 interface EnsureSemanticEnvironmentOptions {
   method?: SemanticMethod;
+  embeddingProvider?: EmbeddingProvider;
   pythonPath?: string;
   venvDir?: string;
 }
@@ -36,6 +43,11 @@ interface CompileSemanticOptions {
   lexicalMinScore?: number;
   embeddingMinScore?: number;
   model?: string;
+  embeddingProvider?: EmbeddingProvider;
+  dimensions?: number;
+  /** Passed to the builder process environment. Never written to an artifact or report. */
+  apiKey?: string;
+  apiBase?: string;
   pythonPath?: string;
   venvDir?: string;
   cacheDir?: string;
@@ -58,6 +70,18 @@ export function semanticRoot(): string {
 
 export function semanticBuilderPath(): string {
   return SEMANTIC_BUILDER;
+}
+
+/**
+ * Omitted provider keeps the FastEmbed default. Any other value must be
+ * exactly `fastembed` or `openai`. Callers validate before Python discovery.
+ */
+export function resolveEmbeddingProvider(value?: string | null): EmbeddingProvider {
+  if (value == null) return DEFAULT_EMBEDDING_PROVIDER;
+  if (value === "fastembed" || value === "openai") return value;
+  throw new Error(
+    `Unsupported embedding provider ${JSON.stringify(value)}. Supported values: ${EMBEDDING_PROVIDERS.join(", ")}.`
+  );
 }
 
 function needsEmbedExtras(method: SemanticMethod): boolean {
@@ -120,21 +144,24 @@ async function findPython(explicitPath?: string): Promise<string> {
 }
 
 export async function ensureSemanticEnvironment(opts: EnsureSemanticEnvironmentOptions = {}): Promise<{ python: string; venvDir: string | null }> {
+  const provider = resolveEmbeddingProvider(opts.embeddingProvider);
   const method = opts.method || DEFAULT_METHOD;
   const basePython = await findPython(opts.pythonPath);
   if (!needsEmbedExtras(method)) {
     return { python: basePython, venvDir: null };
   }
+  const openai = provider === "openai";
+  const requirements = openai ? SEMANTIC_REQUIREMENTS_OPENAI : SEMANTIC_REQUIREMENTS_EMBED;
   const venvDir = opts.venvDir || path.join(os.tmpdir(), "software-land-search-semantic-venv");
   const python = venvPython(venvDir);
-  const marker = path.join(venvDir, ".requirements-embed.sha256");
-  const reqHash = createHash("sha256").update(fs.readFileSync(SEMANTIC_REQUIREMENTS_EMBED)).digest("hex");
+  const marker = path.join(venvDir, openai ? ".requirements-openai.sha256" : ".requirements-embed.sha256");
+  const reqHash = createHash("sha256").update(fs.readFileSync(requirements)).digest("hex");
   const ready = fs.existsSync(python) && fs.existsSync(marker) && fs.readFileSync(marker, "utf8").trim() === reqHash;
   if (!ready) {
     fs.mkdirSync(venvDir, { recursive: true });
     await run(basePython, ["-m", "venv", venvDir], { inheritStderr: true });
     await run(python, ["-m", "pip", "install", "-U", "pip", "wheel", "setuptools"], { inheritStderr: true });
-    await run(python, ["-m", "pip", "install", "-r", SEMANTIC_REQUIREMENTS_EMBED], { inheritStderr: true });
+        await run(python, ["-m", "pip", "install", "-r", requirements], { inheritStderr: true });
     fs.writeFileSync(marker, `${reqHash}\n`);
   }
   return { python, venvDir };
@@ -143,9 +170,31 @@ export async function ensureSemanticEnvironment(opts: EnsureSemanticEnvironmentO
 function writeInput(input: unknown, tmpDir: string): string {
   if (typeof input === "string") return path.resolve(input);
   const file = path.join(tmpDir, "corpus.json");
-  const payload = Array.isArray(input) ? { format: "search-semantic-corpus", version: 1, documents: input } : input;
+  const payload = Array.isArray(input)
+    ? { format: "search-semantic-corpus", version: 1, documents: input }
+    : input;
   fs.writeFileSync(file, `${JSON.stringify(payload)}\n`);
   return file;
+}
+
+/**
+ * OpenAI ranks live under the caller working directory, not the package and
+ * not the compilation temp dir. Relative overrides use that same directory.
+ * Empty overrides stay empty and do not fall through.
+ * The child environment is a copy; this does not assign `process.env`.
+ */
+function applyCallerTokenizerCache(env: NodeJS.ProcessEnv, callerCwd: string): void {
+  if (Object.prototype.hasOwnProperty.call(env, "TIKTOKEN_CACHE_DIR")) {
+    const value = env.TIKTOKEN_CACHE_DIR ?? "";
+    if (value) env.TIKTOKEN_CACHE_DIR = path.resolve(callerCwd, value);
+    return;
+  }
+  if (Object.prototype.hasOwnProperty.call(env, "DATA_GYM_CACHE_DIR")) {
+    const value = env.DATA_GYM_CACHE_DIR ?? "";
+    if (value) env.DATA_GYM_CACHE_DIR = path.resolve(callerCwd, value);
+    return;
+  }
+  env.TIKTOKEN_CACHE_DIR = path.resolve(callerCwd, "build", "search-semantic", "tokenizers");
 }
 
 function rmQuiet(target: string, opts: { recursive?: boolean } = {}) {
@@ -157,6 +206,11 @@ function rmQuiet(target: string, opts: { recursive?: boolean } = {}) {
 }
 
 export async function compileSemantic(input: unknown, opts: CompileSemanticOptions = {}): Promise<CompileSemanticResult> {
+  // Capture before the first await. Python is spawned with cwd SEMANTIC_ROOT,
+  // so the default must already be absolute or it would resolve inside the
+  // installed package.
+  const callerCwd = process.cwd();
+  const provider = resolveEmbeddingProvider(opts.embeddingProvider);
   const method = opts.method || DEFAULT_METHOD;
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "search-semantic-"));
   const callerOwnedOutput = Boolean(opts.outputPath);
@@ -166,6 +220,7 @@ export async function compileSemantic(input: unknown, opts: CompileSemanticOptio
   try {
     const { python } = await ensureSemanticEnvironment({
       method,
+      embeddingProvider: provider,
       pythonPath: opts.pythonPath,
       venvDir: opts.venvDir,
     });
@@ -190,28 +245,33 @@ export async function compileSemantic(input: unknown, opts: CompileSemanticOptio
       String(opts.topK ?? DEFAULT_TOP_K),
       "--min-score",
       String(opts.minScore ?? DEFAULT_MIN_SCORE),
-      "--model",
-      opts.model || DEFAULT_MODEL,
-      "--cache-dir",
-      cacheDir,
-      "--report",
-      reportPath,
     ];
+    if (provider === "openai") {
+      if (opts.model) args.push("--model", opts.model);
+    } else {
+      args.push("--model", opts.model || DEFAULT_MODEL);
+    }
+    args.push("--cache-dir", cacheDir, "--report", reportPath);
     if (opts.lexicalMinScore != null) args.push("--lexical-min-score", String(opts.lexicalMinScore));
     if (opts.embeddingMinScore != null) args.push("--embedding-min-score", String(opts.embeddingMinScore));
+    if (provider === "openai") args.push("--embedding-provider", "openai");
+    if (opts.dimensions != null) args.push("--dimensions", String(opts.dimensions));
+    if (opts.apiBase) args.push("--openai-api-base", opts.apiBase);
     if (opts.precisionGate) args.push("--precision-gate");
     if (opts.mutual) args.push("--mutual");
 
-    const env = {
+    const env: NodeJS.ProcessEnv = {
       ...process.env,
       PYTHONDONTWRITEBYTECODE: "1",
       FASTEMBED_CACHE_PATH: path.join(cacheDir, "fastembed"),
       HF_HOME: path.join(cacheDir, "hf"),
     };
+    if (opts.apiKey) env.OPENAI_API_KEY = opts.apiKey;
+    if (provider === "openai") applyCallerTokenizerCache(env, callerCwd);
     const { stdout } = await run(python, args, { env, inheritStderr: true });
     const artifact = JSON.parse(fs.readFileSync(outputPath, "utf8")) as Record<string, unknown>;
-    if (!artifact || artifact.format !== "search-v2-relationships" || artifact.version !== 1) {
-      throw new Error("semantic compiler did not emit search-v2-relationships v1");
+    if (!artifact || artifact.format !== "search-relationships" || artifact.version !== 1) {
+      throw new Error("semantic compiler did not emit a search-relationships artifact with schema version 1");
     }
     if (Object.prototype.hasOwnProperty.call(artifact, "vectors") || Object.prototype.hasOwnProperty.call(artifact, "embeddings")) {
       throw new Error("semantic compiler must not write vectors into the relationship artifact");

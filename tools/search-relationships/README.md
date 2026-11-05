@@ -8,7 +8,7 @@ explicit domain relationships → editorial / prerequisite / same-category / man
         ↓
 search-relationships merge
         ↓
-search-v2-relationships v1
+search-relationships artifact, schema version 1
 ```
 
 `search-semantic` does not import this package. This package does not import `search-corpus` miners or Search Core. It does not mine candidates or run a review queue.
@@ -31,6 +31,8 @@ Custom types are added by extending `RELATIONSHIP_TYPES` — unknown types fail 
 Strength for explicit domain edges is discrete `1` (or `priority` when set), not a fake cosine. Semantic edges keep builder scores.
 
 ## Domain relationships
+
+A `search-relationships-domain` artifact with schema version 1:
 
 ```json
 {

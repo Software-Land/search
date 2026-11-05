@@ -1,0 +1,12 @@
+# Installed only when the OpenAI embedding provider is selected.
+# The default FastEmbed provider uses requirements-embed.txt and does not read this file.
+# FastEmbed also installs NumPy. tiktoken is specific to this optional OpenAI path.
+# No OpenAI SDK. The builder calls the Embeddings HTTP API with the Python standard library.
+# tiktoken counts cl100k_base tokens. The ranks are not vendored in this package.
+# python3 tools/search-semantic/prepare_tokenizer.py downloads them on first use
+# from the public OpenAI encodings URL into build/search-semantic/tokenizers/
+# under the current working directory, or TIKTOKEN_CACHE_DIR. Deleting that
+# build directory requires the ranks to be acquired again. Tests use the
+# prepared file and do not download it.
+numpy>=2.0,<3
+tiktoken>=0.7,<1

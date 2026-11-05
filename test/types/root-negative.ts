@@ -151,7 +151,7 @@ ARTIFACT_FORMATS.equivalences;
 SearchEngine.create({
   // @ts-expect-error relationships is not a public SearchEngine.create option
   relationships: {
-    format: "search-v2-relationships",
+    format: "search-relationships",
     version: 1,
     relationships: {},
   },

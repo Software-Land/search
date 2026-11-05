@@ -42,7 +42,7 @@ function emptyTotal() {
   };
 }
 
-test("Software.Land historical, v1, v2, and regression fused eligibility/exactness audit", async () => {
+test("Software.Land historical mirror, historical top-N, strict contracts, and regression fused eligibility/exactness audit", async () => {
   const {
     documents,
     configuredConcepts,
@@ -69,8 +69,8 @@ test("Software.Land historical, v1, v2, and regression fused eligibility/exactne
 
   const suites = {
     historical: historical.rows.filter((row) => row.query),
-    v1OnV2: enforcedV1HistoricalTopNRows(historical.rows).filter((row) => row.query),
-    v2: frozenCorpusScenarioRows(loadSoftwareLandJson("v2-contracts.json")).filter((row) => row.query),
+    historicalTopN: enforcedV1HistoricalTopNRows(historical.rows).filter((row) => row.query),
+    strictContracts: frozenCorpusScenarioRows(loadSoftwareLandJson("strict-contracts.json")).filter((row) => row.query),
     regression: frozenCorpusScenarioRows(loadSoftwareLandJson("regression-scenarios.json")).filter(
       (row) => row.query
     ),
@@ -149,22 +149,21 @@ test("Software.Land historical, v1, v2, and regression fused eligibility/exactne
 
   expect(aggregate.primitiveMismatches).toBe(0);
   expect(aggregate.scoreMismatches).toBe(0);
-  // origin/main locked 199 queries, 90 eligible, 109 ineligible, 1511 candidates.
-  // Eight Fenwick overlay queries are new, all eligible, and add 119 candidates.
-  // Bare `institute` no longer occupies `nist`, so packed evidence rejects it as
-  // configured-prefix-recall and its 1 eligible candidate leaves that set.
-  // Nine other still-eligible queries change by one candidate and net -5.
-  // 90 + 8 - 1 = 97 eligible, 109 + 1 = 110 ineligible,
-  // 1511 - 1 - 5 + 119 = 1624 candidates.
+  // Measured on the refreshed 123-document snapshot. Session labels are not
+  // queries. Institute typing steps that are not already covered are queries.
+  // primitiveMismatches and scoreMismatches stay at zero.
+  // The earlier 1822 count kept every repeated class-1 body document. Those
+  // queries have no title hit that can expand a hybrid neighbor, so body posting pruning
+  // skips them again. 1822 - 324 = 1498.
   expect(totals.unique).toMatchObject({
-    queries: 207,
-    eligible: 97,
-    ineligible: 110,
-    candidates: 1624,
+    queries: 222,
+    eligible: 88,
+    ineligible: 134,
+    candidates: 1498,
     primitiveMismatches: 0,
     scoreMismatches: 0,
   });
-  expect(queryAudit.size).toBe(207);
+  expect(queryAudit.size).toBe(222);
   // eslint-disable-next-line no-console
   console.log(JSON.stringify({ rankingEvidenceSoftwareLand: { totals, aggregate } }));
 }, 300_000);

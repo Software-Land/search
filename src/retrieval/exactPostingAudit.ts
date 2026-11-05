@@ -1,8 +1,8 @@
 /**
- * Audit-only Stage-2B posting-work planner.
+ * Audit-only posting-work planner for duplicate posting-list skipping.
  *
  * This module does not change production retrieval. It walks the same compiled
- * posting lanes as the exhaustive Stage-1 retriever, records where visits come
+ * posting lanes as exhaustive compiled retrieval, records where visits come
  * from, and marks skippable work after the fact. Production still inspects
  * every posting entry.
  */

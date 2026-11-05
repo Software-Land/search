@@ -126,7 +126,7 @@ describe("constraint composition", () => {
 describe("compiled artifacts", () => {
   test("relationship artifact is versioned and generic", () => {
     const parsed = parseRelationships({
-      format: "search-v2-relationships",
+      format: "search-relationships",
       version: 1,
       relationships: {
         "tls-config": [{ target: "vpn", type: "semantic", strength: 0.84, provenance: "offline-embedding-builder" }],
@@ -140,7 +140,7 @@ describe("compiled artifacts", () => {
 
   test("configured-concept artifact stays distinct from equivalent relationshipMap recall", () => {
     const eq = parseConfiguredConcepts({
-      format: "search-v2-configured-concepts",
+      format: "search-configured-concepts",
       version: 1,
       entries: [{ key: "tls", aliases: [["transport", "layer", "security"]], type: "equivalence", provenance: "manual" }],
     });
@@ -171,7 +171,7 @@ describe("precomputed relationships", () => {
     { id: "unrelated", title: "Monotonic Stack", body: "Stack algorithm." },
   ];
   const graph = {
-    format: "search-v2-relationships",
+    format: "search-relationships",
     version: 1,
     relationships: {
       "tls-config": [

@@ -7,9 +7,12 @@
  * are not materialized.
  *
  * Kahn walks a frontier of ready buckets/blocks whose heap key is the next
- * best candidate (score, then document.id). Incomparable buckets therefore
- * interleave instead of concatenating. A non-trivial bucket SCC is one
- * candidate SCC and is emitted as a block, matching all-pairs Kosaraju.
+ * best candidate under compareScoreThenWeakBodyThenId: rounded score, then
+ * bodyPhraseCount when both candidates are the weak single-token body pack,
+ * then equivalentRecallBodyOccurrenceCount when both are equivalent-body-only,
+ * then document id. Incomparable buckets therefore interleave instead of
+ * concatenating. A non-trivial bucket SCC is one candidate SCC and is emitted
+ * as a block, matching all-pairs Kosaraju.
  *
  * Custom ConstraintDef.fn values (not the builtin DEFAULT/HYBRID functions)
  * are not signature-safe and must use the pairwise path.

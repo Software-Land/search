@@ -38,6 +38,7 @@ import type {
   ArtifactVersionErrorConstructor,
   AuthoredRelationshipEdge,
   CompiledAuthoredRelevance,
+  CompiledRelationshipArtifact,
   ConfiguredConcept,
   IndexStateError as IndexStateErrorType,
   MigratedConfiguredEntry,
@@ -59,6 +60,7 @@ import type {
 } from "./api.js";
 
 export type {
+  CompiledRelationshipArtifact,
   AdaptiveOptions,
   DirectClass,
   EnglishPlugin,
@@ -110,8 +112,8 @@ export const compileAuthoredRelevance: (options?: {
   relationshipMap?: RelationshipMap;
   documents?: import("./api.js").SearchDocument[];
 }) => CompiledAuthoredRelevance;
-export const mergeRelationships: (base?: unknown, extra?: unknown) => RelationshipArtifact | null =
-  mergeRelationshipsImpl as (base?: unknown, extra?: unknown) => RelationshipArtifact | null;
+export const mergeRelationships: (base?: unknown, extra?: unknown) => CompiledRelationshipArtifact | null =
+  mergeRelationshipsImpl as (base?: unknown, extra?: unknown) => CompiledRelationshipArtifact | null;
 
 export const RELATIONSHIP_STRATEGIES: readonly RelationshipStrategy[] =
   relationshipStrategiesImpl as readonly RelationshipStrategy[];
@@ -120,17 +122,17 @@ export const RETRIEVER_NAMES: readonly RetrieverName[] = retrieverNamesImpl as r
 export const DEFAULT_CANDIDATE_LIMIT: 200 = defaultCandidateLimitImpl;
 export const DEFAULT_ADAPTIVE_DOCUMENT_THRESHOLD: 1500 = defaultAdaptiveDocumentThresholdImpl;
 
-export const parseRelationships: (obj?: unknown) => RelationshipArtifact = parseRelationshipsImpl as (
+export const parseRelationships: (obj?: unknown) => CompiledRelationshipArtifact = parseRelationshipsImpl as (
   obj?: unknown
-) => RelationshipArtifact;
+) => CompiledRelationshipArtifact;
 export const ARTIFACT_FORMATS: {
-  relationships: "search-v2-relationships";
-  corpusStats: "search-v2-corpus-stats";
-  lexicalIndex: "search-v2-lexical-index";
+  relationships: "search-relationships";
+  corpusStats: "search-corpus-stats";
+  lexicalIndex: "search-lexical-index";
 } = artifactFormatsImpl as {
-  relationships: "search-v2-relationships";
-  corpusStats: "search-v2-corpus-stats";
-  lexicalIndex: "search-v2-lexical-index";
+  relationships: "search-relationships";
+  corpusStats: "search-corpus-stats";
+  lexicalIndex: "search-lexical-index";
 };
 export const ARTIFACT_VERSION: 1 = artifactVersionImpl;
 

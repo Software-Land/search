@@ -259,7 +259,7 @@ test("integ first-form prefix fails packed closed and ranks Integrity first", as
   }
 });
 
-test("evidence retrieval is identical to legacy retrieval including Stage 2B/3A stats", async () => {
+test("evidence retrieval is identical to legacy retrieval including duplicate-list and body posting pruning stats", async () => {
   const engine = await compiledEngine(targetedDocuments, [
     { key: "tls", aliases: [["transport", "layer", "security"]] },
   ]);
@@ -282,7 +282,7 @@ test("evidence retrieval is identical to legacy retrieval including Stage 2B/3A 
   }
 });
 
-test("scaled multi-block Stage 3A retrieval remains identical with unread blocks", async () => {
+test("scaled multi-block body posting pruning remains identical with unread blocks", async () => {
   const strong = Array.from({ length: 16 }, (_, index) => ({
     id: `strong-${index}`,
     title: `Alpha Strong Document ${index}`,

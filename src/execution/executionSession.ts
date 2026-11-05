@@ -1,7 +1,7 @@
 /**
  * Session/capability facts for optimization gates.
  *
- * Facts only. Packed search, Stage-2A feature-block pruning, Stage 3A, and
+ * Facts only. Packed search, feature block pruning, body posting pruning, and
  * the complete-interpretation collector each remain separate policies with
  * their own reason strings and precedence.
  */
@@ -20,7 +20,7 @@ export type SearchSessionCapabilities = {
 };
 
 /**
- * Session-gate reason strings shared by packed search and Stage-2A feature-block
+ * Session-gate reason strings shared by packed search and feature block
  * pruning. Each policy still chooses which of these it consults and in what
  * order. Packed-only reasons (`explain`, `complete-interpretation`) stay on
  * packed search. Feature-block-only `missing-pruning-extension` stays there.

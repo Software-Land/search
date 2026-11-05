@@ -71,7 +71,11 @@ function serializeExplanationQuery(query: AnalyzedQuery, features: FeatureVector
       ? { key: query.standaloneRecall.key, sourceToken: query.standaloneRecall.sourceToken }
       : null,
     topicalRecall: query.topicalRecall
-      ? { key: query.topicalRecall.key, forms: query.topicalRecall.forms.map((form) => [...form]) }
+      ? {
+          key: query.topicalRecall.key,
+          forms: query.topicalRecall.forms.map((form) => [...form]),
+          primaryForms: (query.topicalRecall.primaryForms || []).map((form) => [...form]),
+        }
       : null,
     equivalentRecall: query.equivalentRecall?.length
       ? query.equivalentRecall.map((pair) => ({ source: pair.source, target: pair.target }))

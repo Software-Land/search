@@ -1,7 +1,7 @@
 import { sequenceKey } from "../query/configuredAuthoring.js";
 import { isNearCompletePrefix, levenshteinAtMost, DEFAULT_STOP, allowPrefixMatch } from "../text/text.js";
 import { hasIndependentTitleToken, isDottedSpanComponentIndex, queryTokenMatchesDottedSpanComponent } from "../text/versionForms.js";
-import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, hasConfiguredContentIdentity, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall, topicalRecallHint, topicalFormEvidence, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts, rankingCoverageConcepts, formContentTokens, sequenceCount, shortTitleTokenPrefixStub, configuredConceptFieldMatch } from "../retrieval/retrieve.js";
+import { versionHit, conceptMatchesTitle, conceptMatchesBody, matchContextualTitlePrefix, isBoundTrailingTypedToken, hasBoundContextualCompletion, isBoundTrailingTermConcept, hasConfiguredSequenceIntent, hasConfiguredContentIdentity, identityTokens, evidenceTokens, standaloneRecallConcept, documentMatchesStandaloneRecall, topicalRecallHint, topicalFormEvidence, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts, equivalentRecallBodyOccurrenceCount, directBodyOccurrenceCount, rankingCoverageConcepts, formContentTokens, sequenceCount, shortTitleTokenPrefixStub, configuredConceptFieldMatch } from "../retrieval/retrieve.js";
 import { queryPhraseGeometry, queryPhraseGeometryFromGraph } from "../query/queryPlan.js";
 import { querySemanticFacts } from "../query/querySemantics.js";
 import { scoreFeatures } from "../ranking/rank.js";
@@ -1073,14 +1073,17 @@ function withTopicalRecallFields(
 ) {
   const hint = topicalRecallHint(query);
   if (!hint) return fields;
+  const primaryKeys = new Set((hint.primaryForms || []).map((form) => form.join("\u001f")));
   let formCount = 0;
   let titleCount = 0;
   let phraseCount = 0;
+  let primaryTitle = false;
   for (const form of hint.forms) {
     const ev = topicalFormEvidence(doc, form);
     if (!ev.hit) continue;
     formCount += 1;
     if (ev.title) titleCount += 1;
+    if (ev.title && primaryKeys.has(form.join("\u001f"))) primaryTitle = true;
     if (ev.phrase) phraseCount += 1;
   }
   const match = formCount > 0;
@@ -1090,6 +1093,7 @@ function withTopicalRecallFields(
     topicalRecallMatch: match,
     topicalRecallFormCount: formCount,
     topicalRecallTitleMatch: titleCount > 0,
+    topicalPrimaryTitleMatch: primaryTitle,
     topicalRecallPhraseMatch: phraseCount > 0,
     topicalRecallScore: Number(score.toFixed(4)),
   };
@@ -1122,6 +1126,7 @@ function withSynonymRecallFields(
     equivalentRecallTitleMatch: titleCount > 0,
     equivalentRecallBodyMatch: bodyCount > 0,
     equivalentRecallScore: Number(score.toFixed(4)),
+    equivalentRecallBodyOccurrenceCount: equivalentRecallBodyOccurrenceCount(query, doc),
   };
 }
 
@@ -1352,6 +1357,7 @@ function computeFeatureFields(query: AnalyzedQuery, doc: IndexedDocument, time: 
     normalizedQueryPhrase: phrase.normalizedQueryPhrase,
     matchingPhraseKey: phrase.matchingPhraseKey,
     bodyPhraseCount: phrase.bodyPhraseCount,
+    directBodyOccurrenceCount: directBodyOccurrenceCount(query, doc),
     bodyPhraseFrequency: phrase.bodyPhraseFrequency,
     ...typedPhraseFieldFrequencies(query, doc),
   };
@@ -1470,6 +1476,7 @@ export const FEATURE_DEFINITIONS = {
   normalizedQueryPhrase: "Lemmatized non-stop query tokens joined as the compiled n-gram lookup key. An incomplete final token may be completed through vocabulary+morphology first.",
   matchingPhraseKey: "Compiled n-gram key that matched, or null when the count is 0.",
   bodyPhraseCount: "Build-time integer occurrence count of the normalized query phrase in this document BODY. 0 if missing.",
+  directBodyOccurrenceCount: "Unique body occurrences of direct query evidence. Configured concepts count the key and each peer form that body matching accepts. A one-token alias that is a stopword or a member of a longer peer form is not counted. Ordinary query terms still count. 0 means uncomputed or absent, not a single mention. Not bodyPhraseCount and not a score term.",
   bodyPhraseFrequency: "Bounded transform log1p(count)/(1+log1p(count)) of bodyPhraseCount.",
   titlePhraseFrequency: "Exact typed-surface originalSurface occurrences in the title field.",
   summaryPhraseFrequency: "Exact typed-surface originalSurface occurrences in the optional summary field.",

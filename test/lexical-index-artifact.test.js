@@ -36,7 +36,7 @@ function refreshIntegrity(artifact) {
   return artifact;
 }
 
-describe("search-v2-lexical-index v1", () => {
+describe("search-lexical-index schema version 1", () => {
   const documents = attachLexicalFrequency(load("documents.json"), load("lexical-frequency.json"));
   const lemmas = load("lemmas.json");
   const configuredConcepts = load("configured-concepts.json");
@@ -60,14 +60,14 @@ describe("search-v2-lexical-index v1", () => {
     });
     expect(JSON.stringify(second)).toBe(JSON.stringify(artifact));
     expect(JSON.stringify(publicArtifact)).toBe(JSON.stringify(artifact));
-    expect(artifact.format).toBe("search-v2-lexical-index");
+    expect(artifact.format).toBe("search-lexical-index");
     expect(artifact.version).toBe(1);
-    expect(artifact.corpus.documentCount).toBe(122);
-    expect(artifact.data.extensions["exact-pruning-v1"]).toEqual({
+    expect(artifact.corpus.documentCount).toBe(123);
+    expect(artifact.data.extensions["exact-pruning-block-boundaries"]).toEqual({
       revision: 1,
       unit: "document-ordinal",
       blockSize: 128,
-      boundaries: [0, 122],
+      boundaries: [0, 123],
     });
     expect(artifact.data.documents.every((row) =>
       row.length === 7 &&
@@ -115,7 +115,7 @@ describe("search-v2-lexical-index v1", () => {
     await raw.index(documents);
     await compiled.index(documents);
     expect(compiled.lexicalIndex).toBeNull();
-    await expect(compiled.index(documents)).resolves.toMatchObject({ documentCount: 122 });
+    await expect(compiled.index(documents)).resolves.toMatchObject({ documentCount: 123 });
     await expect(compiled.index(
       documents.map((doc, i) => i === 0 ? { ...doc, body: `${doc.body} changed` } : doc)
     )).rejects.toThrow(/consumed lexical index/i);
@@ -156,7 +156,7 @@ describe("search-v2-lexical-index v1", () => {
     ]);
   });
 
-  test("reserved extensions do not change the exact v1 base representation", () => {
+  test("reserved extensions do not change the schema version 1 base representation", () => {
     const extended = JSON.parse(JSON.stringify(artifact));
     extended.data.extensions["future-block-bounds"] = {
       termOrdinal: 0,
@@ -240,7 +240,7 @@ describe("search-v2-lexical-index v1", () => {
     expect(() => loadLexicalIndex(badOffset, documents, schema, plugins)).toThrow(/document offset/i);
   });
 
-  test("v1 corpus fingerprint ignores summary; consumed re-index does not", async () => {
+  test("schema version 1 corpus fingerprint ignores summary; consumed re-index does not", async () => {
     const summarySchema = {
       title: { type: "text", role: "title" },
       summary: { type: "text", role: "summary" },

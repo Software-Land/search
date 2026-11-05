@@ -31,7 +31,7 @@ describe("non-occupied prefix classification (synthetic)", () => {
       schema,
       plugins: plug,
       documentRelationships: {
-        format: "search-v2-relationships",
+        format: "search-relationships",
         version: 1,
         relationships: {
           "api-primary": [{ target: "api-neighbor", type: "editorial", strength: 1 }],

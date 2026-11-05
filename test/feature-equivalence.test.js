@@ -25,8 +25,8 @@ function loadJson(name) {
 function featureSurface(f) {
   return JSON.parse(
     JSON.stringify(f, (_key, value) => {
-      // The frozen extractor predates this internal provenance feature.
-      if (_key === "ordinaryEquivalenceBodyMatch") return undefined;
+      // The frozen extractor predates these internal provenance features.
+      if (_key === "ordinaryEquivalenceBodyMatch" || _key === "directBodyOccurrenceCount") return undefined;
       if (value instanceof Set) return [...value];
       if (value instanceof Map) return Object.fromEntries(value);
       return value;

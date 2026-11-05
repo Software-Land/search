@@ -17,7 +17,11 @@
  *   contextual-prefix    — contextualPrefixQuality only when both hits are contextual
  *   multi-concept body   — bodyLexicalMatch / lexicalConceptCoverage full bands
  *                          only when coverageConceptCount >= 2
- *   related-over-weak    — relationshipStrength; unigram configured mentions
+ *   related-over-weak    — relationshipStrength; directBodyOccurrenceCount band
+ *                          (0 unavailable, 1 single, 2+ repeated) for a
+ *                          zero-term neighbor versus a weak direct
+ *   topical-title        — directBodyOccurrenceCount band (0 / 1 / 2+);
+ *                          topicalPrimaryTitleMatch for an authored primary term
  * Those scalars are included in the key only when they can fire, so ordinary
  * non-exactish / non-contextual groups do not explode B toward C.
  * `relationshipStrength` is present because related-over-weak-direct reads it.
@@ -53,6 +57,16 @@ function prefixQualityBand(p: number) {
 function phraseCountBand(n: number) {
   if (!(n > 0)) return 0;
   if (n < REPEATED_BODY_PHRASE_MIN) return 1;
+  return 2;
+}
+
+/**
+ * 0 is uncomputed or absent, not one mention. 1 is the incidental single
+ * body the topical-title constraint can pass. 2+ stays with repeated evidence.
+ */
+function directBodyOccurrenceBand(n: number) {
+  if (!(n > 0)) return 0;
+  if (n === 1) return 1;
   return 2;
 }
 
@@ -112,6 +126,7 @@ export function constraintSignature(f: Partial<FeatureVector> | undefined) {
     bit(feat.canonicalKeyTitle),
     queryTokenBand(feat.queryTokenCount || 0),
     phraseCountBand(feat.bodyPhraseCount || 0),
+    directBodyOccurrenceBand(feat.directBodyOccurrenceCount || 0),
     bit(feat.exactTitleOrSummaryPhrase),
     bit(feat.ordinaryEquivalenceBodyMatch),
     multiConcept ? 1 : 0,
@@ -123,6 +138,7 @@ export function constraintSignature(f: Partial<FeatureVector> | undefined) {
     bit(feat.standaloneRecallMatch),
     bit(feat.topicalRecallMatch),
     bit(feat.topicalRecallTitleMatch),
+    bit(feat.topicalPrimaryTitleMatch),
     bit(feat.topicalRecallPhraseMatch),
     bit(feat.equivalentRecallMatch),
     bit(feat.equivalentRecallTitleMatch),

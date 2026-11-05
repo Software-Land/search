@@ -67,16 +67,36 @@ export function evaluateHistoricalRelevance(row, titles) {
   const missing = expectedTitles.filter(
     (title) => !window.some((got) => titleMatches(got, title))
   );
-  const ok = missing.length === 0 && window.length >= expectedTitles.length;
-  const missingDetails = missing.map((title) => classifyMissingTitle(title, allTitles, topN));
+  const within = Array.isArray(historical.within) ? historical.within : [];
+  const withinMissing = [];
+  for (const entry of within) {
+    const title = String(entry?.title || "");
+    if (!title) continue;
+    const entryTopN = Number(entry.topN) || HISTORICAL_RENDERED_LIMIT;
+    const entryWindow = rendered.slice(0, entryTopN);
+    if (!entryWindow.some((got) => titleMatches(got, title))) withinMissing.push(title);
+  }
+  const allMissing = [...missing, ...withinMissing];
+  const ok = missing.length === 0
+    && withinMissing.length === 0
+    && window.length >= expectedTitles.length;
+  const missingDetails = [
+    ...missing.map((title) => classifyMissingTitle(title, allTitles, topN)),
+    ...withinMissing.map((title) => {
+      const entry = within.find((item) => titleMatches(item?.title, title));
+      return classifyMissingTitle(title, allTitles, Number(entry?.topN) || HISTORICAL_RENDERED_LIMIT);
+    }),
+  ];
   const kinds = [...new Set(missingDetails.map((item) => item.kind))];
   if (!ok && !kinds.length) kinds.push("outside-topN");
   return {
     ok,
     query: row.query,
     index: row.index,
-    expected: { expectedTop: expectedTitles, topN },
-    missing,
+    expected: within.length
+      ? { expectedTop: expectedTitles, topN, within }
+      : { expectedTop: expectedTitles, topN },
+    missing: allMissing,
     missingDetails,
     window,
     kinds: ok ? [] : kinds,

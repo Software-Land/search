@@ -144,6 +144,7 @@ export function assembleDetailedResult({
     signaturesDiscovered: (timings.representativeStats as { signatures?: number } | null)?.signatures ?? 0,
     representativesInserted: (timings.representativeStats as { retained?: number } | null)?.retained ?? 0,
     representativesReplaced: 0,
+    // Historical diagnostic names for body posting pruning.
     stage3A: retrievalStats.stage3A ?? "off",
     stage3AFallbackReason: retrievalStats.stage3AFallbackReason ?? null,
     relatedCount: timings.relatedCount ?? relatedRanked.length,

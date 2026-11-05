@@ -314,7 +314,7 @@ describe("0.2.0 migration parity", () => {
       ],
       { lemma: morphology().lemma }
     );
-    expect(artifact.format).toBe("search-v2-lexical-frequency");
+    expect(artifact.format).toBe("search-lexical-frequency");
     expect(artifact.version).toBe(1);
     expect(artifact.policy).toEqual({ minN: 1, maxN: 2, minCollectionCount: 2 });
     expect(Object.keys(artifact.documents).sort()).toEqual(["a", "b", "c"]);

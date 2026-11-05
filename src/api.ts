@@ -128,7 +128,7 @@ export interface ExperimentalRetriever {
 export interface SearchEngineOptions {
   schema?: Schema;
   plugins?: SearchPlugin[];
-  /** Optional search-v2-lexical-index v1 artifact compiled for these documents. */
+  /** Optional `search-lexical-index` artifact with schema version 1, compiled for these documents. The pre-0.8.0 `search-v2-lexical-index` spelling is also accepted. */
   lexicalIndex?: LexicalIndexArtifact;
   documentRelationships?: RelationshipArtifact | null;
   relationshipStrategy?: RelationshipStrategy;
@@ -146,7 +146,7 @@ export interface SearchEngineOptions {
  * than a public runtime API.
  */
 export interface LexicalIndexArtifact {
-  format: "search-v2-lexical-index";
+  format: "search-lexical-index" | "search-v2-lexical-index";
   version: 1;
   compatibility: {
     core: string;
@@ -259,6 +259,7 @@ export interface SearchExplanation {
     topicalRecall?: {
       key: string;
       forms: string[][];
+      primaryForms?: string[][];
     } | null;
     equivalentRecall?: Array<{ source: string; target: string }>;
     configuredPrefixRecall?: {
@@ -342,6 +343,8 @@ export type RelationshipEndpoint =
 export interface AuthoredRelationshipEdge {
   to: RelationshipEndpoint;
   kind: RelationshipKind;
+  /** Related concept-to-form only. Selects a primary topical term. Not a weight. */
+  primaryTerm?: true;
 }
 
 export type RelationshipMap = Record<string, AuthoredRelationshipEdge[]>;
@@ -362,11 +365,11 @@ export interface CompiledAuthoredRelevance {
    */
   plugins: SearchPlugin[];
   /**
-   * Authored document→document edges as a `search-v2-relationships` artifact,
+   * Authored document→document edges as a `search-relationships` artifact with schema version 1,
    * or `null` when none were authored. Pass as `SearchEngine.create({ documentRelationships })`.
    * Combine with a generated semantic artifact via `mergeRelationships(semantic, authored.documentRelationships)`.
    */
-  documentRelationships: RelationshipArtifact | null;
+  documentRelationships: CompiledRelationshipArtifact | null;
 }
 
 export interface RelationshipEdge {
@@ -377,10 +380,13 @@ export interface RelationshipEdge {
 }
 
 export interface RelationshipArtifact {
-  format: "search-v2-relationships";
+  format: "search-relationships" | "search-v2-relationships";
   version: 1;
   relationships: Record<string, RelationshipEdge[]>;
 }
+
+/** Artifact written by this package. Readers also accept `search-v2-relationships`. */
+export type CompiledRelationshipArtifact = RelationshipArtifact & { format: "search-relationships" };
 
 export interface InvalidConfigurationError extends Error {
   field: string | null;

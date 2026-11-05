@@ -74,6 +74,44 @@ def _encode(model_name: str, texts: list[str]):
     )
 
 
+def embed_prepared(
+    prepared: list[dict],
+    *,
+    provider: str = "fastembed",
+    model_name: str,
+    cache_dir: Path,
+    dimensions: int | None = None,
+    preprocessing: str = "",
+    api_key: str | None = None,
+    api_base: str | None = None,
+    transport=None,
+    sleeper=None,
+):
+    """Embed prepared documents and return `(vectors, metadata)`.
+
+    `fastembed` is the default and does not read OpenAI credentials.
+    `openai` is explicit. A failure there does not call another provider.
+    """
+    name = provider or "fastembed"
+    if name == "fastembed":
+        return load_or_embed(prepared, model_name=model_name, cache_dir=cache_dir)
+    if name == "openai":
+        from lib.openai_embeddings import embed_openai
+
+        return embed_openai(
+            prepared,
+            model_name=model_name,
+            dimensions=dimensions,
+            cache_dir=cache_dir,
+            preprocessing=preprocessing,
+            api_key=api_key,
+            api_base=api_base,
+            transport=transport,
+            sleeper=sleeper,
+        )
+    raise SystemExit(f"unknown embedding provider {name}")
+
+
 def load_or_embed(prepared: list[dict], *, model_name: str, cache_dir: Path):
     import numpy as np
 

@@ -7,7 +7,7 @@ engine.searchDetailed(query, options?)  // { results, related, meta }
 engine.searchDetailedAsync(...)
 ```
 
-Invariant: `search(q, opts)` is semantically identical to `searchDetailed(q, opts).results`. Ranking, relationship, representative, and public result semantics are the same. Eligible ordinary `search()` / `searchAsync()` may execute via packed ranking-evidence views; `searchDetailed()` uses the diagnostic FeatureVector path and may additionally compute a full exact diagnostic plan for candidate titles, cycles, conflicts, and explanation successors.
+Invariant: `search(q, opts)` is semantically identical to `searchDetailed(q, opts).results`. Ranking, relationship, representative, and public result semantics are the same. Eligible ordinary `search()` / `searchAsync()` may execute via packed ranking-evidence views. `explain: true` on those calls disables packed ranking evidence and remains eligible for feature block pruning and body posting pruning. `searchDetailed()` / `searchDetailedAsync()` are exact diagnostics: they use the FeatureVector path, turn both pruning capabilities off, and may additionally compute a full exact diagnostic plan for candidate titles, cycles, conflicts, and explanation successors. Explicit exhaustive mode also turns those pruning capabilities off. `meta.stage3A` and `meta.stage3AFallbackReason` are historical diagnostic names for body posting pruning.
 
 `searchAsync` / `searchDetailedAsync` are the same algorithm with yields for cancellation. They must not change ordering.
 
@@ -113,9 +113,9 @@ SearchEngine.create({
 `CompiledAuthoredRelevance` has two supported fields:
 
 - `plugins` — the correctly ordered authored relevance plugins for `SearchEngine.create({ plugins: [morphology(), ...authored.plugins] })`
-- `documentRelationships` — compiled authored document→document edges as a `search-v2-relationships` artifact, or `null`
+- `documentRelationships` — compiled authored document→document edges as a `search-relationships` artifact with schema version 1, or `null`
 
-`relationshipMap` is directional. Kinds are `equivalent` and `related`. Endpoints are `{ form }`, `{ concept }`, or `{ document }`. `equivalent` edges are directional and do not auto-reverse. `qa → testing` does not imply `testing → qa`. When equivalence is symmetric, author both directions. Trusted corpus-mined accepted groups do this automatically by compiling each group into a bidirectional equivalent clique. Edges must not carry numeric weights. Equivalent edges do not rewrite typed tokens.
+`relationshipMap` is directional. Kinds are `equivalent` and `related`. Endpoints are `{ form }`, `{ concept }`, or `{ document }`. `equivalent` edges are directional and do not auto-reverse. `qa → testing` does not imply `testing → qa`. When equivalence is symmetric, author both directions. Trusted corpus-mined accepted groups do this automatically by compiling each group into a bidirectional equivalent clique. Edges must not carry numeric weights. Equivalent edges do not rewrite typed tokens. A single-token equivalent target still receives that word's surface and canonical-lemma forms, and those matches stay equivalent-recall evidence rather than typed coverage. Equivalent-body ties use unique matching occurrences before document id. Multiword equivalent targets stay a single phrase. A related form that uniquely names a configured concept also matches that concept's key and complete aliases, still as topical recall. The individual words of a multiword alias are not separate topical matches, and the target's own related concepts are not followed. A topical title can rank above an incidental single body mention. Repeated body evidence and stronger direct matches stay ahead, and a topical body mention without a title match stays behind direct matches.
 
 | Authored edge | Compiles onto |
 | --- | --- |
@@ -124,7 +124,7 @@ SearchEngine.create({
 | `related` concept → `{ form }` | existing topical-recall |
 | `related` document → `{ document }` | existing editorial relationship artifact (`type: editorial`, provenance `manual`, strength 1) |
 
-Complete authored relevance — equivalent recall, related standalone/topical forms, and editorial document edges — is `compileAuthoredRelevance({ configuredConcepts, relationshipMap, documents })`. Pass `...authored.plugins` and `authored.documentRelationships` to `SearchEngine.create`. Browser `SearchClient.init({ configuredConcepts, relationshipMap, documentRelationships })` uses that same full authored-relevance meaning. Generated MiniLM relationships stay in the separate semantic artifact; merge them with authored editorial edges via `mergeRelationships(semantic, authored.documentRelationships)`.
+Complete authored relevance — equivalent recall, related standalone/topical forms, and editorial document edges — is `compileAuthoredRelevance({ configuredConcepts, relationshipMap, documents })`. Pass `...authored.plugins` and `authored.documentRelationships` to `SearchEngine.create`. Browser `SearchClient.init({ configuredConcepts, relationshipMap, documentRelationships })` uses that same full authored-relevance meaning. Generated semantic relationships stay in the separate semantic artifact; merge them with authored editorial edges via `mergeRelationships(semantic, authored.documentRelationships)`. The default offline embedding provider is MiniLM. OpenAI is an optional build-time provider and is not used at search time.
 
 Directional equivalent recall is authored as `relationshipMap` `equivalent` edges and compiled by `compileAuthoredRelevance()`. Trusted corpus-mined groups compile to a bidirectional equivalent clique on `relationshipMap`.
 

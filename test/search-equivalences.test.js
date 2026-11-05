@@ -14,8 +14,8 @@ import {
 import { normalizeSearchEquivalences, MAX_SEARCH_EQUIVALENCE_TARGETS } from "../dist/query/synonyms.js";
 import { compileConfiguredConceptPlugin } from "../dist/relationships/configuredConcepts.js";
 import { analyzeQuery } from "../dist/query/analyze.js";
-import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
-import { coverageConcepts, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts } from "../dist/retrieval/retrieve.js";
+import { bodyPostingPruningUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
+import { coverageConcepts, equivalentRecallBodyOccurrenceCount, isSearchEquivalenceRecallConcept, searchEquivalenceRecallConcepts } from "../dist/retrieval/retrieve.js";
 import { compareConstraint } from "../dist/ranking/constraints.js";
 import { synonyms, deriveMorphologyEquivalenceLookup } from "../dist/query/synonyms.js";
 import { extractFeatures } from "../dist/features/features.js";
@@ -141,7 +141,7 @@ describe("directional search equivalences", () => {
     expect(q.concepts.some((c) => c.kind === "term" && c.forms.includes("testing"))).toBe(true);
     expect(q.concepts.some((c) => c.provenance === "synonym" && c.forms.includes("testing"))).toBe(true);
     expect(ids(indexedHits)).toEqual(expect.arrayContaining(["load", "software"]));
-    expect(stage3AUnsupportedReason(q)).not.toBeNull();
+    expect(bodyPostingPruningUnsupportedReason(q)).not.toBeNull();
 
     const eng = await engine({ retriever: "indexed" });
     const explained = eng.searchDetailed("qa", { limit: 50, explain: true }).results[0];
@@ -158,7 +158,7 @@ describe("directional search equivalences", () => {
     expect(q.configuredSequenceIntent).toBeNull();
     expect(q.equivalentRecall).toEqual([{ source: "quality assurance", target: "testing" }]);
     expect(ids(indexedHits)).toEqual(expect.arrayContaining(["load", "software"]));
-    expect(stage3AUnsupportedReason(q)).toBe("concept-provenance");
+    expect(bodyPostingPruningUnsupportedReason(q)).toBe("concept-provenance");
   });
 
   test("directionality is authored, not automatic", async () => {
@@ -382,7 +382,7 @@ describe("search-equivalence regression controls without synonyms", () => {
 });
 
 describe("search-equivalence memory envelope", () => {
-  test("map lookup stays O(1) per source and memory is small at V1 / 500 / 1000 keys", () => {
+  test("map lookup stays O(1) per source and memory is small at 76 / 500 / 1000 keys", () => {
     function measure(n, fanout) {
       const map = {};
       for (let i = 0; i < n; i++) {
@@ -397,10 +397,10 @@ describe("search-equivalence memory envelope", () => {
       expect(plugin.expand("missing")).toEqual([]);
       return { keys: n, edges: n * Math.min(fanout, MAX_SEARCH_EQUIVALENCE_TARGETS), jsonBytes };
     }
-    const v1 = measure(76, 2);
+    const smallMap = measure(76, 2);
     const mid = measure(500, 2);
     const large = measure(1000, 2);
-    expect(v1.jsonBytes).toBeLessThan(20_000);
+    expect(smallMap.jsonBytes).toBeLessThan(20_000);
     expect(mid.jsonBytes).toBeLessThan(80_000);
     expect(large.jsonBytes).toBeLessThan(160_000);
   });
@@ -493,7 +493,7 @@ describe("extra synonym recall vs merged ordinary-term synonyms", () => {
     expect(byId["testing-title"].features.equivalentRecallTitleMatch).toBe(true);
     expect(byId["testing-body"].retrievalSources).toContain("equivalent-recall");
     expect(byId["testing-body"].features.equivalentRecallBodyMatch).toBe(true);
-    expect(stage3AUnsupportedReason(q)).not.toBeNull();
+    expect(bodyPostingPruningUnsupportedReason(q)).not.toBeNull();
   });
 
   test("uncovered ordinary-term synonyms stay merged into the typed concept", async () => {
@@ -821,6 +821,138 @@ describe("morphology-aware directional search equivalences", () => {
       .results.find((row) => row.id === "security");
     expect(security.features.equivalentRecallBodyMatch).toBe(true);
     expect(security.features.ordinaryEquivalenceBodyMatch).toBe(false);
+  });
+
+  test("single-token equivalent targets share typed lemma forms and occurrence order", async () => {
+    const lemmas = { testing: "test", tests: "test", tested: "test", test: "test" };
+    const map = { alpha: ["testing"] };
+    const dict = [{ key: "alpha", aliases: [] }];
+    const familyDocs = [
+      { id: "only-test", title: "Notes", body: "a test passed" },
+      { id: "only-tests", title: "Notes", body: "many tests passed" },
+      { id: "only-tested", title: "Notes", body: "we tested it" },
+      { id: "a-once", title: "Notes", body: "one test here" },
+      { id: "z-many", title: "Notes", body: "test tests tested testing again" },
+      { id: "overlap", title: "Notes", body: "testing once" },
+      { id: "eq-title", title: "Testing Guide", body: "unrelated words" },
+      { id: "literal-title", title: "Alpha Primer", body: "unrelated words" },
+      { id: "literal-body", title: "Notes", body: "alpha once" },
+      { id: "beta-only", title: "Beta", body: "beta notes" },
+      { id: "plain", title: "Garden", body: "soil moisture" },
+    ];
+    const pluginOpts = { dict, map, lemmas, docs: familyDocs };
+    const { indexed, indexedHits } = await assertIndexedFullScan("alpha", pluginOpts);
+    const order = ids(indexedHits);
+    expect(order).toEqual(expect.arrayContaining(["only-test", "only-tests", "only-tested", "a-once", "z-many", "overlap", "eq-title", "literal-title", "literal-body"]));
+    expect(order).not.toContain("beta-only");
+    expect(order).not.toContain("plain");
+    expect(order.indexOf("literal-title")).toBeLessThan(order.indexOf("eq-title"));
+    expect(order.indexOf("literal-body")).toBeLessThan(order.indexOf("eq-title"));
+    expect(order.indexOf("literal-body")).toBeLessThan(order.indexOf("z-many"));
+    expect(order.indexOf("eq-title")).toBeLessThan(order.indexOf("z-many"));
+    expect(order.indexOf("z-many")).toBeLessThan(order.indexOf("a-once"));
+
+    const q = analyzeQuery("alpha", { plugins: plugins({ dict, map, lemmas }) });
+    const recall = searchEquivalenceRecallConcepts(q);
+    expect(recall.map((concept) => concept.id)).toEqual(["testing"]);
+    expect(recall[0].provenance).toBe("synonym");
+    expect(recall[0].forms).toEqual(expect.arrayContaining(["testing", "test"]));
+    expect(q.equivalentRecall).toEqual([{ source: "alpha", target: "testing" }]);
+    expect(q.tokens.map((token) => token.normalized)).toEqual(["alpha"]);
+
+    const detailed = indexed.searchDetailed("alpha", { limit: 20, explain: true }).results;
+    const byId = Object.fromEntries(detailed.map((row) => [row.id, row]));
+    for (const id of ["only-test", "only-tests", "only-tested", "z-many", "overlap", "a-once"]) {
+      expect(byId[id].retrievalSources).toEqual(["equivalent-recall"]);
+      expect(byId[id].features.queryCoverage).toBe(0);
+      expect(byId[id].features.bodyLexicalMatch).toBe(0);
+      expect(byId[id].features.bodyPhraseCount).toBe(0);
+      expect(byId[id].features.directClass).toBe("none");
+      expect(byId[id].features.equivalentRecallMatch).toBe(true);
+      expect(byId[id].features.equivalentRecallBodyMatch).toBe(true);
+      expect(byId[id].features.equivalentRecallTitleMatch).toBe(false);
+    }
+    expect(byId["z-many"].features.equivalentRecallBodyOccurrenceCount).toBe(4);
+    expect(byId["a-once"].features.equivalentRecallBodyOccurrenceCount).toBe(1);
+    expect(byId["overlap"].features.equivalentRecallBodyOccurrenceCount).toBe(1);
+    expect(byId["eq-title"].features.equivalentRecallTitleMatch).toBe(true);
+    expect(byId["literal-title"].features.exactTitleTokenMatch || byId["literal-title"].features.queryCoverage).toBeTruthy();
+    const overlapDoc = indexed._index.documents.find((doc) => doc.id === "overlap");
+    expect(equivalentRecallBodyOccurrenceCount(q, overlapDoc)).toBe(1);
+
+    const typed = analyzeQuery("testing", { plugins: plugins({ dict, map, lemmas }) });
+    expect(searchEquivalenceRecallConcepts(typed)).toEqual([]);
+    expect(typed.tokens.map((token) => token.normalized)).toEqual(["test"]);
+    const typedHits = indexed.searchDetailed("testing", { limit: 20, explain: true }).results;
+    const typedTest = typedHits.find((row) => row.id === "only-test");
+    expect(typedTest.retrievalSources).toEqual(["body-lexical"]);
+    expect(typedTest.features.bodyLexicalMatch).toBe(1);
+    expect(typedTest.features.directClass).toBe("weak");
+    expect(typedTest.features.queryCoverage).toBe(0);
+    expect(typedTest.features.equivalentRecallMatch).toBeFalsy();
+    expect(typedHits.map((row) => row.id)).not.toContain("literal-title");
+
+    const reverse = await assertIndexedFullScan("testing", pluginOpts);
+    expect(ids(reverse.indexedHits)).not.toContain("literal-body");
+
+    const cascade = { alpha: ["testing"], testing: ["beta"] };
+    const cascaded = await assertIndexedFullScan("alpha", { ...pluginOpts, map: cascade });
+    expect(ids(cascaded.indexedHits)).not.toContain("beta-only");
+    expect(analyzeQuery("alpha", { plugins: plugins({ dict, map: cascade, lemmas }) }).equivalentRecall).toEqual([
+      { source: "alpha", target: "testing" },
+    ]);
+
+    const phrase = analyzeQuery("alpha", {
+      plugins: plugins({ dict, map: { alpha: ["unit testing"] }, lemmas }),
+    });
+    expect(searchEquivalenceRecallConcepts(phrase)[0].forms).toEqual(["unit testing"]);
+  });
+
+  test("an unconfigured equivalent target uses the same morphology as the typed word", async () => {
+    const lemmas = { testing: "test", tests: "test", test: "test" };
+    const authored = compileAuthoredRelevance({
+      configuredConcepts: [],
+      relationshipMap: { alpha: [{ kind: "equivalent", to: { form: "testing" } }] },
+    });
+    const family = [
+      { id: "body-test", title: "Notes", body: "a test passed" },
+      { id: "body-testing", title: "Notes", body: "unit testing notes" },
+      { id: "body-tests", title: "Notes", body: "many tests passed" },
+      { id: "plain", title: "Garden", body: "soil moisture" },
+    ];
+    const orders = [];
+    for (const retriever of ["indexed", "full-scan"]) {
+      const eng = SearchEngine.create({
+        schema,
+        plugins: [morphology({ lemmas }), ...authored.plugins],
+        retriever,
+        relationshipStrategy: "none",
+      });
+      await eng.index(family);
+      const detailed = eng.searchDetailed("alpha", { limit: 20, explain: true });
+      const found = detailed.results.map((row) => row.id);
+      expect(found).toEqual(expect.arrayContaining(["body-test", "body-testing", "body-tests"]));
+      expect(found).not.toContain("plain");
+      const byId = Object.fromEntries(detailed.results.map((row) => [row.id, row]));
+      for (const id of ["body-test", "body-tests"]) {
+        expect(byId[id].retrievalSources).toEqual(["equivalent-recall"]);
+        expect(byId[id].features.queryCoverage || 0).toBe(0);
+        expect(byId[id].features.bodyLexicalMatch || 0).toBe(0);
+        expect(byId[id].features.equivalentRecallBodyMatch).toBe(true);
+      }
+      expect(byId["body-testing"].retrievalSources).toEqual(expect.arrayContaining(["equivalent-recall"]));
+      expect(byId["body-testing"].features.equivalentRecallBodyMatch).toBe(true);
+      const analyzed = eng._prepareQuery("alpha");
+      const recall = searchEquivalenceRecallConcepts(analyzed);
+      expect(recall.map((concept) => concept.id)).toEqual(["testing"]);
+      expect(recall[0].forms).toEqual(expect.arrayContaining(["testing", "test"]));
+      expect(analyzed.equivalentRecall).toEqual([{ source: "alpha", target: "testing" }]);
+      expect(analyzed.tokens.map((token) => token.normalized)).toEqual(["alpha"]);
+      const typed = eng.search("testing", { limit: 20 }).map((row) => row.id);
+      expect(typed).toEqual(expect.arrayContaining(["body-test", "body-testing", "body-tests"]));
+      orders.push(found);
+    }
+    expect(orders[0]).toEqual(orders[1]);
   });
 
   test("lookup map does not grow an authored shard key", () => {

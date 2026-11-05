@@ -14,25 +14,25 @@ The mixed generator plants rare exact titles, version/dotted-span documents, a c
 
 Full-scan at N=25k is an explicit reference only. Do not describe it as scalable. Default `full-scan-max-n` is 5000; pass `--n 25000` without `--skip-full-scan` only when you intend to wait.
 
-Exact indexed retrieval enumerates all legitimate posting matches and reconstructs exact ranking state. Eligible ordinary `search()` uses packed ranking-evidence views; diagnostic and fallback paths reconstruct FeatureVectors. `candidateLimit` remains accepted for compatibility but does not truncate this path. Stage 2A may reject full FeatureVector work for proven single-token body-only document blocks; it does not skip posting entries.
+Exact indexed retrieval enumerates all legitimate posting matches and reconstructs exact ranking state. Eligible ordinary `search()` uses packed ranking-evidence views; diagnostic and fallback paths reconstruct FeatureVectors. `candidateLimit` remains accepted for compatibility but does not truncate this path. Feature block pruning may avoid full feature calculation for proven single-token body-only document blocks; it does not skip posting entries.
 
 The permanent pressure harness also covers quality, artifact size, build/load cost, and posting instrumentation:
 
 ```bash
 node scripts/budget-pressure.mjs --suite mixed --sizes 500,1000,2000,5000,10000,25000
 node scripts/budget-pressure.mjs --suite software-land --floods 400,1000,5000
-node --expose-gc scripts/budget-pressure.mjs --suite stage1 --sizes 1000,5000,10000,25000
+node --expose-gc scripts/budget-pressure.mjs --suite exact-compiled --sizes 1000,5000,10000,25000
 node --expose-gc scripts/exact-pruning-bench.mjs --sizes 1000,5000,10000,25000
 ```
 
-The `stage1` report includes posting entries visited, distinct documents examined, raw-document scans, signatures, retained candidates, retrieve/feature/select/rank timing, deterministic artifact bytes, compile/load time, and process memory snapshots. Timing uses warmup plus several same-run iterations and reports p50 (and p90 where present). Absolute milliseconds are observational and are not comparable across machines or days; a previous ~169 → ~126 ms Stage-1 sample is methodology/hardware noise, not a semantic regression. A/B byte projections are not claims that unimplemented browser loaders have measured heap or latency. Timing and RSS are not CI thresholds.
+The exact-compiled report is written under the compatibility JSON key `stage1`. It includes posting entries visited, distinct documents examined, raw-document scans, signatures, retained candidates, retrieve/feature/select/rank timing, deterministic artifact bytes, compile/load time, and process memory snapshots. `--suite stage1` runs the same suite. Timing uses warmup plus several same-run iterations and reports p50 (and p90 where present). Absolute milliseconds are observational and are not comparable across machines or days; a previous ~169 → ~126 ms exact compiled retrieval sample is methodology/hardware noise, not a semantic regression. A/B byte projections are not claims that unimplemented browser loaders have measured heap or latency. Timing and RSS are not CI thresholds. `scripts/posting-work-audit.mjs` is the posting audit; `scripts/stage2b-posting-audit.mjs` forwards to it and keeps the `stage2a` / `stage2b` JSON keys.
 
 Compact-runtime heap and same-run latency:
 
 ```bash
 node --expose-gc scripts/heap-attribution.mjs --n 25000
 node --expose-gc scripts/compact-runtime-bench.mjs --sizes 1000,5000,10000,25000
-node scripts/phrase-compare-bench.mjs --dist ./dist --label 2C
+node scripts/phrase-compare-bench.mjs --dist ./dist --label compact-runtime
 node --expose-gc scripts/phrase-profile.mjs --n 25000
 # Counterfactual only; does not change production evaluation:
 node scripts/lazy-feature-profile.mjs --n 25000
@@ -40,7 +40,7 @@ node scripts/lazy-feature-profile.mjs --n 25000
 
 See [compact-runtime.md](../../docs/compact-runtime.md). Timing and match counts from those harnesses are observational, not SLAs.
 
-The Stage-2A report runs exhaustive and pruned compiled modes on identical corpora and records exact output equality, posting visits/skips, document blocks, full feature evaluations, bound rejections, timings, artifact/load cost, and metadata bytes for 32/64/128/256-document layouts. The implemented layout is 128. Posting skips are expected to remain zero in Stage 2A.
+The feature block pruning report runs exhaustive and pruned compiled modes on identical corpora and records exact output equality, posting visits and skips, document blocks, full feature evaluations, bound rejections, timings, artifact and load cost, and metadata bytes for 32/64/128/256-document layouts. The implemented layout is 128. Posting skips are expected to remain zero for feature block pruning.
 
 Packed Chromium page-plus-Worker memory is opt-in because Chromium's experimental measurement API can take tens of seconds:
 

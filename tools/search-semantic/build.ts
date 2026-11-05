@@ -3,7 +3,7 @@
  *
  *   node tools/search-semantic/build.mjs --input corpus.json --output graph.json --method combined
  */
-import { compileSemantic, DEFAULT_METHOD, DEFAULT_MIN_SCORE, DEFAULT_MODEL, DEFAULT_REPRESENTATION, DEFAULT_TOP_K } from "./index.js";
+import { compileSemantic, DEFAULT_METHOD, DEFAULT_MIN_SCORE, DEFAULT_MODEL, DEFAULT_REPRESENTATION, DEFAULT_TOP_K, resolveEmbeddingProvider } from "./index.js";
 
 function arg(flag: string, fallback: string | null = null): string | null {
   const i = process.argv.indexOf(flag);
@@ -11,15 +11,30 @@ function arg(flag: string, fallback: string | null = null): string | null {
   return process.argv[i + 1] || fallback;
 }
 
+function embeddingProviderArg(): string | undefined {
+  const flag = "--embedding-provider";
+  const i = process.argv.indexOf(flag);
+  if (i === -1) return undefined;
+  const value = process.argv[i + 1];
+  if (!value || value.startsWith("-")) {
+    throw new Error(`Missing value for ${flag}. Supported embedding providers: fastembed, openai.`);
+  }
+  return value;
+}
+
 async function runCli(): Promise<void> {
   if (process.argv.includes("--help")) {
     console.log(`Usage:
   node tools/search-semantic/build.mjs --input corpus.json --output graph.json [--method embedding] [--precision-gate] [--mutual]
+  node tools/search-semantic/build.mjs --input corpus.json --output graph.json --method embedding --embedding-provider openai --model text-embedding-3-large --dimensions 3072
 
 Runs the packaged Python builder. Search Core never imports this tool.
+The default embedding provider is fastembed. OpenAI is opt-in and reads OPENAI_API_KEY.
+OpenAI tokenizer ranks are cached at build/search-semantic/tokenizers/ under the current directory unless TIKTOKEN_CACHE_DIR or DATA_GYM_CACHE_DIR is set. Deleting the project's build directory removes that cache.
 `);
     return;
   }
+  const embeddingProvider = resolveEmbeddingProvider(embeddingProviderArg());
   const input = arg("--input");
   const output = arg("--output");
   if (!input || !output) {
@@ -33,7 +48,10 @@ Runs the packaged Python builder. Search Core never imports this tool.
     representation: arg("--representation", DEFAULT_REPRESENTATION) || DEFAULT_REPRESENTATION,
     topK: Number(arg("--top-k", String(DEFAULT_TOP_K))),
     minScore: Number(arg("--min-score", String(DEFAULT_MIN_SCORE))),
-    model: arg("--model", DEFAULT_MODEL) || DEFAULT_MODEL,
+    model: arg("--model") || undefined,
+    embeddingProvider,
+    dimensions: arg("--dimensions") ? Number(arg("--dimensions")) : undefined,
+    apiBase: arg("--openai-api-base") || undefined,
     cacheDir: arg("--cache-dir") || undefined,
     venvDir: arg("--venv-dir") || undefined,
     pythonPath: arg("--python") || undefined,

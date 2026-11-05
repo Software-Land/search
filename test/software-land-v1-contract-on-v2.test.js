@@ -1,10 +1,13 @@
 /**
- * V2 against the OSS-mirrored Software.Land V1 historical top-N contract.
+ * Historical V1 top-N membership contract, evaluated by this package's SearchEngine.
  *
- * Runs the current OSS V2 SearchEngine against every enforced row in the
- * complete 223-row OSS historical mirror (Software.Land source has 224 rows;
- * overlay-owned `integ` is excluded). Enforced count is 222.
- * This is not a V1 engine test and not the broader Software.Land 320 suite.
+ * "V1" in this filename is the historical top-N expectation generation. "V2" is
+ * the engine generation that comparison measured. Artifact schema version is the
+ * integer `version` field on a serialized artifact.
+ * Runs SearchEngine against every enforced row in the complete 215-row historical
+ * mirror (Software.Land source has 216 rows; overlay-owned `integ` is excluded).
+ * Enforced count is 214. This is not a historical-engine adapter and not the
+ * broader Software.Land 320 suite.
  */
 import { SearchEngine, morphology, compileAuthoredRelevance } from "../dist/index.js";
 import { attachLexicalFrequency } from "../tools/search-lexical/index.js";
@@ -34,7 +37,7 @@ const {
   schema,
 } = loadSoftwareLandRelevanceInputs();
 
-function createV2Engine() {
+function createHistoricalContractEngine() {
   const compiled = compileAuthoredRelevance({
     configuredConcepts,
     relationshipMap,
@@ -53,7 +56,7 @@ describe("V2 against V1 historical top-N contract", () => {
   const recorded = [];
 
   beforeAll(async () => {
-    engine = createV2Engine();
+    engine = createHistoricalContractEngine();
     await engine.index(attachLexicalFrequency(documents, lexicalFrequency));
   });
 
@@ -74,7 +77,7 @@ describe("V2 against V1 historical top-N contract", () => {
     }
   });
 
-  test("inventory is the complete 223-row OSS historical mirror with exactly one obsolete C row", () => {
+  test("inventory is the complete 215-row OSS historical mirror with exactly one obsolete C row", () => {
     expect(historical.rows).toHaveLength(V1_HISTORICAL_TOPN_INVENTORY_COUNT);
     expect(contract.inventoryCount).toBe(V1_HISTORICAL_TOPN_INVENTORY_COUNT);
     expect(contract.enforcedCount).toBe(V1_HISTORICAL_TOPN_ENFORCED_COUNT);
@@ -129,16 +132,12 @@ describe("V2 against V1 historical top-N contract", () => {
 
   test("NIST prefix family mirrors Software.Land v1 expectedTop/topN", () => {
     const nist = [
-      ["national", 2],
-      ["national i", 2],
-      ["national in", 2],
-      ["national institute", 1],
-      ["national institute o", 1],
-      ["national institute of", 1],
-      ["national institute o s", 1],
-      ["national institute of s", 1],
+      ["national institute of standards and technology", 122, 1],
+      ["national institute of stan", 123, 1],
+      ["national institute of standards and tec", 124, 1],
+      ["national institute of standard", 125, 1],
     ];
-    for (const [query, topN] of nist) {
+    for (const [query, index, topN] of nist) {
       const historicalRow = historical.rows.find((row) => row.query === query);
       const contractRow = contract.rows.find((row) => row.query === query);
       expect(historicalRow?.v1).toEqual({
@@ -146,15 +145,27 @@ describe("V2 against V1 historical top-N contract", () => {
         topN,
       });
       expect(contractRow).toEqual({
-        index: historicalRow.index,
+        index,
         query,
         expectedTop: ["TLS 1.2 Vulnerability"],
         titlePrefix: null,
         topN,
       });
     }
-    expect(historical.rows.some((row) => row.query === "national institute x")).toBe(false);
-    expect(contract.rows.some((row) => row.query === "national institute x")).toBe(false);
+    for (const query of [
+      "national",
+      "national i",
+      "national in",
+      "national institute",
+      "national institute o",
+      "national institute of",
+      "national institute o s",
+      "national institute of s",
+      "national institute x",
+    ]) {
+      expect(historical.rows.some((row) => row.query === query)).toBe(false);
+      expect(contract.rows.some((row) => row.query === query)).toBe(false);
+    }
   });
 
   test.each(contract.rows.map((row) => [row.index, row.query, row]))(

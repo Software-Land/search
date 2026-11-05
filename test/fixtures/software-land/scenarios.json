@@ -1,13 +1,15 @@
 {
   "notes": [
     "Software.Land-derived realistic integration test data. It is not default package policy.",
-    "v2-contracts.json is the strict accepted V2 contract set.",
+    "strict-contracts.json is the strict accepted contract set.",
     "regression-scenarios.json is B-class independent-intent compatibility coverage, not Core ranking policy.",
     "historical-scenarios.json is the OSS historical inventory (source rows minus historical exclusions; currently integ). v1.expectedTop/titlePrefix/topN are executable historical relevance contracts (membership within topN).",
     "disposition describes V2-intent mining, not relevance-suite inclusion. Classification C is omitted from relevance.",
     "V2 intent contracts do not replace historical expectedTop.",
     "Empty-intent rows are not mined into V2 intent/regression cases.",
-    "integ is the historical exclusion and is not mined into V2 contracts. Supplementary regression overlays stay in the historical inventory."
+    "integ is the historical exclusion and is not mined into V2 contracts. Supplementary regression overlays stay in the historical inventory.",
+    "Typing-session labels and query-sequence labels are browser-only. They are not executable queries. Assertion-free keystrokes and clear are not executable coverage.",
+    "what is an appli stays out of regression mining: its recorded B intent still requires What is an API? first, which is a package-only omission. Its historical v1 contract is the source visible-ten policy."
   ],
   "source": {
     "files": [
@@ -17,35 +19,36 @@
     "policy": "A-class independent intent + SEARCH_V2_CONTRACTS; B-intent regressions are compatibility coverage only"
   },
   "counts": {
-    "sourceScenarioRows": 224,
-    "distinctQueries": 194,
+    "sourceScenarioRows": 216,
+    "distinctQueries": 186,
     "v2ApplicableRows": 90,
-    "v2Contracts": 19,
-    "executableContracts": 102,
-    "executableRegressions": 60,
-    "historicalRows": 223,
-    "historicalRelevanceApplicable": 222,
+    "v2Contracts": 50,
+    "executableContracts": 135,
+    "executableRegressions": 54,
+    "historicalRows": 215,
+    "historicalRelevanceApplicable": 214,
     "omittedObsolete": 1,
-    "omittedEmptyIntent": 51,
-    "omittedCoveredByContract": 16,
+    "omittedEmptyIntent": 43,
+    "omittedCoveredByContract": 26,
     "omittedBIntentNotCurrentV2": 1,
     "omittedDuplicateA": 6,
-    "omittedDuplicateB": 5,
-    "omittedBrowserUiOnly": 1,
+    "omittedDuplicateB": 1,
+    "omittedBrowserUiOnly": 3,
+    "browserHrefChecks": 28,
     "omittedOverlayOwned": 1
   },
   "dispositionCounts": {
-    "omitted-covered-by-v2-contract": 16,
+    "omitted-covered-by-v2-contract": 26,
     "contract-a-intent": 83,
-    "regression-b-intent": 60,
-    "omitted-empty-intent-observational-v1": 51,
-    "omitted-duplicate-b-intent": 5,
+    "regression-b-intent": 54,
+    "omitted-empty-intent-observational-v1": 43,
     "omitted-duplicate-a-intent": 6,
     "omitted-b-intent-not-current-v2": 1,
+    "omitted-duplicate-b-intent": 1,
     "omitted-obsolete": 1
   },
   "files": {
-    "v2-contracts.json": "Strict accepted V2 cases (kind: contract).",
+    "strict-contracts.json": "Strict accepted contract cases (kind: contract).",
     "regression-scenarios.json": "B-intent regression/reference cases (kind: regression).",
     "historical-scenarios.json": "OSS historical inventory; expectedTop/titlePrefix are executable historical relevance contracts. Historical exclusion integ is omitted. Supplementary regression overlays are not."
   }

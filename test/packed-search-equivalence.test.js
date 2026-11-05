@@ -155,7 +155,7 @@ function generatedQueries(documents, count, seed) {
 }
 
 describe("packed search() public equivalence", () => {
-  test("Software.Land historical/v1/v2/regression inventory matches searchDetailed", async () => {
+  test("Software.Land historical, strict-contract, and regression inventory matches searchDetailed", async () => {
     const {
       documents,
       configuredConcepts,
@@ -195,17 +195,17 @@ describe("packed search() public equivalence", () => {
         [
           ...historical.rows,
           ...enforcedV1HistoricalTopNRows(historical.rows),
-          ...frozenCorpusScenarioRows(loadSoftwareLandJson("v2-contracts.json")),
+          ...frozenCorpusScenarioRows(loadSoftwareLandJson("strict-contracts.json")),
           ...frozenCorpusScenarioRows(loadSoftwareLandJson("regression-scenarios.json")),
         ]
           .map((row) => row.query)
           .filter(Boolean)
       ),
     ];
-    expect(loadSoftwareLandJson("v2-contracts.json").overlayCases.map((row) => row.query)).toEqual(fenwickQueries);
+    expect(loadSoftwareLandJson("strict-contracts.json").overlayCases.map((row) => row.query)).toEqual(fenwickQueries);
     expect(fenwickQueries.filter((query) => !queries.includes(query))).toEqual([]);
-    expect(queries.filter((query) => !fenwickQueries.includes(query))).toHaveLength(199);
-    expect(queries.length).toBe(207);
+    expect(queries.filter((query) => !fenwickQueries.includes(query))).toHaveLength(214);
+    expect(queries.length).toBe(222);
 
     let packed = 0;
     let fallback = 0;
@@ -228,7 +228,7 @@ describe("packed search() public equivalence", () => {
     expect(publicRows(asyncRows)).toEqual(publicRows(syncRows));
 
     expect(mismatches).toBe(0);
-    expect(packed + fallback).toBe(207);
+    expect(packed + fallback).toBe(222);
 
     const adversarial = generatedQueries(indexedDocuments, 200, SEED ^ 0x51);
     expect(adversarial).toHaveLength(200);
@@ -242,7 +242,7 @@ describe("packed search() public equivalence", () => {
 
     // eslint-disable-next-line no-console
     console.log(JSON.stringify({
-      packedSearchSoftwareLand: { queries: 207, packed, fallback, mismatches: 0 },
+      packedSearchSoftwareLand: { queries: 222, packed, fallback, mismatches: 0 },
       packedSearchSoftwareLandGenerated: {
         queries: 200,
         packed: generatedPacked,

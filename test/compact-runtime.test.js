@@ -1,5 +1,5 @@
 /**
- * Stage 2C: compact compiled documents must match the fat IndexedDocument
+ * Compact lexical runtime: compact compiled documents must match the fat IndexedDocument
  * feature/search surface. Heap numbers are observational, not CI gates.
  */
 import fs from "node:fs";
@@ -117,7 +117,7 @@ describe("compact compiled lexical runtime", () => {
     }
   });
 
-  test("Stage 2A/2B counters remain observable on the compact path", () => {
+  test("feature block pruning and duplicate posting-list counters remain observable on the compact path", () => {
     const detailed = compact._searchDetailedSync("the", { limit: 10, relatedLimit: 0 }, false);
     expect(typeof detailed.meta.postingEntriesVisited).toBe("number");
     expect(typeof detailed.meta.postingEntriesSkipped).toBe("number");

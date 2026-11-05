@@ -4,6 +4,7 @@ dist/
 .DS_Store
 
 # Generated output (test-oracle JS is build/test/oracles/; source is test/oracles/*.ts)
+# OpenAI cl100k ranks, when acquired, live at build/search-semantic/tokenizers/
 build/
 
 # Generated emit for TypeScript-migrated tools (source of truth is *.ts)

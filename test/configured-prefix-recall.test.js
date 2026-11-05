@@ -10,7 +10,7 @@ import { compileLexicalIndex } from "../dist/indexing/lexicalIndex.js";
 import { packedSearchFallbackReason } from "../dist/ranking/evidence/rankingEvidenceSearch.js";
 import { rankingEvidenceEligibilityReason } from "../dist/ranking/evidence/rankingEvidencePlan.js";
 import { rankingEvidenceStaticFor } from "../dist/ranking/evidence/rankingEvidenceState.js";
-import { stage3AUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
+import { bodyPostingPruningUnsupportedReason } from "../dist/retrieval/exactBlockSkip.js";
 import { createSearchClient, createWorkerRuntime, createLoopbackTransport } from "../dist/browser/index.js";
 import { loadSoftwareLandRelevanceInputs } from "./helpers/software-land-fixture.js";
 
@@ -423,8 +423,8 @@ describe("configured prefix recall retrieval and scoring", () => {
     expect(query.configuredPrefixRecall?.key).toBe("nist");
     expect(rankingEvidenceEligibilityReason(query, rankingEvidenceStaticFor(e._index))).toBe("configured-prefix-recall");
     const two = e._prepareQuery("national in");
-    expect(stage3AUnsupportedReason(query)).toBe("token-count");
-    expect(stage3AUnsupportedReason(two)).toBe("configured-prefix-recall");
+    expect(bodyPostingPruningUnsupportedReason(query)).toBe("token-count");
+    expect(bodyPostingPruningUnsupportedReason(two)).toBe("configured-prefix-recall");
     expect(
       packedSearchFallbackReason({
         exactDiagnostics: false,

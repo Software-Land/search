@@ -1,11 +1,11 @@
 {
   "kind": "software-land-authored-relationship-map",
   "notes": [
-    "Runtime relationship map consumed by Software.Land Search V2 at the corpus snapshot.",
-    "Base map is src/search/relationshipMap.js. LIVE_SEARCH_EQUIVALENCE_MAP is composed onto it the same way compileSoftwareLandAuthoredRelevance does before SearchEngine.create.",
-    "The four generated equivalent pairs (access control middleware, asymmetric information, free code camp review, i o) come from the snapshot generated-search-equivalences artifact. synonym-map.json remains the older db5a070 provenance snapshot and is not this map.",
-    "hypertext → http related is an authored relationshipMap.js edge included with this refresh.",
-    "Explicit fixture input. Not a Search Core default. Generated MiniLM document relationships remain in relationships.json."
+    "Runtime relationship map consumed by Software.Land Search V2 at this corpus snapshot.",
+    "Base map is src/search/relationshipMap.js. Live search-equivalence pairs are composed onto it by composeLiveEquivalencesIntoRelationshipMap before SearchEngine.create.",
+    "Includes the authored API primary-term edge, the DFS related edge to minimax, the AI related edge to embeddings, and the ordinary AppSec related edge to security.",
+    "synonym-map.json remains the older db5a070 provenance snapshot and is not this map.",
+    "Explicit fixture input. Not a Search Core default. Compiled document relationships remain in relationships.json."
   ],
   "map": {
     "a*": [
@@ -30,6 +30,26 @@
         }
       }
     ],
+    "ai": [
+      {
+        "kind": "related",
+        "to": {
+          "form": "large language model"
+        }
+      },
+      {
+        "kind": "related",
+        "to": {
+          "form": "machine learning"
+        }
+      },
+      {
+        "kind": "related",
+        "to": {
+          "form": "embeddings"
+        }
+      }
+    ],
     "analytical": [
       {
         "kind": "equivalent",
@@ -44,6 +64,15 @@
         "to": {
           "form": "olap"
         }
+      }
+    ],
+    "api": [
+      {
+        "kind": "related",
+        "to": {
+          "form": "interface"
+        },
+        "primaryTerm": true
       }
     ],
     "appsec": [
@@ -105,6 +134,12 @@
             "signed",
             "cookies"
           ]
+        }
+      },
+      {
+        "kind": "related",
+        "to": {
+          "form": "security"
         }
       }
     ],
@@ -396,6 +431,14 @@
         }
       }
     ],
+    "dfs": [
+      {
+        "kind": "related",
+        "to": {
+          "form": "minimax"
+        }
+      }
+    ],
     "docker": [
       {
         "kind": "equivalent",
@@ -592,6 +635,20 @@
         }
       }
     ],
+    "llm": [
+      {
+        "kind": "related",
+        "to": {
+          "form": "machine learning"
+        }
+      },
+      {
+        "kind": "related",
+        "to": {
+          "form": "artificial intelligence"
+        }
+      }
+    ],
     "load": [
       {
         "kind": "equivalent",
@@ -624,19 +681,17 @@
         }
       }
     ],
-    "minimax": [
+    "ml": [
       {
-        "kind": "equivalent",
+        "kind": "related",
         "to": {
-          "form": "minmax"
+          "form": "large language model"
         }
-      }
-    ],
-    "minmax": [
+      },
       {
-        "kind": "equivalent",
+        "kind": "related",
         "to": {
-          "form": "minimax"
+          "form": "artificial intelligence"
         }
       }
     ],

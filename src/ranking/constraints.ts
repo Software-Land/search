@@ -209,7 +209,7 @@ function isWeakDirect(f: Partial<FeatureVector>) {
 
 /**
  * Hybrid: strong/moderate directs outrank related. Related outrank weak
- * directs that lack repeated compiled body-phrase evidence.
+ * directs that lack an established repeated occurrence count.
  */
 function hybridDirectOverRelatedConstraint(a: FeaturedHit, b: FeaturedHit) {
   const aRel = a.features.relevanceKind === "related";
@@ -221,12 +221,16 @@ function hybridDirectOverRelatedConstraint(a: FeaturedHit, b: FeaturedHit) {
 }
 
 /**
- * Related neighbors outrank weak/incidental directs. Exemptions stay unordered:
- * - repeated compiled body-phrase evidence that is not a unigram configured mention
- * - ordinary equivalence-backed body match
- * - weak-direct whose query-anchored relationshipStrength is at least as strong
- *   as the related candidate (orthogonal hybrid neighborhood)
- * Neither exemption promotes the weak-direct to moderate.
+ * Related neighbors outrank weak/incidental directs unless the weak direct has
+ * an established repeated occurrence count. A count of 0 is uncomputed or
+ * absent, not one mention, and does not qualify. bodyPhraseCount is not a
+ * second counter for this order.
+ *
+ * The repeated case is strict: a zero-term related neighbor stays behind even
+ * when relationshipStrength would otherwise score higher. Neighbors that also
+ * carry direct, equivalent, or topical evidence are not zero-term and keep the
+ * earlier exemptions (unordered phrase, equivalence body, or equal-or-stronger
+ * relationship support). Neither path promotes the weak direct to moderate.
  */
 function hasConfiguredMention(f: Partial<FeatureVector>) {
   const evid = f.configuredConceptFieldEvidence;
@@ -243,7 +247,55 @@ function hasEquivalenceBodyMatch(f: Partial<FeatureVector>) {
   return Boolean(f.ordinaryEquivalenceBodyMatch);
 }
 
+function hasEstablishedRepeatedDirectOccurrences(f: Partial<FeatureVector>) {
+  const count = f.directBodyOccurrenceCount;
+  return typeof count === "number" && Number.isFinite(count) && count >= REPEATED_BODY_PHRASE_MIN;
+}
+
+export function isZeroTermRelatedNeighbor(f: Partial<FeatureVector>) {
+  if (f.relevanceKind !== "related") return false;
+  if (f.equivalentRecallMatch || f.equivalentRecallTitleMatch || f.equivalentRecallBodyMatch) return false;
+  if (f.ordinaryEquivalenceBodyMatch || f.topicalRecallMatch) return false;
+  if ((f.bodyLexicalMatch || 0) > 0 || (f.bodyPhraseCount || 0) > 0) return false;
+  if ((f.directBodyOccurrenceCount || 0) > 0) return false;
+  if ((f.queryCoverage || 0) > 0 || (f.titleCoverage || 0) > 0) return false;
+  return true;
+}
+
+function repeatedDirectOverZeroTermRelated(a: FeaturedHit, b: FeaturedHit) {
+  const aRepeated = isWeakDirect(a.features) && hasEstablishedRepeatedDirectOccurrences(a.features);
+  const bRepeated = isWeakDirect(b.features) && hasEstablishedRepeatedDirectOccurrences(b.features);
+  const aZero = isZeroTermRelatedNeighbor(a.features);
+  const bZero = isZeroTermRelatedNeighbor(b.features);
+  if (aRepeated && bZero && !bRepeated) return -1;
+  if (bRepeated && aZero && !aRepeated) return 1;
+  return 0;
+}
+
+function hasPrimaryTermTitle(f: Partial<FeatureVector>) {
+  return Boolean(f.topicalPrimaryTitleMatch);
+}
+
+/**
+ * An authored primary topical term in the title stays ahead of a pure
+ * embedding neighbor. The neighbor remains related. The title match stays
+ * topical: it is not equivalence and not literal query coverage.
+ */
+function primaryTermTitleOverZeroTermRelated(a: FeaturedHit, b: FeaturedHit) {
+  const aTitle = hasPrimaryTermTitle(a.features);
+  const bTitle = hasPrimaryTermTitle(b.features);
+  const aZero = isZeroTermRelatedNeighbor(a.features);
+  const bZero = isZeroTermRelatedNeighbor(b.features);
+  if (aTitle && bZero && !bTitle) return -1;
+  if (bTitle && aZero && !aTitle) return 1;
+  return 0;
+}
+
 function relatedOverWeakDirectConstraint(a: FeaturedHit, b: FeaturedHit) {
+  const repeatedOrder = repeatedDirectOverZeroTermRelated(a, b);
+  if (repeatedOrder !== 0) return repeatedOrder;
+  const primaryOrder = primaryTermTitleOverZeroTermRelated(a, b);
+  if (primaryOrder !== 0) return primaryOrder;
   const aRel = a.features.relevanceKind === "related";
   const bRel = b.features.relevanceKind === "related";
   if (
@@ -461,12 +513,92 @@ function topicalRecallBand(f: Partial<FeatureVector>) {
   return 0;
 }
 
+function isTopicalTitleOnly(f: Partial<FeatureVector>) {
+  return Boolean(f.topicalRecallTitleMatch) && topicalRecallBand(f) === 1;
+}
+
+/**
+ * Title match of an authored primary topical term, with no direct lexical
+ * evidence of the query. Ordinary topical titles do not qualify.
+ */
+function isPrimaryTermTitleOnly(f: Partial<FeatureVector>) {
+  return hasPrimaryTermTitle(f) && topicalRecallBand(f) === 1;
+}
+
+/**
+ * Weak body evidence of the query that does not itself carry primary-term
+ * title evidence or query-title evidence. Occurrence count is not the
+ * distinction: one mention and a repeated mention are both body-only here.
+ */
+function isWeakBodyWithoutPrimaryTitle(f: Partial<FeatureVector>) {
+  if (f.relevanceKind === "related") return false;
+  if (f.directClass !== "weak" && f.directClass !== "none") return false;
+  if (hasPrimaryTermTitle(f)) return false;
+  if ((f.bodyLexicalMatch || 0) <= 0) return false;
+  if (
+    f.exactTitleMatch ||
+    f.exactTitleTokenMatch ||
+    f.typedSurfaceTitleMatch ||
+    (f.queryCoverage || 0) > 0 ||
+    (f.titleCoverage || 0) > 0 ||
+    (f.titlePrefixQuality || 0) > 0 ||
+    f.contextualTitlePrefix ||
+    f.configuredConceptMatch ||
+    f.canonicalKeyTitle
+  ) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * One real direct body occurrence, with no title or coverage evidence.
+ * bodyPhraseCount 0 is not this case: that field is uncomputed for an occupied
+ * single-token concept, so only an explicit count of 1 qualifies.
+ */
+function isIncidentalSingleWeakBody(f: Partial<FeatureVector>) {
+  if (f.relevanceKind === "related") return false;
+  if (f.directClass !== "weak") return false;
+  if ((f.bodyLexicalMatch || 0) <= 0) return false;
+  if ((f.bodyPhraseCount || 0) >= REPEATED_BODY_PHRASE_MIN) return false;
+  if ((f.directBodyOccurrenceCount || 0) !== 1) return false;
+  if (
+    f.exactTitleMatch ||
+    f.exactTitleTokenMatch ||
+    f.typedSurfaceTitleMatch ||
+    (f.queryCoverage || 0) > 0 ||
+    (f.titleCoverage || 0) > 0 ||
+    (f.titlePrefixQuality || 0) > 0 ||
+    f.contextualTitlePrefix ||
+    f.configuredConceptMatch ||
+    f.canonicalKeyTitle ||
+    f.morphologyMatch ||
+    (f.typoDistance || 0) > 0 ||
+    f.versionMatch ||
+    f.shortLiteralLeadMatch ||
+    f.dottedSpanComponentTitleMatch
+  ) {
+    return false;
+  }
+  return true;
+}
+
 /**
  * Direct/configured/strong literal evidence outranks topical-recall-only hits,
- * which outrank true none. No-ops when neither candidate has topical recall.
+ * which outrank true none. A topical title match outranks an incidental single
+ * body mention. An authored primary-term title, and only that title evidence,
+ * also outranks weak body-only matches, including repeated ones. Ordinary
+ * topical titles, a missing occurrence count, and a topical body mention
+ * without a title match keep the band order. Strong and moderate directs are
+ * not body-only.
+ * No-ops when neither candidate has topical recall.
  */
 function topicalRecallBandConstraint(a: FeaturedHit, b: FeaturedHit) {
   if (!a.features.topicalRecallMatch && !b.features.topicalRecallMatch) return 0;
+  if (isPrimaryTermTitleOnly(a.features) && isWeakBodyWithoutPrimaryTitle(b.features)) return -1;
+  if (isPrimaryTermTitleOnly(b.features) && isWeakBodyWithoutPrimaryTitle(a.features)) return 1;
+  if (isTopicalTitleOnly(a.features) && isIncidentalSingleWeakBody(b.features)) return -1;
+  if (isTopicalTitleOnly(b.features) && isIncidentalSingleWeakBody(a.features)) return 1;
   const aBand = topicalRecallBand(a.features);
   const bBand = topicalRecallBand(b.features);
   if (aBand === bBand) return 0;
@@ -537,6 +669,12 @@ function synonymRecallBandConstraint(a: FeaturedHit, b: FeaturedHit) {
 
 function synonymRecallOnly(f: Partial<FeatureVector>) {
   return Boolean(f.equivalentRecallMatch) && synonymRecallBand(f) === 1;
+}
+
+/** Equivalent-body band only. Title equivalents and literal evidence stay out. */
+export function isEquivalentRecallBodyOnly(f: Partial<FeatureVector> | undefined) {
+  if (!f?.equivalentRecallBodyMatch || f.equivalentRecallTitleMatch) return false;
+  return synonymRecallBand(f) === 1;
 }
 
 function synonymQualityBand(f: Partial<FeatureVector>) {
