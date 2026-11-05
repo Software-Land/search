@@ -29,7 +29,7 @@ import {
   advanceConstraintStamp,
 } from "./constraints.js";
 import { throwIfAborted } from "../cancel.js";
-import { checkpoint, createCooperation, enterCooperationStage, type Cooperation } from "../execution/cooperate.js";
+import { checkpoint, createCooperation, type Cooperation } from "../execution/cooperate.js";
 import { BinaryMaxHeap } from "./rankHeap.js";
 import { constraintSignature } from "./rankSignature.js";
 import { compareScoreThenWeakBodyThenId, scoreThenWeakBodyThenIdBetter } from "./rankTieBreak.js";
@@ -134,7 +134,6 @@ export function rankSparse(
     return [];
   }
 
-  if (cooperation) enterCooperationStage(cooperation, "rank");
   const grouped = groupBySignature(decorated, cooperation, signal);
   if (grouped && typeof (grouped as Promise<number[][]>).then === "function") {
     return (grouped as Promise<number[][]>).then((buckets) => rankGrouped(buckets));

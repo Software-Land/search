@@ -31,7 +31,7 @@ import {
 import { compileRankingEvidencePlan } from "./ranking/evidence/rankingEvidencePlan.js";
 import { RankingEvidenceSessionPool, rankingEvidenceStaticFor } from "./ranking/evidence/rankingEvidenceState.js";
 import { finalizeRankingEvidence, finalizeRankingEvidenceAsync } from "./ranking/evidence/rankingEvidenceFinalize.js";
-import { COOPERATION, checkpoint, createCooperation, enterCooperationStage, isThenable, takeBeforePackedPublish, type Cooperation } from "./execution/cooperate.js";
+import { COOPERATION, checkpoint, createCooperation, isThenable, type Cooperation } from "./execution/cooperate.js";
 import { createPackedDirectHits, isPackedDirectFeatures } from "./ranking/evidence/rankingEvidencePacked.js";
 import { packedSearchFallbackReason } from "./ranking/evidence/rankingEvidenceSearch.js";
 import { assembleDetailedResult, withPackedSearchMeta } from "./results/resultAssembly.js";
@@ -470,7 +470,6 @@ export class SearchEngine {
   ) {
     try {
     throwIfAborted(signal);
-    enterCooperationStage(cooperation, "features");
     const weight = this.retrievalScoreWeight;
     let maxRet = 0;
     if (weight) {
@@ -1035,8 +1034,6 @@ export class SearchEngine {
         cooperation,
       });
       const rankedPack = isThenable(rankedPackValue) ? await rankedPackValue : rankedPackValue;
-      const publishHold = takeBeforePackedPublish();
-      if (publishHold) await publishHold;
       throwIfAborted(signal);
       const finished = this._finishPacked(rankedPack.ranked, query, strategy, {
         limit,
@@ -1261,7 +1258,6 @@ export class SearchEngine {
     await Promise.resolve();
     throwIfAborted(signal);
     const cooperation = createCooperation();
-    enterCooperationStage(cooperation, "retrieve");
     const strategy =
       relationshipStrategy == null
         ? this.relationshipStrategy

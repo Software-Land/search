@@ -155,30 +155,42 @@ function generatedQueries(documents, count, seed) {
 }
 
 describe("packed search() public equivalence", () => {
+  let prepared;
+
+  function softwareLandEngine() {
+    if (!prepared) {
+      prepared = (async () => {
+        const {
+          documents,
+          configuredConcepts,
+          lemmas,
+          relationshipMap,
+          relationships,
+          lexicalFrequency,
+          historical,
+          schema,
+        } = loadSoftwareLandRelevanceInputs();
+        const authored = compileAuthoredRelevance({ configuredConcepts, relationshipMap });
+        const plugins = [morphology({ lemmas }), ...authored.plugins];
+        const indexedDocuments = attachLexicalFrequency(documents, lexicalFrequency);
+        const lexicalIndex = compileLexicalIndex(indexedDocuments, { schema, plugins });
+        const engine = SearchEngine.create({
+          schema,
+          plugins,
+          lexicalIndex,
+          documentRelationships: relationships,
+          relationshipStrategy: "hybrid",
+          retriever: "indexed",
+        });
+        await engine.index(indexedDocuments);
+        return { engine, indexedDocuments, historical };
+      })();
+    }
+    return prepared;
+  }
+
   test("Software.Land historical, strict-contract, and regression inventory matches searchDetailed", async () => {
-    const {
-      documents,
-      configuredConcepts,
-      lemmas,
-      relationshipMap,
-      relationships,
-      lexicalFrequency,
-      historical,
-      schema,
-    } = loadSoftwareLandRelevanceInputs();
-    const authored = compileAuthoredRelevance({ configuredConcepts, relationshipMap });
-    const plugins = [morphology({ lemmas }), ...authored.plugins];
-    const indexedDocuments = attachLexicalFrequency(documents, lexicalFrequency);
-    const lexicalIndex = compileLexicalIndex(indexedDocuments, { schema, plugins });
-    const engine = SearchEngine.create({
-      schema,
-      plugins,
-      lexicalIndex,
-      documentRelationships: relationships,
-      relationshipStrategy: "hybrid",
-      retriever: "indexed",
-    });
-    await engine.index(indexedDocuments);
+    const { engine, historical } = await softwareLandEngine();
 
     const fenwickQueries = [
       "binary index",
@@ -230,27 +242,30 @@ describe("packed search() public equivalence", () => {
     expect(mismatches).toBe(0);
     expect(packed + fallback).toBe(222);
 
-    const adversarial = generatedQueries(indexedDocuments, 200, SEED ^ 0x51);
-    expect(adversarial).toHaveLength(200);
-    let generatedPacked = 0;
-    let generatedFallback = 0;
-    for (const query of adversarial) {
-      const meta = compareSearch(engine, query, { limit: 10, relatedLimit: 5 });
-      if (meta.rankingEvidence === "packed") generatedPacked += 1;
-      else generatedFallback += 1;
-    }
-
     // eslint-disable-next-line no-console
     console.log(JSON.stringify({
       packedSearchSoftwareLand: { queries: 222, packed, fallback, mismatches: 0 },
-      packedSearchSoftwareLandGenerated: {
-        queries: 200,
-        packed: generatedPacked,
-        fallback: generatedFallback,
-        mismatches: 0,
-      },
     }));
-  }, 180_000);
+  }, 360_000);
+
+  test("200 generated Software.Land queries match searchDetailed", async () => {
+    const { engine, indexedDocuments } = await softwareLandEngine();
+    const adversarial = generatedQueries(indexedDocuments, 200, SEED ^ 0x51);
+    expect(adversarial).toHaveLength(200);
+    let packed = 0;
+    let fallback = 0;
+    for (const query of adversarial) {
+      const meta = compareSearch(engine, query, { limit: 10, relatedLimit: 5 });
+      if (meta.rankingEvidence === "packed") packed += 1;
+      else fallback += 1;
+    }
+    expect(packed + fallback).toBe(200);
+
+    // eslint-disable-next-line no-console
+    console.log(JSON.stringify({
+      packedSearchSoftwareLandGenerated: { queries: 200, packed, fallback, mismatches: 0 },
+    }));
+  }, 360_000);
 
   volumeTest("1000 generated 25k queries match searchDetailed", async () => {
     const documents = mixedCorpus(25_000);

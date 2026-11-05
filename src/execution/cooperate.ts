@@ -27,61 +27,20 @@ const TIME_CHECK_STRIDE = 4;
 export type Cooperation = {
   sliceUnits: number;
   completedUnits: number;
-  yields: number;
   sliceStart: number;
   checks: number;
-  stage: string;
-  stageUnits: number;
-};
-
-export type CooperationYield = {
-  completedUnits: number;
-  yields: number;
-  stage: string;
-  stageUnits: number;
 };
 
 /** Attached to internal option bags. Not a public search option. */
 export const COOPERATION: unique symbol = Symbol("search.cooperation");
 
-type Probe = (info: CooperationYield) => void;
-let probe: Probe | null = null;
-
 export function createCooperation(): Cooperation {
   return {
     sliceUnits: 0,
     completedUnits: 0,
-    yields: 0,
     sliceStart: nowMs(),
     checks: 0,
-    stage: "",
-    stageUnits: 0,
   };
-}
-
-/** Name the phase whose checkpoints should report `stageUnits`. */
-export function enterCooperationStage(coop: Cooperation | null | undefined, stage: string): void {
-  if (!coop || coop.stage === stage) return;
-  coop.stage = stage;
-  coop.stageUnits = 0;
-}
-
-type PublishHold = () => Promise<void> | void;
-let beforePackedPublish: PublishHold | null = null;
-
-/**
- * Test hook. Holds the packed path after ranking resolves and before
- * success is published. Production leaves this unset.
- */
-export function setBeforePackedPublish(next: PublishHold | null): void {
-  beforePackedPublish = next;
-}
-
-export function takeBeforePackedPublish(): Promise<void> | void {
-  const hook = beforePackedPublish;
-  if (!hook) return;
-  beforePackedPublish = null;
-  return hook();
 }
 
 export function readCooperation(options: object | null | undefined): Cooperation | null {
@@ -89,14 +48,6 @@ export function readCooperation(options: object | null | undefined): Cooperation
   const value = (options as { [COOPERATION]?: Cooperation })[COOPERATION];
   if (!value || typeof value !== "object") return null;
   return value;
-}
-
-/**
- * Test instrumentation. Production leaves this unset. Not a public API and
- * not part of the Worker protocol.
- */
-export function setCooperationProbe(next: Probe | null): void {
-  probe = next;
 }
 
 export function isThenable<T>(value: T | Promise<T>): value is Promise<T> {
@@ -136,7 +87,6 @@ export function checkpoint(
   if (weight > 0) {
     coop.completedUnits += weight;
     coop.sliceUnits += weight;
-    coop.stageUnits += weight;
   }
   coop.checks += 1;
   const sampleTime = coop.checks % TIME_CHECK_STRIDE === 0;
@@ -146,16 +96,9 @@ export function checkpoint(
     nowMs() - coop.sliceStart >= COOPERATE_TIME_BUDGET_MS;
   if (coop.sliceUnits < COOPERATE_UNIT_BUDGET && !timeDue) return;
   if (coop.completedUnits <= 0) return;
-  probe?.({
-    completedUnits: coop.completedUnits,
-    yields: coop.yields + 1,
-    stage: coop.stage,
-    stageUnits: coop.stageUnits,
-  });
   return yieldToTasks().then(() => {
     throwIfAborted(signal);
     coop.sliceUnits = 0;
-    coop.yields += 1;
     coop.sliceStart = nowMs();
   });
 }

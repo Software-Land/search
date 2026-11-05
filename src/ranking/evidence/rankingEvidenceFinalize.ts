@@ -6,7 +6,7 @@
  * implementations. It never allocates a FeatureVector per candidate.
  */
 import { compactOrdinal } from "../../indexing/compactDocuments.js";
-import { checkpoint, enterCooperationStage, type Cooperation } from "../../execution/cooperate.js";
+import { checkpoint, type Cooperation } from "../../execution/cooperate.js";
 import { queryHasTypedConfiguredGraph } from "../../query/configuredFormGraph.js";
 import { resetReusableFeatureScalar, DEFAULT_FEATURE_VALUES } from "../../features/featureDefaults.js";
 import { classifyDirect } from "../../features/features.js";
@@ -905,7 +905,6 @@ export async function finalizeRankingEvidenceAsync(
   signal?: AbortSignal,
   cooperation?: Cooperation | null
 ): Promise<RankingEvidenceFinalized> {
-  enterCooperationStage(cooperation, "finalize");
   const plan = session.plan;
   if (!plan) throw new Error("ranking evidence session is not acquired");
   session.beginFinalization(hits.length);
